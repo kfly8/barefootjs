@@ -1,5 +1,5 @@
 /**
- * BareJS JSX 型定義
+ * BarefootJS JSX 型定義
  *
  * コンパイラへの入力として使用するJSXの型チェック用
  */

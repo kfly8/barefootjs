@@ -37,16 +37,16 @@ for (const component of result.components) {
 // テンプレートを読み込んで HTML を生成
 const template = await Bun.file(resolve(ROOT_DIR, 'template.html')).text()
 const html = template
-  .replace('{{title}}', 'BareJS Counter')
+  .replace('{{title}}', 'BarefootJS Counter')
   .replace('{{content}}', result.html)
   .replace('{{scripts}}', scriptTags.join('\n  '))
 
 await Bun.write(resolve(DIST_DIR, 'index.html'), html)
 console.log('Generated: dist/index.html')
 
-// barejs-runtime.js をコピー
+// barefoot.js をコピー
 await Bun.write(
-  resolve(DIST_DIR, 'barejs-runtime.js'),
+  resolve(DIST_DIR, 'barefoot.js'),
   Bun.file(resolve(CORE_DIR, 'runtime.js'))
 )
-console.log('Copied: dist/barejs-runtime.js')
+console.log('Copied: dist/barefoot.js')

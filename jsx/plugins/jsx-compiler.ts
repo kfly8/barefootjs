@@ -1,5 +1,5 @@
 /**
- * BareJS JSX Compiler
+ * BarefootJS JSX Compiler
  *
  * JSXをコンパイルして静的HTMLとクライアントJSを生成する。
  * - コンポーネントのインポートを解決
@@ -189,7 +189,7 @@ export async function compileApp(
   for (const [path, result] of compiledComponents) {
     if (result.clientJs) {
       const name = path.split('/').pop()!.replace('.tsx', '')
-      const js = `import { signal } from './barejs-runtime.js'
+      const js = `import { signal } from './barefoot.js'
 
 const [count, setCount] = signal(0)
 

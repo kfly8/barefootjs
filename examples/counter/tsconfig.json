@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "barejs": ["../../core/index.ts"]
+      "barefoot": ["../../core/index.ts"]
     },
     "jsx": "preserve"
   },

@@ -1,5 +1,5 @@
 /**
- * BareJS - Minimal Reactive Primitive
+ * BarefootJS - Minimal Reactive Primitive
  *
  * React風のsignal API
  */

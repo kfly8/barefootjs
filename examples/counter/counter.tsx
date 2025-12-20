@@ -1,15 +1,15 @@
 /**
- * BareJS Counter - JSX版
+ * BarefootJS Counter
  */
 
-import { signal } from 'barejs'
+import { signal } from 'barefoot'
 
 function Counter() {
   const [count, setCount] = signal(0)
 
   return (
     <div>
-      <h1>BareJS Counter</h1>
+      <h1>BarefootJS Counter</h1>
       <p class="counter">{count()}</p>
       <p class="doubled">doubled: {count() * 2}</p>
       <button onClick={() => setCount(n => n + 1)}>+1</button>

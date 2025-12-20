@@ -1,5 +1,5 @@
 /**
- * BareJS Runtime - Browser-compatible minimal runtime
+ * BarefootJS Runtime - Browser-compatible minimal runtime
  */
 
 export function signal(initialValue) {

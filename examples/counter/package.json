@@ -1,5 +1,5 @@
 {
-  "name": "barejs-counter-example",
+  "name": "barefoot-counter-example",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,6 +7,6 @@
     "serve": "bunx serve dist"
   },
   "dependencies": {
-    "barejs": "file:../../"
+    "barefoot": "file:../../"
   }
 }

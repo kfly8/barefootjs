@@ -1,5 +1,5 @@
 {
-  "name": "barejs",
+  "name": "barefoot",
   "version": "0.0.1",
   "description": "Minimal reactive primitives for AI-generated code",
   "module": "core/index.ts",
