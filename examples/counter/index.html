@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BareJS - Counter Example</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .counter {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .doubled {
+      font-size: 24px;
+      color: #666;
+      margin: 10px 0;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>BareJS Counter</h1>
+
+  <p id="counter" class="counter">0</p>
+  <p id="doubled" class="doubled">doubled: 0</p>
+
+  <button id="increment">+1</button>
+  <button id="decrement">-1</button>
+  <button id="reset">Reset</button>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

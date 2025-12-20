@@ -1,0 +1,17 @@
+{
+  "name": "barejs-counter-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./app.ts --outfile ./app.js",
+    "dev": "bun build ./app.ts --outfile ./app.js --watch",
+    "serve": "bunx serve .",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "barejs": "file:../../"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.0.0"
+  }
+}

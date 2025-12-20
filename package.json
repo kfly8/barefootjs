@@ -1,0 +1,21 @@
+{
+  "name": "barejs",
+  "version": "0.0.1",
+  "description": "Minimal reactive primitives for AI-generated code",
+  "module": "core/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "bun test core/",
+    "build:counter": "bun build ./examples/counter/app.ts --outfile ./examples/counter/app.js",
+    "dev:counter": "bun build ./examples/counter/app.ts --outfile ./examples/counter/app.js --watch"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.0.11",
+    "@types/bun": "latest",
+    "happy-dom": "^20.0.11"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
