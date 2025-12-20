@@ -3,15 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun build ./app.ts --outfile ./app.js",
-    "dev": "bun build ./app.ts --outfile ./app.js --watch",
-    "serve": "bunx serve .",
-    "test": "bun test"
+    "build": "bun run build.ts",
+    "serve": "bunx serve dist"
   },
   "dependencies": {
     "barejs": "file:../../"
-  },
-  "devDependencies": {
-    "@happy-dom/global-registrator": "^20.0.0"
   }
 }

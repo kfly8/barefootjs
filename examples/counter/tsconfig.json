@@ -4,8 +4,9 @@
     "baseUrl": ".",
     "paths": {
       "barejs": ["../../core/index.ts"]
-    }
+    },
+    "jsx": "preserve"
   },
-  "include": ["./**/*.ts"],
+  "include": ["./**/*.ts", "./**/*.tsx", "../../core/jsx.d.ts"],
   "exclude": ["node_modules"]
 }

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BareJS - Counter Example</title>
+  <title>{{title}}</title>
+  <link rel="modulepreload" href="./barejs-runtime.js">
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -30,15 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>BareJS Counter</h1>
-
-  <p id="counter" class="counter">0</p>
-  <p id="doubled" class="doubled">doubled: 0</p>
-
-  <button id="increment">+1</button>
-  <button id="decrement">-1</button>
-  <button id="reset">Reset</button>
-
-  <script type="module" src="./app.js"></script>
+  {{content}}
+  {{scripts}}
 </body>
 </html>

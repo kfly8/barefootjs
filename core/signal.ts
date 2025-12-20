@@ -1,47 +1,41 @@
 /**
  * BareJS - Minimal Reactive Primitive
  *
- * signalのみを提供する最小限のリアクティブシステム。
+ * React風のsignal API
  */
 
 /**
  * Signal型の定義
  */
-export type Signal<T> = {
+export type Signal<T> = [
   /** 現在の値を取得 */
-  (): T
-  /** 値を更新 */
-  set: (value: T) => void
-  /** 値を更新（関数を渡す場合） */
-  update: (fn: (current: T) => T) => void
-}
+  () => T,
+  /** 値を更新（値または関数を渡す） */
+  (valueOrFn: T | ((prev: T) => T)) => void
+]
 
 /**
  * signal - リアクティブな値を作成
  *
  * @param initialValue - 初期値
- * @returns Signal オブジェクト
+ * @returns [getter, setter] のタプル
  *
  * @example
- * const count = signal(0)
- * count()        // 0
- * count.set(1)   // 値を1に更新
- * count()        // 1
- * count.update(n => n + 1)  // 値を2に更新
+ * const [count, setCount] = signal(0)
+ * count()              // 0
+ * setCount(5)          // 値を5に更新
+ * setCount(n => n + 1) // 関数で更新（6になる）
  */
 export function signal<T>(initialValue: T): Signal<T> {
   let value = initialValue
 
-  // getter関数にset/updateメソッドを追加
-  const get = (() => value) as Signal<T>
+  const get = () => value
 
-  get.set = (newValue: T) => {
-    value = newValue
+  const set = (valueOrFn: T | ((prev: T) => T)) => {
+    value = typeof valueOrFn === 'function'
+      ? (valueOrFn as (prev: T) => T)(value)
+      : valueOrFn
   }
 
-  get.update = (fn: (current: T) => T) => {
-    value = fn(value)
-  }
-
-  return get
+  return [get, set]
 }
