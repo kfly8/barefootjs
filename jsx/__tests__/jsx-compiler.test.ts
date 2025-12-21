@@ -542,6 +542,55 @@ describe('map内の動的要素', () => {
   })
 
   /**
+   * map内のblurイベント（キャプチャフェーズ）
+   * blurはバブリングしないため、キャプチャフェーズで捕捉
+   */
+  it('map内のblurイベント（キャプチャフェーズ）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([{ id: 1 }])
+        return (
+          <ul>{items().map(item => (
+            <li><input onBlur={() => console.log('blur')} /></li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // blurイベントはキャプチャフェーズを使用
+    expect(component.clientJs).toContain("addEventListener('blur'")
+    expect(component.clientJs).toContain('}, true)')
+  })
+
+  /**
+   * map内のkeydownイベント（条件付き実行）
+   * e.key === 'Enter' && action のパターンを検出し、条件付きでupdateAll()を呼ぶ
+   */
+  it('map内のkeydownイベント（条件付き実行）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([{ id: 1 }])
+        return (
+          <ul>{items().map(item => (
+            <li><input onKeyDown={(e) => e.key === 'Enter' && console.log('enter')} /></li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 条件付き実行: if (condition) { action; updateAll() }
+    expect(component.clientJs).toContain("if (e.key === 'Enter')")
+    expect(component.clientJs).toContain("console.log('enter')")
+    expect(component.clientJs).toContain('updateAll()')
+  })
+
+  /**
    * map内の条件付きレンダリング（三項演算子）
    * items().map(item => <li>{item.editing ? <input /> : <span>{item.text}</span>}</li>)
    *

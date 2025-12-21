@@ -261,6 +261,35 @@ function extractArrowParams(handler: string): string {
 }
 
 /**
+ * バブリングしないイベントかどうか判定
+ * blur, focus などはキャプチャフェーズで捕捉する必要がある
+ */
+function needsCapturePhase(eventName: string): boolean {
+  return ['blur', 'focus', 'focusin', 'focusout'].includes(eventName)
+}
+
+/**
+ * ハンドラボディが条件付き実行パターンかどうか判定
+ * e.key === 'Enter' && doSomething() のようなパターンを検出
+ */
+function parseConditionalHandler(body: string): { condition: string; action: string } | null {
+  // pattern: condition && action
+  // 最初の && で分割（ネストされた && は action 側に含める）
+  const match = body.match(/^(.+?)\s*&&\s*(.+)$/)
+  if (match) {
+    const condition = match[1]!.trim()
+    const action = match[2]!.trim()
+    // condition が比較式っぽい場合のみ（e.key === 'Enter' など）
+    if (condition.includes('===') || condition.includes('!==') ||
+        condition.includes('==') || condition.includes('!=') ||
+        condition.includes('>') || condition.includes('<')) {
+      return { condition, action }
+    }
+  }
+  return null
+}
+
+/**
  * 動的表現をsignalの初期値で評価して文字列を返す
  *
  * 例: on() ? 'ON' : 'OFF' + signals [{getter: 'on', initialValue: 'false'}]
@@ -635,17 +664,32 @@ function compileJsxWithComponents(
   for (const el of listElements) {
     if (el.itemEvents.length > 0) {
       for (const event of el.itemEvents) {
+        const handlerBody = extractArrowBody(event.handler)
+        const conditionalHandler = parseConditionalHandler(handlerBody)
+        const useCapture = needsCapturePhase(event.eventName)
+        const captureArg = useCapture ? ', true' : ''
+
         lines.push(`${el.id}.addEventListener('${event.eventName}', (e) => {`)
         lines.push(`  const target = e.target.closest('[data-event-id="${event.eventId}"]')`)
         lines.push(`  if (target && target.dataset.eventId === '${event.eventId}') {`)
         lines.push(`    const __index = parseInt(target.dataset.index, 10)`)
         lines.push(`    const ${event.paramName} = ${el.arrayExpression}[__index]`)
-        lines.push(`    ${extractArrowBody(event.handler)}`)
-        if (hasDynamicContent) {
-          lines.push(`    updateAll()`)
+
+        if (conditionalHandler && hasDynamicContent) {
+          // 条件付きハンドラ: 条件が満たされた時のみ action と updateAll を実行
+          lines.push(`    if (${conditionalHandler.condition}) {`)
+          lines.push(`      ${conditionalHandler.action}`)
+          lines.push(`      updateAll()`)
+          lines.push(`    }`)
+        } else {
+          lines.push(`    ${handlerBody}`)
+          if (hasDynamicContent) {
+            lines.push(`    updateAll()`)
+          }
         }
+
         lines.push(`  }`)
-        lines.push(`})`)
+        lines.push(`}${captureArg})`)
       }
     }
   }
