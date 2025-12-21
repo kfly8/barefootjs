@@ -15,6 +15,13 @@ import type {
   DynamicAttribute,
 } from '../types'
 
+// TypeScript APIを使用したパーサーをインポート
+import {
+  extractArrowBody as parseArrowBody,
+  extractArrowParams as parseArrowParams,
+  parseConditionalHandler as parseConditional,
+} from '../utils/expression-parser'
+
 export type ClientJsContext = {
   signals: SignalDeclaration[]
   localFunctions: LocalFunction[]
@@ -26,28 +33,18 @@ export type ClientJsContext = {
 
 /**
  * アロー関数からボディ部分を抽出
+ * TypeScript APIを使用して正確にパースする
  */
 export function extractArrowBody(handler: string): string {
-  const arrowMatch = handler.match(/^\s*\([^)]*\)\s*=>\s*(.+)$/s)
-  if (arrowMatch) {
-    let body = arrowMatch[1]!.trim()
-    if (body.startsWith('{') && body.endsWith('}')) {
-      body = body.slice(1, -1).trim()
-    }
-    return body
-  }
-  return handler
+  return parseArrowBody(handler)
 }
 
 /**
  * アロー関数からパラメータ部分を抽出
+ * TypeScript APIを使用して正確にパースする
  */
 export function extractArrowParams(handler: string): string {
-  const paramsMatch = handler.match(/^\s*(\([^)]*\))\s*=>/)
-  if (paramsMatch) {
-    return paramsMatch[1]!
-  }
-  return '()'
+  return parseArrowParams(handler)
 }
 
 /**
@@ -59,19 +56,10 @@ export function needsCapturePhase(eventName: string): boolean {
 
 /**
  * 条件付きハンドラのパース
+ * TypeScript APIを使用して正確にパースする
  */
 export function parseConditionalHandler(body: string): { condition: string; action: string } | null {
-  const match = body.match(/^(.+?)\s*&&\s*(.+)$/)
-  if (match) {
-    const condition = match[1]!.trim()
-    const action = match[2]!.trim()
-    if (condition.includes('===') || condition.includes('!==') ||
-        condition.includes('==') || condition.includes('!=') ||
-        condition.includes('>') || condition.includes('<')) {
-      return { condition, action }
-    }
-  }
-  return null
+  return parseConditional(body)
 }
 
 /**

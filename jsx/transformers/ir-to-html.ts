@@ -5,17 +5,15 @@
  */
 
 import type { IRNode, IRElement, SignalDeclaration } from '../types'
+import { replaceSignalCalls } from '../utils/expression-parser'
 
 /**
  * 動的表現をsignalの初期値で評価して文字列を返す
+ * TypeScript APIを使用して文字列リテラル内のシグナル名は置換しない
  */
 export function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): string {
-  // signal呼び出しを初期値で置き換え
-  let replaced = expr
-  for (const s of signals) {
-    const regex = new RegExp(`\\b${s.getter}\\s*\\(\\s*\\)`, 'g')
-    replaced = replaced.replace(regex, s.initialValue)
-  }
+  // signal呼び出しを初期値で置き換え（ASTベース）
+  const replaced = replaceSignalCalls(expr, signals)
 
   try {
     // ビルド時のみ実行されるため、evalは安全
@@ -112,17 +110,14 @@ function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
 
 /**
  * リスト要素の初期HTMLを生成
+ * TypeScript APIを使用してシグナル呼び出しを置換
  */
 function evaluateListInitialHtml(
   listInfo: { arrayExpression: string; paramName: string; itemTemplate: string },
   signals: SignalDeclaration[]
 ): string {
-  // 配列式を評価
-  let replaced = listInfo.arrayExpression
-  for (const s of signals) {
-    const regex = new RegExp(`\\b${s.getter}\\s*\\(\\s*\\)`, 'g')
-    replaced = replaced.replace(regex, s.initialValue)
-  }
+  // 配列式を評価（ASTベースの置換）
+  const replaced = replaceSignalCalls(listInfo.arrayExpression, signals)
 
   try {
     const arrayValue = eval(replaced)
