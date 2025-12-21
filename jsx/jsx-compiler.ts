@@ -62,12 +62,18 @@ type LocalFunction = {
   code: string        // const handleToggle = (id) => { ... }
 }
 
+type ChildComponentInit = {
+  name: string        // AddTodoForm
+  propsExpr: string   // { onAdd: handleAdd }
+}
+
 type CompileResult = {
   staticHtml: string
   clientJs: string
   serverJsx: string
   signals: SignalDeclaration[]
   localFunctions: LocalFunction[]  // コンポーネント内で定義された関数
+  childInits: ChildComponentInit[] // 初期化が必要な子コンポーネント
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
   listElements: ListElement[]
@@ -460,24 +466,44 @@ export async function compileJSX(
         .map(s => `const [${s.getter}, ${s.setter}] = signal(${s.initialValue})`)
         .join('\n')
 
+      // 子コンポーネントのimportを生成
+      const childImports = result.childInits
+        .map(child => `import { init${child.name} } from './${child.name}.js'`)
+        .join('\n')
+
+      // 子コンポーネントのinit呼び出しを生成
+      const childInitCalls = result.childInits
+        .map(child => `init${child.name}(${child.propsExpr})`)
+        .join('\n')
+
       // propsがある場合はinit関数でラップする
       let clientJs = ''
-      if (result.clientJs) {
+      if (result.clientJs || result.childInits.length > 0) {
+        const allImports = [
+          `import { signal } from './barefoot.js'`,
+          childImports,
+        ].filter(Boolean).join('\n')
+
+        const bodyCode = [
+          result.clientJs,
+          childInitCalls ? `\n// 子コンポーネントの初期化\n${childInitCalls}` : '',
+        ].filter(Boolean).join('\n')
+
         if (result.props.length > 0) {
           const propsParam = `{ ${result.props.join(', ')} }`
-          clientJs = `import { signal } from './barefoot.js'
+          clientJs = `${allImports}
 
 export function init${name}(${propsParam}) {
 ${signalDeclarations ? signalDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
-${result.clientJs.split('\n').map(l => '  ' + l).join('\n')}
+${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 `
         } else {
-          clientJs = `import { signal } from './barefoot.js'
+          clientJs = `${allImports}
 
 ${signalDeclarations}
 
-${result.clientJs}
+${bodyCode}
 `
         }
       }
@@ -555,6 +581,41 @@ function compileJsxWithComponents(
   const dynamicElements: DynamicElement[] = []
   const listElements: ListElement[] = []
   const dynamicAttributes: DynamicAttribute[] = []
+  const childInits: ChildComponentInit[] = []
+
+  /**
+   * コンポーネントタグからpropsを抽出してchildInitsに追加
+   */
+  function extractAndTrackComponentProps(
+    tagName: string,
+    attributes: ts.JsxAttributes,
+    componentResult: CompileResult
+  ): void {
+    // propsを持つコンポーネントのみ
+    if (componentResult.props.length === 0) return
+
+    const propsObj: string[] = []
+    attributes.properties.forEach((attr) => {
+      if (ts.isJsxAttribute(attr) && attr.name) {
+        const propName = attr.name.getText(sourceFile)
+        if (attr.initializer) {
+          if (ts.isStringLiteral(attr.initializer)) {
+            propsObj.push(`${propName}: "${attr.initializer.text}"`)
+          } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+            const expr = attr.initializer.expression.getText(sourceFile)
+            propsObj.push(`${propName}: ${expr}`)
+          }
+        }
+      }
+    })
+
+    if (propsObj.length > 0) {
+      childInits.push({
+        name: tagName,
+        propsExpr: `{ ${propsObj.join(', ')} }`,
+      })
+    }
+  }
 
   function jsxToHtml(node: ts.Node): string {
     if (ts.isJsxElement(node)) {
@@ -564,11 +625,13 @@ function compileJsxWithComponents(
       // コンポーネントタグの場合（HTMLのみ返す、JSは別途結合される）
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
+        // propsを持つ子コンポーネントをトラッキング
+        extractAndTrackComponentProps(tagName, openingElement.attributes, componentResult)
         return componentResult.staticHtml
       }
 
       const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(openingElement, sourceFile, signals)
-      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes)
+      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits)
       const children = childrenResult.html
       const dynamicContent = childrenResult.dynamicExpression
       const listContent = childrenResult.listExpression
@@ -627,6 +690,8 @@ function compileJsxWithComponents(
       // コンポーネントタグの場合（HTMLのみ返す、JSは別途結合される）
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
+        // propsを持つ子コンポーネントをトラッキング
+        extractAndTrackComponentProps(tagName, node.attributes, componentResult)
         return componentResult.staticHtml
       }
 
@@ -835,6 +900,7 @@ function compileJsxWithComponents(
     serverJsx,
     signals,
     localFunctions,
+    childInits,
     interactiveElements,
     dynamicElements,
     listElements,
@@ -1034,7 +1100,8 @@ function processChildrenInternal(
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
   signals: SignalDeclaration[],
-  dynamicAttributes: DynamicAttribute[] = []
+  dynamicAttributes: DynamicAttribute[] = [],
+  childInits: ChildComponentInit[] = []
 ): {
   html: string
   dynamicExpression: { expression: string; fullContent: string } | null
@@ -1086,9 +1153,36 @@ function processChildrenInternal(
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
         html += componentResult.staticHtml
+
+        // propsを持つ子コンポーネントをトラッキング
+        if (componentResult.props.length > 0) {
+          const attributes = ts.isJsxElement(child)
+            ? child.openingElement.attributes
+            : child.attributes
+          const propsObj: string[] = []
+          attributes.properties.forEach((attr) => {
+            if (ts.isJsxAttribute(attr) && attr.name) {
+              const propName = attr.name.getText(sourceFile)
+              if (attr.initializer) {
+                if (ts.isStringLiteral(attr.initializer)) {
+                  propsObj.push(`${propName}: "${attr.initializer.text}"`)
+                } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+                  const expr = attr.initializer.expression.getText(sourceFile)
+                  propsObj.push(`${propName}: ${expr}`)
+                }
+              }
+            }
+          })
+          if (propsObj.length > 0) {
+            childInits.push({
+              name: tagName,
+              propsExpr: `{ ${propsObj.join(', ')} }`,
+            })
+          }
+        }
       } else {
         // 再帰的にJSXを処理（簡易版）
-        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes)
+        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits)
       }
     }
   }
@@ -1210,25 +1304,29 @@ function evaluateMapWithInitialValues(
 
   // 各要素に対してテンプレートを適用
   try {
-    const results = arrayValue.map((item) => {
+    const results = arrayValue.map((item, __index) => {
       // テンプレートリテラルを評価
       // templateStr は `<li>${item}</li>` のような形式
-      // バッククォートを除去してテンプレートを評価
-      const templateBody = templateStr.slice(1, -1) // バッククォートを除去
-
-      // ${paramName} と ${paramName.prop} を実際の値に置換
-      const result = templateBody.replace(
-        new RegExp(`\\$\\{${paramName}(\\.\\w+)?\\}`, 'g'),
-        (_, prop) => {
-          if (prop) {
-            // プロパティアクセス: ${item.text} → item.textの値
-            const propName = prop.slice(1) // '.' を除去
-            return String((item as Record<string, unknown>)[propName] ?? '')
+      // テンプレートリテラルを直接evalで評価（paramNameを変数として使用）
+      try {
+        // paramNameの値をitemにバインドして評価
+        const evalContext = { [paramName]: item, __index }
+        const evalFn = new Function(...Object.keys(evalContext), `return ${templateStr}`)
+        return evalFn(...Object.values(evalContext))
+      } catch {
+        // フォールバック: 単純な置換
+        const templateBody = templateStr.slice(1, -1)
+        return templateBody.replace(
+          new RegExp(`\\$\\{${paramName}(\\.\\w+)?\\}`, 'g'),
+          (_, prop) => {
+            if (prop) {
+              const propName = prop.slice(1)
+              return String((item as Record<string, unknown>)[propName] ?? '')
+            }
+            return String(item)
           }
-          return String(item)
-        }
-      )
-      return result
+        )
+      }
     })
     return results.join('')
   } catch {
@@ -1612,12 +1710,13 @@ function jsxChildToHtml(
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
   signals: SignalDeclaration[],
-  dynamicAttributes: DynamicAttribute[]
+  dynamicAttributes: DynamicAttribute[],
+  childInits: ChildComponentInit[] = []
 ): string {
   if (ts.isJsxElement(node)) {
     const tagName = node.openingElement.tagName.getText(sourceFile)
     const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(node.openingElement, sourceFile, signals)
-    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes)
+    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits)
 
     let id: string | null = null
     const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''

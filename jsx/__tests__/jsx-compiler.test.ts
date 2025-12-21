@@ -1571,4 +1571,93 @@ describe('propsを持つコンポーネント', () => {
     // トップレベルにsignal宣言がある
     expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
   })
+
+  /**
+   * 親コンポーネントが子のinit関数を呼び出す
+   */
+  it('親コンポーネントが子のinit関数を呼び出す', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import { signal } from 'barefoot'
+        import Form from './Form'
+        function App() {
+          const [items, setItems] = signal([])
+          const handleAdd = (text) => {
+            setItems([...items(), { id: Date.now(), text }])
+          }
+          return (
+            <div>
+              <Form onAdd={handleAdd} />
+              <ul>{items().map(item => <li>{item.text}</li>)}</ul>
+            </div>
+          )
+        }
+      `,
+      '/test/Form.tsx': `
+        import { signal } from 'barefoot'
+        type Props = { onAdd: (text: string) => void }
+        function Form({ onAdd }: Props) {
+          const [text, setText] = signal('')
+          return (
+            <div>
+              <input value={text()} onInput={(e) => setText(e.target.value)} />
+              <button onClick={() => onAdd(text())}>追加</button>
+            </div>
+          )
+        }
+        export default Form
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const appComponent = result.components.find(c => c.name === 'App')
+
+    // 子コンポーネントのimportがある
+    expect(appComponent!.clientJs).toContain("import { initForm } from './Form.js'")
+    // init呼び出しがある
+    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd })')
+  })
+})
+
+// =============================================================================
+// map内の三項演算子評価
+// =============================================================================
+
+describe('map内の三項演算子評価', () => {
+  /**
+   * 初期HTMLで三項演算子が評価される
+   */
+  it('初期HTMLで三項演算子が評価される', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { id: 1, text: 'hello', editing: false },
+          { id: 2, text: 'world', editing: true }
+        ])
+        return (
+          <ul>
+            {items().map(item => (
+              <li>
+                {item.editing ? (
+                  <input value={item.text} />
+                ) : (
+                  <span>{item.text}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    `
+    const result = await compile(source)
+
+    // 初期HTMLに三項演算子がそのまま含まれていない
+    expect(result.html).not.toContain('item.editing ?')
+    // 初期値に基づいて正しく評価されている
+    // id:1 は editing:false なので <span>
+    expect(result.html).toContain('<span>hello</span>')
+    // id:2 は editing:true なので <input>
+    expect(result.html).toContain('<input')
+    expect(result.html).toContain('value="world"')
+  })
 })
