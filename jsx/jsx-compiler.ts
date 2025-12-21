@@ -36,89 +36,20 @@ import {
 } from './extractors'
 import { isPascalCase } from './utils/helpers'
 import { IdGenerator } from './utils/id-generator'
+import {
+  evaluateWithInitialValues,
+  extractArrowBody,
+  extractArrowParams,
+  needsCapturePhase,
+  parseConditionalHandler,
+  generateAttributeUpdate,
+  isBooleanAttribute,
+} from './transformers'
 
 export type { ComponentOutput, CompileJSXResult }
 
 // コンパイル単位でIDを管理
 const idGenerator = new IdGenerator()
-
-function extractArrowBody(handler: string): string {
-  // () => count++ → count++
-  // () => { count++ } → count++
-  const arrowMatch = handler.match(/^\s*\([^)]*\)\s*=>\s*(.+)$/)
-  if (arrowMatch) {
-    let body = arrowMatch[1]!.trim()
-    if (body.startsWith('{') && body.endsWith('}')) {
-      body = body.slice(1, -1).trim()
-    }
-    return body
-  }
-  return handler
-}
-
-function extractArrowParams(handler: string): string {
-  // (e) => ... → (e)
-  // () => ... → ()
-  const paramsMatch = handler.match(/^\s*(\([^)]*\))\s*=>/)
-  if (paramsMatch) {
-    return paramsMatch[1]!
-  }
-  return '()'
-}
-
-/**
- * バブリングしないイベントかどうか判定
- * blur, focus などはキャプチャフェーズで捕捉する必要がある
- */
-function needsCapturePhase(eventName: string): boolean {
-  return ['blur', 'focus', 'focusin', 'focusout'].includes(eventName)
-}
-
-/**
- * ハンドラボディが条件付き実行パターンかどうか判定
- * e.key === 'Enter' && doSomething() のようなパターンを検出
- */
-function parseConditionalHandler(body: string): { condition: string; action: string } | null {
-  // pattern: condition && action
-  // 最初の && で分割（ネストされた && は action 側に含める）
-  const match = body.match(/^(.+?)\s*&&\s*(.+)$/)
-  if (match) {
-    const condition = match[1]!.trim()
-    const action = match[2]!.trim()
-    // condition が比較式っぽい場合のみ（e.key === 'Enter' など）
-    if (condition.includes('===') || condition.includes('!==') ||
-        condition.includes('==') || condition.includes('!=') ||
-        condition.includes('>') || condition.includes('<')) {
-      return { condition, action }
-    }
-  }
-  return null
-}
-
-/**
- * 動的表現をsignalの初期値で評価して文字列を返す
- *
- * 例: on() ? 'ON' : 'OFF' + signals [{getter: 'on', initialValue: 'false'}]
- * → false ? 'ON' : 'OFF' → 'OFF'
- */
-function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): string {
-  // signal呼び出しを初期値で置き換え
-  let replaced = expr
-  for (const s of signals) {
-    // getter() を initialValue に置換
-    const regex = new RegExp(`\\b${s.getter}\\s*\\(\\s*\\)`, 'g')
-    replaced = replaced.replace(regex, s.initialValue)
-  }
-
-  try {
-    // 評価して結果を返す
-    const result = eval(replaced)
-    return String(result)
-  } catch {
-    // 評価できない場合は空文字を返す
-    return ''
-  }
-}
 
 /**
  * コールバックprops（onXxx）をラップしてupdateAll()を追加
@@ -710,38 +641,6 @@ function compileJsxWithComponents(
 }
 
 /**
- * 動的属性の更新コードを生成
- */
-function generateAttributeUpdate(da: DynamicAttribute): string {
-  const { id, attrName, expression } = da
-
-  // class/className の場合
-  if (attrName === 'class' || attrName === 'className') {
-    return `${id}.className = ${expression}`
-  }
-
-  // style の場合（オブジェクト形式）
-  if (attrName === 'style') {
-    // expression が { color: 'red' } のようなオブジェクトの場合
-    // Object.assign を使用
-    return `Object.assign(${id}.style, ${expression})`
-  }
-
-  // boolean属性（disabled, checked, hidden など）
-  if (isBooleanAttribute(attrName)) {
-    return `${id}.${attrName} = ${expression}`
-  }
-
-  // value の場合
-  if (attrName === 'value') {
-    return `${id}.value = ${expression}`
-  }
-
-  // その他の属性
-  return `${id}.setAttribute('${attrName}', ${expression})`
-}
-
-/**
  * HTML文字列からHono JSX形式のコンポーネントを生成
  */
 function generateServerJsx(html: string): string {
@@ -759,13 +658,6 @@ function generateServerJsx(html: string): string {
  */
 function isDynamicAttributeTarget(attrName: string): boolean {
   return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden'].includes(attrName)
-}
-
-/**
- * boolean属性かどうか判定
- */
-function isBooleanAttribute(attrName: string): boolean {
-  return ['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)
 }
 
 /**

@@ -119,3 +119,65 @@ export type TemplateStringResult = {
     handler: string
   }>
 }
+
+/**
+ * 中間表現（IR）型定義
+ *
+ * JSX ASTから変換され、各種出力（HTML, ClientJS, ServerJSX）の生成に使用される。
+ */
+
+export type IRNode =
+  | IRElement
+  | IRText
+  | IRExpression
+  | IRComponent
+  | IRConditional
+
+export type IRElement = {
+  type: 'element'
+  tagName: string
+  id: string | null
+  staticAttrs: Array<{ name: string; value: string }>
+  dynamicAttrs: Array<{ name: string; expression: string }>
+  events: Array<{ name: string; eventName: string; handler: string }>
+  children: IRNode[]
+  listInfo: IRListInfo | null
+}
+
+export type IRText = {
+  type: 'text'
+  content: string
+}
+
+export type IRExpression = {
+  type: 'expression'
+  expression: string
+  isDynamic: boolean
+}
+
+export type IRComponent = {
+  type: 'component'
+  name: string
+  props: Array<{ name: string; value: string; isDynamic: boolean }>
+  staticHtml: string
+  childInits: ChildComponentInit | null
+}
+
+export type IRConditional = {
+  type: 'conditional'
+  condition: string
+  whenTrue: IRNode
+  whenFalse: IRNode
+}
+
+export type IRListInfo = {
+  arrayExpression: string
+  paramName: string
+  itemTemplate: string
+  itemEvents: Array<{
+    eventId: number
+    eventName: string
+    handler: string
+    paramName: string
+  }>
+}
