@@ -1,0 +1,12 @@
+{
+  "name": "barefoot-todo-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "serve": "bunx serve dist"
+  },
+  "dependencies": {
+    "barefoot": "file:../../"
+  }
+}
