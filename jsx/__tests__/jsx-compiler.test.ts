@@ -437,32 +437,165 @@ describe('HTML属性', () => {
   /**
    * 動的なclass属性
    * <p class={isActive() ? 'active' : ''}>...</p>
+   *
+   * → __a0.className = isActive() ? 'active' : ''
    */
-  it.todo('動的なclass属性')
+  it('動的なclass属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [isActive, setIsActive] = signal(false)
+        return <p class={isActive() ? 'active' : ''}>Hello</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 動的属性を持つ要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__a0"')
+
+    // 初期値がfalseなのでclassは空
+    expect(component.serverComponent).not.toContain('class="active"')
+
+    // クライアントJSでclassNameが更新される
+    expect(component.clientJs).toContain("__a0.className = isActive() ? 'active' : ''")
+  })
 
   /**
-   * style属性
+   * 動的なclass属性（初期値がtrue）
+   */
+  it('動的なclass属性（初期値がtrue）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [isActive, setIsActive] = signal(true)
+        return <p class={isActive() ? 'active' : ''}>Hello</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 初期値がtrueなのでclassName="active"（サーバーコンポーネントではclassNameに変換される）
+    expect(component.serverComponent).toContain('className="active"')
+  })
+
+  /**
+   * style属性（静的）
    * <p style="color: red">...</p>
    */
-  it.todo('style属性')
+  it('style属性（静的）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = signal(0)
+        return <p style="color: red">{count()}</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 静的なstyle属性がそのまま出力される
+    expect(component.serverComponent).toContain('style="color: red"')
+  })
 
   /**
    * 動的なstyle属性
    * <p style={{ color: isRed() ? 'red' : 'blue' }}>...</p>
+   *
+   * → Object.assign(__a0.style, { color: isRed() ? 'red' : 'blue' })
    */
-  it.todo('動的なstyle属性')
+  it('動的なstyle属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [isRed, setIsRed] = signal(true)
+        return <p style={{ color: isRed() ? 'red' : 'blue' }}>Hello</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 動的属性を持つ要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__a0"')
+
+    // 初期値がtrueなのでcolor: red
+    expect(component.serverComponent).toContain('style="color: red"')
+
+    // クライアントJSでstyleが更新される
+    expect(component.clientJs).toContain("Object.assign(__a0.style, { color: isRed() ? 'red' : 'blue' })")
+  })
 
   /**
    * disabled属性
    * <button disabled={isLoading()}>Submit</button>
+   *
+   * → __a0.disabled = isLoading()
    */
-  it.todo('動的なdisabled属性')
+  it('動的なdisabled属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [isLoading, setIsLoading] = signal(false)
+        return <button disabled={isLoading()}>Submit</button>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 動的属性を持つ要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__a0"')
+
+    // 初期値がfalseなのでdisabled属性はない
+    expect(component.serverComponent).not.toContain('disabled')
+
+    // クライアントJSでdisabledが更新される
+    expect(component.clientJs).toContain('__a0.disabled = isLoading()')
+  })
+
+  /**
+   * disabled属性（初期値がtrue）
+   */
+  it('動的なdisabled属性（初期値がtrue）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [isLoading, setIsLoading] = signal(true)
+        return <button disabled={isLoading()}>Submit</button>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 初期値がtrueなのでdisabled属性がある
+    expect(component.serverComponent).toContain('disabled')
+  })
 
   /**
    * value属性（input要素）
    * <input value={text()} />
+   *
+   * → __a0.value = text()
    */
-  it.todo('動的なvalue属性')
+  it('動的なvalue属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [text, setText] = signal('hello')
+        return <input value={text()} />
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 動的属性を持つ要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__a0"')
+
+    // 初期値が出力される
+    expect(component.serverComponent).toContain('value="hello"')
+
+    // クライアントJSでvalueが更新される
+    expect(component.clientJs).toContain('__a0.value = text()')
+  })
 })
 
 // =============================================================================

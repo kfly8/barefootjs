@@ -42,14 +42,6 @@ JSXから静的HTML + クライアントJSを生成するコンパイラ。
 - [ ] onSubmit
 - [ ] onKeyDown
 
-### HTML属性
-
-- [ ] 動的なclass属性 `class={isActive() ? 'active' : ''}`
-- [ ] style属性
-- [ ] 動的なstyle属性
-- [ ] 動的なdisabled属性
-- [ ] 動的なvalue属性
-
 ### コンポーネント
 
 - [ ] propsなしのコンポーネント

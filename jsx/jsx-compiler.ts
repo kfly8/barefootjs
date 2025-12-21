@@ -37,6 +37,13 @@ type ListElement = {
   mapExpression: string  // items().map(item => '<li>' + item + '</li>').join('')
 }
 
+type DynamicAttribute = {
+  id: string
+  tagName: string
+  attrName: string       // class, style, disabled, value など
+  expression: string     // isActive() ? 'active' : ''
+}
+
 type SignalDeclaration = {
   getter: string      // count, on
   setter: string      // setCount, setOn
@@ -51,6 +58,7 @@ type CompileResult = {
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
   listElements: ListElement[]
+  dynamicAttributes: DynamicAttribute[]
 }
 
 type ComponentImport = {
@@ -163,11 +171,13 @@ function isPascalCase(str: string): boolean {
 let buttonIdCounter = 0
 let dynamicIdCounter = 0
 let listIdCounter = 0
+let attrIdCounter = 0
 
 function resetIdCounters() {
   buttonIdCounter = 0
   dynamicIdCounter = 0
   listIdCounter = 0
+  attrIdCounter = 0
 }
 
 function generateButtonId(): string {
@@ -180,6 +190,10 @@ function generateDynamicId(): string {
 
 function generateListId(): string {
   return `__l${listIdCounter++}`
+}
+
+function generateAttrId(): string {
+  return `__a${attrIdCounter++}`
 }
 
 function extractArrowBody(handler: string): string {
@@ -357,6 +371,7 @@ function compileJsxWithComponents(
   const interactiveElements: InteractiveElement[] = []
   const dynamicElements: DynamicElement[] = []
   const listElements: ListElement[] = []
+  const dynamicAttributes: DynamicAttribute[] = []
 
   function jsxToHtml(node: ts.Node): string {
     if (ts.isJsxElement(node)) {
@@ -369,8 +384,8 @@ function compileJsxWithComponents(
         return componentResult.staticHtml
       }
 
-      const { attrs, events, isInteractive } = processAttributesInternal(openingElement, sourceFile)
-      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals)
+      const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(openingElement, sourceFile, signals)
+      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes)
       const children = childrenResult.html
       const dynamicContent = childrenResult.dynamicExpression
       const listContent = childrenResult.listExpression
@@ -378,12 +393,25 @@ function compileJsxWithComponents(
       let id: string | null = null
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
 
+      // 動的属性がある場合、IDを生成
+      if (dynamicAttrs.length > 0) {
+        id = generateAttrId()
+        for (const da of dynamicAttrs) {
+          dynamicAttributes.push({
+            id,
+            tagName,
+            attrName: da.attrName,
+            expression: da.expression,
+          })
+        }
+      }
+
       if (isInteractive) {
-        id = generateButtonId()
+        id = id || generateButtonId()
         interactiveElements.push({ id, tagName, events })
       }
 
-      if (dynamicContent && !isInteractive && !listContent) {
+      if (dynamicContent && !isInteractive && !listContent && !dynamicAttrs.length) {
         id = generateDynamicId()
         dynamicElements.push({
           id,
@@ -394,7 +422,7 @@ function compileJsxWithComponents(
       }
 
       if (listContent && !isInteractive) {
-        id = generateListId()
+        id = id || generateListId()
         listElements.push({
           id,
           tagName,
@@ -417,11 +445,31 @@ function compileJsxWithComponents(
         return componentResult.staticHtml
       }
 
-      const { attrs, events, isInteractive } = processAttributesInternal(node, sourceFile)
+      const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(node, sourceFile, signals)
+
+      let id: string | null = null
+
+      // 動的属性がある場合、IDを生成
+      if (dynamicAttrs.length > 0) {
+        id = generateAttrId()
+        for (const da of dynamicAttrs) {
+          dynamicAttributes.push({
+            id,
+            tagName,
+            attrName: da.attrName,
+            expression: da.expression,
+          })
+        }
+      }
 
       if (isInteractive) {
-        const id = generateButtonId()
+        id = id || generateButtonId()
         interactiveElements.push({ id, tagName, events })
+        const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
+        return `<${tagName} id="${id}"${attrsStr} />`
+      }
+
+      if (id) {
         const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
         return `<${tagName} id="${id}"${attrsStr} />`
       }
@@ -479,7 +527,10 @@ function compileJsxWithComponents(
 
   // クライアントJSを生成
   const lines: string[] = []
-  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0
+  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0
+
+  // 動的属性を持つ要素のIDを収集（重複を除去）
+  const attrElementIds = [...new Set(dynamicAttributes.map(da => da.id))]
 
   for (const el of dynamicElements) {
     lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
@@ -489,8 +540,15 @@ function compileJsxWithComponents(
     lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
   }
 
+  for (const id of attrElementIds) {
+    lines.push(`const ${id} = document.getElementById('${id}')`)
+  }
+
   for (const el of interactiveElements) {
-    lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+    // 動的属性と重複していない場合のみ追加
+    if (!attrElementIds.includes(el.id)) {
+      lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+    }
   }
 
   if (hasDynamicContent || interactiveElements.length > 0) {
@@ -504,6 +562,10 @@ function compileJsxWithComponents(
     }
     for (const el of listElements) {
       lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
+    }
+    // 動的属性の更新
+    for (const da of dynamicAttributes) {
+      lines.push(`  ${generateAttributeUpdate(da)}`)
     }
     lines.push('}')
     lines.push('')
@@ -547,7 +609,40 @@ function compileJsxWithComponents(
     interactiveElements,
     dynamicElements,
     listElements,
+    dynamicAttributes,
   }
+}
+
+/**
+ * 動的属性の更新コードを生成
+ */
+function generateAttributeUpdate(da: DynamicAttribute): string {
+  const { id, attrName, expression } = da
+
+  // class/className の場合
+  if (attrName === 'class' || attrName === 'className') {
+    return `${id}.className = ${expression}`
+  }
+
+  // style の場合（オブジェクト形式）
+  if (attrName === 'style') {
+    // expression が { color: 'red' } のようなオブジェクトの場合
+    // Object.assign を使用
+    return `Object.assign(${id}.style, ${expression})`
+  }
+
+  // boolean属性（disabled, checked, hidden など）
+  if (isBooleanAttribute(attrName)) {
+    return `${id}.${attrName} = ${expression}`
+  }
+
+  // value の場合
+  if (attrName === 'value') {
+    return `${id}.value = ${expression}`
+  }
+
+  // その他の属性
+  return `${id}.setAttribute('${attrName}', ${expression})`
 }
 
 /**
@@ -563,18 +658,36 @@ function generateServerJsx(html: string): string {
 }
 
 /**
+ * 動的属性かどうか判定
+ * class, style, disabled, value など
+ */
+function isDynamicAttributeTarget(attrName: string): boolean {
+  return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden'].includes(attrName)
+}
+
+/**
+ * boolean属性かどうか判定
+ */
+function isBooleanAttribute(attrName: string): boolean {
+  return ['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)
+}
+
+/**
  * 属性を処理（内部版）
  */
 function processAttributesInternal(
   element: ts.JsxOpeningElement | ts.JsxSelfClosingElement,
-  sourceFile: ts.SourceFile
+  sourceFile: ts.SourceFile,
+  signals: SignalDeclaration[]
 ): {
   attrs: string[]
   events: InteractiveElement['events']
   isInteractive: boolean
+  dynamicAttrs: Array<{ attrName: string; expression: string }>
 } {
   const attrs: string[] = []
   const events: InteractiveElement['events'] = []
+  const dynamicAttrs: Array<{ attrName: string; expression: string }> = []
 
   element.attributes.properties.forEach((attr) => {
     if (ts.isJsxAttribute(attr) && attr.name) {
@@ -589,13 +702,44 @@ function processAttributesInternal(
           }
         }
         events.push({ name: attrName, eventName, handler })
+      } else if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+        // 動的属性の検出
+        const expression = attr.initializer.expression.getText(sourceFile)
+
+        if (isDynamicAttributeTarget(attrName)) {
+          // 動的属性として記録
+          dynamicAttrs.push({ attrName, expression })
+
+          // 初期値を評価してHTMLに出力
+          if (attrName === 'style' && ts.isObjectLiteralExpression(attr.initializer.expression)) {
+            // style={{ color: 'red' }} の場合
+            const styleValue = evaluateStyleObject(attr.initializer.expression, sourceFile, signals)
+            if (styleValue) {
+              attrs.push(`style="${styleValue}"`)
+            }
+          } else if (isBooleanAttribute(attrName)) {
+            // boolean属性の場合、初期値がtrueなら属性を出力
+            const initialValue = evaluateWithInitialValues(expression, signals)
+            if (initialValue === 'true') {
+              attrs.push(attrName)
+            }
+          } else {
+            // class, value などの場合
+            const initialValue = evaluateWithInitialValues(expression, signals)
+            if (initialValue) {
+              attrs.push(`${attrName}="${initialValue}"`)
+            }
+          }
+        } else {
+          // その他の式属性
+          attrs.push(`${attrName}="${expression}"`)
+        }
       } else {
+        // 静的属性
         let value = ''
         if (attr.initializer) {
           if (ts.isStringLiteral(attr.initializer)) {
             value = attr.initializer.text
-          } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-            value = attr.initializer.expression.getText(sourceFile)
           }
         }
         if (value) {
@@ -607,7 +751,34 @@ function processAttributesInternal(
     }
   })
 
-  return { attrs, events, isInteractive: events.length > 0 }
+  return { attrs, events, isInteractive: events.length > 0, dynamicAttrs }
+}
+
+/**
+ * styleオブジェクトを評価してCSS文字列に変換
+ */
+function evaluateStyleObject(
+  obj: ts.ObjectLiteralExpression,
+  sourceFile: ts.SourceFile,
+  signals: SignalDeclaration[]
+): string {
+  const styles: string[] = []
+
+  for (const prop of obj.properties) {
+    if (ts.isPropertyAssignment(prop) && prop.name) {
+      const propName = prop.name.getText(sourceFile)
+      const cssName = propName.replace(/([A-Z])/g, '-$1').toLowerCase()
+
+      const valueExpr = prop.initializer.getText(sourceFile)
+      const value = evaluateWithInitialValues(valueExpr, signals)
+
+      if (value) {
+        styles.push(`${cssName}: ${value}`)
+      }
+    }
+  }
+
+  return styles.join('; ')
 }
 
 /**
@@ -620,7 +791,8 @@ function processChildrenInternal(
   interactiveElements: InteractiveElement[],
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
-  signals: SignalDeclaration[]
+  signals: SignalDeclaration[],
+  dynamicAttributes: DynamicAttribute[] = []
 ): {
   html: string
   dynamicExpression: { expression: string; fullContent: string } | null
@@ -670,7 +842,7 @@ function processChildrenInternal(
         html += componentResult.staticHtml
       } else {
         // 再帰的にJSXを処理（簡易版）
-        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals)
+        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes)
       }
     }
   }
@@ -872,22 +1044,36 @@ function jsxChildToHtml(
   interactiveElements: InteractiveElement[],
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
-  signals: SignalDeclaration[]
+  signals: SignalDeclaration[],
+  dynamicAttributes: DynamicAttribute[]
 ): string {
   if (ts.isJsxElement(node)) {
     const tagName = node.openingElement.tagName.getText(sourceFile)
-    const { attrs, events, isInteractive } = processAttributesInternal(node.openingElement, sourceFile)
-    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals)
+    const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(node.openingElement, sourceFile, signals)
+    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes)
 
     let id: string | null = null
     const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
 
+    // 動的属性がある場合、IDを生成
+    if (dynamicAttrs.length > 0) {
+      id = generateAttrId()
+      for (const da of dynamicAttrs) {
+        dynamicAttributes.push({
+          id,
+          tagName,
+          attrName: da.attrName,
+          expression: da.expression,
+        })
+      }
+    }
+
     if (isInteractive) {
-      id = generateButtonId()
+      id = id || generateButtonId()
       interactiveElements.push({ id, tagName, events })
     }
 
-    if (childrenResult.dynamicExpression && !isInteractive && !childrenResult.listExpression) {
+    if (childrenResult.dynamicExpression && !isInteractive && !childrenResult.listExpression && !dynamicAttrs.length) {
       id = generateDynamicId()
       dynamicElements.push({
         id,
@@ -898,7 +1084,7 @@ function jsxChildToHtml(
     }
 
     if (childrenResult.listExpression && !isInteractive) {
-      id = generateListId()
+      id = id || generateListId()
       listElements.push({
         id,
         tagName,
@@ -914,11 +1100,31 @@ function jsxChildToHtml(
 
   if (ts.isJsxSelfClosingElement(node)) {
     const tagName = node.tagName.getText(sourceFile)
-    const { attrs, events, isInteractive } = processAttributesInternal(node, sourceFile)
+    const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(node, sourceFile, signals)
+
+    let id: string | null = null
+
+    // 動的属性がある場合、IDを生成
+    if (dynamicAttrs.length > 0) {
+      id = generateAttrId()
+      for (const da of dynamicAttrs) {
+        dynamicAttributes.push({
+          id,
+          tagName,
+          attrName: da.attrName,
+          expression: da.expression,
+        })
+      }
+    }
 
     if (isInteractive) {
-      const id = generateButtonId()
+      id = id || generateButtonId()
       interactiveElements.push({ id, tagName, events })
+      const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
+      return `<${tagName} id="${id}"${attrsStr} />`
+    }
+
+    if (id) {
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
       return `<${tagName} id="${id}"${attrsStr} />`
     }
