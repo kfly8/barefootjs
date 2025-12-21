@@ -250,6 +250,16 @@ function extractArrowBody(handler: string): string {
   return handler
 }
 
+function extractArrowParams(handler: string): string {
+  // (e) => ... → (e)
+  // () => ... → ()
+  const paramsMatch = handler.match(/^\s*(\([^)]*\))\s*=>/)
+  if (paramsMatch) {
+    return paramsMatch[1]!
+  }
+  return '()'
+}
+
 /**
  * 動的表現をsignalの初期値で評価して文字列を返す
  *
@@ -643,8 +653,9 @@ function compileJsxWithComponents(
   for (const el of interactiveElements) {
     for (const event of el.events) {
       const handlerBody = extractArrowBody(event.handler)
+      const handlerParams = extractArrowParams(event.handler)
       if (hasDynamicContent) {
-        lines.push(`${el.id}.on${event.eventName} = () => {`)
+        lines.push(`${el.id}.on${event.eventName} = ${handlerParams} => {`)
         lines.push(`  ${handlerBody}`)
         lines.push(`  updateAll()`)
         lines.push(`}`)

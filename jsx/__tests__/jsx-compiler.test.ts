@@ -632,12 +632,39 @@ describe('イベントハンドラ', () => {
     // input要素にIDが付与される
     expect(component.serverComponent).toContain('id="__b0"')
 
-    // onchangeハンドラが設定される
-    expect(component.clientJs).toContain('__b0.onchange')
+    // onchangeハンドラが設定される（イベント引数が保持される）
+    expect(component.clientJs).toContain('__b0.onchange = (e) =>')
     expect(component.clientJs).toContain('setText(e.target.value)')
 
     // updateAllが呼ばれる
     expect(component.clientJs).toContain('updateAll()')
+  })
+
+  /**
+   * onInput（イベント引数付き）
+   * <input onInput={(e) => setText(e.target.value)} />
+   *
+   * → __b0.oninput = (e) => { setText(e.target.value); updateAll() }
+   */
+  it('onInput（イベント引数付き）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [text, setText] = signal('')
+        return (
+          <div>
+            <p>{text()}</p>
+            <input onInput={(e) => setText(e.target.value)} />
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // oninputハンドラが設定される（イベント引数が保持される）
+    expect(component.clientJs).toContain('__b0.oninput = (e) =>')
+    expect(component.clientJs).toContain('setText(e.target.value)')
   })
 
   /**
