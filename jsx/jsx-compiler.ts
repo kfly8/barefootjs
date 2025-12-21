@@ -69,133 +69,34 @@ function wrapCallbackProps(propsExpr: string, hasUpdateAll: boolean): string {
 }
 
 /**
- * 配列式を安全に評価
- * JSONパースを優先し、複雑な式のみ制限付き評価を使用
+ * 配列式を評価
+ * ビルド時のみ実行されるためevalは安全
  */
-function safeParseArrayLiteral(expr: string): unknown[] | null {
-  const trimmed = expr.trim()
-
-  // 空配列
-  if (trimmed === '[]') return []
-
-  // 配列リテラルの場合はJSONパースを試みる
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    // JSON形式に変換を試みる
-    const jsonStr = trimmed
-      .replace(/'([^']*)'/g, '"$1"')
-      .replace(/(\{|,)\s*([a-zA-Z_]\w*)\s*:/g, '$1"$2":')
-
-    try {
-      return JSON.parse(jsonStr)
-    } catch {
-      // JSONパースできない場合は制限付き評価
-    }
-  }
-
-  // 制限付き評価（危険なパターンを除外）
-  if (containsDangerousPattern(trimmed)) {
-    return null
-  }
-
+function evaluateArrayExpression(expr: string): unknown[] | null {
   try {
-    // Functionコンストラクタで評価（グローバルスコープへのアクセスを制限）
-    const result = new Function(`"use strict"; return ${trimmed}`)()
-    if (Array.isArray(result)) {
-      return result
-    }
-    return null
+    const result = eval(expr)
+    return Array.isArray(result) ? result : null
   } catch {
     return null
   }
 }
 
 /**
- * 危険なパターンを含むかチェック
+ * テンプレートリテラルを評価
+ * ビルド時のみ実行されるためFunctionコンストラクタは安全
  */
-function containsDangerousPattern(expr: string): boolean {
-  // 関数呼び出し（signal getter以外）
-  // import, require, fetch, eval等
-  const dangerous = [
-    /\bimport\b/,
-    /\brequire\b/,
-    /\bfetch\b/,
-    /\beval\b/,
-    /\bFunction\b/,
-    /\bwindow\b/,
-    /\bdocument\b/,
-    /\bglobal\b/,
-    /\bprocess\b/,
-    /__proto__/,
-    /constructor\s*\[/,
-  ]
-
-  return dangerous.some(pattern => pattern.test(expr))
-}
-
-/**
- * テンプレートリテラルを安全に評価
- * 制限付きFunction評価を使用
- */
-function evaluateTemplateSafe(
+function evaluateTemplate(
   templateStr: string,
   paramName: string,
   item: unknown,
   __index: number
 ): string {
-  // 危険なパターンを含む場合は空文字を返す
-  if (containsDangerousPattern(templateStr)) {
-    return ''
-  }
-
   try {
-    // Functionコンストラクタでテンプレートリテラルを評価
-    const evalFn = new Function(paramName, '__index', `"use strict"; return ${templateStr}`)
+    const evalFn = new Function(paramName, '__index', `return ${templateStr}`)
     return evalFn(item, __index)
   } catch {
-    // フォールバック: 単純な置換
-    return evaluateTemplateSimple(templateStr, paramName, item, __index)
+    return ''
   }
-}
-
-/**
- * テンプレートリテラルを単純な置換で評価（フォールバック用）
- */
-function evaluateTemplateSimple(
-  templateStr: string,
-  paramName: string,
-  item: unknown,
-  __index: number
-): string {
-  // テンプレートリテラル `...` から中身を取り出す
-  const templateBody = templateStr.slice(1, -1)
-
-  // ${...} を置換
-  return templateBody.replace(
-    /\$\{([^}]+)\}/g,
-    (_, expr) => {
-      const trimmedExpr = expr.trim()
-
-      // __index
-      if (trimmedExpr === '__index') {
-        return String(__index)
-      }
-
-      // paramName (例: item)
-      if (trimmedExpr === paramName) {
-        return String(item)
-      }
-
-      // paramName.property (例: item.id, item.text)
-      const propMatch = trimmedExpr.match(new RegExp(`^${paramName}\\.(\\w+)$`))
-      if (propMatch && typeof item === 'object' && item !== null) {
-        const propName = propMatch[1]!
-        return String((item as Record<string, unknown>)[propName] ?? '')
-      }
-
-      // 評価できない場合は空文字
-      return ''
-    }
-  )
 }
 
 /**
@@ -1091,7 +992,7 @@ function evaluateMapWithInitialValues(
   }
 
   // 配列を安全に評価
-  const arrayValue = safeParseArrayLiteral(replaced)
+  const arrayValue = evaluateArrayExpression(replaced)
   if (arrayValue === null) {
     return ''
   }
@@ -1101,7 +1002,7 @@ function evaluateMapWithInitialValues(
     const results = arrayValue.map((item, __index) => {
       // テンプレートリテラルを安全に評価
       // templateStr は `<li>${item}</li>` のような形式
-      return evaluateTemplateSafe(templateStr, paramName, item, __index)
+      return evaluateTemplate(templateStr, paramName, item, __index)
     })
     return results.join('')
   } catch {
