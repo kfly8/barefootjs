@@ -89,6 +89,8 @@ type ComponentImport = {
 
 export type ComponentOutput = {
   name: string
+  hash: string           // コンテンツハッシュ (例: 7dc6817c)
+  filename: string       // ハッシュ付きファイル名 (例: AddTodoForm-7dc6817c.js)
   clientJs: string
   serverComponent: string
 }
@@ -399,6 +401,20 @@ function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): 
 }
 
 /**
+ * コンテンツからハッシュを生成（8文字の16進数）
+ */
+function generateContentHash(content: string): string {
+  let hash = 0
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  // 8文字の16進数に変換（負の値も正しく処理）
+  return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+/**
  * エントリーポイントからアプリケーションをコンパイル
  *
  * コンポーネントのインポートを再帰的に解決し、
@@ -455,65 +471,100 @@ export async function compileJSX(
   const entryResult = await compileComponent(entryPath)
 
   // コンポーネントごとにJS/サーバーコンポーネントを生成
-  const components: ComponentOutput[] = []
+  // 1. まず全コンポーネントのコードを生成（importパスはプレースホルダー）
+  const componentData: Array<{
+    name: string
+    path: string
+    result: CompileResult
+    signalDeclarations: string
+    childInits: ChildComponentInit[]
+  }> = []
 
   for (const [path, result] of compiledComponents) {
     if (result.clientJs || result.serverJsx) {
       const name = path.split('/').pop()!.replace('.tsx', '')
-
-      // signal宣言を生成
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = signal(${s.initialValue})`)
         .join('\n')
 
-      // 子コンポーネントのimportを生成
-      const childImports = result.childInits
-        .map(child => `import { init${child.name} } from './${child.name}.js'`)
-        .join('\n')
+      componentData.push({
+        name,
+        path,
+        result,
+        signalDeclarations,
+        childInits: result.childInits,
+      })
+    }
+  }
 
-      // 子コンポーネントのinit呼び出しを生成
-      const childInitCalls = result.childInits
-        .map(child => `init${child.name}(${child.propsExpr})`)
-        .join('\n')
+  // 2. 各コンポーネントのハッシュを計算（子コンポーネントのimportを除いた内容で）
+  const componentHashes: Map<string, string> = new Map()
+  for (const data of componentData) {
+    const { name, result, signalDeclarations } = data
+    const bodyCode = result.clientJs
+    const contentForHash = signalDeclarations + bodyCode + result.serverJsx
+    const hash = generateContentHash(contentForHash)
+    componentHashes.set(name, hash)
+  }
 
-      // propsがある場合はinit関数でラップする
-      let clientJs = ''
-      if (result.clientJs || result.childInits.length > 0) {
-        const allImports = [
-          `import { signal } from './barefoot.js'`,
-          childImports,
-        ].filter(Boolean).join('\n')
+  // 3. 最終的なclientJsを生成（正しいハッシュ付きimportパスで）
+  const components: ComponentOutput[] = []
 
-        const bodyCode = [
-          result.clientJs,
-          childInitCalls ? `\n// 子コンポーネントの初期化\n${childInitCalls}` : '',
-        ].filter(Boolean).join('\n')
+  for (const data of componentData) {
+    const { name, result, signalDeclarations, childInits } = data
 
-        if (result.props.length > 0) {
-          const propsParam = `{ ${result.props.join(', ')} }`
-          clientJs = `${allImports}
+    // 子コンポーネントのimportを生成（ハッシュ付き）
+    const childImports = childInits
+      .map(child => {
+        const childHash = componentHashes.get(child.name) || ''
+        const childFilename = childHash ? `${child.name}-${childHash}.js` : `${child.name}.js`
+        return `import { init${child.name} } from './${childFilename}'`
+      })
+      .join('\n')
+
+    // 子コンポーネントのinit呼び出しを生成
+    const childInitCalls = childInits
+      .map(child => `init${child.name}(${child.propsExpr})`)
+      .join('\n')
+
+    // propsがある場合はinit関数でラップする
+    let clientJs = ''
+    if (result.clientJs || childInits.length > 0) {
+      const allImports = [
+        `import { signal } from './barefoot.js'`,
+        childImports,
+      ].filter(Boolean).join('\n')
+
+      const bodyCode = [
+        result.clientJs,
+        childInitCalls ? `\n// 子コンポーネントの初期化\n${childInitCalls}` : '',
+      ].filter(Boolean).join('\n')
+
+      if (result.props.length > 0) {
+        const propsParam = `{ ${result.props.join(', ')} }`
+        clientJs = `${allImports}
 
 export function init${name}(${propsParam}) {
 ${signalDeclarations ? signalDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
 ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 `
-        } else {
-          clientJs = `${allImports}
+      } else {
+        clientJs = `${allImports}
 
 ${signalDeclarations}
 
 ${bodyCode}
 `
-        }
       }
+    }
 
-      // propsがある場合は引数として受け取る
-      const propsParam = result.props.length > 0
-        ? `{ ${result.props.join(', ')} }`
-        : ''
+    // propsがある場合は引数として受け取る
+    const propsParam = result.props.length > 0
+      ? `{ ${result.props.join(', ')} }`
+      : ''
 
-      const serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
+    const serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
 
 export function ${name}(${propsParam}) {
   const c = useRequestContext()
@@ -526,8 +577,10 @@ export function ${name}(${propsParam}) {
   )
 }
 `
-      components.push({ name, clientJs, serverComponent })
-    }
+    const hash = componentHashes.get(name) || ''
+    const filename = hash ? `${name}-${hash}.js` : `${name}.js`
+
+    components.push({ name, hash, filename, clientJs, serverComponent })
   }
 
   return {

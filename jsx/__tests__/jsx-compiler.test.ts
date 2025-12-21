@@ -1611,10 +1611,46 @@ describe('propsを持つコンポーネント', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // 子コンポーネントのimportがある
-    expect(appComponent!.clientJs).toContain("import { initForm } from './Form.js'")
+    // 子コンポーネントのimportがある（ハッシュ付き）
+    expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
     // init呼び出しがある
     expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd })')
+  })
+
+  /**
+   * ComponentOutputにhashとfilenameが含まれる
+   */
+  it('ComponentOutputにhashとfilenameが含まれる', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import Counter from './Counter'
+        function App() {
+          return <div><Counter /></div>
+        }
+        export default App
+      `,
+      '/test/Counter.tsx': `
+        import { signal } from 'barefoot'
+        function Counter() {
+          const [count, setCount] = signal(0)
+          return <button onClick={() => setCount(count() + 1)}>{count()}</button>
+        }
+        export default Counter
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+
+    // 各コンポーネントにhashとfilenameがある
+    for (const c of result.components) {
+      expect(c.hash).toMatch(/^[a-f0-9]{8}$/)
+      expect(c.filename).toBe(`${c.name}-${c.hash}.js`)
+    }
+
+    // Counterコンポーネントの確認
+    const counter = result.components.find(c => c.name === 'Counter')
+    expect(counter).toBeDefined()
+    expect(counter!.hash).toBeTruthy()
+    expect(counter!.filename).toContain(counter!.hash)
   })
 })
 
