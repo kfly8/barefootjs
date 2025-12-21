@@ -35,36 +35,12 @@ import {
   extractLocalFunctions,
 } from './extractors'
 import { isPascalCase } from './utils/helpers'
+import { IdGenerator } from './utils/id-generator'
 
 export type { ComponentOutput, CompileJSXResult }
 
-let buttonIdCounter = 0
-let dynamicIdCounter = 0
-let listIdCounter = 0
-let attrIdCounter = 0
-
-function resetIdCounters() {
-  buttonIdCounter = 0
-  dynamicIdCounter = 0
-  listIdCounter = 0
-  attrIdCounter = 0
-}
-
-function generateButtonId(): string {
-  return `__b${buttonIdCounter++}`
-}
-
-function generateDynamicId(): string {
-  return `__d${dynamicIdCounter++}`
-}
-
-function generateListId(): string {
-  return `__l${listIdCounter++}`
-}
-
-function generateAttrId(): string {
-  return `__a${attrIdCounter++}`
-}
+// コンパイル単位でIDを管理
+const idGenerator = new IdGenerator()
 
 function extractArrowBody(handler: string): string {
   // () => count++ → count++
@@ -189,7 +165,7 @@ export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>
 ): Promise<CompileJSXResult> {
-  resetIdCounters()
+  idGenerator.reset()
 
   // コンパイル済みコンポーネントのキャッシュ
   const compiledComponents: Map<string, CompileResult> = new Map()
@@ -464,7 +440,7 @@ function compileJsxWithComponents(
 
       // 動的属性がある場合、IDを生成
       if (dynamicAttrs.length > 0) {
-        id = generateAttrId()
+        id = idGenerator.generateAttrId()
         for (const da of dynamicAttrs) {
           dynamicAttributes.push({
             id,
@@ -476,12 +452,12 @@ function compileJsxWithComponents(
       }
 
       if (isInteractive) {
-        id = id || generateButtonId()
+        id = id || idGenerator.generateButtonId()
         interactiveElements.push({ id, tagName, events })
       }
 
       if (dynamicContent && !isInteractive && !listContent && !dynamicAttrs.length) {
-        id = generateDynamicId()
+        id = idGenerator.generateDynamicId()
         dynamicElements.push({
           id,
           tagName,
@@ -491,7 +467,7 @@ function compileJsxWithComponents(
       }
 
       if (listContent && !isInteractive) {
-        id = id || generateListId()
+        id = id || idGenerator.generateListId()
         listElements.push({
           id,
           tagName,
@@ -524,7 +500,7 @@ function compileJsxWithComponents(
 
       // 動的属性がある場合、IDを生成
       if (dynamicAttrs.length > 0) {
-        id = generateAttrId()
+        id = idGenerator.generateAttrId()
         for (const da of dynamicAttrs) {
           dynamicAttributes.push({
             id,
@@ -536,7 +512,7 @@ function compileJsxWithComponents(
       }
 
       if (isInteractive) {
-        id = id || generateButtonId()
+        id = id || idGenerator.generateButtonId()
         interactiveElements.push({ id, tagName, events })
         const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
         return `<${tagName} id="${id}"${attrsStr} />`
@@ -1514,7 +1490,7 @@ function jsxChildToHtml(
 
     // 動的属性がある場合、IDを生成
     if (dynamicAttrs.length > 0) {
-      id = generateAttrId()
+      id = idGenerator.generateAttrId()
       for (const da of dynamicAttrs) {
         dynamicAttributes.push({
           id,
@@ -1526,12 +1502,12 @@ function jsxChildToHtml(
     }
 
     if (isInteractive) {
-      id = id || generateButtonId()
+      id = id || idGenerator.generateButtonId()
       interactiveElements.push({ id, tagName, events })
     }
 
     if (childrenResult.dynamicExpression && !isInteractive && !childrenResult.listExpression && !dynamicAttrs.length) {
-      id = generateDynamicId()
+      id = idGenerator.generateDynamicId()
       dynamicElements.push({
         id,
         tagName,
@@ -1541,7 +1517,7 @@ function jsxChildToHtml(
     }
 
     if (childrenResult.listExpression && !isInteractive) {
-      id = id || generateListId()
+      id = id || idGenerator.generateListId()
       listElements.push({
         id,
         tagName,
@@ -1565,7 +1541,7 @@ function jsxChildToHtml(
 
     // 動的属性がある場合、IDを生成
     if (dynamicAttrs.length > 0) {
-      id = generateAttrId()
+      id = idGenerator.generateAttrId()
       for (const da of dynamicAttrs) {
         dynamicAttributes.push({
           id,
@@ -1577,7 +1553,7 @@ function jsxChildToHtml(
     }
 
     if (isInteractive) {
-      id = id || generateButtonId()
+      id = id || idGenerator.generateButtonId()
       interactiveElements.push({ id, tagName, events })
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
       return `<${tagName} id="${id}"${attrsStr} />`
