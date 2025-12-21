@@ -507,6 +507,41 @@ describe('map内の動的要素', () => {
   })
 
   /**
+   * map内の同一要素に複数イベント
+   * <input onInput={...} onBlur={...} onKeyDown={...} />
+   *
+   * → 同一要素の全イベントが同じevent-idを共有する
+   */
+  it('map内の同一要素に複数イベント', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([{ id: 1, text: 'a' }])
+        return (
+          <ul>{items().map(item => (
+            <li>
+              <input
+                onInput={(e) => console.log('input')}
+                onBlur={() => console.log('blur')}
+                onKeyDown={(e) => console.log('keydown')}
+              />
+            </li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 同一要素の全イベントが同じevent-idを共有
+    expect(component.clientJs).toContain('data-event-id="0"')
+    // 全イベントリスナーが同じevent-idをチェック
+    expect(component.clientJs).toMatch(/addEventListener\('input'[\s\S]*?data-event-id="0"/)
+    expect(component.clientJs).toMatch(/addEventListener\('blur'[\s\S]*?data-event-id="0"/)
+    expect(component.clientJs).toMatch(/addEventListener\('keydown'[\s\S]*?data-event-id="0"/)
+  })
+
+  /**
    * map内の条件付きレンダリング（三項演算子）
    * items().map(item => <li>{item.editing ? <input /> : <span>{item.text}</span>}</li>)
    *

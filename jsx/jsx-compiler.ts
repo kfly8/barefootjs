@@ -1154,6 +1154,7 @@ function jsxToTemplateString(
     ): { attrs: string; eventAttrs: string } {
       let attrs = ''
       let eventAttrs = ''
+      let elementEventId: number | null = null  // この要素のevent-id（複数イベントで共有）
 
       attributes.properties.forEach((attr) => {
         if (ts.isJsxAttribute(attr) && attr.name) {
@@ -1164,10 +1165,12 @@ function jsxToTemplateString(
             const eventName = attrName.slice(2).toLowerCase()
             if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
               const handler = attr.initializer.expression.getText(sourceFile)
-              const eventId = eventIdCounter++
-              events.push({ eventId, eventName, handler })
-              // data-indexとdata-event-idを追加
-              eventAttrs = ` data-index="\${__index}" data-event-id="${eventId}"`
+              // 最初のイベントでevent-idを割り当て、同じ要素の全イベントで共有
+              if (elementEventId === null) {
+                elementEventId = eventIdCounter++
+                eventAttrs = ` data-index="\${__index}" data-event-id="${elementEventId}"`
+              }
+              events.push({ eventId: elementEventId, eventName, handler })
             }
           } else if (attr.initializer) {
             if (ts.isStringLiteral(attr.initializer)) {
