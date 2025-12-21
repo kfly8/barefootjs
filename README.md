@@ -36,12 +36,6 @@ JSXから静的HTML + クライアントJSを生成するコンパイラ。
 
 ## TODO
 
-### イベントハンドラ
-
-- [ ] onChange
-- [ ] onSubmit
-- [ ] onKeyDown
-
 ### コンポーネント
 
 - [ ] propsなしのコンポーネント

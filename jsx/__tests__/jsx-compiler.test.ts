@@ -392,20 +392,100 @@ describe('イベントハンドラ', () => {
   /**
    * onChange
    * <input onChange={(e) => setText(e.target.value)} />
+   *
+   * → __b0.onchange = (e) => { setText(e.target.value); updateAll() }
    */
-  it.todo('onChange')
+  it('onChange', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [text, setText] = signal('')
+        return (
+          <div>
+            <p>{text()}</p>
+            <input onChange={(e) => setText(e.target.value)} />
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // input要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__b0"')
+
+    // onchangeハンドラが設定される
+    expect(component.clientJs).toContain('__b0.onchange')
+    expect(component.clientJs).toContain('setText(e.target.value)')
+
+    // updateAllが呼ばれる
+    expect(component.clientJs).toContain('updateAll()')
+  })
 
   /**
    * onSubmit
    * <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+   *
+   * → __b0.onsubmit = (e) => { e.preventDefault(); handleSubmit(); updateAll() }
    */
-  it.todo('onSubmit')
+  it('onSubmit', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [submitted, setSubmitted] = signal(false)
+        return (
+          <div>
+            <p>{submitted() ? 'Done' : 'Not yet'}</p>
+            <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true) }}>
+              <button type="submit">Submit</button>
+            </form>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // form要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__b0"')
+
+    // onsubmitハンドラが設定される
+    expect(component.clientJs).toContain('__b0.onsubmit')
+    expect(component.clientJs).toContain('e.preventDefault()')
+    expect(component.clientJs).toContain('setSubmitted(true)')
+  })
 
   /**
    * onKeyDown
    * <input onKeyDown={(e) => e.key === 'Enter' && handleEnter()} />
+   *
+   * → __b0.onkeydown = (e) => { e.key === 'Enter' && handleEnter(); updateAll() }
    */
-  it.todo('onKeyDown')
+  it('onKeyDown', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [text, setText] = signal('')
+        const [submitted, setSubmitted] = signal(false)
+        return (
+          <div>
+            <p>{submitted() ? 'Submitted' : 'Type and press Enter'}</p>
+            <input onKeyDown={(e) => e.key === 'Enter' && setSubmitted(true)} />
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // input要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__b0"')
+
+    // onkeydownハンドラが設定される
+    expect(component.clientJs).toContain('__b0.onkeydown')
+    expect(component.clientJs).toContain("e.key === 'Enter'")
+    expect(component.clientJs).toContain('setSubmitted(true)')
+  })
 })
 
 // =============================================================================
