@@ -13,92 +13,24 @@
  */
 
 import ts from 'typescript'
+import type {
+  InteractiveElement,
+  DynamicElement,
+  ListElement,
+  DynamicAttribute,
+  SignalDeclaration,
+  LocalFunction,
+  ChildComponentInit,
+  CompileResult,
+  ComponentImport,
+  ComponentOutput,
+  CompileJSXResult,
+  ListExpressionInfo,
+  MapExpressionResult,
+  TemplateStringResult,
+} from './types'
 
-type InteractiveElement = {
-  id: string
-  tagName: string
-  events: Array<{
-    name: string      // onClick
-    eventName: string // click
-    handler: string   // () => setCount(n => n + 1)
-  }>
-}
-
-type DynamicElement = {
-  id: string
-  tagName: string
-  expression: string    // count()
-  fullContent: string   // "doubled: " + count() * 2 など
-}
-
-type ListElement = {
-  id: string
-  tagName: string
-  mapExpression: string  // items().map(item => '<li>' + item + '</li>').join('')
-  itemEvents: Array<{
-    eventId: number       // イベントを区別するID
-    eventName: string     // click, change, keydown
-    handler: string       // (item) => remove(item.id)
-    paramName: string     // item
-  }>
-  arrayExpression: string // items() - 配列を取得するための式
-}
-
-type DynamicAttribute = {
-  id: string
-  tagName: string
-  attrName: string       // class, style, disabled, value など
-  expression: string     // isActive() ? 'active' : ''
-}
-
-type SignalDeclaration = {
-  getter: string      // count, on
-  setter: string      // setCount, setOn
-  initialValue: string // 0, false
-}
-
-type LocalFunction = {
-  name: string        // handleToggle
-  code: string        // const handleToggle = (id) => { ... }
-}
-
-type ChildComponentInit = {
-  name: string        // AddTodoForm
-  propsExpr: string   // { onAdd: handleAdd }
-}
-
-type CompileResult = {
-  staticHtml: string
-  clientJs: string
-  serverJsx: string
-  signals: SignalDeclaration[]
-  localFunctions: LocalFunction[]  // コンポーネント内で定義された関数
-  childInits: ChildComponentInit[] // 初期化が必要な子コンポーネント
-  interactiveElements: InteractiveElement[]
-  dynamicElements: DynamicElement[]
-  listElements: ListElement[]
-  dynamicAttributes: DynamicAttribute[]
-  props: string[]  // コンポーネントが受け取るprops名
-  source: string   // コンポーネントのソースコード（map内インライン展開用）
-}
-
-type ComponentImport = {
-  name: string      // Counter
-  path: string      // ./Counter
-}
-
-export type ComponentOutput = {
-  name: string
-  hash: string           // コンテンツハッシュ (例: 7dc6817c)
-  filename: string       // ハッシュ付きファイル名 (例: AddTodoForm-7dc6817c.js)
-  clientJs: string
-  serverComponent: string
-}
-
-export type CompileJSXResult = {
-  html: string
-  components: ComponentOutput[]
-}
+export type { ComponentOutput, CompileJSXResult }
 
 /**
  * ファイルからインポート文を抽出
@@ -1160,17 +1092,6 @@ function evaluateStyleObject(
 /**
  * 子要素を処理（内部版）
  */
-type ListExpressionInfo = {
-  mapExpression: string
-  itemEvents: Array<{
-    eventId: number
-    eventName: string
-    handler: string
-    paramName: string
-  }>
-  arrayExpression: string
-}
-
 function processChildrenInternal(
   children: ts.NodeArray<ts.JsxChild>,
   sourceFile: ts.SourceFile,
@@ -1267,18 +1188,6 @@ function processChildrenInternal(
   }
 
   return { html, dynamicExpression, listExpression }
-}
-
-type MapExpressionResult = {
-  mapExpression: string
-  initialHtml: string
-  itemEvents: Array<{
-    eventId: number
-    eventName: string
-    handler: string
-    paramName: string
-  }>
-  arrayExpression: string
 }
 
 /**
@@ -1411,15 +1320,6 @@ function evaluateMapWithInitialValues(
   } catch {
     return ''
   }
-}
-
-type TemplateStringResult = {
-  template: string
-  events: Array<{
-    eventId: number
-    eventName: string
-    handler: string
-  }>
 }
 
 /**
