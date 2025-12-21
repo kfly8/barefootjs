@@ -1156,3 +1156,419 @@ describe('サーバーコンポーネント出力', () => {
     expect(component.serverComponent).toContain("c.set('usedComponents'")
   })
 })
+
+// =============================================================================
+// map内のコンポーネントインライン展開
+// =============================================================================
+
+describe('map内のコンポーネントインライン展開', () => {
+  /**
+   * propsを持つコンポーネントのインライン展開
+   * <Item item={item} /> → item.textなどが展開される
+   */
+  it('propsを持つコンポーネントのインライン展開', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import { signal } from 'barefoot'
+        import Item from './Item'
+        function App() {
+          const [items, setItems] = signal([{ id: 1, text: 'hello' }])
+          return (
+            <ul>
+              {items().map(item => (
+                <Item item={item} />
+              ))}
+            </ul>
+          )
+        }
+      `,
+      '/test/Item.tsx': `
+        type Props = { item: { id: number; text: string } }
+        function Item({ item }: Props) {
+          return <li>{item.text}</li>
+        }
+        export default Item
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const appComponent = result.components.find(c => c.name === 'App')
+
+    // ItemコンポーネントがHTMLにインライン展開される（イベントがないので__indexなし）
+    expect(appComponent!.clientJs).toContain('items().map(item => `<li>${item.text}</li>`).join(\'\')')
+  })
+
+  /**
+   * イベントハンドラ付きコンポーネントのインライン展開
+   * onDelete={() => remove(item.id)} がイベントデリゲーションに変換される
+   */
+  it('イベントハンドラ付きコンポーネントのインライン展開', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import { signal } from 'barefoot'
+        import Item from './Item'
+        function App() {
+          const [items, setItems] = signal([{ id: 1, text: 'hello' }])
+          const remove = (id) => setItems(items().filter(i => i.id !== id))
+          return (
+            <ul>
+              {items().map(item => (
+                <Item item={item} onDelete={() => remove(item.id)} />
+              ))}
+            </ul>
+          )
+        }
+      `,
+      '/test/Item.tsx': `
+        type Props = {
+          item: { id: number; text: string }
+          onDelete: () => void
+        }
+        function Item({ item, onDelete }: Props) {
+          return (
+            <li>
+              <span>{item.text}</span>
+              <button onClick={() => onDelete()}>削除</button>
+            </li>
+          )
+        }
+        export default Item
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const appComponent = result.components.find(c => c.name === 'App')
+
+    // イベントハンドラがdata-indexとdata-event-idに変換される
+    expect(appComponent!.clientJs).toContain('data-index="${__index}"')
+    expect(appComponent!.clientJs).toContain('data-event-id="0"')
+    // イベントデリゲーションが生成される
+    expect(appComponent!.clientJs).toContain("addEventListener('click'")
+    // ハンドラの中身がインライン展開される（onDelete() → remove(item.id)）
+    expect(appComponent!.clientJs).toContain('remove(item.id)')
+  })
+
+  /**
+   * 条件付きレンダリングを含むコンポーネントのインライン展開
+   * todo.editing ? <input> : <span> のパターン
+   */
+  it('条件付きレンダリングを含むコンポーネントのインライン展開', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import { signal } from 'barefoot'
+        import Item from './Item'
+        function App() {
+          const [items, setItems] = signal([{ id: 1, text: 'hello', editing: false }])
+          return (
+            <ul>
+              {items().map(item => (
+                <Item item={item} />
+              ))}
+            </ul>
+          )
+        }
+      `,
+      '/test/Item.tsx': `
+        type Props = { item: { id: number; text: string; editing: boolean } }
+        function Item({ item }: Props) {
+          return (
+            <li>
+              {item.editing ? (
+                <input value={item.text} />
+              ) : (
+                <span>{item.text}</span>
+              )}
+            </li>
+          )
+        }
+        export default Item
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const appComponent = result.components.find(c => c.name === 'App')
+
+    // 条件付きレンダリングがテンプレートに含まれる
+    expect(appComponent!.clientJs).toContain('item.editing ?')
+  })
+
+  /**
+   * 複数のイベントハンドラを持つコンポーネント
+   * onToggle, onDelete, onEdit など
+   */
+  it('複数のイベントハンドラを持つコンポーネント', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import { signal } from 'barefoot'
+        import Item from './Item'
+        function App() {
+          const [items, setItems] = signal([{ id: 1, text: 'hello', done: false }])
+          const toggle = (id) => setItems(items().map(i => i.id === id ? {...i, done: !i.done} : i))
+          const remove = (id) => setItems(items().filter(i => i.id !== id))
+          return (
+            <ul>
+              {items().map(item => (
+                <Item
+                  item={item}
+                  onToggle={() => toggle(item.id)}
+                  onDelete={() => remove(item.id)}
+                />
+              ))}
+            </ul>
+          )
+        }
+      `,
+      '/test/Item.tsx': `
+        type Props = {
+          item: { id: number; text: string; done: boolean }
+          onToggle: () => void
+          onDelete: () => void
+        }
+        function Item({ item, onToggle, onDelete }: Props) {
+          return (
+            <li>
+              <span>{item.text}</span>
+              <button onClick={() => onToggle()}>切替</button>
+              <button onClick={() => onDelete()}>削除</button>
+            </li>
+          )
+        }
+        export default Item
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const appComponent = result.components.find(c => c.name === 'App')
+
+    // 複数のイベントデリゲーションが生成される
+    expect(appComponent!.clientJs).toContain('toggle(item.id)')
+    expect(appComponent!.clientJs).toContain('remove(item.id)')
+    // 異なるevent-idが使われる
+    expect(appComponent!.clientJs).toContain('data-event-id="0"')
+    expect(appComponent!.clientJs).toContain('data-event-id="1"')
+  })
+})
+
+// =============================================================================
+// コンポーネント内ローカル関数
+// =============================================================================
+
+describe('コンポーネント内ローカル関数', () => {
+  /**
+   * アロー関数で定義されたハンドラが出力される
+   * const handleToggle = (id) => { ... }
+   */
+  it('アロー関数で定義されたハンドラが出力される', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([{ id: 1, done: false }])
+        const handleToggle = (id) => {
+          setItems(items().map(t => t.id === id ? { ...t, done: !t.done } : t))
+        }
+        return (
+          <ul>
+            {items().map(item => (
+              <li>
+                <button onClick={() => handleToggle(item.id)}>切替</button>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // ハンドラ関数が定義されている
+    expect(component.clientJs).toContain('const handleToggle = (id) =>')
+    expect(component.clientJs).toContain('setItems(items().map(t => t.id === id ? { ...t, done: !t.done } : t))')
+  })
+
+  /**
+   * 複数のハンドラ関数が出力される
+   */
+  it('複数のハンドラ関数が出力される', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([])
+        const handleAdd = () => {
+          setItems([...items(), { id: Date.now() }])
+        }
+        const handleDelete = (id) => {
+          setItems(items().filter(t => t.id !== id))
+        }
+        return (
+          <div>
+            <button onClick={() => handleAdd()}>追加</button>
+            <ul>
+              {items().map(item => (
+                <li>
+                  <button onClick={() => handleDelete(item.id)}>削除</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 両方のハンドラ関数が定義されている
+    expect(component.clientJs).toContain('const handleAdd = () =>')
+    expect(component.clientJs).toContain('const handleDelete = (id) =>')
+  })
+
+  /**
+   * signal宣言と混在しても正しく抽出される
+   */
+  it('signal宣言と混在しても正しく抽出される', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = signal(0)
+        const [name, setName] = signal('')
+        const increment = () => {
+          setCount(count() + 1)
+        }
+        const reset = () => {
+          setCount(0)
+          setName('')
+        }
+        return (
+          <div>
+            <button onClick={() => increment()}>+1</button>
+            <button onClick={() => reset()}>リセット</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // signal宣言は通常通り
+    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
+    expect(component.clientJs).toContain("const [name, setName] = signal('')")
+    // ハンドラ関数も出力される
+    expect(component.clientJs).toContain('const increment = () =>')
+    expect(component.clientJs).toContain('const reset = () =>')
+  })
+
+  /**
+   * TypeScript型注釈が除去される
+   * const handleToggle = (id: number) => { ... } → const handleToggle = (id) => { ... }
+   */
+  it('TypeScript型注釈が除去される', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal<{ id: number; done: boolean }[]>([])
+        const handleToggle = (id: number) => {
+          setItems(items().map((t: { id: number; done: boolean }) =>
+            t.id === id ? { ...t, done: !t.done } : t
+          ))
+        }
+        const handleAdd = (text: string, priority: number = 1) => {
+          setItems([...items(), { id: Date.now(), done: false }])
+        }
+        return (
+          <ul>
+            {items().map(item => (
+              <li>
+                <button onClick={() => handleToggle(item.id)}>切替</button>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 型注釈が除去されている
+    expect(component.clientJs).not.toContain(': number')
+    expect(component.clientJs).not.toContain(': string')
+    expect(component.clientJs).not.toContain(': {')
+    // 関数自体は出力される
+    expect(component.clientJs).toContain('const handleToggle = (id) =>')
+    expect(component.clientJs).toContain('const handleAdd = (text, priority = 1) =>')
+  })
+})
+
+// =============================================================================
+// propsを持つコンポーネント
+// =============================================================================
+
+describe('propsを持つコンポーネント', () => {
+  /**
+   * propsを持つコンポーネントはinit関数でラップされる
+   */
+  it('propsを持つコンポーネントはinit関数でラップされる', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        import { signal } from 'barefoot'
+        import Form from './Form'
+        function App() {
+          const [items, setItems] = signal([])
+          const handleAdd = (text) => {
+            setItems([...items(), { id: Date.now(), text }])
+          }
+          return (
+            <div>
+              <Form onAdd={handleAdd} />
+            </div>
+          )
+        }
+      `,
+      '/test/Form.tsx': `
+        import { signal } from 'barefoot'
+        type Props = { onAdd: (text: string) => void }
+        function Form({ onAdd }: Props) {
+          const [text, setText] = signal('')
+          const handleSubmit = () => {
+            if (text().trim()) {
+              onAdd(text().trim())
+              setText('')
+            }
+          }
+          return (
+            <div>
+              <input value={text()} onInput={(e) => setText(e.target.value)} />
+              <button onClick={() => handleSubmit()}>追加</button>
+            </div>
+          )
+        }
+        export default Form
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const formComponent = result.components.find(c => c.name === 'Form')
+
+    // init関数でラップされている
+    expect(formComponent!.clientJs).toContain('export function initForm({ onAdd })')
+    // signal宣言が関数内にある
+    expect(formComponent!.clientJs).toContain("const [text, setText] = signal('')")
+    // ローカル関数も関数内にある
+    expect(formComponent!.clientJs).toContain('const handleSubmit = () =>')
+    // onAddが使える
+    expect(formComponent!.clientJs).toContain('onAdd(text().trim())')
+  })
+
+  /**
+   * propsがないコンポーネントはラップされない
+   */
+  it('propsがないコンポーネントはラップされない', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = signal(0)
+        return <button onClick={() => setCount(count() + 1)}>{count()}</button>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // init関数でラップされていない
+    expect(component.clientJs).not.toContain('export function init')
+    // トップレベルにsignal宣言がある
+    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
+  })
+})

@@ -57,16 +57,23 @@ type SignalDeclaration = {
   initialValue: string // 0, false
 }
 
+type LocalFunction = {
+  name: string        // handleToggle
+  code: string        // const handleToggle = (id) => { ... }
+}
+
 type CompileResult = {
   staticHtml: string
   clientJs: string
   serverJsx: string
   signals: SignalDeclaration[]
+  localFunctions: LocalFunction[]  // コンポーネント内で定義された関数
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
   listElements: ListElement[]
   dynamicAttributes: DynamicAttribute[]
   props: string[]  // コンポーネントが受け取るprops名
+  source: string   // コンポーネントのソースコード（map内インライン展開用）
 }
 
 type ComponentImport = {
@@ -199,6 +206,77 @@ function extractComponentProps(source: string, filePath: string): string[] {
   })
 
   return props
+}
+
+/**
+ * TypeScriptの型注釈を除去してJavaScriptに変換
+ */
+function stripTypeAnnotations(code: string): string {
+  const result = ts.transpileModule(code, {
+    compilerOptions: {
+      target: ts.ScriptTarget.ESNext,
+      module: ts.ModuleKind.ESNext,
+      removeComments: false,
+    },
+  })
+  return result.outputText.trim()
+}
+
+/**
+ * コンポーネント内で定義されたローカル関数を抽出
+ * const handleToggle = (id) => { ... }
+ * const handleAdd = () => { ... }
+ * ※ signal宣言は除外
+ * ※ TypeScript型注釈は除去される
+ */
+function extractLocalFunctions(source: string, filePath: string, signals: SignalDeclaration[]): LocalFunction[] {
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  )
+
+  const localFunctions: LocalFunction[] = []
+  const signalNames = new Set(signals.flatMap(s => [s.getter, s.setter]))
+
+  function visit(node: ts.Node) {
+    // コンポーネント関数内のみを探索
+    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
+      // コンポーネント関数の本体を探索
+      if (node.body) {
+        for (const statement of node.body.statements) {
+          // const handleToggle = (id) => { ... } パターン
+          if (ts.isVariableStatement(statement)) {
+            for (const decl of statement.declarationList.declarations) {
+              if (ts.isIdentifier(decl.name) && decl.initializer) {
+                const name = decl.name.text
+                // signal宣言は除外（const [count, setCount] = signal(0) は既に別で処理）
+                if (signalNames.has(name)) continue
+                // signal()呼び出しは除外
+                if (ts.isCallExpression(decl.initializer) &&
+                    ts.isIdentifier(decl.initializer.expression) &&
+                    decl.initializer.expression.text === 'signal') continue
+
+                // アロー関数または関数式の場合
+                if (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer)) {
+                  const tsCode = statement.getText(sourceFile)
+                  // TypeScript型注釈を除去
+                  const code = stripTypeAnnotations(tsCode)
+                  localFunctions.push({ name, code })
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+  return localFunctions
 }
 
 /**
@@ -382,12 +460,27 @@ export async function compileJSX(
         .map(s => `const [${s.getter}, ${s.setter}] = signal(${s.initialValue})`)
         .join('\n')
 
-      const clientJs = result.clientJs ? `import { signal } from './barefoot.js'
+      // propsがある場合はinit関数でラップする
+      let clientJs = ''
+      if (result.clientJs) {
+        if (result.props.length > 0) {
+          const propsParam = `{ ${result.props.join(', ')} }`
+          clientJs = `import { signal } from './barefoot.js'
+
+export function init${name}(${propsParam}) {
+${signalDeclarations ? signalDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
+${result.clientJs.split('\n').map(l => '  ' + l).join('\n')}
+}
+`
+        } else {
+          clientJs = `import { signal } from './barefoot.js'
 
 ${signalDeclarations}
 
 ${result.clientJs}
-` : ''
+`
+        }
+      }
 
       // propsがある場合は引数として受け取る
       const propsParam = result.props.length > 0
@@ -454,6 +547,9 @@ function compileJsxWithComponents(
 
   // コンポーネントのpropsを抽出
   const props = extractComponentProps(source, filePath)
+
+  // ローカル関数を抽出
+  const localFunctions = extractLocalFunctions(source, filePath, signals)
 
   const interactiveElements: InteractiveElement[] = []
   const dynamicElements: DynamicElement[] = []
@@ -644,6 +740,14 @@ function compileJsxWithComponents(
     lines.push('')
   }
 
+  // ローカル関数を出力
+  for (const fn of localFunctions) {
+    lines.push(fn.code)
+  }
+  if (localFunctions.length > 0) {
+    lines.push('')
+  }
+
   if (hasDynamicContent) {
     lines.push('function updateAll() {')
     for (const el of dynamicElements) {
@@ -730,11 +834,13 @@ function compileJsxWithComponents(
     clientJs,
     serverJsx,
     signals,
+    localFunctions,
     interactiveElements,
     dynamicElements,
     listElements,
     dynamicAttributes,
     props,
+    source,
   }
 }
 
@@ -948,7 +1054,7 @@ function processChildrenInternal(
       }
     } else if (ts.isJsxExpression(child) && child.expression) {
       // map式を検出
-      const mapInfo = extractMapExpression(child.expression, sourceFile, signals)
+      const mapInfo = extractMapExpression(child.expression, sourceFile, signals, components)
       if (mapInfo) {
         // map式の場合: items().map(item => <li>{item}</li>)
         listExpression = {
@@ -1009,7 +1115,8 @@ type MapExpressionResult = {
 function extractMapExpression(
   expr: ts.Expression,
   sourceFile: ts.SourceFile,
-  signals: SignalDeclaration[]
+  signals: SignalDeclaration[],
+  components: Map<string, CompileResult> = new Map()
 ): MapExpressionResult | null {
   // CallExpression で .map() を検出
   if (!ts.isCallExpression(expr)) return null
@@ -1045,7 +1152,7 @@ function extractMapExpression(
 
     if (jsxBody) {
       // JSXをテンプレートリテラル形式に変換
-      const templateResult = jsxToTemplateString(jsxBody, sourceFile, paramName)
+      const templateResult = jsxToTemplateString(jsxBody, sourceFile, paramName, components)
       const arrayExpr = propAccess.expression.getText(sourceFile)
 
       // イベントがある場合は__indexを使用
@@ -1142,11 +1249,13 @@ type TemplateStringResult = {
  * JSX要素をテンプレートリテラル文字列に変換
  * <li>{item}</li> → `<li>${item}</li>`
  * イベントハンドラはdata-index属性とdata-event-id属性に置き換え、イベント情報を返す
+ * コンポーネントタグはインライン展開する
  */
 function jsxToTemplateString(
   node: ts.JsxElement | ts.JsxSelfClosingElement,
   sourceFile: ts.SourceFile,
-  paramName: string
+  paramName: string,
+  components: Map<string, CompileResult> = new Map()
 ): TemplateStringResult {
   const events: Array<{ eventId: number; eventName: string; handler: string }> = []
   let eventIdCounter = 0
@@ -1190,6 +1299,216 @@ function jsxToTemplateString(
     return node.getText(sourceFile)
   }
 
+  /**
+   * コンポーネントのJSX属性からpropsを抽出
+   */
+  function extractComponentProps(
+    attributes: ts.JsxAttributes,
+    sf: ts.SourceFile
+  ): Map<string, string> {
+    const props = new Map<string, string>()
+    attributes.properties.forEach((attr) => {
+      if (ts.isJsxAttribute(attr) && attr.name) {
+        const propName = attr.name.getText(sf)
+        if (attr.initializer) {
+          if (ts.isStringLiteral(attr.initializer)) {
+            props.set(propName, `"${attr.initializer.text}"`)
+          } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+            props.set(propName, attr.initializer.expression.getText(sf))
+          }
+        }
+      }
+    })
+    return props
+  }
+
+  /**
+   * コンポーネントをインライン展開する
+   * コンポーネントのソースを解析し、propsを置換したテンプレートを生成
+   */
+  function inlineComponent(
+    componentResult: CompileResult,
+    propsMap: Map<string, string>
+  ): string {
+    // コンポーネントのソースをパース
+    const componentSource = componentResult.source
+    const componentSf = ts.createSourceFile(
+      'component.tsx',
+      componentSource,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX
+    )
+
+    // コンポーネントのJSXを探す
+    let componentJsx: ts.JsxElement | ts.JsxSelfClosingElement | null = null
+
+    function findJsxReturn(node: ts.Node) {
+      if (ts.isReturnStatement(node) && node.expression) {
+        let expr = node.expression
+        if (ts.isParenthesizedExpression(expr)) {
+          expr = expr.expression
+        }
+        if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
+          componentJsx = expr
+        }
+      }
+      ts.forEachChild(node, findJsxReturn)
+    }
+
+    ts.forEachChild(componentSf, (node) => {
+      if (ts.isFunctionDeclaration(node)) {
+        findJsxReturn(node)
+      }
+    })
+
+    if (!componentJsx) {
+      return ''
+    }
+
+    // コンポーネントのJSXをテンプレートに変換（propsを置換）
+    return processComponentJsx(componentJsx, componentSf, propsMap)
+  }
+
+  /**
+   * コンポーネントのJSXを処理してテンプレートに変換（props置換付き）
+   */
+  function processComponentJsx(
+    n: ts.JsxElement | ts.JsxSelfClosingElement,
+    sf: ts.SourceFile,
+    propsMap: Map<string, string>
+  ): string {
+    /**
+     * 式内のprop参照を置換
+     */
+    function substituteProps(expr: string): string {
+      let result = expr
+      for (const [propName, propValue] of propsMap) {
+        // prop() の呼び出しを置換（イベントハンドラの呼び出し）
+        // 例: onToggle() → (() => handleToggle(todo.id))()
+        // しかし () => onToggle() パターンの場合は onToggle を propValue に置換
+        const callRegex = new RegExp(`\\b${propName}\\s*\\(([^)]*)\\)`, 'g')
+        result = result.replace(callRegex, (match, args) => {
+          // propValue が arrow function の場合、それを呼び出し
+          // (args) => body を body(args) に変換
+          const arrowMatch = propValue.match(/^\s*\(([^)]*)\)\s*=>\s*(.+)$/)
+          if (arrowMatch) {
+            const arrowParams = arrowMatch[1] || ''
+            let body = arrowMatch[2]!.trim()
+            // 引数の置換が必要な場合
+            if (args && arrowParams) {
+              // 簡易的な引数の置換
+              const paramNames = arrowParams.split(',').map(p => p.trim())
+              const argValues = args.split(',').map((a: string) => a.trim())
+              for (let i = 0; i < paramNames.length && i < argValues.length; i++) {
+                if (paramNames[i]) {
+                  body = body.replace(new RegExp(`\\b${paramNames[i]}\\b`, 'g'), argValues[i])
+                }
+              }
+            }
+            return body
+          }
+          return `(${propValue})(${args})`
+        })
+        // 単純な参照を置換（例: todo.done → todo.done）
+        // prop名だけの場合（関数呼び出しでない）
+        const refRegex = new RegExp(`\\b${propName}\\b(?!\\s*\\()`, 'g')
+        result = result.replace(refRegex, propValue)
+      }
+      return result
+    }
+
+    function processAttrs(
+      attributes: ts.JsxAttributes
+    ): { attrs: string; eventAttrs: string } {
+      let attrs = ''
+      let eventAttrs = ''
+      let elementEventId: number | null = null
+
+      attributes.properties.forEach((attr) => {
+        if (ts.isJsxAttribute(attr) && attr.name) {
+          const attrName = attr.name.getText(sf)
+
+          if (attrName.startsWith('on')) {
+            const eventName = attrName.slice(2).toLowerCase()
+            if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+              let handler = attr.initializer.expression.getText(sf)
+              // ハンドラ内のprop参照を置換
+              handler = substituteProps(handler)
+              if (elementEventId === null) {
+                elementEventId = eventIdCounter++
+                eventAttrs = ` data-index="\${__index}" data-event-id="${elementEventId}"`
+              }
+              events.push({ eventId: elementEventId, eventName, handler })
+            }
+          } else if (attr.initializer) {
+            if (ts.isStringLiteral(attr.initializer)) {
+              attrs += ` ${attrName}="${attr.initializer.text}"`
+            } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+              const expr = attr.initializer.expression.getText(sf)
+              const substituted = substituteProps(expr)
+              attrs += ` ${attrName}="\${${substituted}}"`
+            }
+          }
+        }
+      })
+
+      return { attrs, eventAttrs }
+    }
+
+    function processJsxNode(node: ts.JsxElement | ts.JsxSelfClosingElement): string {
+      if (ts.isJsxSelfClosingElement(node)) {
+        const tagName = node.tagName.getText(sf)
+        const { attrs, eventAttrs } = processAttrs(node.attributes)
+        return `<${tagName}${eventAttrs}${attrs} />`
+      }
+
+      if (ts.isJsxElement(node)) {
+        const tagName = node.openingElement.tagName.getText(sf)
+        const { attrs, eventAttrs } = processAttrs(node.openingElement.attributes)
+
+        let children = ''
+        for (const child of node.children) {
+          if (ts.isJsxText(child)) {
+            const text = child.getText(sf).trim()
+            if (text) {
+              children += text
+            }
+          } else if (ts.isJsxExpression(child) && child.expression) {
+            // 条件式や通常の式を処理
+            if (ts.isConditionalExpression(child.expression)) {
+              const condition = substituteProps(child.expression.condition.getText(sf))
+              const whenTrue = processJsxOrExpr(child.expression.whenTrue, sf)
+              const whenFalse = processJsxOrExpr(child.expression.whenFalse, sf)
+              children += `\${${condition} ? ${whenTrue} : ${whenFalse}}`
+            } else {
+              const expr = substituteProps(child.expression.getText(sf))
+              children += `\${${expr}}`
+            }
+          } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
+            children += processJsxNode(child)
+          }
+        }
+
+        return `<${tagName}${eventAttrs}${attrs}>${children}</${tagName}>`
+      }
+
+      return ''
+    }
+
+    function processJsxOrExpr(expr: ts.Expression, sf: ts.SourceFile): string {
+      if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
+        return `\`${processJsxNode(expr)}\``
+      }
+      if (ts.isParenthesizedExpression(expr)) {
+        return processJsxOrExpr(expr.expression, sf)
+      }
+      return substituteProps(expr.getText(sf))
+    }
+
+    return processJsxNode(n)
+  }
+
   function processNode(
     n: ts.JsxElement | ts.JsxSelfClosingElement
   ): string {
@@ -1231,12 +1550,28 @@ function jsxToTemplateString(
 
     if (ts.isJsxSelfClosingElement(n)) {
       const tagName = n.tagName.getText(sourceFile)
+
+      // コンポーネントタグの検出とインライン展開
+      if (isPascalCase(tagName) && components.has(tagName)) {
+        const componentResult = components.get(tagName)!
+        const propsMap = extractComponentProps(n.attributes, sourceFile)
+        return inlineComponent(componentResult, propsMap)
+      }
+
       const { attrs, eventAttrs } = processAttributes(n.attributes)
       return `<${tagName}${eventAttrs}${attrs} />`
     }
 
     if (ts.isJsxElement(n)) {
       const tagName = n.openingElement.tagName.getText(sourceFile)
+
+      // コンポーネントタグの検出とインライン展開
+      if (isPascalCase(tagName) && components.has(tagName)) {
+        const componentResult = components.get(tagName)!
+        const propsMap = extractComponentProps(n.openingElement.attributes, sourceFile)
+        return inlineComponent(componentResult, propsMap)
+      }
+
       const { attrs, eventAttrs } = processAttributes(n.openingElement.attributes)
 
       // 子要素を処理
