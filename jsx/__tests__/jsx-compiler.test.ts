@@ -342,29 +342,126 @@ describe('map内の動的要素', () => {
   /**
    * map内のonClick
    * items().map(item => <li onClick={() => remove(item.id)}>{item.text}</li>)
+   *
+   * → イベントデリゲーションでハンドラを設定
+   * → data-index属性で要素を特定
    */
-  it.todo('map内のonClick')
+  it('map内のonClick', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { id: 1, text: 'a' },
+          { id: 2, text: 'b' }
+        ])
+        const remove = (id) => setItems(items => items.filter(x => x.id !== id))
+        return <ul>{items().map(item => <li onClick={() => remove(item.id)}>{item.text}</li>)}</ul>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // リスト要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__l0"')
+
+    // data-index属性がテンプレートに含まれる
+    expect(component.clientJs).toContain('data-index="${__index}"')
+
+    // イベントデリゲーションが設定される
+    expect(component.clientJs).toContain("__l0.addEventListener('click'")
+    expect(component.clientJs).toContain('const item = items()[__index]')
+    expect(component.clientJs).toContain('remove(item.id)')
+  })
 
   /**
-   * map内のonChange, onKeyDown等
+   * map内のonChange
+   * items().map(item => <input onChange={() => toggle(item.id)} />)
    */
-  it.todo('map内のonChange, onKeyDown等')
+  it('map内のonChange', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { id: 1, checked: false },
+          { id: 2, checked: true }
+        ])
+        const toggle = (id) => setItems(items => items.map(x => x.id === id ? { ...x, checked: !x.checked } : x))
+        return <div>{items().map(item => <input type="checkbox" onChange={() => toggle(item.id)} />)}</div>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // onchangeイベントデリゲーションが設定される
+    expect(component.clientJs).toContain("addEventListener('change'")
+    expect(component.clientJs).toContain('toggle(item.id)')
+  })
 
   /**
    * map内の動的class属性
    * items().map(item => <li class={item.done ? 'done' : ''}>{item.text}</li>)
+   *
+   * → テンプレート内で式として出力され、innerHTML更新時に評価される
    */
-  it.todo('map内の動的class属性')
+  it('map内の動的class属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { text: 'a', done: true },
+          { text: 'b', done: false }
+        ])
+        return <ul>{items().map(item => <li class={item.done ? 'done' : ''}>{item.text}</li>)}</ul>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // テンプレートに動的class属性が含まれる
+    expect(component.clientJs).toContain("class=\"${item.done ? 'done' : ''}\"")
+  })
 
   /**
    * map内の動的style属性
    */
-  it.todo('map内の動的style属性')
+  it('map内の動的style属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { text: 'a', color: 'red' },
+          { text: 'b', color: 'blue' }
+        ])
+        return <ul>{items().map(item => <li style={item.color}>{item.text}</li>)}</ul>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // テンプレートに動的style属性が含まれる
+    expect(component.clientJs).toContain('style="${item.color}"')
+  })
 
   /**
-   * map内の動的disabled/checked属性
+   * map内の動的checked属性
    */
-  it.todo('map内の動的disabled/checked属性')
+  it('map内の動的checked属性', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { id: 1, checked: true },
+          { id: 2, checked: false }
+        ])
+        return <div>{items().map(item => <input type="checkbox" checked={item.checked} />)}</div>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // テンプレートに動的checked属性が含まれる
+    expect(component.clientJs).toContain('checked="${item.checked}"')
+  })
 })
 
 // =============================================================================

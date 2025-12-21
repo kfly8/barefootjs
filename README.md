@@ -36,14 +36,6 @@ JSXから静的HTML + クライアントJSを生成するコンパイラ。
 
 ## TODO
 
-### map内の動的要素
-
-- [ ] map内のonClick `items().map(item => <li onClick={() => remove(item.id)}>{item.text}</li>)`
-- [ ] map内のonChange, onKeyDown等
-- [ ] map内の動的class属性 `items().map(item => <li class={item.done ? 'done' : ''}>{item.text}</li>)`
-- [ ] map内の動的style属性
-- [ ] map内の動的disabled/checked属性
-
 ### 型
 
 - [ ] signalの型推論 `signal<number>(0)`
