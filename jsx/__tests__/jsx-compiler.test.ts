@@ -505,6 +505,40 @@ describe('map内の動的要素', () => {
     // テンプレートに動的checked属性が含まれる
     expect(component.clientJs).toContain('checked="${item.checked}"')
   })
+
+  /**
+   * map内の条件付きレンダリング（三項演算子）
+   * items().map(item => <li>{item.editing ? <input /> : <span>{item.text}</span>}</li>)
+   *
+   * → テンプレート内で三項演算子を使用し、innerHTML更新時に評価される
+   */
+  it('map内の条件付きレンダリング（三項演算子）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { id: 1, text: 'a', editing: false },
+          { id: 2, text: 'b', editing: true }
+        ])
+        return (
+          <ul>{items().map(item => (
+            <li>
+              {item.editing ? <input value={item.text} /> : <span>{item.text}</span>}
+            </li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // テンプレートに三項演算子が含まれる
+    expect(component.clientJs).toContain('${item.editing ?')
+    // input要素が含まれる
+    expect(component.clientJs).toContain('<input')
+    // span要素が含まれる
+    expect(component.clientJs).toContain('<span>')
+  })
 })
 
 // =============================================================================

@@ -1096,6 +1096,45 @@ function jsxToTemplateString(
   const events: Array<{ eventId: number; eventName: string; handler: string }> = []
   let eventIdCounter = 0
 
+  /**
+   * 式を処理（三項演算子内のJSXを検出して変換）
+   */
+  function processExpression(expr: ts.Expression): string {
+    // 三項演算子の場合
+    if (ts.isConditionalExpression(expr)) {
+      const condition = expr.condition.getText(sourceFile)
+      const whenTrue = processExpressionOrJsx(expr.whenTrue)
+      const whenFalse = processExpressionOrJsx(expr.whenFalse)
+      return `\${${condition} ? ${whenTrue} : ${whenFalse}}`
+    }
+
+    // ParenthesizedExpressionの場合（括弧で囲まれた式）
+    if (ts.isParenthesizedExpression(expr)) {
+      return processExpression(expr.expression)
+    }
+
+    // その他の式はそのまま出力
+    return `\${${expr.getText(sourceFile)}}`
+  }
+
+  /**
+   * 式またはJSXを処理
+   */
+  function processExpressionOrJsx(node: ts.Expression): string {
+    // JSX要素の場合はテンプレート文字列に変換
+    if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+      return `\`${processNode(node)}\``
+    }
+
+    // 括弧で囲まれた式の場合
+    if (ts.isParenthesizedExpression(node)) {
+      return processExpressionOrJsx(node.expression)
+    }
+
+    // その他の式はそのまま
+    return node.getText(sourceFile)
+  }
+
   function processNode(
     n: ts.JsxElement | ts.JsxSelfClosingElement
   ): string {
@@ -1151,7 +1190,8 @@ function jsxToTemplateString(
             children += text
           }
         } else if (ts.isJsxExpression(child) && child.expression) {
-          children += `\${${child.expression.getText(sourceFile)}}`
+          // 三項演算子内のJSXを処理
+          children += processExpression(child.expression)
         } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
           // 再帰的に処理
           children += processNode(child)
