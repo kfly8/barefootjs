@@ -44,12 +44,6 @@ JSXから静的HTML + クライアントJSを生成するコンパイラ。
 - [ ] map内の動的style属性
 - [ ] map内の動的disabled/checked属性
 
-### コンポーネント
-
-- [ ] propsなしのコンポーネント
-- [ ] propsありのコンポーネント
-- [ ] childrenを持つコンポーネント
-
 ### 型
 
 - [ ] signalの型推論 `signal<number>(0)`

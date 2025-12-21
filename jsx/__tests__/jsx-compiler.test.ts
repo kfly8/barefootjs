@@ -21,6 +21,17 @@ async function compile(source: string) {
   })
 }
 
+// テスト用のヘルパー: 複数ファイルをサポート
+async function compileWithFiles(
+  entryPath: string,
+  files: Record<string, string>
+) {
+  return compileJSX(entryPath, async (path) => {
+    if (files[path]) return files[path]
+    throw new Error(`File not found: ${path}`)
+  })
+}
+
 // =============================================================================
 // signal宣言
 // =============================================================================
@@ -719,20 +730,121 @@ describe('コンポーネント', () => {
   /**
    * propsなしのコンポーネント
    * <Counter />
+   *
+   * 親コンポーネントが子コンポーネントをインポートして使用
    */
-  it.todo('propsなしのコンポーネント')
+  it('propsなしのコンポーネント', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import Counter from './Counter'
+        function App() {
+          return (
+            <div>
+              <h1>My App</h1>
+              <Counter />
+            </div>
+          )
+        }
+      `,
+      '/test/Counter.tsx': `
+        import { signal } from 'barefoot'
+        function Counter() {
+          const [count, setCount] = signal(0)
+          return (
+            <div>
+              <p>{count()}</p>
+              <button onClick={() => setCount(n => n + 1)}>+1</button>
+            </div>
+          )
+        }
+      `,
+    }
+
+    const result = await compileWithFiles('/test/App.tsx', files)
+
+    // AppコンポーネントのHTMLにCounterのHTMLが埋め込まれる
+    expect(result.html).toContain('<h1>My App</h1>')
+    expect(result.html).toContain('<p')
+    expect(result.html).toContain('<button')
+
+    // Counterコンポーネントが出力される
+    const counterComponent = result.components.find(c => c.name === 'Counter')
+    expect(counterComponent).toBeDefined()
+    expect(counterComponent!.clientJs).toContain('const [count, setCount] = signal(0)')
+  })
 
   /**
    * propsありのコンポーネント
    * <Counter initial={5} />
+   *
+   * サーバーコンポーネントがpropsを受け取る形式になる
    */
-  it.todo('propsありのコンポーネント')
+  it('propsありのコンポーネント', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import Counter from './Counter'
+        function App() {
+          return (
+            <div>
+              <Counter initial={5} />
+            </div>
+          )
+        }
+      `,
+      '/test/Counter.tsx': `
+        import { signal } from 'barefoot'
+        function Counter({ initial }) {
+          const [count, setCount] = signal(initial)
+          return (
+            <div>
+              <p>{count()}</p>
+              <button onClick={() => setCount(n => n + 1)}>+1</button>
+            </div>
+          )
+        }
+      `,
+    }
+
+    const result = await compileWithFiles('/test/App.tsx', files)
+
+    // Counterコンポーネントがpropsを受け取る形式になる
+    const counterComponent = result.components.find(c => c.name === 'Counter')
+    expect(counterComponent).toBeDefined()
+    expect(counterComponent!.serverComponent).toContain('function Counter({ initial })')
+  })
 
   /**
    * childrenを持つコンポーネント
    * <Button>Click me</Button>
+   *
+   * サーバーコンポーネントがchildrenを受け取る形式になる
    */
-  it.todo('childrenを持つコンポーネント')
+  it('childrenを持つコンポーネント', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import Button from './Button'
+        function App() {
+          return (
+            <div>
+              <Button>Click me</Button>
+            </div>
+          )
+        }
+      `,
+      '/test/Button.tsx': `
+        function Button({ children }) {
+          return <button class="btn">{children}</button>
+        }
+      `,
+    }
+
+    const result = await compileWithFiles('/test/App.tsx', files)
+
+    // Buttonコンポーネントがchildrenを受け取る形式になる
+    const buttonComponent = result.components.find(c => c.name === 'Button')
+    expect(buttonComponent).toBeDefined()
+    expect(buttonComponent!.serverComponent).toContain('function Button({ children })')
+  })
 })
 
 // =============================================================================

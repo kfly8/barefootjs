@@ -59,6 +59,7 @@ type CompileResult = {
   dynamicElements: DynamicElement[]
   listElements: ListElement[]
   dynamicAttributes: DynamicAttribute[]
+  props: string[]  // コンポーネントが受け取るprops名
 }
 
 type ComponentImport = {
@@ -155,10 +156,42 @@ function extractSignals(source: string, filePath: string): SignalDeclaration[] {
       }
     }
     ts.forEachChild(node, visit)
-  }
+ }
 
   visit(sourceFile)
   return signals
+}
+
+/**
+ * コンポーネント関数のパラメータ（props）を抽出
+ * function Counter({ initial = 0 }) → ['initial']
+ * function Counter(props) → [] (destructuringでない場合は抽出しない)
+ */
+function extractComponentProps(source: string, filePath: string): string[] {
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  )
+
+  const props: string[] = []
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
+      const param = node.parameters[0]
+      if (param && ts.isObjectBindingPattern(param.name)) {
+        for (const element of param.name.elements) {
+          if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
+            props.push(element.name.text)
+          }
+        }
+      }
+    }
+  })
+
+  return props
 }
 
 /**
@@ -310,9 +343,14 @@ ${signalDeclarations}
 ${result.clientJs}
 ` : ''
 
+      // propsがある場合は引数として受け取る
+      const propsParam = result.props.length > 0
+        ? `{ ${result.props.join(', ')} }`
+        : ''
+
       const serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
 
-export function ${name}() {
+export function ${name}(${propsParam}) {
   const c = useRequestContext()
   const used = c.get('usedComponents') || []
   if (!used.includes('${name}')) {
@@ -367,6 +405,9 @@ function compileJsxWithComponents(
 
   // signal宣言を抽出
   const signals = extractSignals(source, filePath)
+
+  // コンポーネントのpropsを抽出
+  const props = extractComponentProps(source, filePath)
 
   const interactiveElements: InteractiveElement[] = []
   const dynamicElements: DynamicElement[] = []
@@ -610,6 +651,7 @@ function compileJsxWithComponents(
     dynamicElements,
     listElements,
     dynamicAttributes,
+    props,
   }
 }
 
