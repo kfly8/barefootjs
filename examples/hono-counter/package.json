@@ -1,0 +1,13 @@
+{
+  "name": "barefoot-hono-counter-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "dev": "bun run --watch server.tsx"
+  },
+  "dependencies": {
+    "barefoot": "file:../../",
+    "hono": "^4"
+  }
+}

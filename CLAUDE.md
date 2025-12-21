@@ -100,16 +100,16 @@ barefoot/
 │   └── __tests__/
 │       └── signal.test.ts
 ├── jsx/
-│   └── plugins/
+│   └── compiler/
 │       └── jsx-compiler.ts # JSXコンパイラ
 └── examples/
-    └── counter/
-        ├── index.tsx       # エントリーポイント
-        ├── Counter.tsx     # コンポーネント
-        ├── template.html   # HTMLテンプレート
-        ├── build.ts        # ビルドスクリプト
-        └── dist/           # ビルド出力
-            ├── index.html
-            ├── Counter-{hash}.js
-            └── barefoot.js
+    ├── counter/            # 静的ビルド例
+    │   ├── index.tsx
+    │   ├── Counter.tsx
+    │   ├── template.html
+    │   └── build.ts
+    └── hono-counter/       # Hono SSR例
+        ├── server.ts       # Honoサーバー
+        ├── index.tsx
+        └── Counter.tsx
 ```

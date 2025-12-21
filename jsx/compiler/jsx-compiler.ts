@@ -7,7 +7,7 @@
  * - 動的コンテンツ（{count()}等）を検出して更新関数を生成
  *
  * 使用例:
- *   const result = await compileApp(entryPath, readFile)
+ *   const result = await compileJSX(entryPath, readFile)
  *   // result.html: 静的HTML
  *   // result.components: コンポーネントごとのJS
  */
@@ -34,6 +34,7 @@ type DynamicElement = {
 type CompileResult = {
   staticHtml: string
   clientJs: string
+  serverJsx: string
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
 }
@@ -43,12 +44,13 @@ type ComponentImport = {
   path: string      // ./Counter
 }
 
-type ComponentOutput = {
+export type ComponentOutput = {
   name: string
-  js: string
+  clientJs: string
+  serverComponent: string
 }
 
-type AppCompileResult = {
+export type CompileJSXResult = {
   html: string
   components: ComponentOutput[]
 }
@@ -137,10 +139,10 @@ function extractArrowBody(handler: string): string {
  * @param readFile - ファイルを読み込む関数
  * @returns { html, components } - 静的HTMLとコンポーネントJS配列
  */
-export async function compileApp(
+export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>
-): Promise<AppCompileResult> {
+): Promise<CompileJSXResult> {
   resetIdCounters()
 
   // コンパイル済みコンポーネントのキャッシュ
@@ -183,19 +185,34 @@ export async function compileApp(
   // エントリーポイントをコンパイル
   const entryResult = await compileComponent(entryPath)
 
-  // コンポーネントごとにJSを生成
+  // コンポーネントごとにJS/サーバーコンポーネントを生成
   const components: ComponentOutput[] = []
 
   for (const [path, result] of compiledComponents) {
-    if (result.clientJs) {
+    if (result.clientJs || result.serverJsx) {
       const name = path.split('/').pop()!.replace('.tsx', '')
-      const js = `import { signal } from './barefoot.js'
+
+      const clientJs = result.clientJs ? `import { signal } from './barefoot.js'
 
 const [count, setCount] = signal(0)
 
 ${result.clientJs}
+` : ''
+
+      const serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
+
+export function ${name}() {
+  const c = useRequestContext()
+  const used = c.get('usedComponents') || []
+  if (!used.includes('${name}')) {
+    c.set('usedComponents', [...used, '${name}'])
+  }
+  return (
+    ${result.serverJsx}
+  )
+}
 `
-      components.push({ name, js })
+      components.push({ name, clientJs, serverComponent })
     }
   }
 
@@ -396,12 +413,28 @@ function compileJsxWithComponents(
   const clientJs = lines.join('\n')
   const processedHtml = staticHtml.replace(/\$\{[^}]+\}/g, '0')
 
+  // サーバー用JSX（Hono JSX形式）を生成
+  const serverJsx = generateServerJsx(processedHtml)
+
   return {
     staticHtml: processedHtml,
     clientJs,
+    serverJsx,
     interactiveElements,
     dynamicElements,
   }
+}
+
+/**
+ * HTML文字列からHono JSX形式のコンポーネントを生成
+ */
+function generateServerJsx(html: string): string {
+  // class -> className, 閉じタグの修正など
+  const jsx = html
+    .replace(/class="/g, 'className="')
+    .replace(/<(\w+)([^>]*)\s*\/>/g, '<$1$2 />') // 自己閉じタグの正規化
+
+  return jsx
 }
 
 /**
