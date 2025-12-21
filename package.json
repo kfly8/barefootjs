@@ -1,14 +1,15 @@
 {
-  "name": "barefoot",
+  "name": "barefootjs",
   "version": "0.0.1",
-  "description": "Minimal reactive primitives for AI-generated code",
-  "module": "core/index.ts",
+  "description": "JSX to static HTML + client JS compiler",
   "type": "module",
   "private": true,
+  "exports": {
+    "./core": "./core/index.ts",
+    "./compiler": "./jsx/compiler/index.ts"
+  },
   "scripts": {
-    "test": "bun test core/",
-    "build:counter": "bun build ./examples/counter/app.ts --outfile ./examples/counter/app.js",
-    "dev:counter": "bun build ./examples/counter/app.ts --outfile ./examples/counter/app.js --watch"
+    "test": "bun test"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",
