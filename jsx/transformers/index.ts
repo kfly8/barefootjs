@@ -2,7 +2,7 @@
  * BarefootJS JSX Compiler - Transformers
  */
 
-export { irToHtml, evaluateWithInitialValues } from './ir-to-html'
+export { irToHtml, evaluateWithInitialValues, irToServerJsx } from './ir-to-html'
 export {
   generateClientJs,
   collectClientJsInfo,
@@ -14,3 +14,4 @@ export {
   generateAttributeUpdate,
   type ClientJsContext,
 } from './ir-to-client-js'
+export { jsxToIR, findAndConvertJsxReturn, type JsxToIRContext } from './jsx-to-ir'
