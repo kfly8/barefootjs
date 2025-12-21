@@ -22,209 +22,21 @@ import type {
   LocalFunction,
   ChildComponentInit,
   CompileResult,
-  ComponentImport,
   ComponentOutput,
   CompileJSXResult,
   ListExpressionInfo,
   MapExpressionResult,
   TemplateStringResult,
 } from './types'
+import {
+  extractImports,
+  extractSignals,
+  extractComponentProps,
+  extractLocalFunctions,
+} from './extractors'
+import { isPascalCase } from './utils/helpers'
 
 export type { ComponentOutput, CompileJSXResult }
-
-/**
- * ファイルからインポート文を抽出
- */
-function extractImports(source: string, filePath: string): ComponentImport[] {
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  )
-
-  const imports: ComponentImport[] = []
-
-  ts.forEachChild(sourceFile, (node) => {
-    if (ts.isImportDeclaration(node)) {
-      const moduleSpecifier = node.moduleSpecifier
-      if (ts.isStringLiteral(moduleSpecifier)) {
-        const path = moduleSpecifier.text
-        // ローカルインポートのみ（./で始まる）
-        if (path.startsWith('./') || path.startsWith('../')) {
-          const importClause = node.importClause
-          if (importClause?.name) {
-            // default import: import Counter from './Counter'
-            imports.push({
-              name: importClause.name.getText(sourceFile),
-              path,
-            })
-          }
-        }
-      }
-    }
-  })
-
-  return imports
-}
-
-/**
- * ソースコードからsignal宣言を抽出
- * const [count, setCount] = signal(0) のパターンを検出
- */
-function extractSignals(source: string, filePath: string): SignalDeclaration[] {
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  )
-
-  const signals: SignalDeclaration[] = []
-
-  function visit(node: ts.Node) {
-    if (ts.isVariableDeclaration(node) &&
-        ts.isArrayBindingPattern(node.name) &&
-        node.initializer &&
-        ts.isCallExpression(node.initializer)) {
-
-      const callExpr = node.initializer
-      if (ts.isIdentifier(callExpr.expression) &&
-          callExpr.expression.text === 'signal') {
-
-        const elements = node.name.elements
-        if (elements.length === 2 &&
-            ts.isBindingElement(elements[0]) &&
-            ts.isBindingElement(elements[1]) &&
-            ts.isIdentifier(elements[0].name) &&
-            ts.isIdentifier(elements[1].name)) {
-
-          const getter = elements[0].name.text
-          const setter = elements[1].name.text
-          const initialValue = callExpr.arguments[0]?.getText(sourceFile) || '0'
-
-          signals.push({ getter, setter, initialValue })
-        }
-      }
-    }
-    ts.forEachChild(node, visit)
- }
-
-  visit(sourceFile)
-  return signals
-}
-
-/**
- * コンポーネント関数のパラメータ（props）を抽出
- * function Counter({ initial = 0 }) → ['initial']
- * function Counter(props) → [] (destructuringでない場合は抽出しない)
- */
-function extractComponentProps(source: string, filePath: string): string[] {
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  )
-
-  const props: string[] = []
-
-  ts.forEachChild(sourceFile, (node) => {
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      const param = node.parameters[0]
-      if (param && ts.isObjectBindingPattern(param.name)) {
-        for (const element of param.name.elements) {
-          if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
-            props.push(element.name.text)
-          }
-        }
-      }
-    }
-  })
-
-  return props
-}
-
-/**
- * TypeScriptの型注釈を除去してJavaScriptに変換
- */
-function stripTypeAnnotations(code: string): string {
-  const result = ts.transpileModule(code, {
-    compilerOptions: {
-      target: ts.ScriptTarget.ESNext,
-      module: ts.ModuleKind.ESNext,
-      removeComments: false,
-    },
-  })
-  return result.outputText.trim()
-}
-
-/**
- * コンポーネント内で定義されたローカル関数を抽出
- * const handleToggle = (id) => { ... }
- * const handleAdd = () => { ... }
- * ※ signal宣言は除外
- * ※ TypeScript型注釈は除去される
- */
-function extractLocalFunctions(source: string, filePath: string, signals: SignalDeclaration[]): LocalFunction[] {
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  )
-
-  const localFunctions: LocalFunction[] = []
-  const signalNames = new Set(signals.flatMap(s => [s.getter, s.setter]))
-
-  function visit(node: ts.Node) {
-    // コンポーネント関数内のみを探索
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      // コンポーネント関数の本体を探索
-      if (node.body) {
-        for (const statement of node.body.statements) {
-          // const handleToggle = (id) => { ... } パターン
-          if (ts.isVariableStatement(statement)) {
-            for (const decl of statement.declarationList.declarations) {
-              if (ts.isIdentifier(decl.name) && decl.initializer) {
-                const name = decl.name.text
-                // signal宣言は除外（const [count, setCount] = signal(0) は既に別で処理）
-                if (signalNames.has(name)) continue
-                // signal()呼び出しは除外
-                if (ts.isCallExpression(decl.initializer) &&
-                    ts.isIdentifier(decl.initializer.expression) &&
-                    decl.initializer.expression.text === 'signal') continue
-
-                // アロー関数または関数式の場合
-                if (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer)) {
-                  const tsCode = statement.getText(sourceFile)
-                  // TypeScript型注釈を除去
-                  const code = stripTypeAnnotations(tsCode)
-                  localFunctions.push({ name, code })
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    ts.forEachChild(node, visit)
-  }
-
-  visit(sourceFile)
-  return localFunctions
-}
-
-/**
- * PascalCaseかどうか判定（コンポーネントタグの判定用）
- */
-function isPascalCase(str: string): boolean {
-  return /^[A-Z][a-zA-Z0-9]*$/.test(str)
-}
 
 let buttonIdCounter = 0
 let dynamicIdCounter = 0
