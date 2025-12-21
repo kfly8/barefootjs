@@ -45,12 +45,16 @@ export const renderer = jsxRenderer(({ children }) => {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>BarefootJS + Hono Counter</title>
+        <title>BarefootJS + Hono</title>
         <style>{`
           body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
           h1 { color: #333; }
+          nav ul { list-style: none; padding: 0; }
+          nav li { margin: 0.5rem 0; }
+          nav a { font-size: 1.2rem; }
           .counter { font-size: 3rem; font-weight: bold; }
           .doubled { color: #666; }
+          .toggle span { font-size: 2rem; font-weight: bold; margin-right: 1rem; }
           button { font-size: 1.2rem; padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; }
         `}</style>
       </head>

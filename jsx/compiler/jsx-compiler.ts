@@ -31,10 +31,17 @@ type DynamicElement = {
   fullContent: string   // "doubled: " + count() * 2 など
 }
 
+type SignalDeclaration = {
+  getter: string      // count, on
+  setter: string      // setCount, setOn
+  initialValue: string // 0, false
+}
+
 type CompileResult = {
   staticHtml: string
   clientJs: string
   serverJsx: string
+  signals: SignalDeclaration[]
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
 }
@@ -90,6 +97,53 @@ function extractImports(source: string, filePath: string): ComponentImport[] {
   })
 
   return imports
+}
+
+/**
+ * ソースコードからsignal宣言を抽出
+ * const [count, setCount] = signal(0) のパターンを検出
+ */
+function extractSignals(source: string, filePath: string): SignalDeclaration[] {
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  )
+
+  const signals: SignalDeclaration[] = []
+
+  function visit(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) &&
+        ts.isArrayBindingPattern(node.name) &&
+        node.initializer &&
+        ts.isCallExpression(node.initializer)) {
+
+      const callExpr = node.initializer
+      if (ts.isIdentifier(callExpr.expression) &&
+          callExpr.expression.text === 'signal') {
+
+        const elements = node.name.elements
+        if (elements.length === 2 &&
+            ts.isBindingElement(elements[0]) &&
+            ts.isBindingElement(elements[1]) &&
+            ts.isIdentifier(elements[0].name) &&
+            ts.isIdentifier(elements[1].name)) {
+
+          const getter = elements[0].name.text
+          const setter = elements[1].name.text
+          const initialValue = callExpr.arguments[0]?.getText(sourceFile) || '0'
+
+          signals.push({ getter, setter, initialValue })
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+  return signals
 }
 
 /**
@@ -192,9 +246,14 @@ export async function compileJSX(
     if (result.clientJs || result.serverJsx) {
       const name = path.split('/').pop()!.replace('.tsx', '')
 
+      // signal宣言を生成
+      const signalDeclarations = result.signals
+        .map(s => `const [${s.getter}, ${s.setter}] = signal(${s.initialValue})`)
+        .join('\n')
+
       const clientJs = result.clientJs ? `import { signal } from './barefoot.js'
 
-const [count, setCount] = signal(0)
+${signalDeclarations}
 
 ${result.clientJs}
 ` : ''
@@ -253,6 +312,9 @@ function compileJsxWithComponents(
     true,
     ts.ScriptKind.TSX
   )
+
+  // signal宣言を抽出
+  const signals = extractSignals(source, filePath)
 
   const interactiveElements: InteractiveElement[] = []
   const dynamicElements: DynamicElement[] = []
@@ -420,6 +482,7 @@ function compileJsxWithComponents(
     staticHtml: processedHtml,
     clientJs,
     serverJsx,
+    signals,
     interactiveElements,
     dynamicElements,
   }
@@ -515,7 +578,8 @@ function processChildrenInternal(
       parts.push(expr)
       if (ts.isCallExpression(child.expression) ||
           ts.isPropertyAccessExpression(child.expression) ||
-          ts.isBinaryExpression(child.expression)) {
+          ts.isBinaryExpression(child.expression) ||
+          ts.isConditionalExpression(child.expression)) {
         dynamicExpression = {
           expression: expr,
           fullContent: parts.length === 1 ? expr : parts.join(' + '),
