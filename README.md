@@ -36,13 +36,6 @@ JSXから静的HTML + クライアントJSを生成するコンパイラ。
 
 ## TODO
 
-### signal
-
-- [ ] 文字列のsignal `signal('hello')`
-- [ ] 複数のsignal
-- [ ] オブジェクトのsignal `signal({ name: '', age: 0 })`
-- [ ] 配列のsignal `signal([])`
-
 ### 動的コンテンツ
 
 - [ ] 初期値の正しい描画（現状: Toggle初期表示が"0"→"OFF"）

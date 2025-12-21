@@ -67,26 +67,76 @@ describe('signal宣言', () => {
    * 文字列のsignal
    * const [text, setText] = signal('hello')
    */
-  it.todo('文字列のsignal')
+  it('文字列のsignal', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [text, setText] = signal('hello')
+        return <p>{text()}</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    expect(component.clientJs).toContain("const [text, setText] = signal('hello')")
+  })
 
   /**
    * 複数のsignal
    * const [count, setCount] = signal(0)
    * const [name, setName] = signal('')
    */
-  it.todo('複数のsignal')
+  it('複数のsignal', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = signal(0)
+        const [name, setName] = signal('Alice')
+        return <p>{name()}: {count()}</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
+    expect(component.clientJs).toContain("const [name, setName] = signal('Alice')")
+  })
 
   /**
    * オブジェクトのsignal
    * const [user, setUser] = signal({ name: '', age: 0 })
    */
-  it.todo('オブジェクトのsignal')
+  it('オブジェクトのsignal', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [user, setUser] = signal({ name: 'Alice', age: 20 })
+        return <p>{user().name}</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    expect(component.clientJs).toContain("const [user, setUser] = signal({ name: 'Alice', age: 20 })")
+  })
 
   /**
    * 配列のsignal
    * const [items, setItems] = signal([])
    */
-  it.todo('配列のsignal')
+  it('配列のsignal', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([])
+        return <p>{items().length}</p>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    expect(component.clientJs).toContain('const [items, setItems] = signal([])')
+  })
 })
 
 // =============================================================================
