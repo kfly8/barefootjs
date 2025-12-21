@@ -2,7 +2,7 @@
  * カウンターのビルドスクリプト
  */
 
-import { compileApp } from '../../jsx/plugins/jsx-compiler'
+import { compileJSX } from '../../jsx/compiler'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -19,7 +19,7 @@ await mkdir(DIST_DIR, { recursive: true })
 
 // コンパイル
 const entryPath = resolve(ROOT_DIR, 'index.tsx')
-const result = await compileApp(entryPath, async (path) => {
+const result = await compileJSX(entryPath, async (path) => {
   return await Bun.file(path).text()
 })
 

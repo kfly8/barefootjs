@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "barefoot": ["../../core/index.ts"]
+    },
+    "jsx": "preserve"
+  },
+  "include": ["./**/*.ts", "./**/*.tsx", "../../core/jsx.d.ts"],
+  "exclude": ["node_modules"]
+}

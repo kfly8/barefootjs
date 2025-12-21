@@ -7,7 +7,7 @@
  * - 動的コンテンツ（{count()}等）を検出して更新関数を生成
  *
  * 使用例:
- *   const result = await compileApp(entryPath, readFile)
+ *   const result = await compileJSX(entryPath, readFile)
  *   // result.html: 静的HTML
  *   // result.components: コンポーネントごとのJS
  */
@@ -43,12 +43,12 @@ type ComponentImport = {
   path: string      // ./Counter
 }
 
-type ComponentOutput = {
+export type ComponentOutput = {
   name: string
   js: string
 }
 
-type AppCompileResult = {
+export type CompileJSXResult = {
   html: string
   components: ComponentOutput[]
 }
@@ -137,10 +137,10 @@ function extractArrowBody(handler: string): string {
  * @param readFile - ファイルを読み込む関数
  * @returns { html, components } - 静的HTMLとコンポーネントJS配列
  */
-export async function compileApp(
+export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>
-): Promise<AppCompileResult> {
+): Promise<CompileJSXResult> {
   resetIdCounters()
 
   // コンパイル済みコンポーネントのキャッシュ
