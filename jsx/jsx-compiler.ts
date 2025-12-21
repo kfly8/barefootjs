@@ -31,6 +31,12 @@ type DynamicElement = {
   fullContent: string   // "doubled: " + count() * 2 など
 }
 
+type ListElement = {
+  id: string
+  tagName: string
+  mapExpression: string  // items().map(item => '<li>' + item + '</li>').join('')
+}
+
 type SignalDeclaration = {
   getter: string      // count, on
   setter: string      // setCount, setOn
@@ -44,6 +50,7 @@ type CompileResult = {
   signals: SignalDeclaration[]
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
+  listElements: ListElement[]
 }
 
 type ComponentImport = {
@@ -155,10 +162,12 @@ function isPascalCase(str: string): boolean {
 
 let buttonIdCounter = 0
 let dynamicIdCounter = 0
+let listIdCounter = 0
 
 function resetIdCounters() {
   buttonIdCounter = 0
   dynamicIdCounter = 0
+  listIdCounter = 0
 }
 
 function generateButtonId(): string {
@@ -167,6 +176,10 @@ function generateButtonId(): string {
 
 function generateDynamicId(): string {
   return `__d${dynamicIdCounter++}`
+}
+
+function generateListId(): string {
+  return `__l${listIdCounter++}`
 }
 
 function extractArrowBody(handler: string): string {
@@ -181,6 +194,31 @@ function extractArrowBody(handler: string): string {
     return body
   }
   return handler
+}
+
+/**
+ * 動的表現をsignalの初期値で評価して文字列を返す
+ *
+ * 例: on() ? 'ON' : 'OFF' + signals [{getter: 'on', initialValue: 'false'}]
+ * → false ? 'ON' : 'OFF' → 'OFF'
+ */
+function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): string {
+  // signal呼び出しを初期値で置き換え
+  let replaced = expr
+  for (const s of signals) {
+    // getter() を initialValue に置換
+    const regex = new RegExp(`\\b${s.getter}\\s*\\(\\s*\\)`, 'g')
+    replaced = replaced.replace(regex, s.initialValue)
+  }
+
+  try {
+    // 評価して結果を返す
+    const result = eval(replaced)
+    return String(result)
+  } catch {
+    // 評価できない場合は空文字を返す
+    return ''
+  }
 }
 
 /**
@@ -318,6 +356,7 @@ function compileJsxWithComponents(
 
   const interactiveElements: InteractiveElement[] = []
   const dynamicElements: DynamicElement[] = []
+  const listElements: ListElement[] = []
 
   function jsxToHtml(node: ts.Node): string {
     if (ts.isJsxElement(node)) {
@@ -331,9 +370,10 @@ function compileJsxWithComponents(
       }
 
       const { attrs, events, isInteractive } = processAttributesInternal(openingElement, sourceFile)
-      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements)
+      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals)
       const children = childrenResult.html
       const dynamicContent = childrenResult.dynamicExpression
+      const listContent = childrenResult.listExpression
 
       let id: string | null = null
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
@@ -343,13 +383,22 @@ function compileJsxWithComponents(
         interactiveElements.push({ id, tagName, events })
       }
 
-      if (dynamicContent && !isInteractive) {
+      if (dynamicContent && !isInteractive && !listContent) {
         id = generateDynamicId()
         dynamicElements.push({
           id,
           tagName,
           expression: dynamicContent.expression,
           fullContent: dynamicContent.fullContent,
+        })
+      }
+
+      if (listContent && !isInteractive) {
+        id = generateListId()
+        listElements.push({
+          id,
+          tagName,
+          mapExpression: listContent.mapExpression,
         })
       }
 
@@ -430,8 +479,13 @@ function compileJsxWithComponents(
 
   // クライアントJSを生成
   const lines: string[] = []
+  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0
 
   for (const el of dynamicElements) {
+    lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+  }
+
+  for (const el of listElements) {
     lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
   }
 
@@ -439,14 +493,17 @@ function compileJsxWithComponents(
     lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
   }
 
-  if (dynamicElements.length > 0 || interactiveElements.length > 0) {
+  if (hasDynamicContent || interactiveElements.length > 0) {
     lines.push('')
   }
 
-  if (dynamicElements.length > 0) {
+  if (hasDynamicContent) {
     lines.push('function updateAll() {')
     for (const el of dynamicElements) {
       lines.push(`  ${el.id}.textContent = ${el.fullContent}`)
+    }
+    for (const el of listElements) {
+      lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
     }
     lines.push('}')
     lines.push('')
@@ -455,7 +512,7 @@ function compileJsxWithComponents(
   for (const el of interactiveElements) {
     for (const event of el.events) {
       const handlerBody = extractArrowBody(event.handler)
-      if (dynamicElements.length > 0) {
+      if (hasDynamicContent) {
         lines.push(`${el.id}.on${event.eventName} = () => {`)
         lines.push(`  ${handlerBody}`)
         lines.push(`  updateAll()`)
@@ -466,14 +523,18 @@ function compileJsxWithComponents(
     }
   }
 
-  if (dynamicElements.length > 0) {
+  if (hasDynamicContent) {
     lines.push('')
     lines.push('// 初期表示')
     lines.push('updateAll()')
   }
 
   const clientJs = lines.join('\n')
-  const processedHtml = staticHtml.replace(/\$\{[^}]+\}/g, '0')
+
+  // 動的表現を初期値で評価して置換
+  const processedHtml = staticHtml.replace(/\$\{([^}]+)\}/g, (_, expr) => {
+    return evaluateWithInitialValues(expr, signals)
+  })
 
   // サーバー用JSX（Hono JSX形式）を生成
   const serverJsx = generateServerJsx(processedHtml)
@@ -485,6 +546,7 @@ function compileJsxWithComponents(
     signals,
     interactiveElements,
     dynamicElements,
+    listElements,
   }
 }
 
@@ -556,13 +618,17 @@ function processChildrenInternal(
   sourceFile: ts.SourceFile,
   components: Map<string, CompileResult>,
   interactiveElements: InteractiveElement[],
-  dynamicElements: DynamicElement[]
+  dynamicElements: DynamicElement[],
+  listElements: ListElement[],
+  signals: SignalDeclaration[]
 ): {
   html: string
   dynamicExpression: { expression: string; fullContent: string } | null
+  listExpression: { mapExpression: string } | null
 } {
   let html = ''
   let dynamicExpression: { expression: string; fullContent: string } | null = null
+  let listExpression: { mapExpression: string } | null = null
   const parts: string[] = []
 
   for (const child of children) {
@@ -573,16 +639,25 @@ function processChildrenInternal(
         parts.push(`"${text}"`)
       }
     } else if (ts.isJsxExpression(child) && child.expression) {
-      const expr = child.expression.getText(sourceFile)
-      html += `\${${expr}}`
-      parts.push(expr)
-      if (ts.isCallExpression(child.expression) ||
-          ts.isPropertyAccessExpression(child.expression) ||
-          ts.isBinaryExpression(child.expression) ||
-          ts.isConditionalExpression(child.expression)) {
-        dynamicExpression = {
-          expression: expr,
-          fullContent: parts.length === 1 ? expr : parts.join(' + '),
+      // map式を検出
+      const mapInfo = extractMapExpression(child.expression, sourceFile, signals)
+      if (mapInfo) {
+        // map式の場合: items().map(item => <li>{item}</li>)
+        listExpression = { mapExpression: mapInfo.mapExpression }
+        // 初期値で評価済みのHTMLを追加
+        html += mapInfo.initialHtml
+      } else {
+        const expr = child.expression.getText(sourceFile)
+        html += `\${${expr}}`
+        parts.push(expr)
+        if (ts.isCallExpression(child.expression) ||
+            ts.isPropertyAccessExpression(child.expression) ||
+            ts.isBinaryExpression(child.expression) ||
+            ts.isConditionalExpression(child.expression)) {
+          dynamicExpression = {
+            expression: expr,
+            fullContent: parts.length === 1 ? expr : parts.join(' + '),
+          }
         }
       }
     } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
@@ -595,12 +670,196 @@ function processChildrenInternal(
         html += componentResult.staticHtml
       } else {
         // 再帰的にJSXを処理（簡易版）
-        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements)
+        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals)
       }
     }
   }
 
-  return { html, dynamicExpression }
+  return { html, dynamicExpression, listExpression }
+}
+
+/**
+ * map式を抽出
+ * items().map(item => <li>{item}</li>) のパターンを検出
+ */
+function extractMapExpression(
+  expr: ts.Expression,
+  sourceFile: ts.SourceFile,
+  signals: SignalDeclaration[]
+): { mapExpression: string; initialHtml: string } | null {
+  // CallExpression で .map() を検出
+  if (!ts.isCallExpression(expr)) return null
+
+  const callExpr = expr
+  if (!ts.isPropertyAccessExpression(callExpr.expression)) return null
+
+  const propAccess = callExpr.expression
+  if (propAccess.name.text !== 'map') return null
+
+  // mapのコールバックを取得
+  const callback = callExpr.arguments[0]
+  if (!callback) return null
+
+  // コールバックがアロー関数の場合
+  if (ts.isArrowFunction(callback)) {
+    const param = callback.parameters[0]
+    if (!param) return null
+    const paramName = param.name.getText(sourceFile)
+
+    // コールバックのボディがJSX要素の場合
+    const body = callback.body
+    let jsxBody: ts.JsxElement | ts.JsxSelfClosingElement | null = null
+
+    if (ts.isJsxElement(body) || ts.isJsxSelfClosingElement(body)) {
+      jsxBody = body
+    } else if (ts.isParenthesizedExpression(body)) {
+      const inner = body.expression
+      if (ts.isJsxElement(inner) || ts.isJsxSelfClosingElement(inner)) {
+        jsxBody = inner
+      }
+    }
+
+    if (jsxBody) {
+      // JSXをテンプレートリテラル形式に変換
+      const templateStr = jsxToTemplateString(jsxBody, sourceFile, paramName)
+      const arrayExpr = propAccess.expression.getText(sourceFile)
+      const mapExpression = `${arrayExpr}.map(${paramName} => ${templateStr}).join('')`
+
+      // 初期値を使ってHTMLを生成
+      const initialHtml = evaluateMapWithInitialValues(arrayExpr, paramName, templateStr, signals)
+
+      return { mapExpression, initialHtml }
+    }
+  }
+
+  return null
+}
+
+/**
+ * map式を初期値で評価してHTMLを生成
+ */
+function evaluateMapWithInitialValues(
+  arrayExpr: string,
+  paramName: string,
+  templateStr: string,
+  signals: SignalDeclaration[]
+): string {
+  // 配列式からsignal呼び出しを見つけて初期値を取得
+  // items() または items().filter(...) のパターンに対応
+
+  // signal呼び出しを初期値で置き換えた式を作成
+  let replaced = arrayExpr
+  for (const s of signals) {
+    const regex = new RegExp(`\\b${s.getter}\\s*\\(\\s*\\)`, 'g')
+    replaced = replaced.replace(regex, s.initialValue)
+  }
+
+  // 配列を評価
+  let arrayValue: unknown[]
+  try {
+    arrayValue = eval(replaced)
+    if (!Array.isArray(arrayValue)) {
+      return ''
+    }
+  } catch {
+    return ''
+  }
+
+  // 各要素に対してテンプレートを適用
+  try {
+    const results = arrayValue.map((item) => {
+      // テンプレートリテラルを評価
+      // templateStr は `<li>${item}</li>` のような形式
+      // バッククォートを除去してテンプレートを評価
+      const templateBody = templateStr.slice(1, -1) // バッククォートを除去
+
+      // ${paramName} と ${paramName.prop} を実際の値に置換
+      const result = templateBody.replace(
+        new RegExp(`\\$\\{${paramName}(\\.\\w+)?\\}`, 'g'),
+        (_, prop) => {
+          if (prop) {
+            // プロパティアクセス: ${item.text} → item.textの値
+            const propName = prop.slice(1) // '.' を除去
+            return String((item as Record<string, unknown>)[propName] ?? '')
+          }
+          return String(item)
+        }
+      )
+      return result
+    })
+    return results.join('')
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * JSX要素をテンプレートリテラル文字列に変換
+ * <li>{item}</li> → `<li>${item}</li>`
+ */
+function jsxToTemplateString(
+  node: ts.JsxElement | ts.JsxSelfClosingElement,
+  sourceFile: ts.SourceFile,
+  _paramName: string
+): string {
+  if (ts.isJsxSelfClosingElement(node)) {
+    const tagName = node.tagName.getText(sourceFile)
+    // 属性を処理
+    let attrs = ''
+    node.attributes.properties.forEach((attr) => {
+      if (ts.isJsxAttribute(attr) && attr.name) {
+        const attrName = attr.name.getText(sourceFile)
+        if (attr.initializer) {
+          if (ts.isStringLiteral(attr.initializer)) {
+            attrs += ` ${attrName}="${attr.initializer.text}"`
+          } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+            attrs += ` ${attrName}="\${${attr.initializer.expression.getText(sourceFile)}}"`
+          }
+        }
+      }
+    })
+    return `\`<${tagName}${attrs} />\``
+  }
+
+  if (ts.isJsxElement(node)) {
+    const tagName = node.openingElement.tagName.getText(sourceFile)
+    // 属性を処理
+    let attrs = ''
+    node.openingElement.attributes.properties.forEach((attr) => {
+      if (ts.isJsxAttribute(attr) && attr.name) {
+        const attrName = attr.name.getText(sourceFile)
+        if (attr.initializer) {
+          if (ts.isStringLiteral(attr.initializer)) {
+            attrs += ` ${attrName}="${attr.initializer.text}"`
+          } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+            attrs += ` ${attrName}="\${${attr.initializer.expression.getText(sourceFile)}}"`
+          }
+        }
+      }
+    })
+
+    // 子要素を処理
+    let children = ''
+    for (const child of node.children) {
+      if (ts.isJsxText(child)) {
+        const text = child.getText(sourceFile).trim()
+        if (text) {
+          children += text
+        }
+      } else if (ts.isJsxExpression(child) && child.expression) {
+        children += `\${${child.expression.getText(sourceFile)}}`
+      } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
+        // 再帰的に処理（バッククォートを除去して結合）
+        const inner = jsxToTemplateString(child, sourceFile, _paramName)
+        // バッククォートを除去
+        children += inner.slice(1, -1)
+      }
+    }
+
+    return `\`<${tagName}${attrs}>${children}</${tagName}>\``
+  }
+
+  return '``'
 }
 
 /**
@@ -611,12 +870,14 @@ function jsxChildToHtml(
   sourceFile: ts.SourceFile,
   components: Map<string, CompileResult>,
   interactiveElements: InteractiveElement[],
-  dynamicElements: DynamicElement[]
+  dynamicElements: DynamicElement[],
+  listElements: ListElement[],
+  signals: SignalDeclaration[]
 ): string {
   if (ts.isJsxElement(node)) {
     const tagName = node.openingElement.tagName.getText(sourceFile)
     const { attrs, events, isInteractive } = processAttributesInternal(node.openingElement, sourceFile)
-    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements)
+    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals)
 
     let id: string | null = null
     const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
@@ -626,13 +887,22 @@ function jsxChildToHtml(
       interactiveElements.push({ id, tagName, events })
     }
 
-    if (childrenResult.dynamicExpression && !isInteractive) {
+    if (childrenResult.dynamicExpression && !isInteractive && !childrenResult.listExpression) {
       id = generateDynamicId()
       dynamicElements.push({
         id,
         tagName,
         expression: childrenResult.dynamicExpression.expression,
         fullContent: childrenResult.dynamicExpression.fullContent,
+      })
+    }
+
+    if (childrenResult.listExpression && !isInteractive) {
+      id = generateListId()
+      listElements.push({
+        id,
+        tagName,
+        mapExpression: childrenResult.listExpression.mapExpression,
       })
     }
 

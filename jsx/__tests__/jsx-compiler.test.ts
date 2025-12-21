@@ -230,21 +230,97 @@ describe('動的コンテンツ', () => {
 
   /**
    * 初期値の正しい描画
-   * signal(false) → 初期表示は "OFF" であるべき（現状は "0"）
+   * signal(false) → 初期表示は "OFF" であるべき
    */
-  it.todo('初期値の正しい描画')
+  it('初期値の正しい描画（真偽値から文字列）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [on, setOn] = signal(false)
+        return <span>{on() ? 'ON' : 'OFF'}</span>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 初期値 false なので OFF が表示される
+    expect(component.serverComponent).toContain('>OFF<')
+  })
+
+  /**
+   * 初期値の正しい描画（数値の演算）
+   * signal(5) → 初期表示は 10
+   */
+  it('初期値の正しい描画（数値の演算）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = signal(5)
+        return <span>{count() * 2}</span>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 初期値 5 * 2 = 10
+    expect(component.serverComponent).toContain('>10<')
+  })
 
   /**
    * 配列のmap
    * <ul>{items().map(item => <li>{item}</li>)}</ul>
    */
-  it.todo('配列のmap')
+  it('配列のmap', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal(['a', 'b', 'c'])
+        return <ul>{items().map(item => <li>{item}</li>)}</ul>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // リスト要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__l0"')
+
+    // クライアントJSでinnerHTMLで更新される
+    expect(component.clientJs).toContain('__l0.innerHTML = items().map(item => `<li>${item}</li>`).join(\'\')')
+
+    // 初期値が描画される
+    expect(component.serverComponent).toContain('<li>a</li><li>b</li><li>c</li>')
+  })
 
   /**
    * 配列のfilter + map
    * <ul>{items().filter(x => x.done).map(item => <li>{item.text}</li>)}</ul>
    */
-  it.todo('配列のfilter + map')
+  it('配列のfilter + map', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { text: 'a', done: true },
+          { text: 'b', done: false },
+          { text: 'c', done: true }
+        ])
+        return <ul>{items().filter(x => x.done).map(item => <li>{item.text}</li>)}</ul>
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // リスト要素にIDが付与される
+    expect(component.serverComponent).toContain('id="__l0"')
+
+    // クライアントJSでfilter + mapが使われる
+    expect(component.clientJs).toContain('items().filter(x => x.done).map(item =>')
+
+    // 初期値でフィルタされた要素が描画される（done: trueのみ）
+    expect(component.serverComponent).toContain('<li>a</li>')
+    expect(component.serverComponent).toContain('<li>c</li>')
+    expect(component.serverComponent).not.toContain('<li>b</li>')
+  })
 })
 
 // =============================================================================

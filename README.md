@@ -36,12 +36,6 @@ JSXから静的HTML + クライアントJSを生成するコンパイラ。
 
 ## TODO
 
-### 動的コンテンツ
-
-- [ ] 初期値の正しい描画（現状: Toggle初期表示が"0"→"OFF"）
-- [ ] 配列のmap `{items().map(item => <li>{item}</li>)}`
-- [ ] 配列のfilter + map
-
 ### イベントハンドラ
 
 - [ ] onChange
