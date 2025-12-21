@@ -36,6 +36,7 @@ type ListElement = {
   tagName: string
   mapExpression: string  // items().map(item => '<li>' + item + '</li>').join('')
   itemEvents: Array<{
+    eventId: number       // イベントを区別するID
     eventName: string     // click, change, keydown
     handler: string       // (item) => remove(item.id)
     paramName: string     // item
@@ -625,8 +626,8 @@ function compileJsxWithComponents(
     if (el.itemEvents.length > 0) {
       for (const event of el.itemEvents) {
         lines.push(`${el.id}.addEventListener('${event.eventName}', (e) => {`)
-        lines.push(`  const target = e.target.closest('[data-index]')`)
-        lines.push(`  if (target) {`)
+        lines.push(`  const target = e.target.closest('[data-event-id="${event.eventId}"]')`)
+        lines.push(`  if (target && target.dataset.eventId === '${event.eventId}') {`)
         lines.push(`    const __index = parseInt(target.dataset.index, 10)`)
         lines.push(`    const ${event.paramName} = ${el.arrayExpression}[__index]`)
         lines.push(`    ${extractArrowBody(event.handler)}`)
@@ -856,6 +857,7 @@ function evaluateStyleObject(
 type ListExpressionInfo = {
   mapExpression: string
   itemEvents: Array<{
+    eventId: number
     eventName: string
     handler: string
     paramName: string
@@ -937,6 +939,7 @@ type MapExpressionResult = {
   mapExpression: string
   initialHtml: string
   itemEvents: Array<{
+    eventId: number
     eventName: string
     handler: string
     paramName: string
@@ -1000,6 +1003,7 @@ function extractMapExpression(
 
       // イベント情報を収集
       const itemEvents = templateResult.events.map(e => ({
+        eventId: e.eventId,
         eventName: e.eventName,
         handler: e.handler,
         paramName,
@@ -1073,6 +1077,7 @@ function evaluateMapWithInitialValues(
 type TemplateStringResult = {
   template: string
   events: Array<{
+    eventId: number
     eventName: string
     handler: string
   }>
@@ -1081,90 +1086,86 @@ type TemplateStringResult = {
 /**
  * JSX要素をテンプレートリテラル文字列に変換
  * <li>{item}</li> → `<li>${item}</li>`
- * イベントハンドラはdata-index属性に置き換え、イベント情報を返す
+ * イベントハンドラはdata-index属性とdata-event-id属性に置き換え、イベント情報を返す
  */
 function jsxToTemplateString(
   node: ts.JsxElement | ts.JsxSelfClosingElement,
   sourceFile: ts.SourceFile,
   paramName: string
 ): TemplateStringResult {
-  const events: Array<{ eventName: string; handler: string }> = []
+  const events: Array<{ eventId: number; eventName: string; handler: string }> = []
+  let eventIdCounter = 0
 
-  function processAttributes(
-    attributes: ts.JsxAttributes
-  ): { attrs: string; hasEvents: boolean } {
-    let attrs = ''
-    let hasEvents = false
+  function processNode(
+    n: ts.JsxElement | ts.JsxSelfClosingElement
+  ): string {
+    function processAttributes(
+      attributes: ts.JsxAttributes
+    ): { attrs: string; eventAttrs: string } {
+      let attrs = ''
+      let eventAttrs = ''
 
-    attributes.properties.forEach((attr) => {
-      if (ts.isJsxAttribute(attr) && attr.name) {
-        const attrName = attr.name.getText(sourceFile)
+      attributes.properties.forEach((attr) => {
+        if (ts.isJsxAttribute(attr) && attr.name) {
+          const attrName = attr.name.getText(sourceFile)
 
-        if (attrName.startsWith('on')) {
-          // イベントハンドラを検出
-          const eventName = attrName.slice(2).toLowerCase()
-          if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-            const handler = attr.initializer.expression.getText(sourceFile)
-            events.push({ eventName, handler })
-            hasEvents = true
-          }
-        } else if (attr.initializer) {
-          if (ts.isStringLiteral(attr.initializer)) {
-            attrs += ` ${attrName}="${attr.initializer.text}"`
-          } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-            attrs += ` ${attrName}="\${${attr.initializer.expression.getText(sourceFile)}}"`
+          if (attrName.startsWith('on')) {
+            // イベントハンドラを検出
+            const eventName = attrName.slice(2).toLowerCase()
+            if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+              const handler = attr.initializer.expression.getText(sourceFile)
+              const eventId = eventIdCounter++
+              events.push({ eventId, eventName, handler })
+              // data-indexとdata-event-idを追加
+              eventAttrs = ` data-index="\${__index}" data-event-id="${eventId}"`
+            }
+          } else if (attr.initializer) {
+            if (ts.isStringLiteral(attr.initializer)) {
+              attrs += ` ${attrName}="${attr.initializer.text}"`
+            } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+              attrs += ` ${attrName}="\${${attr.initializer.expression.getText(sourceFile)}}"`
+            }
           }
         }
-      }
-    })
+      })
 
-    return { attrs, hasEvents }
-  }
-
-  if (ts.isJsxSelfClosingElement(node)) {
-    const tagName = node.tagName.getText(sourceFile)
-    const { attrs, hasEvents } = processAttributes(node.attributes)
-    // イベントがある場合はdata-index属性を追加
-    const indexAttr = hasEvents ? ' data-index="${__index}"' : ''
-    return {
-      template: `\`<${tagName}${indexAttr}${attrs} />\``,
-      events,
+      return { attrs, eventAttrs }
     }
-  }
 
-  if (ts.isJsxElement(node)) {
-    const tagName = node.openingElement.tagName.getText(sourceFile)
-    const { attrs, hasEvents } = processAttributes(node.openingElement.attributes)
+    if (ts.isJsxSelfClosingElement(n)) {
+      const tagName = n.tagName.getText(sourceFile)
+      const { attrs, eventAttrs } = processAttributes(n.attributes)
+      return `<${tagName}${eventAttrs}${attrs} />`
+    }
 
-    // 子要素を処理
-    let children = ''
-    for (const child of node.children) {
-      if (ts.isJsxText(child)) {
-        const text = child.getText(sourceFile).trim()
-        if (text) {
-          children += text
+    if (ts.isJsxElement(n)) {
+      const tagName = n.openingElement.tagName.getText(sourceFile)
+      const { attrs, eventAttrs } = processAttributes(n.openingElement.attributes)
+
+      // 子要素を処理
+      let children = ''
+      for (const child of n.children) {
+        if (ts.isJsxText(child)) {
+          const text = child.getText(sourceFile).trim()
+          if (text) {
+            children += text
+          }
+        } else if (ts.isJsxExpression(child) && child.expression) {
+          children += `\${${child.expression.getText(sourceFile)}}`
+        } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
+          // 再帰的に処理
+          children += processNode(child)
         }
-      } else if (ts.isJsxExpression(child) && child.expression) {
-        children += `\${${child.expression.getText(sourceFile)}}`
-      } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
-        // 再帰的に処理（バッククォートを除去して結合）
-        const result = jsxToTemplateString(child, sourceFile, paramName)
-        // バッククォートを除去
-        children += result.template.slice(1, -1)
-        // 子要素のイベントも収集
-        events.push(...result.events)
       }
+
+      return `<${tagName}${eventAttrs}${attrs}>${children}</${tagName}>`
     }
 
-    // イベントがある場合はdata-index属性を追加
-    const indexAttr = hasEvents ? ' data-index="${__index}"' : ''
-    return {
-      template: `\`<${tagName}${indexAttr}${attrs}>${children}</${tagName}>\``,
-      events,
-    }
+    return ''
   }
 
-  return { template: '``', events: [] }
+  const template = `\`${processNode(node)}\``
+  return { template, events }
 }
 
 /**

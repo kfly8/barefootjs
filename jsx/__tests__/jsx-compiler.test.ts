@@ -374,6 +374,49 @@ describe('map内の動的要素', () => {
   })
 
   /**
+   * map内の複数のonClick（異なる要素）
+   * items().map(item => <li><button onClick={toggle}>A</button><button onClick={remove}>B</button></li>)
+   *
+   * → 各イベントハンドラはdata-event-idで区別される
+   */
+  it('map内の複数のonClick（異なる要素）', async () => {
+    const source = `
+      import { signal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = signal([
+          { id: 1, text: 'a', done: false },
+          { id: 2, text: 'b', done: true }
+        ])
+        const toggle = (id) => setItems(items => items.map(x => x.id === id ? { ...x, done: !x.done } : x))
+        const remove = (id) => setItems(items => items.filter(x => x.id !== id))
+        return (
+          <ul>{items().map(todo => (
+            <li>
+              <span>{todo.text}</span>
+              <button onClick={() => toggle(todo.id)}>Toggle</button>
+              <button onClick={() => remove(todo.id)}>Delete</button>
+            </li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // 各ボタンに異なるdata-event-idが付与される
+    expect(component.clientJs).toContain('data-event-id="0"')
+    expect(component.clientJs).toContain('data-event-id="1"')
+
+    // 各イベントハンドラが個別に設定される
+    expect(component.clientJs).toContain('toggle(todo.id)')
+    expect(component.clientJs).toContain('remove(todo.id)')
+
+    // イベントデリゲーションでevent-idをチェックする
+    expect(component.clientJs).toContain("dataset.eventId === '0'")
+    expect(component.clientJs).toContain("dataset.eventId === '1'")
+  })
+
+  /**
    * map内のonChange
    * items().map(item => <input onChange={() => toggle(item.id)} />)
    */
