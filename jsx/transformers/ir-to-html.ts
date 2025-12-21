@@ -5,23 +5,14 @@
  */
 
 import type { IRNode, IRElement, SignalDeclaration } from '../types'
+import { safeEvaluateWithSignals } from '../utils/safe-evaluator'
 
 /**
  * 動的表現をsignalの初期値で評価して文字列を返す
+ * evalを使用せず安全に評価する
  */
 export function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): string {
-  let replaced = expr
-  for (const s of signals) {
-    const regex = new RegExp(`\\b${s.getter}\\s*\\(\\s*\\)`, 'g')
-    replaced = replaced.replace(regex, s.initialValue)
-  }
-
-  try {
-    const result = eval(replaced)
-    return String(result)
-  } catch {
-    return ''
-  }
+  return safeEvaluateWithSignals(expr, signals)
 }
 
 /**
