@@ -1613,8 +1613,8 @@ describe('propsを持つコンポーネント', () => {
 
     // 子コンポーネントのimportがある（ハッシュ付き）
     expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
-    // init呼び出しがある
-    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd })')
+    // init呼び出しがある（コールバックpropsはupdateAll()でラップされる）
+    expect(appComponent!.clientJs).toContain('initForm({ onAdd: (...args) => { handleAdd(...args); updateAll() }}')
   })
 
   /**
@@ -1651,6 +1651,80 @@ describe('propsを持つコンポーネント', () => {
     expect(counter).toBeDefined()
     expect(counter!.hash).toBeTruthy()
     expect(counter!.filename).toContain(counter!.hash)
+  })
+})
+
+// =============================================================================
+// コールバックpropsのupdateAll()ラップ
+// =============================================================================
+
+describe('コールバックpropsのupdateAll()ラップ', () => {
+  /**
+   * 動的コンテンツがある親では、コールバックpropsがラップされる
+   */
+  it('動的コンテンツがある場合、コールバックpropsがupdateAll()でラップされる', async () => {
+    const files: Record<string, string> = {
+      '/test/Parent.tsx': `
+        import { signal } from 'barefoot'
+        import Child from './Child'
+        function Parent() {
+          const [count, setCount] = signal(0)
+          const handleClick = () => setCount(count() + 1)
+          return (
+            <div>
+              <span>{count()}</span>
+              <Child onClick={handleClick} />
+            </div>
+          )
+        }
+        export default Parent
+      `,
+      '/test/Child.tsx': `
+        type Props = { onClick: () => void }
+        function Child({ onClick }: Props) {
+          return <button onClick={() => onClick()}>Click</button>
+        }
+        export default Child
+      `,
+    }
+    const result = await compileWithFiles('/test/Parent.tsx', files)
+    const parent = result.components.find(c => c.name === 'Parent')
+
+    // コールバックがupdateAll()でラップされている
+    expect(parent!.clientJs).toContain('onClick: (...args) => { handleClick(...args); updateAll() }')
+  })
+
+  /**
+   * 動的コンテンツがない親では、コールバックpropsはラップされない
+   */
+  it('動的コンテンツがない場合、コールバックpropsはラップされない', async () => {
+    const files: Record<string, string> = {
+      '/test/Parent.tsx': `
+        import Child from './Child'
+        function Parent() {
+          const handleClick = () => console.log('clicked')
+          return (
+            <div>
+              <Child onClick={handleClick} />
+            </div>
+          )
+        }
+        export default Parent
+      `,
+      '/test/Child.tsx': `
+        type Props = { onClick: () => void }
+        function Child({ onClick }: Props) {
+          return <button onClick={() => onClick()}>Click</button>
+        }
+        export default Child
+      `,
+    }
+    const result = await compileWithFiles('/test/Parent.tsx', files)
+    const parent = result.components.find(c => c.name === 'Parent')
+
+    // コールバックはラップされていない
+    expect(parent!.clientJs).toContain('onClick: handleClick')
+    expect(parent!.clientJs).not.toContain('updateAll')
   })
 })
 

@@ -401,6 +401,23 @@ function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): 
 }
 
 /**
+ * コールバックprops（onXxx）をラップしてupdateAll()を追加
+ * { onAdd: handleAdd } → { onAdd: (...args) => { handleAdd(...args); updateAll() } }
+ */
+function wrapCallbackProps(propsExpr: string, hasUpdateAll: boolean): string {
+  if (!hasUpdateAll) return propsExpr
+
+  // onで始まるprops（onAdd, onToggle等）をラップ
+  return propsExpr.replace(
+    /(on[A-Z]\w*):\s*([^,}]+)/g,
+    (_, propName, value) => {
+      const trimmedValue = value.trim()
+      return `${propName}: (...args) => { ${trimmedValue}(...args); updateAll() }`
+    }
+  )
+}
+
+/**
  * コンテンツからハッシュを生成（8文字の16進数）
  */
 function generateContentHash(content: string): string {
@@ -522,9 +539,18 @@ export async function compileJSX(
       })
       .join('\n')
 
+    // 親コンポーネントに動的コンテンツがあるか（updateAllが生成されるか）
+    const hasDynamicContent = result.dynamicElements.length > 0 ||
+                              result.listElements.length > 0 ||
+                              result.dynamicAttributes.length > 0
+
     // 子コンポーネントのinit呼び出しを生成
+    // コールバックpropsをラップしてupdateAll()を追加
     const childInitCalls = childInits
-      .map(child => `init${child.name}(${child.propsExpr})`)
+      .map(child => {
+        const wrappedProps = wrapCallbackProps(child.propsExpr, hasDynamicContent)
+        return `init${child.name}(${wrappedProps})`
+      })
       .join('\n')
 
     // propsがある場合はinit関数でラップする
