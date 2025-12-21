@@ -5,8 +5,8 @@
   "type": "module",
   "private": true,
   "exports": {
-    "./core": "./core/index.ts",
-    "./compiler": "./jsx/compiler/index.ts"
+    "./dom": "./dom/index.ts",
+    "./jsx": "./jsx/index.ts"
   },
   "scripts": {
     "test": "bun test"

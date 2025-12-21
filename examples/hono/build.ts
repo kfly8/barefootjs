@@ -8,13 +8,13 @@
  * を生成する
  */
 
-import { compileJSX } from '../../jsx/compiler'
+import { compileJSX } from '../../jsx'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
-const CORE_DIR = resolve(ROOT_DIR, '../../core')
+const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 
 // コンパイル対象のコンポーネント
 const COMPONENTS = ['Counter', 'Toggle']
@@ -26,7 +26,7 @@ function contentHash(content: string): string {
 await mkdir(DIST_DIR, { recursive: true })
 
 // barefoot.js（ハッシュ付き）を先に生成
-const barefootContent = await Bun.file(resolve(CORE_DIR, 'runtime.js')).text()
+const barefootContent = await Bun.file(resolve(DOM_DIR, 'runtime.js')).text()
 const barefootHash = contentHash(barefootContent)
 const barefootFileName = `barefoot-${barefootHash}.js`
 await Bun.write(resolve(DIST_DIR, barefootFileName), barefootContent)
