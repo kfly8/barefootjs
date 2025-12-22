@@ -16,7 +16,7 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 
 // Components to compile
-const COMPONENTS = ['Counter', 'Toggle']
+const COMPONENTS = ['Counter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm']
 
 function contentHash(content: string): string {
   return Bun.hash(content).toString(16).slice(0, 8)
@@ -56,6 +56,7 @@ for (const componentName of COMPONENTS) {
         /from ['"]\.\/barefoot\.js['"]/g,
         `from './${barefootFileName}'`
       )
+
       const hash = contentHash(updatedClientJs)
       clientFileName = `${component.name}.client-${hash}.js`
       await Bun.write(resolve(DIST_DIR, clientFileName), updatedClientJs)
