@@ -9,6 +9,12 @@ import { mkdir } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import type { BuildConfig, ResolvedBuildConfig, StaticBuildConfig, ServerBuildConfig } from './build-config'
 
+// Default relative path from example directory to dom runtime
+const DEFAULT_DOM_DIR_PATH = '../../dom'
+
+// Pattern to match barefoot.js imports in generated client code
+const BAREFOOT_IMPORT_PATTERN = /from ['"]\.\/barefoot\.js['"]/g
+
 /**
  * Load and resolve build configuration
  */
@@ -18,7 +24,7 @@ export async function loadBuildConfig(configPath: string): Promise<ResolvedBuild
   
   const rootDir = dirname(configPath)
   const distDir = resolve(rootDir, config.dist || 'dist')
-  const domDir = resolve(rootDir, '../../dom')
+  const domDir = resolve(rootDir, DEFAULT_DOM_DIR_PATH)
   
   return {
     ...config,
@@ -115,7 +121,7 @@ async function buildServer(config: ResolvedBuildConfig & ServerBuildConfig): Pro
       let clientFileName: string | undefined
       if (component.clientJs) {
         const updatedClientJs = component.clientJs.replace(
-          /from ['"]\.\/barefoot\.js['"]/g,
+          BAREFOOT_IMPORT_PATTERN,
           `from './${barefootFileName}'`
         )
         const hash = contentHash(updatedClientJs)
@@ -147,7 +153,9 @@ export async function build(configPath: string): Promise<void> {
   } else if (config.mode === 'server') {
     await buildServer(config as ResolvedBuildConfig & ServerBuildConfig)
   } else {
-    throw new Error(`Unknown build mode: ${(config as any).mode}`)
+    // This should never happen if BuildConfig type is properly constrained
+    const unknownMode = config.mode
+    throw new Error(`Unknown build mode: ${unknownMode}`)
   }
   
   console.log('\nBuild complete!')

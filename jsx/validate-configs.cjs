@@ -9,6 +9,9 @@
 const fs = require('fs');
 const path = require('path');
 
+// Configuration directory relative to this script
+const EXAMPLES_DIR_PATH = '../examples';
+
 // Configuration schemas
 const STATIC_REQUIRED = ['mode', 'entry', 'template', 'title'];
 const SERVER_REQUIRED = ['mode', 'components'];
@@ -109,7 +112,7 @@ function validateConfig(filepath) {
 }
 
 // Find all barefoot.config.json files
-const examplesDir = path.join(__dirname, '../examples');
+const examplesDir = path.join(__dirname, EXAMPLES_DIR_PATH);
 const examples = fs.readdirSync(examplesDir);
 
 console.log('='.repeat(60));
