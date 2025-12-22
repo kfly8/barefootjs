@@ -1,15 +1,15 @@
 /**
  * BarefootJS JSX Compiler
  *
- * JSXをコンパイルして静的HTMLとクライアントJSを生成する。
- * - コンポーネントのインポートを解決
- * - イベントハンドラ（onClick等）を検出してクライアントJSを生成
- * - 動的コンテンツ（{count()}等）を検出して更新関数を生成
+ * Compiles JSX to static HTML and client JS.
+ * - Resolves component imports
+ * - Detects event handlers (onClick, etc.) and generates client JS
+ * - Detects dynamic content ({count()}, etc.) and generates update functions
  *
- * 使用例:
+ * Usage example:
  *   const result = await compileJSX(entryPath, readFile)
- *   // result.html: 静的HTML
- *   // result.components: コンポーネントごとのJS
+ *   // result.html: static HTML
+ *   // result.components: JS for each component
  */
 
 import ts from 'typescript'
@@ -56,15 +56,15 @@ export type { CompileOptions, ServerComponentAdapter }
 export { honoServerAdapter }
 
 /**
- * エントリーポイントからアプリケーションをコンパイル
+ * Compile application from entry point
  *
- * コンポーネントのインポートを再帰的に解決し、
- * 静的HTMLとコンポーネントごとのJSを生成する。
+ * Recursively resolves component imports and
+ * generates static HTML and JS for each component.
  *
- * @param entryPath - エントリーファイルのパス (例: /path/to/index.tsx)
- * @param readFile - ファイルを読み込む関数
- * @param options - コンパイルオプション
- * @returns { html, components } - 静的HTMLとコンポーネントJS配列
+ * @param entryPath - Entry file path (e.g., /path/to/index.tsx)
+ * @param readFile - Function to read files
+ * @param options - Compilation options
+ * @returns { html, components } - Static HTML and component JS array
  */
 export async function compileJSX(
   entryPath: string,
@@ -75,29 +75,29 @@ export async function compileJSX(
   // Create a new IdGenerator for each compilation (enables parallel compilation)
   const idGenerator = new IdGenerator()
 
-  // コンパイル済みコンポーネントのキャッシュ
+  // Cache of compiled components
   const compiledComponents: Map<string, CompileResult> = new Map()
 
-  // ベースディレクトリを取得
+  // Get base directory
   const baseDir = entryPath.substring(0, entryPath.lastIndexOf('/'))
 
   /**
-   * コンポーネントをコンパイル（再帰的に依存を解決）
+   * Compile component (recursively resolve dependencies)
    */
   async function compileComponent(componentPath: string): Promise<CompileResult> {
-    // キャッシュチェック
+    // Check cache
     if (compiledComponents.has(componentPath)) {
       return compiledComponents.get(componentPath)!
     }
 
-    // ファイル読み込み（.tsx拡張子を補完）
+    // Read file (append .tsx extension)
     const fullPath = componentPath.endsWith('.tsx') ? componentPath : `${componentPath}.tsx`
     const source = await readFile(fullPath)
 
-    // このコンポーネントのインポートを抽出
+    // Extract imports for this component
     const imports = extractImports(source, fullPath)
 
-    // 依存コンポーネントを先にコンパイル
+    // Compile dependent components first
     const componentResults: Map<string, CompileResult> = new Map()
     for (const imp of imports) {
       const depPath = resolvePath(baseDir, imp.path)
@@ -105,18 +105,18 @@ export async function compileJSX(
       componentResults.set(imp.name, result)
     }
 
-    // コンポーネントをコンパイル（子コンポーネントのHTMLを埋め込む）
+    // Compile component (embed child component HTML)
     const result = compileJsxWithComponents(source, fullPath, componentResults, idGenerator)
 
     compiledComponents.set(componentPath, result)
     return result
   }
 
-  // エントリーポイントをコンパイル
+  // Compile entry point
   const entryResult = await compileComponent(entryPath)
 
-  // コンポーネントごとにJS/サーバーコンポーネントを生成
-  // 1. まず全コンポーネントのコードを生成（importパスはプレースホルダー）
+  // Generate JS/server component for each component
+  // 1. First generate code for all components (with placeholder import paths)
   const componentData: Array<{
     name: string
     path: string
@@ -142,7 +142,7 @@ export async function compileJSX(
     }
   }
 
-  // 2. 各コンポーネントのハッシュを計算（子コンポーネントのimportを除いた内容で）
+  // 2. Calculate hash for each component (based on content excluding child component imports)
   const componentHashes: Map<string, string> = new Map()
   for (const data of componentData) {
     const { name, result, signalDeclarations } = data
@@ -152,13 +152,13 @@ export async function compileJSX(
     componentHashes.set(name, hash)
   }
 
-  // 3. 最終的なclientJsを生成（正しいハッシュ付きimportパスで）
+  // 3. Generate final clientJs (with correct hash-suffixed import paths)
   const components: ComponentOutput[] = []
 
   for (const data of componentData) {
     const { name, result, signalDeclarations, childInits } = data
 
-    // 子コンポーネントのimportを生成（ハッシュ付き）
+    // Generate child component imports (with hash)
     const childImports = childInits
       .map(child => {
         const childHash = componentHashes.get(child.name) || ''
@@ -167,20 +167,20 @@ export async function compileJSX(
       })
       .join('\n')
 
-    // 子コンポーネントのinit呼び出しを生成
-    // createEffect により自動的に更新されるため、コールバックのラップは不要
+    // Generate child component init calls
+    // Automatically updated by createEffect, so no need to wrap in callback
     const childInitCalls = childInits
       .map(child => {
         return `init${child.name}(${child.propsExpr})`
       })
       .join('\n')
 
-    // 動的コンテンツがあるか（createEffectが生成されるか）
+    // Check if there's dynamic content (whether createEffect is generated)
     const hasDynamicContent = result.dynamicElements.length > 0 ||
                               result.listElements.length > 0 ||
                               result.dynamicAttributes.length > 0
 
-    // propsがある場合はinit関数でラップする
+    // Wrap in init function if props exist
     let clientJs = ''
     if (result.clientJs || childInits.length > 0) {
       const allImports = [
@@ -190,7 +190,7 @@ export async function compileJSX(
 
       const bodyCode = [
         result.clientJs,
-        childInitCalls ? `\n// 子コンポーネントの初期化\n${childInitCalls}` : '',
+        childInitCalls ? `\n// Initialize child components\n${childInitCalls}` : '',
       ].filter(Boolean).join('\n')
 
       if (result.props.length > 0) {
@@ -243,14 +243,14 @@ ${bodyCode}
 }
 
 /**
- * コンポーネント対応のJSXコンパイル（内部用）
- * 子コンポーネントのHTMLを埋め込みつつコンパイルする
+ * JSX compilation with component support (internal use)
+ * Compiles while embedding child component HTML
  *
- * IRベースの処理フロー：
- * 1. JSX → IR変換 (jsx-to-ir.ts)
- * 2. IR → HTML変換 (ir-to-html.ts)
- * 3. IR → ClientJS情報収集 (ir-to-client-js.ts)
- * 4. ClientJS生成 (createEffectベース)
+ * IR-based processing flow:
+ * 1. JSX → IR conversion (jsx-to-ir.ts)
+ * 2. IR → HTML conversion (ir-to-html.ts)
+ * 3. IR → ClientJS info collection (ir-to-client-js.ts)
+ * 4. ClientJS generation (createEffect-based)
  */
 function compileJsxWithComponents(
   source: string,
@@ -266,13 +266,13 @@ function compileJsxWithComponents(
     ts.ScriptKind.TSX
   )
 
-  // signal宣言を抽出
+  // Extract signal declarations
   const signals = extractSignals(source, filePath)
 
-  // コンポーネントのpropsを抽出
+  // Extract component props
   const props = extractComponentProps(source, filePath)
 
-  // ローカル関数を抽出
+  // Extract local functions
   const localFunctions = extractLocalFunctions(source, filePath, signals)
 
   // Create IR context

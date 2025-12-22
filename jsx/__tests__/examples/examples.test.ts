@@ -130,33 +130,33 @@ describe('examples/todo-spa', () => {
     }, { serverAdapter: honoServerAdapter })
   })
 
-  it('コンパイルに成功する', () => {
+  it('compiles successfully', () => {
     expect(result.components.length).toBeGreaterThan(0)
   })
 
-  it('TodoApp コンポーネントが生成される', () => {
+  it('TodoApp component is generated', () => {
     const todoApp = result.components.find(c => c.name === 'TodoApp')
     expect(todoApp).toBeDefined()
   })
 
-  it('AddTodoForm コンポーネントが生成される', () => {
+  it('AddTodoForm component is generated', () => {
     const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
     expect(addTodoForm).toBeDefined()
   })
 
-  it('TodoItem コンポーネントが生成される', () => {
+  it('TodoItem component is generated', () => {
     const todoItem = result.components.find(c => c.name === 'TodoItem')
     expect(todoItem).toBeDefined()
   })
 
-  it('TodoApp で fetch が使用される (API呼び出し)', () => {
+  it('fetch is used in TodoApp (API calls)', () => {
     const todoApp = result.components.find(c => c.name === 'TodoApp')
     // fetch calls in the client-side code (for CRUD operations)
     expect(todoApp?.clientJs).toContain("fetch('/api/todos'")
     expect(todoApp?.clientJs).toContain("fetch(`/api/todos/${id}`")
   })
 
-  it('AddTodoForm の initAddTodoForm が呼び出される', () => {
+  it('initAddTodoForm of AddTodoForm is called', () => {
     const todoApp = result.components.find(c => c.name === 'TodoApp')
     expect(todoApp?.clientJs).toContain('initAddTodoForm({ onAdd: handleAdd })')
   })
