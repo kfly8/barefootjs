@@ -313,7 +313,7 @@ describe('Components - Callback props', () => {
 })
 
 describe('Components - Hash and filename', () => {
-  it('ComponentOutput includes hash and filename', async () => {
+  it('ComponentOutput includes hash and filename for components with clientJs', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import Counter from './Counter'
@@ -333,17 +333,28 @@ describe('Components - Hash and filename', () => {
     }
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // Each component has hash and filename
+    // Components with clientJs have hash and filename
     for (const c of result.components) {
       expect(c.hash).toMatch(/^[a-f0-9]{8}$/)
-      expect(c.filename).toBe(`${c.name}-${c.hash}.js`)
+      if (c.hasClientJs) {
+        expect(c.filename).toBe(`${c.name}-${c.hash}.js`)
+      } else {
+        expect(c.filename).toBe('')
+      }
     }
 
-    // Counter component verification
+    // Counter component has clientJs
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter).toBeDefined()
+    expect(counter!.hasClientJs).toBe(true)
     expect(counter!.hash).toBeTruthy()
     expect(counter!.filename).toContain(counter!.hash)
+
+    // App component (wrapper) has no clientJs
+    const app = result.components.find(c => c.name === 'App')
+    expect(app).toBeDefined()
+    expect(app!.hasClientJs).toBe(false)
+    expect(app!.filename).toBe('')
   })
 })
 

@@ -78,9 +78,10 @@ export type ComponentImport = {
 export type ComponentOutput = {
   name: string
   hash: string           // Content hash (e.g., 7dc6817c)
-  filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js)
+  filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js), empty if no client JS
   clientJs: string
   serverComponent: string
+  hasClientJs: boolean   // Whether this component needs client-side JS
 }
 
 export type CompileJSXResult = {

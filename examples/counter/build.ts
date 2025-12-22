@@ -19,13 +19,15 @@ const result = await compileJSX(entryPath, async (path) => {
   return await Bun.file(path).text()
 }, { serverAdapter: honoServerAdapter })
 
-// Output component JS (with hash)
+// Output component JS (with hash) - only for components with client JS
 const scriptTags: string[] = []
 
 for (const component of result.components) {
-  await Bun.write(resolve(DIST_DIR, component.filename), component.clientJs)
-  scriptTags.push(`<script type="module" src="./${component.filename}"></script>`)
-  console.log(`Generated: dist/${component.filename}`)
+  if (component.hasClientJs) {
+    await Bun.write(resolve(DIST_DIR, component.filename), component.clientJs)
+    scriptTags.push(`<script type="module" src="./${component.filename}"></script>`)
+    console.log(`Generated: dist/${component.filename}`)
+  }
 }
 
 // Load template and generate HTML

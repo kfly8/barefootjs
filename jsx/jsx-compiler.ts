@@ -227,10 +227,13 @@ ${bodyCode}
       props: result.props,
       jsx: result.serverJsx,
     })
-    const hash = componentHashes.get(name) || ''
-    const filename = hash ? `${name}-${hash}.js` : `${name}.js`
 
-    components.push({ name, hash, filename, clientJs, serverComponent })
+    // Determine if this component needs client-side JS
+    const hasClientJs = Boolean(clientJs.trim())
+    const hash = componentHashes.get(name) || ''
+    const filename = hasClientJs ? (hash ? `${name}-${hash}.js` : `${name}.js`) : ''
+
+    components.push({ name, hash, filename, clientJs, serverComponent, hasClientJs })
   }
 
   return {

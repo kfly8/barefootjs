@@ -46,9 +46,9 @@ for (const componentName of COMPONENTS) {
     await Bun.write(resolve(DIST_DIR, serverFileName), component.serverComponent)
     console.log(`Generated: dist/${serverFileName}`)
 
-    // Client JS (using hashed filename from compiler)
+    // Client JS (using hashed filename from compiler) - only for components with client JS
     let clientFileName: string | undefined
-    if (component.clientJs) {
+    if (component.hasClientJs) {
       clientFileName = component.filename
       await Bun.write(resolve(DIST_DIR, clientFileName), component.clientJs)
       console.log(`Generated: dist/${clientFileName}`)

@@ -42,8 +42,8 @@ for (const componentName of COMPONENTS) {
     await Bun.write(resolve(DIST_DIR, serverFileName), component.serverComponent)
     console.log(`Generated: dist/${serverFileName}`)
 
-    // Client JS (use compiler-generated filename)
-    if (component.clientJs) {
+    // Client JS (use compiler-generated filename) - only for components with client JS
+    if (component.hasClientJs) {
       let clientJs = component.clientJs
 
       // Special handling for TodoApp - add initialization code
