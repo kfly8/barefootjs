@@ -1,10 +1,9 @@
 /**
- * Counter コンポーネント
+ * Counter Component
  *
- * このファイルからコンパイラが：
- * - サーバー用コンポーネント（Hono JSX）
- * - クライアント用JS（インタラクティブ化）
- * を生成する
+ * From this file, the compiler generates:
+ * - Server component (Hono JSX)
+ * - Client JS (for interactivity)
  */
 
 import { createSignal } from 'barefoot'

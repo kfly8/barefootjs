@@ -7,7 +7,7 @@ import type { ComponentImport } from '../types'
 import { createSourceFile } from '../utils/helpers'
 
 /**
- * ファイルからインポート文を抽出
+ * Extracts import statements from file
  */
 export function extractImports(source: string, filePath: string): ComponentImport[] {
   const sourceFile = createSourceFile(source, filePath)
@@ -19,7 +19,7 @@ export function extractImports(source: string, filePath: string): ComponentImpor
       const moduleSpecifier = node.moduleSpecifier
       if (ts.isStringLiteral(moduleSpecifier)) {
         const path = moduleSpecifier.text
-        // ローカルインポートのみ（./で始まる）
+        // Only local imports (starting with ./)
         if (path.startsWith('./') || path.startsWith('../')) {
           const importClause = node.importClause
           if (importClause?.name) {

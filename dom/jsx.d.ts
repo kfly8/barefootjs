@@ -1,7 +1,7 @@
 /**
- * BarefootJS JSX 型定義
+ * BarefootJS JSX Type Definitions
  *
- * コンパイラへの入力として使用するJSXの型チェック用
+ * Type checking for JSX used as input to the compiler
  */
 
 declare namespace JSX {

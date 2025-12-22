@@ -1,11 +1,10 @@
 /**
- * BarefootJS + Hono ビルドスクリプト
+ * BarefootJS + Hono build script
  *
- * 各コンポーネント（Counter.tsx, Toggle.tsx等）から：
- * - dist/{Component}.tsx（サーバー用コンポーネント）
- * - dist/{Component}.client-{hash}.js（クライアント用JS）
- * - dist/manifest.json（マニフェスト）
- * を生成する
+ * From each component (Counter.tsx, Toggle.tsx, etc.), generates:
+ * - dist/{Component}.tsx (server component)
+ * - dist/{Component}.client-{hash}.js (client JS)
+ * - dist/manifest.json (manifest)
  */
 
 import { compileJSX } from '../../jsx'
@@ -16,7 +15,7 @@ const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 
-// コンパイル対象のコンポーネント
+// Components to compile
 const COMPONENTS = ['Counter', 'Toggle']
 
 function contentHash(content: string): string {
@@ -25,19 +24,19 @@ function contentHash(content: string): string {
 
 await mkdir(DIST_DIR, { recursive: true })
 
-// barefoot.js（ハッシュ付き）を先に生成
+// Generate barefoot.js (with hash) first
 const barefootContent = await Bun.file(resolve(DOM_DIR, 'runtime.js')).text()
 const barefootHash = contentHash(barefootContent)
 const barefootFileName = `barefoot-${barefootHash}.js`
 await Bun.write(resolve(DIST_DIR, barefootFileName), barefootContent)
 console.log(`Generated: dist/${barefootFileName}`)
 
-// マニフェスト
+// Manifest
 const manifest: Record<string, { clientJs?: string; serverComponent: string }> = {
   '__barefoot__': { serverComponent: '', clientJs: barefootFileName }
 }
 
-// 各コンポーネントをコンパイル
+// Compile each component
 for (const componentName of COMPONENTS) {
   const entryPath = resolve(ROOT_DIR, `${componentName}.tsx`)
   const result = await compileJSX(entryPath, async (path) => {
@@ -45,12 +44,12 @@ for (const componentName of COMPONENTS) {
   })
 
   for (const component of result.components) {
-    // サーバー用コンポーネント
+    // Server component
     const serverFileName = `${component.name}.tsx`
     await Bun.write(resolve(DIST_DIR, serverFileName), component.serverComponent)
     console.log(`Generated: dist/${serverFileName}`)
 
-    // クライアント用JS（importパスを書き換え、ハッシュ付き）
+    // Client JS (rewrite import paths, with hash)
     let clientFileName: string | undefined
     if (component.clientJs) {
       const updatedClientJs = component.clientJs.replace(
@@ -70,7 +69,7 @@ for (const componentName of COMPONENTS) {
   }
 }
 
-// マニフェストを出力
+// Output manifest
 await Bun.write(resolve(DIST_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/manifest.json')
 

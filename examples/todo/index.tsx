@@ -1,5 +1,5 @@
 /**
- * BarefootJS TodoApp - エントリーポイント
+ * BarefootJS TodoApp - Entry point
  */
 
 import TodoApp from './TodoApp'

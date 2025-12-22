@@ -6,9 +6,9 @@ import ts from 'typescript'
 import { createSourceFile, isPascalCase } from '../utils/helpers'
 
 /**
- * コンポーネント関数のパラメータ（props）を抽出
+ * Extracts component function parameters (props).
  * function Counter({ initial = 0 }) → ['initial']
- * function Counter(props) → [] (destructuringでない場合は抽出しない)
+ * function Counter(props) → [] (not extracted if not destructuring)
  */
 export function extractComponentProps(source: string, filePath: string): string[] {
   const sourceFile = createSourceFile(source, filePath)

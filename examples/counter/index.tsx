@@ -1,5 +1,5 @@
 /**
- * BarefootJS Counter - エントリーポイント
+ * BarefootJS Counter - Entry point
  */
 
 import Counter from './Counter'

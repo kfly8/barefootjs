@@ -1,6 +1,6 @@
 /**
- * AddTodoForm コンポーネント
- * 新しいTodoを追加するフォーム
+ * AddTodoForm Component
+ * Form to add new todos
  */
 
 import { createSignal } from 'barefoot'
@@ -24,13 +24,13 @@ function AddTodoForm({ onAdd }: Props) {
       <input
         type="text"
         class="new-todo-input"
-        placeholder="新しいTodoを入力..."
+        placeholder="Enter new todo..."
         value={newText()}
         onInput={(e) => setNewText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && handleAdd()}
       />
       <button class="add-btn" onClick={() => handleAdd()}>
-        追加
+        Add
       </button>
     </div>
   )

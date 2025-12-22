@@ -7,8 +7,8 @@ import type { SignalDeclaration } from '../types'
 import { createSourceFile } from '../utils/helpers'
 
 /**
- * ソースコードからsignal宣言を抽出
- * const [count, setCount] = createSignal(0) のパターンを検出
+ * Extracts signal declarations from source code.
+ * Detects pattern like const [count, setCount] = createSignal(0)
  */
 export function extractSignals(source: string, filePath: string): SignalDeclaration[] {
   const sourceFile = createSourceFile(source, filePath)

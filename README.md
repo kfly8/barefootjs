@@ -34,11 +34,3 @@ A compiler that generates static HTML + client-side JS from JSX.
                      └─────────────────┘
 ```
 
-## TODO
-
-### Types
-
-- [ ] Signal type inference `signal<number>(0)`
-- [ ] Component props type definitions
-- [ ] Event handler types `(e: MouseEvent) => void`
-- [ ] JSX element type checking

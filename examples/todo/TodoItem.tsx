@@ -1,6 +1,6 @@
 /**
- * TodoItem コンポーネント
- * 個別のTodoアイテムを表示・編集
+ * TodoItem Component
+ * Displays and edits individual todo items
  */
 
 type Todo = {
@@ -35,10 +35,10 @@ function TodoItem({ todo, onToggle, onDelete, onStartEdit, onFinishEdit }: Props
         </span>
       )}
       <button class="toggle-btn" onClick={() => onToggle()}>
-        {todo.done ? '未完了に戻す' : '完了'}
+        {todo.done ? 'Undo' : 'Done'}
       </button>
       <button class="delete-btn" onClick={() => onDelete()}>
-        削除
+        Delete
       </button>
     </li>
   )

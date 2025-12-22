@@ -1,18 +1,18 @@
 /**
  * BarefootJS Renderer
  *
- * レイアウトとクライアントJSの自動挿入を担当
- * 使用されたコンポーネントのみスクリプトを読み込む
+ * Handles layout and automatic client JS injection.
+ * Only loads scripts for components that are used.
  */
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import manifest from './dist/manifest.json'
 
-// クライアントJSのscriptタグを生成（使用されたコンポーネントのみ）
+// Generate script tags for client JS (only for used components)
 function getScriptTags(usedComponents: string[]): string[] {
   const scripts: string[] = []
 
-  // 使用されたコンポーネントがある場合のみbarefoot.jsを読み込む
+  // Only load barefoot.js if components are used
   if (usedComponents.length > 0) {
     const barefootJs = manifest['__barefoot__']?.clientJs
     if (barefootJs) {
@@ -20,7 +20,7 @@ function getScriptTags(usedComponents: string[]): string[] {
     }
   }
 
-  // 使用されたコンポーネントのclient.jsのみ
+  // Only client.js for used components
   for (const name of usedComponents) {
     const entry = manifest[name as keyof typeof manifest]
     if (entry?.clientJs) {
@@ -31,7 +31,7 @@ function getScriptTags(usedComponents: string[]): string[] {
   return scripts
 }
 
-// 子要素描画後にスクリプトを挿入するコンポーネント
+// Component that inserts scripts after children are rendered
 function Scripts() {
   const c = useRequestContext()
   const usedComponents: string[] = c.get('usedComponents') || []

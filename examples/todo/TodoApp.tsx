@@ -1,7 +1,7 @@
 /**
  * BarefootJS TodoApp
  *
- * メインコンポーネント - 状態管理と子コンポーネントの統合
+ * Main component - state management and child component integration
  */
 
 import { createSignal } from 'barefoot'
@@ -17,9 +17,9 @@ type Todo = {
 
 function TodoApp() {
   const [todos, setTodos] = createSignal<Todo[]>([
-    { id: 1, text: 'プロジェクトのセットアップ', done: false, editing: false },
-    { id: 2, text: 'コンポーネントを作成', done: false, editing: false },
-    { id: 3, text: 'テストを書く', done: true, editing: false },
+    { id: 1, text: 'Setup project', done: false, editing: false },
+    { id: 2, text: 'Create components', done: false, editing: false },
+    { id: 3, text: 'Write tests', done: true, editing: false },
   ])
 
   const [nextId, setNextId] = createSignal(4)
@@ -50,7 +50,7 @@ function TodoApp() {
       <h1>BarefootJS Todo</h1>
 
       <p class="status">
-        完了: <span class="count">{todos().filter(t => t.done).length}</span> / <span class="total">{todos().length}</span>
+        Done: <span class="count">{todos().filter(t => t.done).length}</span> / <span class="total">{todos().length}</span>
       </p>
 
       <AddTodoForm onAdd={handleAdd} />
