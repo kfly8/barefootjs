@@ -11,21 +11,38 @@ import type { ServerComponentAdapter } from '../types'
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, props, jsx }) => {
+  generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents }) => {
     const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
     const propsType = props.length > 0
       ? `: { ${props.map(p => `${p}?: unknown`).join('; ')} }`
       : ''
 
+    // Generate imports for child components
+    const childImports = childComponents
+      .map(child => `import { ${child} } from './${child}'`)
+      .join('\n')
+
+    const allImports = [
+      `import { useRequestContext } from 'hono/jsx-renderer'`,
+      childImports,
+    ].filter(Boolean).join('\n')
+
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
-      return `import { useRequestContext } from 'hono/jsx-renderer'
+      return `${allImports}
 
 export function ${name}(${propsParam}${propsType}) {
   const c = useRequestContext()
   const used = c.get('usedComponents') || []
   if (!used.includes('${name}')) {
     c.set('usedComponents', [...used, '${name}'])
+  }
+
+  // Check if this is the root BarefootJS component (first to render)
+  // Only root component outputs data-bf-props to avoid duplicate hydration data
+  const __isRoot = !c.get('bfRootComponent')
+  if (__isRoot) {
+    c.set('bfRootComponent', '${name}')
   }
 
   // Serialize props for client hydration (only serializable values)
@@ -35,7 +52,7 @@ export function ${name}(${propsParam}${propsType}) {
 
   return (
     <>
-      {__hasHydrateProps && (
+      {__isRoot && __hasHydrateProps && (
         <script
           type="application/json"
           data-bf-props="${name}"
@@ -49,7 +66,7 @@ export function ${name}(${propsParam}${propsType}) {
 `
     } else {
       // Components without props don't need hydration setup
-      return `import { useRequestContext } from 'hono/jsx-renderer'
+      return `${allImports}
 
 export function ${name}() {
   const c = useRequestContext()
@@ -57,6 +74,13 @@ export function ${name}() {
   if (!used.includes('${name}')) {
     c.set('usedComponents', [...used, '${name}'])
   }
+
+  // Check if this is the root BarefootJS component
+  const __isRoot = !c.get('bfRootComponent')
+  if (__isRoot) {
+    c.set('bfRootComponent', '${name}')
+  }
+
   return (
     ${jsx}
   )

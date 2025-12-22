@@ -3,91 +3,210 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { htmlToJsx, generateServerJsx } from '../../transformers/ir-to-server-jsx'
-import type { ServerComponentAdapter } from '../../types'
+import { irToServerJsx } from '../../transformers/ir-to-server-jsx'
+import type { IRNode, IRElement, SignalDeclaration } from '../../types'
 
-describe('htmlToJsx', () => {
-  it('converts class to className', () => {
-    const html = '<div class="container"><span class="text">Hello</span></div>'
-    const jsx = htmlToJsx(html)
-    expect(jsx).toBe('<div className="container"><span className="text">Hello</span></div>')
+describe('irToServerJsx', () => {
+  const signals: SignalDeclaration[] = [
+    { getter: 'count', setter: 'setCount', initialValue: '0' },
+    { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },
+  ]
+
+  it('converts text node', () => {
+    const node: IRNode = { type: 'text', content: 'Hello World' }
+    expect(irToServerJsx(node, [])).toBe('Hello World')
   })
 
-  it('does not convert class inside attribute values', () => {
-    const html = '<div class="my-class" data-info="class-name">Text</div>'
-    const jsx = htmlToJsx(html)
-    expect(jsx).toBe('<div className="my-class" data-info="class-name">Text</div>')
+  it('converts expression node preserving expression', () => {
+    const node: IRNode = { type: 'expression', expression: 'count()', isDynamic: true }
+    const result = irToServerJsx(node, signals)
+    expect(result).toBe('{0}')  // count() replaced with initial value
   })
 
-  it('handles multiple class attributes', () => {
-    const html = '<div class="a"><p class="b"><span class="c">Nested</span></p></div>'
-    const jsx = htmlToJsx(html)
-    expect(jsx).toBe('<div className="a"><p className="b"><span className="c">Nested</span></p></div>')
-  })
-
-  it('returns unchanged html if no class attributes', () => {
-    const html = '<div id="main"><span>No class here</span></div>'
-    const jsx = htmlToJsx(html)
-    expect(jsx).toBe(html)
-  })
-
-  it('handles empty string', () => {
-    expect(htmlToJsx('')).toBe('')
-  })
-})
-
-describe('generateServerJsx', () => {
-  const mockAdapter: ServerComponentAdapter = {
-    generateServerComponent: ({ name, props, jsx }) => {
-      const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
-      return `function ${name}(${propsParam}) { return ${jsx} }`
+  it('converts simple element', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [{ name: 'class', value: 'container' }],
+      dynamicAttrs: [],
+      events: [],
+      children: [{ type: 'text', content: 'Hello' }],
+      listInfo: null,
+      dynamicContent: null,
     }
-  }
-
-  it('generates server component without props', () => {
-    const result = generateServerJsx(
-      '<div class="counter">0</div>',
-      'Counter',
-      [],
-      mockAdapter
-    )
-    expect(result).toBe('function Counter() { return <div className="counter">0</div> }')
+    const result = irToServerJsx(node, [])
+    expect(result).toBe('<div className="container">Hello</div>')
   })
 
-  it('generates server component with props', () => {
-    const result = generateServerJsx(
-      '<div class="todo-item">Todo</div>',
-      'TodoItem',
-      ['todo', 'onToggle'],
-      mockAdapter
-    )
-    expect(result).toBe('function TodoItem({ todo, onToggle }) { return <div className="todo-item">Todo</div> }')
+  it('converts element with dynamic attributes', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'span',
+      id: 'd0',
+      staticAttrs: [],
+      dynamicAttrs: [{ name: 'class', expression: 'count() > 0 ? "active" : ""' }],
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, signals)
+    expect(result).toContain('data-bf="d0"')
+    expect(result).toContain('className={0 > 0 ? "active" : ""}')
   })
 
-  it('converts class to className in generated jsx', () => {
-    const result = generateServerJsx(
-      '<div class="a"><span class="b">Text</span></div>',
-      'MyComponent',
-      [],
-      mockAdapter
-    )
-    expect(result).toContain('className="a"')
-    expect(result).toContain('className="b"')
-    expect(result).not.toContain('class="')
+  it('converts element with list info', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'ul',
+      id: 'l0',
+      staticAttrs: [{ name: 'class', value: 'todo-list' }],
+      dynamicAttrs: [],
+      events: [],
+      children: [],
+      listInfo: {
+        arrayExpression: 'todos()',
+        paramName: 'todo',
+        itemTemplate: '<li class="todo-item">' + '${todo.text}' + '</li>',
+        itemIR: {
+          type: 'element',
+          tagName: 'li',
+          id: null,
+          staticAttrs: [{ name: 'class', value: 'todo-item' }],
+          dynamicAttrs: [],
+          events: [],
+          children: [{ type: 'expression', expression: 'todo.text', isDynamic: false }],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        itemEvents: [],
+      },
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, signals)
+    expect(result).toContain('<ul')
+    expect(result).toContain('className="todo-list"')
+    // With itemIR, the list generates proper JSX instead of template string
+    expect(result).toContain('initialTodos?.map((todo, __index) => (<li className="todo-item">{todo.text}</li>))')
+  })
+
+  it('converts conditional node with text branches (quoted strings)', () => {
+    const node: IRNode = {
+      type: 'conditional',
+      condition: 'count() > 0',
+      whenTrue: { type: 'text', content: 'Positive' },
+      whenFalse: { type: 'text', content: 'Zero or Negative' },
+    }
+    const result = irToServerJsx(node, signals)
+    // Text inside ternary must be quoted strings for valid JSX
+    expect(result).toBe('{0 > 0 ? "Positive" : "Zero or Negative"}')
+  })
+
+  it('converts conditional node with expression branches (no extra braces)', () => {
+    const node: IRNode = {
+      type: 'conditional',
+      condition: 'isOn()',
+      whenTrue: { type: 'expression', expression: "'ON'", isDynamic: false },
+      whenFalse: { type: 'expression', expression: "'OFF'", isDynamic: false },
+    }
+    const isOnSignal: SignalDeclaration[] = [
+      { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
+    ]
+    const result = irToServerJsx(node, isOnSignal)
+    // Expression inside ternary should NOT have extra curly braces
+    // Valid: {false ? 'ON' : 'OFF'}
+    // Invalid: {false ? {'ON'} : {'OFF'}}
+    expect(result).toBe("{false ? 'ON' : 'OFF'}")
+  })
+
+  it('converts conditional node with element branches', () => {
+    const node: IRNode = {
+      type: 'conditional',
+      condition: 'isOn()',
+      whenTrue: {
+        type: 'element',
+        tagName: 'span',
+        id: null,
+        staticAttrs: [{ name: 'class', value: 'on' }],
+        dynamicAttrs: [],
+        events: [],
+        children: [{ type: 'text', content: 'ON' }],
+        listInfo: null,
+        dynamicContent: null,
+      },
+      whenFalse: {
+        type: 'element',
+        tagName: 'span',
+        id: null,
+        staticAttrs: [{ name: 'class', value: 'off' }],
+        dynamicAttrs: [],
+        events: [],
+        children: [{ type: 'text', content: 'OFF' }],
+        listInfo: null,
+        dynamicContent: null,
+      },
+    }
+    const isOnSignal: SignalDeclaration[] = [
+      { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
+    ]
+    const result = irToServerJsx(node, isOnSignal)
+    // Element branches are valid JSX as-is
+    expect(result).toBe('{false ? <span className="on">ON</span> : <span className="off">OFF</span>}')
+  })
+
+  it('handles self-closing tags', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'input',
+      id: 'i0',
+      staticAttrs: [{ name: 'type', value: 'text' }],
+      dynamicAttrs: [],
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, [])
+    expect(result).toBe('<input data-bf="i0" type="text" />')
   })
 })
 
-describe('generateServerJsx with honoServerAdapter', () => {
-  // Import actual adapter for integration test
-  it('generates Hono-compatible server component', async () => {
+describe('irToServerJsx with honoServerAdapter integration', () => {
+  it('generates JSX that works with Hono adapter', async () => {
     const { honoServerAdapter } = await import('../../adapters/hono')
 
-    const result = generateServerJsx(
-      '<div class="counter"><span data-bf="d0">0</span></div>',
-      'Counter',
-      [],
-      honoServerAdapter
-    )
+    const ir: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [{ name: 'class', value: 'counter' }],
+      dynamicAttrs: [],
+      events: [],
+      children: [{
+        type: 'element',
+        tagName: 'span',
+        id: 'd0',
+        staticAttrs: [],
+        dynamicAttrs: [],
+        events: [],
+        children: [{ type: 'text', content: '0' }],
+        listInfo: null,
+        dynamicContent: null,
+      }],
+      listInfo: null,
+      dynamicContent: null,
+    }
+
+    const jsx = irToServerJsx(ir, [])
+    const result = honoServerAdapter.generateServerComponent({
+      name: 'Counter',
+      props: [],
+      jsx,
+      ir,
+      signals: [],
+      childComponents: [],
+    })
 
     expect(result).toContain('import { useRequestContext }')
     expect(result).toContain('function Counter()')
@@ -95,18 +214,55 @@ describe('generateServerJsx with honoServerAdapter', () => {
     expect(result).toContain('className="counter"')
   })
 
-  it('generates Hono server component with props hydration', async () => {
+  it('generates JSX with props that Hono adapter can use for hydration', async () => {
     const { honoServerAdapter } = await import('../../adapters/hono')
 
-    const result = generateServerJsx(
-      '<ul class="todo-list"></ul>',
-      'TodoApp',
-      ['initialTodos'],
-      honoServerAdapter
-    )
+    const signals: SignalDeclaration[] = [
+      { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },
+    ]
+
+    const ir: IRElement = {
+      type: 'element',
+      tagName: 'ul',
+      id: 'l0',
+      staticAttrs: [{ name: 'class', value: 'todo-list' }],
+      dynamicAttrs: [],
+      events: [],
+      children: [],
+      listInfo: {
+        arrayExpression: 'todos()',
+        paramName: 'todo',
+        itemTemplate: '<li className="todo-item">${todo.text}</li>',
+        itemIR: {
+          type: 'element',
+          tagName: 'li',
+          id: null,
+          staticAttrs: [{ name: 'class', value: 'todo-item' }],
+          dynamicAttrs: [],
+          events: [],
+          children: [{ type: 'expression', expression: 'todo.text', isDynamic: false }],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        itemEvents: [],
+      },
+      dynamicContent: null,
+    }
+
+    const jsx = irToServerJsx(ir, signals)
+    const result = honoServerAdapter.generateServerComponent({
+      name: 'TodoApp',
+      props: ['initialTodos'],
+      jsx,
+      ir,
+      signals,
+      childComponents: [],
+    })
 
     expect(result).toContain('export function TodoApp({ initialTodos }')
     expect(result).toContain('data-bf-props="TodoApp"')
     expect(result).toContain('__hydrateProps')
+    // Check that list is generated with map
+    expect(result).toContain('initialTodos?.map')
   })
 })

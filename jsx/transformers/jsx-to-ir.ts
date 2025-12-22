@@ -393,10 +393,14 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
   // Convert JSX to template string (with component inlining support)
   const { template, events } = jsxToTemplateString(jsxBody, ctx.sourceFile, paramName, ctx.components)
 
+  // Also convert JSX to IR for server JSX generation
+  const itemIR = jsxToIR(jsxBody, ctx)
+
   return {
     arrayExpression: arrayExpr,
     paramName,
     itemTemplate: template,
+    itemIR,
     itemEvents: events.map(e => ({ ...e, paramName })),
   }
 }

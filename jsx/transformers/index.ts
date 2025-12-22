@@ -3,7 +3,7 @@
  */
 
 export { irToHtml, evaluateWithInitialValues } from './ir-to-html'
-export { htmlToJsx, generateServerJsx } from './ir-to-server-jsx'
+export { irToServerJsx } from './ir-to-server-jsx'
 export {
   generateClientJs,
   collectClientJsInfo,

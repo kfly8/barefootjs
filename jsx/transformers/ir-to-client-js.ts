@@ -287,6 +287,11 @@ function collectFromElement(
       itemEvents: el.listInfo.itemEvents,
       arrayExpression: el.listInfo.arrayExpression,
     })
+
+    // Also collect child components from list item IR
+    if (el.listInfo.itemIR) {
+      collectClientJsInfo(el.listInfo.itemIR, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+    }
   }
 
   // Recursively process children

@@ -67,6 +67,7 @@ export type CompileResult = {
   dynamicAttributes: DynamicAttribute[]
   props: string[]  // Props names the component receives
   source: string   // Component source code (for inline expansion in map)
+  ir: IRNode | null  // Intermediate Representation for server JSX generation
 }
 
 export type ComponentImport = {
@@ -107,6 +108,10 @@ export type ServerComponentAdapter = {
     name: string
     props: string[]
     jsx: string
+    ir: IRNode | null
+    signals: SignalDeclaration[]
+    /** Child components used by this component */
+    childComponents: string[]
   }) => string
 }
 
@@ -204,6 +209,8 @@ export type IRListInfo = {
   arrayExpression: string
   paramName: string
   itemTemplate: string
+  /** IR nodes for list item (used for server JSX generation) */
+  itemIR: IRNode | null
   itemEvents: Array<{
     eventId: number
     eventName: string

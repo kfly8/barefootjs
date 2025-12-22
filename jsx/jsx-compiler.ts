@@ -39,7 +39,7 @@ import {
   parseConditionalHandler,
   generateAttributeUpdate,
   irToHtml,
-  generateServerJsx,
+  irToServerJsx,
   collectClientJsInfo,
   findAndConvertJsxReturn,
   type JsxToIRContext,
@@ -222,8 +222,18 @@ ${bodyCode}
 
     // Generate server JSX component (only if adapter is provided)
     let serverJsx = ''
-    if (options?.serverAdapter) {
-      serverJsx = generateServerJsx(result.staticHtml, name, result.props, options.serverAdapter)
+    if (options?.serverAdapter && result.ir) {
+      const jsx = irToServerJsx(result.ir, result.signals)
+      // Extract unique child component names
+      const childComponents = [...new Set(childInits.map(c => c.name))]
+      serverJsx = options.serverAdapter.generateServerComponent({
+        name,
+        props: result.props,
+        jsx,
+        ir: result.ir,
+        signals: result.signals,
+        childComponents,
+      })
     }
 
     components.push({
@@ -323,6 +333,7 @@ function compileJsxWithComponents(
     dynamicAttributes,
     props,
     source,
+    ir,
   }
 }
 
