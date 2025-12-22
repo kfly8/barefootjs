@@ -143,7 +143,7 @@ describe('Local functions in components', () => {
           <ul>
             {items().map(item => (
               <li>
-                <button onClick={() => handleToggle(item.id)}>切替</button>
+                <button onClick={() => handleToggle(item.id)}>Toggle</button>
               </li>
             ))}
           </ul>
