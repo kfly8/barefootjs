@@ -18,6 +18,7 @@ import type {
 } from '../types'
 import { isPascalCase } from '../utils/helpers'
 import { IdGenerator } from '../utils/id-generator'
+import { jsxToTemplateString } from '../compiler/template-generator'
 
 export type JsxToIRContext = {
   sourceFile: ts.SourceFile
@@ -361,95 +362,6 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
     itemTemplate: template,
     itemEvents: events.map(e => ({ ...e, paramName })),
   }
-}
-
-/**
- * Converts JSX to template string
- */
-function jsxToTemplateString(
-  node: ts.JsxElement | ts.JsxSelfClosingElement,
-  sourceFile: ts.SourceFile,
-  paramName: string
-): { template: string; events: Array<{ eventId: number; eventName: string; handler: string }> } {
-  const events: Array<{ eventId: number; eventName: string; handler: string }> = []
-  let eventIdCounter = 0
-
-  function processNode(n: ts.JsxElement | ts.JsxSelfClosingElement): string {
-    if (ts.isJsxSelfClosingElement(n)) {
-      const tagName = n.tagName.getText(sourceFile)
-      const { attrs, eventAttrs } = processAttrsForTemplate(n.attributes)
-      return `<${tagName}${eventAttrs}${attrs} />`
-    }
-
-    const tagName = n.openingElement.tagName.getText(sourceFile)
-    const { attrs, eventAttrs } = processAttrsForTemplate(n.openingElement.attributes)
-
-    let children = ''
-    for (const child of n.children) {
-      if (ts.isJsxText(child)) {
-        const text = child.getText(sourceFile).trim()
-        if (text) children += text
-      } else if (ts.isJsxExpression(child) && child.expression) {
-        if (ts.isConditionalExpression(child.expression)) {
-          const cond = child.expression.condition.getText(sourceFile)
-          const whenTrue = processExprOrJsx(child.expression.whenTrue)
-          const whenFalse = processExprOrJsx(child.expression.whenFalse)
-          children += `\${${cond} ? ${whenTrue} : ${whenFalse}}`
-        } else {
-          children += `\${${child.expression.getText(sourceFile)}}`
-        }
-      } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
-        children += processNode(child)
-      }
-    }
-
-    return `<${tagName}${eventAttrs}${attrs}>${children}</${tagName}>`
-  }
-
-  function processExprOrJsx(expr: ts.Expression): string {
-    if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
-      return `\`${processNode(expr)}\``
-    }
-    if (ts.isParenthesizedExpression(expr)) {
-      return processExprOrJsx(expr.expression)
-    }
-    return expr.getText(sourceFile)
-  }
-
-  function processAttrsForTemplate(attributes: ts.JsxAttributes): { attrs: string; eventAttrs: string } {
-    let attrs = ''
-    let eventAttrs = ''
-    let elementEventId: number | null = null
-
-    attributes.properties.forEach((attr) => {
-      if (!ts.isJsxAttribute(attr) || !attr.name) return
-
-      const attrName = attr.name.getText(sourceFile)
-
-      if (attrName.startsWith('on')) {
-        const eventName = attrName.slice(2).toLowerCase()
-        if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-          const handler = attr.initializer.expression.getText(sourceFile)
-          if (elementEventId === null) {
-            elementEventId = eventIdCounter++
-            eventAttrs = ` data-index="\${__index}" data-event-id="${elementEventId}"`
-          }
-          events.push({ eventId: elementEventId, eventName, handler })
-        }
-      } else if (attr.initializer) {
-        if (ts.isStringLiteral(attr.initializer)) {
-          attrs += ` ${attrName}="${attr.initializer.text}"`
-        } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-          attrs += ` ${attrName}="\${${attr.initializer.expression.getText(sourceFile)}}"`
-        }
-      }
-    })
-
-    return { attrs, eventAttrs }
-  }
-
-  const template = `\`${processNode(node)}\``
-  return { template, events }
 }
 
 /**
