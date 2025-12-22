@@ -95,7 +95,7 @@ app.get('/todos', (c) => {
 
       <ul class="todo-list">
         {todos.map(todo => (
-          <li class={todo.done ? 'todo-item done' : 'todo-item'}>
+          <li key={todo.id} class={todo.done ? 'todo-item done' : 'todo-item'}>
             <span class="todo-text">{todo.text}</span>
             <form method="POST" action={`/todos/toggle/${todo.id}`} style="display: inline;">
               <button type="submit" class="toggle-btn">
@@ -128,7 +128,9 @@ app.post('/todos/add', async (c) => {
 
 // Todo - POST toggle
 app.post('/todos/toggle/:id', (c) => {
-  const id = parseInt(c.req.param('id'))
+  const id = parseInt(c.req.param('id'), 10)
+  if (isNaN(id)) return c.redirect('/todos')
+  
   const todo = todos.find(t => t.id === id)
   if (todo) {
     todo.done = !todo.done
@@ -138,7 +140,9 @@ app.post('/todos/toggle/:id', (c) => {
 
 // Todo - POST delete
 app.post('/todos/delete/:id', (c) => {
-  const id = parseInt(c.req.param('id'))
+  const id = parseInt(c.req.param('id'), 10)
+  if (isNaN(id)) return c.redirect('/todos')
+  
   todos = todos.filter(t => t.id !== id)
   return c.redirect('/todos')
 })
