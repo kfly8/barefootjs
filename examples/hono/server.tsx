@@ -75,11 +75,6 @@ app.get('/todos', (c) => {
   return c.render(
     <div>
       <TodoApp initialTodos={todos} />
-      <script dangerouslySetInnerHTML={{ __html: `
-        // Initialize TodoApp with server data
-        import { initTodoApp } from '/static/TodoApp.client-f2e1e5c8.js';
-        initTodoApp({ initialTodos: ${JSON.stringify(todos)} });
-      ` }} type="module"></script>
       <p><a href="/">← Back</a></p>
     </div>
   )
