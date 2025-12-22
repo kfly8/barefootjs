@@ -37,9 +37,9 @@ import { compile } from './test-helpers'
 describe('HTML属性 - 静的', () => {
   it('class属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p class="counter">{count()}</p>
       }
     `
@@ -52,9 +52,9 @@ describe('HTML属性 - 静的', () => {
 
   it('style属性（静的）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p style="color: red">{count()}</p>
       }
     `
@@ -69,9 +69,9 @@ describe('HTML属性 - 静的', () => {
 describe('HTML属性 - 動的class', () => {
   it('動的なclass属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [isActive, setIsActive] = signal(false)
+        const [isActive, setIsActive] = createSignal(false)
         return <p class={isActive() ? 'active' : ''}>Hello</p>
       }
     `
@@ -90,9 +90,9 @@ describe('HTML属性 - 動的class', () => {
 
   it('動的なclass属性（初期値がtrue）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [isActive, setIsActive] = signal(true)
+        const [isActive, setIsActive] = createSignal(true)
         return <p class={isActive() ? 'active' : ''}>Hello</p>
       }
     `
@@ -107,9 +107,9 @@ describe('HTML属性 - 動的class', () => {
 describe('HTML属性 - 動的style', () => {
   it('動的なstyle属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [isRed, setIsRed] = signal(true)
+        const [isRed, setIsRed] = createSignal(true)
         return <p style={{ color: isRed() ? 'red' : 'blue' }}>Hello</p>
       }
     `
@@ -130,9 +130,9 @@ describe('HTML属性 - 動的style', () => {
 describe('HTML属性 - boolean属性', () => {
   it('動的なdisabled属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [isLoading, setIsLoading] = signal(false)
+        const [isLoading, setIsLoading] = createSignal(false)
         return <button disabled={isLoading()}>Submit</button>
       }
     `
@@ -151,9 +151,9 @@ describe('HTML属性 - boolean属性', () => {
 
   it('動的なdisabled属性（初期値がtrue）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [isLoading, setIsLoading] = signal(true)
+        const [isLoading, setIsLoading] = createSignal(true)
         return <button disabled={isLoading()}>Submit</button>
       }
     `
@@ -168,9 +168,9 @@ describe('HTML属性 - boolean属性', () => {
 describe('HTML属性 - フォーム関連', () => {
   it('動的なvalue属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [text, setText] = signal('hello')
+        const [text, setText] = createSignal('hello')
         return <input value={text()} />
       }
     `

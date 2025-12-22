@@ -1,1 +1,1 @@
-export { signal, type Signal } from './signal'
+export { createSignal, createEffect, onCleanup, type Signal, type CleanupFn, type EffectFn } from './signal'

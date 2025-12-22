@@ -8,7 +8,7 @@ import { createSourceFile } from '../utils/helpers'
 
 /**
  * ソースコードからsignal宣言を抽出
- * const [count, setCount] = signal(0) のパターンを検出
+ * const [count, setCount] = createSignal(0) のパターンを検出
  */
 export function extractSignals(source: string, filePath: string): SignalDeclaration[] {
   const sourceFile = createSourceFile(source, filePath)
@@ -23,7 +23,7 @@ export function extractSignals(source: string, filePath: string): SignalDeclarat
 
       const callExpr = node.initializer
       if (ts.isIdentifier(callExpr.expression) &&
-          callExpr.expression.text === 'signal') {
+          callExpr.expression.text === 'createSignal') {
 
         const elements = node.name.elements
         if (elements.length === 2 &&

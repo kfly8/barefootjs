@@ -43,9 +43,9 @@ import { compile } from './test-helpers'
 describe('リストレンダリング - 基本', () => {
   it('配列のmap', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal(['a', 'b', 'c'])
+        const [items, setItems] = createSignal(['a', 'b', 'c'])
         return <ul>{items().map(item => <li>{item}</li>)}</ul>
       }
     `
@@ -64,9 +64,9 @@ describe('リストレンダリング - 基本', () => {
 
   it('配列のfilter + map', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { text: 'a', done: true },
           { text: 'b', done: false },
           { text: 'c', done: true }
@@ -93,9 +93,9 @@ describe('リストレンダリング - 基本', () => {
 describe('リストレンダリング - イベント', () => {
   it('map内のonClick', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { id: 1, text: 'a' },
           { id: 2, text: 'b' }
         ])
@@ -120,9 +120,9 @@ describe('リストレンダリング - イベント', () => {
 
   it('map内の複数のonClick（異なる要素）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { id: 1, text: 'a', done: false },
           { id: 2, text: 'b', done: true }
         ])
@@ -157,9 +157,9 @@ describe('リストレンダリング - イベント', () => {
 
   it('map内のonChange', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { id: 1, checked: false },
           { id: 2, checked: true }
         ])
@@ -177,9 +177,9 @@ describe('リストレンダリング - イベント', () => {
 
   it('map内の同一要素に複数イベント', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([{ id: 1, text: 'a' }])
+        const [items, setItems] = createSignal([{ id: 1, text: 'a' }])
         return (
           <ul>{items().map(item => (
             <li>
@@ -206,9 +206,9 @@ describe('リストレンダリング - イベント', () => {
 
   it('map内のblurイベント（キャプチャフェーズ）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([{ id: 1 }])
+        const [items, setItems] = createSignal([{ id: 1 }])
         return (
           <ul>{items().map(item => (
             <li><input onBlur={() => console.log('blur')} /></li>
@@ -226,9 +226,9 @@ describe('リストレンダリング - イベント', () => {
 
   it('map内のkeydownイベント（条件付き実行）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([{ id: 1 }])
+        const [items, setItems] = createSignal([{ id: 1 }])
         return (
           <ul>{items().map(item => (
             <li><input onKeyDown={(e) => e.key === 'Enter' && console.log('enter')} /></li>
@@ -239,17 +239,16 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 条件付き実行: if (condition) { action; updateAll() }
+    // 条件付き実行: if (condition) { action }
     expect(component.clientJs).toContain("if (e.key === 'Enter')")
     expect(component.clientJs).toContain("console.log('enter')")
-    expect(component.clientJs).toContain('updateAll()')
   })
 
   it('map内のkeydownイベント（複数条件 && 実行）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([{ id: 1, text: 'hello' }])
+        const [items, setItems] = createSignal([{ id: 1, text: 'hello' }])
         const handleFinish = (id, text) => console.log(id, text)
         return (
           <ul>{items().map(item => (
@@ -264,13 +263,13 @@ describe('リストレンダリング - イベント', () => {
     const component = result.components[0]
 
     // 複数条件の場合も if 文で囲まれる
-    // 期待: if (e.key === 'Enter' && !e.isComposing) { handleFinish(...); updateAll() }
+    // 期待: if (e.key === 'Enter' && !e.isComposing) { handleFinish(...) }
     expect(component.clientJs).toContain("if (e.key === 'Enter' && !e.isComposing)")
     expect(component.clientJs).toContain("handleFinish(item.id, e.target.value)")
 
-    // updateAll() は if 文の中にあるべき（条件が満たされた時のみ）
+    // アクションは if 文の中にあるべき
     const clientJs = component.clientJs
-    const ifMatch = clientJs.match(/if \(e\.key === 'Enter' && !e\.isComposing\) \{[\s\S]*?updateAll\(\)[\s\S]*?\}/)
+    const ifMatch = clientJs.match(/if \(e\.key === 'Enter' && !e\.isComposing\) \{[\s\S]*?handleFinish\(item\.id, e\.target\.value\)[\s\S]*?\}/)
     expect(ifMatch).not.toBeNull()
   })
 })
@@ -278,9 +277,9 @@ describe('リストレンダリング - イベント', () => {
 describe('リストレンダリング - 動的属性', () => {
   it('map内の動的class属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { text: 'a', done: true },
           { text: 'b', done: false }
         ])
@@ -296,9 +295,9 @@ describe('リストレンダリング - 動的属性', () => {
 
   it('map内の動的style属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { text: 'a', color: 'red' },
           { text: 'b', color: 'blue' }
         ])
@@ -314,9 +313,9 @@ describe('リストレンダリング - 動的属性', () => {
 
   it('map内の動的checked属性', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { id: 1, checked: true },
           { id: 2, checked: false }
         ])
@@ -334,9 +333,9 @@ describe('リストレンダリング - 動的属性', () => {
 describe('リストレンダリング - 条件分岐', () => {
   it('map内の条件付きレンダリング（三項演算子）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { id: 1, text: 'a', editing: false },
           { id: 2, text: 'b', editing: true }
         ])
@@ -362,9 +361,9 @@ describe('リストレンダリング - 条件分岐', () => {
 
   it('初期HTMLで三項演算子が評価される', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([
+        const [items, setItems] = createSignal([
           { id: 1, text: 'hello', editing: false },
           { id: 2, text: 'world', editing: true }
         ])

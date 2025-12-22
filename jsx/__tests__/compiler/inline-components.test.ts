@@ -51,10 +51,10 @@ describe('map内のコンポーネントインライン展開', () => {
   it('propsを持つコンポーネントのインライン展開', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
-          const [items, setItems] = signal([{ id: 1, text: 'hello' }])
+          const [items, setItems] = createSignal([{ id: 1, text: 'hello' }])
           return (
             <ul>
               {items().map(item => (
@@ -82,10 +82,10 @@ describe('map内のコンポーネントインライン展開', () => {
   it('イベントハンドラ付きコンポーネントのインライン展開', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
-          const [items, setItems] = signal([{ id: 1, text: 'hello' }])
+          const [items, setItems] = createSignal([{ id: 1, text: 'hello' }])
           const remove = (id) => setItems(items().filter(i => i.id !== id))
           return (
             <ul>
@@ -127,10 +127,10 @@ describe('map内のコンポーネントインライン展開', () => {
   it('条件付きレンダリングを含むコンポーネントのインライン展開', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
-          const [items, setItems] = signal([{ id: 1, text: 'hello', editing: false }])
+          const [items, setItems] = createSignal([{ id: 1, text: 'hello', editing: false }])
           return (
             <ul>
               {items().map(item => (
@@ -166,10 +166,10 @@ describe('map内のコンポーネントインライン展開', () => {
   it('複数のイベントハンドラを持つコンポーネント', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
-          const [items, setItems] = signal([{ id: 1, text: 'hello', done: false }])
+          const [items, setItems] = createSignal([{ id: 1, text: 'hello', done: false }])
           const toggle = (id) => setItems(items().map(i => i.id === id ? {...i, done: !i.done} : i))
           const remove = (id) => setItems(items().filter(i => i.id !== id))
           return (

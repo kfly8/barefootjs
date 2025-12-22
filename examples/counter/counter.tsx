@@ -2,10 +2,10 @@
  * BarefootJS Counter
  */
 
-import { signal } from 'barefoot'
+import { createSignal } from 'barefoot'
 
 function Counter() {
-  const [count, setCount] = signal(0)
+  const [count, setCount] = createSignal(0)
 
   return (
     <div>

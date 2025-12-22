@@ -3,14 +3,14 @@
  * 新しいTodoを追加するフォーム
  */
 
-import { signal } from 'barefoot'
+import { createSignal } from 'barefoot'
 
 type Props = {
   onAdd: (text: string) => void
 }
 
 function AddTodoForm({ onAdd }: Props) {
-  const [newText, setNewText] = signal('')
+  const [newText, setNewText] = createSignal('')
 
   const handleAdd = () => {
     if (newText().trim()) {

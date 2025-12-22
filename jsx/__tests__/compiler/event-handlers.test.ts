@@ -22,14 +22,16 @@
  *
  * // 出力（clientJs）
  * const __b0 = document.getElementById('__b0')
- * __b0.onclick = () => {
- *   setCount(n => n + 1)
- *   updateAll()
- * }
+ * __b0.onclick = () => setCount(n => n + 1)
+ *
+ * // 動的要素は createEffect で更新
+ * createEffect(() => {
+ *   __d0.textContent = count()
+ * })
  * ```
  *
  * ## 注意事項
- * - 動的コンテンツがある場合、ハンドラ実行後に `updateAll()` が呼ばれる
+ * - 動的コンテンツは `createEffect()` で自動追跡される
  * - イベント引数 `(e)` は保持される
  */
 
@@ -39,9 +41,9 @@ import { compile } from './test-helpers'
 describe('イベントハンドラ - 基本', () => {
   it('onClick', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return (
           <div>
             <p>{count()}</p>
@@ -60,15 +62,15 @@ describe('イベントハンドラ - 基本', () => {
     expect(component.clientJs).toContain('__b0.onclick')
     expect(component.clientJs).toContain('setCount(n => n + 1)')
 
-    // updateAllが呼ばれる
-    expect(component.clientJs).toContain('updateAll()')
+    // 動的コンテンツはcreateEffectで更新される
+    expect(component.clientJs).toContain('createEffect(')
   })
 
   it('複数のonClick', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return (
           <div>
             <p>{count()}</p>
@@ -91,9 +93,9 @@ describe('イベントハンドラ - 基本', () => {
 describe('イベントハンドラ - フォーム', () => {
   it('onChange', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [text, setText] = signal('')
+        const [text, setText] = createSignal('')
         return (
           <div>
             <p>{text()}</p>
@@ -112,15 +114,15 @@ describe('イベントハンドラ - フォーム', () => {
     expect(component.clientJs).toContain('__b0.onchange = (e) =>')
     expect(component.clientJs).toContain('setText(e.target.value)')
 
-    // updateAllが呼ばれる
-    expect(component.clientJs).toContain('updateAll()')
+    // 動的コンテンツはcreateEffectで更新される
+    expect(component.clientJs).toContain('createEffect(')
   })
 
   it('onInput（イベント引数付き）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [text, setText] = signal('')
+        const [text, setText] = createSignal('')
         return (
           <div>
             <p>{text()}</p>
@@ -139,9 +141,9 @@ describe('イベントハンドラ - フォーム', () => {
 
   it('onSubmit', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [submitted, setSubmitted] = signal(false)
+        const [submitted, setSubmitted] = createSignal(false)
         return (
           <div>
             <p>{submitted() ? 'Done' : 'Not yet'}</p>
@@ -168,10 +170,10 @@ describe('イベントハンドラ - フォーム', () => {
 describe('イベントハンドラ - キーボード', () => {
   it('onKeyDown', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [text, setText] = signal('')
-        const [submitted, setSubmitted] = signal(false)
+        const [text, setText] = createSignal('')
+        const [submitted, setSubmitted] = createSignal(false)
         return (
           <div>
             <p>{submitted() ? 'Submitted' : 'Type and press Enter'}</p>

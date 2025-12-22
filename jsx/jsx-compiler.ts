@@ -47,7 +47,6 @@ import {
   isBooleanAttribute,
 } from './transformers'
 import {
-  wrapCallbackProps,
   generateContentHash,
   resolvePath,
   isDynamicAttributeTarget,
@@ -130,7 +129,7 @@ export async function compileJSX(
     if (result.clientJs || result.serverJsx) {
       const name = path.split('/').pop()!.replace('.tsx', '')
       const signalDeclarations = result.signals
-        .map(s => `const [${s.getter}, ${s.setter}] = signal(${s.initialValue})`)
+        .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
         .join('\n')
 
       componentData.push({
@@ -168,25 +167,24 @@ export async function compileJSX(
       })
       .join('\n')
 
-    // 親コンポーネントに動的コンテンツがあるか（updateAllが生成されるか）
+    // 子コンポーネントのinit呼び出しを生成
+    // createEffect により自動的に更新されるため、コールバックのラップは不要
+    const childInitCalls = childInits
+      .map(child => {
+        return `init${child.name}(${child.propsExpr})`
+      })
+      .join('\n')
+
+    // 動的コンテンツがあるか（createEffectが生成されるか）
     const hasDynamicContent = result.dynamicElements.length > 0 ||
                               result.listElements.length > 0 ||
                               result.dynamicAttributes.length > 0
-
-    // 子コンポーネントのinit呼び出しを生成
-    // コールバックpropsをラップしてupdateAll()を追加
-    const childInitCalls = childInits
-      .map(child => {
-        const wrappedProps = wrapCallbackProps(child.propsExpr, hasDynamicContent)
-        return `init${child.name}(${wrappedProps})`
-      })
-      .join('\n')
 
     // propsがある場合はinit関数でラップする
     let clientJs = ''
     if (result.clientJs || childInits.length > 0) {
       const allImports = [
-        `import { signal } from './barefoot.js'`,
+        `import { createSignal, createEffect } from './barefoot.js'`,
         childImports,
       ].filter(Boolean).join('\n')
 
@@ -506,19 +504,28 @@ function compileJsxWithComponents(
     lines.push('')
   }
 
+  // 動的要素のcreateEffect
+  for (const el of dynamicElements) {
+    lines.push(`createEffect(() => {`)
+    lines.push(`  ${el.id}.textContent = ${el.fullContent}`)
+    lines.push(`})`)
+  }
+
+  // リスト要素のcreateEffect
+  for (const el of listElements) {
+    lines.push(`createEffect(() => {`)
+    lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
+    lines.push(`})`)
+  }
+
+  // 動的属性のcreateEffect
+  for (const da of dynamicAttributes) {
+    lines.push(`createEffect(() => {`)
+    lines.push(`  ${generateAttributeUpdate(da)}`)
+    lines.push(`})`)
+  }
+
   if (hasDynamicContent) {
-    lines.push('function updateAll() {')
-    for (const el of dynamicElements) {
-      lines.push(`  ${el.id}.textContent = ${el.fullContent}`)
-    }
-    for (const el of listElements) {
-      lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
-    }
-    // 動的属性の更新
-    for (const da of dynamicAttributes) {
-      lines.push(`  ${generateAttributeUpdate(da)}`)
-    }
-    lines.push('}')
     lines.push('')
   }
 
@@ -537,17 +544,13 @@ function compileJsxWithComponents(
         lines.push(`    const __index = parseInt(target.dataset.index, 10)`)
         lines.push(`    const ${event.paramName} = ${el.arrayExpression}[__index]`)
 
-        if (conditionalHandler && hasDynamicContent) {
-          // 条件付きハンドラ: 条件が満たされた時のみ action と updateAll を実行
+        if (conditionalHandler) {
+          // 条件付きハンドラ: 条件が満たされた時のみ action を実行
           lines.push(`    if (${conditionalHandler.condition}) {`)
           lines.push(`      ${conditionalHandler.action}`)
-          lines.push(`      updateAll()`)
           lines.push(`    }`)
         } else {
           lines.push(`    ${handlerBody}`)
-          if (hasDynamicContent) {
-            lines.push(`    updateAll()`)
-          }
         }
 
         lines.push(`  }`)
@@ -559,22 +562,20 @@ function compileJsxWithComponents(
   for (const el of interactiveElements) {
     for (const event of el.events) {
       const handlerBody = extractArrowBody(event.handler)
-      const handlerParams = extractArrowParams(event.handler)
-      if (hasDynamicContent) {
-        lines.push(`${el.id}.on${event.eventName} = ${handlerParams} => {`)
-        lines.push(`  ${handlerBody}`)
-        lines.push(`  updateAll()`)
+      const conditionalHandler = parseConditionalHandler(handlerBody)
+
+      if (conditionalHandler) {
+        // 条件付きハンドラ: if文に変換して return false を防ぐ
+        const params = extractArrowParams(event.handler)
+        lines.push(`${el.id}.on${event.eventName} = ${params} => {`)
+        lines.push(`  if (${conditionalHandler.condition}) {`)
+        lines.push(`    ${conditionalHandler.action}`)
+        lines.push(`  }`)
         lines.push(`}`)
       } else {
         lines.push(`${el.id}.on${event.eventName} = ${event.handler}`)
       }
     }
-  }
-
-  if (hasDynamicContent) {
-    lines.push('')
-    lines.push('// 初期表示')
-    lines.push('updateAll()')
   }
 
   const clientJs = lines.join('\n')

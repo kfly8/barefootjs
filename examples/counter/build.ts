@@ -2,17 +2,13 @@
  * カウンターのビルドスクリプト
  */
 
-import { compileJSX } from '../../jsx/compiler'
+import { compileJSX } from '../../jsx'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
-const CORE_DIR = resolve(ROOT_DIR, '../../core')
-
-function contentHash(content: string): string {
-  return Bun.hash(content).toString(16).slice(0, 8)
-}
+const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 
 // dist/ ディレクトリを作成
 await mkdir(DIST_DIR, { recursive: true })
@@ -27,11 +23,9 @@ const result = await compileJSX(entryPath, async (path) => {
 const scriptTags: string[] = []
 
 for (const component of result.components) {
-  const hash = contentHash(component.js)
-  const filename = `${component.name}-${hash}.js`
-  await Bun.write(resolve(DIST_DIR, filename), component.js)
-  scriptTags.push(`<script type="module" src="./${filename}"></script>`)
-  console.log(`Generated: dist/${filename}`)
+  await Bun.write(resolve(DIST_DIR, component.filename), component.clientJs)
+  scriptTags.push(`<script type="module" src="./${component.filename}"></script>`)
+  console.log(`Generated: dist/${component.filename}`)
 }
 
 // テンプレートを読み込んで HTML を生成
@@ -47,6 +41,6 @@ console.log('Generated: dist/index.html')
 // barefoot.js をコピー
 await Bun.write(
   resolve(DIST_DIR, 'barefoot.js'),
-  Bun.file(resolve(CORE_DIR, 'runtime.js'))
+  Bun.file(resolve(DOM_DIR, 'runtime.js'))
 )
 console.log('Copied: dist/barefoot.js')

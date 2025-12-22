@@ -36,9 +36,9 @@ import { compile } from './test-helpers'
 describe('コンポーネント内ローカル関数', () => {
   it('アロー関数で定義されたハンドラが出力される', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([{ id: 1, done: false }])
+        const [items, setItems] = createSignal([{ id: 1, done: false }])
         const handleToggle = (id) => {
           setItems(items().map(t => t.id === id ? { ...t, done: !t.done } : t))
         }
@@ -63,9 +63,9 @@ describe('コンポーネント内ローカル関数', () => {
 
   it('複数のハンドラ関数が出力される', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([])
+        const [items, setItems] = createSignal([])
         const handleAdd = () => {
           setItems([...items(), { id: Date.now() }])
         }
@@ -96,10 +96,10 @@ describe('コンポーネント内ローカル関数', () => {
 
   it('signal宣言と混在しても正しく抽出される', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
-        const [name, setName] = signal('')
+        const [count, setCount] = createSignal(0)
+        const [name, setName] = createSignal('')
         const increment = () => {
           setCount(count() + 1)
         }
@@ -119,8 +119,8 @@ describe('コンポーネント内ローカル関数', () => {
     const component = result.components[0]
 
     // signal宣言は通常通り
-    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
-    expect(component.clientJs).toContain("const [name, setName] = signal('')")
+    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    expect(component.clientJs).toContain("const [name, setName] = createSignal('')")
     // ハンドラ関数も出力される
     expect(component.clientJs).toContain('const increment = () =>')
     expect(component.clientJs).toContain('const reset = () =>')
@@ -128,7 +128,7 @@ describe('コンポーネント内ローカル関数', () => {
 
   it('TypeScript型注釈が除去される', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = signal<{ id: number; done: boolean }[]>([])
         const handleToggle = (id: number) => {

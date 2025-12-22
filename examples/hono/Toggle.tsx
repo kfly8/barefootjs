@@ -1,7 +1,7 @@
-import { signal } from 'barefoot'
+import { createSignal } from 'barefoot'
 
 function Toggle() {
-  const [on, setOn] = signal(false)
+  const [on, setOn] = createSignal(false)
   return (
     <div class="toggle">
       <span>{on() ? 'ON' : 'OFF'}</span>

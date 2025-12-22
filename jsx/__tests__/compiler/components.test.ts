@@ -15,7 +15,7 @@
  * ```typescript
  * // propsありの場合（clientJs）
  * export function initForm({ onAdd }) {
- *   const [text, setText] = signal('')
+ *   const [text, setText] = createSignal('')
  *   // ...
  * }
  *
@@ -48,9 +48,9 @@ describe('コンポーネント - 基本', () => {
         }
       `,
       '/test/Counter.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         function Counter() {
-          const [count, setCount] = signal(0)
+          const [count, setCount] = createSignal(0)
           return (
             <div>
               <p>{count()}</p>
@@ -71,7 +71,7 @@ describe('コンポーネント - 基本', () => {
     // Counterコンポーネントが出力される
     const counterComponent = result.components.find(c => c.name === 'Counter')
     expect(counterComponent).toBeDefined()
-    expect(counterComponent!.clientJs).toContain('const [count, setCount] = signal(0)')
+    expect(counterComponent!.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
   it('propsありのコンポーネント', async () => {
@@ -87,9 +87,9 @@ describe('コンポーネント - 基本', () => {
         }
       `,
       '/test/Counter.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         function Counter({ initial }) {
-          const [count, setCount] = signal(initial)
+          const [count, setCount] = createSignal(initial)
           return (
             <div>
               <p>{count()}</p>
@@ -140,10 +140,10 @@ describe('コンポーネント - propsとinit関数', () => {
   it('propsを持つコンポーネントはinit関数でラップされる', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Form from './Form'
         function App() {
-          const [items, setItems] = signal([])
+          const [items, setItems] = createSignal([])
           const handleAdd = (text) => {
             setItems([...items(), { id: Date.now(), text }])
           }
@@ -155,10 +155,10 @@ describe('コンポーネント - propsとinit関数', () => {
         }
       `,
       '/test/Form.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         type Props = { onAdd: (text: string) => void }
         function Form({ onAdd }: Props) {
-          const [text, setText] = signal('')
+          const [text, setText] = createSignal('')
           const handleSubmit = () => {
             if (text().trim()) {
               onAdd(text().trim())
@@ -181,7 +181,7 @@ describe('コンポーネント - propsとinit関数', () => {
     // init関数でラップされている
     expect(formComponent!.clientJs).toContain('export function initForm({ onAdd })')
     // signal宣言が関数内にある
-    expect(formComponent!.clientJs).toContain("const [text, setText] = signal('')")
+    expect(formComponent!.clientJs).toContain("const [text, setText] = createSignal('')")
     // ローカル関数も関数内にある
     expect(formComponent!.clientJs).toContain('const handleSubmit = () =>')
     // onAddが使える
@@ -190,9 +190,9 @@ describe('コンポーネント - propsとinit関数', () => {
 
   it('propsがないコンポーネントはラップされない', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <button onClick={() => setCount(count() + 1)}>{count()}</button>
       }
     `
@@ -202,16 +202,16 @@ describe('コンポーネント - propsとinit関数', () => {
     // init関数でラップされていない
     expect(component.clientJs).not.toContain('export function init')
     // トップレベルにsignal宣言がある
-    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
+    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
   it('親コンポーネントが子のinit関数を呼び出す', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Form from './Form'
         function App() {
-          const [items, setItems] = signal([])
+          const [items, setItems] = createSignal([])
           const handleAdd = (text) => {
             setItems([...items(), { id: Date.now(), text }])
           }
@@ -224,10 +224,10 @@ describe('コンポーネント - propsとinit関数', () => {
         }
       `,
       '/test/Form.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         type Props = { onAdd: (text: string) => void }
         function Form({ onAdd }: Props) {
-          const [text, setText] = signal('')
+          const [text, setText] = createSignal('')
           return (
             <div>
               <input value={text()} onInput={(e) => setText(e.target.value)} />
@@ -243,19 +243,19 @@ describe('コンポーネント - propsとinit関数', () => {
 
     // 子コンポーネントのimportがある（ハッシュ付き）
     expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
-    // init呼び出しがある（コールバックpropsはupdateAll()でラップされる）
-    expect(appComponent!.clientJs).toContain('initForm({ onAdd: (...args) => { handleAdd(...args); updateAll() }}')
+    // init呼び出しがある（createEffectにより自動追跡されるため、コールバックはそのまま渡される）
+    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd })')
   })
 })
 
-describe('コンポーネント - コールバックpropsのラップ', () => {
-  it('動的コンテンツがある場合、コールバックpropsがupdateAll()でラップされる', async () => {
+describe('コンポーネント - コールバックprops', () => {
+  it('動的コンテンツがある場合、コールバックpropsがそのまま渡される（createEffectで自動追跡）', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         import Child from './Child'
         function Parent() {
-          const [count, setCount] = signal(0)
+          const [count, setCount] = createSignal(0)
           const handleClick = () => setCount(count() + 1)
           return (
             <div>
@@ -277,11 +277,11 @@ describe('コンポーネント - コールバックpropsのラップ', () => {
     const result = await compileWithFiles('/test/Parent.tsx', files)
     const parent = result.components.find(c => c.name === 'Parent')
 
-    // コールバックがupdateAll()でラップされている
-    expect(parent!.clientJs).toContain('onClick: (...args) => { handleClick(...args); updateAll() }')
+    // コールバックはそのまま渡される（createEffectによる自動追跡のため）
+    expect(parent!.clientJs).toContain('initChild({ onClick: handleClick })')
   })
 
-  it('動的コンテンツがない場合、コールバックpropsはラップされない', async () => {
+  it('動的コンテンツがない場合もコールバックpropsはそのまま渡される', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
         import Child from './Child'
@@ -323,9 +323,9 @@ describe('コンポーネント - ハッシュとファイル名', () => {
         export default App
       `,
       '/test/Counter.tsx': `
-        import { signal } from 'barefoot'
+        import { createSignal } from 'barefoot'
         function Counter() {
-          const [count, setCount] = signal(0)
+          const [count, setCount] = createSignal(0)
           return <button onClick={() => setCount(count() + 1)}>{count()}</button>
         }
         export default Counter
@@ -350,9 +350,9 @@ describe('コンポーネント - ハッシュとファイル名', () => {
 describe('コンポーネント - サーバー出力', () => {
   it('useRequestContextによるコンポーネント登録', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p>{count()}</p>
       }
     `

@@ -13,11 +13,11 @@
  * ## 生成されるコード
  * ```typescript
  * // 入力
- * const [count, setCount] = signal(0)
+ * const [count, setCount] = createSignal(0)
  *
  * // 出力（clientJs）
- * import { signal } from './barefoot.js'
- * const [count, setCount] = signal(0)
+ * import { createSignal } from './barefoot.js'
+ * const [count, setCount] = createSignal(0)
  * ```
  */
 
@@ -27,87 +27,87 @@ import { compile } from './test-helpers'
 describe('signal宣言', () => {
   it('数値のsignal', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p>{count()}</p>
       }
     `
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
+    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
   it('真偽値のsignal', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [on, setOn] = signal(false)
+        const [on, setOn] = createSignal(false)
         return <span>{on() ? 'ON' : 'OFF'}</span>
       }
     `
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('const [on, setOn] = signal(false)')
+    expect(component.clientJs).toContain('const [on, setOn] = createSignal(false)')
   })
 
   it('文字列のsignal', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [text, setText] = signal('hello')
+        const [text, setText] = createSignal('hello')
         return <p>{text()}</p>
       }
     `
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain("const [text, setText] = signal('hello')")
+    expect(component.clientJs).toContain("const [text, setText] = createSignal('hello')")
   })
 
   it('複数のsignal', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
-        const [name, setName] = signal('Alice')
+        const [count, setCount] = createSignal(0)
+        const [name, setName] = createSignal('Alice')
         return <p>{name()}: {count()}</p>
       }
     `
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('const [count, setCount] = signal(0)')
-    expect(component.clientJs).toContain("const [name, setName] = signal('Alice')")
+    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    expect(component.clientJs).toContain("const [name, setName] = createSignal('Alice')")
   })
 
   it('オブジェクトのsignal', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [user, setUser] = signal({ name: 'Alice', age: 20 })
+        const [user, setUser] = createSignal({ name: 'Alice', age: 20 })
         return <p>{user().name}</p>
       }
     `
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain("const [user, setUser] = signal({ name: 'Alice', age: 20 })")
+    expect(component.clientJs).toContain("const [user, setUser] = createSignal({ name: 'Alice', age: 20 })")
   })
 
   it('配列のsignal', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [items, setItems] = signal([])
+        const [items, setItems] = createSignal([])
         return <p>{items().length}</p>
       }
     `
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('const [items, setItems] = signal([])')
+    expect(component.clientJs).toContain('const [items, setItems] = createSignal([])')
   })
 })

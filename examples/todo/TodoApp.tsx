@@ -4,7 +4,7 @@
  * メインコンポーネント - 状態管理と子コンポーネントの統合
  */
 
-import { signal } from 'barefoot'
+import { createSignal } from 'barefoot'
 import TodoItem from './TodoItem'
 import AddTodoForm from './AddTodoForm'
 
@@ -16,13 +16,13 @@ type Todo = {
 }
 
 function TodoApp() {
-  const [todos, setTodos] = signal<Todo[]>([
+  const [todos, setTodos] = createSignal<Todo[]>([
     { id: 1, text: 'プロジェクトのセットアップ', done: false, editing: false },
     { id: 2, text: 'コンポーネントを作成', done: false, editing: false },
     { id: 3, text: 'テストを書く', done: true, editing: false },
   ])
 
-  const [nextId, setNextId] = signal(4)
+  const [nextId, setNextId] = createSignal(4)
 
   const handleAdd = (text: string) => {
     setTodos([...todos(), { id: nextId(), text, done: false, editing: false }])

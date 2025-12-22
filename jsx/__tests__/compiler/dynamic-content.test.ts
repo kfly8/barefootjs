@@ -33,9 +33,9 @@ import { compile } from './test-helpers'
 describe('動的コンテンツ', () => {
   it('関数呼び出し', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p>{count()}</p>
       }
     `
@@ -51,9 +51,9 @@ describe('動的コンテンツ', () => {
 
   it('二項演算', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p>{count() * 2}</p>
       }
     `
@@ -65,9 +65,9 @@ describe('動的コンテンツ', () => {
 
   it('条件式（三項演算子）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [on, setOn] = signal(false)
+        const [on, setOn] = createSignal(false)
         return <span>{on() ? 'ON' : 'OFF'}</span>
       }
     `
@@ -79,9 +79,9 @@ describe('動的コンテンツ', () => {
 
   it('テキスト + 動的コンテンツ', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(0)
+        const [count, setCount] = createSignal(0)
         return <p>Count: {count()}</p>
       }
     `
@@ -93,9 +93,9 @@ describe('動的コンテンツ', () => {
 
   it('初期値の正しい描画（真偽値から文字列）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [on, setOn] = signal(false)
+        const [on, setOn] = createSignal(false)
         return <span>{on() ? 'ON' : 'OFF'}</span>
       }
     `
@@ -108,9 +108,9 @@ describe('動的コンテンツ', () => {
 
   it('初期値の正しい描画（数値の演算）', async () => {
     const source = `
-      import { signal } from 'barefoot'
+      import { createSignal } from 'barefoot'
       function Component() {
-        const [count, setCount] = signal(5)
+        const [count, setCount] = createSignal(5)
         return <span>{count() * 2}</span>
       }
     `
