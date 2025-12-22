@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun run build.ts",
+    "build": "bun ../../jsx/build.cli.ts",
+    "build:legacy": "bun run build.ts",
     "dev": "bun run --watch server.tsx"
   },
   "dependencies": {

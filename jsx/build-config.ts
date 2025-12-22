@@ -20,8 +20,6 @@ export interface ServerBuildConfig {
 
 export type BuildConfig = StaticBuildConfig | ServerBuildConfig
 
-export interface ResolvedBuildConfig extends BuildConfig {
-  rootDir: string
-  distDir: string
-  domDir: string
-}
+export type ResolvedBuildConfig = 
+  | (StaticBuildConfig & { rootDir: string; distDir: string; domDir: string })
+  | (ServerBuildConfig & { rootDir: string; distDir: string; domDir: string })
