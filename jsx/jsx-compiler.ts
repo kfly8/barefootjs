@@ -56,9 +56,6 @@ import { extractMapExpression, evaluateMapWithInitialValues } from './compiler/m
 
 export type { ComponentOutput, CompileJSXResult }
 
-// コンパイル単位でIDを管理
-const idGenerator = new IdGenerator()
-
 /**
  * エントリーポイントからアプリケーションをコンパイル
  *
@@ -73,7 +70,8 @@ export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>
 ): Promise<CompileJSXResult> {
-  idGenerator.reset()
+  // Create a new IdGenerator for each compilation (enables parallel compilation)
+  const idGenerator = new IdGenerator()
 
   // コンパイル済みコンポーネントのキャッシュ
   const compiledComponents: Map<string, CompileResult> = new Map()
@@ -106,7 +104,7 @@ export async function compileJSX(
     }
 
     // コンポーネントをコンパイル（子コンポーネントのHTMLを埋め込む）
-    const result = compileJsxWithComponents(source, fullPath, componentResults)
+    const result = compileJsxWithComponents(source, fullPath, componentResults, idGenerator)
 
     compiledComponents.set(componentPath, result)
     return result
@@ -249,7 +247,8 @@ export function ${name}(${propsParam}) {
 function compileJsxWithComponents(
   source: string,
   filePath: string,
-  components: Map<string, CompileResult>
+  components: Map<string, CompileResult>,
+  idGenerator: IdGenerator
 ): CompileResult {
   const sourceFile = ts.createSourceFile(
     filePath,
@@ -322,7 +321,7 @@ function compileJsxWithComponents(
       }
 
       const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(openingElement, sourceFile, signals)
-      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits)
+      const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits, idGenerator)
       const children = childrenResult.html
       const dynamicContent = childrenResult.dynamicExpression
       const listContent = childrenResult.listExpression
@@ -737,7 +736,8 @@ function processChildrenInternal(
   listElements: ListElement[],
   signals: SignalDeclaration[],
   dynamicAttributes: DynamicAttribute[] = [],
-  childInits: ChildComponentInit[] = []
+  childInits: ChildComponentInit[] = [],
+  idGenerator: IdGenerator
 ): {
   html: string
   dynamicExpression: { expression: string; fullContent: string } | null
@@ -818,7 +818,7 @@ function processChildrenInternal(
         }
       } else {
         // 再帰的にJSXを処理（簡易版）
-        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits)
+        html += jsxChildToHtml(child, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits, idGenerator)
       }
     }
   }
@@ -839,12 +839,13 @@ function jsxChildToHtml(
   listElements: ListElement[],
   signals: SignalDeclaration[],
   dynamicAttributes: DynamicAttribute[],
-  childInits: ChildComponentInit[] = []
+  childInits: ChildComponentInit[] = [],
+  idGenerator: IdGenerator
 ): string {
   if (ts.isJsxElement(node)) {
     const tagName = node.openingElement.tagName.getText(sourceFile)
     const { attrs, events, isInteractive, dynamicAttrs } = processAttributesInternal(node.openingElement, sourceFile, signals)
-    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits)
+    const childrenResult = processChildrenInternal(node.children, sourceFile, components, interactiveElements, dynamicElements, listElements, signals, dynamicAttributes, childInits, idGenerator)
 
     let id: string | null = null
     const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
