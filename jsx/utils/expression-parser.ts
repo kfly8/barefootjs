@@ -34,6 +34,14 @@ function parseExpression(code: string): ts.Expression | null {
 }
 
 /**
+ * Checks if expression is an arrow function
+ */
+export function isArrowFunction(code: string): boolean {
+  const expr = parseExpression(code)
+  return expr !== null && ts.isArrowFunction(expr)
+}
+
+/**
  * Extracts arrow function body
  */
 export function extractArrowBody(handler: string): string {

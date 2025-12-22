@@ -9,6 +9,7 @@
 import ts from 'typescript'
 import type { CompileResult, TemplateStringResult } from '../types'
 import { isPascalCase } from '../utils/helpers'
+import { isArrowFunction, extractArrowParams, extractArrowBody } from '../utils/expression-parser'
 
 /**
  * Converts JSX element to template literal string.
@@ -154,10 +155,11 @@ export function jsxToTemplateString(
         result = result.replace(callRegex, (match, args) => {
           // If propValue is an arrow function, call it
           // Convert (args) => body to body(args)
-          const arrowMatch = propValue.match(/^\s*\(([^)]*)\)\s*=>\s*(.+)$/)
-          if (arrowMatch) {
-            const arrowParams = arrowMatch[1] || ''
-            let body = arrowMatch[2]!.trim()
+          if (isArrowFunction(propValue)) {
+            // extractArrowParams returns "(param1, param2)", remove parentheses
+            const arrowParamsWithParen = extractArrowParams(propValue)
+            const arrowParams = arrowParamsWithParen.slice(1, -1)
+            let body = extractArrowBody(propValue)
             // If argument substitution is needed
             if (args && arrowParams) {
               // Simple argument substitution
