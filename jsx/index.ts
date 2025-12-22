@@ -1,2 +1,2 @@
-export { compileJSX } from './jsx-compiler'
-export type { CompileJSXResult, ComponentOutput } from './jsx-compiler'
+export { compileJSX, honoServerAdapter } from './jsx-compiler'
+export type { CompileJSXResult, ComponentOutput, CompileOptions, ServerComponentAdapter } from './jsx-compiler'

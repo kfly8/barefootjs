@@ -121,6 +121,35 @@ export type TemplateStringResult = {
 }
 
 /**
+ * Server Component Adapter
+ *
+ * Generates server-side component code for a specific JSX runtime.
+ * This abstraction allows BarefootJS to support different frameworks (Hono, Next.js, etc.)
+ */
+export type ServerComponentAdapter = {
+  /**
+   * Generate server component code
+   * @param options - Component information
+   * @returns Server component source code
+   */
+  generateServerComponent: (options: {
+    name: string
+    props: string[]
+    jsx: string
+  }) => string
+}
+
+/**
+ * Compile options for compileJSX
+ */
+export type CompileOptions = {
+  /**
+   * Server component adapter (default: honoServerAdapter)
+   */
+  serverAdapter?: ServerComponentAdapter
+}
+
+/**
  * Intermediate Representation (IR) Type Definitions
  *
  * Transformed from JSX AST and used to generate various outputs (HTML, ClientJS, ServerJSX).

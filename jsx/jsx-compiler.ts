@@ -23,7 +23,10 @@ import type {
   CompileResult,
   ComponentOutput,
   CompileJSXResult,
+  CompileOptions,
+  ServerComponentAdapter,
 } from './types'
+import { honoServerAdapter } from './adapters'
 import {
   extractImports,
   extractSignals,
@@ -49,6 +52,8 @@ import {
 } from './compiler/utils'
 
 export type { ComponentOutput, CompileJSXResult }
+export type { CompileOptions, ServerComponentAdapter }
+export { honoServerAdapter }
 
 /**
  * エントリーポイントからアプリケーションをコンパイル
@@ -58,12 +63,15 @@ export type { ComponentOutput, CompileJSXResult }
  *
  * @param entryPath - エントリーファイルのパス (例: /path/to/index.tsx)
  * @param readFile - ファイルを読み込む関数
+ * @param options - コンパイルオプション（省略可）
  * @returns { html, components } - 静的HTMLとコンポーネントJS配列
  */
 export async function compileJSX(
   entryPath: string,
-  readFile: (path: string) => Promise<string>
+  readFile: (path: string) => Promise<string>,
+  options: CompileOptions = {}
 ): Promise<CompileJSXResult> {
+  const serverAdapter = options.serverAdapter ?? honoServerAdapter
   // Create a new IdGenerator for each compilation (enables parallel compilation)
   const idGenerator = new IdGenerator()
 
@@ -213,59 +221,12 @@ ${bodyCode}
       }
     }
 
-    // propsがある場合は引数として受け取る
-    const propsParam = result.props.length > 0
-      ? `{ ${result.props.join(', ')} }`
-      : ''
-
-    // Generate server component with auto-hydration support
-    let serverComponent: string
-    if (result.props.length > 0) {
-      // For components with props, embed serializable props for client hydration
-      serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
-
-export function ${name}(${propsParam}) {
-  const c = useRequestContext()
-  const used = c.get('usedComponents') || []
-  if (!used.includes('${name}')) {
-    c.set('usedComponents', [...used, '${name}'])
-  }
-
-  // Serialize props for client hydration (only serializable values)
-  const __hydrateProps = {}
-  ${result.props.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
-  const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
-
-  return (
-    <>
-      {__hasHydrateProps && (
-        <script
-          type="application/json"
-          data-bf-props="${name}"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
-        />
-      )}
-      ${result.serverJsx}
-    </>
-  )
-}
-`
-    } else {
-      // Components without props don't need hydration setup
-      serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
-
-export function ${name}() {
-  const c = useRequestContext()
-  const used = c.get('usedComponents') || []
-  if (!used.includes('${name}')) {
-    c.set('usedComponents', [...used, '${name}'])
-  }
-  return (
-    ${result.serverJsx}
-  )
-}
-`
-    }
+    // Generate server component using adapter
+    const serverComponent = serverAdapter.generateServerComponent({
+      name,
+      props: result.props,
+      jsx: result.serverJsx,
+    })
     const hash = componentHashes.get(name) || ''
     const filename = hash ? `${name}-${hash}.js` : `${name}.js`
 
