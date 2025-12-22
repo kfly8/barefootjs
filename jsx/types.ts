@@ -142,6 +142,8 @@ export type IRElement = {
   events: Array<{ name: string; eventName: string; handler: string }>
   children: IRNode[]
   listInfo: IRListInfo | null
+  // Dynamic content info (for elements with signal-dependent children)
+  dynamicContent: { expression: string; fullContent: string } | null
 }
 
 export type IRText = {

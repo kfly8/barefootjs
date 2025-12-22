@@ -88,7 +88,8 @@ describe('Dynamic Content', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('d0.textContent = "Count:" + count()')
+    // String() wrapper is added for safe concatenation with text
+    expect(component.clientJs).toContain('d0.textContent = "Count:" + String(count())')
   })
 
   it('correct initial rendering (boolean to string)', async () => {
