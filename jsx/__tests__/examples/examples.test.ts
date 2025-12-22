@@ -119,3 +119,45 @@ describe('examples/hono', () => {
     expect(toggle?.clientJs).toContain('createEffect')
   })
 })
+
+describe('examples/todo-spa', () => {
+  let result: Awaited<ReturnType<typeof compileJSX>>
+
+  beforeAll(async () => {
+    const entryPath = resolve(EXAMPLES_DIR, 'todo-spa/TodoApp.tsx')
+    result = await compileJSX(entryPath, async (path) => {
+      return await Bun.file(path).text()
+    })
+  })
+
+  it('コンパイルに成功する', () => {
+    expect(result.components.length).toBeGreaterThan(0)
+  })
+
+  it('TodoApp コンポーネントが生成される', () => {
+    const todoApp = result.components.find(c => c.name === 'TodoApp')
+    expect(todoApp).toBeDefined()
+  })
+
+  it('AddTodoForm コンポーネントが生成される', () => {
+    const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
+    expect(addTodoForm).toBeDefined()
+  })
+
+  it('TodoItem コンポーネントが生成される', () => {
+    const todoItem = result.components.find(c => c.name === 'TodoItem')
+    expect(todoItem).toBeDefined()
+  })
+
+  it('TodoApp で fetch が使用される (API呼び出し)', () => {
+    const todoApp = result.components.find(c => c.name === 'TodoApp')
+    // fetch calls in the client-side code (for CRUD operations)
+    expect(todoApp?.clientJs).toContain("fetch('/api/todos'")
+    expect(todoApp?.clientJs).toContain("fetch(`/api/todos/${id}`")
+  })
+
+  it('AddTodoForm の initAddTodoForm が呼び出される', () => {
+    const todoApp = result.components.find(c => c.name === 'TodoApp')
+    expect(todoApp?.clientJs).toContain('initAddTodoForm({ onAdd: handleAdd })')
+  })
+})
