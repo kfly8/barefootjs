@@ -1,16 +1,16 @@
 /**
- * JSXコンパイラテスト用ヘルパー関数
+ * JSX Compiler Test Helper Functions
  *
- * テスト間で共通のセットアップとユーティリティを提供する。
+ * Provides common setup and utilities for tests.
  */
 
 import { compileJSX, honoServerAdapter } from '../../jsx-compiler'
 
 /**
- * 単一コンポーネントをコンパイル
+ * Compiles a single component
  *
- * @param source - JSXソースコード
- * @returns コンパイル結果
+ * @param source - JSX source code
+ * @returns Compilation result
  *
  * @example
  * ```typescript
@@ -35,11 +35,11 @@ export async function compile(source: string) {
 }
 
 /**
- * 複数ファイル構成のコンポーネントをコンパイル
+ * Compiles components with multiple files
  *
- * @param entryPath - エントリーポイントのパス
- * @param files - ファイルパスとソースコードのマップ
- * @returns コンパイル結果
+ * @param entryPath - Entry point path
+ * @param files - Map of file paths to source code
+ * @returns Compilation result
  *
  * @example
  * ```typescript
