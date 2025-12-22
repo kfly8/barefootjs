@@ -48,55 +48,9 @@ describe('examples/counter', () => {
   })
 })
 
-describe('examples/todo', () => {
-  let result: Awaited<ReturnType<typeof compileJSX>>
-
-  beforeAll(async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'todo/index.tsx')
-    result = await compileJSX(entryPath, async (path) => {
-      return await Bun.file(path).text()
-    })
-  })
-
-  it('compiles successfully', () => {
-    expect(result.components.length).toBeGreaterThan(0)
-  })
-
-  it('TodoApp component is generated', () => {
-    const todoApp = result.components.find(c => c.name === 'TodoApp')
-    expect(todoApp).toBeDefined()
-  })
-
-  it('AddTodoForm component is generated', () => {
-    const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
-    expect(addTodoForm).toBeDefined()
-  })
-
-  it('createEffect is used in TodoApp', () => {
-    const todoApp = result.components.find(c => c.name === 'TodoApp')
-    expect(todoApp?.clientJs).toContain('createEffect(() => {')
-  })
-
-  it('initAddTodoForm of AddTodoForm is called', () => {
-    const todoApp = result.components.find(c => c.name === 'TodoApp')
-    expect(todoApp?.clientJs).toContain('initAddTodoForm({ onAdd: handleAdd })')
-  })
-
-  it('input event is set in AddTodoForm', () => {
-    const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
-    expect(addTodoForm?.clientJs).toContain('oninput = (e) => setNewText(e.target.value)')
-  })
-
-  it('keydown event is set in AddTodoForm', () => {
-    const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
-    expect(addTodoForm?.clientJs).toContain('onkeydown')
-    expect(addTodoForm?.clientJs).toContain("e.key === 'Enter'")
-  })
-})
-
-describe('examples/hono', () => {
+describe('examples/hono-static-html', () => {
   it('Counter component is compiled', async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'hono/pages/components/Counter.tsx')
+    const entryPath = resolve(EXAMPLES_DIR, 'hono-static-html/pages/components/Counter.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
     })
@@ -108,7 +62,7 @@ describe('examples/hono', () => {
   })
 
   it('Toggle component is compiled', async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'hono/pages/components/Toggle.tsx')
+    const entryPath = resolve(EXAMPLES_DIR, 'hono-static-html/pages/components/Toggle.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
     })
@@ -120,50 +74,3 @@ describe('examples/hono', () => {
   })
 })
 
-describe('examples/todo-spa', () => {
-  let result: Awaited<ReturnType<typeof compileJSX>>
-
-  beforeAll(async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'todo-spa/pages/TodoPage.tsx')
-    result = await compileJSX(entryPath, async (path) => {
-      return await Bun.file(path).text()
-    })
-  })
-
-  it('compiles successfully', () => {
-    expect(result.components.length).toBeGreaterThan(0)
-  })
-
-  it('TodoPage component is generated', () => {
-    const todoPage = result.components.find(c => c.name === 'TodoPage')
-    expect(todoPage).toBeDefined()
-    expect(todoPage?.staticHtml).toContain('BarefootJS Todo SPA')
-  })
-
-  it('TodoApp component is generated', () => {
-    const todoApp = result.components.find(c => c.name === 'TodoApp')
-    expect(todoApp).toBeDefined()
-  })
-
-  it('AddTodoForm component is generated', () => {
-    const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
-    expect(addTodoForm).toBeDefined()
-  })
-
-  it('TodoItem component is generated', () => {
-    const todoItem = result.components.find(c => c.name === 'TodoItem')
-    expect(todoItem).toBeDefined()
-  })
-
-  it('fetch is used in TodoApp (API calls)', () => {
-    const todoApp = result.components.find(c => c.name === 'TodoApp')
-    // fetch calls in the client-side code (for CRUD operations)
-    expect(todoApp?.clientJs).toContain("fetch('/api/todos'")
-    expect(todoApp?.clientJs).toContain("fetch(`/api/todos/${id}`")
-  })
-
-  it('initAddTodoForm of AddTodoForm is called', () => {
-    const todoApp = result.components.find(c => c.name === 'TodoApp')
-    expect(todoApp?.clientJs).toContain('initAddTodoForm({ onAdd: handleAdd })')
-  })
-})
