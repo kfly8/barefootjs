@@ -75,8 +75,8 @@ describe('Inline component expansion in map', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // Item component is expanded inline in HTML (no __index since there are no events)
-    expect(appComponent!.clientJs).toContain('items().map(item => `<li>${item.text}</li>`).join(\'\')')
+    // Item component is expanded inline in HTML (with __index for event delegation support)
+    expect(appComponent!.clientJs).toContain('items().map((item, __index) => `<li>${item.text}</li>`).join(\'\')')
   })
 
   it('Inline expansion of components with event handlers', async () => {

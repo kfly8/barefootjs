@@ -25,6 +25,29 @@ export function evaluateWithInitialValues(expr: string, signals: SignalDeclarati
 }
 
 /**
+ * Evaluates a style object expression and converts it to CSS string.
+ */
+function evaluateStyleObject(expr: string, signals: SignalDeclaration[]): string {
+  // Wrap with parentheses to evaluate as object literal
+  const replaced = replaceSignalCalls(`(${expr})`, signals)
+
+  try {
+    const styleObj = eval(replaced)
+    if (typeof styleObj !== 'object' || styleObj === null) return ''
+
+    const styles: string[] = []
+    for (const [key, value] of Object.entries(styleObj)) {
+      // Convert camelCase to kebab-case
+      const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+      styles.push(`${cssKey}: ${value}`)
+    }
+    return styles.join('; ')
+  } catch {
+    return ''
+  }
+}
+
+/**
  * Generates HTML from an IR node
  */
 export function irToHtml(node: IRNode, signals: SignalDeclaration[]): string {
@@ -33,10 +56,9 @@ export function irToHtml(node: IRNode, signals: SignalDeclaration[]): string {
       return node.content
 
     case 'expression':
-      if (node.isDynamic) {
-        return evaluateWithInitialValues(node.expression, signals)
-      }
-      return node.expression
+      // Evaluate expression with initial values (both dynamic and static)
+      // Static expressions like string literals also need evaluation
+      return evaluateWithInitialValues(node.expression, signals)
 
     case 'component':
       return node.staticHtml
@@ -63,9 +85,9 @@ function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
   // Build attributes
   const attrParts: string[] = []
 
-  // Add ID if present
+  // Add data-bf attribute if present (for DOM references)
   if (id) {
-    attrParts.push(`id="${id}"`)
+    attrParts.push(`data-bf="${id}"`)
   }
 
   // Static attributes
@@ -79,6 +101,15 @@ function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
 
   // Dynamic attributes (evaluated with initial values)
   for (const attr of dynamicAttrs) {
+    // Special handling for style objects
+    if (attr.name === 'style' && attr.expression.trim().startsWith('{')) {
+      const styleValue = evaluateStyleObject(attr.expression, signals)
+      if (styleValue) {
+        attrParts.push(`style="${styleValue}"`)
+      }
+      continue
+    }
+
     const value = evaluateWithInitialValues(attr.expression, signals)
     if (value && value !== 'false') {
       if (isBooleanAttribute(attr.name) && value === 'true') {

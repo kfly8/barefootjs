@@ -220,15 +220,21 @@ export function collectClientJsInfo(
   interactiveElements: InteractiveElement[],
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
-  dynamicAttributes: DynamicAttribute[]
+  dynamicAttributes: DynamicAttribute[],
+  childInits: Array<{ name: string; propsExpr: string }> = []
 ): void {
   switch (node.type) {
     case 'element':
-      collectFromElement(node, interactiveElements, dynamicElements, listElements, dynamicAttributes)
+      collectFromElement(node, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
       break
     case 'conditional':
-      collectClientJsInfo(node.whenTrue, interactiveElements, dynamicElements, listElements, dynamicAttributes)
-      collectClientJsInfo(node.whenFalse, interactiveElements, dynamicElements, listElements, dynamicAttributes)
+      collectClientJsInfo(node.whenTrue, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+      collectClientJsInfo(node.whenFalse, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+      break
+    case 'component':
+      if (node.childInits) {
+        childInits.push(node.childInits)
+      }
       break
   }
 }
@@ -238,7 +244,8 @@ function collectFromElement(
   interactiveElements: InteractiveElement[],
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
-  dynamicAttributes: DynamicAttribute[]
+  dynamicAttributes: DynamicAttribute[],
+  childInits: Array<{ name: string; propsExpr: string }>
 ): void {
   // If element has events
   if (el.events.length > 0 && el.id) {
@@ -261,6 +268,16 @@ function collectFromElement(
     }
   }
 
+  // If element has dynamic content (signal-dependent children)
+  if (el.dynamicContent && el.id) {
+    dynamicElements.push({
+      id: el.id,
+      tagName: el.tagName,
+      expression: el.dynamicContent.expression,
+      fullContent: el.dynamicContent.fullContent,
+    })
+  }
+
   // If element has list info
   if (el.listInfo && el.id) {
     listElements.push({
@@ -274,6 +291,6 @@ function collectFromElement(
 
   // Recursively process children
   for (const child of el.children) {
-    collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes)
+    collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
   }
 }

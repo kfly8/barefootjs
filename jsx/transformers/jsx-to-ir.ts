@@ -70,7 +70,7 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
   )
 
   // Process children
-  const { children, listInfo, hasDynamicContent } = processChildren(node.children, ctx)
+  const { children, listInfo, hasDynamicContent, dynamicContent } = processChildren(node.children, ctx)
 
   // Determine ID
   const needsId = events.length > 0 || dynamicAttrs.length > 0 || listInfo || hasDynamicContent
@@ -85,6 +85,7 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
     events,
     children,
     listInfo,
+    dynamicContent,
   }
 }
 
@@ -113,6 +114,7 @@ function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext)
     events,
     children: [],
     listInfo: null,
+    dynamicContent: null,
   }
 }
 
@@ -295,10 +297,13 @@ function processChildren(
   children: IRNode[]
   listInfo: IRListInfo | null
   hasDynamicContent: boolean
+  dynamicContent: { expression: string; fullContent: string } | null
 } {
   const irChildren: IRNode[] = []
   let listInfo: IRListInfo | null = null
   let hasDynamicContent = false
+  const contentParts: Array<{ type: 'text' | 'expression'; value: string }> = []
+  let dynamicExpression = ''
 
   for (const child of children) {
     // Detect map expression
@@ -315,11 +320,43 @@ function processChildren(
       irChildren.push(irNode)
       if (irNode.type === 'expression' && irNode.isDynamic) {
         hasDynamicContent = true
+        dynamicExpression = irNode.expression
+        contentParts.push({ type: 'expression', value: irNode.expression })
+      } else if (irNode.type === 'text') {
+        contentParts.push({ type: 'text', value: irNode.content })
+      } else if (irNode.type === 'expression' && !irNode.isDynamic) {
+        contentParts.push({ type: 'expression', value: irNode.expression })
+      } else if (irNode.type === 'conditional') {
+        // Conditional expression with signal-dependent condition
+        if (containsSignalCall(irNode.condition, ctx.signals)) {
+          hasDynamicContent = true
+          // Reconstruct the ternary expression for fullContent
+          const whenTrueExpr = irNode.whenTrue.type === 'expression' ? irNode.whenTrue.expression : ''
+          const whenFalseExpr = irNode.whenFalse.type === 'expression' ? irNode.whenFalse.expression : ''
+          const ternaryExpr = `${irNode.condition} ? ${whenTrueExpr} : ${whenFalseExpr}`
+          dynamicExpression = ternaryExpr
+          contentParts.push({ type: 'expression', value: ternaryExpr })
+        }
       }
     }
   }
 
-  return { children: irChildren, listInfo, hasDynamicContent }
+  // Build fullContent for dynamic elements
+  let dynamicContent: { expression: string; fullContent: string } | null = null
+  if (hasDynamicContent && contentParts.length > 0) {
+    // If only one expression, use it directly without String() wrapper
+    if (contentParts.length === 1 && contentParts[0].type === 'expression') {
+      dynamicContent = { expression: dynamicExpression, fullContent: contentParts[0].value }
+    } else {
+      // Multiple parts: wrap expressions with String() for concatenation
+      const fullContent = contentParts.map(part =>
+        part.type === 'text' ? `"${part.value}"` : `String(${part.value})`
+      ).join(' + ')
+      dynamicContent = { expression: dynamicExpression, fullContent }
+    }
+  }
+
+  return { children: irChildren, listInfo, hasDynamicContent, dynamicContent }
 }
 
 /**
@@ -353,8 +390,8 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
 
   if (!jsxBody) return null
 
-  // Convert JSX to template string (simplified)
-  const { template, events } = jsxToTemplateString(jsxBody, ctx.sourceFile, paramName)
+  // Convert JSX to template string (with component inlining support)
+  const { template, events } = jsxToTemplateString(jsxBody, ctx.sourceFile, paramName, ctx.components)
 
   return {
     arrayExpression: arrayExpr,
@@ -416,21 +453,29 @@ export function findAndConvertJsxReturn(
   let result: IRNode | null = null
 
   function visit(node: ts.Node) {
+    // Find function declaration with PascalCase name (component)
     if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      ts.forEachChild(node, (child) => {
-        if (ts.isReturnStatement(child) && child.expression) {
-          let expr = child.expression
-          if (ts.isParenthesizedExpression(expr)) {
-            expr = expr.expression
-          }
-          if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
-            result = jsxToIR(expr, ctx)
-          }
-        }
-        ts.forEachChild(child, visit)
-      })
+      // Look for return statement in function body
+      findReturnInBody(node.body)
     }
     ts.forEachChild(node, visit)
+  }
+
+  function findReturnInBody(node: ts.Node | undefined) {
+    if (!node) return
+
+    if (ts.isReturnStatement(node) && node.expression) {
+      let expr = node.expression
+      if (ts.isParenthesizedExpression(expr)) {
+        expr = expr.expression
+      }
+      if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
+        result = jsxToIR(expr, ctx)
+      }
+      return
+    }
+
+    ts.forEachChild(node, findReturnInBody)
   }
 
   visit(sourceFile)
