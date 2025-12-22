@@ -2,7 +2,7 @@
  * Counter build script
  */
 
-import { compileJSX } from '../../jsx'
+import { compileJSX, honoServerAdapter } from '../../jsx'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -17,7 +17,7 @@ await mkdir(DIST_DIR, { recursive: true })
 const entryPath = resolve(ROOT_DIR, 'index.tsx')
 const result = await compileJSX(entryPath, async (path) => {
   return await Bun.file(path).text()
-})
+}, { serverAdapter: honoServerAdapter })
 
 // Output component JS (with hash)
 const scriptTags: string[] = []

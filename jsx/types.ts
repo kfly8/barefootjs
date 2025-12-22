@@ -144,9 +144,9 @@ export type ServerComponentAdapter = {
  */
 export type CompileOptions = {
   /**
-   * Server component adapter (default: honoServerAdapter)
+   * Server component adapter (required)
    */
-  serverAdapter?: ServerComponentAdapter
+  serverAdapter: ServerComponentAdapter
 }
 
 /**

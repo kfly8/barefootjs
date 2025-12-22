@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'bun:test'
-import { compileJSX } from '../../index'
+import { compileJSX, honoServerAdapter } from '../../index'
 import { resolve } from 'node:path'
 
 const EXAMPLES_DIR = resolve(import.meta.dir, '../../../examples')
@@ -17,7 +17,7 @@ describe('examples/counter', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'counter/index.tsx')
     result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    })
+    }, { serverAdapter: honoServerAdapter })
   })
 
   it('compiles successfully', () => {
@@ -55,7 +55,7 @@ describe('examples/todo', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'todo/index.tsx')
     result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    })
+    }, { serverAdapter: honoServerAdapter })
   })
 
   it('compiles successfully', () => {
@@ -99,7 +99,7 @@ describe('examples/hono', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'hono/Counter.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    })
+    }, { serverAdapter: honoServerAdapter })
 
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter).toBeDefined()
@@ -111,7 +111,7 @@ describe('examples/hono', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'hono/Toggle.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    })
+    }, { serverAdapter: honoServerAdapter })
 
     const toggle = result.components.find(c => c.name === 'Toggle')
     expect(toggle).toBeDefined()
@@ -127,7 +127,7 @@ describe('examples/todo-spa', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'todo-spa/TodoApp.tsx')
     result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    })
+    }, { serverAdapter: honoServerAdapter })
   })
 
   it('コンパイルに成功する', () => {

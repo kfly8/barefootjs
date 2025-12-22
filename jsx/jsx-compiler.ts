@@ -63,15 +63,15 @@ export { honoServerAdapter }
  *
  * @param entryPath - エントリーファイルのパス (例: /path/to/index.tsx)
  * @param readFile - ファイルを読み込む関数
- * @param options - コンパイルオプション（省略可）
+ * @param options - コンパイルオプション
  * @returns { html, components } - 静的HTMLとコンポーネントJS配列
  */
 export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>,
-  options: CompileOptions = {}
+  options: CompileOptions
 ): Promise<CompileJSXResult> {
-  const serverAdapter = options.serverAdapter ?? honoServerAdapter
+  const { serverAdapter } = options
   // Create a new IdGenerator for each compilation (enables parallel compilation)
   const idGenerator = new IdGenerator()
 

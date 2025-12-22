@@ -4,7 +4,7 @@
  * Compiles TodoApp and its dependencies
  */
 
-import { compileJSX } from '../../jsx'
+import { compileJSX, honoServerAdapter } from '../../jsx'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -34,7 +34,7 @@ for (const componentName of COMPONENTS) {
   const entryPath = resolve(ROOT_DIR, `${componentName}.tsx`)
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  })
+  }, { serverAdapter: honoServerAdapter })
 
   for (const component of result.components) {
     // Server component
