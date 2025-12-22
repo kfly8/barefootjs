@@ -1,40 +1,40 @@
 /**
- * コンポーネントのテスト
+ * Component tests
  *
- * ## 概要
- * 複数コンポーネントの構成、props、children、
- * サーバーコンポーネント出力を検証する。
+ * ## Overview
+ * Verify component composition, props, children, and
+ * server component output.
  *
- * ## 対応パターン
- * - propsなしのコンポーネント: `<Counter />`
- * - propsありのコンポーネント: `<Counter initial={5} />`
- * - childrenを持つコンポーネント: `<Button>Click me</Button>`
- * - コールバックprops: `<Form onAdd={handleAdd} />`
+ * ## Supported patterns
+ * - Components without props: `<Counter />`
+ * - Components with props: `<Counter initial={5} />`
+ * - Components with children: `<Button>Click me</Button>`
+ * - Callback props: `<Form onAdd={handleAdd} />`
  *
- * ## 生成されるコード
+ * ## Generated code
  * ```typescript
- * // propsありの場合（clientJs）
+ * // With props (clientJs)
  * export function initForm({ onAdd }) {
  *   const [text, setText] = createSignal('')
  *   // ...
  * }
  *
- * // 親コンポーネントでの呼び出し
+ * // Call in parent component
  * import { initForm } from './Form-abc123.js'
  * initForm({ onAdd: (...args) => { handleAdd(...args); updateAll() } })
  * ```
  *
- * ## 注意事項
- * - コンポーネント名はPascalCase
- * - propsを持つコンポーネントは `init{Name}` 関数でラップ
- * - コールバックpropsは親の動的コンテンツがある場合 `updateAll()` でラップ
+ * ## Notes
+ * - Component names must be PascalCase
+ * - Components with props are wrapped in `init{Name}` function
+ * - Callback props are wrapped with `updateAll()` when parent has dynamic content
  */
 
 import { describe, it, expect } from 'bun:test'
 import { compile, compileWithFiles } from './test-helpers'
 
-describe('コンポーネント - 基本', () => {
-  it('propsなしのコンポーネント', async () => {
+describe('Components - Basics', () => {
+  it('Component without props', async () => {
     const files = {
       '/test/App.tsx': `
         import Counter from './Counter'
@@ -63,18 +63,18 @@ describe('コンポーネント - 基本', () => {
 
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // AppコンポーネントのHTMLにCounterのHTMLが埋め込まれる
+    // Counter HTML is embedded in App component HTML
     expect(result.html).toContain('<h1>My App</h1>')
     expect(result.html).toContain('<p')
     expect(result.html).toContain('<button')
 
-    // Counterコンポーネントが出力される
+    // Counter component is output
     const counterComponent = result.components.find(c => c.name === 'Counter')
     expect(counterComponent).toBeDefined()
     expect(counterComponent!.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
-  it('propsありのコンポーネント', async () => {
+  it('Component with props', async () => {
     const files = {
       '/test/App.tsx': `
         import Counter from './Counter'
@@ -102,13 +102,13 @@ describe('コンポーネント - 基本', () => {
 
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // Counterコンポーネントがpropsを受け取る形式になる
+    // Counter component takes props
     const counterComponent = result.components.find(c => c.name === 'Counter')
     expect(counterComponent).toBeDefined()
     expect(counterComponent!.serverComponent).toContain('function Counter({ initial })')
   })
 
-  it('childrenを持つコンポーネント', async () => {
+  it('Component with children', async () => {
     const files = {
       '/test/App.tsx': `
         import Button from './Button'
@@ -129,15 +129,15 @@ describe('コンポーネント - 基本', () => {
 
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // Buttonコンポーネントがchildrenを受け取る形式になる
+    // Button component takes children
     const buttonComponent = result.components.find(c => c.name === 'Button')
     expect(buttonComponent).toBeDefined()
     expect(buttonComponent!.serverComponent).toContain('function Button({ children })')
   })
 })
 
-describe('コンポーネント - propsとinit関数', () => {
-  it('propsを持つコンポーネントはinit関数でラップされる', async () => {
+describe('Components - Props and init function', () => {
+  it('Components with props are wrapped in init function', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import { createSignal } from 'barefoot'
@@ -168,7 +168,7 @@ describe('コンポーネント - propsとinit関数', () => {
           return (
             <div>
               <input value={text()} onInput={(e) => setText(e.target.value)} />
-              <button onClick={() => handleSubmit()}>追加</button>
+              <button onClick={() => handleSubmit()}>Add</button>
             </div>
           )
         }
@@ -178,17 +178,17 @@ describe('コンポーネント - propsとinit関数', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const formComponent = result.components.find(c => c.name === 'Form')
 
-    // init関数でラップされている
+    // Wrapped in init function
     expect(formComponent!.clientJs).toContain('export function initForm({ onAdd })')
-    // signal宣言が関数内にある
+    // Signal declaration is inside function
     expect(formComponent!.clientJs).toContain("const [text, setText] = createSignal('')")
-    // ローカル関数も関数内にある
+    // Local function is also inside function
     expect(formComponent!.clientJs).toContain('const handleSubmit = () =>')
-    // onAddが使える
+    // onAdd can be used
     expect(formComponent!.clientJs).toContain('onAdd(text().trim())')
   })
 
-  it('propsがないコンポーネントはラップされない', async () => {
+  it('Components without props are not wrapped', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -199,13 +199,13 @@ describe('コンポーネント - propsとinit関数', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // init関数でラップされていない
+    // Not wrapped in init function
     expect(component.clientJs).not.toContain('export function init')
-    // トップレベルにsignal宣言がある
+    // Signal declaration is at top level
     expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
-  it('親コンポーネントが子のinit関数を呼び出す', async () => {
+  it('Parent component calls child init function', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import { createSignal } from 'barefoot'
@@ -231,7 +231,7 @@ describe('コンポーネント - propsとinit関数', () => {
           return (
             <div>
               <input value={text()} onInput={(e) => setText(e.target.value)} />
-              <button onClick={() => onAdd(text())}>追加</button>
+              <button onClick={() => onAdd(text())}>Add</button>
             </div>
           )
         }
@@ -241,15 +241,15 @@ describe('コンポーネント - propsとinit関数', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // 子コンポーネントのimportがある（ハッシュ付き）
+    // Child component import exists (with hash)
     expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
-    // init呼び出しがある（createEffectにより自動追跡されるため、コールバックはそのまま渡される）
+    // init call exists (callback is passed as is because createEffect automatically tracks)
     expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd })')
   })
 })
 
-describe('コンポーネント - コールバックprops', () => {
-  it('動的コンテンツがある場合、コールバックpropsがそのまま渡される（createEffectで自動追跡）', async () => {
+describe('Components - Callback props', () => {
+  it('When there is dynamic content, callback props are passed as is (automatically tracked by createEffect)', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
         import { createSignal } from 'barefoot'
@@ -277,11 +277,11 @@ describe('コンポーネント - コールバックprops', () => {
     const result = await compileWithFiles('/test/Parent.tsx', files)
     const parent = result.components.find(c => c.name === 'Parent')
 
-    // コールバックはそのまま渡される（createEffectによる自動追跡のため）
+    // Callback is passed as is (due to automatic tracking by createEffect)
     expect(parent!.clientJs).toContain('initChild({ onClick: handleClick })')
   })
 
-  it('動的コンテンツがない場合もコールバックpropsはそのまま渡される', async () => {
+  it('Even without dynamic content, callback props are passed as is', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
         import Child from './Child'
@@ -306,14 +306,14 @@ describe('コンポーネント - コールバックprops', () => {
     const result = await compileWithFiles('/test/Parent.tsx', files)
     const parent = result.components.find(c => c.name === 'Parent')
 
-    // コールバックはラップされていない
+    // Callback is not wrapped
     expect(parent!.clientJs).toContain('onClick: handleClick')
     expect(parent!.clientJs).not.toContain('updateAll')
   })
 })
 
-describe('コンポーネント - ハッシュとファイル名', () => {
-  it('ComponentOutputにhashとfilenameが含まれる', async () => {
+describe('Components - Hash and filename', () => {
+  it('ComponentOutput includes hash and filename', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import Counter from './Counter'
@@ -333,13 +333,13 @@ describe('コンポーネント - ハッシュとファイル名', () => {
     }
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // 各コンポーネントにhashとfilenameがある
+    // Each component has hash and filename
     for (const c of result.components) {
       expect(c.hash).toMatch(/^[a-f0-9]{8}$/)
       expect(c.filename).toBe(`${c.name}-${c.hash}.js`)
     }
 
-    // Counterコンポーネントの確認
+    // Counter component verification
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter).toBeDefined()
     expect(counter!.hash).toBeTruthy()
@@ -347,8 +347,8 @@ describe('コンポーネント - ハッシュとファイル名', () => {
   })
 })
 
-describe('コンポーネント - サーバー出力', () => {
-  it('useRequestContextによるコンポーネント登録', async () => {
+describe('Components - Server output', () => {
+  it('Component registration using useRequestContext', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
