@@ -1,6 +1,7 @@
 # dependencies (bun install)
 node_modules
 bun.lock
+package-lock.json
 
 # output
 out
@@ -37,4 +38,5 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # examples
 examples/*/*.js
 examples/*/bun.lock
+examples/*/package-lock.json
 examples/*/node_modules
