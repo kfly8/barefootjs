@@ -1,23 +1,23 @@
 /**
- * JSXコンパイラ - ユーティリティ関数
+ * JSX Compiler - Utility Functions
  *
- * コンパイル処理で使用する汎用ユーティリティを提供する。
+ * Provides general utilities used in compilation processing.
  */
 
 /**
- * コールバックprops（onXxx）をラップしてupdateAll()を追加
+ * Wraps callback props (onXxx) to add updateAll()
  *
  * @example
- * // 入力
+ * // Input
  * { onAdd: handleAdd }
  *
- * // 出力（hasUpdateAll = true の場合）
+ * // Output (when hasUpdateAll = true)
  * { onAdd: (...args) => { handleAdd(...args); updateAll() } }
  */
 export function wrapCallbackProps(propsExpr: string, hasUpdateAll: boolean): string {
   if (!hasUpdateAll) return propsExpr
 
-  // onで始まるprops（onAdd, onToggle等）をラップ
+  // Wrap props starting with on (onAdd, onToggle, etc.)
   return propsExpr.replace(
     /(on[A-Z]\w*):\s*([^,}]+)/g,
     (_, propName, value) => {
@@ -28,8 +28,8 @@ export function wrapCallbackProps(propsExpr: string, hasUpdateAll: boolean): str
 }
 
 /**
- * 配列式を評価
- * ビルド時のみ実行されるためevalは安全
+ * Evaluates array expression.
+ * Safe to use eval as this only runs at build time.
  */
 export function evaluateArrayExpression(expr: string): unknown[] | null {
   try {
@@ -41,8 +41,8 @@ export function evaluateArrayExpression(expr: string): unknown[] | null {
 }
 
 /**
- * テンプレートリテラルを評価
- * ビルド時のみ実行されるためFunctionコンストラクタは安全
+ * Evaluates template literal.
+ * Safe to use Function constructor as this only runs at build time.
  */
 export function evaluateTemplate(
   templateStr: string,
@@ -59,10 +59,10 @@ export function evaluateTemplate(
 }
 
 /**
- * コンテンツからハッシュを生成（8文字の16進数）
+ * Generates hash from content (8-character hexadecimal)
  *
- * @param content - ハッシュ対象のコンテンツ
- * @returns 8文字のハッシュ文字列
+ * @param content - Content to hash
+ * @returns 8-character hash string
  */
 export function generateContentHash(content: string): string {
   let hash = 0
@@ -71,16 +71,16 @@ export function generateContentHash(content: string): string {
     hash = ((hash << 5) - hash) + char
     hash = hash & hash // Convert to 32bit integer
   }
-  // 8文字の16進数に変換（負の値も正しく処理）
+  // Convert to 8-character hexadecimal (correctly handles negative values)
   return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
 /**
- * パスを解決
+ * Resolves path
  *
- * @param baseDir - ベースディレクトリ
- * @param relativePath - 相対パス（./や../で始まる）
- * @returns 解決されたパス
+ * @param baseDir - Base directory
+ * @param relativePath - Relative path (starts with ./ or ../)
+ * @returns Resolved path
  */
 export function resolvePath(baseDir: string, relativePath: string): string {
   if (relativePath.startsWith('./')) {
@@ -95,8 +95,8 @@ export function resolvePath(baseDir: string, relativePath: string): string {
 }
 
 /**
- * 動的属性かどうか判定
- * class, style, disabled, value など
+ * Checks if attribute is a dynamic attribute target.
+ * e.g., class, style, disabled, value, etc.
  */
 export function isDynamicAttributeTarget(attrName: string): boolean {
   return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden'].includes(attrName)

@@ -1,17 +1,17 @@
 /**
  * BarefootJS - Reactive Primitives
  *
- * createSignal: 状態を保持し、変更を追跡するリアクティブプリミティブ
- * createEffect: signal の変更に反応して自動実行される副作用
- * onCleanup: effect のクリーンアップ関数を登録
+ * createSignal: Reactive primitive that holds state and tracks changes
+ * createEffect: Side effect that runs automatically when signals change
+ * onCleanup: Register cleanup function for effects
  */
 
 // --- Types ---
 
 export type Signal<T> = [
-  /** 現在の値を取得（effect内で呼ぶと依存として登録される） */
+  /** Get current value (registers dependency when called inside effect) */
   () => T,
-  /** 値を更新（値または関数を渡す） */
+  /** Update value (accepts value or updater function) */
   (valueOrFn: T | ((prev: T) => T)) => void
 ]
 
@@ -33,23 +33,23 @@ const MAX_EFFECT_RUNS = 100
 // --- createSignal ---
 
 /**
- * createSignal - リアクティブな値を作成
+ * createSignal - Create a reactive value
  *
- * @param initialValue - 初期値
- * @returns [getter, setter] のタプル
+ * @param initialValue - Initial value
+ * @returns [getter, setter] tuple
  *
  * @example
  * const [count, setCount] = createSignal(0)
  * count()              // 0
- * setCount(5)          // 値を5に更新
- * setCount(n => n + 1) // 関数で更新（6になる）
+ * setCount(5)          // Update to 5
+ * setCount(n => n + 1) // Update with function (becomes 6)
  */
 export function createSignal<T>(initialValue: T): Signal<T> {
   let value = initialValue
   const subscribers = new Set<EffectContext>()
 
   const get = () => {
-    // 現在実行中のeffectがあれば、このsignalへの依存を記録
+    // If there's a currently running effect, register dependency on this signal
     if (currentEffect) {
       subscribers.add(currentEffect)
       currentEffect.dependencies.add(subscribers)
@@ -62,14 +62,14 @@ export function createSignal<T>(initialValue: T): Signal<T> {
       ? (valueOrFn as (prev: T) => T)(value)
       : valueOrFn
 
-    // 値が変わらない場合は何もしない
+    // Skip if value hasn't changed
     if (Object.is(value, newValue)) {
       return
     }
 
     value = newValue
 
-    // 依存しているeffectを再実行
+    // Re-run all dependent effects
     const effectsToRun = [...subscribers]
     for (const effect of effectsToRun) {
       runEffect(effect)
@@ -82,16 +82,16 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 // --- createEffect ---
 
 /**
- * createEffect - signal の変更に反応して自動実行される副作用
+ * createEffect - Side effect that runs automatically when signals change
  *
- * @param fn - 副作用関数（クリーンアップ関数を返すことができる）
+ * @param fn - Effect function (can return a cleanup function)
  *
  * @example
  * const [count, setCount] = createSignal(0)
  * createEffect(() => {
  *   console.log("count changed:", count())
  * })
- * setCount(1)  // "count changed: 1" が出力される
+ * setCount(1)  // Logs "count changed: 1"
  */
 export function createEffect(fn: EffectFn): void {
   if (currentEffect !== null) {
@@ -108,26 +108,26 @@ export function createEffect(fn: EffectFn): void {
 }
 
 function runEffect(effect: EffectContext): void {
-  // 循環依存チェック
+  // Check for circular dependency
   effectDepth++
   if (effectDepth > MAX_EFFECT_RUNS) {
     effectDepth = 0
     throw new Error(`Effect exceeded maximum run limit (${MAX_EFFECT_RUNS}). Possible circular dependency.`)
   }
 
-  // 前回のクリーンアップを実行
+  // Run previous cleanup
   if (effect.cleanup) {
     effect.cleanup()
     effect.cleanup = null
   }
 
-  // 前回の依存をクリア
+  // Clear previous dependencies
   for (const dep of effect.dependencies) {
     dep.delete(effect)
   }
   effect.dependencies.clear()
 
-  // effectを実行して新しい依存を収集
+  // Run effect and collect new dependencies
   const prevEffect = currentEffect
   currentEffect = effect
 
@@ -147,12 +147,12 @@ function runEffect(effect: EffectContext): void {
 let currentCleanupFn: CleanupFn | null = null
 
 /**
- * onCleanup - effect のクリーンアップ関数を登録
+ * onCleanup - Register cleanup function for effects
  *
- * effect 内で呼び出すと、次回の effect 実行前または
- * effect が破棄される時にクリーンアップ関数が呼ばれる。
+ * When called inside an effect, the cleanup function will be called
+ * before the next effect run or when the effect is disposed.
  *
- * @param fn - クリーンアップ関数
+ * @param fn - Cleanup function
  *
  * @example
  * createEffect(() => {

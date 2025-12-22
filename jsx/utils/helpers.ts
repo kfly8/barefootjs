@@ -5,14 +5,14 @@
 import ts from 'typescript'
 
 /**
- * PascalCaseかどうか判定（コンポーネントタグの判定用）
+ * Checks if string is PascalCase (for component tag detection)
  */
 export function isPascalCase(str: string): boolean {
   return /^[A-Z][a-zA-Z0-9]*$/.test(str)
 }
 
 /**
- * TypeScriptの型注釈を除去してJavaScriptに変換
+ * Strips TypeScript type annotations and converts to JavaScript
  */
 export function stripTypeAnnotations(code: string): string {
   const result = ts.transpileModule(code, {
@@ -26,7 +26,7 @@ export function stripTypeAnnotations(code: string): string {
 }
 
 /**
- * ソースファイルを作成するヘルパー
+ * Helper to create source file
  */
 export function createSourceFile(source: string, filePath: string): ts.SourceFile {
   return ts.createSourceFile(

@@ -1,8 +1,8 @@
 /**
  * BarefootJS JSX Compiler - ID Generator
  *
- * 要素ID生成を管理するクラス。
- * グローバル状態を排除し、コンパイル単位でのID管理を可能にする。
+ * Manages element ID generation.
+ * Eliminates global state and enables per-compilation ID management.
  */
 
 export class IdGenerator {
@@ -12,7 +12,7 @@ export class IdGenerator {
   private attrIdCounter = 0
 
   /**
-   * カウンターをリセット
+   * Resets counters
    */
   reset(): void {
     this.buttonIdCounter = 0
@@ -22,28 +22,28 @@ export class IdGenerator {
   }
 
   /**
-   * ボタン/インタラクティブ要素用のIDを生成
+   * Generates ID for button/interactive elements
    */
   generateButtonId(): string {
     return `__b${this.buttonIdCounter++}`
   }
 
   /**
-   * 動的コンテンツ要素用のIDを生成
+   * Generates ID for dynamic content elements
    */
   generateDynamicId(): string {
     return `__d${this.dynamicIdCounter++}`
   }
 
   /**
-   * リスト要素用のIDを生成
+   * Generates ID for list elements
    */
   generateListId(): string {
     return `__l${this.listIdCounter++}`
   }
 
   /**
-   * 動的属性を持つ要素用のIDを生成
+   * Generates ID for elements with dynamic attributes
    */
   generateAttrId(): string {
     return `__a${this.attrIdCounter++}`

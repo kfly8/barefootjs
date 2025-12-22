@@ -16,7 +16,7 @@ export type DynamicElement = {
   id: string
   tagName: string
   expression: string    // count()
-  fullContent: string   // "doubled: " + count() * 2 など
+  fullContent: string   // e.g., "doubled: " + count() * 2
 }
 
 export type ListElement = {
@@ -24,18 +24,18 @@ export type ListElement = {
   tagName: string
   mapExpression: string  // items().map(item => '<li>' + item + '</li>').join('')
   itemEvents: Array<{
-    eventId: number       // イベントを区別するID
+    eventId: number       // ID to distinguish events
     eventName: string     // click, change, keydown
     handler: string       // (item) => remove(item.id)
     paramName: string     // item
   }>
-  arrayExpression: string // items() - 配列を取得するための式
+  arrayExpression: string // items() - expression to get the array
 }
 
 export type DynamicAttribute = {
   id: string
   tagName: string
-  attrName: string       // class, style, disabled, value など
+  attrName: string       // class, style, disabled, value, etc.
   expression: string     // isActive() ? 'active' : ''
 }
 
@@ -60,14 +60,14 @@ export type CompileResult = {
   clientJs: string
   serverJsx: string
   signals: SignalDeclaration[]
-  localFunctions: LocalFunction[]  // コンポーネント内で定義された関数
-  childInits: ChildComponentInit[] // 初期化が必要な子コンポーネント
+  localFunctions: LocalFunction[]  // Functions defined within the component
+  childInits: ChildComponentInit[] // Child components that need initialization
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
   listElements: ListElement[]
   dynamicAttributes: DynamicAttribute[]
-  props: string[]  // コンポーネントが受け取るprops名
-  source: string   // コンポーネントのソースコード（map内インライン展開用）
+  props: string[]  // Props names the component receives
+  source: string   // Component source code (for inline expansion in map)
 }
 
 export type ComponentImport = {
@@ -77,8 +77,8 @@ export type ComponentImport = {
 
 export type ComponentOutput = {
   name: string
-  hash: string           // コンテンツハッシュ (例: 7dc6817c)
-  filename: string       // ハッシュ付きファイル名 (例: AddTodoForm-7dc6817c.js)
+  hash: string           // Content hash (e.g., 7dc6817c)
+  filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js)
   clientJs: string
   serverComponent: string
 }
@@ -121,9 +121,9 @@ export type TemplateStringResult = {
 }
 
 /**
- * 中間表現（IR）型定義
+ * Intermediate Representation (IR) Type Definitions
  *
- * JSX ASTから変換され、各種出力（HTML, ClientJS, ServerJSX）の生成に使用される。
+ * Transformed from JSX AST and used to generate various outputs (HTML, ClientJS, ServerJSX).
  */
 
 export type IRNode =

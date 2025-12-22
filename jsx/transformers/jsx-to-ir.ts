@@ -1,7 +1,7 @@
 /**
  * BarefootJS JSX Compiler - JSX AST to IR Transformer
  *
- * TypeScript JSX ASTを中間表現（IR）に変換する。
+ * Transforms TypeScript JSX AST to Intermediate Representation (IR).
  */
 
 import ts from 'typescript'
@@ -27,7 +27,7 @@ export type JsxToIRContext = {
 }
 
 /**
- * JSX ASTノードをIRに変換
+ * Converts JSX AST node to IR
  */
 export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
   if (ts.isJsxElement(node)) {
@@ -52,26 +52,26 @@ export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
 }
 
 /**
- * JSX要素をIRに変換
+ * Converts JSX element to IR
  */
 function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
   const tagName = node.openingElement.tagName.getText(ctx.sourceFile)
 
-  // コンポーネントタグの場合
+  // Component tag
   if (isPascalCase(tagName) && ctx.components.has(tagName)) {
     return componentToIR(tagName, node.openingElement.attributes, ctx)
   }
 
-  // 通常のHTML要素
+  // Regular HTML element
   const { staticAttrs, dynamicAttrs, events } = processAttributes(
     node.openingElement.attributes,
     ctx
   )
 
-  // 子要素を処理
+  // Process children
   const { children, listInfo, hasDynamicContent } = processChildren(node.children, ctx)
 
-  // IDの決定
+  // Determine ID
   const needsId = events.length > 0 || dynamicAttrs.length > 0 || listInfo || hasDynamicContent
   const id = needsId ? determineId(events, dynamicAttrs, listInfo, hasDynamicContent, ctx) : null
 
@@ -88,12 +88,12 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
 }
 
 /**
- * 自己閉じJSX要素をIRに変換
+ * Converts self-closing JSX element to IR
  */
 function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext): IRNode {
   const tagName = node.tagName.getText(ctx.sourceFile)
 
-  // コンポーネントタグの場合
+  // Component tag
   if (isPascalCase(tagName) && ctx.components.has(tagName)) {
     return componentToIR(tagName, node.attributes, ctx)
   }
@@ -116,7 +116,7 @@ function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext)
 }
 
 /**
- * コンポーネントをIRに変換
+ * Converts component to IR
  */
 function componentToIR(
   tagName: string,
@@ -140,7 +140,7 @@ function componentToIR(
     }
   })
 
-  // 子コンポーネントの初期化情報
+  // Child component initialization info
   let childInits = null
   if (componentResult.props.length > 0 && props.length > 0) {
     const propsExpr = `{ ${props.map(p => `${p.name}: ${p.value}`).join(', ')} }`
@@ -157,16 +157,16 @@ function componentToIR(
 }
 
 /**
- * JSX式をIRに変換
+ * Converts JSX expression to IR
  */
 function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
-  // map式の検出
+  // Detect map expression
   if (ts.isCallExpression(expr)) {
     const mapInfo = extractMapInfo(expr, ctx)
     if (mapInfo) {
-      // mapはリスト要素として親要素に情報を渡す必要があるため、
-      // ここでは特別な処理が必要
-      // 一旦expressionとして返し、親で処理する
+      // Map needs to pass list info to parent element,
+      // so special handling is required here.
+      // Return as expression for now, process in parent.
       return {
         type: 'expression',
         expression: expr.getText(ctx.sourceFile),
@@ -175,12 +175,12 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
     }
   }
 
-  // 三項演算子の検出
+  // Detect ternary operator
   if (ts.isConditionalExpression(expr)) {
     return conditionalToIR(expr, ctx)
   }
 
-  // 通常の式
+  // Regular expression
   const exprText = expr.getText(ctx.sourceFile)
   const isDynamic = containsSignalCall(exprText, ctx.signals)
 
@@ -192,7 +192,7 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
 }
 
 /**
- * 三項演算子をIRに変換
+ * Converts ternary operator to IR
  */
 function conditionalToIR(expr: ts.ConditionalExpression, ctx: JsxToIRContext): IRConditional {
   const condition = expr.condition.getText(ctx.sourceFile)
@@ -209,20 +209,20 @@ function conditionalToIR(expr: ts.ConditionalExpression, ctx: JsxToIRContext): I
 }
 
 /**
- * 条件分岐のブランチを処理
+ * Processes conditional branch
  */
 function processConditionalBranch(node: ts.Expression, ctx: JsxToIRContext): IRNode {
-  // 括弧で囲まれている場合
+  // Parenthesized expression
   if (ts.isParenthesizedExpression(node)) {
     return processConditionalBranch(node.expression, ctx)
   }
 
-  // JSX要素の場合
+  // JSX element
   if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
     return jsxToIR(node, ctx)!
   }
 
-  // 式の場合
+  // Expression
   return {
     type: 'expression',
     expression: node.getText(ctx.sourceFile),
@@ -231,7 +231,7 @@ function processConditionalBranch(node: ts.Expression, ctx: JsxToIRContext): IRN
 }
 
 /**
- * 属性を処理
+ * Processes attributes
  */
 function processAttributes(
   attributes: ts.JsxAttributes,
@@ -250,7 +250,7 @@ function processAttributes(
 
     const attrName = attr.name.getText(ctx.sourceFile)
 
-    // イベントハンドラ
+    // Event handler
     if (attrName.startsWith('on')) {
       const eventName = attrName.slice(2).toLowerCase()
       if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
@@ -260,7 +260,7 @@ function processAttributes(
       return
     }
 
-    // 動的属性
+    // Dynamic attribute
     if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
       const expression = attr.initializer.expression.getText(ctx.sourceFile)
       if (isDynamicAttributeTarget(attrName)) {
@@ -269,7 +269,7 @@ function processAttributes(
       }
     }
 
-    // 静的属性
+    // Static attribute
     if (attr.initializer) {
       if (ts.isStringLiteral(attr.initializer)) {
         staticAttrs.push({ name: attrName, value: attr.initializer.text })
@@ -285,7 +285,7 @@ function processAttributes(
 }
 
 /**
- * 子要素を処理
+ * Processes children
  */
 function processChildren(
   children: ts.NodeArray<ts.JsxChild>,
@@ -300,7 +300,7 @@ function processChildren(
   let hasDynamicContent = false
 
   for (const child of children) {
-    // map式の検出
+    // Detect map expression
     if (ts.isJsxExpression(child) && child.expression && ts.isCallExpression(child.expression)) {
       const mapResult = extractMapInfo(child.expression, ctx)
       if (mapResult) {
@@ -322,7 +322,7 @@ function processChildren(
 }
 
 /**
- * map式から情報を抽出
+ * Extracts information from map expression
  */
 function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInfo | null {
   if (!ts.isPropertyAccessExpression(expr.expression)) return null
@@ -337,7 +337,7 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
   const paramName = param.name.getText(ctx.sourceFile)
   const arrayExpr = expr.expression.expression.getText(ctx.sourceFile)
 
-  // コールバックのボディからテンプレートを生成
+  // Generate template from callback body
   let jsxBody: ts.JsxElement | ts.JsxSelfClosingElement | null = null
   const body = callback.body
 
@@ -352,7 +352,7 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
 
   if (!jsxBody) return null
 
-  // JSXをテンプレート文字列に変換（簡易版）
+  // Convert JSX to template string (simplified)
   const { template, events } = jsxToTemplateString(jsxBody, ctx.sourceFile, paramName)
 
   return {
@@ -364,7 +364,7 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
 }
 
 /**
- * JSXをテンプレート文字列に変換
+ * Converts JSX to template string
  */
 function jsxToTemplateString(
   node: ts.JsxElement | ts.JsxSelfClosingElement,
@@ -453,7 +453,7 @@ function jsxToTemplateString(
 }
 
 /**
- * IDを決定
+ * Determines ID
  */
 function determineId(
   events: IRElement['events'],
@@ -478,14 +478,14 @@ function determineId(
 }
 
 /**
- * 動的属性のターゲットかどうか
+ * Checks if an attribute is a dynamic attribute target
  */
 function isDynamicAttributeTarget(attrName: string): boolean {
   return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden'].includes(attrName)
 }
 
 /**
- * signal呼び出しを含むかどうか
+ * Checks if expression contains signal calls
  */
 function containsSignalCall(expr: string, signals: SignalDeclaration[]): boolean {
   return signals.some(s => {
@@ -495,7 +495,7 @@ function containsSignalCall(expr: string, signals: SignalDeclaration[]): boolean
 }
 
 /**
- * コンポーネントのJSX returnを見つけてIRに変換
+ * Finds component's JSX return and converts to IR
  */
 export function findAndConvertJsxReturn(
   sourceFile: ts.SourceFile,

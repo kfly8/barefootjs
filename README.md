@@ -1,44 +1,44 @@
 # BarefootJS
 
-JSXから静的HTML + クライアントJSを生成するコンパイラ。
+A compiler that generates static HTML + client-side JS from JSX.
 
 ## ARCHITECTURE
 
 ```
 ┌─────────────────┐
-│  Counter.tsx    │  ← JSXコンポーネント
+│  Counter.tsx    │  ← JSX Component
 └────────┬────────┘
          │ compileJSX()
          ▼
 ┌─────────────────────────────────────┐
 │         jsx/jsx-compiler.ts         │
-│  - signal宣言の抽出                 │
-│  - 動的コンテンツの検出 (__d0)      │
-│  - イベントハンドラの検出 (__b0)    │
+│  - Extract signal declarations      │
+│  - Detect dynamic content (__d0)    │
+│  - Detect event handlers (__b0)     │
 └────────┬───────────────────┬────────┘
          │                   │
          ▼                   ▼
 ┌─────────────────┐  ┌─────────────────┐
 │ Counter.tsx     │  │ Counter.client  │
-│ (静的HTML)      │  │ .js             │
+│ (Static HTML)   │  │ .js             │
 │                 │  │                 │
-│ - id属性付与    │  │ - signal初期化  │
-│ - JS注入用の印  │  │ - updateAll()   │
-│                 │  │ - onclick設定   │
+│ - Add id attrs  │  │ - Init signals  │
+│ - Markers for   │  │ - updateAll()   │
+│   JS injection  │  │ - Set onclick   │
 └─────────────────┘  └────────┬────────┘
                               │
                               ▼
                      ┌─────────────────┐
                      │ dom/runtime.js  │
-                     │ - signal実装    │
+                     │ - signal impl   │
                      └─────────────────┘
 ```
 
 ## TODO
 
-### 型
+### Types
 
-- [ ] signalの型推論 `signal<number>(0)`
-- [ ] コンポーネントpropsの型定義
-- [ ] イベントハンドラの型 `(e: MouseEvent) => void`
-- [ ] JSX要素の型チェック
+- [ ] Signal type inference `signal<number>(0)`
+- [ ] Component props type definitions
+- [ ] Event handler types `(e: MouseEvent) => void`
+- [ ] JSX element type checking

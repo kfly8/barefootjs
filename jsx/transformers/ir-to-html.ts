@@ -1,22 +1,22 @@
 /**
  * BarefootJS JSX Compiler - IR to HTML Transformer
  *
- * 中間表現（IR）から静的HTMLを生成する。
+ * Generates static HTML from Intermediate Representation (IR).
  */
 
 import type { IRNode, IRElement, SignalDeclaration } from '../types'
 import { replaceSignalCalls } from '../utils/expression-parser'
 
 /**
- * 動的表現をsignalの初期値で評価して文字列を返す
- * TypeScript APIを使用して文字列リテラル内のシグナル名は置換しない
+ * Evaluates dynamic expressions with signal initial values and returns a string.
+ * Uses TypeScript API to avoid replacing signal names within string literals.
  */
 export function evaluateWithInitialValues(expr: string, signals: SignalDeclaration[]): string {
-  // signal呼び出しを初期値で置き換え（ASTベース）
+  // Replace signal calls with initial values (AST-based)
   const replaced = replaceSignalCalls(expr, signals)
 
   try {
-    // ビルド時のみ実行されるため、evalは安全
+    // Safe to use eval as this only runs at build time
     const result = eval(replaced)
     return String(result)
   } catch {
@@ -25,7 +25,7 @@ export function evaluateWithInitialValues(expr: string, signals: SignalDeclarati
 }
 
 /**
- * IRノードからHTMLを生成
+ * Generates HTML from an IR node
  */
 export function irToHtml(node: IRNode, signals: SignalDeclaration[]): string {
   switch (node.type) {
@@ -55,20 +55,20 @@ export function irToHtml(node: IRNode, signals: SignalDeclaration[]): string {
 }
 
 /**
- * IR要素からHTMLを生成
+ * Generates HTML from an IR element
  */
 function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
   const { tagName, id, staticAttrs, dynamicAttrs, children, listInfo } = el
 
-  // 属性を構築
+  // Build attributes
   const attrParts: string[] = []
 
-  // IDがあれば追加
+  // Add ID if present
   if (id) {
     attrParts.push(`id="${id}"`)
   }
 
-  // 静的属性
+  // Static attributes
   for (const attr of staticAttrs) {
     if (attr.value) {
       attrParts.push(`${attr.name}="${attr.value}"`)
@@ -77,7 +77,7 @@ function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
     }
   }
 
-  // 動的属性（初期値で評価）
+  // Dynamic attributes (evaluated with initial values)
   for (const attr of dynamicAttrs) {
     const value = evaluateWithInitialValues(attr.expression, signals)
     if (value && value !== 'false') {
@@ -91,16 +91,16 @@ function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
 
   const attrsStr = attrParts.length > 0 ? ' ' + attrParts.join(' ') : ''
 
-  // リスト要素の場合
+  // List element
   if (listInfo) {
     const listHtml = evaluateListInitialHtml(listInfo, signals)
     return `<${tagName}${attrsStr}>${listHtml}</${tagName}>`
   }
 
-  // 子要素を処理
+  // Process children
   const childrenHtml = children.map(child => irToHtml(child, signals)).join('')
 
-  // 自己閉じタグ
+  // Self-closing tag
   if (children.length === 0 && isSelfClosingTag(tagName)) {
     return `<${tagName}${attrsStr} />`
   }
@@ -109,14 +109,14 @@ function elementToHtml(el: IRElement, signals: SignalDeclaration[]): string {
 }
 
 /**
- * リスト要素の初期HTMLを生成
- * TypeScript APIを使用してシグナル呼び出しを置換
+ * Generates initial HTML for list elements.
+ * Uses TypeScript API to replace signal calls.
  */
 function evaluateListInitialHtml(
   listInfo: { arrayExpression: string; paramName: string; itemTemplate: string },
   signals: SignalDeclaration[]
 ): string {
-  // 配列式を評価（ASTベースの置換）
+  // Evaluate array expression (AST-based replacement)
   const replaced = replaceSignalCalls(listInfo.arrayExpression, signals)
 
   try {
@@ -133,21 +133,21 @@ function evaluateListInitialHtml(
 }
 
 /**
- * 自己閉じタグかどうか判定
+ * Checks if a tag is a self-closing tag
  */
 function isSelfClosingTag(tagName: string): boolean {
   return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
 }
 
 /**
- * boolean属性かどうか判定
+ * Checks if an attribute is a boolean attribute
  */
 function isBooleanAttribute(attrName: string): boolean {
   return ['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)
 }
 
 /**
- * IRからサーバーJSX（Hono形式）を生成
+ * Generates server JSX (Hono format) from IR
  */
 export function irToServerJsx(html: string): string {
   return html.replace(/class="/g, 'className="')

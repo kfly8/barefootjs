@@ -1,8 +1,8 @@
 # BarefootJS
 
-JSXから静的HTML + クライアントJSを生成するコンパイラ。
+A compiler that generates static HTML + client-side JS from JSX.
 
-## コンセプト
+## Concept
 
-- **JSXコンパイラが中心**: 宣言的なJSXを命令的なDOM操作コードに変換
-- **ランタイム最小**: `signal` のみの最小API
+- **JSX Compiler at the Core**: Transforms declarative JSX into imperative DOM manipulation code
+- **Minimal Runtime**: Minimal API with only `signal`

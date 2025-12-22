@@ -1,7 +1,7 @@
 /**
  * BarefootJS JSX Compiler - IR to Client JS Transformer
  *
- * 中間表現（IR）からクライアントJavaScriptを生成する。
+ * Generates client-side JavaScript from Intermediate Representation (IR).
  */
 
 import type {
@@ -15,7 +15,7 @@ import type {
   DynamicAttribute,
 } from '../types'
 
-// TypeScript APIを使用したパーサーをインポート
+// Import parsers using TypeScript API
 import {
   extractArrowBody as parseArrowBody,
   extractArrowParams as parseArrowParams,
@@ -32,45 +32,45 @@ export type ClientJsContext = {
 }
 
 /**
- * アロー関数からボディ部分を抽出
- * TypeScript APIを使用して正確にパースする
+ * Extracts the body part from an arrow function.
+ * Uses TypeScript API for accurate parsing.
  */
 export function extractArrowBody(handler: string): string {
   return parseArrowBody(handler)
 }
 
 /**
- * アロー関数からパラメータ部分を抽出
- * TypeScript APIを使用して正確にパースする
+ * Extracts the parameter part from an arrow function.
+ * Uses TypeScript API for accurate parsing.
  */
 export function extractArrowParams(handler: string): string {
   return parseArrowParams(handler)
 }
 
 /**
- * バブリングしないイベントかどうか判定
+ * Checks if an event requires capture phase (non-bubbling events)
  */
 export function needsCapturePhase(eventName: string): boolean {
   return ['blur', 'focus', 'focusin', 'focusout'].includes(eventName)
 }
 
 /**
- * 条件付きハンドラのパース
- * TypeScript APIを使用して正確にパースする
+ * Parses conditional handlers.
+ * Uses TypeScript API for accurate parsing.
  */
 export function parseConditionalHandler(body: string): { condition: string; action: string } | null {
   return parseConditional(body)
 }
 
 /**
- * boolean属性かどうか判定
+ * Checks if an attribute is a boolean attribute
  */
 export function isBooleanAttribute(attrName: string): boolean {
   return ['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)
 }
 
 /**
- * 動的属性の更新コードを生成
+ * Generates update code for dynamic attributes
  */
 export function generateAttributeUpdate(da: DynamicAttribute): string {
   const { id, attrName, expression } = da
@@ -95,7 +95,7 @@ export function generateAttributeUpdate(da: DynamicAttribute): string {
 }
 
 /**
- * コンテキストからクライアントJSを生成
+ * Generates client JS from context
  */
 export function generateClientJs(ctx: ClientJsContext): string {
   const lines: string[] = []
@@ -103,10 +103,10 @@ export function generateClientJs(ctx: ClientJsContext): string {
                             ctx.listElements.length > 0 ||
                             ctx.dynamicAttributes.length > 0
 
-  // 動的属性を持つ要素のIDを収集（重複を除去）
+  // Collect element IDs with dynamic attributes (remove duplicates)
   const attrElementIds = [...new Set(ctx.dynamicAttributes.map(da => da.id))]
 
-  // DOM要素の取得
+  // Get DOM elements
   for (const el of ctx.dynamicElements) {
     lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
   }
@@ -129,7 +129,7 @@ export function generateClientJs(ctx: ClientJsContext): string {
     lines.push('')
   }
 
-  // ローカル関数を出力
+  // Output local functions
   for (const fn of ctx.localFunctions) {
     lines.push(fn.code)
   }
@@ -137,7 +137,7 @@ export function generateClientJs(ctx: ClientJsContext): string {
     lines.push('')
   }
 
-  // updateAll関数
+  // updateAll function
   if (hasDynamicContent) {
     lines.push('function updateAll() {')
     for (const el of ctx.dynamicElements) {
@@ -153,7 +153,7 @@ export function generateClientJs(ctx: ClientJsContext): string {
     lines.push('')
   }
 
-  // リスト要素内のイベントデリゲーション
+  // Event delegation within list elements
   for (const el of ctx.listElements) {
     if (el.itemEvents.length > 0) {
       for (const event of el.itemEvents) {
@@ -186,7 +186,7 @@ export function generateClientJs(ctx: ClientJsContext): string {
     }
   }
 
-  // インタラクティブ要素のイベントハンドラ
+  // Event handlers for interactive elements
   for (const el of ctx.interactiveElements) {
     for (const event of el.events) {
       const handlerBody = extractArrowBody(event.handler)
@@ -202,10 +202,10 @@ export function generateClientJs(ctx: ClientJsContext): string {
     }
   }
 
-  // 初期表示
+  // Initial display
   if (hasDynamicContent) {
     lines.push('')
-    lines.push('// 初期表示')
+    lines.push('// Initial display')
     lines.push('updateAll()')
   }
 
@@ -213,7 +213,7 @@ export function generateClientJs(ctx: ClientJsContext): string {
 }
 
 /**
- * IRからクライアントJS生成に必要な情報を収集
+ * Collects information needed for client JS generation from IR
  */
 export function collectClientJsInfo(
   node: IRNode,
@@ -240,7 +240,7 @@ function collectFromElement(
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[]
 ): void {
-  // イベントがある場合
+  // If element has events
   if (el.events.length > 0 && el.id) {
     interactiveElements.push({
       id: el.id,
@@ -249,7 +249,7 @@ function collectFromElement(
     })
   }
 
-  // 動的属性がある場合
+  // If element has dynamic attributes
   if (el.dynamicAttrs.length > 0 && el.id) {
     for (const attr of el.dynamicAttrs) {
       dynamicAttributes.push({
@@ -261,7 +261,7 @@ function collectFromElement(
     }
   }
 
-  // リスト情報がある場合
+  // If element has list info
   if (el.listInfo && el.id) {
     listElements.push({
       id: el.id,
@@ -272,7 +272,7 @@ function collectFromElement(
     })
   }
 
-  // 子要素を再帰処理
+  // Recursively process children
   for (const child of el.children) {
     collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes)
   }
