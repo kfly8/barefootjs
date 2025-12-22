@@ -1,0 +1,7 @@
+{
+  "mode": "static",
+  "entry": "index.tsx",
+  "template": "template.html",
+  "title": "BarefootJS Todo",
+  "dist": "dist"
+}
