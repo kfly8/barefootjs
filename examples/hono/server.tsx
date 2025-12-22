@@ -7,6 +7,7 @@ import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
 import { Counter } from './dist/Counter'
 import { Toggle } from './dist/Toggle'
+import { TodoApp } from './dist/TodoApp'
 
 const app = new Hono()
 
@@ -40,7 +41,7 @@ app.get('/', (c) => {
         <ul>
           <li><a href="/counter">Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
-          <li><a href="/todos">Todo (SSR)</a></li>
+          <li><a href="/todos">Todo (API)</a></li>
         </ul>
       </nav>
     </div>
@@ -69,82 +70,72 @@ app.get('/toggle', (c) => {
   )
 })
 
-// Todo - GET (render todo list)
+// Todo - Web UI
 app.get('/todos', (c) => {
-  const doneCount = todos.filter(t => t.done).length
-  const totalCount = todos.length
-  
   return c.render(
     <div>
-      <h1>BarefootJS Todo (SSR)</h1>
-
-      <p class="status">
-        Done: <span class="count">{doneCount}</span> / <span class="total">{totalCount}</span>
-      </p>
-
-      <form method="POST" action="/todos/add" class="add-form">
-        <input
-          type="text"
-          name="text"
-          class="new-todo-input"
-          placeholder="Enter new todo..."
-          required
-        />
-        <button type="submit" class="add-btn">Add</button>
-      </form>
-
-      <ul class="todo-list">
-        {todos.map(todo => (
-          <li key={todo.id} class={todo.done ? 'todo-item done' : 'todo-item'}>
-            <span class="todo-text">{todo.text}</span>
-            <form method="POST" action={`/todos/toggle/${todo.id}`} style="display: inline;">
-              <button type="submit" class="toggle-btn">
-                {todo.done ? 'Undo' : 'Done'}
-              </button>
-            </form>
-            <form method="POST" action={`/todos/delete/${todo.id}`} style="display: inline;">
-              <button type="submit" class="delete-btn">Delete</button>
-            </form>
-          </li>
-        ))}
-      </ul>
-      
+      <TodoApp />
       <p><a href="/">← Back</a></p>
     </div>
   )
 })
 
-// Todo - POST add
-app.post('/todos/add', async (c) => {
-  const formData = await c.req.formData()
-  const text = formData.get('text') as string
-  
-  if (text && text.trim()) {
-    todos.push({ id: nextId++, text: text.trim(), done: false })
-  }
-  
-  return c.redirect('/todos')
+// REST API - Get all todos
+app.get('/api/todos', (c) => {
+  return c.json(todos)
 })
 
-// Todo - POST toggle
-app.post('/todos/toggle/:id', (c) => {
+// REST API - Create todo
+app.post('/api/todos', async (c) => {
+  const body = await c.req.json()
+  const newTodo: Todo = {
+    id: nextId++,
+    text: body.text,
+    done: false,
+  }
+  todos.push(newTodo)
+  return c.json(newTodo, 201)
+})
+
+// REST API - Update todo
+app.put('/api/todos/:id', async (c) => {
   const id = parseInt(c.req.param('id'), 10)
-  if (isNaN(id)) return c.redirect('/todos')
-  
+  if (isNaN(id)) {
+    return c.json({ error: 'Invalid ID' }, 400)
+  }
+
+  const body = await c.req.json()
   const todo = todos.find(t => t.id === id)
-  if (todo) {
-    todo.done = !todo.done
+  
+  if (!todo) {
+    return c.json({ error: 'Todo not found' }, 404)
   }
-  return c.redirect('/todos')
+  
+  if (body.text !== undefined) {
+    todo.text = body.text
+  }
+  if (body.done !== undefined) {
+    todo.done = body.done
+  }
+  
+  return c.json(todo)
 })
 
-// Todo - POST delete
-app.post('/todos/delete/:id', (c) => {
+// REST API - Delete todo
+app.delete('/api/todos/:id', (c) => {
   const id = parseInt(c.req.param('id'), 10)
-  if (isNaN(id)) return c.redirect('/todos')
+  if (isNaN(id)) {
+    return c.json({ error: 'Invalid ID' }, 400)
+  }
+
+  const index = todos.findIndex(t => t.id === id)
   
-  todos = todos.filter(t => t.id !== id)
-  return c.redirect('/todos')
+  if (index === -1) {
+    return c.json({ error: 'Todo not found' }, 404)
+  }
+  
+  todos.splice(index, 1)
+  return c.json({ success: true })
 })
 
 export default {

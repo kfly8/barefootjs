@@ -16,7 +16,7 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 
 // Components to compile
-const COMPONENTS = ['Counter', 'Toggle']
+const COMPONENTS = ['Counter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm']
 
 function contentHash(content: string): string {
   return Bun.hash(content).toString(16).slice(0, 8)
@@ -52,10 +52,27 @@ for (const componentName of COMPONENTS) {
     // Client JS (rewrite import paths, with hash)
     let clientFileName: string | undefined
     if (component.clientJs) {
-      const updatedClientJs = component.clientJs.replace(
+      let updatedClientJs = component.clientJs.replace(
         /from ['"]\.\/barefoot\.js['"]/g,
         `from './${barefootFileName}'`
       )
+
+      // Special handling for TodoApp - add initialization code
+      if (component.name === 'TodoApp') {
+        updatedClientJs += `
+
+// Initial data fetch (manually added)
+fetch('/api/todos')
+  .then(res => res.json())
+  .then(data => {
+    setTodos(data.map(t => ({ ...t, editing: false })))
+  })
+  .catch(err => {
+    console.error('Failed to load todos:', err)
+  })
+`
+      }
+
       const hash = contentHash(updatedClientJs)
       clientFileName = `${component.name}.client-${hash}.js`
       await Bun.write(resolve(DIST_DIR, clientFileName), updatedClientJs)
