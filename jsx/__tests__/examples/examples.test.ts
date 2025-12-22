@@ -1,7 +1,7 @@
 /**
- * Examples ビルドテスト
+ * Examples build test
  *
- * 各exampleが正しくビルドされることを確認する
+ * Verify that each example builds correctly
  */
 
 import { describe, it, expect, beforeAll } from 'bun:test'
@@ -20,27 +20,27 @@ describe('examples/counter', () => {
     })
   })
 
-  it('コンパイルに成功する', () => {
+  it('compiles successfully', () => {
     expect(result.components.length).toBeGreaterThan(0)
   })
 
-  it('Counter コンポーネントが生成される', () => {
+  it('Counter component is generated', () => {
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter).toBeDefined()
   })
 
-  it('createSignal と createEffect がインポートされる', () => {
+  it('createSignal and createEffect are imported', () => {
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter?.clientJs).toContain("import { createSignal, createEffect } from './barefoot.js'")
   })
 
-  it('createEffect でDOMが更新される', () => {
+  it('DOM is updated with createEffect', () => {
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter?.clientJs).toContain('createEffect(() => {')
     expect(counter?.clientJs).toContain('.textContent = count()')
   })
 
-  it('イベントハンドラが設定される', () => {
+  it('event handlers are set', () => {
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter?.clientJs).toContain('onclick = () => setCount(n => n + 1)')
     expect(counter?.clientJs).toContain('onclick = () => setCount(n => n - 1)')
@@ -58,36 +58,36 @@ describe('examples/todo', () => {
     })
   })
 
-  it('コンパイルに成功する', () => {
+  it('compiles successfully', () => {
     expect(result.components.length).toBeGreaterThan(0)
   })
 
-  it('TodoApp コンポーネントが生成される', () => {
+  it('TodoApp component is generated', () => {
     const todoApp = result.components.find(c => c.name === 'TodoApp')
     expect(todoApp).toBeDefined()
   })
 
-  it('AddTodoForm コンポーネントが生成される', () => {
+  it('AddTodoForm component is generated', () => {
     const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
     expect(addTodoForm).toBeDefined()
   })
 
-  it('TodoApp で createEffect が使用される', () => {
+  it('createEffect is used in TodoApp', () => {
     const todoApp = result.components.find(c => c.name === 'TodoApp')
     expect(todoApp?.clientJs).toContain('createEffect(() => {')
   })
 
-  it('AddTodoForm の initAddTodoForm が呼び出される', () => {
+  it('initAddTodoForm of AddTodoForm is called', () => {
     const todoApp = result.components.find(c => c.name === 'TodoApp')
     expect(todoApp?.clientJs).toContain('initAddTodoForm({ onAdd: handleAdd })')
   })
 
-  it('AddTodoForm で input イベントが設定される', () => {
+  it('input event is set in AddTodoForm', () => {
     const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
     expect(addTodoForm?.clientJs).toContain('oninput = (e) => setNewText(e.target.value)')
   })
 
-  it('AddTodoForm で keydown イベントが設定される', () => {
+  it('keydown event is set in AddTodoForm', () => {
     const addTodoForm = result.components.find(c => c.name === 'AddTodoForm')
     expect(addTodoForm?.clientJs).toContain('onkeydown')
     expect(addTodoForm?.clientJs).toContain("e.key === 'Enter'")
@@ -95,7 +95,7 @@ describe('examples/todo', () => {
 })
 
 describe('examples/hono', () => {
-  it('Counter コンポーネントがコンパイルされる', async () => {
+  it('Counter component is compiled', async () => {
     const entryPath = resolve(EXAMPLES_DIR, 'hono/Counter.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
@@ -107,7 +107,7 @@ describe('examples/hono', () => {
     expect(counter?.clientJs).toContain('createEffect')
   })
 
-  it('Toggle コンポーネントがコンパイルされる', async () => {
+  it('Toggle component is compiled', async () => {
     const entryPath = resolve(EXAMPLES_DIR, 'hono/Toggle.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()

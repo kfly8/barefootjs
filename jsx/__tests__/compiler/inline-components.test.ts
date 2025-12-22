@@ -1,35 +1,35 @@
 /**
- * map内のコンポーネントインライン展開のテスト
+ * Test for inline component expansion in map
  *
- * ## 概要
- * `.map()` 内で使用されるコンポーネントが、テンプレートリテラルに
- * インライン展開されることを検証する。
+ * ## Overview
+ * Verify that components used within `.map()` are expanded inline
+ * into template literals.
  *
- * ## なぜインライン展開が必要か
- * map内のコンポーネントは、親の配列が更新されるたびに
- * `innerHTML` で再描画される。そのため、コンポーネントを
- * 個別のDOMノードとして扱うのではなく、テンプレート文字列に
- * 展開する必要がある。
+ * ## Why inline expansion is needed
+ * Components in map are re-rendered with `innerHTML` every time
+ * the parent array is updated. Therefore, it is necessary to
+ * expand components into template strings rather than treat them
+ * as individual DOM nodes.
  *
- * ## 対応パターン
- * - propsを持つコンポーネント
- * - イベントハンドラ付きコンポーネント
- * - 条件付きレンダリングを含むコンポーネント
- * - 複数のイベントハンドラを持つコンポーネント
+ * ## Supported patterns
+ * - Components with props
+ * - Components with event handlers
+ * - Components with conditional rendering
+ * - Components with multiple event handlers
  *
- * ## 生成されるコード
+ * ## Generated code
  * ```typescript
- * // 入力
+ * // Input
  * {items().map(item => <Item item={item} onDelete={() => remove(item.id)} />)}
  *
- * // Itemコンポーネント
+ * // Item component
  * function Item({ item, onDelete }) {
- *   return <li><span>{item.text}</span><button onClick={() => onDelete()}>削除</button></li>
+ *   return <li><span>{item.text}</span><button onClick={() => onDelete()}>Delete</button></li>
  * }
  *
- * // 出力（clientJs）- Itemがインライン展開される
+ * // Output (clientJs) - Item is expanded inline
  * l0.innerHTML = items().map((item, __index) =>
- *   `<li><span>${item.text}</span><button data-index="${__index}" data-event-id="0">削除</button></li>`
+ *   `<li><span>${item.text}</span><button data-index="${__index}" data-event-id="0">Delete</button></li>`
  * ).join('')
  *
  * l0.addEventListener('click', (e) => {
@@ -37,7 +37,7 @@
  *   if (target && target.dataset.eventId === '0') {
  *     const __index = parseInt(target.dataset.index, 10)
  *     const item = items()[__index]
- *     remove(item.id)  // onDelete() が展開される
+ *     remove(item.id)  // onDelete() is expanded
  *     updateAll()
  *   }
  * })
@@ -47,8 +47,8 @@
 import { describe, it, expect } from 'bun:test'
 import { compileWithFiles } from './test-helpers'
 
-describe('map内のコンポーネントインライン展開', () => {
-  it('propsを持つコンポーネントのインライン展開', async () => {
+describe('Inline component expansion in map', () => {
+  it('Inline expansion of components with props', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import { createSignal } from 'barefoot'
@@ -75,11 +75,11 @@ describe('map内のコンポーネントインライン展開', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // ItemコンポーネントがHTMLにインライン展開される（イベントがないので__indexなし）
+    // Item component is expanded inline in HTML (no __index since there are no events)
     expect(appComponent!.clientJs).toContain('items().map(item => `<li>${item.text}</li>`).join(\'\')')
   })
 
-  it('イベントハンドラ付きコンポーネントのインライン展開', async () => {
+  it('Inline expansion of components with event handlers', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import { createSignal } from 'barefoot'
@@ -105,7 +105,7 @@ describe('map内のコンポーネントインライン展開', () => {
           return (
             <li>
               <span>{item.text}</span>
-              <button onClick={() => onDelete()}>削除</button>
+              <button onClick={() => onDelete()}>Delete</button>
             </li>
           )
         }
@@ -115,16 +115,16 @@ describe('map内のコンポーネントインライン展開', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // イベントハンドラがdata-indexとdata-event-idに変換される
+    // Event handlers are converted to data-index and data-event-id
     expect(appComponent!.clientJs).toContain('data-index="${__index}"')
     expect(appComponent!.clientJs).toContain('data-event-id="0"')
-    // イベントデリゲーションが生成される
+    // Event delegation is generated
     expect(appComponent!.clientJs).toContain("addEventListener('click'")
-    // ハンドラの中身がインライン展開される（onDelete() → remove(item.id)）
+    // Handler content is expanded inline (onDelete() → remove(item.id))
     expect(appComponent!.clientJs).toContain('remove(item.id)')
   })
 
-  it('条件付きレンダリングを含むコンポーネントのインライン展開', async () => {
+  it('Inline expansion of components with conditional rendering', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import { createSignal } from 'barefoot'
@@ -159,11 +159,11 @@ describe('map内のコンポーネントインライン展開', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // 条件付きレンダリングがテンプレートに含まれる
+    // Conditional rendering is included in template
     expect(appComponent!.clientJs).toContain('item.editing ?')
   })
 
-  it('複数のイベントハンドラを持つコンポーネント', async () => {
+  it('Components with multiple event handlers', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
         import { createSignal } from 'barefoot'
@@ -195,8 +195,8 @@ describe('map内のコンポーネントインライン展開', () => {
           return (
             <li>
               <span>{item.text}</span>
-              <button onClick={() => onToggle()}>切替</button>
-              <button onClick={() => onDelete()}>削除</button>
+              <button onClick={() => onToggle()}>Toggle</button>
+              <button onClick={() => onDelete()}>Delete</button>
             </li>
           )
         }
@@ -206,10 +206,10 @@ describe('map内のコンポーネントインライン展開', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appComponent = result.components.find(c => c.name === 'App')
 
-    // 複数のイベントデリゲーションが生成される
+    // Multiple event delegations are generated
     expect(appComponent!.clientJs).toContain('toggle(item.id)')
     expect(appComponent!.clientJs).toContain('remove(item.id)')
-    // 異なるevent-idが使われる
+    // Different event-ids are used
     expect(appComponent!.clientJs).toContain('data-event-id="0"')
     expect(appComponent!.clientJs).toContain('data-event-id="1"')
   })

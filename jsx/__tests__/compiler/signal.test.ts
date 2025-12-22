@@ -1,21 +1,21 @@
 /**
- * Signal宣言のテスト
+ * Signal declaration tests
  *
- * ## 概要
- * BarefootJSの状態管理の基本単位である `signal` の宣言と
- * クライアントJSへの出力を検証する。
+ * ## Overview
+ * Verify the declaration of `signal`, the basic unit of state management
+ * in BarefootJS, and its output to client JS.
  *
- * ## 対応パターン
- * - 数値、真偽値、文字列のプリミティブ型
- * - オブジェクト、配列の参照型
- * - 複数signalの同時宣言
+ * ## Supported patterns
+ * - Primitive types: numbers, booleans, strings
+ * - Reference types: objects, arrays
+ * - Multiple simultaneous signal declarations
  *
- * ## 生成されるコード
+ * ## Generated code
  * ```typescript
- * // 入力
+ * // Input
  * const [count, setCount] = createSignal(0)
  *
- * // 出力（clientJs）
+ * // Output (clientJs)
  * import { createSignal } from './barefoot.js'
  * const [count, setCount] = createSignal(0)
  * ```
@@ -24,8 +24,8 @@
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('signal宣言', () => {
-  it('数値のsignal', async () => {
+describe('Signal declarations', () => {
+  it('Number signal', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -39,7 +39,7 @@ describe('signal宣言', () => {
     expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
-  it('真偽値のsignal', async () => {
+  it('Boolean signal', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -53,7 +53,7 @@ describe('signal宣言', () => {
     expect(component.clientJs).toContain('const [on, setOn] = createSignal(false)')
   })
 
-  it('文字列のsignal', async () => {
+  it('String signal', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -67,7 +67,7 @@ describe('signal宣言', () => {
     expect(component.clientJs).toContain("const [text, setText] = createSignal('hello')")
   })
 
-  it('複数のsignal', async () => {
+  it('Multiple signals', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -83,7 +83,7 @@ describe('signal宣言', () => {
     expect(component.clientJs).toContain("const [name, setName] = createSignal('Alice')")
   })
 
-  it('オブジェクトのsignal', async () => {
+  it('Object signal', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -97,7 +97,7 @@ describe('signal宣言', () => {
     expect(component.clientJs).toContain("const [user, setUser] = createSignal({ name: 'Alice', age: 20 })")
   })
 
-  it('配列のsignal', async () => {
+  it('Array signal', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
