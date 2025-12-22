@@ -41,7 +41,7 @@ app.get('/', (c) => {
         <ul>
           <li><a href="/counter">Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
-          <li><a href="/todos">Todo (API)</a></li>
+          <li><a href="/todos">Todo (SSR + API)</a></li>
         </ul>
       </nav>
     </div>
@@ -74,7 +74,12 @@ app.get('/toggle', (c) => {
 app.get('/todos', (c) => {
   return c.render(
     <div>
-      <TodoApp />
+      <TodoApp initialTodos={todos} />
+      <script dangerouslySetInnerHTML={{ __html: `
+        // Initialize TodoApp with server data
+        import { initTodoApp } from '/static/TodoApp.client-f2e1e5c8.js';
+        initTodoApp({ initialTodos: ${JSON.stringify(todos)} });
+      ` }} type="module"></script>
       <p><a href="/">← Back</a></p>
     </div>
   )

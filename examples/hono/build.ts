@@ -52,26 +52,10 @@ for (const componentName of COMPONENTS) {
     // Client JS (rewrite import paths, with hash)
     let clientFileName: string | undefined
     if (component.clientJs) {
-      let updatedClientJs = component.clientJs.replace(
+      const updatedClientJs = component.clientJs.replace(
         /from ['"]\.\/barefoot\.js['"]/g,
         `from './${barefootFileName}'`
       )
-
-      // Special handling for TodoApp - add initialization code
-      if (component.name === 'TodoApp') {
-        updatedClientJs += `
-
-// Initial data fetch (manually added)
-fetch('/api/todos')
-  .then(res => res.json())
-  .then(data => {
-    setTodos(data.map(t => ({ ...t, editing: false })))
-  })
-  .catch(err => {
-    console.error('Failed to load todos:', err)
-  })
-`
-      }
 
       const hash = contentHash(updatedClientJs)
       clientFileName = `${component.name}.client-${hash}.js`

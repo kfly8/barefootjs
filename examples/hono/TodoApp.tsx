@@ -1,7 +1,7 @@
 /**
- * BarefootJS TodoApp for Hono
+ * BarefootJS TodoApp for Hono with SSR
  *
- * Main component - fetches todos from API using createEffect
+ * Main component - renders initial todos from server, then uses API for updates
  */
 
 import { createSignal, createEffect } from 'barefoot'
@@ -15,20 +15,14 @@ type Todo = {
   editing: boolean
 }
 
-function TodoApp() {
-  const [todos, setTodos] = createSignal<Todo[]>([])
+type Props = {
+  initialTodos?: Array<{ id: number; text: string; done: boolean }>
+}
 
-  // Fetch todos from API on mount
-  createEffect(() => {
-    fetch('/api/todos')
-      .then(res => res.json())
-      .then(data => {
-        setTodos(data.map((t: any) => ({ ...t, editing: false })))
-      })
-      .catch(err => {
-        console.error('Failed to load todos:', err)
-      })
-  })
+function TodoApp({ initialTodos = [] }: Props) {
+  const [todos, setTodos] = createSignal<Todo[]>(
+    initialTodos.map(t => ({ ...t, editing: false }))
+  )
 
   const handleAdd = async (text: string) => {
     try {
@@ -96,7 +90,7 @@ function TodoApp() {
 
   return (
     <div>
-      <h1>BarefootJS Todo (API)</h1>
+      <h1>BarefootJS Todo (SSR + API)</h1>
 
       <p class="status">
         Done: <span class="count">{todos().filter(t => t.done).length}</span> / <span class="total">{todos().length}</span>
