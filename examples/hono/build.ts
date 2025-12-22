@@ -3,7 +3,7 @@
  *
  * From each component (Counter.tsx, Toggle.tsx, etc.), generates:
  * - dist/{Component}.tsx (server component)
- * - dist/{Component}.client-{hash}.js (client JS)
+ * - dist/{Component}-{hash}.js (client JS with hash from compiler)
  * - dist/manifest.json (manifest)
  */
 
@@ -18,17 +18,14 @@ const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 // Components to compile
 const COMPONENTS = ['Counter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm']
 
-function contentHash(content: string): string {
-  return Bun.hash(content).toString(16).slice(0, 8)
-}
-
 await mkdir(DIST_DIR, { recursive: true })
 
-// Generate barefoot.js (with hash) first
-const barefootContent = await Bun.file(resolve(DOM_DIR, 'runtime.js')).text()
-const barefootHash = contentHash(barefootContent)
-const barefootFileName = `barefoot-${barefootHash}.js`
-await Bun.write(resolve(DIST_DIR, barefootFileName), barefootContent)
+// Copy barefoot.js
+const barefootFileName = 'barefoot.js'
+await Bun.write(
+  resolve(DIST_DIR, barefootFileName),
+  Bun.file(resolve(DOM_DIR, 'runtime.js'))
+)
 console.log(`Generated: dist/${barefootFileName}`)
 
 // Manifest
@@ -49,17 +46,11 @@ for (const componentName of COMPONENTS) {
     await Bun.write(resolve(DIST_DIR, serverFileName), component.serverComponent)
     console.log(`Generated: dist/${serverFileName}`)
 
-    // Client JS (rewrite import paths, with hash)
+    // Client JS (using hashed filename from compiler)
     let clientFileName: string | undefined
     if (component.clientJs) {
-      const updatedClientJs = component.clientJs.replace(
-        /from ['"]\.\/barefoot\.js['"]/g,
-        `from './${barefootFileName}'`
-      )
-
-      const hash = contentHash(updatedClientJs)
-      clientFileName = `${component.name}.client-${hash}.js`
-      await Bun.write(resolve(DIST_DIR, clientFileName), updatedClientJs)
+      clientFileName = component.filename
+      await Bun.write(resolve(DIST_DIR, clientFileName), component.clientJs)
       console.log(`Generated: dist/${clientFileName}`)
     }
 
