@@ -43,7 +43,7 @@ describe('Dynamic Content', () => {
     const component = result.components[0]
 
     // Dynamic elements get an ID
-    expect(component.serverComponent).toContain('data-bf="d0"')
+    expect(component.staticHtml).toContain('data-bf="d0"')
 
     // Updated in updateAll function
     expect(component.clientJs).toContain('d0.textContent = count()')
@@ -104,7 +104,7 @@ describe('Dynamic Content', () => {
     const component = result.components[0]
 
     // Initial value is false, so OFF is displayed
-    expect(component.serverComponent).toContain('>OFF<')
+    expect(component.staticHtml).toContain('>OFF<')
   })
 
   it('correct initial rendering (numeric operation)', async () => {
@@ -119,6 +119,6 @@ describe('Dynamic Content', () => {
     const component = result.components[0]
 
     // Initial value 5 * 2 = 10
-    expect(component.serverComponent).toContain('>10<')
+    expect(component.staticHtml).toContain('>10<')
   })
 })

@@ -53,13 +53,13 @@ describe('List Rendering - Basic', () => {
     const component = result.components[0]
 
     // List element gets an ID
-    expect(component.serverComponent).toContain('data-bf="l0"')
+    expect(component.staticHtml).toContain('data-bf="l0"')
 
     // Updated with innerHTML in client JS (with __index for event delegation support)
     expect(component.clientJs).toContain('l0.innerHTML = items().map((item, __index) => `<li>${item}</li>`).join(\'\')')
 
     // Initial values are rendered
-    expect(component.serverComponent).toContain('<li>a</li><li>b</li><li>c</li>')
+    expect(component.staticHtml).toContain('<li>a</li><li>b</li><li>c</li>')
   })
 
   it('array filter + map', async () => {
@@ -78,15 +78,15 @@ describe('List Rendering - Basic', () => {
     const component = result.components[0]
 
     // List element gets an ID
-    expect(component.serverComponent).toContain('data-bf="l0"')
+    expect(component.staticHtml).toContain('data-bf="l0"')
 
     // filter + map is used in client JS (with __index for event delegation support)
     expect(component.clientJs).toContain('items().filter(x => x.done).map((item, __index) =>')
 
     // Filtered elements are rendered with initial values (only done: true)
-    expect(component.serverComponent).toContain('<li>a</li>')
-    expect(component.serverComponent).toContain('<li>c</li>')
-    expect(component.serverComponent).not.toContain('<li>b</li>')
+    expect(component.staticHtml).toContain('<li>a</li>')
+    expect(component.staticHtml).toContain('<li>c</li>')
+    expect(component.staticHtml).not.toContain('<li>b</li>')
   })
 })
 
@@ -107,7 +107,7 @@ describe('List Rendering - Events', () => {
     const component = result.components[0]
 
     // List element gets an ID
-    expect(component.serverComponent).toContain('data-bf="l0"')
+    expect(component.staticHtml).toContain('data-bf="l0"')
 
     // data-index attribute is included in template
     expect(component.clientJs).toContain('data-index="${__index}"')

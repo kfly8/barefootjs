@@ -24,9 +24,7 @@ import type {
   ComponentOutput,
   CompileJSXResult,
   CompileOptions,
-  ServerComponentAdapter,
 } from './types'
-import { honoServerAdapter } from './adapters'
 import {
   extractImports,
   extractSignals,
@@ -41,7 +39,7 @@ import {
   parseConditionalHandler,
   generateAttributeUpdate,
   irToHtml,
-  irToServerJsx,
+  generateServerJsx,
   collectClientJsInfo,
   findAndConvertJsxReturn,
   type JsxToIRContext,
@@ -52,8 +50,6 @@ import {
 } from './compiler/utils'
 
 export type { ComponentOutput, CompileJSXResult }
-export type { CompileOptions, ServerComponentAdapter }
-export { honoServerAdapter }
 
 /**
  * Compile application from entry point
@@ -63,23 +59,18 @@ export { honoServerAdapter }
  *
  * @param entryPath - Entry file path (e.g., /path/to/index.tsx)
  * @param readFile - Function to read files
- * @param options - Compilation options
  * @returns { html, components } - Static HTML and component JS array
  */
 export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>,
-  options: CompileOptions
+  options?: CompileOptions
 ): Promise<CompileJSXResult> {
-  const { serverAdapter } = options
   // Create a new IdGenerator for each compilation (enables parallel compilation)
   const idGenerator = new IdGenerator()
 
   // Cache of compiled components
   const compiledComponents: Map<string, CompileResult> = new Map()
-
-  // Get base directory
-  const baseDir = entryPath.substring(0, entryPath.lastIndexOf('/'))
 
   /**
    * Compile component (recursively resolve dependencies)
@@ -94,13 +85,16 @@ export async function compileJSX(
     const fullPath = componentPath.endsWith('.tsx') ? componentPath : `${componentPath}.tsx`
     const source = await readFile(fullPath)
 
+    // Get base directory for this component (resolve imports relative to this file)
+    const componentDir = fullPath.substring(0, fullPath.lastIndexOf('/'))
+
     // Extract imports for this component
     const imports = extractImports(source, fullPath)
 
     // Compile dependent components first
     const componentResults: Map<string, CompileResult> = new Map()
     for (const imp of imports) {
-      const depPath = resolvePath(baseDir, imp.path)
+      const depPath = resolvePath(componentDir, imp.path)
       const result = await compileComponent(depPath)
       componentResults.set(imp.name, result)
     }
@@ -126,7 +120,7 @@ export async function compileJSX(
   }> = []
 
   for (const [path, result] of compiledComponents) {
-    if (result.clientJs || result.serverJsx) {
+    if (result.clientJs || result.staticHtml) {
       const name = path.split('/').pop()!.replace('.tsx', '')
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
@@ -147,7 +141,7 @@ export async function compileJSX(
   for (const data of componentData) {
     const { name, result, signalDeclarations } = data
     const bodyCode = result.clientJs
-    const contentForHash = signalDeclarations + bodyCode + result.serverJsx
+    const contentForHash = signalDeclarations + bodyCode + result.staticHtml
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
   }
@@ -221,19 +215,27 @@ ${bodyCode}
       }
     }
 
-    // Generate server component using adapter
-    const serverComponent = serverAdapter.generateServerComponent({
-      name,
-      props: result.props,
-      jsx: result.serverJsx,
-    })
-
     // Determine if this component needs client-side JS
     const hasClientJs = Boolean(clientJs.trim())
     const hash = componentHashes.get(name) || ''
     const filename = hasClientJs ? (hash ? `${name}-${hash}.js` : `${name}.js`) : ''
 
-    components.push({ name, hash, filename, clientJs, serverComponent, hasClientJs })
+    // Generate server JSX component (only if adapter is provided)
+    let serverJsx = ''
+    if (options?.serverAdapter) {
+      serverJsx = generateServerJsx(result.staticHtml, name, result.props, options.serverAdapter)
+    }
+
+    components.push({
+      name,
+      hash,
+      filename,
+      clientJs,
+      staticHtml: result.staticHtml,
+      serverJsx,
+      props: result.props,
+      hasClientJs,
+    })
   }
 
   return {
@@ -309,13 +311,9 @@ function compileJsxWithComponents(
     localFunctions
   )
 
-  // Generate server JSX (Hono JSX format)
-  const serverJsx = irToServerJsx(staticHtml)
-
   return {
     staticHtml,
     clientJs,
-    serverJsx,
     signals,
     localFunctions,
     childInits,

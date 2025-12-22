@@ -58,7 +58,6 @@ export type ChildComponentInit = {
 export type CompileResult = {
   staticHtml: string
   clientJs: string
-  serverJsx: string
   signals: SignalDeclaration[]
   localFunctions: LocalFunction[]  // Functions defined within the component
   childInits: ChildComponentInit[] // Child components that need initialization
@@ -80,13 +79,40 @@ export type ComponentOutput = {
   hash: string           // Content hash (e.g., 7dc6817c)
   filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js), empty if no client JS
   clientJs: string
-  serverComponent: string
+  staticHtml: string     // Pre-compiled static HTML (no JSX runtime needed)
+  serverJsx: string      // Server JSX component (for hono/jsx integration)
+  props: string[]        // Props names the component receives
   hasClientJs: boolean   // Whether this component needs client-side JS
 }
 
 export type CompileJSXResult = {
   html: string
   components: ComponentOutput[]
+}
+
+export type OutputFormat = 'html' | 'jsx'
+
+/**
+ * Server Component Adapter
+ *
+ * Abstracts framework-specific server component generation.
+ */
+export type ServerComponentAdapter = {
+  /**
+   * Generate server component code
+   * @param options - Component information
+   * @returns Server component source code
+   */
+  generateServerComponent: (options: {
+    name: string
+    props: string[]
+    jsx: string
+  }) => string
+}
+
+export type CompileOptions = {
+  outputFormat?: OutputFormat  // Default: 'html'
+  serverAdapter?: ServerComponentAdapter  // Required for 'jsx' output
 }
 
 export type ListExpressionInfo = {
@@ -121,34 +147,6 @@ export type TemplateStringResult = {
   }>
 }
 
-/**
- * Server Component Adapter
- *
- * Generates server-side component code for a specific JSX runtime.
- * This abstraction allows BarefootJS to support different frameworks (Hono, Next.js, etc.)
- */
-export type ServerComponentAdapter = {
-  /**
-   * Generate server component code
-   * @param options - Component information
-   * @returns Server component source code
-   */
-  generateServerComponent: (options: {
-    name: string
-    props: string[]
-    jsx: string
-  }) => string
-}
-
-/**
- * Compile options for compileJSX
- */
-export type CompileOptions = {
-  /**
-   * Server component adapter (required)
-   */
-  serverAdapter: ServerComponentAdapter
-}
 
 /**
  * Intermediate Representation (IR) Type Definitions

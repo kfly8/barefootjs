@@ -27,7 +27,7 @@
  * ```
  *
  * ## Notes
- * - In server components, `class` is converted to `className`
+ * - Static HTML uses standard `class` attribute (not `className`)
  * - Boolean attributes (like disabled) are only output when `true`
  */
 
@@ -46,8 +46,8 @@ describe('HTML Attributes - Static', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // In server components, class is converted to className
-    expect(component.serverComponent).toContain('className="counter"')
+    // Static HTML uses standard class attribute
+    expect(component.staticHtml).toContain('class="counter"')
   })
 
   it('style attribute (static)', async () => {
@@ -62,7 +62,7 @@ describe('HTML Attributes - Static', () => {
     const component = result.components[0]
 
     // Static style attribute is output as-is
-    expect(component.serverComponent).toContain('style="color: red"')
+    expect(component.staticHtml).toContain('style="color: red"')
   })
 })
 
@@ -79,10 +79,10 @@ describe('HTML Attributes - Dynamic class', () => {
     const component = result.components[0]
 
     // Elements with dynamic attributes get an ID
-    expect(component.serverComponent).toContain('data-bf="a0"')
+    expect(component.staticHtml).toContain('data-bf="a0"')
 
     // Initial value is false, so class is empty
-    expect(component.serverComponent).not.toContain('class="active"')
+    expect(component.staticHtml).not.toContain('class="active"')
 
     // className is updated in client JS
     expect(component.clientJs).toContain("a0.className = isActive() ? 'active' : ''")
@@ -99,8 +99,8 @@ describe('HTML Attributes - Dynamic class', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Initial value is true, so className="active" (converted to className in server components)
-    expect(component.serverComponent).toContain('className="active"')
+    // Initial value is true, so class="active"
+    expect(component.staticHtml).toContain('class="active"')
   })
 })
 
@@ -117,10 +117,10 @@ describe('HTML Attributes - Dynamic style', () => {
     const component = result.components[0]
 
     // Elements with dynamic attributes get an ID
-    expect(component.serverComponent).toContain('data-bf="a0"')
+    expect(component.staticHtml).toContain('data-bf="a0"')
 
     // Initial value is true, so color: red
-    expect(component.serverComponent).toContain('style="color: red"')
+    expect(component.staticHtml).toContain('style="color: red"')
 
     // Style is updated in client JS
     expect(component.clientJs).toContain("Object.assign(a0.style, { color: isRed() ? 'red' : 'blue' })")
@@ -140,10 +140,10 @@ describe('HTML Attributes - Boolean attributes', () => {
     const component = result.components[0]
 
     // Elements with dynamic attributes get an ID
-    expect(component.serverComponent).toContain('data-bf="a0"')
+    expect(component.staticHtml).toContain('data-bf="a0"')
 
     // Initial value is false, so disabled attribute is not present
-    expect(component.serverComponent).not.toContain('disabled')
+    expect(component.staticHtml).not.toContain('disabled')
 
     // Disabled is updated in client JS
     expect(component.clientJs).toContain('a0.disabled = isLoading()')
@@ -161,7 +161,7 @@ describe('HTML Attributes - Boolean attributes', () => {
     const component = result.components[0]
 
     // Initial value is true, so disabled attribute is present
-    expect(component.serverComponent).toContain('disabled')
+    expect(component.staticHtml).toContain('disabled')
   })
 })
 
@@ -178,10 +178,10 @@ describe('HTML Attributes - Form related', () => {
     const component = result.components[0]
 
     // Elements with dynamic attributes get an ID
-    expect(component.serverComponent).toContain('data-bf="a0"')
+    expect(component.staticHtml).toContain('data-bf="a0"')
 
     // Initial value is output
-    expect(component.serverComponent).toContain('value="hello"')
+    expect(component.staticHtml).toContain('value="hello"')
 
     // Value is updated in client JS
     expect(component.clientJs).toContain('a0.value = text()')

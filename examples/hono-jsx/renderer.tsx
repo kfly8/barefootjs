@@ -1,18 +1,16 @@
 /**
- * BarefootJS Renderer
+ * BarefootJS Renderer for Hono/JSX
  *
- * Handles layout and automatic client JS injection.
- * Only loads scripts for components that are used.
+ * Uses hono/jsx-renderer with automatic script injection.
  */
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import manifest from './dist/manifest.json'
 
-// Generate script tags for client JS (only for used components)
+// Generate script tags for client JS
 function getScriptTags(usedComponents: string[]): string[] {
   const scripts: string[] = []
 
-  // Only load barefoot.js if components are used
   if (usedComponents.length > 0) {
     const barefootJs = manifest['__barefoot__']?.clientJs
     if (barefootJs) {
@@ -20,7 +18,6 @@ function getScriptTags(usedComponents: string[]): string[] {
     }
   }
 
-  // Only client.js for used components
   for (const name of usedComponents) {
     const entry = manifest[name as keyof typeof manifest]
     if (entry?.clientJs) {
@@ -45,7 +42,7 @@ export const renderer = jsxRenderer(({ children }) => {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>BarefootJS + Hono</title>
+        <title>BarefootJS + Hono/JSX</title>
         <style>{`
           body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
           h1 { color: #333; }
@@ -56,7 +53,7 @@ export const renderer = jsxRenderer(({ children }) => {
           .doubled { color: #666; }
           .toggle span { font-size: 2rem; font-weight: bold; margin-right: 1rem; }
           button { font-size: 1.2rem; padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; }
-          
+
           /* Todo styles */
           .status { font-size: 18px; color: #666; margin: 16px 0; }
           .status .count { font-weight: bold; color: #4caf50; }

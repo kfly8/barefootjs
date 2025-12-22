@@ -105,7 +105,8 @@ describe('Components - Basics', () => {
     // Counter component takes props
     const counterComponent = result.components.find(c => c.name === 'Counter')
     expect(counterComponent).toBeDefined()
-    expect(counterComponent!.serverComponent).toContain('function Counter({ initial })')
+    // Props are stored in component output
+    expect(counterComponent!.props).toContain('initial')
   })
 
   it('Component with children', async () => {
@@ -132,7 +133,8 @@ describe('Components - Basics', () => {
     // Button component takes children
     const buttonComponent = result.components.find(c => c.name === 'Button')
     expect(buttonComponent).toBeDefined()
-    expect(buttonComponent!.serverComponent).toContain('function Button({ children })')
+    // Children prop is handled
+    expect(buttonComponent!.props).toContain('children')
   })
 })
 
@@ -358,8 +360,8 @@ describe('Components - Hash and filename', () => {
   })
 })
 
-describe('Components - Server output', () => {
-  it('Component registration using useRequestContext', async () => {
+describe('Components - Static HTML output', () => {
+  it('Component outputs valid HTML', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -370,61 +372,13 @@ describe('Components - Server output', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.serverComponent).toContain("import { useRequestContext } from 'hono/jsx-renderer'")
-    expect(component.serverComponent).toContain("c.set('usedComponents'")
+    // staticHtml contains valid HTML (not JSX)
+    expect(component.staticHtml).toContain('<p')
+    expect(component.staticHtml).toContain('data-bf=')
   })
 })
 
 describe('Components - Auto-hydration', () => {
-  it('Server component with props embeds hydration script', async () => {
-    const files: Record<string, string> = {
-      '/test/Counter.tsx': `
-        import { createSignal } from 'barefoot'
-        function Counter({ initial }) {
-          const [count, setCount] = createSignal(initial)
-          return (
-            <div>
-              <p>{count()}</p>
-              <button onClick={() => setCount(n => n + 1)}>+1</button>
-            </div>
-          )
-        }
-        export default Counter
-      `,
-    }
-    const result = await compileWithFiles('/test/Counter.tsx', files)
-    const counter = result.components.find(c => c.name === 'Counter')
-
-    // Server component should serialize props for hydration
-    expect(counter!.serverComponent).toContain('__hydrateProps')
-    expect(counter!.serverComponent).toContain('data-bf-props="Counter"')
-    expect(counter!.serverComponent).toContain('JSON.stringify(__hydrateProps)')
-  })
-
-  it('Server component filters out function props from hydration', async () => {
-    const files: Record<string, string> = {
-      '/test/Form.tsx': `
-        import { createSignal } from 'barefoot'
-        function Form({ onSubmit, initialValue }) {
-          const [text, setText] = createSignal(initialValue)
-          return (
-            <div>
-              <input value={text()} onInput={(e) => setText(e.target.value)} />
-              <button onClick={() => onSubmit(text())}>Submit</button>
-            </div>
-          )
-        }
-        export default Form
-      `,
-    }
-    const result = await compileWithFiles('/test/Form.tsx', files)
-    const form = result.components.find(c => c.name === 'Form')
-
-    // Should check if prop is a function before adding to hydrate props
-    expect(form!.serverComponent).toContain("typeof onSubmit !== 'function'")
-    expect(form!.serverComponent).toContain("typeof initialValue !== 'function'")
-  })
-
   it('Client JS includes auto-hydration code for components with props', async () => {
     const files: Record<string, string> = {
       '/test/Counter.tsx': `
@@ -467,19 +421,4 @@ describe('Components - Auto-hydration', () => {
     expect(counter.clientJs).not.toContain('data-bf-props')
   })
 
-  it('Server component without props does not have hydration script', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Counter() {
-        const [count, setCount] = createSignal(0)
-        return <p>{count()}</p>
-      }
-    `
-    const result = await compile(source)
-    const counter = result.components[0]
-
-    // No hydration script for components without props
-    expect(counter.serverComponent).not.toContain('__hydrateProps')
-    expect(counter.serverComponent).not.toContain('data-bf-props')
-  })
 })

@@ -176,10 +176,3 @@ function isSelfClosingTag(tagName: string): boolean {
 function isBooleanAttribute(attrName: string): boolean {
   return ['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)
 }
-
-/**
- * Generates server JSX (Hono format) from IR
- */
-export function irToServerJsx(html: string): string {
-  return html.replace(/class="/g, 'className="')
-}

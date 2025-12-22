@@ -1,14 +1,20 @@
 /**
- * BarefootJS + Hono SSR Server
+ * BarefootJS + Hono/JSX SSR Server
+ *
+ * Uses hono/jsx with BarefootJS components.
+ * Components are imported as JSX and rendered server-side.
  */
 
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
-import { barefootRenderer } from './renderer'
+import { renderer } from './renderer'
+import { Counter } from './dist/Counter'
+import { Toggle } from './dist/Toggle'
+import { TodoApp } from './dist/TodoApp'
 
 const app = new Hono()
 
-app.use(barefootRenderer())
+app.use(renderer)
 
 app.use('/static/*', serveStatic({
   root: './dist',
@@ -24,11 +30,50 @@ let todos: Todo[] = [
 ]
 let nextId = 4
 
-// Pages
-app.get('/', (c) => c.render('HomePage', { title: 'BarefootJS + Hono' }))
-app.get('/counter', (c) => c.render('CounterPage', { title: 'Counter' }))
-app.get('/toggle', (c) => c.render('TogglePage', { title: 'Toggle' }))
-app.get('/todos', (c) => c.render('TodoPage', { title: 'Todo', initialTodos: todos }))
+// Pages - using JSX components directly
+app.get('/', (c) => {
+  return c.render(
+    <div>
+      <h1>BarefootJS + Hono/JSX Examples</h1>
+      <nav>
+        <ul>
+          <li><a href="/counter">Counter</a></li>
+          <li><a href="/toggle">Toggle</a></li>
+          <li><a href="/todos">Todo (SSR + API)</a></li>
+        </ul>
+      </nav>
+    </div>
+  )
+})
+
+app.get('/counter', (c) => {
+  return c.render(
+    <div>
+      <h1>Counter Example</h1>
+      <Counter />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+app.get('/toggle', (c) => {
+  return c.render(
+    <div>
+      <h1>Toggle Example</h1>
+      <Toggle />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+app.get('/todos', (c) => {
+  return c.render(
+    <div>
+      <TodoApp initialTodos={todos} />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
 
 // REST API
 app.get('/api/todos', (c) => c.json(todos))
@@ -64,4 +109,4 @@ app.delete('/api/todos/:id', (c) => {
   return c.json({ success: true })
 })
 
-export default { port: 3000, fetch: app.fetch }
+export default { port: 3001, fetch: app.fetch }

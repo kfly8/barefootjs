@@ -13,12 +13,15 @@ import type { ServerComponentAdapter } from '../types'
 export const honoServerAdapter: ServerComponentAdapter = {
   generateServerComponent: ({ name, props, jsx }) => {
     const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
+    const propsType = props.length > 0
+      ? `: { ${props.map(p => `${p}?: unknown`).join('; ')} }`
+      : ''
 
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
       return `import { useRequestContext } from 'hono/jsx-renderer'
 
-export function ${name}(${propsParam}) {
+export function ${name}(${propsParam}${propsType}) {
   const c = useRequestContext()
   const used = c.get('usedComponents') || []
   if (!used.includes('${name}')) {
@@ -26,7 +29,7 @@ export function ${name}(${propsParam}) {
   }
 
   // Serialize props for client hydration (only serializable values)
-  const __hydrateProps = {}
+  const __hydrateProps: Record<string, unknown> = {}
   ${props.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 

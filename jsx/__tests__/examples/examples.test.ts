@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'bun:test'
-import { compileJSX, honoServerAdapter } from '../../index'
+import { compileJSX } from '../../index'
 import { resolve } from 'node:path'
 
 const EXAMPLES_DIR = resolve(import.meta.dir, '../../../examples')
@@ -17,7 +17,7 @@ describe('examples/counter', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'counter/index.tsx')
     result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    }, { serverAdapter: honoServerAdapter })
+    })
   })
 
   it('compiles successfully', () => {
@@ -55,7 +55,7 @@ describe('examples/todo', () => {
     const entryPath = resolve(EXAMPLES_DIR, 'todo/index.tsx')
     result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    }, { serverAdapter: honoServerAdapter })
+    })
   })
 
   it('compiles successfully', () => {
@@ -96,10 +96,10 @@ describe('examples/todo', () => {
 
 describe('examples/hono', () => {
   it('Counter component is compiled', async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'hono/Counter.tsx')
+    const entryPath = resolve(EXAMPLES_DIR, 'hono/pages/components/Counter.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    }, { serverAdapter: honoServerAdapter })
+    })
 
     const counter = result.components.find(c => c.name === 'Counter')
     expect(counter).toBeDefined()
@@ -108,10 +108,10 @@ describe('examples/hono', () => {
   })
 
   it('Toggle component is compiled', async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'hono/Toggle.tsx')
+    const entryPath = resolve(EXAMPLES_DIR, 'hono/pages/components/Toggle.tsx')
     const result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    }, { serverAdapter: honoServerAdapter })
+    })
 
     const toggle = result.components.find(c => c.name === 'Toggle')
     expect(toggle).toBeDefined()
@@ -124,14 +124,20 @@ describe('examples/todo-spa', () => {
   let result: Awaited<ReturnType<typeof compileJSX>>
 
   beforeAll(async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'todo-spa/TodoApp.tsx')
+    const entryPath = resolve(EXAMPLES_DIR, 'todo-spa/pages/TodoPage.tsx')
     result = await compileJSX(entryPath, async (path) => {
       return await Bun.file(path).text()
-    }, { serverAdapter: honoServerAdapter })
+    })
   })
 
   it('compiles successfully', () => {
     expect(result.components.length).toBeGreaterThan(0)
+  })
+
+  it('TodoPage component is generated', () => {
+    const todoPage = result.components.find(c => c.name === 'TodoPage')
+    expect(todoPage).toBeDefined()
+    expect(todoPage?.staticHtml).toContain('BarefootJS Todo SPA')
   })
 
   it('TodoApp component is generated', () => {
