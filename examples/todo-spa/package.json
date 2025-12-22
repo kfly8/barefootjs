@@ -1,0 +1,16 @@
+{
+  "name": "barefoot-todo-spa-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "dev": "bun run --watch server.tsx"
+  },
+  "dependencies": {
+    "barefoot": "file:../../",
+    "hono": "^4"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}
