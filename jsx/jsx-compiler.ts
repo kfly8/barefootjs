@@ -187,13 +187,22 @@ export async function compileJSX(
 
       if (result.props.length > 0) {
         const propsParam = `{ ${result.props.join(', ')} }`
+        // Add auto-hydration code that looks for embedded props and calls init
+        const autoHydrateCode = `
+// Auto-hydration: look for embedded props from server
+const __propsEl = document.querySelector('script[data-bf-props="${name}"]')
+if (__propsEl) {
+  const __props = JSON.parse(__propsEl.textContent || '{}')
+  init${name}(__props)
+}
+`
         clientJs = `${allImports}
 
 export function init${name}(${propsParam}) {
 ${signalDeclarations ? signalDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
 ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
-`
+${autoHydrateCode}`
       } else {
         clientJs = `${allImports}
 
@@ -209,9 +218,43 @@ ${bodyCode}
       ? `{ ${result.props.join(', ')} }`
       : ''
 
-    const serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
+    // Generate server component with auto-hydration support
+    let serverComponent: string
+    if (result.props.length > 0) {
+      // For components with props, embed serializable props for client hydration
+      serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
 
 export function ${name}(${propsParam}) {
+  const c = useRequestContext()
+  const used = c.get('usedComponents') || []
+  if (!used.includes('${name}')) {
+    c.set('usedComponents', [...used, '${name}'])
+  }
+
+  // Serialize props for client hydration (only serializable values)
+  const __hydrateProps = {}
+  ${result.props.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
+  const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
+
+  return (
+    <>
+      {__hasHydrateProps && (
+        <script
+          type="application/json"
+          data-bf-props="${name}"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
+        />
+      )}
+      ${result.serverJsx}
+    </>
+  )
+}
+`
+    } else {
+      // Components without props don't need hydration setup
+      serverComponent = `import { useRequestContext } from 'hono/jsx-renderer'
+
+export function ${name}() {
   const c = useRequestContext()
   const used = c.get('usedComponents') || []
   if (!used.includes('${name}')) {
@@ -222,6 +265,7 @@ export function ${name}(${propsParam}) {
   )
 }
 `
+    }
     const hash = componentHashes.get(name) || ''
     const filename = hash ? `${name}-${hash}.js` : `${name}.js`
 
