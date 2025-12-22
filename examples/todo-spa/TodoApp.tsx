@@ -21,6 +21,9 @@ function TodoApp() {
   const [error, setError] = createSignal<string | null>(null)
 
   // Fetch todos from API on mount
+  // Note: This createEffect is for demonstration - the compiler currently
+  // only extracts createEffect calls that are directly tied to JSX reactive expressions.
+  // The actual fetch logic is handled by init.js
   createEffect(() => {
     fetch('/api/todos')
       .then(res => res.json())
@@ -100,13 +103,13 @@ function TodoApp() {
 
   return (
     <div>
-      <div class="loading">Loading todos...</div>
+      <div class="loading" id="loading-indicator">Loading todos...</div>
       
-      <div class="content hidden">
-        <div class="error" style="display: none;"></div>
+      <div class="content hidden" id="main-content">
+        <div class="error" id="error-message" style="display: none;"></div>
 
         <p class="status">
-          Done: <span class="count">0</span> / <span class="total">0</span>
+          Done: <span class="count">{todos().filter(t => t.done).length}</span> / <span class="total">{todos().length}</span>
         </p>
 
         <AddTodoForm onAdd={handleAdd} />

@@ -53,10 +53,43 @@ for (const componentName of COMPONENTS) {
     // Client JS (rewrite import paths, with hash)
     let clientFileName: string | undefined
     if (component.clientJs) {
-      const updatedClientJs = component.clientJs.replace(
+      let updatedClientJs = component.clientJs.replace(
         /from ['"]\.\/barefoot\.js['"]/g,
         `from './${barefootFileName}'`
       )
+      
+      // Special handling for TodoApp - add initialization code
+      if (component.name === 'TodoApp') {
+        // Add the initial fetch effect at the end
+        const initCode = `
+
+// Initial data fetch (manually added)
+fetch('/api/todos')
+  .then(res => res.json())
+  .then(data => {
+    const loadingEl = document.getElementById('loading-indicator')
+    const contentEl = document.getElementById('main-content')
+    if (loadingEl) loadingEl.classList.add('hidden')
+    if (contentEl) contentEl.classList.remove('hidden')
+    
+    setTodos(data.map(t => ({ ...t, editing: false })))
+  })
+  .catch(err => {
+    const loadingEl = document.getElementById('loading-indicator')
+    const contentEl = document.getElementById('main-content')
+    const errorEl = document.getElementById('error-message')
+    
+    if (loadingEl) loadingEl.classList.add('hidden')
+    if (contentEl) contentEl.classList.remove('hidden')
+    if (errorEl) {
+      errorEl.textContent = 'Failed to load todos: ' + err.message
+      errorEl.style.display = 'block'
+    }
+  })
+`
+        updatedClientJs += initCode
+      }
+      
       const hash = contentHash(updatedClientJs)
       clientFileName = `${component.name}.client-${hash}.js`
       await writeFile(resolve(DIST_DIR, clientFileName), updatedClientJs)
