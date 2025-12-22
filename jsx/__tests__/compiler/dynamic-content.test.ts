@@ -1,28 +1,28 @@
 /**
- * 動的コンテンツのテスト
+ * Dynamic Content Tests
  *
- * ## 概要
- * JSX内の動的な値（signal呼び出し、式、条件分岐）が
- * 正しくHTMLとクライアントJSに変換されることを検証する。
+ * ## Overview
+ * Verifies that dynamic values in JSX (signal calls, expressions, conditionals)
+ * are correctly converted to HTML and client JS.
  *
- * ## 対応パターン
- * - 関数呼び出し: `{count()}`
- * - 二項演算: `{count() * 2}`
- * - 条件式（三項演算子）: `{on() ? 'ON' : 'OFF'}`
- * - テキスト + 動的コンテンツ: `Count: {count()}`
+ * ## Supported Patterns
+ * - Function calls: `{count()}`
+ * - Binary operations: `{count() * 2}`
+ * - Conditional expressions (ternary): `{on() ? 'ON' : 'OFF'}`
+ * - Text + dynamic content: `Count: {count()}`
  *
- * ## 生成されるコード
+ * ## Generated Code
  * ```typescript
- * // 入力
+ * // Input
  * <p>{count()}</p>
  *
- * // 出力（HTML）
- * <p id="__d0">0</p>  // 初期値で評価
+ * // Output (HTML)
+ * <p data-bf="d0">0</p>  // evaluated with initial value
  *
- * // 出力（clientJs）
+ * // Output (clientJs)
  * const __d0 = document.getElementById('__d0')
  * function updateAll() {
- *   __d0.textContent = count()
+ *   d0.textContent = count()
  * }
  * ```
  */
@@ -30,8 +30,8 @@
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('動的コンテンツ', () => {
-  it('関数呼び出し', async () => {
+describe('Dynamic Content', () => {
+  it('function call', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -42,14 +42,14 @@ describe('動的コンテンツ', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 動的要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__d0"')
+    // Dynamic elements get an ID
+    expect(component.serverComponent).toContain('data-bf="d0"')
 
-    // updateAll関数で更新される
-    expect(component.clientJs).toContain('__d0.textContent = count()')
+    // Updated in updateAll function
+    expect(component.clientJs).toContain('d0.textContent = count()')
   })
 
-  it('二項演算', async () => {
+  it('binary operation', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -60,10 +60,10 @@ describe('動的コンテンツ', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('__d0.textContent = count() * 2')
+    expect(component.clientJs).toContain('d0.textContent = count() * 2')
   })
 
-  it('条件式（三項演算子）', async () => {
+  it('conditional expression (ternary operator)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -74,10 +74,10 @@ describe('動的コンテンツ', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain("__d0.textContent = on() ? 'ON' : 'OFF'")
+    expect(component.clientJs).toContain("d0.textContent = on() ? 'ON' : 'OFF'")
   })
 
-  it('テキスト + 動的コンテンツ', async () => {
+  it('text + dynamic content', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -88,10 +88,10 @@ describe('動的コンテンツ', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('__d0.textContent = "Count:" + count()')
+    expect(component.clientJs).toContain('d0.textContent = "Count:" + count()')
   })
 
-  it('初期値の正しい描画（真偽値から文字列）', async () => {
+  it('correct initial rendering (boolean to string)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -102,11 +102,11 @@ describe('動的コンテンツ', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 初期値 false なので OFF が表示される
+    // Initial value is false, so OFF is displayed
     expect(component.serverComponent).toContain('>OFF<')
   })
 
-  it('初期値の正しい描画（数値の演算）', async () => {
+  it('correct initial rendering (numeric operation)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -117,7 +117,7 @@ describe('動的コンテンツ', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 初期値 5 * 2 = 10
+    // Initial value 5 * 2 = 10
     expect(component.serverComponent).toContain('>10<')
   })
 })

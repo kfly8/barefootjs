@@ -1,44 +1,44 @@
 /**
- * イベントハンドラのテスト
+ * Event Handler Tests
  *
- * ## 概要
- * JSX要素のイベントハンドラ（onClick, onChange, onInput等）が
- * クライアントJSに正しく変換されることを検証する。
+ * ## Overview
+ * Verifies that event handlers on JSX elements (onClick, onChange, onInput, etc.)
+ * are correctly converted to client JS.
  *
- * ## 対応パターン
- * - onClick: ボタンクリック等
- * - onChange: 入力値変更
- * - onInput: 入力中のリアルタイム更新
- * - onSubmit: フォーム送信
- * - onKeyDown: キーボードイベント
+ * ## Supported Patterns
+ * - onClick: button clicks, etc.
+ * - onChange: input value changes
+ * - onInput: real-time updates during input
+ * - onSubmit: form submissions
+ * - onKeyDown: keyboard events
  *
- * ## 生成されるコード
+ * ## Generated Code
  * ```typescript
- * // 入力
+ * // Input
  * <button onClick={() => setCount(n => n + 1)}>+1</button>
  *
- * // 出力（HTML）
- * <button id="__b0">+1</button>
+ * // Output (HTML)
+ * <button data-bf="b0">+1</button>
  *
- * // 出力（clientJs）
+ * // Output (clientJs)
  * const __b0 = document.getElementById('__b0')
- * __b0.onclick = () => setCount(n => n + 1)
+ * b0.onclick = () => setCount(n => n + 1)
  *
- * // 動的要素は createEffect で更新
+ * // Dynamic elements are updated with createEffect
  * createEffect(() => {
- *   __d0.textContent = count()
+ *   d0.textContent = count()
  * })
  * ```
  *
- * ## 注意事項
- * - 動的コンテンツは `createEffect()` で自動追跡される
- * - イベント引数 `(e)` は保持される
+ * ## Notes
+ * - Dynamic content is auto-tracked with `createEffect()`
+ * - Event argument `(e)` is preserved
  */
 
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('イベントハンドラ - 基本', () => {
+describe('Event Handlers - Basic', () => {
   it('onClick', async () => {
     const source = `
       import { createSignal } from 'barefoot'
@@ -55,18 +55,18 @@ describe('イベントハンドラ - 基本', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // ボタンにIDが付与される
-    expect(component.serverComponent).toContain('id="__b0"')
+    // Button gets an ID
+    expect(component.serverComponent).toContain('data-bf="b0"')
 
-    // onclickハンドラが設定される
-    expect(component.clientJs).toContain('__b0.onclick')
+    // onclick handler is set
+    expect(component.clientJs).toContain('b0.onclick')
     expect(component.clientJs).toContain('setCount(n => n + 1)')
 
-    // 動的コンテンツはcreateEffectで更新される
+    // Dynamic content is updated with createEffect
     expect(component.clientJs).toContain('createEffect(')
   })
 
-  it('複数のonClick', async () => {
+  it('multiple onClick', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -83,14 +83,14 @@ describe('イベントハンドラ - 基本', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.serverComponent).toContain('id="__b0"')
-    expect(component.serverComponent).toContain('id="__b1"')
-    expect(component.clientJs).toContain('__b0.onclick')
-    expect(component.clientJs).toContain('__b1.onclick')
+    expect(component.serverComponent).toContain('data-bf="b0"')
+    expect(component.serverComponent).toContain('data-bf="b1"')
+    expect(component.clientJs).toContain('b0.onclick')
+    expect(component.clientJs).toContain('b1.onclick')
   })
 })
 
-describe('イベントハンドラ - フォーム', () => {
+describe('Event Handlers - Form', () => {
   it('onChange', async () => {
     const source = `
       import { createSignal } from 'barefoot'
@@ -107,18 +107,18 @@ describe('イベントハンドラ - フォーム', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // input要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__b0"')
+    // Input element gets an ID
+    expect(component.serverComponent).toContain('data-bf="b0"')
 
-    // onchangeハンドラが設定される（イベント引数が保持される）
-    expect(component.clientJs).toContain('__b0.onchange = (e) =>')
+    // onchange handler is set (event argument is preserved)
+    expect(component.clientJs).toContain('b0.onchange = (e) =>')
     expect(component.clientJs).toContain('setText(e.target.value)')
 
-    // 動的コンテンツはcreateEffectで更新される
+    // Dynamic content is updated with createEffect
     expect(component.clientJs).toContain('createEffect(')
   })
 
-  it('onInput（イベント引数付き）', async () => {
+  it('onInput (with event argument)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -134,8 +134,8 @@ describe('イベントハンドラ - フォーム', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // oninputハンドラが設定される（イベント引数が保持される）
-    expect(component.clientJs).toContain('__b0.oninput = (e) =>')
+    // oninput handler is set (event argument is preserved)
+    expect(component.clientJs).toContain('b0.oninput = (e) =>')
     expect(component.clientJs).toContain('setText(e.target.value)')
   })
 
@@ -157,17 +157,17 @@ describe('イベントハンドラ - フォーム', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // form要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__b0"')
+    // Form element gets an ID
+    expect(component.serverComponent).toContain('data-bf="b0"')
 
-    // onsubmitハンドラが設定される
-    expect(component.clientJs).toContain('__b0.onsubmit')
+    // onsubmit handler is set
+    expect(component.clientJs).toContain('b0.onsubmit')
     expect(component.clientJs).toContain('e.preventDefault()')
     expect(component.clientJs).toContain('setSubmitted(true)')
   })
 })
 
-describe('イベントハンドラ - キーボード', () => {
+describe('Event Handlers - Keyboard', () => {
   it('onKeyDown', async () => {
     const source = `
       import { createSignal } from 'barefoot'
@@ -185,11 +185,11 @@ describe('イベントハンドラ - キーボード', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // input要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__b0"')
+    // Input element gets an ID
+    expect(component.serverComponent).toContain('data-bf="b0"')
 
-    // onkeydownハンドラが設定される
-    expect(component.clientJs).toContain('__b0.onkeydown')
+    // onkeydown handler is set
+    expect(component.clientJs).toContain('b0.onkeydown')
     expect(component.clientJs).toContain("e.key === 'Enter'")
     expect(component.clientJs).toContain('setSubmitted(true)')
   })

@@ -28,11 +28,11 @@
  * }
  *
  * // 出力（clientJs）- Itemがインライン展開される
- * __l0.innerHTML = items().map((item, __index) =>
+ * l0.innerHTML = items().map((item, __index) =>
  *   `<li><span>${item.text}</span><button data-index="${__index}" data-event-id="0">削除</button></li>`
  * ).join('')
  *
- * __l0.addEventListener('click', (e) => {
+ * l0.addEventListener('click', (e) => {
  *   const target = e.target.closest('[data-event-id="0"]')
  *   if (target && target.dataset.eventId === '0') {
  *     const __index = parseInt(target.dataset.index, 10)

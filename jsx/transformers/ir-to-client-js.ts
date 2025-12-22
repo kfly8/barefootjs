@@ -108,20 +108,20 @@ export function generateClientJs(ctx: ClientJsContext): string {
 
   // Get DOM elements
   for (const el of ctx.dynamicElements) {
-    lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const el of ctx.listElements) {
-    lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const id of attrElementIds) {
-    lines.push(`const ${id} = document.getElementById('${id}')`)
+    lines.push(`const ${id} = document.querySelector('[data-bf="${id}"]')`)
   }
 
   for (const el of ctx.interactiveElements) {
     if (!attrElementIds.includes(el.id)) {
-      lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+      lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
     }
   }
 

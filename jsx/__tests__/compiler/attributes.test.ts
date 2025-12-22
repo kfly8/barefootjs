@@ -1,41 +1,41 @@
 /**
- * HTML属性のテスト
+ * HTML Attributes Tests
  *
- * ## 概要
- * JSX要素のHTML属性（静的・動的）が正しく処理されることを検証する。
+ * ## Overview
+ * Verifies that HTML attributes (static and dynamic) on JSX elements are processed correctly.
  *
- * ## 対応パターン
- * - 静的属性: `class="counter"`, `style="color: red"`
- * - 動的class: `class={isActive() ? 'active' : ''}`
- * - 動的style: `style={{ color: isRed() ? 'red' : 'blue' }}`
- * - 動的disabled: `disabled={isLoading()}`
- * - 動的value: `value={text()}`
+ * ## Supported Patterns
+ * - Static attributes: `class="counter"`, `style="color: red"`
+ * - Dynamic class: `class={isActive() ? 'active' : ''}`
+ * - Dynamic style: `style={{ color: isRed() ? 'red' : 'blue' }}`
+ * - Dynamic disabled: `disabled={isLoading()}`
+ * - Dynamic value: `value={text()}`
  *
- * ## 生成されるコード
+ * ## Generated Code
  * ```typescript
- * // 入力
+ * // Input
  * <p class={isActive() ? 'active' : ''}>Hello</p>
  *
- * // 出力（HTML）- 初期値で評価
- * <p id="__a0" class="">Hello</p>  // isActive() = false の場合
+ * // Output (HTML) - evaluated with initial value
+ * <p data-bf="a0" class="">Hello</p>  // when isActive() = false
  *
- * // 出力（clientJs）
+ * // Output (clientJs)
  * const __a0 = document.getElementById('__a0')
  * function updateAll() {
- *   __a0.className = isActive() ? 'active' : ''
+ *   a0.className = isActive() ? 'active' : ''
  * }
  * ```
  *
- * ## 注意事項
- * - サーバーコンポーネントでは `class` → `className` に変換
- * - boolean属性（disabled等）は `true` の時のみ出力
+ * ## Notes
+ * - In server components, `class` is converted to `className`
+ * - Boolean attributes (like disabled) are only output when `true`
  */
 
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('HTML属性 - 静的', () => {
-  it('class属性', async () => {
+describe('HTML Attributes - Static', () => {
+  it('class attribute', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -46,11 +46,11 @@ describe('HTML属性 - 静的', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // サーバーコンポーネントではclassNameに変換
+    // In server components, class is converted to className
     expect(component.serverComponent).toContain('className="counter"')
   })
 
-  it('style属性（静的）', async () => {
+  it('style attribute (static)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -61,13 +61,13 @@ describe('HTML属性 - 静的', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 静的なstyle属性がそのまま出力される
+    // Static style attribute is output as-is
     expect(component.serverComponent).toContain('style="color: red"')
   })
 })
 
-describe('HTML属性 - 動的class', () => {
-  it('動的なclass属性', async () => {
+describe('HTML Attributes - Dynamic class', () => {
+  it('dynamic class attribute', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -78,17 +78,17 @@ describe('HTML属性 - 動的class', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 動的属性を持つ要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__a0"')
+    // Elements with dynamic attributes get an ID
+    expect(component.serverComponent).toContain('data-bf="a0"')
 
-    // 初期値がfalseなのでclassは空
+    // Initial value is false, so class is empty
     expect(component.serverComponent).not.toContain('class="active"')
 
-    // クライアントJSでclassNameが更新される
-    expect(component.clientJs).toContain("__a0.className = isActive() ? 'active' : ''")
+    // className is updated in client JS
+    expect(component.clientJs).toContain("a0.className = isActive() ? 'active' : ''")
   })
 
-  it('動的なclass属性（初期値がtrue）', async () => {
+  it('dynamic class attribute (initial value is true)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -99,13 +99,13 @@ describe('HTML属性 - 動的class', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 初期値がtrueなのでclassName="active"（サーバーコンポーネントではclassNameに変換される）
+    // Initial value is true, so className="active" (converted to className in server components)
     expect(component.serverComponent).toContain('className="active"')
   })
 })
 
-describe('HTML属性 - 動的style', () => {
-  it('動的なstyle属性', async () => {
+describe('HTML Attributes - Dynamic style', () => {
+  it('dynamic style attribute', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -116,19 +116,19 @@ describe('HTML属性 - 動的style', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 動的属性を持つ要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__a0"')
+    // Elements with dynamic attributes get an ID
+    expect(component.serverComponent).toContain('data-bf="a0"')
 
-    // 初期値がtrueなのでcolor: red
+    // Initial value is true, so color: red
     expect(component.serverComponent).toContain('style="color: red"')
 
-    // クライアントJSでstyleが更新される
-    expect(component.clientJs).toContain("Object.assign(__a0.style, { color: isRed() ? 'red' : 'blue' })")
+    // Style is updated in client JS
+    expect(component.clientJs).toContain("Object.assign(a0.style, { color: isRed() ? 'red' : 'blue' })")
   })
 })
 
-describe('HTML属性 - boolean属性', () => {
-  it('動的なdisabled属性', async () => {
+describe('HTML Attributes - Boolean attributes', () => {
+  it('dynamic disabled attribute', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -139,17 +139,17 @@ describe('HTML属性 - boolean属性', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 動的属性を持つ要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__a0"')
+    // Elements with dynamic attributes get an ID
+    expect(component.serverComponent).toContain('data-bf="a0"')
 
-    // 初期値がfalseなのでdisabled属性はない
+    // Initial value is false, so disabled attribute is not present
     expect(component.serverComponent).not.toContain('disabled')
 
-    // クライアントJSでdisabledが更新される
-    expect(component.clientJs).toContain('__a0.disabled = isLoading()')
+    // Disabled is updated in client JS
+    expect(component.clientJs).toContain('a0.disabled = isLoading()')
   })
 
-  it('動的なdisabled属性（初期値がtrue）', async () => {
+  it('dynamic disabled attribute (initial value is true)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -160,13 +160,13 @@ describe('HTML属性 - boolean属性', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 初期値がtrueなのでdisabled属性がある
+    // Initial value is true, so disabled attribute is present
     expect(component.serverComponent).toContain('disabled')
   })
 })
 
-describe('HTML属性 - フォーム関連', () => {
-  it('動的なvalue属性', async () => {
+describe('HTML Attributes - Form related', () => {
+  it('dynamic value attribute', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -177,13 +177,13 @@ describe('HTML属性 - フォーム関連', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 動的属性を持つ要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__a0"')
+    // Elements with dynamic attributes get an ID
+    expect(component.serverComponent).toContain('data-bf="a0"')
 
-    // 初期値が出力される
+    // Initial value is output
     expect(component.serverComponent).toContain('value="hello"')
 
-    // クライアントJSでvalueが更新される
-    expect(component.clientJs).toContain('__a0.value = text()')
+    // Value is updated in client JS
+    expect(component.clientJs).toContain('a0.value = text()')
   })
 })

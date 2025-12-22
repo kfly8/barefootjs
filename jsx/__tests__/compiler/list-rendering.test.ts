@@ -1,31 +1,31 @@
 /**
- * リストレンダリングのテスト
+ * List Rendering Tests
  *
- * ## 概要
- * 配列の `.map()` によるリストレンダリングと、
- * リスト内の動的要素（イベント、条件分岐、属性）の処理を検証する。
+ * ## Overview
+ * Verifies list rendering using `.map()` on arrays and
+ * processing of dynamic elements within lists (events, conditionals, attributes).
  *
- * ## 対応パターン
- * - 基本的なmap: `items().map(item => <li>{item}</li>)`
+ * ## Supported Patterns
+ * - Basic map: `items().map(item => <li>{item}</li>)`
  * - filter + map: `items().filter(x => x.done).map(...)`
- * - map内のイベント: `onClick={() => remove(item.id)}`
- * - map内の条件分岐: `{item.editing ? <input /> : <span />}`
- * - map内の動的属性: `class={item.done ? 'done' : ''}`
+ * - Events in map: `onClick={() => remove(item.id)}`
+ * - Conditionals in map: `{item.editing ? <input /> : <span />}`
+ * - Dynamic attributes in map: `class={item.done ? 'done' : ''}`
  *
- * ## 生成されるコード
+ * ## Generated Code
  * ```typescript
- * // 入力
+ * // Input
  * <ul>{items().map(item => <li onClick={() => remove(item.id)}>{item.text}</li>)}</ul>
  *
- * // 出力（HTML）
- * <ul id="__l0">
+ * // Output (HTML)
+ * <ul data-bf="l0">
  *   <li data-index="0" data-event-id="0">...</li>
  *   ...
  * </ul>
  *
- * // 出力（clientJs）
- * __l0.innerHTML = items().map((item, __index) => `<li data-index="${__index}" data-event-id="0">${item.text}</li>`).join('')
- * __l0.addEventListener('click', (e) => {
+ * // Output (clientJs)
+ * l0.innerHTML = items().map((item, __index) => `<li data-index="${__index}" data-event-id="0">${item.text}</li>`).join('')
+ * l0.addEventListener('click', (e) => {
  *   const target = e.target.closest('[data-event-id="0"]')
  *   if (target && target.dataset.eventId === '0') {
  *     const __index = parseInt(target.dataset.index, 10)
@@ -40,8 +40,8 @@
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('リストレンダリング - 基本', () => {
-  it('配列のmap', async () => {
+describe('List Rendering - Basic', () => {
+  it('array map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -52,17 +52,17 @@ describe('リストレンダリング - 基本', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // リスト要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__l0"')
+    // List element gets an ID
+    expect(component.serverComponent).toContain('data-bf="l0"')
 
-    // クライアントJSでinnerHTMLで更新される
-    expect(component.clientJs).toContain('__l0.innerHTML = items().map(item => `<li>${item}</li>`).join(\'\')')
+    // Updated with innerHTML in client JS
+    expect(component.clientJs).toContain('l0.innerHTML = items().map(item => `<li>${item}</li>`).join(\'\')')
 
-    // 初期値が描画される
+    // Initial values are rendered
     expect(component.serverComponent).toContain('<li>a</li><li>b</li><li>c</li>')
   })
 
-  it('配列のfilter + map', async () => {
+  it('array filter + map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -77,21 +77,21 @@ describe('リストレンダリング - 基本', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // リスト要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__l0"')
+    // List element gets an ID
+    expect(component.serverComponent).toContain('data-bf="l0"')
 
-    // クライアントJSでfilter + mapが使われる
+    // filter + map is used in client JS
     expect(component.clientJs).toContain('items().filter(x => x.done).map(item =>')
 
-    // 初期値でフィルタされた要素が描画される（done: trueのみ）
+    // Filtered elements are rendered with initial values (only done: true)
     expect(component.serverComponent).toContain('<li>a</li>')
     expect(component.serverComponent).toContain('<li>c</li>')
     expect(component.serverComponent).not.toContain('<li>b</li>')
   })
 })
 
-describe('リストレンダリング - イベント', () => {
-  it('map内のonClick', async () => {
+describe('List Rendering - Events', () => {
+  it('onClick in map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -106,19 +106,19 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // リスト要素にIDが付与される
-    expect(component.serverComponent).toContain('id="__l0"')
+    // List element gets an ID
+    expect(component.serverComponent).toContain('data-bf="l0"')
 
-    // data-index属性がテンプレートに含まれる
+    // data-index attribute is included in template
     expect(component.clientJs).toContain('data-index="${__index}"')
 
-    // イベントデリゲーションが設定される
-    expect(component.clientJs).toContain("__l0.addEventListener('click'")
+    // Event delegation is set up
+    expect(component.clientJs).toContain("l0.addEventListener('click'")
     expect(component.clientJs).toContain('const item = items()[__index]')
     expect(component.clientJs).toContain('remove(item.id)')
   })
 
-  it('map内の複数のonClick（異なる要素）', async () => {
+  it('multiple onClick in map (different elements)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -142,20 +142,20 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 各ボタンに異なるdata-event-idが付与される
+    // Each button gets a different data-event-id
     expect(component.clientJs).toContain('data-event-id="0"')
     expect(component.clientJs).toContain('data-event-id="1"')
 
-    // 各イベントハンドラが個別に設定される
+    // Each event handler is set up individually
     expect(component.clientJs).toContain('toggle(todo.id)')
     expect(component.clientJs).toContain('remove(todo.id)')
 
-    // イベントデリゲーションでevent-idをチェックする
+    // Event delegation checks event-id
     expect(component.clientJs).toContain("dataset.eventId === '0'")
     expect(component.clientJs).toContain("dataset.eventId === '1'")
   })
 
-  it('map内のonChange', async () => {
+  it('onChange in map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -170,12 +170,12 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // onchangeイベントデリゲーションが設定される
+    // onchange event delegation is set up
     expect(component.clientJs).toContain("addEventListener('change'")
     expect(component.clientJs).toContain('toggle(item.id)')
   })
 
-  it('map内の同一要素に複数イベント', async () => {
+  it('multiple events on same element in map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -196,15 +196,15 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 同一要素の全イベントが同じevent-idを共有
+    // All events on same element share the same event-id
     expect(component.clientJs).toContain('data-event-id="0"')
-    // 全イベントリスナーが同じevent-idをチェック
+    // All event listeners check the same event-id
     expect(component.clientJs).toMatch(/addEventListener\('input'[\s\S]*?data-event-id="0"/)
     expect(component.clientJs).toMatch(/addEventListener\('blur'[\s\S]*?data-event-id="0"/)
     expect(component.clientJs).toMatch(/addEventListener\('keydown'[\s\S]*?data-event-id="0"/)
   })
 
-  it('map内のblurイベント（キャプチャフェーズ）', async () => {
+  it('blur event in map (capture phase)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -219,12 +219,12 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // blurイベントはキャプチャフェーズを使用
+    // Blur event uses capture phase
     expect(component.clientJs).toContain("addEventListener('blur'")
     expect(component.clientJs).toContain('}, true)')
   })
 
-  it('map内のkeydownイベント（条件付き実行）', async () => {
+  it('keydown event in map (conditional execution)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -239,12 +239,12 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 条件付き実行: if (condition) { action }
+    // Conditional execution: if (condition) { action }
     expect(component.clientJs).toContain("if (e.key === 'Enter')")
     expect(component.clientJs).toContain("console.log('enter')")
   })
 
-  it('map内のkeydownイベント（複数条件 && 実行）', async () => {
+  it('keydown event in map (multiple conditions && execution)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -262,20 +262,20 @@ describe('リストレンダリング - イベント', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // 複数条件の場合も if 文で囲まれる
-    // 期待: if (e.key === 'Enter' && !e.isComposing) { handleFinish(...) }
+    // Multiple conditions are also wrapped in if statement
+    // Expected: if (e.key === 'Enter' && !e.isComposing) { handleFinish(...) }
     expect(component.clientJs).toContain("if (e.key === 'Enter' && !e.isComposing)")
     expect(component.clientJs).toContain("handleFinish(item.id, e.target.value)")
 
-    // アクションは if 文の中にあるべき
+    // Action should be inside the if statement
     const clientJs = component.clientJs
     const ifMatch = clientJs.match(/if \(e\.key === 'Enter' && !e\.isComposing\) \{[\s\S]*?handleFinish\(item\.id, e\.target\.value\)[\s\S]*?\}/)
     expect(ifMatch).not.toBeNull()
   })
 })
 
-describe('リストレンダリング - 動的属性', () => {
-  it('map内の動的class属性', async () => {
+describe('List Rendering - Dynamic Attributes', () => {
+  it('dynamic class attribute in map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -289,11 +289,11 @@ describe('リストレンダリング - 動的属性', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // テンプレートに動的class属性が含まれる
+    // Template contains dynamic class attribute
     expect(component.clientJs).toContain("class=\"${item.done ? 'done' : ''}\"")
   })
 
-  it('map内の動的style属性', async () => {
+  it('dynamic style attribute in map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -307,11 +307,11 @@ describe('リストレンダリング - 動的属性', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // テンプレートに動的style属性が含まれる
+    // Template contains dynamic style attribute
     expect(component.clientJs).toContain('style="${item.color}"')
   })
 
-  it('map内の動的checked属性', async () => {
+  it('dynamic checked attribute in map', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -325,13 +325,13 @@ describe('リストレンダリング - 動的属性', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // テンプレートに動的checked属性が含まれる
+    // Template contains dynamic checked attribute
     expect(component.clientJs).toContain('checked="${item.checked}"')
   })
 })
 
-describe('リストレンダリング - 条件分岐', () => {
-  it('map内の条件付きレンダリング（三項演算子）', async () => {
+describe('List Rendering - Conditionals', () => {
+  it('conditional rendering in map (ternary operator)', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -351,15 +351,15 @@ describe('リストレンダリング - 条件分岐', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // テンプレートに三項演算子が含まれる
+    // Template contains ternary operator
     expect(component.clientJs).toContain('${item.editing ?')
-    // input要素が含まれる
+    // Input element is included
     expect(component.clientJs).toContain('<input')
-    // span要素が含まれる
+    // Span element is included
     expect(component.clientJs).toContain('<span>')
   })
 
-  it('初期HTMLで三項演算子が評価される', async () => {
+  it('ternary operator is evaluated in initial HTML', async () => {
     const source = `
       import { createSignal } from 'barefoot'
       function Component() {
@@ -384,12 +384,12 @@ describe('リストレンダリング - 条件分岐', () => {
     `
     const result = await compile(source)
 
-    // 初期HTMLに三項演算子がそのまま含まれていない
+    // Initial HTML should not contain the ternary operator as-is
     expect(result.html).not.toContain('item.editing ?')
-    // 初期値に基づいて正しく評価されている
-    // id:1 は editing:false なので <span>
+    // Correctly evaluated based on initial values
+    // id:1 has editing:false, so <span>
     expect(result.html).toContain('<span>hello</span>')
-    // id:2 は editing:true なので <input>
+    // id:2 has editing:true, so <input>
     expect(result.html).toContain('<input')
     expect(result.html).toContain('value="world"')
   })

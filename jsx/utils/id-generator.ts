@@ -25,27 +25,27 @@ export class IdGenerator {
    * Generates ID for button/interactive elements
    */
   generateButtonId(): string {
-    return `__b${this.buttonIdCounter++}`
+    return `b${this.buttonIdCounter++}`
   }
 
   /**
    * Generates ID for dynamic content elements
    */
   generateDynamicId(): string {
-    return `__d${this.dynamicIdCounter++}`
+    return `d${this.dynamicIdCounter++}`
   }
 
   /**
    * Generates ID for list elements
    */
   generateListId(): string {
-    return `__l${this.listIdCounter++}`
+    return `l${this.listIdCounter++}`
   }
 
   /**
    * Generates ID for elements with dynamic attributes
    */
   generateAttrId(): string {
-    return `__a${this.attrIdCounter++}`
+    return `a${this.attrIdCounter++}`
   }
 }

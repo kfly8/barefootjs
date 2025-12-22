@@ -370,7 +370,7 @@ function compileJsxWithComponents(
       }
 
       if (id) {
-        return `<${tagName} id="${id}"${attrsStr}>${children}</${tagName}>`
+        return `<${tagName} data-bf="${id}"${attrsStr}>${children}</${tagName}>`
       }
       return `<${tagName}${attrsStr}>${children}</${tagName}>`
     }
@@ -407,12 +407,12 @@ function compileJsxWithComponents(
         id = id || idGenerator.generateButtonId()
         interactiveElements.push({ id, tagName, events })
         const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
-        return `<${tagName} id="${id}"${attrsStr} />`
+        return `<${tagName} data-bf="${id}"${attrsStr} />`
       }
 
       if (id) {
         const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
-        return `<${tagName} id="${id}"${attrsStr} />`
+        return `<${tagName} data-bf="${id}"${attrsStr} />`
       }
 
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
@@ -474,21 +474,21 @@ function compileJsxWithComponents(
   const attrElementIds = [...new Set(dynamicAttributes.map(da => da.id))]
 
   for (const el of dynamicElements) {
-    lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const el of listElements) {
-    lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const id of attrElementIds) {
-    lines.push(`const ${id} = document.getElementById('${id}')`)
+    lines.push(`const ${id} = document.querySelector('[data-bf="${id}"]')`)
   }
 
   for (const el of interactiveElements) {
     // 動的属性と重複していない場合のみ追加
     if (!attrElementIds.includes(el.id)) {
-      lines.push(`const ${el.id} = document.getElementById('${el.id}')`)
+      lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
     }
   }
 
@@ -889,7 +889,7 @@ function jsxChildToHtml(
     }
 
     if (id) {
-      return `<${tagName} id="${id}"${attrsStr}>${childrenResult.html}</${tagName}>`
+      return `<${tagName} data-bf="${id}"${attrsStr}>${childrenResult.html}</${tagName}>`
     }
     return `<${tagName}${attrsStr}>${childrenResult.html}</${tagName}>`
   }
@@ -917,12 +917,12 @@ function jsxChildToHtml(
       id = id || idGenerator.generateButtonId()
       interactiveElements.push({ id, tagName, events })
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
-      return `<${tagName} id="${id}"${attrsStr} />`
+      return `<${tagName} data-bf="${id}"${attrsStr} />`
     }
 
     if (id) {
       const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''
-      return `<${tagName} id="${id}"${attrsStr} />`
+      return `<${tagName} data-bf="${id}"${attrsStr} />`
     }
 
     const attrsStr = attrs.length > 0 ? ' ' + attrs.join(' ') : ''

@@ -36,10 +36,10 @@ describe('Deeply Nested JSX', () => {
     const component = result.components[0]
 
     // Dynamic element should have an ID
-    expect(component.serverComponent).toContain('id="__d0"')
+    expect(component.serverComponent).toContain('data-bf="d0"')
     // createEffect should be generated for the dynamic content
     expect(component.clientJs).toContain('createEffect')
-    expect(component.clientJs).toContain('__d0.textContent = count()')
+    expect(component.clientJs).toContain('d0.textContent = count()')
   })
 
   it('handles nested elements with multiple dynamic values', async () => {
@@ -66,14 +66,14 @@ describe('Deeply Nested JSX', () => {
     const component = result.components[0]
 
     // All three dynamic elements should have IDs
-    expect(component.serverComponent).toContain('id="__d0"')
-    expect(component.serverComponent).toContain('id="__d1"')
-    expect(component.serverComponent).toContain('id="__d2"')
+    expect(component.serverComponent).toContain('data-bf="d0"')
+    expect(component.serverComponent).toContain('data-bf="d1"')
+    expect(component.serverComponent).toContain('data-bf="d2"')
 
     // Three createEffect calls
-    expect(component.clientJs).toContain('__d0.textContent = a()')
-    expect(component.clientJs).toContain('__d1.textContent = b()')
-    expect(component.clientJs).toContain('__d2.textContent = c()')
+    expect(component.clientJs).toContain('d0.textContent = a()')
+    expect(component.clientJs).toContain('d1.textContent = b()')
+    expect(component.clientJs).toContain('d2.textContent = c()')
   })
 
   it('handles nested elements with events at different levels', async () => {
@@ -98,14 +98,14 @@ describe('Deeply Nested JSX', () => {
     const component = result.components[0]
 
     // All three buttons should have IDs
-    expect(component.serverComponent).toContain('id="__b0"')
-    expect(component.serverComponent).toContain('id="__b1"')
-    expect(component.serverComponent).toContain('id="__b2"')
+    expect(component.serverComponent).toContain('data-bf="b0"')
+    expect(component.serverComponent).toContain('data-bf="b1"')
+    expect(component.serverComponent).toContain('data-bf="b2"')
 
     // Event handlers should be set
-    expect(component.clientJs).toContain('__b0.onclick')
-    expect(component.clientJs).toContain('__b1.onclick')
-    expect(component.clientJs).toContain('__b2.onclick')
+    expect(component.clientJs).toContain('b0.onclick')
+    expect(component.clientJs).toContain('b1.onclick')
+    expect(component.clientJs).toContain('b2.onclick')
   })
 })
 
@@ -134,7 +134,7 @@ describe('Complex Expressions', () => {
     const component = result.components[0]
 
     // List should have ID
-    expect(component.serverComponent).toContain('id="__l0"')
+    expect(component.serverComponent).toContain('data-bf="l0"')
     // Nested ternary should be in template
     expect(component.clientJs).toContain("item.type === 'a' ? 'first' : item.type === 'b' ? 'second' : 'third'")
   })
