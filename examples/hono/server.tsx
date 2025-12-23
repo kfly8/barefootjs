@@ -7,11 +7,14 @@
 
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
+import { Suspense } from 'hono/jsx/streaming'
 import { renderer } from './renderer'
 import { Counter } from './dist/Counter'
 import { Toggle } from './dist/Toggle'
 import { TodoApp } from './dist/TodoApp'
 import { Dashboard } from './dist/Dashboard'
+import { AsyncUserList } from './AsyncUserList'
+import { AsyncCounterWrapper } from './AsyncCounterWrapper'
 
 const app = new Hono()
 
@@ -44,6 +47,8 @@ app.get('/', (c) => {
           <li><a href="/dashboard">Dashboard (All widgets)</a></li>
           <li><a href="/dashboard/counter-only">Dashboard (Counter only)</a></li>
           <li><a href="/dashboard/message-only">Dashboard (Message only)</a></li>
+          <li><a href="/async">Async User List (Suspense)</a></li>
+          <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
         </ul>
       </nav>
     </div>
@@ -104,6 +109,32 @@ app.get('/dashboard/message-only', (c) => {
   return c.render(
     <div>
       <Dashboard showCounter={false} showMessage={true} message="Custom message!" />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Async User List with Suspense (streaming)
+app.get('/async', (c) => {
+  return c.render(
+    <div>
+      <h1>Async Data Fetching with Suspense</h1>
+      <Suspense fallback={<p className="loading">Loading users...</p>}>
+        <AsyncUserList />
+      </Suspense>
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Async Counter with Suspense + BarefootJS (streaming + interactivity)
+app.get('/async-counter', (c) => {
+  return c.render(
+    <div>
+      <h1>Async Counter with Suspense + BarefootJS</h1>
+      <Suspense fallback={<p className="loading">Loading counter...</p>}>
+        <AsyncCounterWrapper />
+      </Suspense>
       <p><a href="/">← Back</a></p>
     </div>
   )

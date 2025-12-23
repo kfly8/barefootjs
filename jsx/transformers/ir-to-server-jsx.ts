@@ -3,11 +3,9 @@
  *
  * Generates server-side JSX components from Intermediate Representation (IR).
  * Unlike ir-to-html which evaluates expressions, this preserves them as JSX.
- *
- * Uses Slot Registry pattern for reliable hydration.
  */
 
-import type { IRNode, IRElement, SignalDeclaration, Slot, SlotRegistry } from '../types'
+import type { IRNode, IRElement, SignalDeclaration } from '../types'
 
 /**
  * Context for server JSX generation
@@ -15,8 +13,6 @@ import type { IRNode, IRElement, SignalDeclaration, Slot, SlotRegistry } from '.
 export type ServerJsxContext = {
   componentName: string
   signals: SignalDeclaration[]
-  slots: Slot[]
-  handlerIndex: number
 }
 
 /**
@@ -30,53 +26,22 @@ function htmlToJsx(html: string): string {
 }
 
 /**
- * Generates JSX with slot registry from an IR node
- *
- * @param node - IR node to convert
- * @param componentName - Name of the component (for data-bf-scope)
- * @param signals - Signal declarations for prop mapping
- * @returns { jsx, registry } - JSX string and slot registry
- */
-export function irToServerJsxWithRegistry(
-  node: IRNode,
-  componentName: string,
-  signals: SignalDeclaration[]
-): { jsx: string; registry: SlotRegistry } {
-  const ctx: ServerJsxContext = {
-    componentName,
-    signals,
-    slots: [],
-    handlerIndex: 0,
-  }
-
-  const jsx = irToServerJsxInternal(node, ctx, true)
-
-  return {
-    jsx,
-    registry: { slots: ctx.slots },
-  }
-}
-
-/**
  * Generates JSX from an IR node (preserves expressions)
  *
  * Unlike irToHtml which evaluates expressions with initial values,
  * this function preserves expressions as JSX `{...}` syntax.
  *
  * @param node - IR node to convert
+ * @param componentName - Name of the component (for data-bf-scope)
  * @param signals - Signal declarations for prop mapping
  * @returns JSX string
- * @deprecated Use irToServerJsxWithRegistry for new code
  */
-export function irToServerJsx(node: IRNode, signals: SignalDeclaration[]): string {
-  // Legacy wrapper - creates context without collecting slots
+export function irToServerJsx(node: IRNode, componentName: string, signals: SignalDeclaration[]): string {
   const ctx: ServerJsxContext = {
-    componentName: '',
+    componentName,
     signals,
-    slots: [],
-    handlerIndex: 0,
   }
-  return irToServerJsxInternal(node, ctx, false)
+  return irToServerJsxInternal(node, ctx, true)
 }
 
 /**
@@ -137,8 +102,6 @@ function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[]): s
   const ctx: ServerJsxContext = {
     componentName: '',
     signals,
-    slots: [],
-    handlerIndex: 0,
   }
   return nodeToJsxExpressionValueInternal(node, ctx)
 }
@@ -189,8 +152,6 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string
   const ctx: ServerJsxContext = {
     componentName: '',
     signals,
-    slots: [],
-    handlerIndex: 0,
   }
   return elementToServerJsxInternal(el, ctx, false)
 }
@@ -212,46 +173,6 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
   // Add data-bf attribute if present (for DOM references)
   if (id) {
     attrParts.push(`data-bf="${id}"`)
-
-    // Collect slot information
-    if (dynamicContent) {
-      ctx.slots.push({
-        id: parseInt(id, 10),
-        type: 'content',
-        signal: dynamicContent.expression,
-      })
-    }
-
-    if (events.length > 0) {
-      for (const event of events) {
-        ctx.slots.push({
-          id: parseInt(id, 10),
-          type: 'event',
-          event: event.eventName,
-          handler: ctx.handlerIndex++,
-        })
-      }
-    }
-
-    if (dynamicAttrs.length > 0) {
-      for (const attr of dynamicAttrs) {
-        ctx.slots.push({
-          id: parseInt(id, 10),
-          type: 'attr',
-          attr: attr.name,
-          expr: attr.expression,
-        })
-      }
-    }
-
-    if (listInfo) {
-      ctx.slots.push({
-        id: parseInt(id, 10),
-        type: 'list',
-        array: listInfo.arrayExpression,
-        itemEvents: listInfo.itemEvents,
-      })
-    }
   }
 
   // Static attributes (convert class to className)

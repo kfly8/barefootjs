@@ -39,7 +39,6 @@ import {
   parseConditionalHandler,
   generateAttributeUpdate,
   irToServerJsx,
-  irToServerJsxWithRegistry,
   collectClientJsInfo,
   collectAllChildComponentNames,
   findAndConvertJsxReturn,
@@ -222,8 +221,7 @@ ${bodyCode}
     // Generate server JSX component (only if adapter is provided)
     let serverJsx = ''
     if (options?.serverAdapter && result.ir) {
-      // Use registry-based JSX generation
-      const { jsx, registry } = irToServerJsxWithRegistry(result.ir, name, result.signals)
+      const jsx = irToServerJsx(result.ir, name, result.signals)
       // Collect all child component names (including those in lists) for server imports
       const childComponents = collectAllChildComponentNames(result.ir)
       serverJsx = options.serverAdapter.generateServerComponent({
@@ -233,7 +231,6 @@ ${bodyCode}
         ir: result.ir,
         signals: result.signals,
         childComponents,
-        registry,
       })
     }
 

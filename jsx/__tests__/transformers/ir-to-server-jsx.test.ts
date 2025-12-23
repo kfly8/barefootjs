@@ -14,12 +14,12 @@ describe('irToServerJsx', () => {
 
   it('converts text node', () => {
     const node: IRNode = { type: 'text', content: 'Hello World' }
-    expect(irToServerJsx(node, [])).toBe('Hello World')
+    expect(irToServerJsx(node, 'Test', [])).toBe('Hello World')
   })
 
   it('converts expression node preserving expression', () => {
     const node: IRNode = { type: 'expression', expression: 'count()', isDynamic: true }
-    const result = irToServerJsx(node, signals)
+    const result = irToServerJsx(node, 'Test', signals)
     expect(result).toBe('{0}')  // count() replaced with initial value
   })
 
@@ -35,8 +35,8 @@ describe('irToServerJsx', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, [])
-    expect(result).toBe('<div className="container">Hello</div>')
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toBe('<div data-bf-scope="Test" className="container">Hello</div>')
   })
 
   it('converts element with dynamic attributes', () => {
@@ -51,7 +51,7 @@ describe('irToServerJsx', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, signals)
+    const result = irToServerJsx(node, 'Test', signals)
     expect(result).toContain('data-bf="d0"')
     expect(result).toContain('className={0 > 0 ? "active" : ""}')
   })
@@ -84,7 +84,7 @@ describe('irToServerJsx', () => {
       },
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, signals)
+    const result = irToServerJsx(node, 'Test', signals)
     expect(result).toContain('<ul')
     expect(result).toContain('className="todo-list"')
     // With itemIR, the list generates proper JSX instead of template string
@@ -98,7 +98,7 @@ describe('irToServerJsx', () => {
       whenTrue: { type: 'text', content: 'Positive' },
       whenFalse: { type: 'text', content: 'Zero or Negative' },
     }
-    const result = irToServerJsx(node, signals)
+    const result = irToServerJsx(node, 'Test', signals)
     // Text inside ternary must be quoted strings for valid JSX
     expect(result).toBe('{0 > 0 ? "Positive" : "Zero or Negative"}')
   })
@@ -113,7 +113,7 @@ describe('irToServerJsx', () => {
     const isOnSignal: SignalDeclaration[] = [
       { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
     ]
-    const result = irToServerJsx(node, isOnSignal)
+    const result = irToServerJsx(node, 'Test', isOnSignal)
     // Expression inside ternary should NOT have extra curly braces
     // Valid: {false ? 'ON' : 'OFF'}
     // Invalid: {false ? {'ON'} : {'OFF'}}
@@ -150,7 +150,7 @@ describe('irToServerJsx', () => {
     const isOnSignal: SignalDeclaration[] = [
       { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
     ]
-    const result = irToServerJsx(node, isOnSignal)
+    const result = irToServerJsx(node, 'Test', isOnSignal)
     // Element branches are valid JSX as-is
     expect(result).toBe('{false ? <span className="on">ON</span> : <span className="off">OFF</span>}')
   })
@@ -167,8 +167,8 @@ describe('irToServerJsx', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, [])
-    expect(result).toBe('<input data-bf="i0" type="text" />')
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toBe('<input data-bf-scope="Test" data-bf="i0" type="text" />')
   })
 })
 
@@ -198,7 +198,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       dynamicContent: null,
     }
 
-    const jsx = irToServerJsx(ir, [])
+    const jsx = irToServerJsx(ir, 'Counter', [])
     const result = honoServerAdapter.generateServerComponent({
       name: 'Counter',
       props: [],
@@ -210,7 +210,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
 
     expect(result).toContain('import { useRequestContext }')
     expect(result).toContain('function Counter()')
-    expect(result).toContain("c.get('usedComponents')")
+    expect(result).toContain("c.get('bfOutputScripts')")
     expect(result).toContain('className="counter"')
   })
 
@@ -249,7 +249,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       dynamicContent: null,
     }
 
-    const jsx = irToServerJsx(ir, signals)
+    const jsx = irToServerJsx(ir, 'Counter', signals)
     const result = honoServerAdapter.generateServerComponent({
       name: 'TodoApp',
       props: ['initialTodos'],

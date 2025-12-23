@@ -2,7 +2,7 @@
  * BarefootJS JSX Compiler - Transformers
  */
 
-export { irToServerJsx, irToServerJsxWithRegistry, type ServerJsxContext } from './ir-to-server-jsx'
+export { irToServerJsx, type ServerJsxContext } from './ir-to-server-jsx'
 export {
   generateClientJs,
   collectClientJsInfo,

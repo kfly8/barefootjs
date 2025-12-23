@@ -2,17 +2,17 @@
  * Hono Server Component Adapter
  *
  * Generates server components compatible with Hono's JSX runtime.
- * Uses useRequestContext to track which components are used for client-side hydration.
- * Outputs slot registry for reliable hydration with Slot Registry pattern.
+ * Each component outputs its own script tags for self-contained hydration.
+ * This enables automatic script inclusion even inside Suspense boundaries.
  */
 
-import type { ServerComponentAdapter, SlotRegistry } from '../types'
+import type { ServerComponentAdapter } from '../types'
 
 /**
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents, registry }) => {
+  generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents }) => {
     const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
     const propsType = props.length > 0
       ? `: { ${props.map(p => `${p}?: unknown`).join('; ')} }`
@@ -25,13 +25,25 @@ export const honoServerAdapter: ServerComponentAdapter = {
 
     const allImports = [
       `import { useRequestContext } from 'hono/jsx-renderer'`,
+      `import manifest from './manifest.json'`,
       childImports,
     ].filter(Boolean).join('\n')
 
-    // Registry script (embedded in component)
-    const registryScript = registry && registry.slots.length > 0
-      ? `<script type="application/json" data-bf-registry dangerouslySetInnerHTML={{ __html: ${JSON.stringify(JSON.stringify(registry))} }} />`
-      : ''
+    // Script output logic (self-contained)
+    const scriptLogic = `
+  // Track which scripts have been output to avoid duplicates
+  const __outputScripts = c.get('bfOutputScripts') || new Set<string>()
+  const __needsBarefoot = !__outputScripts.has('__barefoot__')
+  const __needsThis = !__outputScripts.has('${name}')
+  if (__needsBarefoot) __outputScripts.add('__barefoot__')
+  if (__needsThis) __outputScripts.add('${name}')
+  c.set('bfOutputScripts', __outputScripts)
+
+  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
+  const __thisSrc = (manifest as any)['${name}']?.clientJs`
+
+    const scriptTags = `{__needsBarefoot && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
+      {__needsThis && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
 
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
@@ -39,10 +51,7 @@ export const honoServerAdapter: ServerComponentAdapter = {
 
 export function ${name}(${propsParam}${propsType}) {
   const c = useRequestContext()
-  const used = c.get('usedComponents') || []
-  if (!used.includes('${name}')) {
-    c.set('usedComponents', [...used, '${name}'])
-  }
+${scriptLogic}
 
   // Check if this is the root BarefootJS component (first to render)
   // Only root component outputs data-bf-props to avoid duplicate hydration data
@@ -58,6 +67,7 @@ export function ${name}(${propsParam}${propsType}) {
 
   return (
     <>
+      ${scriptTags}
       {__isRoot && __hasHydrateProps && (
         <script
           type="application/json"
@@ -66,7 +76,6 @@ export function ${name}(${propsParam}${propsType}) {
         />
       )}
       ${jsx}
-      ${registryScript}
     </>
   )
 }
@@ -77,21 +86,12 @@ export function ${name}(${propsParam}${propsType}) {
 
 export function ${name}() {
   const c = useRequestContext()
-  const used = c.get('usedComponents') || []
-  if (!used.includes('${name}')) {
-    c.set('usedComponents', [...used, '${name}'])
-  }
-
-  // Check if this is the root BarefootJS component
-  const __isRoot = !c.get('bfRootComponent')
-  if (__isRoot) {
-    c.set('bfRootComponent', '${name}')
-  }
+${scriptLogic}
 
   return (
     <>
+      ${scriptTags}
       ${jsx}
-      ${registryScript}
     </>
   )
 }

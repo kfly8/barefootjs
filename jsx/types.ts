@@ -109,8 +109,6 @@ export type ServerComponentAdapter = {
     signals: SignalDeclaration[]
     /** Child components used by this component */
     childComponents: string[]
-    /** Slot registry for hydration */
-    registry?: SlotRegistry
   }) => string
 }
 
@@ -210,55 +208,6 @@ export type IRListInfo = {
   itemTemplate: string
   /** IR nodes for list item (used for server JSX generation) */
   itemIR: IRNode | null
-  itemEvents: Array<{
-    eventId: number
-    eventName: string
-    handler: string
-    paramName: string
-  }>
-}
-
-/**
- * Slot Registry Types
- *
- * Registry that maps slot IDs to their behaviors.
- * Used for reliable hydration regardless of conditional rendering.
- */
-
-export type SlotRegistry = {
-  slots: Slot[]
-}
-
-export type Slot =
-  | SlotContent
-  | SlotEvent
-  | SlotAttr
-  | SlotList
-
-export type SlotContent = {
-  id: number
-  type: 'content'
-  signal: string
-}
-
-export type SlotEvent = {
-  id: number
-  type: 'event'
-  event: string
-  handler: number
-}
-
-export type SlotAttr = {
-  id: number
-  type: 'attr'
-  attr: string
-  expr: string
-}
-
-export type SlotList = {
-  id: number
-  type: 'list'
-  array: string
   itemEvents: Array<{
     eventId: number
     eventName: string

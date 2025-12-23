@@ -32,7 +32,7 @@ describe('honoServerAdapter', () => {
 
       expect(result).toContain('export function Hello()')
       expect(result).toContain('useRequestContext')
-      expect(result).toContain("usedComponents")
+      expect(result).toContain("bfOutputScripts")
     })
 
     it('generates component with props and hydration script', () => {
