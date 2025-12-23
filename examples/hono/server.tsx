@@ -11,6 +11,7 @@ import { renderer } from './renderer'
 import { Counter } from './dist/Counter'
 import { Toggle } from './dist/Toggle'
 import { TodoApp } from './dist/TodoApp'
+import { Dashboard } from './dist/Dashboard'
 
 const app = new Hono()
 
@@ -40,6 +41,9 @@ app.get('/', (c) => {
           <li><a href="/counter">Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
           <li><a href="/todos">Todo (SSR + API)</a></li>
+          <li><a href="/dashboard">Dashboard (All widgets)</a></li>
+          <li><a href="/dashboard/counter-only">Dashboard (Counter only)</a></li>
+          <li><a href="/dashboard/message-only">Dashboard (Message only)</a></li>
         </ul>
       </nav>
     </div>
@@ -70,6 +74,36 @@ app.get('/todos', (c) => {
   return c.render(
     <div>
       <TodoApp initialTodos={todos} />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Dashboard with feature flags - all widgets
+app.get('/dashboard', (c) => {
+  return c.render(
+    <div>
+      <Dashboard showCounter={true} showMessage={true} initialCount={10} message="Hello from server!" />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Dashboard - counter widget only
+app.get('/dashboard/counter-only', (c) => {
+  return c.render(
+    <div>
+      <Dashboard showCounter={true} showMessage={false} initialCount={5} />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Dashboard - message widget only
+app.get('/dashboard/message-only', (c) => {
+  return c.render(
+    <div>
+      <Dashboard showCounter={false} showMessage={true} message="Custom message!" />
       <p><a href="/">← Back</a></p>
     </div>
   )

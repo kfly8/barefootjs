@@ -183,6 +183,34 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
     return conditionalToIR(expr, ctx)
   }
 
+  // Detect logical AND with JSX (e.g., {flag && <Component />})
+  if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+    const jsxInRight = findJsxInExpression(expr.right)
+    if (jsxInRight) {
+      const condition = expr.left.getText(ctx.sourceFile)
+      return {
+        type: 'conditional',
+        condition,
+        whenTrue: jsxToIR(jsxInRight, ctx)!,
+        whenFalse: { type: 'expression', expression: 'null', isDynamic: false },
+      }
+    }
+  }
+
+  // Detect logical OR with JSX (e.g., {loading || <Component />})
+  if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
+    const jsxInRight = findJsxInExpression(expr.right)
+    if (jsxInRight) {
+      const condition = expr.left.getText(ctx.sourceFile)
+      return {
+        type: 'conditional',
+        condition: `!(${condition})`,
+        whenTrue: jsxToIR(jsxInRight, ctx)!,
+        whenFalse: { type: 'expression', expression: 'null', isDynamic: false },
+      }
+    }
+  }
+
   // Regular expression
   const exprText = expr.getText(ctx.sourceFile)
   const isDynamic = containsSignalCall(exprText, ctx.signals)
@@ -192,6 +220,19 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
     expression: exprText,
     isDynamic,
   }
+}
+
+/**
+ * Finds JSX element in expression (unwrapping parentheses)
+ */
+function findJsxInExpression(node: ts.Expression): ts.JsxElement | ts.JsxSelfClosingElement | null {
+  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+    return node
+  }
+  if (ts.isParenthesizedExpression(node)) {
+    return findJsxInExpression(node.expression)
+  }
+  return null
 }
 
 /**

@@ -16,7 +16,7 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DOM_DIR = resolve(ROOT_DIR, '../../dom')
 
 // Components to compile
-const COMPONENTS = ['Counter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm']
+const COMPONENTS = ['Counter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm', 'Dashboard']
 
 await mkdir(DIST_DIR, { recursive: true })
 
