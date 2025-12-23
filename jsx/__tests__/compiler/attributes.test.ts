@@ -47,8 +47,8 @@ describe('HTML Attributes - Dynamic class', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // className is updated in client JS
-    expect(component.clientJs).toContain("a0.className = isActive() ? 'active' : ''")
+    // className is updated in client JS (with existence check)
+    expect(component.clientJs).toContain("_0.className = isActive() ? 'active' : ''")
   })
 })
 
@@ -64,8 +64,8 @@ describe('HTML Attributes - Dynamic style', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Style is updated in client JS
-    expect(component.clientJs).toContain("Object.assign(a0.style, { color: isRed() ? 'red' : 'blue' })")
+    // Style is updated in client JS (with existence check)
+    expect(component.clientJs).toContain("Object.assign(_0.style, { color: isRed() ? 'red' : 'blue' })")
   })
 })
 
@@ -81,8 +81,8 @@ describe('HTML Attributes - Boolean attributes', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Disabled is updated in client JS
-    expect(component.clientJs).toContain('a0.disabled = isLoading()')
+    // Disabled is updated in client JS (with existence check)
+    expect(component.clientJs).toContain('_0.disabled = isLoading()')
   })
 })
 
@@ -98,7 +98,7 @@ describe('HTML Attributes - Form related', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Value is updated in client JS
-    expect(component.clientJs).toContain('a0.value = text()')
+    // Value is updated in client JS (with existence check)
+    expect(component.clientJs).toContain('_0.value = text()')
   })
 })

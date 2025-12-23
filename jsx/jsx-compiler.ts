@@ -39,6 +39,7 @@ import {
   parseConditionalHandler,
   generateAttributeUpdate,
   irToServerJsx,
+  irToServerJsxWithRegistry,
   collectClientJsInfo,
   findAndConvertJsxReturn,
   type JsxToIRContext,
@@ -222,7 +223,8 @@ ${bodyCode}
     // Generate server JSX component (only if adapter is provided)
     let serverJsx = ''
     if (options?.serverAdapter && result.ir) {
-      const jsx = irToServerJsx(result.ir, result.signals)
+      // Use registry-based JSX generation
+      const { jsx, registry } = irToServerJsxWithRegistry(result.ir, name, result.signals)
       // Extract unique child component names
       const childComponents = [...new Set(childInits.map(c => c.name))]
       serverJsx = options.serverAdapter.generateServerComponent({
@@ -232,6 +234,7 @@ ${bodyCode}
         ir: result.ir,
         signals: result.signals,
         childComponents,
+        registry,
       })
     }
 
@@ -331,7 +334,35 @@ function compileJsxWithComponents(
 }
 
 /**
+ * Generates update code for dynamic attributes (with custom variable name)
+ */
+function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): string {
+  const { attrName, expression } = da
+
+  if (attrName === 'class' || attrName === 'className') {
+    return `${varName}.className = ${expression}`
+  }
+
+  if (attrName === 'style') {
+    return `Object.assign(${varName}.style, ${expression})`
+  }
+
+  if (['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)) {
+    return `${varName}.${attrName} = ${expression}`
+  }
+
+  if (attrName === 'value') {
+    return `${varName}.value = ${expression}`
+  }
+
+  return `${varName}.setAttribute('${attrName}', ${expression})`
+}
+
+/**
  * Generate client JS with createEffect (reactive updates)
+ *
+ * Uses Slot Registry pattern: each element is checked for existence before processing.
+ * This ensures reliable hydration even when conditional rendering removes elements.
  */
 function generateClientJsWithCreateEffect(
   interactiveElements: InteractiveElement[],
@@ -346,23 +377,26 @@ function generateClientJsWithCreateEffect(
   // Collect element IDs with dynamic attributes (remove duplicates)
   const attrElementIds = [...new Set(dynamicAttributes.map(da => da.id))]
 
-  // Get DOM elements
+  // Helper to make valid JS variable name from slot ID
+  const varName = (id: string) => `_${id}`
+
+  // Get DOM elements (with existence checks)
   for (const el of dynamicElements) {
-    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
+    lines.push(`const ${varName(el.id)} = document.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const el of listElements) {
-    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
+    lines.push(`const ${varName(el.id)} = document.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const id of attrElementIds) {
-    lines.push(`const ${id} = document.querySelector('[data-bf="${id}"]')`)
+    lines.push(`const ${varName(id)} = document.querySelector('[data-bf="${id}"]')`)
   }
 
   for (const el of interactiveElements) {
     // Only add if not already added for dynamic attributes
     if (!attrElementIds.includes(el.id)) {
-      lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
+      lines.push(`const ${varName(el.id)} = document.querySelector('[data-bf="${el.id}"]')`)
     }
   }
 
@@ -378,78 +412,93 @@ function generateClientJsWithCreateEffect(
     lines.push('')
   }
 
-  // createEffect for dynamic elements
+  // createEffect for dynamic elements (with existence check)
   for (const el of dynamicElements) {
-    lines.push(`createEffect(() => {`)
-    lines.push(`  ${el.id}.textContent = ${el.fullContent}`)
-    lines.push(`})`)
+    const v = varName(el.id)
+    lines.push(`if (${v}) {`)
+    lines.push(`  createEffect(() => {`)
+    lines.push(`    ${v}.textContent = ${el.fullContent}`)
+    lines.push(`  })`)
+    lines.push(`}`)
   }
 
-  // createEffect for list elements
+  // createEffect for list elements (with existence check)
   for (const el of listElements) {
-    lines.push(`createEffect(() => {`)
-    lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
-    lines.push(`})`)
+    const v = varName(el.id)
+    lines.push(`if (${v}) {`)
+    lines.push(`  createEffect(() => {`)
+    lines.push(`    ${v}.innerHTML = ${el.mapExpression}`)
+    lines.push(`  })`)
+    lines.push(`}`)
   }
 
-  // createEffect for dynamic attributes
+  // createEffect for dynamic attributes (with existence check)
   for (const da of dynamicAttributes) {
-    lines.push(`createEffect(() => {`)
-    lines.push(`  ${generateAttributeUpdate(da)}`)
-    lines.push(`})`)
+    const v = varName(da.id)
+    lines.push(`if (${v}) {`)
+    lines.push(`  createEffect(() => {`)
+    lines.push(`    ${generateAttributeUpdateWithVar(da, v)}`)
+    lines.push(`  })`)
+    lines.push(`}`)
   }
 
   if (hasDynamicContent) {
     lines.push('')
   }
 
-  // Event delegation for list elements
+  // Event delegation for list elements (with existence check)
   for (const el of listElements) {
     if (el.itemEvents.length > 0) {
+      const v = varName(el.id)
       for (const event of el.itemEvents) {
         const handlerBody = extractArrowBody(event.handler)
         const conditionalHandler = parseConditionalHandler(handlerBody)
         const useCapture = needsCapturePhase(event.eventName)
         const captureArg = useCapture ? ', true' : ''
 
-        lines.push(`${el.id}.addEventListener('${event.eventName}', (e) => {`)
-        lines.push(`  const target = e.target.closest('[data-event-id="${event.eventId}"]')`)
-        lines.push(`  if (target && target.dataset.eventId === '${event.eventId}') {`)
-        lines.push(`    const __index = parseInt(target.dataset.index, 10)`)
-        lines.push(`    const ${event.paramName} = ${el.arrayExpression}[__index]`)
+        lines.push(`if (${v}) {`)
+        lines.push(`  ${v}.addEventListener('${event.eventName}', (e) => {`)
+        lines.push(`    const target = e.target.closest('[data-event-id="${event.eventId}"]')`)
+        lines.push(`    if (target && target.dataset.eventId === '${event.eventId}') {`)
+        lines.push(`      const __index = parseInt(target.dataset.index, 10)`)
+        lines.push(`      const ${event.paramName} = ${el.arrayExpression}[__index]`)
 
         if (conditionalHandler) {
           // Conditional handler: execute action only when condition is met
-          lines.push(`    if (${conditionalHandler.condition}) {`)
-          lines.push(`      ${conditionalHandler.action}`)
-          lines.push(`    }`)
+          lines.push(`      if (${conditionalHandler.condition}) {`)
+          lines.push(`        ${conditionalHandler.action}`)
+          lines.push(`      }`)
         } else {
-          lines.push(`    ${handlerBody}`)
+          lines.push(`      ${handlerBody}`)
         }
 
-        lines.push(`  }`)
-        lines.push(`}${captureArg})`)
+        lines.push(`    }`)
+        lines.push(`  }${captureArg})`)
+        lines.push(`}`)
       }
     }
   }
 
-  // Event handlers for interactive elements
+  // Event handlers for interactive elements (with existence check)
   for (const el of interactiveElements) {
+    const v = varName(el.id)
     for (const event of el.events) {
       const handlerBody = extractArrowBody(event.handler)
       const conditionalHandler = parseConditionalHandler(handlerBody)
 
+      lines.push(`if (${v}) {`)
       if (conditionalHandler) {
         // Conditional handler: convert to if statement to prevent return false
         const params = extractArrowParams(event.handler)
-        lines.push(`${el.id}.on${event.eventName} = ${params} => {`)
-        lines.push(`  if (${conditionalHandler.condition}) {`)
-        lines.push(`    ${conditionalHandler.action}`)
+        lines.push(`  ${v}.on${event.eventName} = ${params} => {`)
+        lines.push(`    if (${conditionalHandler.condition}) {`)
+        lines.push(`      ${conditionalHandler.action}`)
+        lines.push(`    }`)
         lines.push(`  }`)
-        lines.push(`}`)
       } else {
-        lines.push(`${el.id}.on${event.eventName} = ${event.handler}`)
+        lines.push(`  ${v}.on${event.eventName} = ${event.handler}`)
       }
+      lines.push(`}`)
     }
   }
 

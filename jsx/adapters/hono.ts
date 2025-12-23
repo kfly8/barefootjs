@@ -3,15 +3,16 @@
  *
  * Generates server components compatible with Hono's JSX runtime.
  * Uses useRequestContext to track which components are used for client-side hydration.
+ * Outputs slot registry for reliable hydration with Slot Registry pattern.
  */
 
-import type { ServerComponentAdapter } from '../types'
+import type { ServerComponentAdapter, SlotRegistry } from '../types'
 
 /**
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents }) => {
+  generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents, registry }) => {
     const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
     const propsType = props.length > 0
       ? `: { ${props.map(p => `${p}?: unknown`).join('; ')} }`
@@ -26,6 +27,11 @@ export const honoServerAdapter: ServerComponentAdapter = {
       `import { useRequestContext } from 'hono/jsx-renderer'`,
       childImports,
     ].filter(Boolean).join('\n')
+
+    // Registry script (embedded in component)
+    const registryScript = registry && registry.slots.length > 0
+      ? `<script type="application/json" data-bf-registry dangerouslySetInnerHTML={{ __html: ${JSON.stringify(JSON.stringify(registry))} }} />`
+      : ''
 
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
@@ -60,6 +66,7 @@ export function ${name}(${propsParam}${propsType}) {
         />
       )}
       ${jsx}
+      ${registryScript}
     </>
   )
 }
@@ -82,7 +89,10 @@ export function ${name}() {
   }
 
   return (
-    ${jsx}
+    <>
+      ${jsx}
+      ${registryScript}
+    </>
   )
 }
 `

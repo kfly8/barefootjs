@@ -2,6 +2,7 @@
  * BarefootJS JSX Compiler - IR to Client JS Transformer
  *
  * Generates client-side JavaScript from Intermediate Representation (IR).
+ * Uses Slot Registry pattern for reliable hydration with existence checks.
  */
 
 import type {

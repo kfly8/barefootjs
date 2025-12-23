@@ -72,9 +72,9 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
   // Process children
   const { children, listInfo, hasDynamicContent, dynamicContent } = processChildren(node.children, ctx)
 
-  // Determine ID
+  // Assign slot ID if element needs client-side handling
   const needsId = events.length > 0 || dynamicAttrs.length > 0 || listInfo || hasDynamicContent
-  const id = needsId ? determineId(events, dynamicAttrs, listInfo, hasDynamicContent, ctx) : null
+  const id = needsId ? generateSlotId(ctx) : null
 
   return {
     type: 'element',
@@ -103,7 +103,7 @@ function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext)
   const { staticAttrs, dynamicAttrs, events } = processAttributes(node.attributes, ctx)
 
   const needsId = events.length > 0 || dynamicAttrs.length > 0
-  const id = needsId ? determineId(events, dynamicAttrs, null, false, ctx) : null
+  const id = needsId ? generateSlotId(ctx) : null
 
   return {
     type: 'element',
@@ -406,28 +406,13 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
 }
 
 /**
- * Determines ID
+ * Generates a slot ID for dynamic elements
+ *
+ * All dynamic elements get sequential IDs (0, 1, 2...).
+ * The type of element (event, attr, list, content) is tracked in the registry.
  */
-function determineId(
-  events: IRElement['events'],
-  dynamicAttrs: IRElement['dynamicAttrs'],
-  listInfo: IRListInfo | null,
-  hasDynamicContent: boolean,
-  ctx: JsxToIRContext
-): string {
-  if (dynamicAttrs.length > 0) {
-    return ctx.idGenerator.generateAttrId()
-  }
-  if (events.length > 0) {
-    return ctx.idGenerator.generateButtonId()
-  }
-  if (listInfo) {
-    return ctx.idGenerator.generateListId()
-  }
-  if (hasDynamicContent) {
-    return ctx.idGenerator.generateDynamicId()
-  }
-  return ctx.idGenerator.generateButtonId()
+function generateSlotId(ctx: JsxToIRContext): string {
+  return ctx.idGenerator.generateSlotId()
 }
 
 /**

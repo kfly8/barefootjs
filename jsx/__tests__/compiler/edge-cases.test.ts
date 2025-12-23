@@ -37,7 +37,7 @@ describe('Deeply Nested JSX', () => {
 
     // createEffect should be generated for the dynamic content
     expect(component.clientJs).toContain('createEffect')
-    expect(component.clientJs).toContain('d0.textContent = count()')
+    expect(component.clientJs).toContain('_0.textContent = count()')
   })
 
   it('handles nested elements with multiple dynamic values', async () => {
@@ -63,10 +63,10 @@ describe('Deeply Nested JSX', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Three createEffect calls
-    expect(component.clientJs).toContain('d0.textContent = a()')
-    expect(component.clientJs).toContain('d1.textContent = b()')
-    expect(component.clientJs).toContain('d2.textContent = c()')
+    // Three createEffect calls (sequential slot IDs)
+    expect(component.clientJs).toContain('_0.textContent = a()')
+    expect(component.clientJs).toContain('_1.textContent = b()')
+    expect(component.clientJs).toContain('_2.textContent = c()')
   })
 
   it('handles nested elements with events at different levels', async () => {
@@ -90,10 +90,10 @@ describe('Deeply Nested JSX', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Event handlers should be set
-    expect(component.clientJs).toContain('b0.onclick')
-    expect(component.clientJs).toContain('b1.onclick')
-    expect(component.clientJs).toContain('b2.onclick')
+    // Event handlers should be set (sequential slot IDs)
+    expect(component.clientJs).toContain('_0.onclick')
+    expect(component.clientJs).toContain('_1.onclick')
+    expect(component.clientJs).toContain('_2.onclick')
   })
 })
 

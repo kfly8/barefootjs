@@ -3,9 +3,21 @@
  *
  * Generates server-side JSX components from Intermediate Representation (IR).
  * Unlike ir-to-html which evaluates expressions, this preserves them as JSX.
+ *
+ * Uses Slot Registry pattern for reliable hydration.
  */
 
-import type { IRNode, IRElement, SignalDeclaration } from '../types'
+import type { IRNode, IRElement, SignalDeclaration, Slot, SlotRegistry } from '../types'
+
+/**
+ * Context for server JSX generation
+ */
+export type ServerJsxContext = {
+  componentName: string
+  signals: SignalDeclaration[]
+  slots: Slot[]
+  handlerIndex: number
+}
 
 /**
  * Converts HTML to JSX format (internal helper)
@@ -18,6 +30,34 @@ function htmlToJsx(html: string): string {
 }
 
 /**
+ * Generates JSX with slot registry from an IR node
+ *
+ * @param node - IR node to convert
+ * @param componentName - Name of the component (for data-bf-scope)
+ * @param signals - Signal declarations for prop mapping
+ * @returns { jsx, registry } - JSX string and slot registry
+ */
+export function irToServerJsxWithRegistry(
+  node: IRNode,
+  componentName: string,
+  signals: SignalDeclaration[]
+): { jsx: string; registry: SlotRegistry } {
+  const ctx: ServerJsxContext = {
+    componentName,
+    signals,
+    slots: [],
+    handlerIndex: 0,
+  }
+
+  const jsx = irToServerJsxInternal(node, ctx, true)
+
+  return {
+    jsx,
+    registry: { slots: ctx.slots },
+  }
+}
+
+/**
  * Generates JSX from an IR node (preserves expressions)
  *
  * Unlike irToHtml which evaluates expressions with initial values,
@@ -26,15 +66,30 @@ function htmlToJsx(html: string): string {
  * @param node - IR node to convert
  * @param signals - Signal declarations for prop mapping
  * @returns JSX string
+ * @deprecated Use irToServerJsxWithRegistry for new code
  */
 export function irToServerJsx(node: IRNode, signals: SignalDeclaration[]): string {
+  // Legacy wrapper - creates context without collecting slots
+  const ctx: ServerJsxContext = {
+    componentName: '',
+    signals,
+    slots: [],
+    handlerIndex: 0,
+  }
+  return irToServerJsxInternal(node, ctx, false)
+}
+
+/**
+ * Internal implementation of IR to Server JSX conversion
+ */
+function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: boolean): string {
   switch (node.type) {
     case 'text':
       return node.content
 
     case 'expression':
       // Preserve expression as JSX (replace signal calls with prop references)
-      const expr = replaceSignalCallsWithProps(node.expression, signals)
+      const expr = replaceSignalCallsWithProps(node.expression, ctx.signals)
       return `{${expr}}`
 
     case 'component':
@@ -43,7 +98,7 @@ export function irToServerJsx(node: IRNode, signals: SignalDeclaration[]): strin
       const propsStr = node.props
         .filter(p => !p.name.startsWith('on'))  // Skip event handlers like onToggle, onClick
         .map(p => {
-          const value = replaceSignalCallsWithProps(p.value, signals)
+          const value = replaceSignalCallsWithProps(p.value, ctx.signals)
           // String literals keep quotes, expressions use braces
           if (value.startsWith('"') || value.startsWith("'")) {
             return `${p.name}=${value}`
@@ -55,14 +110,14 @@ export function irToServerJsx(node: IRNode, signals: SignalDeclaration[]): strin
 
     case 'conditional':
       // Generate ternary expression
-      const condition = replaceSignalCallsWithProps(node.condition, signals)
+      const condition = replaceSignalCallsWithProps(node.condition, ctx.signals)
       // Use helper to get values suitable for inside JSX expression context
-      const whenTrue = nodeToJsxExpressionValue(node.whenTrue, signals)
-      const whenFalse = nodeToJsxExpressionValue(node.whenFalse, signals)
+      const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
+      const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
       return `{${condition} ? ${whenTrue} : ${whenFalse}}`
 
     case 'element':
-      return elementToServerJsx(node, signals)
+      return elementToServerJsxInternal(node, ctx, isRoot)
   }
 }
 
@@ -79,6 +134,16 @@ export function irToServerJsx(node: IRNode, signals: SignalDeclaration[]): strin
  * @returns String suitable for use inside JSX expression (e.g., ternary)
  */
 function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[]): string {
+  const ctx: ServerJsxContext = {
+    componentName: '',
+    signals,
+    slots: [],
+    handlerIndex: 0,
+  }
+  return nodeToJsxExpressionValueInternal(node, ctx)
+}
+
+function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): string {
   switch (node.type) {
     case 'text':
       // Text inside expression context needs to be a quoted string
@@ -88,17 +153,17 @@ function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[]): s
 
     case 'expression':
       // Expression inside expression context: just the expression, no braces
-      return replaceSignalCallsWithProps(node.expression, signals)
+      return replaceSignalCallsWithProps(node.expression, ctx.signals)
 
     case 'element':
       // Element is valid JSX, use as-is
-      return elementToServerJsx(node, signals)
+      return elementToServerJsxInternal(node, ctx, false)
 
     case 'conditional':
       // Nested conditional - recursively process
-      const cond = replaceSignalCallsWithProps(node.condition, signals)
-      const whenTrue = nodeToJsxExpressionValue(node.whenTrue, signals)
-      const whenFalse = nodeToJsxExpressionValue(node.whenFalse, signals)
+      const cond = replaceSignalCallsWithProps(node.condition, ctx.signals)
+      const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
+      const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
       return `(${cond} ? ${whenTrue} : ${whenFalse})`
 
     case 'component':
@@ -106,7 +171,7 @@ function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[]): s
       const compPropsStr = node.props
         .filter(p => !p.name.startsWith('on'))  // Skip event handlers
         .map(p => {
-          const value = replaceSignalCallsWithProps(p.value, signals)
+          const value = replaceSignalCallsWithProps(p.value, ctx.signals)
           if (value.startsWith('"') || value.startsWith("'")) {
             return `${p.name}=${value}`
           }
@@ -118,17 +183,75 @@ function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[]): s
 }
 
 /**
- * Generates JSX from an IR element
+ * Generates JSX from an IR element (legacy wrapper)
  */
 function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string {
-  const { tagName, id, staticAttrs, dynamicAttrs, children, listInfo } = el
+  const ctx: ServerJsxContext = {
+    componentName: '',
+    signals,
+    slots: [],
+    handlerIndex: 0,
+  }
+  return elementToServerJsxInternal(el, ctx, false)
+}
+
+/**
+ * Internal implementation of element to server JSX conversion
+ */
+function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot: boolean): string {
+  const { tagName, id, staticAttrs, dynamicAttrs, events, children, listInfo, dynamicContent } = el
 
   // Build attributes
   const attrParts: string[] = []
 
+  // Add data-bf-scope for root element
+  if (isRoot && ctx.componentName) {
+    attrParts.push(`data-bf-scope="${ctx.componentName}"`)
+  }
+
   // Add data-bf attribute if present (for DOM references)
   if (id) {
     attrParts.push(`data-bf="${id}"`)
+
+    // Collect slot information
+    if (dynamicContent) {
+      ctx.slots.push({
+        id: parseInt(id, 10),
+        type: 'content',
+        signal: dynamicContent.expression,
+      })
+    }
+
+    if (events.length > 0) {
+      for (const event of events) {
+        ctx.slots.push({
+          id: parseInt(id, 10),
+          type: 'event',
+          event: event.eventName,
+          handler: ctx.handlerIndex++,
+        })
+      }
+    }
+
+    if (dynamicAttrs.length > 0) {
+      for (const attr of dynamicAttrs) {
+        ctx.slots.push({
+          id: parseInt(id, 10),
+          type: 'attr',
+          attr: attr.name,
+          expr: attr.expression,
+        })
+      }
+    }
+
+    if (listInfo) {
+      ctx.slots.push({
+        id: parseInt(id, 10),
+        type: 'list',
+        array: listInfo.arrayExpression,
+        itemEvents: listInfo.itemEvents,
+      })
+    }
   }
 
   // Static attributes (convert class to className)
@@ -144,7 +267,7 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string
   // Dynamic attributes (preserve expressions)
   for (const attr of dynamicAttrs) {
     const attrName = attr.name === 'class' ? 'className' : attr.name
-    const expr = replaceSignalCallsWithProps(attr.expression, signals)
+    const expr = replaceSignalCallsWithProps(attr.expression, ctx.signals)
 
     // Style objects need special handling
     if (attrName === 'style' && expr.trim().startsWith('{')) {
@@ -158,11 +281,11 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string
 
   // List element - generate .map() expression
   if (listInfo) {
-    const arrayExpr = replaceSignalCallsWithProps(listInfo.arrayExpression, signals)
+    const arrayExpr = replaceSignalCallsWithProps(listInfo.arrayExpression, ctx.signals)
 
     // Use itemIR for proper JSX generation (avoids escaping issues)
     if (listInfo.itemIR) {
-      const itemJsx = irToServerJsx(listInfo.itemIR, signals)
+      const itemJsx = irToServerJsxInternal(listInfo.itemIR, ctx, false)
       const mapExpr = `{${arrayExpr}?.map((${listInfo.paramName}, __index) => (${itemJsx}))}`
       return `<${tagName}${attrsStr}>${mapExpr}</${tagName}>`
     }
@@ -174,7 +297,7 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string
   }
 
   // Process children
-  const childrenJsx = children.map(child => irToServerJsx(child, signals)).join('')
+  const childrenJsx = children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
 
   // Self-closing tag
   if (children.length === 0 && isSelfClosingTag(tagName)) {

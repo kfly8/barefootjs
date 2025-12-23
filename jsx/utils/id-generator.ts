@@ -1,51 +1,51 @@
 /**
  * BarefootJS JSX Compiler - ID Generator
  *
- * Manages element ID generation.
- * Eliminates global state and enables per-compilation ID management.
+ * Manages slot ID generation with a single sequential counter.
+ * Slot IDs are simple numbers (0, 1, 2...) for reliable hydration.
  */
 
 export class IdGenerator {
-  private buttonIdCounter = 0
-  private dynamicIdCounter = 0
-  private listIdCounter = 0
-  private attrIdCounter = 0
+  private slotCounter = 0
 
   /**
-   * Resets counters
+   * Resets counter
    */
   reset(): void {
-    this.buttonIdCounter = 0
-    this.dynamicIdCounter = 0
-    this.listIdCounter = 0
-    this.attrIdCounter = 0
+    this.slotCounter = 0
   }
 
   /**
-   * Generates ID for button/interactive elements
+   * Generates next slot ID
+   * Returns string for compatibility with existing code
    */
+  generateSlotId(): string {
+    return String(this.slotCounter++)
+  }
+
+  /**
+   * Gets the current counter value (for registry generation)
+   */
+  getCurrentCount(): number {
+    return this.slotCounter
+  }
+
+  // Legacy methods for backwards compatibility during migration
+  // TODO: Remove after full migration to slot registry pattern
+
   generateButtonId(): string {
-    return `b${this.buttonIdCounter++}`
+    return this.generateSlotId()
   }
 
-  /**
-   * Generates ID for dynamic content elements
-   */
   generateDynamicId(): string {
-    return `d${this.dynamicIdCounter++}`
+    return this.generateSlotId()
   }
 
-  /**
-   * Generates ID for list elements
-   */
   generateListId(): string {
-    return `l${this.listIdCounter++}`
+    return this.generateSlotId()
   }
 
-  /**
-   * Generates ID for elements with dynamic attributes
-   */
   generateAttrId(): string {
-    return `a${this.attrIdCounter++}`
+    return this.generateSlotId()
   }
 }

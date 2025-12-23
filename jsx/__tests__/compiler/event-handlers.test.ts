@@ -12,27 +12,33 @@
  * - onSubmit: form submissions
  * - onKeyDown: keyboard events
  *
- * ## Generated Code
+ * ## Generated Code (Slot Registry Pattern)
  * ```typescript
  * // Input
  * <button onClick={() => setCount(n => n + 1)}>+1</button>
  *
  * // Output (HTML)
- * <button data-bf="b0">+1</button>
+ * <button data-bf="0">+1</button>
  *
- * // Output (clientJs)
- * const __b0 = document.getElementById('__b0')
- * b0.onclick = () => setCount(n => n + 1)
+ * // Output (clientJs) - with existence checks for reliable hydration
+ * const _0 = document.querySelector('[data-bf="0"]')
+ * if (_0) {
+ *   _0.onclick = () => setCount(n => n + 1)
+ * }
  *
  * // Dynamic elements are updated with createEffect
- * createEffect(() => {
- *   d0.textContent = count()
- * })
+ * if (_1) {
+ *   createEffect(() => {
+ *     _1.textContent = count()
+ *   })
+ * }
  * ```
  *
  * ## Notes
  * - Dynamic content is auto-tracked with `createEffect()`
  * - Event argument `(e)` is preserved
+ * - Slot IDs are sequential numbers (0, 1, 2...)
+ * - Each element is checked for existence before processing
  */
 
 import { describe, it, expect } from 'bun:test'
@@ -55,12 +61,15 @@ describe('Event Handlers - Basic', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // onclick handler is set
-    expect(component.clientJs).toContain('b0.onclick')
+    // onclick handler is set (with existence check)
+    expect(component.clientJs).toContain('_1.onclick')
     expect(component.clientJs).toContain('setCount(n => n + 1)')
 
     // Dynamic content is updated with createEffect
     expect(component.clientJs).toContain('createEffect(')
+
+    // Existence checks are added
+    expect(component.clientJs).toContain('if (_1)')
   })
 
   it('multiple onClick', async () => {
@@ -80,8 +89,9 @@ describe('Event Handlers - Basic', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('b0.onclick')
-    expect(component.clientJs).toContain('b1.onclick')
+    // Multiple onclick handlers with sequential IDs
+    expect(component.clientJs).toContain('_1.onclick')
+    expect(component.clientJs).toContain('_2.onclick')
   })
 })
 
@@ -103,7 +113,7 @@ describe('Event Handlers - Form', () => {
     const component = result.components[0]
 
     // onchange handler is set (event argument is preserved)
-    expect(component.clientJs).toContain('b0.onchange = (e) =>')
+    expect(component.clientJs).toContain('_1.onchange = (e) =>')
     expect(component.clientJs).toContain('setText(e.target.value)')
 
     // Dynamic content is updated with createEffect
@@ -127,7 +137,7 @@ describe('Event Handlers - Form', () => {
     const component = result.components[0]
 
     // oninput handler is set (event argument is preserved)
-    expect(component.clientJs).toContain('b0.oninput = (e) =>')
+    expect(component.clientJs).toContain('_1.oninput = (e) =>')
     expect(component.clientJs).toContain('setText(e.target.value)')
   })
 
@@ -150,7 +160,7 @@ describe('Event Handlers - Form', () => {
     const component = result.components[0]
 
     // onsubmit handler is set
-    expect(component.clientJs).toContain('b0.onsubmit')
+    expect(component.clientJs).toContain('_1.onsubmit')
     expect(component.clientJs).toContain('e.preventDefault()')
     expect(component.clientJs).toContain('setSubmitted(true)')
   })
@@ -175,7 +185,7 @@ describe('Event Handlers - Keyboard', () => {
     const component = result.components[0]
 
     // onkeydown handler is set
-    expect(component.clientJs).toContain('b0.onkeydown')
+    expect(component.clientJs).toContain('_1.onkeydown')
     expect(component.clientJs).toContain("e.key === 'Enter'")
     expect(component.clientJs).toContain('setSubmitted(true)')
   })

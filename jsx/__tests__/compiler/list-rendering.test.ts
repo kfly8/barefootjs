@@ -12,28 +12,33 @@
  * - Conditionals in map: `{item.editing ? <input /> : <span />}`
  * - Dynamic attributes in map: `class={item.done ? 'done' : ''}`
  *
- * ## Generated Code
+ * ## Generated Code (Slot Registry Pattern)
  * ```typescript
  * // Input
  * <ul>{items().map(item => <li onClick={() => remove(item.id)}>{item.text}</li>)}</ul>
  *
  * // Output (HTML)
- * <ul data-bf="l0">
+ * <ul data-bf="0">
  *   <li data-index="0" data-event-id="0">...</li>
  *   ...
  * </ul>
  *
- * // Output (clientJs)
- * l0.innerHTML = items().map((item, __index) => `<li data-index="${__index}" data-event-id="0">${item.text}</li>`).join('')
- * l0.addEventListener('click', (e) => {
- *   const target = e.target.closest('[data-event-id="0"]')
- *   if (target && target.dataset.eventId === '0') {
- *     const __index = parseInt(target.dataset.index, 10)
- *     const item = items()[__index]
- *     remove(item.id)
- *     updateAll()
- *   }
- * })
+ * // Output (clientJs) - with existence checks
+ * if (_0) {
+ *   createEffect(() => {
+ *     _0.innerHTML = items().map((item, __index) => `<li data-index="${__index}" data-event-id="0">${item.text}</li>`).join('')
+ *   })
+ * }
+ * if (_0) {
+ *   _0.addEventListener('click', (e) => {
+ *     const target = e.target.closest('[data-event-id="0"]')
+ *     if (target && target.dataset.eventId === '0') {
+ *       const __index = parseInt(target.dataset.index, 10)
+ *       const item = items()[__index]
+ *       remove(item.id)
+ *     }
+ *   })
+ * }
  * ```
  */
 
@@ -53,7 +58,9 @@ describe('List Rendering - Basic', () => {
     const component = result.components[0]
 
     // Updated with innerHTML in client JS (with __index for event delegation support)
-    expect(component.clientJs).toContain('l0.innerHTML = items().map((item, __index) => `<li>${item}</li>`).join(\'\')')
+    expect(component.clientJs).toContain('_0.innerHTML = items().map((item, __index) => `<li>${item}</li>`).join(\'\')')
+    // Existence check is included
+    expect(component.clientJs).toContain('if (_0)')
   })
 
   it('array filter + map', async () => {
@@ -95,8 +102,8 @@ describe('List Rendering - Events', () => {
     // data-index attribute is included in template
     expect(component.clientJs).toContain('data-index="${__index}"')
 
-    // Event delegation is set up
-    expect(component.clientJs).toContain("l0.addEventListener('click'")
+    // Event delegation is set up (with existence check)
+    expect(component.clientJs).toContain("_1.addEventListener('click'")
     expect(component.clientJs).toContain('const item = items()[__index]')
     expect(component.clientJs).toContain('remove(item.id)')
   })
