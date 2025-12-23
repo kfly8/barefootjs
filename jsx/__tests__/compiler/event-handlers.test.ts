@@ -55,9 +55,6 @@ describe('Event Handlers - Basic', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Button gets an ID
-    expect(component.staticHtml).toContain('data-bf="b0"')
-
     // onclick handler is set
     expect(component.clientJs).toContain('b0.onclick')
     expect(component.clientJs).toContain('setCount(n => n + 1)')
@@ -83,8 +80,6 @@ describe('Event Handlers - Basic', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.staticHtml).toContain('data-bf="b0"')
-    expect(component.staticHtml).toContain('data-bf="b1"')
     expect(component.clientJs).toContain('b0.onclick')
     expect(component.clientJs).toContain('b1.onclick')
   })
@@ -106,9 +101,6 @@ describe('Event Handlers - Form', () => {
     `
     const result = await compile(source)
     const component = result.components[0]
-
-    // Input element gets an ID
-    expect(component.staticHtml).toContain('data-bf="b0"')
 
     // onchange handler is set (event argument is preserved)
     expect(component.clientJs).toContain('b0.onchange = (e) =>')
@@ -157,9 +149,6 @@ describe('Event Handlers - Form', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Form element gets an ID
-    expect(component.staticHtml).toContain('data-bf="b0"')
-
     // onsubmit handler is set
     expect(component.clientJs).toContain('b0.onsubmit')
     expect(component.clientJs).toContain('e.preventDefault()')
@@ -184,9 +173,6 @@ describe('Event Handlers - Keyboard', () => {
     `
     const result = await compile(source)
     const component = result.components[0]
-
-    // Input element gets an ID
-    expect(component.staticHtml).toContain('data-bf="b0"')
 
     // onkeydown handler is set
     expect(component.clientJs).toContain('b0.onkeydown')

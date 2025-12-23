@@ -35,8 +35,6 @@ describe('Deeply Nested JSX', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Dynamic element should have an ID
-    expect(component.staticHtml).toContain('data-bf="d0"')
     // createEffect should be generated for the dynamic content
     expect(component.clientJs).toContain('createEffect')
     expect(component.clientJs).toContain('d0.textContent = count()')
@@ -65,11 +63,6 @@ describe('Deeply Nested JSX', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // All three dynamic elements should have IDs
-    expect(component.staticHtml).toContain('data-bf="d0"')
-    expect(component.staticHtml).toContain('data-bf="d1"')
-    expect(component.staticHtml).toContain('data-bf="d2"')
-
     // Three createEffect calls
     expect(component.clientJs).toContain('d0.textContent = a()')
     expect(component.clientJs).toContain('d1.textContent = b()')
@@ -96,11 +89,6 @@ describe('Deeply Nested JSX', () => {
     `
     const result = await compile(source)
     const component = result.components[0]
-
-    // All three buttons should have IDs
-    expect(component.staticHtml).toContain('data-bf="b0"')
-    expect(component.staticHtml).toContain('data-bf="b1"')
-    expect(component.staticHtml).toContain('data-bf="b2"')
 
     // Event handlers should be set
     expect(component.clientJs).toContain('b0.onclick')
@@ -133,8 +121,6 @@ describe('Complex Expressions', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // List should have ID
-    expect(component.staticHtml).toContain('data-bf="l0"')
     // Nested ternary should be in template
     expect(component.clientJs).toContain("item.type === 'a' ? 'first' : item.type === 'b' ? 'second' : 'third'")
   })
@@ -200,7 +186,6 @@ describe('Component Composition', () => {
     const component = result.components[0]
 
     // Ternary should be preserved in template or evaluated
-    expect(component.staticHtml).toBeDefined()
     expect(component.clientJs).toContain('createEffect')
   })
 

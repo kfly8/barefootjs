@@ -48,29 +48,4 @@ describe('examples/counter', () => {
   })
 })
 
-describe('examples/hono-static-html', () => {
-  it('Counter component is compiled', async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'hono-static-html/pages/components/Counter.tsx')
-    const result = await compileJSX(entryPath, async (path) => {
-      return await Bun.file(path).text()
-    })
-
-    const counter = result.components.find(c => c.name === 'Counter')
-    expect(counter).toBeDefined()
-    expect(counter?.clientJs).toContain('createSignal')
-    expect(counter?.clientJs).toContain('createEffect')
-  })
-
-  it('Toggle component is compiled', async () => {
-    const entryPath = resolve(EXAMPLES_DIR, 'hono-static-html/pages/components/Toggle.tsx')
-    const result = await compileJSX(entryPath, async (path) => {
-      return await Bun.file(path).text()
-    })
-
-    const toggle = result.components.find(c => c.name === 'Toggle')
-    expect(toggle).toBeDefined()
-    expect(toggle?.clientJs).toContain('createSignal')
-    expect(toggle?.clientJs).toContain('createEffect')
-  })
-})
 

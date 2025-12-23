@@ -42,9 +42,6 @@ describe('Dynamic Content', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Dynamic elements get an ID
-    expect(component.staticHtml).toContain('data-bf="d0"')
-
     // Updated in updateAll function
     expect(component.clientJs).toContain('d0.textContent = count()')
   })
@@ -92,33 +89,4 @@ describe('Dynamic Content', () => {
     expect(component.clientJs).toContain('d0.textContent = "Count:" + String(count())')
   })
 
-  it('correct initial rendering (boolean to string)', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [on, setOn] = createSignal(false)
-        return <span>{on() ? 'ON' : 'OFF'}</span>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // Initial value is false, so OFF is displayed
-    expect(component.staticHtml).toContain('>OFF<')
-  })
-
-  it('correct initial rendering (numeric operation)', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [count, setCount] = createSignal(5)
-        return <span>{count() * 2}</span>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // Initial value 5 * 2 = 10
-    expect(component.staticHtml).toContain('>10<')
-  })
 })

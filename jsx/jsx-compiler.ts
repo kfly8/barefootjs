@@ -38,7 +38,6 @@ import {
   needsCapturePhase,
   parseConditionalHandler,
   generateAttributeUpdate,
-  irToHtml,
   irToServerJsx,
   collectClientJsInfo,
   findAndConvertJsxReturn,
@@ -120,7 +119,7 @@ export async function compileJSX(
   }> = []
 
   for (const [path, result] of compiledComponents) {
-    if (result.clientJs || result.staticHtml) {
+    if (result.clientJs) {
       const name = path.split('/').pop()!.replace('.tsx', '')
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
@@ -141,7 +140,7 @@ export async function compileJSX(
   for (const data of componentData) {
     const { name, result, signalDeclarations } = data
     const bodyCode = result.clientJs
-    const contentForHash = signalDeclarations + bodyCode + result.staticHtml
+    const contentForHash = signalDeclarations + bodyCode
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
   }
@@ -241,7 +240,6 @@ ${bodyCode}
       hash,
       filename,
       clientJs,
-      staticHtml: result.staticHtml,
       serverJsx,
       props: result.props,
       hasClientJs,
@@ -249,7 +247,6 @@ ${bodyCode}
   }
 
   return {
-    html: entryResult.staticHtml,
     components,
   }
 }
@@ -309,9 +306,6 @@ function compileJsxWithComponents(
     collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
   }
 
-  // Generate static HTML from IR
-  const staticHtml = ir ? irToHtml(ir, signals) : ''
-
   // Generate client JS (createEffect-based)
   const clientJs = generateClientJsWithCreateEffect(
     interactiveElements,
@@ -322,7 +316,6 @@ function compileJsxWithComponents(
   )
 
   return {
-    staticHtml,
     clientJs,
     signals,
     localFunctions,

@@ -31,10 +31,11 @@ for (const component of result.components) {
 }
 
 // Load template and generate HTML
+// NOTE: Static HTML generation has been removed. Use Server JSX instead.
 const template = await Bun.file(resolve(ROOT_DIR, 'template.html')).text()
 const html = template
   .replace('{{title}}', 'BarefootJS Counter')
-  .replace('{{content}}', result.html)
+  .replace('{{content}}', '<!-- TODO: Use Server JSX for HTML generation -->')
   .replace('{{scripts}}', scriptTags.join('\n  '))
 
 await Bun.write(resolve(DIST_DIR, 'index.html'), html)

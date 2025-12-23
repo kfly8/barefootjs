@@ -34,37 +34,6 @@
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('HTML Attributes - Static', () => {
-  it('class attribute', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [count, setCount] = createSignal(0)
-        return <p class="counter">{count()}</p>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // Static HTML uses standard class attribute
-    expect(component.staticHtml).toContain('class="counter"')
-  })
-
-  it('style attribute (static)', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [count, setCount] = createSignal(0)
-        return <p style="color: red">{count()}</p>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // Static style attribute is output as-is
-    expect(component.staticHtml).toContain('style="color: red"')
-  })
-})
 
 describe('HTML Attributes - Dynamic class', () => {
   it('dynamic class attribute', async () => {
@@ -78,29 +47,8 @@ describe('HTML Attributes - Dynamic class', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Elements with dynamic attributes get an ID
-    expect(component.staticHtml).toContain('data-bf="a0"')
-
-    // Initial value is false, so class is empty
-    expect(component.staticHtml).not.toContain('class="active"')
-
     // className is updated in client JS
     expect(component.clientJs).toContain("a0.className = isActive() ? 'active' : ''")
-  })
-
-  it('dynamic class attribute (initial value is true)', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [isActive, setIsActive] = createSignal(true)
-        return <p class={isActive() ? 'active' : ''}>Hello</p>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // Initial value is true, so class="active"
-    expect(component.staticHtml).toContain('class="active"')
   })
 })
 
@@ -115,12 +63,6 @@ describe('HTML Attributes - Dynamic style', () => {
     `
     const result = await compile(source)
     const component = result.components[0]
-
-    // Elements with dynamic attributes get an ID
-    expect(component.staticHtml).toContain('data-bf="a0"')
-
-    // Initial value is true, so color: red
-    expect(component.staticHtml).toContain('style="color: red"')
 
     // Style is updated in client JS
     expect(component.clientJs).toContain("Object.assign(a0.style, { color: isRed() ? 'red' : 'blue' })")
@@ -139,29 +81,8 @@ describe('HTML Attributes - Boolean attributes', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Elements with dynamic attributes get an ID
-    expect(component.staticHtml).toContain('data-bf="a0"')
-
-    // Initial value is false, so disabled attribute is not present
-    expect(component.staticHtml).not.toContain('disabled')
-
     // Disabled is updated in client JS
     expect(component.clientJs).toContain('a0.disabled = isLoading()')
-  })
-
-  it('dynamic disabled attribute (initial value is true)', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [isLoading, setIsLoading] = createSignal(true)
-        return <button disabled={isLoading()}>Submit</button>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // Initial value is true, so disabled attribute is present
-    expect(component.staticHtml).toContain('disabled')
   })
 })
 
@@ -176,12 +97,6 @@ describe('HTML Attributes - Form related', () => {
     `
     const result = await compile(source)
     const component = result.components[0]
-
-    // Elements with dynamic attributes get an ID
-    expect(component.staticHtml).toContain('data-bf="a0"')
-
-    // Initial value is output
-    expect(component.staticHtml).toContain('value="hello"')
 
     // Value is updated in client JS
     expect(component.clientJs).toContain('a0.value = text()')

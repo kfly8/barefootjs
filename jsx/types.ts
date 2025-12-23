@@ -56,7 +56,6 @@ export type ChildComponentInit = {
 }
 
 export type CompileResult = {
-  staticHtml: string
   clientJs: string
   signals: SignalDeclaration[]
   localFunctions: LocalFunction[]  // Functions defined within the component
@@ -80,14 +79,12 @@ export type ComponentOutput = {
   hash: string           // Content hash (e.g., 7dc6817c)
   filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js), empty if no client JS
   clientJs: string
-  staticHtml: string     // Pre-compiled static HTML (no JSX runtime needed)
   serverJsx: string      // Server JSX component (for hono/jsx integration)
   props: string[]        // Props names the component receives
   hasClientJs: boolean   // Whether this component needs client-side JS
 }
 
 export type CompileJSXResult = {
-  html: string
   components: ComponentOutput[]
 }
 

@@ -63,11 +63,6 @@ describe('Components - Basics', () => {
 
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // Counter HTML is embedded in App component HTML
-    expect(result.html).toContain('<h1>My App</h1>')
-    expect(result.html).toContain('<p')
-    expect(result.html).toContain('<button')
-
     // Counter component is output
     const counterComponent = result.components.find(c => c.name === 'Counter')
     expect(counterComponent).toBeDefined()
@@ -109,7 +104,7 @@ describe('Components - Basics', () => {
     expect(counterComponent!.props).toContain('initial')
   })
 
-  it('Component with children', async () => {
+  it('Component with children and clientJs', async () => {
     const files = {
       '/test/App.tsx': `
         import Button from './Button'
@@ -122,15 +117,17 @@ describe('Components - Basics', () => {
         }
       `,
       '/test/Button.tsx': `
+        import { createSignal } from 'barefoot'
         function Button({ children }) {
-          return <button class="btn">{children}</button>
+          const [clicked, setClicked] = createSignal(false)
+          return <button class="btn" onClick={() => setClicked(true)}>{children}</button>
         }
       `,
     }
 
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // Button component takes children
+    // Button component takes children and has clientJs
     const buttonComponent = result.components.find(c => c.name === 'Button')
     expect(buttonComponent).toBeDefined()
     // Children prop is handled
@@ -352,29 +349,10 @@ describe('Components - Hash and filename', () => {
     expect(counter!.hash).toBeTruthy()
     expect(counter!.filename).toContain(counter!.hash)
 
-    // App component (wrapper) has no clientJs
+    // Only components with clientJs are included in the output
+    // App component (wrapper without clientJs) is not included
     const app = result.components.find(c => c.name === 'App')
-    expect(app).toBeDefined()
-    expect(app!.hasClientJs).toBe(false)
-    expect(app!.filename).toBe('')
-  })
-})
-
-describe('Components - Static HTML output', () => {
-  it('Component outputs valid HTML', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [count, setCount] = createSignal(0)
-        return <p>{count()}</p>
-      }
-    `
-    const result = await compile(source)
-    const component = result.components[0]
-
-    // staticHtml contains valid HTML (not JSX)
-    expect(component.staticHtml).toContain('<p')
-    expect(component.staticHtml).toContain('data-bf=')
+    expect(app).toBeUndefined()
   })
 })
 

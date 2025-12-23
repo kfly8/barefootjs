@@ -52,14 +52,8 @@ describe('List Rendering - Basic', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // List element gets an ID
-    expect(component.staticHtml).toContain('data-bf="l0"')
-
     // Updated with innerHTML in client JS (with __index for event delegation support)
     expect(component.clientJs).toContain('l0.innerHTML = items().map((item, __index) => `<li>${item}</li>`).join(\'\')')
-
-    // Initial values are rendered
-    expect(component.staticHtml).toContain('<li>a</li><li>b</li><li>c</li>')
   })
 
   it('array filter + map', async () => {
@@ -77,16 +71,8 @@ describe('List Rendering - Basic', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // List element gets an ID
-    expect(component.staticHtml).toContain('data-bf="l0"')
-
     // filter + map is used in client JS (with __index for event delegation support)
     expect(component.clientJs).toContain('items().filter(x => x.done).map((item, __index) =>')
-
-    // Filtered elements are rendered with initial values (only done: true)
-    expect(component.staticHtml).toContain('<li>a</li>')
-    expect(component.staticHtml).toContain('<li>c</li>')
-    expect(component.staticHtml).not.toContain('<li>b</li>')
   })
 })
 
@@ -105,9 +91,6 @@ describe('List Rendering - Events', () => {
     `
     const result = await compile(source)
     const component = result.components[0]
-
-    // List element gets an ID
-    expect(component.staticHtml).toContain('data-bf="l0"')
 
     // data-index attribute is included in template
     expect(component.clientJs).toContain('data-index="${__index}"')
@@ -359,38 +342,4 @@ describe('List Rendering - Conditionals', () => {
     expect(component.clientJs).toContain('<span>')
   })
 
-  it('ternary operator is evaluated in initial HTML', async () => {
-    const source = `
-      import { createSignal } from 'barefoot'
-      function Component() {
-        const [items, setItems] = createSignal([
-          { id: 1, text: 'hello', editing: false },
-          { id: 2, text: 'world', editing: true }
-        ])
-        return (
-          <ul>
-            {items().map(item => (
-              <li>
-                {item.editing ? (
-                  <input value={item.text} />
-                ) : (
-                  <span>{item.text}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    `
-    const result = await compile(source)
-
-    // Initial HTML should not contain the ternary operator as-is
-    expect(result.html).not.toContain('item.editing ?')
-    // Correctly evaluated based on initial values
-    // id:1 has editing:false, so <span>
-    expect(result.html).toContain('<span>hello</span>')
-    // id:2 has editing:true, so <input>
-    expect(result.html).toContain('<input')
-    expect(result.html).toContain('value="world"')
-  })
 })
