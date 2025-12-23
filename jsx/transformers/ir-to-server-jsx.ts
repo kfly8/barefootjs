@@ -86,15 +86,24 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
       return elementToServerJsxInternal(node, ctx, isRoot)
 
     case 'fragment':
-      return fragmentToServerJsxInternal(node, ctx)
+      return fragmentToServerJsxInternal(node, ctx, isRoot)
   }
 }
 
 /**
  * Internal implementation of fragment to server JSX conversion
+ *
+ * When fragment is the root, wraps children in a div with data-bf-scope
+ * to enable proper hydration (querySelector needs a common parent).
  */
-function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext): string {
+function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext, isRoot: boolean): string {
   const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+
+  // Fragment at root needs a wrapper div for hydration to work
+  if (isRoot && ctx.componentName) {
+    return `<div data-bf-scope="${ctx.componentName}">${childrenJsx}</div>`
+  }
+
   return `<>${childrenJsx}</>`
 }
 

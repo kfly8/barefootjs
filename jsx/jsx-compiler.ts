@@ -408,40 +408,42 @@ function generateClientJsWithCreateEffect(
   // Find the component's scope element first (to avoid ID collisions between components)
   if (hasElements) {
     lines.push(`const __scope = document.querySelector('[data-bf-scope="${componentName}"]')`)
+    // Helper to query within scope, including scope element itself (for Fragment roots)
+    lines.push(`const __q = (s) => __scope?.matches(s) ? __scope : __scope?.querySelector(s)`)
   }
 
   // Get DOM elements within scope (with existence checks)
   for (const el of dynamicElements) {
     if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
       queriedIds.add(el.id)
     }
   }
 
   for (const el of listElements) {
     if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
       queriedIds.add(el.id)
     }
   }
 
   for (const id of attrElementIds) {
     if (!queriedIds.has(id)) {
-      lines.push(`const ${varName(id)} = __scope?.querySelector('[data-bf="${id}"]')`)
+      lines.push(`const ${varName(id)} = __q('[data-bf="${id}"]')`)
       queriedIds.add(id)
     }
   }
 
   for (const el of interactiveElements) {
     if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
       queriedIds.add(el.id)
     }
   }
 
   for (const el of refElements) {
     if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
       queriedIds.add(el.id)
     }
   }
