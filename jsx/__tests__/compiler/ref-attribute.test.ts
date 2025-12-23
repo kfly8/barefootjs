@@ -75,8 +75,8 @@ describe('Ref Attribute Support', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Element should have data-bf ID for both ref and event handler
-    expect(component.serverJsx).toContain('data-bf=')
+    // Root elements use path-based navigation, no data-bf needed
+    expect(component.serverJsx).not.toContain('data-bf=')
     // Client JS should have both ref and click handler
     expect(component.clientJs).toContain('buttonRef = el')
     expect(component.clientJs).toContain('onclick')

@@ -30,9 +30,10 @@ describe('Fragment Support', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Fragment at root gets wrapped in div with data-bf-scope for hydration
-    expect(component.serverJsx).toContain('<div data-bf-scope="Component">')
-    expect(component.serverJsx).toContain('<h1>Title</h1>')
+    // Fragment outputs as-is, first element gets data-bf-scope
+    expect(component.serverJsx).toContain('<>')
+    expect(component.serverJsx).toContain('</>')
+    expect(component.serverJsx).toContain('<h1 data-bf-scope="Component">Title</h1>')
     expect(component.serverJsx).toContain('<p>Content</p>')
   })
 
@@ -139,8 +140,8 @@ describe('Fragment Support', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Fragment at root gets wrapped in div with data-bf-scope
-    expect(component.serverJsx).toContain('<div data-bf-scope="Component"><div>Only child</div></div>')
+    // Fragment outputs as-is, first element gets data-bf-scope
+    expect(component.serverJsx).toContain('<div data-bf-scope="Component">Only child</div>')
   })
 
   it('empty fragment', async () => {
@@ -152,7 +153,7 @@ describe('Fragment Support', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Empty fragment at root gets wrapped in div with data-bf-scope
-    expect(component.serverJsx).toContain('<div data-bf-scope="Component"></div>')
+    // Empty fragment outputs as-is (no element to add data-bf-scope)
+    expect(component.serverJsx).toContain('<></>')
   })
 })

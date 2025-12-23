@@ -92,9 +92,11 @@ describe('SVG Elements Support', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Should have data-bf for dynamic element
-    expect(component.serverJsx).toContain('data-bf=')
+    // Elements reachable via path-based navigation don't need data-bf
+    expect(component.serverJsx).not.toContain('data-bf=')
     expect(component.serverJsx).toContain('<circle')
+    // Should use path-based navigation in client JS
+    expect(component.clientJs).toContain('firstElementChild')
   })
 
   it('svg with events', async () => {
@@ -118,8 +120,8 @@ describe('SVG Elements Support', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Should have data-bf for interactive element
-    expect(component.serverJsx).toContain('data-bf=')
+    // Elements reachable via path-based navigation don't need data-bf
+    expect(component.serverJsx).not.toContain('data-bf=')
     // Should generate click handler
     expect(component.clientJs).toContain('onclick')
   })

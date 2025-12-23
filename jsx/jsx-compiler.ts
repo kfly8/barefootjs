@@ -25,6 +25,7 @@ import type {
   ComponentOutput,
   CompileJSXResult,
   CompileOptions,
+  IRNode,
 } from './types'
 import {
   extractImports,
@@ -49,6 +50,11 @@ import {
   generateContentHash,
   resolvePath,
 } from './compiler/utils'
+import {
+  calculateElementPaths,
+  generatePathExpression,
+  type ElementPath,
+} from './utils/element-paths'
 
 export type { ComponentOutput, CompileJSXResult }
 
@@ -230,7 +236,13 @@ ${bodyCode}
     // Generate server JSX component (only if adapter is provided)
     let serverJsx = ''
     if (options?.serverAdapter && result.ir) {
-      const jsx = irToServerJsx(result.ir, name, result.signals)
+      // Calculate element paths to determine which elements need data-bf attributes
+      // Elements with null paths (e.g., after component siblings) need data-bf for querySelector fallback
+      const paths = calculateElementPaths(result.ir)
+      const needsDataBfIds = new Set(
+        paths.filter(p => p.path === null).map(p => p.id)
+      )
+      const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds)
       // Collect all child component names (including those in lists) for server imports
       const childComponents = collectAllChildComponentNames(result.ir)
       serverJsx = options.serverAdapter.generateServerComponent({
@@ -326,7 +338,8 @@ function compileJsxWithComponents(
     listElements,
     dynamicAttributes,
     localFunctions,
-    refElements
+    refElements,
+    ir
   )
 
   return {
@@ -373,8 +386,8 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
 /**
  * Generate client JS with createEffect (reactive updates)
  *
- * Uses Slot Registry pattern: each element is checked for existence before processing.
- * This ensures reliable hydration even when conditional rendering removes elements.
+ * Uses tree position-based hydration: elements are found by DOM traversal
+ * instead of querySelector. This enables Fragment root support.
  */
 function generateClientJsWithCreateEffect(
   componentName: string,
@@ -383,7 +396,8 @@ function generateClientJsWithCreateEffect(
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[],
   localFunctions: LocalFunction[],
-  refElements: RefElement[] = []
+  refElements: RefElement[] = [],
+  ir: IRNode | null = null
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0
@@ -405,46 +419,88 @@ function generateClientJsWithCreateEffect(
                       attrElementIds.length > 0 || interactiveElements.length > 0 ||
                       refElements.length > 0
 
-  // Find the component's scope element first (to avoid ID collisions between components)
+  // Calculate element paths from IR for tree position-based hydration
+  const elementPaths: Map<string, string | null> = new Map()
+  if (ir) {
+    const paths = calculateElementPaths(ir)
+    for (const { id, path } of paths) {
+      elementPaths.set(id, path)
+    }
+  }
+
+  // Find the component's scope element first
   if (hasElements) {
     lines.push(`const __scope = document.querySelector('[data-bf-scope="${componentName}"]')`)
-    // Helper to query within scope, including scope element itself (for Fragment roots)
-    lines.push(`const __q = (s) => __scope?.matches(s) ? __scope : __scope?.querySelector(s)`)
   }
 
-  // Get DOM elements within scope (with existence checks)
-  for (const el of dynamicElements) {
-    if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
-      queriedIds.add(el.id)
+  // Track declared variables and their paths for chaining optimization
+  // e.g., { '': '__scope', 'nextElementSibling': '_1' }
+  const declaredPaths: Map<string, string> = new Map()
+  declaredPaths.set('', '__scope')
+
+  // Helper to generate optimized element access code
+  // Instead of always using __scope, chain from previously declared variables
+  const getElementAccessCode = (id: string): string => {
+    const path = elementPaths.get(id)
+
+    // Fallback to querySelector for null paths or when path not found
+    if (path === undefined || path === null) {
+      return `__scope?.querySelector('[data-bf="${id}"]')`
     }
-  }
 
-  for (const el of listElements) {
-    if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
-      queriedIds.add(el.id)
+    // Find the best base variable (longest matching prefix)
+    let bestBase = '__scope'
+    let bestBasePath = ''
+    let remainingPath = path
+
+    for (const [declaredPath, varNameStr] of declaredPaths) {
+      if (path === declaredPath) {
+        // Exact match - just use that variable
+        return varNameStr
+      }
+      if (path.startsWith(declaredPath) && declaredPath.length > bestBasePath.length) {
+        // This declared path is a prefix of our target path
+        const suffix = path.slice(declaredPath.length)
+        // Make sure it's a proper prefix (starts with '.' or is empty)
+        if (suffix === '' || suffix.startsWith('.')) {
+          bestBase = varNameStr
+          bestBasePath = declaredPath
+          remainingPath = suffix.startsWith('.') ? suffix.slice(1) : suffix
+        }
+      }
     }
+
+    // Register this path for future chaining
+    declaredPaths.set(path, varName(id))
+
+    // Generate the access code
+    if (remainingPath === '') {
+      return bestBase
+    }
+    return `${bestBase}?.${remainingPath}`
   }
 
-  for (const id of attrElementIds) {
+  // Collect all element IDs that need to be queried, sorted by path length
+  // This ensures shorter paths are declared first for optimal chaining
+  const allElementIds = new Set<string>()
+  for (const el of dynamicElements) allElementIds.add(el.id)
+  for (const el of listElements) allElementIds.add(el.id)
+  for (const id of attrElementIds) allElementIds.add(id)
+  for (const el of interactiveElements) allElementIds.add(el.id)
+  for (const el of refElements) allElementIds.add(el.id)
+
+  // Sort by path length to ensure proper chaining order
+  const sortedIds = Array.from(allElementIds).sort((a, b) => {
+    const pathA = elementPaths.get(a) ?? ''
+    const pathB = elementPaths.get(b) ?? ''
+    return pathA.length - pathB.length
+  })
+
+  // Generate element declarations in sorted order
+  for (const id of sortedIds) {
     if (!queriedIds.has(id)) {
-      lines.push(`const ${varName(id)} = __q('[data-bf="${id}"]')`)
+      lines.push(`const ${varName(id)} = ${getElementAccessCode(id)}`)
       queriedIds.add(id)
-    }
-  }
-
-  for (const el of interactiveElements) {
-    if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
-      queriedIds.add(el.id)
-    }
-  }
-
-  for (const el of refElements) {
-    if (!queriedIds.has(el.id)) {
-      lines.push(`const ${varName(el.id)} = __q('[data-bf="${el.id}"]')`)
-      queriedIds.add(el.id)
     }
   }
 

@@ -52,7 +52,8 @@ describe('irToServerJsx', () => {
       dynamicContent: null,
     }
     const result = irToServerJsx(node, 'Test', signals)
-    expect(result).toContain('data-bf="d0"')
+    // Root elements use path-based navigation (empty path), no data-bf needed
+    expect(result).not.toContain('data-bf="d0"')
     expect(result).toContain('className={0 > 0 ? "active" : ""}')
   })
 
@@ -168,7 +169,8 @@ describe('irToServerJsx', () => {
       dynamicContent: null,
     }
     const result = irToServerJsx(node, 'Test', [])
-    expect(result).toBe('<input data-bf-scope="Test" data-bf="i0" type="text" />')
+    // Root elements use path-based navigation, no data-bf needed
+    expect(result).toBe('<input data-bf-scope="Test" type="text" />')
   })
 })
 

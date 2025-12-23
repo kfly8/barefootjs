@@ -14,6 +14,7 @@ import { isSvgRoot } from '../utils/svg-helpers'
 export type ServerJsxContext = {
   componentName: string
   signals: SignalDeclaration[]
+  needsDataBfIds: Set<string>  // IDs that need data-bf attribute for querySelector fallback
 }
 
 /**
@@ -35,12 +36,19 @@ function htmlToJsx(html: string): string {
  * @param node - IR node to convert
  * @param componentName - Name of the component (for data-bf-scope)
  * @param signals - Signal declarations for prop mapping
+ * @param needsDataBfIds - Set of element IDs that need data-bf attribute (for querySelector fallback)
  * @returns JSX string
  */
-export function irToServerJsx(node: IRNode, componentName: string, signals: SignalDeclaration[]): string {
+export function irToServerJsx(
+  node: IRNode,
+  componentName: string,
+  signals: SignalDeclaration[],
+  needsDataBfIds: Set<string> = new Set()
+): string {
   const ctx: ServerJsxContext = {
     componentName,
     signals,
+    needsDataBfIds,
   }
   return irToServerJsxInternal(node, ctx, true)
 }
@@ -93,17 +101,15 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
 /**
  * Internal implementation of fragment to server JSX conversion
  *
- * When fragment is the root, wraps children in a div with data-bf-scope
- * to enable proper hydration (querySelector needs a common parent).
+ * Fragments output as-is (<>...</>). When fragment is at root,
+ * data-bf-scope is added to the first element child.
  */
 function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext, isRoot: boolean): string {
-  const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
-
-  // Fragment at root needs a wrapper div for hydration to work
-  if (isRoot && ctx.componentName) {
-    return `<div data-bf-scope="${ctx.componentName}">${childrenJsx}</div>`
-  }
-
+  const childrenJsx = node.children.map((child, index) => {
+    // Pass isRoot to the first element child when fragment is root
+    const childIsRoot = isRoot && index === 0 && child.type === 'element'
+    return irToServerJsxInternal(child, ctx, childIsRoot)
+  }).join('')
   return `<>${childrenJsx}</>`
 }
 
@@ -117,12 +123,14 @@ function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext, is
  *
  * @param node - IR node to convert
  * @param signals - Signal declarations for prop mapping
+ * @param needsDataBfIds - Set of element IDs that need data-bf attribute
  * @returns String suitable for use inside JSX expression (e.g., ternary)
  */
-function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[]): string {
+function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set()): string {
   const ctx: ServerJsxContext = {
     componentName: '',
     signals,
+    needsDataBfIds,
   }
   return nodeToJsxExpressionValueInternal(node, ctx)
 }
@@ -173,10 +181,11 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 /**
  * Generates JSX from an IR element (legacy wrapper)
  */
-function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string {
+function elementToServerJsx(el: IRElement, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set()): string {
   const ctx: ServerJsxContext = {
     componentName: '',
     signals,
+    needsDataBfIds,
   }
   return elementToServerJsxInternal(el, ctx, false)
 }
@@ -195,8 +204,9 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
     attrParts.push(`data-bf-scope="${ctx.componentName}"`)
   }
 
-  // Add data-bf attribute if present (for DOM references)
-  if (id) {
+  // Add data-bf for elements that need querySelector fallback
+  // (e.g., elements after component siblings where path-based navigation is unreliable)
+  if (id && ctx.needsDataBfIds.has(id)) {
     attrParts.push(`data-bf="${id}"`)
   }
 
