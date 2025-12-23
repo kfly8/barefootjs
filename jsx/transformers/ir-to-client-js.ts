@@ -240,6 +240,40 @@ export function collectClientJsInfo(
   }
 }
 
+/**
+ * Collects all child component names from IR (for server-side imports)
+ * Unlike collectClientJsInfo, this includes components inside lists
+ */
+export function collectAllChildComponentNames(node: IRNode): string[] {
+  const names: string[] = []
+  collectChildComponentNamesRecursive(node, names)
+  return [...new Set(names)]
+}
+
+function collectChildComponentNamesRecursive(node: IRNode, names: string[]): void {
+  switch (node.type) {
+    case 'element':
+      // Check listInfo for components inside lists
+      if (node.listInfo?.itemIR) {
+        collectChildComponentNamesRecursive(node.listInfo.itemIR, names)
+      }
+      // Recursively process children
+      for (const child of node.children) {
+        collectChildComponentNamesRecursive(child, names)
+      }
+      break
+    case 'conditional':
+      collectChildComponentNamesRecursive(node.whenTrue, names)
+      collectChildComponentNamesRecursive(node.whenFalse, names)
+      break
+    case 'component':
+      if (node.childInits?.name) {
+        names.push(node.childInits.name)
+      }
+      break
+  }
+}
+
 function collectFromElement(
   el: IRElement,
   interactiveElements: InteractiveElement[],
@@ -289,9 +323,11 @@ function collectFromElement(
       arrayExpression: el.listInfo.arrayExpression,
     })
 
-    // Also collect child components from list item IR
+    // Process list item IR for dynamic content, but NOT for childInits
+    // (Components inside lists are rendered as innerHTML template, not initialized separately)
     if (el.listInfo.itemIR) {
-      collectClientJsInfo(el.listInfo.itemIR, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+      // Pass empty array for childInits to avoid collecting child components from list items
+      collectClientJsInfo(el.listInfo.itemIR, interactiveElements, dynamicElements, listElements, dynamicAttributes, [])
     }
   }
 

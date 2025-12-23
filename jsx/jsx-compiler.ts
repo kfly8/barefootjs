@@ -41,6 +41,7 @@ import {
   irToServerJsx,
   irToServerJsxWithRegistry,
   collectClientJsInfo,
+  collectAllChildComponentNames,
   findAndConvertJsxReturn,
   type JsxToIRContext,
 } from './transformers'
@@ -66,9 +67,6 @@ export async function compileJSX(
   readFile: (path: string) => Promise<string>,
   options?: CompileOptions
 ): Promise<CompileJSXResult> {
-  // Create a new IdGenerator for each compilation (enables parallel compilation)
-  const idGenerator = new IdGenerator()
-
   // Cache of compiled components
   const compiledComponents: Map<string, CompileResult> = new Map()
 
@@ -99,8 +97,9 @@ export async function compileJSX(
       componentResults.set(imp.name, result)
     }
 
-    // Compile component (embed child component HTML)
-    const result = compileJsxWithComponents(source, fullPath, componentResults, idGenerator)
+    // Compile component with its own IdGenerator (each component has IDs starting from 0)
+    const componentIdGenerator = new IdGenerator()
+    const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator)
 
     compiledComponents.set(componentPath, result)
     return result
@@ -225,8 +224,8 @@ ${bodyCode}
     if (options?.serverAdapter && result.ir) {
       // Use registry-based JSX generation
       const { jsx, registry } = irToServerJsxWithRegistry(result.ir, name, result.signals)
-      // Extract unique child component names
-      const childComponents = [...new Set(childInits.map(c => c.name))]
+      // Collect all child component names (including those in lists) for server imports
+      const childComponents = collectAllChildComponentNames(result.ir)
       serverJsx = options.serverAdapter.generateServerComponent({
         name,
         props: result.props,
@@ -309,8 +308,12 @@ function compileJsxWithComponents(
     collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
   }
 
+  // Extract component name from file path
+  const componentName = filePath.split('/').pop()!.replace('.tsx', '')
+
   // Generate client JS (createEffect-based)
   const clientJs = generateClientJsWithCreateEffect(
+    componentName,
     interactiveElements,
     dynamicElements,
     listElements,
@@ -365,6 +368,7 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
  * This ensures reliable hydration even when conditional rendering removes elements.
  */
 function generateClientJsWithCreateEffect(
+  componentName: string,
   interactiveElements: InteractiveElement[],
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
@@ -380,23 +384,32 @@ function generateClientJsWithCreateEffect(
   // Helper to make valid JS variable name from slot ID
   const varName = (id: string) => `_${id}`
 
-  // Get DOM elements (with existence checks)
+  // Check if there are any elements to query
+  const hasElements = dynamicElements.length > 0 || listElements.length > 0 ||
+                      attrElementIds.length > 0 || interactiveElements.length > 0
+
+  // Find the component's scope element first (to avoid ID collisions between components)
+  if (hasElements) {
+    lines.push(`const __scope = document.querySelector('[data-bf-scope="${componentName}"]')`)
+  }
+
+  // Get DOM elements within scope (with existence checks)
   for (const el of dynamicElements) {
-    lines.push(`const ${varName(el.id)} = document.querySelector('[data-bf="${el.id}"]')`)
+    lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const el of listElements) {
-    lines.push(`const ${varName(el.id)} = document.querySelector('[data-bf="${el.id}"]')`)
+    lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
   }
 
   for (const id of attrElementIds) {
-    lines.push(`const ${varName(id)} = document.querySelector('[data-bf="${id}"]')`)
+    lines.push(`const ${varName(id)} = __scope?.querySelector('[data-bf="${id}"]')`)
   }
 
   for (const el of interactiveElements) {
     // Only add if not already added for dynamic attributes
     if (!attrElementIds.includes(el.id)) {
-      lines.push(`const ${varName(el.id)} = document.querySelector('[data-bf="${el.id}"]')`)
+      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
     }
   }
 

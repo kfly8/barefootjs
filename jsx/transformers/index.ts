@@ -6,6 +6,7 @@ export { irToServerJsx, irToServerJsxWithRegistry, type ServerJsxContext } from 
 export {
   generateClientJs,
   collectClientJsInfo,
+  collectAllChildComponentNames,
   extractArrowBody,
   extractArrowParams,
   needsCapturePhase,
