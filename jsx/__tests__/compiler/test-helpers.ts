@@ -5,7 +5,7 @@
  */
 
 import { compileJSX } from '../../jsx-compiler'
-import { honoServerAdapter } from '../../adapters/hono'
+import { testServerAdapter } from '../../adapters/test'
 
 /**
  * Compiles a single component
@@ -32,7 +32,7 @@ export async function compile(source: string) {
   return compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: honoServerAdapter })
+  }, { serverAdapter: testServerAdapter })
 }
 
 /**
@@ -63,5 +63,5 @@ export async function compileWithFiles(
   return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: honoServerAdapter })
+  }, { serverAdapter: testServerAdapter })
 }
