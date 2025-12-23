@@ -18,6 +18,7 @@ import type {
   DynamicElement,
   ListElement,
   DynamicAttribute,
+  RefElement,
   LocalFunction,
   ChildComponentInit,
   CompileResult,
@@ -118,7 +119,8 @@ export async function compileJSX(
   }> = []
 
   for (const [path, result] of compiledComponents) {
-    if (result.clientJs) {
+    // Include component if it has clientJs OR ir (for serverJsx generation)
+    if (result.clientJs || result.ir) {
       const name = path.split('/').pop()!.replace('.tsx', '')
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
@@ -172,11 +174,18 @@ export async function compileJSX(
                               result.listElements.length > 0 ||
                               result.dynamicAttributes.length > 0
 
+    // Check if any list uses key-based reconciliation
+    const needsReconcileList = result.listElements.some(el => el.keyExpression !== null)
+
     // Wrap in init function if props exist
     let clientJs = ''
     if (result.clientJs || childInits.length > 0) {
+      const barefootImports = ['createSignal', 'createEffect']
+      if (needsReconcileList) {
+        barefootImports.push('reconcileList')
+      }
       const allImports = [
-        `import { createSignal, createEffect } from './barefoot.js'`,
+        `import { ${barefootImports.join(', ')} } from './barefoot.js'`,
         childImports,
       ].filter(Boolean).join('\n')
 
@@ -300,9 +309,10 @@ function compileJsxWithComponents(
   const listElements: ListElement[] = []
   const dynamicAttributes: DynamicAttribute[] = []
   const childInits: { name: string; propsExpr: string }[] = []
+  const refElements: RefElement[] = []
 
   if (ir) {
-    collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+    collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
   }
 
   // Extract component name from file path
@@ -315,7 +325,8 @@ function compileJsxWithComponents(
     dynamicElements,
     listElements,
     dynamicAttributes,
-    localFunctions
+    localFunctions,
+    refElements
   )
 
   return {
@@ -327,6 +338,7 @@ function compileJsxWithComponents(
     dynamicElements,
     listElements,
     dynamicAttributes,
+    refElements,
     props,
     source,
     ir,
@@ -370,7 +382,8 @@ function generateClientJsWithCreateEffect(
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[],
-  localFunctions: LocalFunction[]
+  localFunctions: LocalFunction[],
+  refElements: RefElement[] = []
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0
@@ -378,12 +391,19 @@ function generateClientJsWithCreateEffect(
   // Collect element IDs with dynamic attributes (remove duplicates)
   const attrElementIds = [...new Set(dynamicAttributes.map(da => da.id))]
 
+  // Collect element IDs with refs (remove duplicates)
+  const refElementIds = [...new Set(refElements.map(r => r.id))]
+
   // Helper to make valid JS variable name from slot ID
   const varName = (id: string) => `_${id}`
 
+  // Track which IDs we've already added queries for
+  const queriedIds = new Set<string>()
+
   // Check if there are any elements to query
   const hasElements = dynamicElements.length > 0 || listElements.length > 0 ||
-                      attrElementIds.length > 0 || interactiveElements.length > 0
+                      attrElementIds.length > 0 || interactiveElements.length > 0 ||
+                      refElements.length > 0
 
   // Find the component's scope element first (to avoid ID collisions between components)
   if (hasElements) {
@@ -392,25 +412,41 @@ function generateClientJsWithCreateEffect(
 
   // Get DOM elements within scope (with existence checks)
   for (const el of dynamicElements) {
-    lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
-  }
-
-  for (const el of listElements) {
-    lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
-  }
-
-  for (const id of attrElementIds) {
-    lines.push(`const ${varName(id)} = __scope?.querySelector('[data-bf="${id}"]')`)
-  }
-
-  for (const el of interactiveElements) {
-    // Only add if not already added for dynamic attributes
-    if (!attrElementIds.includes(el.id)) {
+    if (!queriedIds.has(el.id)) {
       lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      queriedIds.add(el.id)
     }
   }
 
-  if (hasDynamicContent || interactiveElements.length > 0) {
+  for (const el of listElements) {
+    if (!queriedIds.has(el.id)) {
+      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      queriedIds.add(el.id)
+    }
+  }
+
+  for (const id of attrElementIds) {
+    if (!queriedIds.has(id)) {
+      lines.push(`const ${varName(id)} = __scope?.querySelector('[data-bf="${id}"]')`)
+      queriedIds.add(id)
+    }
+  }
+
+  for (const el of interactiveElements) {
+    if (!queriedIds.has(el.id)) {
+      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      queriedIds.add(el.id)
+    }
+  }
+
+  for (const el of refElements) {
+    if (!queriedIds.has(el.id)) {
+      lines.push(`const ${varName(el.id)} = __scope?.querySelector('[data-bf="${el.id}"]')`)
+      queriedIds.add(el.id)
+    }
+  }
+
+  if (hasDynamicContent || interactiveElements.length > 0 || refElements.length > 0) {
     lines.push('')
   }
 
@@ -419,6 +455,17 @@ function generateClientJsWithCreateEffect(
     lines.push(fn.code)
   }
   if (localFunctions.length > 0) {
+    lines.push('')
+  }
+
+  // Execute ref callbacks (with existence check)
+  for (const ref of refElements) {
+    const v = varName(ref.id)
+    lines.push(`if (${v}) {`)
+    lines.push(`  (${ref.callback})(${v})`)
+    lines.push(`}`)
+  }
+  if (refElements.length > 0) {
     lines.push('')
   }
 
@@ -437,7 +484,16 @@ function generateClientJsWithCreateEffect(
     const v = varName(el.id)
     lines.push(`if (${v}) {`)
     lines.push(`  createEffect(() => {`)
-    lines.push(`    ${v}.innerHTML = ${el.mapExpression}`)
+    if (el.keyExpression) {
+      // Use reconcileList for efficient key-based updates
+      // Convert key expression to work in render context (e.g., item.id -> item.id)
+      const renderFn = `(${el.paramName}, __index) => ${el.itemTemplate}`
+      const getKeyFn = `(${el.paramName}) => ${el.keyExpression}`
+      lines.push(`    reconcileList(${v}, ${el.arrayExpression}, ${renderFn}, ${getKeyFn})`)
+    } else {
+      // Fall back to innerHTML for lists without key
+      lines.push(`    ${v}.innerHTML = ${el.mapExpression}`)
+    }
     lines.push(`  })`)
     lines.push(`}`)
   }

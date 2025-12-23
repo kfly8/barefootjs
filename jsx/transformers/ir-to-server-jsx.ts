@@ -5,7 +5,8 @@
  * Unlike ir-to-html which evaluates expressions, this preserves them as JSX.
  */
 
-import type { IRNode, IRElement, SignalDeclaration } from '../types'
+import type { IRNode, IRElement, IRFragment, SignalDeclaration } from '../types'
+import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
  * Context for server JSX generation
@@ -83,7 +84,18 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
 
     case 'element':
       return elementToServerJsxInternal(node, ctx, isRoot)
+
+    case 'fragment':
+      return fragmentToServerJsxInternal(node, ctx)
   }
+}
+
+/**
+ * Internal implementation of fragment to server JSX conversion
+ */
+function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext): string {
+  const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+  return `<>${childrenJsx}</>`
 }
 
 /**
@@ -142,6 +154,10 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
         })
         .join(' ')
       return `<${node.name}${compPropsStr ? ' ' + compPropsStr : ''} />`
+
+    case 'fragment':
+      // Fragment inside expression context
+      return fragmentToServerJsxInternal(node, ctx)
   }
 }
 
@@ -160,7 +176,7 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[]): string
  * Internal implementation of element to server JSX conversion
  */
 function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot: boolean): string {
-  const { tagName, id, staticAttrs, dynamicAttrs, events, children, listInfo, dynamicContent } = el
+  const { tagName, id, staticAttrs, dynamicAttrs, spreadAttrs = [], events, children, listInfo, dynamicContent } = el
 
   // Build attributes
   const attrParts: string[] = []
@@ -173,6 +189,17 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
   // Add data-bf attribute if present (for DOM references)
   if (id) {
     attrParts.push(`data-bf="${id}"`)
+  }
+
+  // Add xmlns for SVG root element
+  if (isSvgRoot(tagName)) {
+    attrParts.push('xmlns="http://www.w3.org/2000/svg"')
+  }
+
+  // Spread attributes (preserve expressions)
+  for (const spread of spreadAttrs) {
+    const expr = replaceSignalCallsWithProps(spread.expression, ctx.signals)
+    attrParts.push(`{...${expr}}`)
   }
 
   // Static attributes (convert class to className)
@@ -206,7 +233,11 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
 
     // Use itemIR for proper JSX generation (avoids escaping issues)
     if (listInfo.itemIR) {
-      const itemJsx = irToServerJsxInternal(listInfo.itemIR, ctx, false)
+      let itemJsx = irToServerJsxInternal(listInfo.itemIR, ctx, false)
+      // Inject data-key attribute if key expression is present
+      if (listInfo.keyExpression) {
+        itemJsx = injectDataKeyAttribute(itemJsx, listInfo.keyExpression)
+      }
       const mapExpr = `{${arrayExpr}?.map((${listInfo.paramName}, __index) => (${itemJsx}))}`
       return `<${tagName}${attrsStr}>${mapExpr}</${tagName}>`
     }
@@ -257,4 +288,22 @@ function replaceSignalCallsWithProps(expr: string, signals: SignalDeclaration[])
  */
 function isSelfClosingTag(tagName: string): boolean {
   return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
+}
+
+/**
+ * Injects data-key attribute into JSX string
+ *
+ * Finds the first element tag and adds data-key={expression} after the tag name.
+ * e.g., "<li className=\"item\">" -> "<li data-key={item.id} className=\"item\">"
+ */
+function injectDataKeyAttribute(jsx: string, keyExpression: string): string {
+  // Match the first opening tag: <tagName followed by space, /, or >
+  const match = jsx.match(/^<([a-zA-Z][a-zA-Z0-9]*)/)
+  if (!match) return jsx
+
+  const tagName = match[1]
+  const tagLength = match[0].length
+
+  // Insert data-key after the tag name
+  return `<${tagName} data-key={${keyExpression}}${jsx.slice(tagLength)}`
 }

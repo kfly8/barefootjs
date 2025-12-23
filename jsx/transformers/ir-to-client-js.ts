@@ -14,6 +14,7 @@ import type {
   DynamicElement,
   ListElement,
   DynamicAttribute,
+  RefElement,
 } from '../types'
 
 // Import parsers using TypeScript API
@@ -222,19 +223,26 @@ export function collectClientJsInfo(
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[],
-  childInits: Array<{ name: string; propsExpr: string }> = []
+  childInits: Array<{ name: string; propsExpr: string }> = [],
+  refElements: RefElement[] = []
 ): void {
   switch (node.type) {
     case 'element':
-      collectFromElement(node, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+      collectFromElement(node, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
       break
     case 'conditional':
-      collectClientJsInfo(node.whenTrue, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
-      collectClientJsInfo(node.whenFalse, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+      collectClientJsInfo(node.whenTrue, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
+      collectClientJsInfo(node.whenFalse, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
       break
     case 'component':
       if (node.childInits) {
         childInits.push(node.childInits)
+      }
+      break
+    case 'fragment':
+      // Recursively process fragment children
+      for (const child of node.children) {
+        collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
       }
       break
   }
@@ -271,6 +279,12 @@ function collectChildComponentNamesRecursive(node: IRNode, names: string[]): voi
         names.push(node.childInits.name)
       }
       break
+    case 'fragment':
+      // Recursively process fragment children
+      for (const child of node.children) {
+        collectChildComponentNamesRecursive(child, names)
+      }
+      break
   }
 }
 
@@ -280,8 +294,18 @@ function collectFromElement(
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[],
-  childInits: Array<{ name: string; propsExpr: string }>
+  childInits: Array<{ name: string; propsExpr: string }>,
+  refElements: RefElement[]
 ): void {
+  // If element has ref
+  if (el.ref && el.id) {
+    refElements.push({
+      id: el.id,
+      tagName: el.tagName,
+      callback: el.ref,
+    })
+  }
+
   // If element has events
   if (el.events.length > 0 && el.id) {
     interactiveElements.push({
@@ -321,18 +345,21 @@ function collectFromElement(
       mapExpression: `${el.listInfo.arrayExpression}.map((${el.listInfo.paramName}, __index) => ${el.listInfo.itemTemplate}).join('')`,
       itemEvents: el.listInfo.itemEvents,
       arrayExpression: el.listInfo.arrayExpression,
+      keyExpression: el.listInfo.keyExpression,
+      paramName: el.listInfo.paramName,
+      itemTemplate: el.listInfo.itemTemplate,
     })
 
     // Process list item IR for dynamic content, but NOT for childInits
     // (Components inside lists are rendered as innerHTML template, not initialized separately)
     if (el.listInfo.itemIR) {
-      // Pass empty array for childInits to avoid collecting child components from list items
-      collectClientJsInfo(el.listInfo.itemIR, interactiveElements, dynamicElements, listElements, dynamicAttributes, [])
+      // Pass empty array for childInits and refElements to avoid collecting from list items
+      collectClientJsInfo(el.listInfo.itemIR, interactiveElements, dynamicElements, listElements, dynamicAttributes, [], [])
     }
   }
 
   // Recursively process children
   for (const child of el.children) {
-    collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits)
+    collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
   }
 }

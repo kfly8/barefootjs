@@ -12,6 +12,7 @@ import type {
   IRExpression,
   IRComponent,
   IRConditional,
+  IRFragment,
   IRListInfo,
   SignalDeclaration,
   CompileResult,
@@ -39,6 +40,10 @@ export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
     return jsxSelfClosingToIR(node, ctx)
   }
 
+  if (ts.isJsxFragment(node)) {
+    return jsxFragmentToIR(node, ctx)
+  }
+
   if (ts.isJsxText(node)) {
     const text = node.getText(ctx.sourceFile).trim()
     if (!text) return null
@@ -53,6 +58,23 @@ export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
 }
 
 /**
+ * Converts JSX fragment to IR
+ */
+function jsxFragmentToIR(node: ts.JsxFragment, ctx: JsxToIRContext): IRFragment {
+  const children: IRNode[] = []
+  for (const child of node.children) {
+    const irNode = jsxToIR(child, ctx)
+    if (irNode) {
+      children.push(irNode)
+    }
+  }
+  return {
+    type: 'fragment',
+    children,
+  }
+}
+
+/**
  * Converts JSX element to IR
  */
 function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
@@ -64,7 +86,7 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
   }
 
   // Regular HTML element
-  const { staticAttrs, dynamicAttrs, events } = processAttributes(
+  const { staticAttrs, dynamicAttrs, spreadAttrs, ref, events } = processAttributes(
     node.openingElement.attributes,
     ctx
   )
@@ -73,7 +95,7 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
   const { children, listInfo, hasDynamicContent, dynamicContent } = processChildren(node.children, ctx)
 
   // Assign slot ID if element needs client-side handling
-  const needsId = events.length > 0 || dynamicAttrs.length > 0 || listInfo || hasDynamicContent
+  const needsId = events.length > 0 || dynamicAttrs.length > 0 || listInfo || hasDynamicContent || ref !== null
   const id = needsId ? generateSlotId(ctx) : null
 
   return {
@@ -82,6 +104,8 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
     id,
     staticAttrs,
     dynamicAttrs,
+    spreadAttrs,
+    ref,
     events,
     children,
     listInfo,
@@ -100,9 +124,9 @@ function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext)
     return componentToIR(tagName, node.attributes, ctx)
   }
 
-  const { staticAttrs, dynamicAttrs, events } = processAttributes(node.attributes, ctx)
+  const { staticAttrs, dynamicAttrs, spreadAttrs, ref, events } = processAttributes(node.attributes, ctx)
 
-  const needsId = events.length > 0 || dynamicAttrs.length > 0
+  const needsId = events.length > 0 || dynamicAttrs.length > 0 || ref !== null
   const id = needsId ? generateSlotId(ctx) : null
 
   return {
@@ -111,6 +135,8 @@ function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext)
     id,
     staticAttrs,
     dynamicAttrs,
+    spreadAttrs,
+    ref,
     events,
     children: [],
     listInfo: null,
@@ -225,8 +251,8 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
 /**
  * Finds JSX element in expression (unwrapping parentheses)
  */
-function findJsxInExpression(node: ts.Expression): ts.JsxElement | ts.JsxSelfClosingElement | null {
-  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+function findJsxInExpression(node: ts.Expression): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxFragment | null {
+  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
     return node
   }
   if (ts.isParenthesizedExpression(node)) {
@@ -261,8 +287,8 @@ function processConditionalBranch(node: ts.Expression, ctx: JsxToIRContext): IRN
     return processConditionalBranch(node.expression, ctx)
   }
 
-  // JSX element
-  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+  // JSX element or fragment
+  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
     return jsxToIR(node, ctx)!
   }
 
@@ -283,16 +309,40 @@ function processAttributes(
 ): {
   staticAttrs: IRElement['staticAttrs']
   dynamicAttrs: IRElement['dynamicAttrs']
+  spreadAttrs: IRElement['spreadAttrs']
+  ref: string | null
   events: IRElement['events']
 } {
   const staticAttrs: IRElement['staticAttrs'] = []
   const dynamicAttrs: IRElement['dynamicAttrs'] = []
+  const spreadAttrs: IRElement['spreadAttrs'] = []
+  let ref: string | null = null
   const events: IRElement['events'] = []
 
   attributes.properties.forEach((attr) => {
+    // Handle spread attributes
+    if (ts.isJsxSpreadAttribute(attr)) {
+      const expression = attr.expression.getText(ctx.sourceFile)
+      spreadAttrs.push({ expression })
+      return
+    }
+
     if (!ts.isJsxAttribute(attr) || !attr.name) return
 
     const attrName = attr.name.getText(ctx.sourceFile)
+
+    // Skip key attribute (handled separately by list processing)
+    if (attrName === 'key') {
+      return
+    }
+
+    // Handle ref attribute
+    if (attrName === 'ref') {
+      if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+        ref = attr.initializer.expression.getText(ctx.sourceFile)
+      }
+      return
+    }
 
     // Event handler
     if (attrName.startsWith('on')) {
@@ -304,10 +354,11 @@ function processAttributes(
       return
     }
 
-    // Dynamic attribute
+    // Dynamic attribute (signal-dependent expression or specific attribute targets)
     if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
       const expression = attr.initializer.expression.getText(ctx.sourceFile)
-      if (isDynamicAttributeTarget(attrName)) {
+      // Treat as dynamic if it's a known target OR contains signal calls
+      if (isDynamicAttributeTarget(attrName) || containsSignalCall(expression, ctx.signals)) {
         dynamicAttrs.push({ name: attrName, expression })
         return
       }
@@ -318,6 +369,7 @@ function processAttributes(
       if (ts.isStringLiteral(attr.initializer)) {
         staticAttrs.push({ name: attrName, value: attr.initializer.text })
       } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+        // Expression without signal calls - store as static
         staticAttrs.push({ name: attrName, value: attr.initializer.expression.getText(ctx.sourceFile) })
       }
     } else {
@@ -325,7 +377,7 @@ function processAttributes(
     }
   })
 
-  return { staticAttrs, dynamicAttrs, events }
+  return { staticAttrs, dynamicAttrs, spreadAttrs, ref, events }
 }
 
 /**
@@ -414,6 +466,9 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
   if (!param) return null
 
   const paramName = param.name.getText(ctx.sourceFile)
+  // Check for index parameter (e.g., (item, index) => ...)
+  const indexParam = callback.parameters[1]
+  const indexParamName = indexParam ? indexParam.name.getText(ctx.sourceFile) : null
   const arrayExpr = expr.expression.expression.getText(ctx.sourceFile)
 
   // Generate template from callback body
@@ -431,6 +486,9 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
 
   if (!jsxBody) return null
 
+  // Extract key attribute from the root element
+  const keyExpression = extractKeyAttribute(jsxBody, ctx, indexParamName)
+
   // Convert JSX to template string (with component inlining support)
   const { template, events } = jsxToTemplateString(jsxBody, ctx.sourceFile, paramName, ctx.components)
 
@@ -443,7 +501,40 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
     itemTemplate: template,
     itemIR,
     itemEvents: events.map(e => ({ ...e, paramName })),
+    keyExpression,
   }
+}
+
+/**
+ * Extracts key attribute from JSX element
+ * Returns the expression (e.g., 'item.id' or '__index') or null if no key
+ */
+function extractKeyAttribute(
+  node: ts.JsxElement | ts.JsxSelfClosingElement,
+  ctx: JsxToIRContext,
+  indexParamName: string | null
+): string | null {
+  const attributes = ts.isJsxElement(node)
+    ? node.openingElement.attributes
+    : node.attributes
+
+  for (const attr of attributes.properties) {
+    if (!ts.isJsxAttribute(attr) || !attr.name) continue
+
+    const attrName = attr.name.getText(ctx.sourceFile)
+    if (attrName !== 'key') continue
+
+    if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+      const expr = attr.initializer.expression.getText(ctx.sourceFile)
+      // If key is the index parameter, normalize to __index
+      if (indexParamName && expr === indexParamName) {
+        return '__index'
+      }
+      return expr
+    }
+  }
+
+  return null
 }
 
 /**
@@ -499,7 +590,7 @@ export function findAndConvertJsxReturn(
       if (ts.isParenthesizedExpression(expr)) {
         expr = expr.expression
       }
-      if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
+      if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr) || ts.isJsxFragment(expr)) {
         result = jsxToIR(expr, ctx)
       }
       return

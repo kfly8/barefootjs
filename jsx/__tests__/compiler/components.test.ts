@@ -349,10 +349,13 @@ describe('Components - Hash and filename', () => {
     expect(counter!.hash).toBeTruthy()
     expect(counter!.filename).toContain(counter!.hash)
 
-    // Only components with clientJs are included in the output
-    // App component (wrapper without clientJs) is not included
+    // All components with JSX return are included (even without clientJs)
+    // App component has serverJsx but no clientJs
     const app = result.components.find(c => c.name === 'App')
-    expect(app).toBeUndefined()
+    expect(app).toBeDefined()
+    expect(app!.hasClientJs).toBe(false)
+    expect(app!.filename).toBe('')
+    expect(app!.serverJsx).toContain('<Counter />')
   })
 })
 

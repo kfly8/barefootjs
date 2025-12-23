@@ -30,6 +30,12 @@ export type ListElement = {
     paramName: string     // item
   }>
   arrayExpression: string // items() - expression to get the array
+  /** Key expression for efficient list reconciliation (null if no key) */
+  keyExpression: string | null
+  /** Parameter name in map callback (e.g., 'item') */
+  paramName: string
+  /** Item template for rendering */
+  itemTemplate: string
 }
 
 export type DynamicAttribute = {
@@ -37,6 +43,12 @@ export type DynamicAttribute = {
   tagName: string
   attrName: string       // class, style, disabled, value, etc.
   expression: string     // isActive() ? 'active' : ''
+}
+
+export type RefElement = {
+  id: string
+  tagName: string
+  callback: string       // (el) => inputRef = el
 }
 
 export type SignalDeclaration = {
@@ -64,6 +76,7 @@ export type CompileResult = {
   dynamicElements: DynamicElement[]
   listElements: ListElement[]
   dynamicAttributes: DynamicAttribute[]
+  refElements: RefElement[]        // Elements with ref callbacks
   props: string[]  // Props names the component receives
   source: string   // Component source code (for inline expansion in map)
   ir: IRNode | null  // Intermediate Representation for server JSX generation
@@ -162,6 +175,7 @@ export type IRNode =
   | IRExpression
   | IRComponent
   | IRConditional
+  | IRFragment
 
 export type IRElement = {
   type: 'element'
@@ -169,6 +183,10 @@ export type IRElement = {
   id: string | null
   staticAttrs: Array<{ name: string; value: string }>
   dynamicAttrs: Array<{ name: string; expression: string }>
+  /** Spread attributes ({...props}) */
+  spreadAttrs: Array<{ expression: string }>
+  /** Ref callback expression */
+  ref: string | null
   events: Array<{ name: string; eventName: string; handler: string }>
   children: IRNode[]
   listInfo: IRListInfo | null
@@ -214,4 +232,11 @@ export type IRListInfo = {
     handler: string
     paramName: string
   }>
+  /** Key expression for efficient list reconciliation (null if no key) */
+  keyExpression: string | null
+}
+
+export type IRFragment = {
+  type: 'fragment'
+  children: IRNode[]
 }

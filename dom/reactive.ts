@@ -170,3 +170,74 @@ export function onCleanup(fn: CleanupFn): void {
     }
   }
 }
+
+// --- reconcileList ---
+
+/**
+ * reconcileList - Efficient key-based list updates
+ *
+ * Updates a list container by reusing existing DOM elements when possible,
+ * based on the key attribute. This is more efficient than innerHTML for
+ * lists where items are added, removed, or reordered.
+ *
+ * @param container - The container element holding the list items
+ * @param items - The new array of items to render
+ * @param renderFn - Function to render an item to HTML string
+ * @param getKey - Function to extract unique key from item
+ *
+ * @example
+ * const [todos, setTodos] = createSignal([{ id: 1, text: 'Buy milk' }])
+ * createEffect(() => {
+ *   reconcileList(
+ *     listEl,
+ *     todos(),
+ *     (todo, i) => `<li data-key="${todo.id}">${todo.text}</li>`,
+ *     todo => todo.id
+ *   )
+ * })
+ */
+export function reconcileList<T>(
+  container: HTMLElement,
+  items: T[],
+  renderFn: (item: T, index: number) => string,
+  getKey: (item: T) => string | number
+): void {
+  const newKeys = items.map(getKey)
+  const existingElements = Array.from(container.children) as HTMLElement[]
+  const existingMap = new Map<string | number, HTMLElement>()
+
+  // Build map of existing elements by key
+  existingElements.forEach(el => {
+    const key = el.dataset.key
+    if (key !== undefined) {
+      // Try to preserve original type (number vs string)
+      const numKey = Number(key)
+      existingMap.set(Number.isNaN(numKey) ? key : numKey, el)
+    }
+  })
+
+  // Build new list
+  const fragment = document.createDocumentFragment()
+  items.forEach((item, index) => {
+    const key = newKeys[index]
+    const existing = existingMap.get(key)
+
+    if (existing) {
+      // Reuse existing element
+      fragment.appendChild(existing)
+      existingMap.delete(key)
+    } else {
+      // Create new element
+      const temp = document.createElement('div')
+      temp.innerHTML = renderFn(item, index)
+      const newElement = temp.firstChild
+      if (newElement) {
+        fragment.appendChild(newElement)
+      }
+    }
+  })
+
+  // Clear container and append new list
+  container.innerHTML = ''
+  container.appendChild(fragment)
+}

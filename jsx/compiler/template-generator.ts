@@ -288,6 +288,14 @@ export function jsxToTemplateString(
         if (ts.isJsxAttribute(attr) && attr.name) {
           const attrName = attr.name.getText(sourceFile)
 
+          // Convert key to data-key for list reconciliation
+          if (attrName === 'key') {
+            if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+              attrs += ` data-key="\${${attr.initializer.expression.getText(sourceFile)}}"`
+            }
+            return
+          }
+
           if (attrName.startsWith('on')) {
             // Detect event handler
             const eventName = attrName.slice(2).toLowerCase()
