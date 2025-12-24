@@ -3,7 +3,7 @@
  * Form to add new todos
  */
 
-import { createSignal } from 'barefoot'
+import { createSignal } from '@barefootjs/dom'
 
 type Props = {
   onAdd: (text: string) => void

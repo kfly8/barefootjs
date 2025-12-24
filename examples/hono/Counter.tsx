@@ -6,7 +6,7 @@
  * - Client JS (for interactivity)
  */
 
-import { createSignal } from 'barefoot'
+import { createSignal } from '@barefootjs/dom'
 
 function Counter() {
   const [count, setCount] = createSignal(0)

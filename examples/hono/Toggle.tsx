@@ -1,4 +1,4 @@
-import { createSignal } from 'barefoot'
+import { createSignal } from '@barefootjs/dom'
 
 function Toggle() {
   const [on, setOn] = createSignal(false)

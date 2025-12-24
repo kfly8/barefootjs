@@ -4,7 +4,7 @@
  * Main component - renders initial todos from server, then uses API for updates
  */
 
-import { createSignal, createEffect } from 'barefoot'
+import { createSignal, createEffect } from '@barefootjs/dom'
 import TodoItem from './TodoItem'
 import AddTodoForm from './AddTodoForm'
 

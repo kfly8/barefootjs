@@ -5,7 +5,7 @@
  * which widgets to show based on feature flags.
  */
 
-import { createSignal } from 'barefoot'
+import { createSignal } from '@barefootjs/dom'
 
 type Props = {
   showCounter?: boolean
