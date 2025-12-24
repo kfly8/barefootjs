@@ -42,8 +42,8 @@ describe('Dynamic Content', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Updated with createEffect and existence check
-    expect(component.clientJs).toContain('_0.textContent = count()')
+    // Updated with createEffect, existence check, and String() wrapper
+    expect(component.clientJs).toContain('_0.textContent = String(count())')
     expect(component.clientJs).toContain('if (_0)')
   })
 
@@ -58,7 +58,7 @@ describe('Dynamic Content', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain('_0.textContent = count() * 2')
+    expect(component.clientJs).toContain('_0.textContent = String(count() * 2)')
   })
 
   it('conditional expression (ternary operator)', async () => {
@@ -72,7 +72,7 @@ describe('Dynamic Content', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    expect(component.clientJs).toContain("_0.textContent = on() ? 'ON' : 'OFF'")
+    expect(component.clientJs).toContain("_0.textContent = String(on() ? 'ON' : 'OFF')")
   })
 
   it('text + dynamic content', async () => {
@@ -86,8 +86,9 @@ describe('Dynamic Content', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // String() wrapper is added for safe concatenation with text
-    expect(component.clientJs).toContain('_0.textContent = "Count:" + String(count())')
+    // String() wrapper is added for safe concatenation with text (now double-wrapped)
+    // Note: whitespace after "Count:" is preserved
+    expect(component.clientJs).toContain('_0.textContent = String("Count: " + String(count()))')
   })
 
 })

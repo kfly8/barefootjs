@@ -143,7 +143,8 @@ export function generateClientJs(ctx: ClientJsContext): string {
   if (hasDynamicContent) {
     lines.push('function updateAll() {')
     for (const el of ctx.dynamicElements) {
-      lines.push(`  ${el.id}.textContent = ${el.fullContent}`)
+      // Wrap in String() for consistent textContent assignment across environments
+      lines.push(`  ${el.id}.textContent = String(${el.fullContent})`)
     }
     for (const el of ctx.listElements) {
       lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
@@ -350,12 +351,11 @@ function collectFromElement(
       itemTemplate: el.listInfo.itemTemplate,
     })
 
-    // Process list item IR for dynamic content, but NOT for childInits
-    // (Components inside lists are rendered as innerHTML template, not initialized separately)
-    if (el.listInfo.itemIR) {
-      // Pass empty array for childInits and refElements to avoid collecting from list items
-      collectClientJsInfo(el.listInfo.itemIR, interactiveElements, dynamicElements, listElements, dynamicAttributes, [], [])
-    }
+    // List items are rendered as innerHTML/reconcileList template
+    // Their events are handled via event delegation (itemEvents)
+    // Their dynamic attributes are embedded in the template string
+    // So we should NOT collect them as separate clientJs info
+    // (No recursive call for listInfo.itemIR)
   }
 
   // Recursively process children

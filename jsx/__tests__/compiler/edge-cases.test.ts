@@ -35,9 +35,9 @@ describe('Deeply Nested JSX', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // createEffect should be generated for the dynamic content
+    // createEffect should be generated for the dynamic content with String() wrapper
     expect(component.clientJs).toContain('createEffect')
-    expect(component.clientJs).toContain('_0.textContent = count()')
+    expect(component.clientJs).toContain('_0.textContent = String(count())')
   })
 
   it('handles nested elements with multiple dynamic values', async () => {
@@ -63,10 +63,10 @@ describe('Deeply Nested JSX', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Three createEffect calls (sequential slot IDs)
-    expect(component.clientJs).toContain('_0.textContent = a()')
-    expect(component.clientJs).toContain('_1.textContent = b()')
-    expect(component.clientJs).toContain('_2.textContent = c()')
+    // Three createEffect calls (sequential slot IDs) with String() wrapper
+    expect(component.clientJs).toContain('_0.textContent = String(a())')
+    expect(component.clientJs).toContain('_1.textContent = String(b())')
+    expect(component.clientJs).toContain('_2.textContent = String(c())')
   })
 
   it('handles nested elements with events at different levels', async () => {

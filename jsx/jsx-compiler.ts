@@ -532,7 +532,8 @@ function generateClientJsWithCreateEffect(
     const v = varName(el.id)
     lines.push(`if (${v}) {`)
     lines.push(`  createEffect(() => {`)
-    lines.push(`    ${v}.textContent = ${el.fullContent}`)
+    // Wrap in String() for consistent textContent assignment across environments
+    lines.push(`    ${v}.textContent = String(${el.fullContent})`)
     lines.push(`  })`)
     lines.push(`}`)
   }

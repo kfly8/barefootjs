@@ -5,7 +5,7 @@
  */
 
 import { compileJSX } from '../../jsx-compiler'
-import { testServerAdapter } from '../../adapters/test'
+import { testJsxAdapter } from '../../adapters/testing'
 
 /**
  * Compiles a single component
@@ -32,7 +32,7 @@ export async function compile(source: string) {
   return compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: testServerAdapter })
+  }, { serverAdapter: testJsxAdapter })
 }
 
 /**
@@ -63,5 +63,5 @@ export async function compileWithFiles(
   return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: testServerAdapter })
+  }, { serverAdapter: testJsxAdapter })
 }

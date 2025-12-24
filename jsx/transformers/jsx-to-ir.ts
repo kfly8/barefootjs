@@ -45,7 +45,27 @@ export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
   }
 
   if (ts.isJsxText(node)) {
-    const text = node.getText(ctx.sourceFile).trim()
+    // JSX text processing follows React-like rules:
+    // 1. Text containing only whitespace with newlines is ignored
+    // 2. Leading/trailing newlines with their indentation are trimmed
+    // 3. Internal newlines are converted to single space
+    // 4. Adjacent whitespace is preserved (e.g., "text: " keeps trailing space)
+    const rawText = node.getText(ctx.sourceFile)
+
+    // If text is only whitespace containing newlines, skip it
+    if (/^\s*$/.test(rawText) && rawText.includes('\n')) {
+      return null
+    }
+
+    // Normalize: collapse leading/trailing whitespace with newlines, preserve inline spaces
+    let text = rawText
+      // Remove leading whitespace that includes newlines
+      .replace(/^[\t ]*\n[\s]*/, '')
+      // Remove trailing whitespace that includes newlines
+      .replace(/[\s]*\n[\t ]*$/, '')
+      // Convert internal newlines to single space
+      .replace(/\s*\n\s*/g, ' ')
+
     if (!text) return null
     return { type: 'text', content: text }
   }
