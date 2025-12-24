@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "exports": {
     ".": "./src/index.ts",
-    "./adapters/hono": "./src/adapters/hono.ts",
     "./adapters/testing": "./src/adapters/testing.ts"
   }
 }

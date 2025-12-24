@@ -176,7 +176,7 @@ describe('irToServerJsx', () => {
 
 describe('irToServerJsx with honoServerAdapter integration', () => {
   it('generates JSX that works with Hono adapter', async () => {
-    const { honoServerAdapter } = await import('../../src/adapters/hono')
+    const { honoServerAdapter } = await import('@barefootjs/hono')
 
     const ir: IRElement = {
       type: 'element',
@@ -204,6 +204,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
     const result = honoServerAdapter.generateServerComponent({
       name: 'Counter',
       props: [],
+      typeDefinitions: [],
       jsx,
       ir,
       signals: [],
@@ -217,7 +218,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
   })
 
   it('generates JSX with props that Hono adapter can use for hydration', async () => {
-    const { honoServerAdapter } = await import('../../src/adapters/hono')
+    const { honoServerAdapter } = await import('@barefootjs/hono')
 
     const signals: SignalDeclaration[] = [
       { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },
@@ -254,7 +255,8 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
     const jsx = irToServerJsx(ir, 'Counter', signals)
     const result = honoServerAdapter.generateServerComponent({
       name: 'TodoApp',
-      props: ['initialTodos'],
+      props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
+      typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],
       jsx,
       ir,
       signals,

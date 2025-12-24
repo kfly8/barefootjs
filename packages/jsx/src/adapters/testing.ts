@@ -27,10 +27,16 @@ import { isSvgRoot } from '../utils/svg-helpers'
  * ```
  */
 export const testJsxAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, props, jsx }) => {
-    const propsParam = props.length > 0
-      ? `{ ${props.join(', ')} }: { ${props.map(p => `${p}: any`).join('; ')} }`
-      : ''
+  generateServerComponent: ({ name, props, typeDefinitions: _typeDefinitions, jsx }) => {
+    let propsParam = ''
+    if (props.length > 0) {
+      const propNames = props.map(p => p.name)
+      const propsType = props.map(p => {
+        const optionalMark = p.optional ? '?' : ''
+        return `${p.name}${optionalMark}: ${p.type}`
+      }).join('; ')
+      propsParam = `{ ${propNames.join(', ')} }: { ${propsType} }`
+    }
 
     return `export function ${name}(${propsParam}) {
   return (

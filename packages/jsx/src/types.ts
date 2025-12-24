@@ -67,6 +67,12 @@ export type ChildComponentInit = {
   propsExpr: string   // { onAdd: handleAdd }
 }
 
+export type PropWithType = {
+  name: string        // showCounter
+  type: string        // boolean
+  optional: boolean   // true if has ? or default value
+}
+
 export type CompileResult = {
   clientJs: string
   signals: SignalDeclaration[]
@@ -77,7 +83,8 @@ export type CompileResult = {
   listElements: ListElement[]
   dynamicAttributes: DynamicAttribute[]
   refElements: RefElement[]        // Elements with ref callbacks
-  props: string[]  // Props names the component receives
+  props: PropWithType[]            // Props with type information
+  typeDefinitions: string[]        // Type definitions used by props
   source: string   // Component source code (for inline expansion in map)
   ir: IRNode | null  // Intermediate Representation for server JSX generation
 }
@@ -93,7 +100,7 @@ export type ComponentOutput = {
   filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js), empty if no client JS
   clientJs: string
   serverJsx: string      // Server JSX component (for hono/jsx integration)
-  props: string[]        // Props names the component receives
+  props: PropWithType[]  // Props with type information
   hasClientJs: boolean   // Whether this component needs client-side JS
 }
 
@@ -116,7 +123,8 @@ export type ServerComponentAdapter = {
    */
   generateServerComponent: (options: {
     name: string
-    props: string[]
+    props: PropWithType[]
+    typeDefinitions: string[]
     jsx: string
     ir: IRNode | null
     signals: SignalDeclaration[]

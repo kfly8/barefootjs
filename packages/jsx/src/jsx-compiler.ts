@@ -30,7 +30,8 @@ import type {
 import {
   extractImports,
   extractSignals,
-  extractComponentProps,
+  extractComponentPropsWithTypes,
+  extractTypeDefinitions,
   extractLocalFunctions,
 } from './extractors'
 import { IdGenerator } from './utils/id-generator'
@@ -201,7 +202,7 @@ export async function compileJSX(
       ].filter(Boolean).join('\n')
 
       if (result.props.length > 0) {
-        const propsParam = `{ ${result.props.join(', ')} }`
+        const propsParam = `{ ${result.props.map(p => p.name).join(', ')} }`
         // Add auto-hydration code that looks for embedded props and calls init
         const autoHydrateCode = `
 // Auto-hydration: look for embedded props from server
@@ -248,6 +249,7 @@ ${bodyCode}
       serverJsx = options.serverAdapter.generateServerComponent({
         name,
         props: result.props,
+        typeDefinitions: result.typeDefinitions,
         jsx,
         ir: result.ir,
         signals: result.signals,
@@ -298,8 +300,12 @@ function compileJsxWithComponents(
   // Extract signal declarations
   const signals = extractSignals(source, filePath)
 
-  // Extract component props
-  const props = extractComponentProps(source, filePath)
+  // Extract component props with types
+  const props = extractComponentPropsWithTypes(source, filePath)
+
+  // Extract type definitions used by props
+  const propTypes = props.map(p => p.type)
+  const typeDefinitions = extractTypeDefinitions(source, filePath, propTypes)
 
   // Extract local functions
   const localFunctions = extractLocalFunctions(source, filePath, signals)
@@ -353,6 +359,7 @@ function compileJsxWithComponents(
     dynamicAttributes,
     refElements,
     props,
+    typeDefinitions,
     source,
     ir,
   }

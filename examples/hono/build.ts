@@ -7,8 +7,8 @@
  * - dist/manifest.json
  */
 
-import { compileJSX } from '@barefootjs/jsx'
-import { honoServerAdapter } from '@barefootjs/jsx/adapters/hono'
+import { compileJSX, type PropWithType } from '@barefootjs/jsx'
+import { honoServerAdapter } from '@barefootjs/hono'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -37,7 +37,7 @@ await Bun.write(
 console.log(`Generated: dist/${barefootFileName}`)
 
 // Manifest
-const manifest: Record<string, { clientJs?: string; serverJsx: string; props: string[] }> = {
+const manifest: Record<string, { clientJs?: string; serverJsx: string; props: PropWithType[] }> = {
   '__barefoot__': { serverJsx: '', clientJs: barefootFileName, props: [] }
 }
 

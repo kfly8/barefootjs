@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { honoServerAdapter } from '../../src/adapters/hono'
+import { honoServerAdapter } from '@barefootjs/hono'
 import type { IRElement } from '../../src/types'
 
 describe('honoServerAdapter', () => {
@@ -24,6 +24,7 @@ describe('honoServerAdapter', () => {
       const result = honoServerAdapter.generateServerComponent({
         name: 'Hello',
         props: [],
+        typeDefinitions: [],
         jsx: '<div>Hello</div>',
         ir,
         signals: [],
@@ -50,7 +51,8 @@ describe('honoServerAdapter', () => {
 
       const result = honoServerAdapter.generateServerComponent({
         name: 'Counter',
-        props: ['initialCount'],
+        props: [{ name: 'initialCount', type: 'number', optional: true }],
+        typeDefinitions: [],
         jsx: '<div>{initialCount}</div>',
         ir,
         signals: [],
@@ -80,6 +82,7 @@ describe('honoServerAdapter', () => {
       const result = honoServerAdapter.generateServerComponent({
         name: 'Parent',
         props: [],
+        typeDefinitions: [],
         jsx: '<div><Child /></div>',
         ir,
         signals: [],
@@ -105,7 +108,8 @@ describe('honoServerAdapter', () => {
 
       const result = honoServerAdapter.generateServerComponent({
         name: 'TodoApp',
-        props: ['initialTodos'],
+        props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
+        typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],
         jsx: '<div>{initialTodos}</div>',
         ir,
         signals: [],

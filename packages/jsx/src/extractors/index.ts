@@ -4,5 +4,5 @@
 
 export { extractImports } from './imports'
 export { extractSignals } from './signals'
-export { extractComponentProps } from './props'
+export { extractComponentPropsWithTypes, extractTypeDefinitions } from './props'
 export { extractLocalFunctions } from './local-functions'

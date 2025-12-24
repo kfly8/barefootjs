@@ -101,7 +101,7 @@ describe('Components - Basics', () => {
     const counterComponent = result.components.find(c => c.name === 'Counter')
     expect(counterComponent).toBeDefined()
     // Props are stored in component output
-    expect(counterComponent!.props).toContain('initial')
+    expect(counterComponent!.props.map(p => p.name)).toContain('initial')
   })
 
   it('Component with children and clientJs', async () => {
@@ -131,7 +131,7 @@ describe('Components - Basics', () => {
     const buttonComponent = result.components.find(c => c.name === 'Button')
     expect(buttonComponent).toBeDefined()
     // Children prop is handled
-    expect(buttonComponent!.props).toContain('children')
+    expect(buttonComponent!.props.map(p => p.name)).toContain('children')
   })
 })
 

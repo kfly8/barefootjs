@@ -6,7 +6,7 @@
  * This enables automatic script inclusion even inside Suspense boundaries.
  */
 
-import type { ServerComponentAdapter } from '../types'
+import type { ServerComponentAdapter } from './types'
 
 /**
  * Injects conditional data-key prop into the root element of JSX string.
@@ -40,13 +40,18 @@ function injectDataKeyProp(jsx: string): string {
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents }) => {
+  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, childComponents }) => {
+    // Extract prop names for destructuring
+    const propNames = props.map(p => p.name)
     // Always include "data-key" for list item reconciliation support
     // Also include "__listIndex" for event delegation in lists
-    const allProps = [...props, '"data-key": __dataKey', '__listIndex']
+    const allProps = [...propNames, '"data-key": __dataKey', '__listIndex']
     const propsParam = `{ ${allProps.join(', ')} }`
-    // Build propsType without leading semicolon when props is empty
-    const basePropsType = props.map(p => `${p}?: unknown`).join('; ')
+    // Build propsType with actual type annotations from source
+    const basePropsType = props.map(p => {
+      const optionalMark = p.optional ? '?' : ''
+      return `${p.name}${optionalMark}: ${p.type}`
+    }).join('; ')
     const propsType = `: { ${basePropsType}${basePropsType ? '; ' : ''}"data-key"?: string | number; __listIndex?: number }`
 
     // Inject conditional data-key attribute into root element
@@ -63,6 +68,9 @@ export const honoServerAdapter: ServerComponentAdapter = {
       `import manifest from './manifest.json'`,
       childImports,
     ].filter(Boolean).join('\n')
+
+    // Include type definitions used by props
+    const typeDefs = typeDefinitions.length > 0 ? '\n' + typeDefinitions.join('\n\n') + '\n' : ''
 
     // Script output logic (self-contained)
     const scriptLogic = `
@@ -83,7 +91,7 @@ export const honoServerAdapter: ServerComponentAdapter = {
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
       return `${allImports}
-
+${typeDefs}
 export function ${name}(${propsParam}${propsType}) {
   const c = useRequestContext()
 ${scriptLogic}
@@ -97,7 +105,7 @@ ${scriptLogic}
 
   // Serialize props for client hydration (only serializable values)
   const __hydrateProps: Record<string, unknown> = {}
-  ${props.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
+  ${propNames.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 
   return (
@@ -118,7 +126,7 @@ ${scriptLogic}
     } else {
       // Components without props still need data-key and __listIndex support for list items
       return `${allImports}
-
+${typeDefs}
 export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
   const c = useRequestContext()
 ${scriptLogic}
