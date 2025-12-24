@@ -305,4 +305,57 @@ describe('reconcileList', () => {
     // Should reuse element when content is unchanged
     expect((container.children[0] as any).__testId).toBe('original')
   })
+
+  test('event delegation works after element replacement', () => {
+    const container = document.createElement('ul')
+    const clickedItems: number[] = []
+
+    // Set up event delegation on container (like BarefootJS does)
+    container.addEventListener('click', (e) => {
+      const target = (e.target as HTMLElement).closest('[data-event-id="0"]')
+      if (target) {
+        const index = parseInt((target as HTMLElement).dataset.index || '0', 10)
+        clickedItems.push(index)
+      }
+    })
+
+    // Initial render with event attributes
+    const items1 = [
+      { id: 1, text: 'Apple', done: false },
+      { id: 2, text: 'Banana', done: false },
+    ]
+    reconcileList(
+      container,
+      items1,
+      (item, index) => `<li data-key="${item.id}"><button data-index="${index}" data-event-id="0">${item.done ? 'Undo' : 'Done'}</button></li>`,
+      (item) => item.id
+    )
+
+    // Click first button
+    const button1 = container.querySelector('[data-event-id="0"]') as HTMLElement
+    button1.click()
+    expect(clickedItems).toEqual([0])
+
+    // Update first item (content changes, element should be replaced)
+    const items2 = [
+      { id: 1, text: 'Apple', done: true },
+      { id: 2, text: 'Banana', done: false },
+    ]
+    reconcileList(
+      container,
+      items2,
+      (item, index) => `<li data-key="${item.id}"><button data-index="${index}" data-event-id="0">${item.done ? 'Undo' : 'Done'}</button></li>`,
+      (item) => item.id
+    )
+
+    // Click replaced button - event delegation should still work
+    const newButton1 = container.querySelector('[data-event-id="0"]') as HTMLElement
+    newButton1.click()
+    expect(clickedItems).toEqual([0, 0])
+
+    // Click second button
+    const button2 = container.querySelectorAll('[data-event-id="0"]')[1] as HTMLElement
+    button2.click()
+    expect(clickedItems).toEqual([0, 0, 1])
+  })
 })

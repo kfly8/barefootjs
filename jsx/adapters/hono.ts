@@ -15,9 +15,15 @@ import type { ServerComponentAdapter } from '../types'
  * Into: <div data-key={__dataKey} className="foo">
  *
  * This enables list item reconciliation when the component is used with key prop.
+ *
+ * Note: This function requires a single root element (not a Fragment).
+ * Components used in lists with key props must return a single element,
+ * not a Fragment (<>...</>). If a Fragment is detected, the JSX is returned
+ * unchanged and data-key will not be applied.
  */
 function injectDataKeyProp(jsx: string): string {
   // Match the first opening tag: <tagName followed by space, /, or >
+  // Note: Does not match Fragments (<>) - they return unchanged
   const match = jsx.match(/^<([a-zA-Z][a-zA-Z0-9]*)(\s|\/|>)/)
   if (!match) return jsx
 
