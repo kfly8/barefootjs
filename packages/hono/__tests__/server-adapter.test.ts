@@ -3,13 +3,13 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { honoServerAdapter } from '@barefootjs/hono'
-import type { IRElement } from '../../src/types'
+import { honoServerAdapter } from '../src'
 
 describe('honoServerAdapter', () => {
   describe('generateServerComponent', () => {
     it('generates component without props', () => {
-      const ir: IRElement = {
+      // IR is not used by the adapter, just passed through
+      const ir = {
         type: 'element',
         tagName: 'div',
         id: null,
@@ -37,7 +37,7 @@ describe('honoServerAdapter', () => {
     })
 
     it('generates component with props and hydration script', () => {
-      const ir: IRElement = {
+      const ir = {
         type: 'element',
         tagName: 'div',
         id: null,
@@ -67,7 +67,7 @@ describe('honoServerAdapter', () => {
     })
 
     it('generates imports for child components', () => {
-      const ir: IRElement = {
+      const ir = {
         type: 'element',
         tagName: 'div',
         id: null,
@@ -94,7 +94,7 @@ describe('honoServerAdapter', () => {
     })
 
     it('only outputs data-bf-props for root component (first to render)', () => {
-      const ir: IRElement = {
+      const ir = {
         type: 'element',
         tagName: 'div',
         id: null,
