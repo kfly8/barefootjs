@@ -217,20 +217,41 @@ export function reconcileList<T>(
   })
 
   // Build new list
+  // Note: Event delegation on the container is not affected by element replacement
   const fragment = document.createDocumentFragment()
   items.forEach((item, index) => {
     const key = newKeys[index]
     const existing = existingMap.get(key)
 
     if (existing) {
-      // Reuse existing element
-      fragment.appendChild(existing)
+      // Existing element found - render new HTML and compare
+      const newHtml = renderFn(item, index)
+      const temp = document.createElement('div')
+      temp.innerHTML = newHtml
+      const newElement = temp.firstChild as HTMLElement
+
+      if (newElement) {
+        // Use isEqualNode for robust DOM structure comparison
+        // (unlike outerHTML, this is not affected by attribute ordering)
+        if (existing.isEqualNode(newElement)) {
+          // Content unchanged, reuse existing element (preserves DOM state)
+          fragment.appendChild(existing)
+        } else {
+          // Content changed, replace with new element
+          fragment.appendChild(newElement)
+        }
+      } else {
+        // Fallback: if renderFn produced no valid node, keep existing element
+        // to avoid silently dropping list items
+        fragment.appendChild(existing)
+      }
       existingMap.delete(key)
     } else {
-      // Create new element
+      // No existing element - render and create new
+      const newHtml = renderFn(item, index)
       const temp = document.createElement('div')
-      temp.innerHTML = renderFn(item, index)
-      const newElement = temp.firstChild
+      temp.innerHTML = newHtml
+      const newElement = temp.firstChild as HTMLElement
       if (newElement) {
         fragment.appendChild(newElement)
       }

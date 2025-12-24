@@ -211,7 +211,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
     })
 
     expect(result).toContain('import { useRequestContext }')
-    expect(result).toContain('function Counter()')
+    expect(result).toContain('function Counter({ "data-key": __dataKey, __listIndex }')
     expect(result).toContain("c.get('bfOutputScripts')")
     expect(result).toContain('className="counter"')
   })
@@ -261,7 +261,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       childComponents: [],
     })
 
-    expect(result).toContain('export function TodoApp({ initialTodos }')
+    expect(result).toContain('export function TodoApp({ initialTodos, "data-key": __dataKey, __listIndex }')
     expect(result).toContain('data-bf-props="TodoApp"')
     expect(result).toContain('__hydrateProps')
     // Check that list is generated with map

@@ -9,14 +9,49 @@
 import type { ServerComponentAdapter } from '../types'
 
 /**
+ * Injects conditional data-key prop into the root element of JSX string.
+ *
+ * Transforms: <div className="foo">
+ * Into: <div {...(__dataKey !== undefined ? { "data-key": __dataKey } : {})} className="foo">
+ *
+ * This enables list item reconciliation when the component is used with key prop.
+ * The data-key is only rendered when __dataKey is defined, avoiding "undefined" values.
+ *
+ * Note: This function requires a single root element (not a Fragment).
+ * Components used in lists with key props must return a single element,
+ * not a Fragment (<>...</>). If a Fragment is detected, the JSX is returned
+ * unchanged and data-key will not be applied.
+ */
+function injectDataKeyProp(jsx: string): string {
+  // Match the first opening tag: <tagName followed by space, /, or >
+  // Note: Does not match Fragments (<>) - they return unchanged
+  const match = jsx.match(/^<([a-zA-Z][a-zA-Z0-9]*)(\s|\/|>)/)
+  if (!match) return jsx
+
+  const tagName = match[1]
+  const afterTag = match[2]
+
+  // Insert conditional data-key spread after the tag name
+  // Only renders data-key when __dataKey is defined
+  return `<${tagName} {...(__dataKey !== undefined ? { "data-key": __dataKey } : {})}${afterTag}${jsx.slice(match[0].length)}`
+}
+
+/**
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
   generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents }) => {
-    const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
-    const propsType = props.length > 0
-      ? `: { ${props.map(p => `${p}?: unknown`).join('; ')} }`
-      : ''
+    // Always include "data-key" for list item reconciliation support
+    // Also include "__listIndex" for event delegation in lists
+    const allProps = [...props, '"data-key": __dataKey', '__listIndex']
+    const propsParam = `{ ${allProps.join(', ')} }`
+    // Build propsType without leading semicolon when props is empty
+    const basePropsType = props.map(p => `${p}?: unknown`).join('; ')
+    const propsType = `: { ${basePropsType}${basePropsType ? '; ' : ''}"data-key"?: string | number; __listIndex?: number }`
+
+    // Inject conditional data-key attribute into root element
+    // Only renders when __dataKey is defined (component used in a list with key)
+    const jsxWithDataKey = injectDataKeyProp(jsx)
 
     // Generate imports for child components
     const childImports = childComponents
@@ -75,23 +110,23 @@ ${scriptLogic}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
         />
       )}
-      ${jsx}
+      ${jsxWithDataKey}
     </>
   )
 }
 `
     } else {
-      // Components without props don't need hydration setup
+      // Components without props still need data-key and __listIndex support for list items
       return `${allImports}
 
-export function ${name}() {
+export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
   const c = useRequestContext()
 ${scriptLogic}
 
   return (
     <>
       ${scriptTags}
-      ${jsx}
+      ${jsxWithDataKey}
     </>
   )
 }

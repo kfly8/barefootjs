@@ -101,6 +101,7 @@ function TodoApp({ initialTodos = [] }: Props) {
       <ul class="todo-list">
         {todos().map(todo => (
           <TodoItem
+            key={todo.id}
             todo={todo}
             onToggle={() => handleToggle(todo.id)}
             onDelete={() => handleDelete(todo.id)}

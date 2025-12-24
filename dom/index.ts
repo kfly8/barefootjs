@@ -1,1 +1,1 @@
-export { createSignal, createEffect, onCleanup, type Signal, type CleanupFn, type EffectFn } from './reactive'
+export { createSignal, createEffect, onCleanup, reconcileList, type Signal, type CleanupFn, type EffectFn } from './reactive'

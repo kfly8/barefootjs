@@ -99,3 +99,76 @@ export function onCleanup(fn) {
     }
   }
 }
+
+// --- reconcileList ---
+
+/**
+ * Reconcile a list of items with their DOM representation using keys.
+ * Reuses existing DOM elements when possible based on data-key attribute.
+ *
+ * @param {HTMLElement} container - The container element holding the list items
+ * @param {Array} items - The new array of items to render
+ * @param {Function} renderFn - Function that renders an item to HTML string: (item, index) => string
+ * @param {Function} getKey - Function that extracts a unique key from an item: (item) => string | number
+ */
+export function reconcileList(container, items, renderFn, getKey) {
+  const newKeys = items.map(getKey)
+  const existingElements = Array.from(container.children)
+  const existingMap = new Map()
+
+  // Build map of existing elements by key
+  existingElements.forEach(el => {
+    const key = el.dataset.key
+    if (key !== undefined) {
+      // Try to preserve original type (number vs string)
+      const numKey = Number(key)
+      existingMap.set(Number.isNaN(numKey) ? key : numKey, el)
+    }
+  })
+
+  // Build new list
+  // Note: Event delegation on the container is not affected by element replacement
+  const fragment = document.createDocumentFragment()
+  items.forEach((item, index) => {
+    const key = newKeys[index]
+    const existing = existingMap.get(key)
+
+    if (existing) {
+      // Existing element found - render new HTML and compare
+      const newHtml = renderFn(item, index)
+      const temp = document.createElement('div')
+      temp.innerHTML = newHtml
+      const newElement = temp.firstChild
+
+      if (newElement) {
+        // Use isEqualNode for robust DOM structure comparison
+        // (unlike outerHTML, this is not affected by attribute ordering)
+        if (existing.isEqualNode(newElement)) {
+          // Content unchanged, reuse existing element (preserves DOM state)
+          fragment.appendChild(existing)
+        } else {
+          // Content changed, replace with new element
+          fragment.appendChild(newElement)
+        }
+      } else {
+        // Fallback: if renderFn produced no valid node, keep existing element
+        // to avoid silently dropping list items
+        fragment.appendChild(existing)
+      }
+      existingMap.delete(key)
+    } else {
+      // No existing element - render and create new
+      const newHtml = renderFn(item, index)
+      const temp = document.createElement('div')
+      temp.innerHTML = newHtml
+      const newElement = temp.firstChild
+      if (newElement) {
+        fragment.appendChild(newElement)
+      }
+    }
+  })
+
+  // Clear container and append new list
+  container.innerHTML = ''
+  container.appendChild(fragment)
+}

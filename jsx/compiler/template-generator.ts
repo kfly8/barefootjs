@@ -94,6 +94,12 @@ export function jsxToTemplateString(
     componentResult: CompileResult,
     propsMap: Map<string, string>
   ): string {
+    // Extract key prop for data-key attribute on root element
+    const keyAttr = propsMap.get('key')
+    if (keyAttr) {
+      propsMap.delete('key')  // Don't substitute 'key' as a regular prop
+    }
+
     // Parse component source
     const componentSource = componentResult.source
     const componentSf = ts.createSourceFile(
@@ -131,16 +137,18 @@ export function jsxToTemplateString(
     }
 
     // Convert component's JSX to template (with props substitution)
-    return processComponentJsx(componentJsx, componentSf, propsMap)
+    return processComponentJsx(componentJsx, componentSf, propsMap, keyAttr)
   }
 
   /**
    * Processes component's JSX and converts to template (with props substitution)
+   * @param keyAttr - Optional key attribute value to add as data-key on root element
    */
   function processComponentJsx(
     n: ts.JsxElement | ts.JsxSelfClosingElement,
     sf: ts.SourceFile,
-    propsMap: Map<string, string>
+    propsMap: Map<string, string>,
+    keyAttr?: string
   ): string {
     /**
      * Substitutes prop references in expression
@@ -221,11 +229,27 @@ export function jsxToTemplateString(
       return { attrs, eventAttrs }
     }
 
-    function processJsxNode(node: ts.JsxElement | ts.JsxSelfClosingElement): string {
+    type ProcessOptions = {
+      /**
+       * Whether to inject data-key attribute on this element.
+       *
+       * Set to true only for the root element of an inlined component when the
+       * parent component passes a `key` prop. This enables reconcileList to
+       * identify and reuse DOM elements during list updates.
+       *
+       * Defaults to false because child elements should not have data-key;
+       * only the root element of each list item needs it for reconciliation.
+       */
+      injectDataKey: boolean
+    }
+
+    function processJsxNode(node: ts.JsxElement | ts.JsxSelfClosingElement, options: ProcessOptions = { injectDataKey: false }): string {
+      const dataKeyAttr = options.injectDataKey && keyAttr ? ` data-key="\${${keyAttr}}"` : ''
+
       if (ts.isJsxSelfClosingElement(node)) {
         const tagName = node.tagName.getText(sf)
         const { attrs, eventAttrs } = processAttrs(node.attributes)
-        return `<${tagName}${eventAttrs}${attrs} />`
+        return `<${tagName}${dataKeyAttr}${eventAttrs}${attrs} />`
       }
 
       if (ts.isJsxElement(node)) {
@@ -255,7 +279,7 @@ export function jsxToTemplateString(
           }
         }
 
-        return `<${tagName}${eventAttrs}${attrs}>${children}</${tagName}>`
+        return `<${tagName}${dataKeyAttr}${eventAttrs}${attrs}>${children}</${tagName}>`
       }
 
       return ''
@@ -271,7 +295,7 @@ export function jsxToTemplateString(
       return substituteProps(expr.getText(sf))
     }
 
-    return processJsxNode(n)
+    return processJsxNode(n, { injectDataKey: true })
   }
 
   function processNode(
