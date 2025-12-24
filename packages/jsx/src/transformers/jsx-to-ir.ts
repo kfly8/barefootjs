@@ -200,7 +200,7 @@ function componentToIR(
     type: 'component',
     name: tagName,
     props,
-    staticHtml: componentResult.staticHtml,
+    staticHtml: '', // Not used - component HTML is generated in server adapter
     childInits,
   }
 }

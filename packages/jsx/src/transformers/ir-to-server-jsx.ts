@@ -188,8 +188,8 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
       return `<${node.name}${compPropsStr ? ' ' + compPropsStr : ''} />`
 
     case 'fragment':
-      // Fragment inside expression context
-      return fragmentToServerJsxInternal(node, ctx)
+      // Fragment inside expression context (not root)
+      return fragmentToServerJsxInternal(node, ctx, false)
   }
 }
 
