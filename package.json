@@ -4,19 +4,17 @@
   "description": "JSX to static HTML + client JS compiler",
   "type": "module",
   "private": true,
-  "exports": {
-    "./dom": "./dom/index.ts",
-    "./jsx": "./jsx/index.ts"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "test": "bun test"
+    "test": "bun test --cwd . packages/",
+    "build": "bun run --filter '*' build"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",
     "@types/bun": "latest",
-    "happy-dom": "^20.0.11"
-  },
-  "peerDependencies": {
+    "happy-dom": "^20.0.11",
     "typescript": "^5.9.3"
   }
 }

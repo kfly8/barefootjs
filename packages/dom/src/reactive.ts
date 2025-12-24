@@ -1,9 +1,8 @@
 /**
  * BarefootJS - Reactive Primitives
  *
- * createSignal: Reactive primitive that holds state and tracks changes
- * createEffect: Side effect that runs automatically when signals change
- * onCleanup: Register cleanup function for effects
+ * Minimal reactive system for DOM manipulation.
+ * Inspired by SolidJS signals.
  */
 
 // --- Types ---
@@ -33,7 +32,7 @@ const MAX_EFFECT_RUNS = 100
 // --- createSignal ---
 
 /**
- * createSignal - Create a reactive value
+ * Create a reactive value
  *
  * @param initialValue - Initial value
  * @returns [getter, setter] tuple
@@ -49,7 +48,6 @@ export function createSignal<T>(initialValue: T): Signal<T> {
   const subscribers = new Set<EffectContext>()
 
   const get = () => {
-    // If there's a currently running effect, register dependency on this signal
     if (currentEffect) {
       subscribers.add(currentEffect)
       currentEffect.dependencies.add(subscribers)
@@ -62,14 +60,12 @@ export function createSignal<T>(initialValue: T): Signal<T> {
       ? (valueOrFn as (prev: T) => T)(value)
       : valueOrFn
 
-    // Skip if value hasn't changed
     if (Object.is(value, newValue)) {
       return
     }
 
     value = newValue
 
-    // Re-run all dependent effects
     const effectsToRun = [...subscribers]
     for (const effect of effectsToRun) {
       runEffect(effect)
@@ -82,7 +78,7 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 // --- createEffect ---
 
 /**
- * createEffect - Side effect that runs automatically when signals change
+ * Side effect that runs automatically when signals change
  *
  * @param fn - Effect function (can return a cleanup function)
  *
@@ -108,26 +104,22 @@ export function createEffect(fn: EffectFn): void {
 }
 
 function runEffect(effect: EffectContext): void {
-  // Check for circular dependency
   effectDepth++
   if (effectDepth > MAX_EFFECT_RUNS) {
     effectDepth = 0
     throw new Error(`Effect exceeded maximum run limit (${MAX_EFFECT_RUNS}). Possible circular dependency.`)
   }
 
-  // Run previous cleanup
   if (effect.cleanup) {
     effect.cleanup()
     effect.cleanup = null
   }
 
-  // Clear previous dependencies
   for (const dep of effect.dependencies) {
     dep.delete(effect)
   }
   effect.dependencies.clear()
 
-  // Run effect and collect new dependencies
   const prevEffect = currentEffect
   currentEffect = effect
 
@@ -144,13 +136,8 @@ function runEffect(effect: EffectContext): void {
 
 // --- onCleanup ---
 
-let currentCleanupFn: CleanupFn | null = null
-
 /**
- * onCleanup - Register cleanup function for effects
- *
- * When called inside an effect, the cleanup function will be called
- * before the next effect run or when the effect is disposed.
+ * Register cleanup function for effects
  *
  * @param fn - Cleanup function
  *
@@ -174,11 +161,10 @@ export function onCleanup(fn: CleanupFn): void {
 // --- reconcileList ---
 
 /**
- * reconcileList - Efficient key-based list updates
+ * Efficient key-based list reconciliation
  *
  * Updates a list container by reusing existing DOM elements when possible,
- * based on the key attribute. This is more efficient than innerHTML for
- * lists where items are added, removed, or reordered.
+ * based on the data-key attribute.
  *
  * @param container - The container element holding the list items
  * @param items - The new array of items to render
@@ -210,44 +196,34 @@ export function reconcileList<T>(
   existingElements.forEach(el => {
     const key = el.dataset.key
     if (key !== undefined) {
-      // Try to preserve original type (number vs string)
       const numKey = Number(key)
       existingMap.set(Number.isNaN(numKey) ? key : numKey, el)
     }
   })
 
   // Build new list
-  // Note: Event delegation on the container is not affected by element replacement
   const fragment = document.createDocumentFragment()
   items.forEach((item, index) => {
     const key = newKeys[index]
     const existing = existingMap.get(key)
 
     if (existing) {
-      // Existing element found - render new HTML and compare
       const newHtml = renderFn(item, index)
       const temp = document.createElement('div')
       temp.innerHTML = newHtml
       const newElement = temp.firstChild as HTMLElement
 
       if (newElement) {
-        // Use isEqualNode for robust DOM structure comparison
-        // (unlike outerHTML, this is not affected by attribute ordering)
         if (existing.isEqualNode(newElement)) {
-          // Content unchanged, reuse existing element (preserves DOM state)
           fragment.appendChild(existing)
         } else {
-          // Content changed, replace with new element
           fragment.appendChild(newElement)
         }
       } else {
-        // Fallback: if renderFn produced no valid node, keep existing element
-        // to avoid silently dropping list items
         fragment.appendChild(existing)
       }
       existingMap.delete(key)
     } else {
-      // No existing element - render and create new
       const newHtml = renderFn(item, index)
       const temp = document.createElement('div')
       temp.innerHTML = newHtml
@@ -258,7 +234,6 @@ export function reconcileList<T>(
     }
   })
 
-  // Clear container and append new list
   container.innerHTML = ''
   container.appendChild(fragment)
 }

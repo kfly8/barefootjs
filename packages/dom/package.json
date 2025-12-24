@@ -1,0 +1,42 @@
+{
+  "name": "@barefootjs/dom",
+  "version": "0.0.1",
+  "description": "Minimal reactive DOM primitives for BarefootJS",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "bun run build:js && bun run build:types",
+    "build:js": "bun build ./src/index.ts --outdir ./dist --format esm",
+    "build:types": "tsc --emitDeclarationOnly --outDir ./dist",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "reactive",
+    "signals",
+    "dom",
+    "barefoot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kfly8/barefootjs",
+    "directory": "packages/dom"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.0.11",
+    "typescript": "^5.0.0"
+  }
+}

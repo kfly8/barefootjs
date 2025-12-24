@@ -1,0 +1,53 @@
+{
+  "name": "@barefootjs/jsx",
+  "version": "0.0.1",
+  "description": "JSX compiler for BarefootJS - transforms JSX to server HTML + client JS",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapters/hono": {
+      "types": "./dist/adapters/hono.d.ts",
+      "import": "./dist/adapters/hono.js"
+    },
+    "./adapters/testing": {
+      "types": "./dist/adapters/testing.d.ts",
+      "import": "./dist/adapters/testing.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "bun run build:js && bun run build:types",
+    "build:js": "bun build ./src/index.ts ./src/adapters/hono.ts ./src/adapters/testing.ts --outdir ./dist --format esm",
+    "build:types": "tsc --emitDeclarationOnly --outDir ./dist",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "jsx",
+    "compiler",
+    "barefoot",
+    "ssr"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kfly8/barefootjs",
+    "directory": "packages/jsx"
+  },
+  "peerDependencies": {
+    "@barefootjs/dom": "workspace:*"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.0.11",
+    "typescript": "^5.0.0"
+  }
+}

@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { compileJSX } from '../../jsx-compiler'
-import { honoServerAdapter } from '../../../jsx/adapters/hono'
+import { compileJSX } from '../../src/jsx-compiler'
+import { honoServerAdapter } from '../../src/adapters/hono'
 
 async function compile(source: string) {
   const files: Record<string, string> = {

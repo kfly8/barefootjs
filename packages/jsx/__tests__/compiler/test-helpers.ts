@@ -4,8 +4,8 @@
  * Provides common setup and utilities for tests.
  */
 
-import { compileJSX } from '../../jsx-compiler'
-import { testJsxAdapter } from '../../adapters/testing'
+import { compileJSX } from '../../src/jsx-compiler'
+import { testJsxAdapter } from '../../src/adapters/testing'
 
 /**
  * Compiles a single component

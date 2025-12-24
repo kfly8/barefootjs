@@ -11,10 +11,12 @@
 
 import { describe, test, expect, beforeAll } from 'bun:test'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
-import { reconcileList } from '../reactive'
+import { reconcileList } from '../src/reactive'
 
 beforeAll(() => {
-  GlobalRegistrator.register()
+  if (typeof window === 'undefined') {
+    GlobalRegistrator.register()
+  }
 })
 
 describe('reconcileList', () => {

@@ -8,8 +8,8 @@
  * - Signal updates cause correct DOM changes
  */
 
-import { compileJSX } from '../../jsx-compiler'
-import { testHtmlAdapter } from '../../adapters/testing'
+import { compileJSX } from '../../src/jsx-compiler'
+import { testHtmlAdapter } from '../../src/adapters/testing'
 
 export type CompileResult = {
   html: string
@@ -96,7 +96,7 @@ export async function setupDOM(result: CompileResult): Promise<{
   document.body.appendChild(container)
 
   // Execute clientJs in the context with barefoot imports
-  const { createSignal, createEffect, onCleanup, reconcileList } = await import('../../../dom/reactive')
+  const { createSignal, createEffect, onCleanup, reconcileList } = await import('../../../dom/src/reactive')
 
   // Remove import statements from clientJs (they're not needed in test context)
   const cleanedClientJs = result.clientJs

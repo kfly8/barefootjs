@@ -7,24 +7,32 @@
  * - dist/manifest.json
  */
 
-import { compileJSX, honoServerAdapter } from '../../jsx'
+import { compileJSX } from '../../packages/jsx/src'
+import { honoServerAdapter } from '../../packages/jsx/src/adapters/hono'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
-const DOM_DIR = resolve(ROOT_DIR, '../../dom')
+const DOM_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
 // Components to compile
 const COMPONENTS = ['Counter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm', 'Dashboard']
 
 await mkdir(DIST_DIR, { recursive: true })
 
-// Copy barefoot.js
+// Build and copy barefoot.js from @barefootjs/dom
 const barefootFileName = 'barefoot.js'
+const domDistFile = resolve(DOM_DIR, 'dist/index.js')
+// Build dom package if dist doesn't exist
+if (!await Bun.file(domDistFile).exists()) {
+  console.log('Building @barefootjs/dom...')
+  const proc = Bun.spawn(['bun', 'run', 'build'], { cwd: DOM_DIR })
+  await proc.exited
+}
 await Bun.write(
   resolve(DIST_DIR, barefootFileName),
-  Bun.file(resolve(DOM_DIR, 'runtime.js'))
+  Bun.file(domDistFile)
 )
 console.log(`Generated: dist/${barefootFileName}`)
 

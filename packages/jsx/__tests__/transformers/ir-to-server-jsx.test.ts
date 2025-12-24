@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { irToServerJsx } from '../../transformers/ir-to-server-jsx'
-import type { IRNode, IRElement, SignalDeclaration } from '../../types'
+import { irToServerJsx } from '../../src/transformers/ir-to-server-jsx'
+import type { IRNode, IRElement, SignalDeclaration } from '../../src/types'
 
 describe('irToServerJsx', () => {
   const signals: SignalDeclaration[] = [
@@ -176,7 +176,7 @@ describe('irToServerJsx', () => {
 
 describe('irToServerJsx with honoServerAdapter integration', () => {
   it('generates JSX that works with Hono adapter', async () => {
-    const { honoServerAdapter } = await import('../../adapters/hono')
+    const { honoServerAdapter } = await import('../../src/adapters/hono')
 
     const ir: IRElement = {
       type: 'element',
@@ -217,7 +217,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
   })
 
   it('generates JSX with props that Hono adapter can use for hydration', async () => {
-    const { honoServerAdapter } = await import('../../adapters/hono')
+    const { honoServerAdapter } = await import('../../src/adapters/hono')
 
     const signals: SignalDeclaration[] = [
       { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },

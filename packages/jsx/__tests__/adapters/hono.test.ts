@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { honoServerAdapter } from '../../adapters/hono'
-import type { IRElement } from '../../types'
+import { honoServerAdapter } from '../../src/adapters/hono'
+import type { IRElement } from '../../src/types'
 
 describe('honoServerAdapter', () => {
   describe('generateServerComponent', () => {

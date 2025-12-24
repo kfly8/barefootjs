@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { calculateElementPaths, generatePathExpression } from '../../utils/element-paths'
-import type { IRElement, IRFragment } from '../../types'
+import { calculateElementPaths, generatePathExpression } from '../../src/utils/element-paths'
+import type { IRElement, IRFragment } from '../../src/types'
 
 describe('calculateElementPaths', () => {
   describe('simple element root', () => {

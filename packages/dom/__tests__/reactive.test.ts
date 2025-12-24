@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { createSignal } from '../reactive'
+import { createSignal } from '../src/reactive'
 
 describe('createSignal', () => {
   test('returns initial value', () => {
