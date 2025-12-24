@@ -15,6 +15,10 @@ export type ServerJsxContext = {
   componentName: string
   signals: SignalDeclaration[]
   needsDataBfIds: Set<string>  // IDs that need data-bf attribute for querySelector fallback
+  /** Event ID counter for event attribute output (to match client-side event delegation) */
+  eventIdCounter: { value: number } | null
+  /** Whether we're inside a list context (for passing __listIndex to child components) */
+  inListContext: boolean
 }
 
 /**
@@ -43,12 +47,16 @@ export function irToServerJsx(
   node: IRNode,
   componentName: string,
   signals: SignalDeclaration[],
-  needsDataBfIds: Set<string> = new Set()
+  needsDataBfIds: Set<string> = new Set(),
+  options: { outputEventAttrs?: boolean } = {}
 ): string {
   const ctx: ServerJsxContext = {
     componentName,
     signals,
     needsDataBfIds,
+    // Initialize event ID counter if outputEventAttrs is enabled
+    eventIdCounter: options.outputEventAttrs ? { value: 0 } : null,
+    inListContext: false,
   }
   return irToServerJsxInternal(node, ctx, true)
 }
@@ -69,7 +77,7 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
     case 'component':
       // Output component call with props (component will be rendered by server)
       // Skip event handler props (they reference undefined functions in server context)
-      const propsStr = node.props
+      const compProps = node.props
         .filter(p => !p.name.startsWith('on'))  // Skip event handlers like onToggle, onClick
         .map(p => {
           const value = replaceSignalCallsWithProps(p.value, ctx.signals)
@@ -79,7 +87,12 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
           }
           return `${p.name}={${value}}`
         })
-        .join(' ')
+      // Pass __listIndex to child components when inside a list
+      // This enables proper data-index attribute for event delegation
+      if (ctx.inListContext) {
+        compProps.push('__listIndex={__index}')
+      }
+      const propsStr = compProps.join(' ')
       return `<${node.name}${propsStr ? ' ' + propsStr : ''} />`
 
     case 'conditional':
@@ -131,6 +144,8 @@ function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[], ne
     componentName: '',
     signals,
     needsDataBfIds,
+    eventIdCounter: null,
+    inListContext: false,
   }
   return nodeToJsxExpressionValueInternal(node, ctx)
 }
@@ -186,6 +201,8 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[], needsDa
     componentName: '',
     signals,
     needsDataBfIds,
+    eventIdCounter: null,
+    inListContext: false,
   }
   return elementToServerJsxInternal(el, ctx, false)
 }
@@ -244,6 +261,21 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
     }
   }
 
+  // Add event attributes for elements with events (data-index and data-event-id)
+  // This ensures server HTML matches client template for proper hydration
+  if (ctx.eventIdCounter && events.length > 0) {
+    const eventId = ctx.eventIdCounter.value++
+    // __index is only defined inside .map() callbacks (inListContext)
+    // __listIndex is a prop passed from parent when component is used in a list
+    // For non-list contexts, only use __listIndex (which may be undefined)
+    if (ctx.inListContext) {
+      attrParts.push(`data-index={__listIndex ?? __index}`)
+    } else {
+      attrParts.push(`data-index={__listIndex}`)
+    }
+    attrParts.push(`data-event-id="${eventId}"`)
+  }
+
   const attrsStr = attrParts.length > 0 ? ' ' + attrParts.join(' ') : ''
 
   // List element - generate .map() expression
@@ -252,7 +284,15 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
 
     // Use itemIR for proper JSX generation (avoids escaping issues)
     if (listInfo.itemIR) {
-      let itemJsx = irToServerJsxInternal(listInfo.itemIR, ctx, false)
+      // Create a new context for list item processing
+      // - Fresh event ID counter for this list
+      // - Set inListContext to true so child components get __listIndex
+      const itemCtx: ServerJsxContext = {
+        ...ctx,
+        eventIdCounter: ctx.eventIdCounter ? { value: 0 } : null,
+        inListContext: true,
+      }
+      let itemJsx = irToServerJsxInternal(listInfo.itemIR, itemCtx, false)
       // Inject data-key attribute if key expression is present
       if (listInfo.keyExpression) {
         itemJsx = injectDataKeyAttribute(itemJsx, listInfo.keyExpression)

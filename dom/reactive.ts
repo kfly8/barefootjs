@@ -222,18 +222,25 @@ export function reconcileList<T>(
     const key = newKeys[index]
     const existing = existingMap.get(key)
 
-    if (existing) {
-      // Reuse existing element
-      fragment.appendChild(existing)
-      existingMap.delete(key)
-    } else {
-      // Create new element
-      const temp = document.createElement('div')
-      temp.innerHTML = renderFn(item, index)
-      const newElement = temp.firstChild
-      if (newElement) {
+    // Always render new HTML to compare with existing
+    const newHtml = renderFn(item, index)
+    const temp = document.createElement('div')
+    temp.innerHTML = newHtml
+    const newElement = temp.firstChild as HTMLElement
+
+    if (existing && newElement) {
+      // Compare existing element with new content
+      if (existing.outerHTML === newElement.outerHTML) {
+        // Content unchanged, reuse existing element
+        fragment.appendChild(existing)
+      } else {
+        // Content changed, use new element
         fragment.appendChild(newElement)
       }
+      existingMap.delete(key)
+    } else if (newElement) {
+      // No existing element, use new element
+      fragment.appendChild(newElement)
     }
   })
 

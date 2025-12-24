@@ -551,7 +551,7 @@ function generateSlotId(ctx: JsxToIRContext): string {
  * Checks if an attribute is a dynamic attribute target
  */
 function isDynamicAttributeTarget(attrName: string): boolean {
-  return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden'].includes(attrName)
+  return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden', 'data-key'].includes(attrName)
 }
 
 /**

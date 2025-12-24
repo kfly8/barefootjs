@@ -99,3 +99,62 @@ export function onCleanup(fn) {
     }
   }
 }
+
+// --- reconcileList ---
+
+/**
+ * Reconcile a list of items with their DOM representation using keys.
+ * Reuses existing DOM elements when possible based on data-key attribute.
+ *
+ * @param {HTMLElement} container - The container element holding the list items
+ * @param {Array} items - The new array of items to render
+ * @param {Function} renderFn - Function that renders an item to HTML string: (item, index) => string
+ * @param {Function} getKey - Function that extracts a unique key from an item: (item) => string | number
+ */
+export function reconcileList(container, items, renderFn, getKey) {
+  const newKeys = items.map(getKey)
+  const existingElements = Array.from(container.children)
+  const existingMap = new Map()
+
+  // Build map of existing elements by key
+  existingElements.forEach(el => {
+    const key = el.dataset.key
+    if (key !== undefined) {
+      // Try to preserve original type (number vs string)
+      const numKey = Number(key)
+      existingMap.set(Number.isNaN(numKey) ? key : numKey, el)
+    }
+  })
+
+  // Build new list
+  const fragment = document.createDocumentFragment()
+  items.forEach((item, index) => {
+    const key = newKeys[index]
+    const existing = existingMap.get(key)
+
+    // Always render new HTML to compare with existing
+    const newHtml = renderFn(item, index)
+    const temp = document.createElement('div')
+    temp.innerHTML = newHtml
+    const newElement = temp.firstChild
+
+    if (existing && newElement) {
+      // Compare existing element with new content
+      if (existing.outerHTML === newElement.outerHTML) {
+        // Content unchanged, reuse existing element
+        fragment.appendChild(existing)
+      } else {
+        // Content changed, use new element
+        fragment.appendChild(newElement)
+      }
+      existingMap.delete(key)
+    } else if (newElement) {
+      // No existing element, use new element
+      fragment.appendChild(newElement)
+    }
+  })
+
+  // Clear container and append new list
+  container.innerHTML = ''
+  container.appendChild(fragment)
+}

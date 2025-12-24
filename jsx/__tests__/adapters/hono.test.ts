@@ -30,7 +30,7 @@ describe('honoServerAdapter', () => {
         childComponents: [],
       })
 
-      expect(result).toContain('export function Hello()')
+      expect(result).toContain('export function Hello({ "data-key": __dataKey, __listIndex }')
       expect(result).toContain('useRequestContext')
       expect(result).toContain("bfOutputScripts")
     })
@@ -57,7 +57,7 @@ describe('honoServerAdapter', () => {
         childComponents: [],
       })
 
-      expect(result).toContain('export function Counter({ initialCount }')
+      expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, __listIndex }')
       expect(result).toContain('__isRoot')
       expect(result).toContain('bfRootComponent')
       expect(result).toContain('data-bf-props="Counter"')

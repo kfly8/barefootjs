@@ -9,14 +9,38 @@
 import type { ServerComponentAdapter } from '../types'
 
 /**
+ * Injects data-key prop into the root element of JSX string.
+ *
+ * Transforms: <div className="foo">
+ * Into: <div data-key={__dataKey} className="foo">
+ *
+ * This enables list item reconciliation when the component is used with key prop.
+ */
+function injectDataKeyProp(jsx: string): string {
+  // Match the first opening tag: <tagName followed by space, /, or >
+  const match = jsx.match(/^<([a-zA-Z][a-zA-Z0-9]*)(\s|\/|>)/)
+  if (!match) return jsx
+
+  const tagName = match[1]
+  const afterTag = match[2]
+
+  // Insert data-key={__dataKey} after the tag name
+  return `<${tagName} data-key={__dataKey}${afterTag}${jsx.slice(match[0].length)}`
+}
+
+/**
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
   generateServerComponent: ({ name, props, jsx, ir: _ir, signals: _signals, childComponents }) => {
-    const propsParam = props.length > 0 ? `{ ${props.join(', ')} }` : ''
-    const propsType = props.length > 0
-      ? `: { ${props.map(p => `${p}?: unknown`).join('; ')} }`
-      : ''
+    // Always include "data-key" for list item reconciliation support
+    // Also include "__listIndex" for event delegation in lists
+    const allProps = [...props, '"data-key": __dataKey', '__listIndex']
+    const propsParam = `{ ${allProps.join(', ')} }`
+    const propsType = `: { ${props.map(p => `${p}?: unknown`).join('; ')}; "data-key"?: string | number; __listIndex?: number }`
+
+    // Inject data-key attribute into root element if provided
+    const jsxWithDataKey = injectDataKeyProp(jsx)
 
     // Generate imports for child components
     const childImports = childComponents
@@ -75,23 +99,23 @@ ${scriptLogic}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
         />
       )}
-      ${jsx}
+      ${jsxWithDataKey}
     </>
   )
 }
 `
     } else {
-      // Components without props don't need hydration setup
+      // Components without props still need data-key and __listIndex support for list items
       return `${allImports}
 
-export function ${name}() {
+export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
   const c = useRequestContext()
 ${scriptLogic}
 
   return (
     <>
       ${scriptTags}
-      ${jsx}
+      ${jsxWithDataKey}
     </>
   )
 }

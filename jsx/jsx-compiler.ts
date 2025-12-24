@@ -242,7 +242,7 @@ ${bodyCode}
       const needsDataBfIds = new Set(
         paths.filter(p => p.path === null).map(p => p.id)
       )
-      const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds)
+      const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds, { outputEventAttrs: true })
       // Collect all child component names (including those in lists) for server imports
       const childComponents = collectAllChildComponentNames(result.ir)
       serverJsx = options.serverAdapter.generateServerComponent({
