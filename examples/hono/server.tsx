@@ -13,6 +13,7 @@ import { Counter } from './dist/Counter'
 import { Toggle } from './dist/Toggle'
 import { TodoApp } from './dist/TodoApp'
 import { Dashboard } from './dist/Dashboard'
+import { Game } from './dist/Game'
 import { AsyncUserList } from './AsyncUserList'
 import { AsyncCounterWrapper } from './AsyncCounterWrapper'
 
@@ -49,6 +50,7 @@ app.get('/', (c) => {
           <li><a href="/dashboard/message-only">Dashboard (Message only)</a></li>
           <li><a href="/async">Async User List (Suspense)</a></li>
           <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
+          <li><a href="/game">Game (100x100 Grid Benchmark)</a></li>
         </ul>
       </nav>
     </div>
@@ -135,6 +137,16 @@ app.get('/async-counter', (c) => {
       <Suspense fallback={<p className="loading">Loading counter...</p>}>
         <AsyncCounterWrapper />
       </Suspense>
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Game (100x100 Grid Benchmark)
+app.get('/game', (c) => {
+  return c.render(
+    <div>
+      <Game />
       <p><a href="/">← Back</a></p>
     </div>
   )
