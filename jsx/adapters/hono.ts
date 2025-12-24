@@ -9,12 +9,13 @@
 import type { ServerComponentAdapter } from '../types'
 
 /**
- * Injects data-key prop into the root element of JSX string.
+ * Injects conditional data-key prop into the root element of JSX string.
  *
  * Transforms: <div className="foo">
- * Into: <div data-key={__dataKey} className="foo">
+ * Into: <div {...(__dataKey !== undefined ? { "data-key": __dataKey } : {})} className="foo">
  *
  * This enables list item reconciliation when the component is used with key prop.
+ * The data-key is only rendered when __dataKey is defined, avoiding "undefined" values.
  *
  * Note: This function requires a single root element (not a Fragment).
  * Components used in lists with key props must return a single element,
@@ -30,8 +31,9 @@ function injectDataKeyProp(jsx: string): string {
   const tagName = match[1]
   const afterTag = match[2]
 
-  // Insert data-key={__dataKey} after the tag name
-  return `<${tagName} data-key={__dataKey}${afterTag}${jsx.slice(match[0].length)}`
+  // Insert conditional data-key spread after the tag name
+  // Only renders data-key when __dataKey is defined
+  return `<${tagName} {...(__dataKey !== undefined ? { "data-key": __dataKey } : {})}${afterTag}${jsx.slice(match[0].length)}`
 }
 
 /**
@@ -43,9 +45,12 @@ export const honoServerAdapter: ServerComponentAdapter = {
     // Also include "__listIndex" for event delegation in lists
     const allProps = [...props, '"data-key": __dataKey', '__listIndex']
     const propsParam = `{ ${allProps.join(', ')} }`
-    const propsType = `: { ${props.map(p => `${p}?: unknown`).join('; ')}; "data-key"?: string | number; __listIndex?: number }`
+    // Build propsType without leading semicolon when props is empty
+    const basePropsType = props.map(p => `${p}?: unknown`).join('; ')
+    const propsType = `: { ${basePropsType}${basePropsType ? '; ' : ''}"data-key"?: string | number; __listIndex?: number }`
 
-    // Inject data-key attribute into root element if provided
+    // Inject conditional data-key attribute into root element
+    // Only renders when __dataKey is defined (component used in a list with key)
     const jsxWithDataKey = injectDataKeyProp(jsx)
 
     // Generate imports for child components

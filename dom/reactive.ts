@@ -240,6 +240,10 @@ export function reconcileList<T>(
           // Content changed, replace with new element
           fragment.appendChild(newElement)
         }
+      } else {
+        // Fallback: if renderFn produced no valid node, keep existing element
+        // to avoid silently dropping list items
+        fragment.appendChild(existing)
       }
       existingMap.delete(key)
     } else {

@@ -285,7 +285,10 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
     // Use itemIR for proper JSX generation (avoids escaping issues)
     if (listInfo.itemIR) {
       // Create a new context for list item processing
-      // - Fresh event ID counter for this list
+      // - Reset event ID counter to 0 for each list item (intentional!)
+      //   Each item has the same event-id pattern (0, 1, 2...), distinguished by data-index.
+      //   This enables event delegation: handlers look for specific event-ids,
+      //   and data-index identifies which item was interacted with.
       // - Set inListContext to true so child components get __listIndex
       const itemCtx: ServerJsxContext = {
         ...ctx,
