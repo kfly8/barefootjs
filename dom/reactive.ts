@@ -217,35 +217,40 @@ export function reconcileList<T>(
   })
 
   // Build new list
-  // Note: We render HTML for every item to enable content comparison.
-  // This is acceptable because:
-  // 1. renderFn is typically a simple template string interpolation
-  // 2. The outerHTML comparison is reliable since both strings come from the same renderFn
-  //    (attribute order and formatting are consistent)
-  // 3. Event delegation on the container is not affected by element replacement
+  // Note: Event delegation on the container is not affected by element replacement
   const fragment = document.createDocumentFragment()
   items.forEach((item, index) => {
     const key = newKeys[index]
     const existing = existingMap.get(key)
 
-    const newHtml = renderFn(item, index)
-    const temp = document.createElement('div')
-    temp.innerHTML = newHtml
-    const newElement = temp.firstChild as HTMLElement
+    if (existing) {
+      // Existing element found - render new HTML and compare
+      const newHtml = renderFn(item, index)
+      const temp = document.createElement('div')
+      temp.innerHTML = newHtml
+      const newElement = temp.firstChild as HTMLElement
 
-    if (existing && newElement) {
-      // Compare using outerHTML - safe because both come from the same renderFn
-      if (existing.outerHTML === newElement.outerHTML) {
-        // Content unchanged, reuse existing element (preserves DOM state)
-        fragment.appendChild(existing)
-      } else {
-        // Content changed, replace with new element
-        fragment.appendChild(newElement)
+      if (newElement) {
+        // Use isEqualNode for robust DOM structure comparison
+        // (unlike outerHTML, this is not affected by attribute ordering)
+        if (existing.isEqualNode(newElement)) {
+          // Content unchanged, reuse existing element (preserves DOM state)
+          fragment.appendChild(existing)
+        } else {
+          // Content changed, replace with new element
+          fragment.appendChild(newElement)
+        }
       }
       existingMap.delete(key)
-    } else if (newElement) {
-      // No existing element, create new
-      fragment.appendChild(newElement)
+    } else {
+      // No existing element - render and create new
+      const newHtml = renderFn(item, index)
+      const temp = document.createElement('div')
+      temp.innerHTML = newHtml
+      const newElement = temp.firstChild as HTMLElement
+      if (newElement) {
+        fragment.appendChild(newElement)
+      }
     }
   })
 
