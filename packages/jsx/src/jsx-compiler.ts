@@ -325,6 +325,8 @@ ${bodyCode}
       const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds, { outputEventAttrs: true, memos: result.memos })
       // Collect all child component names (including those in lists) for server imports
       const childComponents = collectAllChildComponentNames(result.ir)
+      // Filter imports to only include child components
+      const originalImports = result.imports.filter(imp => childComponents.includes(imp.name))
       serverJsx = options.serverAdapter.generateServerComponent({
         name,
         props: result.props,
@@ -334,6 +336,8 @@ ${bodyCode}
         signals: result.signals,
         memos: result.memos,
         childComponents,
+        moduleConstants: result.moduleConstants,
+        originalImports,
       })
     }
 
@@ -403,6 +407,9 @@ function compileJsxWithComponents(
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
 
+  // Extract imports (for server JSX generation)
+  const imports = extractImports(source, filePath)
+
   // Create IR context
   const irContext: JsxToIRContext = {
     sourceFile,
@@ -461,6 +468,7 @@ function compileJsxWithComponents(
     typeDefinitions,
     source,
     ir,
+    imports,
   }
 }
 

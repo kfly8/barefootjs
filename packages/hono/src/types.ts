@@ -19,6 +19,18 @@ export type MemoDeclaration = {
   computation: string // () => count() * 2
 }
 
+export type ModuleConstant = {
+  name: string        // GRID_SIZE
+  value: string       // 100 (literal value as string)
+  code: string        // const GRID_SIZE = 100
+}
+
+export type ComponentImport = {
+  name: string      // Counter
+  path: string      // ./Counter
+  isDefault: boolean // true for default import, false for named import
+}
+
 export type IRNode = unknown // Simplified - full IR types are in @barefootjs/jsx
 
 /**
@@ -42,6 +54,10 @@ export type ServerComponentAdapter = {
     memos: MemoDeclaration[]
     /** Child components used by this component */
     childComponents: string[]
+    /** Module-level constants (e.g., const GRID_SIZE = 100) */
+    moduleConstants: ModuleConstant[]
+    /** Original import statements for child components */
+    originalImports: ComponentImport[]
   }) => string
 
   /**

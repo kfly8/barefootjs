@@ -208,7 +208,10 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       jsx,
       ir,
       signals: [],
+      memos: [],
       childComponents: [],
+      moduleConstants: [],
+      originalImports: [],
     })
 
     expect(result).toContain('import { useRequestContext }')
@@ -260,7 +263,10 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       jsx,
       ir,
       signals,
+      memos: [],
       childComponents: [],
+      moduleConstants: [],
+      originalImports: [],
     })
 
     expect(result).toContain('export function TodoApp({ initialTodos, "data-key": __dataKey, __listIndex }')

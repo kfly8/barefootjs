@@ -28,7 +28,10 @@ describe('honoServerAdapter', () => {
         jsx: '<div>Hello</div>',
         ir,
         signals: [],
+        memos: [],
         childComponents: [],
+        moduleConstants: [],
+        originalImports: [],
       })
 
       expect(result).toContain('export function Hello({ "data-key": __dataKey, __listIndex }')
@@ -56,7 +59,10 @@ describe('honoServerAdapter', () => {
         jsx: '<div>{initialCount}</div>',
         ir,
         signals: [],
+        memos: [],
         childComponents: [],
+        moduleConstants: [],
+        originalImports: [],
       })
 
       expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, __listIndex }')
@@ -66,7 +72,41 @@ describe('honoServerAdapter', () => {
       expect(result).toContain('__hydrateProps')
     })
 
-    it('generates imports for child components', () => {
+    it('generates imports for child components using originalImports paths', () => {
+      const ir = {
+        type: 'element',
+        tagName: 'div',
+        id: null,
+        staticAttrs: [],
+        dynamicAttrs: [],
+        events: [],
+        children: [],
+        listInfo: null,
+        dynamicContent: null,
+      }
+
+      const result = honoServerAdapter.generateServerComponent({
+        name: 'Parent',
+        props: [],
+        typeDefinitions: [],
+        jsx: '<div><Child /><SharedButton /></div>',
+        ir,
+        signals: [],
+        memos: [],
+        childComponents: ['Child', 'SharedButton'],
+        moduleConstants: [],
+        originalImports: [
+          { name: 'Child', path: './Child', isDefault: true },
+          { name: 'SharedButton', path: '../shared/Button', isDefault: false },
+        ],
+      })
+
+      // Paths from originalImports are preserved (but always use named import syntax)
+      expect(result).toContain("import { Child } from './Child'")
+      expect(result).toContain("import { SharedButton } from '../shared/Button'")
+    })
+
+    it('falls back to named imports when originalImports is empty', () => {
       const ir = {
         type: 'element',
         tagName: 'div',
@@ -86,11 +126,47 @@ describe('honoServerAdapter', () => {
         jsx: '<div><Child /></div>',
         ir,
         signals: [],
-        childComponents: ['Child', 'AnotherChild'],
+        memos: [],
+        childComponents: ['Child'],
+        moduleConstants: [],
+        originalImports: [],
       })
 
+      // Falls back to named import when no original import info
       expect(result).toContain("import { Child } from './Child'")
-      expect(result).toContain("import { AnotherChild } from './AnotherChild'")
+    })
+
+    it('includes module constants in output', () => {
+      const ir = {
+        type: 'element',
+        tagName: 'div',
+        id: null,
+        staticAttrs: [],
+        dynamicAttrs: [],
+        events: [],
+        children: [],
+        listInfo: null,
+        dynamicContent: null,
+      }
+
+      const result = honoServerAdapter.generateServerComponent({
+        name: 'Game',
+        props: [],
+        typeDefinitions: [],
+        jsx: '<div className={className}>Game</div>',
+        ir,
+        signals: [],
+        memos: [],
+        childComponents: [],
+        moduleConstants: [
+          { name: 'GRID_SIZE', value: '100', code: 'const GRID_SIZE = 100' },
+          { name: 'MAX_ENEMIES', value: '30', code: 'const MAX_ENEMIES = 30' },
+        ],
+        originalImports: [],
+      })
+
+      expect(result).toContain('const GRID_SIZE = 100')
+      expect(result).toContain('const MAX_ENEMIES = 30')
     })
 
     it('handles Suspense boundaries gracefully with try/catch', () => {
@@ -113,7 +189,10 @@ describe('honoServerAdapter', () => {
         jsx: '<div>0</div>',
         ir,
         signals: [],
+        memos: [],
         childComponents: [],
+        moduleConstants: [],
+        originalImports: [],
       })
 
       // Should use try/catch for useRequestContext to handle Suspense boundaries
@@ -146,7 +225,10 @@ describe('honoServerAdapter', () => {
         jsx: '<div>{initialTodos}</div>',
         ir,
         signals: [],
+        memos: [],
         childComponents: [],
+        moduleConstants: [],
+        originalImports: [],
       })
 
       // Should check bfRootComponent context (with try/catch for Suspense boundaries)

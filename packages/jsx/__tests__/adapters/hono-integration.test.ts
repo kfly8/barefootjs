@@ -171,7 +171,7 @@ describe('Hono Adapter Integration', () => {
       expect(parent).toBeDefined()
       expect(child).toBeDefined()
 
-      // Parent should import Child
+      // Parent should import Child (using named import since generated components use named exports)
       expect(parent!.serverJsx).toContain("import { Child } from './Child'")
       expect(parent!.serverJsx).toContain('<Child')
     })

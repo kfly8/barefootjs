@@ -48,14 +48,24 @@ export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
 
   if (ts.isJsxText(node)) {
     // JSX text processing follows React-like rules:
-    // 1. Text containing only whitespace with newlines is ignored
-    // 2. Leading/trailing newlines with their indentation are trimmed
-    // 3. Internal newlines are converted to single space
-    // 4. Adjacent whitespace is preserved (e.g., "text: " keeps trailing space)
+    // 1. Text containing only whitespace with newlines is ignored (indentation)
+    // 2. Inline spaces between elements are preserved (e.g., "<span>A</span> <span>B</span>")
+    // 3. Leading/trailing newlines with their indentation are trimmed
+    // 4. Internal newlines are converted to single space
+    // 5. Adjacent whitespace is preserved (e.g., "text: " keeps trailing space)
     const rawText = node.getText(ctx.sourceFile)
 
-    // If text is only whitespace containing newlines, skip it
-    if (/^\s*$/.test(rawText) && rawText.includes('\n')) {
+    // If text is only whitespace
+    if (/^\s*$/.test(rawText)) {
+      // Pure indentation (starts with newline) - skip it
+      if (rawText.startsWith('\n') || rawText.startsWith('\r')) {
+        return null
+      }
+      // Inline spaces (e.g., " " between elements) - preserve
+      if (/^[ \t]+$/.test(rawText)) {
+        return { type: 'text', content: rawText }
+      }
+      // Other whitespace patterns with embedded newlines - skip
       return null
     }
 

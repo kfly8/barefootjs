@@ -108,11 +108,13 @@ export type CompileResult = {
   typeDefinitions: string[]        // Type definitions used by props
   source: string   // Component source code (for inline expansion in map)
   ir: IRNode | null  // Intermediate Representation for server JSX generation
+  imports: ComponentImport[]       // Import statements from source file
 }
 
 export type ComponentImport = {
   name: string      // Counter
   path: string      // ./Counter
+  isDefault: boolean // true for default import, false for named import
 }
 
 export type ComponentOutput = {
@@ -152,6 +154,10 @@ export type ServerComponentAdapter = {
     memos: MemoDeclaration[]
     /** Child components used by this component */
     childComponents: string[]
+    /** Module-level constants (e.g., const GRID_SIZE = 100) */
+    moduleConstants: ModuleConstant[]
+    /** Original import statements for child components */
+    originalImports: ComponentImport[]
   }) => string
 
   /**

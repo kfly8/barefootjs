@@ -27,7 +27,18 @@ export function extractImports(source: string, filePath: string): ComponentImpor
             imports.push({
               name: importClause.name.getText(sourceFile),
               path,
+              isDefault: true,
             })
+          }
+          // named imports: import { Counter } from './Counter'
+          if (importClause?.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
+            for (const element of importClause.namedBindings.elements) {
+              imports.push({
+                name: element.name.getText(sourceFile),
+                path,
+                isDefault: false,
+              })
+            }
           }
         }
       }

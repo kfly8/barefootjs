@@ -211,3 +211,76 @@ describe('Component Composition', () => {
     expect(component.clientJs).toContain('lastName()')
   })
 })
+
+describe('Whitespace Handling', () => {
+  it('preserves trailing whitespace in text before elements', async () => {
+    // JSX parser preserves whitespace within text nodes
+    const source = `
+      function Component() {
+        return (
+          <p>Done: <span>5</span></p>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // The "Done: " text (including trailing space) should be preserved
+    expect(component.serverJsx).toContain('Done: <span>')
+  })
+
+  it('preserves leading text in whitespace after closing element', async () => {
+    // Note: JSX drops pure whitespace between sibling elements at parser level
+    // To preserve whitespace between elements, use {' '} or include text
+    const source = `
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [done, setDone] = createSignal(5)
+        const [total, setTotal] = createSignal(10)
+        return (
+          <p>Done: <span>{done()}</span>/ <span>{total()}</span></p>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // The "/ " text (including leading slash and trailing space) should be preserved
+    expect(component.serverJsx).toContain('/ <span')
+  })
+
+  it('removes indentation whitespace between block elements', async () => {
+    const source = `
+      function Component() {
+        return (
+          <div>
+            <p>First</p>
+            <p>Second</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // No extra whitespace between p elements (indentation stripped)
+    expect(component.serverJsx).toContain('<p>First</p><p>Second</p>')
+  })
+
+  it('preserves explicit space expression between elements', async () => {
+    // Use {' '} to explicitly add whitespace between sibling elements
+    const source = `
+      function Component() {
+        return (
+          <p><span>A</span>{' '}<span>B</span></p>
+        )
+      }
+    `
+    const result = await compile(source)
+    const component = result.components[0]
+
+    // The explicit space expression should be in the output
+    expect(component.serverJsx).toContain('<span>A</span>{')
+    expect(component.serverJsx).toContain('}<span>B</span>')
+  })
+})
