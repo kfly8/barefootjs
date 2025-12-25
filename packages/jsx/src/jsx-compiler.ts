@@ -374,10 +374,11 @@ export async function compileJSX(
           ? `{ ${result.props.map(p => p.name).join(', ')} }`
           : '{}'  // Empty destructuring for components with no props but child inits
         // Add auto-hydration code that initializes when scope element exists
+        // Only auto-hydrate root components (not nested inside another data-bf-scope)
         const autoHydrateCode = `
-// Auto-hydration: initialize when scope element exists
+// Auto-hydration: initialize when scope element exists (root components only)
 const __scopeEl = document.querySelector('[data-bf-scope="${name}"]')
-if (__scopeEl) {
+if (__scopeEl && !__scopeEl.parentElement?.closest('[data-bf-scope]')) {
   const __propsEl = document.querySelector('script[data-bf-props="${name}"]')
   const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
   init${name}(__props)
