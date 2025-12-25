@@ -248,15 +248,23 @@ export async function compileJSX(
     // Wrap in init function if props exist
     let clientJs = ''
     if (result.clientJs || childInits.length > 0) {
-      const barefootImports = ['createSignal', 'createEffect']
+      // Only include barefoot imports if there's actual client-side logic
+      const hasClientLogic = Boolean(result.clientJs)
+      const barefootImports: string[] = []
+      if (hasClientLogic) {
+        barefootImports.push('createSignal', 'createEffect')
+      }
       if (needsCreateMemo) {
         barefootImports.push('createMemo')
       }
       if (needsReconcileList) {
         barefootImports.push('reconcileList')
       }
+      const barefootImportLine = barefootImports.length > 0
+        ? `import { ${barefootImports.join(', ')} } from './barefoot.js'`
+        : ''
       const allImports = [
-        `import { ${barefootImports.join(', ')} } from './barefoot.js'`,
+        barefootImportLine,
         childImports,
       ].filter(Boolean).join('\n')
 
@@ -286,12 +294,11 @@ ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 ${autoHydrateCode}`
       } else {
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-        // For components without props, define __instanceIndex = 0 (root component is singleton)
+        // Only define __instanceIndex if there's client logic that queries elements
+        const instanceIndexLine = hasClientLogic ? 'const __instanceIndex = 0\n' : ''
         clientJs = `${allImports}
 
-const __instanceIndex = 0
-
-${declarations}
+${instanceIndexLine}${declarations}
 
 ${bodyCode}
 `
