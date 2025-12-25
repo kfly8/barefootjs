@@ -101,9 +101,10 @@ describe('honoServerAdapter', () => {
         ],
       })
 
-      // Paths from originalImports are preserved (but always use named import syntax)
+      // All generated components are in the same dist/ directory,
+      // so imports always use ./${componentName} format
       expect(result).toContain("import { Child } from './Child'")
-      expect(result).toContain("import { SharedButton } from '../shared/Button'")
+      expect(result).toContain("import { SharedButton } from './SharedButton'")
     })
 
     it('falls back to named imports when originalImports is empty', () => {
