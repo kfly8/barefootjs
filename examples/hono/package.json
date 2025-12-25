@@ -7,8 +7,7 @@
   },
   "dependencies": {
     "@barefootjs/dom": "workspace:*",
-    "@barefootjs/hono": "workspace:*",
-    "hono": "^4.6.0"
+    "@barefootjs/hono": "workspace:*"
   },
   "devDependencies": {
     "@barefootjs/jsx": "workspace:*",
