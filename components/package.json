@@ -1,5 +1,5 @@
 {
-  "name": "barefootjs-hono-jsx-example",
+  "name": "barefootjs-components",
   "version": "0.0.1",
   "scripts": {
     "build": "bun run build.ts",
@@ -12,6 +12,9 @@
   },
   "devDependencies": {
     "@barefootjs/jsx": "workspace:*",
-    "bun-types": "^1.1.0"
+    "@unocss/cli": "^66.0.0",
+    "@unocss/preset-wind": "^66.0.0",
+    "bun-types": "^1.1.0",
+    "unocss": "^66.0.0"
   }
 }
