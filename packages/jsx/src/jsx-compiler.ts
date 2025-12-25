@@ -1,15 +1,15 @@
 /**
  * BarefootJS JSX Compiler
  *
- * Compiles JSX to static HTML and client JS.
+ * Compiles JSX to Marked JSX and Client JS.
  * - Resolves component imports
- * - Detects event handlers (onClick, etc.) and generates client JS
+ * - Detects event handlers (onClick, etc.) and generates Client JS
  * - Detects dynamic content ({count()}, etc.) and generates update functions
  *
  * Usage example:
  *   const result = await compileJSX(entryPath, readFile)
- *   // result.html: static HTML
- *   // result.components: JS for each component
+ *   // result.components[].serverJsx: Marked JSX (server-side JSX with hydration markers)
+ *   // result.components[].clientJs: Client JS
  */
 
 import ts from 'typescript'
@@ -68,11 +68,11 @@ export type { ComponentOutput, CompileJSXResult }
  * Compile application from entry point
  *
  * Recursively resolves component imports and
- * generates static HTML and JS for each component.
+ * generates Marked JSX and Client JS for each component.
  *
  * @param entryPath - Entry file path (e.g., /path/to/index.tsx)
  * @param readFile - Function to read files
- * @returns { html, components } - Static HTML and component JS array
+ * @returns { components } - Array of compiled components (Marked JSX + Client JS)
  */
 export async function compileJSX(
   entryPath: string,
@@ -353,13 +353,13 @@ ${bodyCode}
 
 /**
  * JSX compilation with component support (internal use)
- * Compiles while embedding child component HTML
+ * Compiles while embedding child components
  *
  * IR-based processing flow:
  * 1. JSX → IR conversion (jsx-to-ir.ts)
- * 2. IR → HTML conversion (ir-to-html.ts)
- * 3. IR → ClientJS info collection (ir-to-client-js.ts)
- * 4. ClientJS generation (createEffect-based)
+ * 2. IR → Marked JSX conversion (ir-to-server-jsx.ts)
+ * 3. IR → Client JS info collection (ir-to-client-js.ts)
+ * 4. Client JS generation (createEffect-based)
  *
  * @param source - Source code
  * @param filePath - File path

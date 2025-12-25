@@ -3,13 +3,24 @@
 A JSX compiler that generates server-side JSX and client-side JavaScript from JSX components.
 Uses a signal-based reactive system similar to SolidJS, generating minimal client JS only for interactive parts.
 
+## Terminology
+
+### Marked JSX
+
+BarefootJS compiles JSX components into two outputs:
+
+1. **Marked JSX** - Server-side JSX with hydration markers (`data-bf-scope`, `data-bf`, `data-bf-cond`, etc.)
+2. **Client JS** - Minimal JavaScript that hydrates interactive parts
+
+The "markers" are data attributes that allow the client JS to find and update specific DOM elements without virtual DOM diffing.
+
 ## Directory Structure
 
 ```
 packages/
 ├── jsx/           # JSX compiler core (compileJSX function)
 │   ├── extractors/    # Extract metadata from AST (signals, memos, imports, props, etc.)
-│   ├── transformers/  # JSX → IR → Server JSX / Client JS
+│   ├── transformers/  # JSX → IR → Marked JSX / Client JS
 │   ├── adapters/      # Output adapters (testing)
 │   └── compiler/      # Code generation utilities
 ├── dom/           # Reactive primitives (createSignal, createEffect, createMemo)
