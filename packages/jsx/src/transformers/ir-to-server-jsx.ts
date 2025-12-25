@@ -5,7 +5,7 @@
  * Unlike ir-to-html which evaluates expressions, this preserves them as JSX.
  */
 
-import type { IRNode, IRElement, IRFragment, SignalDeclaration } from '../types'
+import type { IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
@@ -14,6 +14,7 @@ import { isSvgRoot } from '../utils/svg-helpers'
 export type ServerJsxContext = {
   componentName: string
   signals: SignalDeclaration[]
+  memos: MemoDeclaration[]
   needsDataBfIds: Set<string>  // IDs that need data-bf attribute for querySelector fallback
   /** Event ID counter for event attribute output (to match client-side event delegation) */
   eventIdCounter: { value: number } | null
@@ -48,11 +49,12 @@ export function irToServerJsx(
   componentName: string,
   signals: SignalDeclaration[],
   needsDataBfIds: Set<string> = new Set(),
-  options: { outputEventAttrs?: boolean } = {}
+  options: { outputEventAttrs?: boolean; memos?: MemoDeclaration[] } = {}
 ): string {
   const ctx: ServerJsxContext = {
     componentName,
     signals,
+    memos: options.memos || [],
     needsDataBfIds,
     // Initialize event ID counter if outputEventAttrs is enabled
     eventIdCounter: options.outputEventAttrs ? { value: 0 } : null,
@@ -71,7 +73,7 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
 
     case 'expression':
       // Preserve expression as JSX (replace signal calls with prop references)
-      const expr = replaceSignalCallsWithProps(node.expression, ctx.signals)
+      const expr = replaceSignalCallsWithProps(node.expression, ctx.signals, ctx.memos)
       return `{${expr}}`
 
     case 'component':
@@ -80,7 +82,7 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
       const compProps = node.props
         .filter(p => !p.name.startsWith('on'))  // Skip event handlers like onToggle, onClick
         .map(p => {
-          const value = replaceSignalCallsWithProps(p.value, ctx.signals)
+          const value = replaceSignalCallsWithProps(p.value, ctx.signals, ctx.memos)
           // String literals keep quotes, expressions use braces
           if (value.startsWith('"') || value.startsWith("'")) {
             return `${p.name}=${value}`
@@ -97,7 +99,7 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
 
     case 'conditional':
       // Generate ternary expression
-      const condition = replaceSignalCallsWithProps(node.condition, ctx.signals)
+      const condition = replaceSignalCallsWithProps(node.condition, ctx.signals, ctx.memos)
       // Use helper to get values suitable for inside JSX expression context
       const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
       const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
@@ -139,10 +141,11 @@ function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext, is
  * @param needsDataBfIds - Set of element IDs that need data-bf attribute
  * @returns String suitable for use inside JSX expression (e.g., ternary)
  */
-function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set()): string {
+function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set(), memos: MemoDeclaration[] = []): string {
   const ctx: ServerJsxContext = {
     componentName: '',
     signals,
+    memos,
     needsDataBfIds,
     eventIdCounter: null,
     inListContext: false,
@@ -160,7 +163,7 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 
     case 'expression':
       // Expression inside expression context: just the expression, no braces
-      return replaceSignalCallsWithProps(node.expression, ctx.signals)
+      return replaceSignalCallsWithProps(node.expression, ctx.signals, ctx.memos)
 
     case 'element':
       // Element is valid JSX, use as-is
@@ -168,7 +171,7 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 
     case 'conditional':
       // Nested conditional - recursively process
-      const cond = replaceSignalCallsWithProps(node.condition, ctx.signals)
+      const cond = replaceSignalCallsWithProps(node.condition, ctx.signals, ctx.memos)
       const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
       const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
       return `(${cond} ? ${whenTrue} : ${whenFalse})`
@@ -178,7 +181,7 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
       const compPropsStr = node.props
         .filter(p => !p.name.startsWith('on'))  // Skip event handlers
         .map(p => {
-          const value = replaceSignalCallsWithProps(p.value, ctx.signals)
+          const value = replaceSignalCallsWithProps(p.value, ctx.signals, ctx.memos)
           if (value.startsWith('"') || value.startsWith("'")) {
             return `${p.name}=${value}`
           }
@@ -196,10 +199,11 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 /**
  * Generates JSX from an IR element (legacy wrapper)
  */
-function elementToServerJsx(el: IRElement, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set()): string {
+function elementToServerJsx(el: IRElement, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set(), memos: MemoDeclaration[] = []): string {
   const ctx: ServerJsxContext = {
     componentName: '',
     signals,
+    memos,
     needsDataBfIds,
     eventIdCounter: null,
     inListContext: false,
@@ -234,7 +238,7 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
 
   // Spread attributes (preserve expressions)
   for (const spread of spreadAttrs) {
-    const expr = replaceSignalCallsWithProps(spread.expression, ctx.signals)
+    const expr = replaceSignalCallsWithProps(spread.expression, ctx.signals, ctx.memos)
     attrParts.push(`{...${expr}}`)
   }
 
@@ -251,7 +255,7 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
   // Dynamic attributes (preserve expressions)
   for (const attr of dynamicAttrs) {
     const attrName = attr.name === 'class' ? 'className' : attr.name
-    const expr = replaceSignalCallsWithProps(attr.expression, ctx.signals)
+    const expr = replaceSignalCallsWithProps(attr.expression, ctx.signals, ctx.memos)
 
     // Style objects need special handling
     if (attrName === 'style' && expr.trim().startsWith('{')) {
@@ -280,7 +284,7 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
 
   // List element - generate .map() expression
   if (listInfo) {
-    const arrayExpr = replaceSignalCallsWithProps(listInfo.arrayExpression, ctx.signals)
+    const arrayExpr = replaceSignalCallsWithProps(listInfo.arrayExpression, ctx.signals, ctx.memos)
 
     // Use itemIR for proper JSX generation (avoids escaping issues)
     if (listInfo.itemIR) {
@@ -322,27 +326,55 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
 }
 
 /**
- * Replaces signal calls with prop references
+ * Replaces signal and memo calls with their values
  *
- * For server JSX, signals don't exist - we use props directly.
- * e.g., todos() -> initialTodos (if signal 'todos' is initialized from prop 'initialTodos')
+ * For server JSX, signals don't exist - we use their initial values.
+ * Memos are evaluated with signals replaced by their initial values.
+ * e.g., count() -> 0 (if signal 'count' has initialValue '0')
+ * e.g., doubled() -> 0 * 2 (if memo 'doubled' computes count() * 2)
  *
  * @param expr - Expression string
  * @param signals - Signal declarations
- * @returns Expression with signal calls replaced
+ * @param memos - Memo declarations
+ * @returns Expression with signal/memo calls replaced
  */
-function replaceSignalCallsWithProps(expr: string, signals: SignalDeclaration[]): string {
+function replaceSignalAndMemoCalls(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[]): string {
   let result = expr
 
+  // First, replace signal getter calls with their initial values
   for (const signal of signals) {
-    // Replace signal getter calls: count() -> initialValue
-    // For now, just replace with the initial value expression
-    // TODO: Track which signals are initialized from props
     const getterPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
     result = result.replace(getterPattern, signal.initialValue)
   }
 
+  // Then, replace memo getter calls with their evaluated computation
+  for (const memo of memos) {
+    const getterPattern = new RegExp(`\\b${memo.getter}\\(\\)`, 'g')
+    if (getterPattern.test(result)) {
+      // Extract the arrow function body from computation
+      // e.g., "() => count() * 2" -> "count() * 2"
+      let computationBody = memo.computation
+      const arrowMatch = computationBody.match(/^\s*\(\s*\)\s*=>\s*(.+)$/s)
+      if (arrowMatch) {
+        computationBody = arrowMatch[1].trim()
+      }
+      // Replace signals in the computation body
+      for (const signal of signals) {
+        const signalPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
+        computationBody = computationBody.replace(signalPattern, signal.initialValue)
+      }
+      result = result.replace(getterPattern, `(${computationBody})`)
+    }
+  }
+
   return result
+}
+
+/**
+ * Replaces signal calls with prop references (legacy wrapper for compatibility)
+ */
+function replaceSignalCallsWithProps(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[] = []): string {
+  return replaceSignalAndMemoCalls(expr, signals, memos)
 }
 
 /**

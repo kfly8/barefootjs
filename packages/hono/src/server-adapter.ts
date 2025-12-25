@@ -40,7 +40,7 @@ function injectDataKeyProp(jsx: string): string {
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, childComponents }) => {
+  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents }) => {
     // Extract prop names for destructuring
     const propNames = props.map(p => p.name)
     // Always include "data-key" for list item reconciliation support

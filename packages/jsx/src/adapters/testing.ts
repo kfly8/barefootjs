@@ -9,7 +9,7 @@
  * - testHtmlAdapter: Outputs static HTML (for E2E DOM testing)
  */
 
-import type { ServerComponentAdapter, IRNode, IRElement, IRFragment, SignalDeclaration } from '../types'
+import type { ServerComponentAdapter, IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**

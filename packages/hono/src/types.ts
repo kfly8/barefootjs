@@ -14,6 +14,11 @@ export type SignalDeclaration = {
   initialValue: string // 0, false
 }
 
+export type MemoDeclaration = {
+  getter: string      // doubled
+  computation: string // () => count() * 2
+}
+
 export type IRNode = unknown // Simplified - full IR types are in @barefootjs/jsx
 
 /**
@@ -34,6 +39,7 @@ export type ServerComponentAdapter = {
     jsx: string
     ir: IRNode | null
     signals: SignalDeclaration[]
+    memos: MemoDeclaration[]
     /** Child components used by this component */
     childComponents: string[]
   }) => string

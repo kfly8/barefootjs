@@ -30,6 +30,7 @@ import type {
 import {
   extractImports,
   extractSignals,
+  extractMemos,
   extractComponentPropsWithTypes,
   extractTypeDefinitions,
   extractLocalFunctions,
@@ -122,6 +123,7 @@ export async function compileJSX(
     path: string
     result: CompileResult
     signalDeclarations: string
+    memoDeclarations: string
     childInits: ChildComponentInit[]
   }> = []
 
@@ -132,12 +134,16 @@ export async function compileJSX(
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
         .join('\n')
+      const memoDeclarations = result.memos
+        .map(m => `const ${m.getter} = createMemo(${m.computation})`)
+        .join('\n')
 
       componentData.push({
         name,
         path,
         result,
         signalDeclarations,
+        memoDeclarations,
         childInits: result.childInits,
       })
     }
@@ -146,9 +152,9 @@ export async function compileJSX(
   // 2. Calculate hash for each component (based on content excluding child component imports)
   const componentHashes: Map<string, string> = new Map()
   for (const data of componentData) {
-    const { name, result, signalDeclarations } = data
+    const { name, result, signalDeclarations, memoDeclarations } = data
     const bodyCode = result.clientJs
-    const contentForHash = signalDeclarations + bodyCode
+    const contentForHash = signalDeclarations + memoDeclarations + bodyCode
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
   }
@@ -157,7 +163,7 @@ export async function compileJSX(
   const components: ComponentOutput[] = []
 
   for (const data of componentData) {
-    const { name, result, signalDeclarations, childInits } = data
+    const { name, result, signalDeclarations, memoDeclarations, childInits } = data
 
     // Generate child component imports (with hash)
     const childImports = childInits
@@ -184,10 +190,16 @@ export async function compileJSX(
     // Check if any list uses key-based reconciliation
     const needsReconcileList = result.listElements.some(el => el.keyExpression !== null)
 
+    // Check if component uses memos
+    const needsCreateMemo = result.memos.length > 0
+
     // Wrap in init function if props exist
     let clientJs = ''
     if (result.clientJs || childInits.length > 0) {
       const barefootImports = ['createSignal', 'createEffect']
+      if (needsCreateMemo) {
+        barefootImports.push('createMemo')
+      }
       if (needsReconcileList) {
         barefootImports.push('reconcileList')
       }
@@ -212,17 +224,19 @@ if (__propsEl) {
   init${name}(__props)
 }
 `
+        const declarations = [signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
         clientJs = `${allImports}
 
 export function init${name}(${propsParam}) {
-${signalDeclarations ? signalDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
+${declarations ? declarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
 ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 ${autoHydrateCode}`
       } else {
+        const declarations = [signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
         clientJs = `${allImports}
 
-${signalDeclarations}
+${declarations}
 
 ${bodyCode}
 `
@@ -243,7 +257,7 @@ ${bodyCode}
       const needsDataBfIds = new Set(
         paths.filter(p => p.path === null).map(p => p.id)
       )
-      const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds, { outputEventAttrs: true })
+      const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds, { outputEventAttrs: true, memos: result.memos })
       // Collect all child component names (including those in lists) for server imports
       const childComponents = collectAllChildComponentNames(result.ir)
       serverJsx = options.serverAdapter.generateServerComponent({
@@ -253,6 +267,7 @@ ${bodyCode}
         jsx,
         ir: result.ir,
         signals: result.signals,
+        memos: result.memos,
         childComponents,
       })
     }
@@ -300,6 +315,9 @@ function compileJsxWithComponents(
   // Extract signal declarations
   const signals = extractSignals(source, filePath)
 
+  // Extract memo declarations
+  const memos = extractMemos(source, filePath)
+
   // Extract component props with types
   const props = extractComponentPropsWithTypes(source, filePath)
 
@@ -314,6 +332,7 @@ function compileJsxWithComponents(
   const irContext: JsxToIRContext = {
     sourceFile,
     signals,
+    memos,
     components,
     idGenerator,
   }
@@ -351,6 +370,7 @@ function compileJsxWithComponents(
   return {
     clientJs,
     signals,
+    memos,
     localFunctions,
     childInits,
     interactiveElements,

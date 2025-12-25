@@ -57,6 +57,11 @@ export type SignalDeclaration = {
   initialValue: string // 0, false
 }
 
+export type MemoDeclaration = {
+  getter: string      // doubled
+  computation: string // () => count() * 2
+}
+
 export type LocalFunction = {
   name: string        // handleToggle
   code: string        // const handleToggle = (id) => { ... }
@@ -76,6 +81,7 @@ export type PropWithType = {
 export type CompileResult = {
   clientJs: string
   signals: SignalDeclaration[]
+  memos: MemoDeclaration[]         // Memoized computed values
   localFunctions: LocalFunction[]  // Functions defined within the component
   childInits: ChildComponentInit[] // Child components that need initialization
   interactiveElements: InteractiveElement[]
@@ -128,6 +134,7 @@ export type ServerComponentAdapter = {
     jsx: string
     ir: IRNode | null
     signals: SignalDeclaration[]
+    memos: MemoDeclaration[]
     /** Child components used by this component */
     childComponents: string[]
   }) => string

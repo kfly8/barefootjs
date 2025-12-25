@@ -16,6 +16,7 @@ export type Signal<T> = [
 
 export type CleanupFn = () => void
 export type EffectFn = () => void | CleanupFn
+export type Memo<T> = () => T
 
 // --- Internal State ---
 
@@ -156,6 +157,43 @@ export function onCleanup(fn: CleanupFn): void {
       fn()
     }
   }
+}
+
+// --- createMemo ---
+
+/**
+ * Create a memoized computed value
+ *
+ * A derived signal that:
+ * - Tracks dependencies automatically (like createEffect)
+ * - Caches the computed result
+ * - Acts as a read-only signal (can be used as dependency by other effects/memos)
+ *
+ * @param fn - Computation function that returns a value
+ * @returns Getter function for the memoized value
+ *
+ * @example
+ * const [count, setCount] = createSignal(2)
+ * const doubled = createMemo(() => count() * 2)
+ * doubled()    // 4
+ * setCount(5)
+ * doubled()    // 10
+ */
+export function createMemo<T>(fn: () => T): Memo<T> {
+  const [value, setValue] = createSignal<T>(undefined as T)
+  let initialized = false
+
+  createEffect(() => {
+    const result = fn()
+    if (initialized) {
+      setValue(result)
+    } else {
+      initialized = true
+      setValue(result)
+    }
+  })
+
+  return value
 }
 
 // --- reconcileList ---

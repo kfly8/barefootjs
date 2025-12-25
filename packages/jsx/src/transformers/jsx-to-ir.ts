@@ -15,6 +15,7 @@ import type {
   IRFragment,
   IRListInfo,
   SignalDeclaration,
+  MemoDeclaration,
   CompileResult,
 } from '../types'
 import { isPascalCase } from '../utils/helpers'
@@ -24,6 +25,7 @@ import { jsxToTemplateString } from '../compiler/template-generator'
 export type JsxToIRContext = {
   sourceFile: ts.SourceFile
   signals: SignalDeclaration[]
+  memos: MemoDeclaration[]
   components: Map<string, CompileResult>
   idGenerator: IdGenerator
 }
@@ -259,7 +261,7 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
 
   // Regular expression
   const exprText = expr.getText(ctx.sourceFile)
-  const isDynamic = containsSignalCall(exprText, ctx.signals)
+  const isDynamic = containsReactiveCall(exprText, ctx.signals, ctx.memos)
 
   return {
     type: 'expression',
@@ -316,7 +318,7 @@ function processConditionalBranch(node: ts.Expression, ctx: JsxToIRContext): IRN
   return {
     type: 'expression',
     expression: node.getText(ctx.sourceFile),
-    isDynamic: containsSignalCall(node.getText(ctx.sourceFile), ctx.signals),
+    isDynamic: containsReactiveCall(node.getText(ctx.sourceFile), ctx.signals, ctx.memos),
   }
 }
 
@@ -378,7 +380,7 @@ function processAttributes(
     if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
       const expression = attr.initializer.expression.getText(ctx.sourceFile)
       // Treat as dynamic if it's a known target OR contains signal calls
-      if (isDynamicAttributeTarget(attrName) || containsSignalCall(expression, ctx.signals)) {
+      if (isDynamicAttributeTarget(attrName) || containsReactiveCall(expression, ctx.signals, ctx.memos)) {
         dynamicAttrs.push({ name: attrName, expression })
         return
       }
@@ -441,7 +443,7 @@ function processChildren(
         contentParts.push({ type: 'expression', value: irNode.expression })
       } else if (irNode.type === 'conditional') {
         // Conditional expression with signal-dependent condition
-        if (containsSignalCall(irNode.condition, ctx.signals)) {
+        if (containsReactiveCall(irNode.condition, ctx.signals, ctx.memos)) {
           hasDynamicContent = true
           // Reconstruct the ternary expression for fullContent
           const whenTrueExpr = irNode.whenTrue.type === 'expression' ? irNode.whenTrue.expression : ''
@@ -575,7 +577,24 @@ function isDynamicAttributeTarget(attrName: string): boolean {
 }
 
 /**
- * Checks if expression contains signal calls
+ * Checks if expression contains signal or memo calls
+ */
+function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[]): boolean {
+  const hasSignalCall = signals.some(s => {
+    const regex = new RegExp(`\\b${s.getter}\\s*\\(`)
+    return regex.test(expr)
+  })
+  if (hasSignalCall) return true
+
+  const hasMemoCall = memos.some(m => {
+    const regex = new RegExp(`\\b${m.getter}\\s*\\(`)
+    return regex.test(expr)
+  })
+  return hasMemoCall
+}
+
+/**
+ * Checks if expression contains signal calls (legacy - for backwards compatibility)
  */
 function containsSignalCall(expr: string, signals: SignalDeclaration[]): boolean {
   return signals.some(s => {
