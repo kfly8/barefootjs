@@ -194,12 +194,14 @@ export async function compileJSX(
     }
   }
 
-  // 2. Calculate hash for each component (based on content excluding child component imports)
+  // 2. Calculate hash for each component (based on content including child init calls)
   const componentHashes: Map<string, string> = new Map()
   for (const data of componentData) {
-    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations } = data
+    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
     const bodyCode = result.clientJs
-    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode
+    // Include childInits in hash to invalidate cache when child components change
+    const childInitsStr = childInits.map(c => `${c.name}:${c.propsExpr}`).join(',')
+    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode + childInitsStr
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
   }
@@ -210,20 +212,25 @@ export async function compileJSX(
   for (const data of componentData) {
     const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
 
-    // Generate child component imports (with hash)
-    const childImports = childInits
-      .map(child => {
-        const childHash = componentHashes.get(child.name) || ''
-        const childFilename = childHash ? `${child.name}-${childHash}.js` : `${child.name}.js`
-        return `import { init${child.name} } from './${childFilename}'`
+    // Generate child component imports (with hash) - deduplicate by component name
+    const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
+    const childImports = uniqueChildNames
+      .map(childName => {
+        const childHash = componentHashes.get(childName) || ''
+        const childFilename = childHash ? `${childName}-${childHash}.js` : `${childName}.js`
+        return `import { init${childName} } from './${childFilename}'`
       })
       .join('\n')
 
     // Generate child component init calls
     // Automatically updated by createEffect, so no need to wrap in callback
+    // Track instance index for each child component type
+    const childInstanceCounts: Map<string, number> = new Map()
     const childInitCalls = childInits
       .map(child => {
-        return `init${child.name}(${child.propsExpr})`
+        const instanceIndex = childInstanceCounts.get(child.name) ?? 0
+        childInstanceCounts.set(child.name, instanceIndex + 1)
+        return `init${child.name}(${child.propsExpr}, ${instanceIndex})`
       })
       .join('\n')
 
@@ -272,14 +279,17 @@ if (__propsEl) {
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
         clientJs = `${allImports}
 
-export function init${name}(${propsParam}) {
+export function init${name}(${propsParam}, __instanceIndex = 0) {
 ${declarations ? declarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
 ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 ${autoHydrateCode}`
       } else {
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
+        // For components without props, define __instanceIndex = 0 (root component is singleton)
         clientJs = `${allImports}
+
+const __instanceIndex = 0
 
 ${declarations}
 
@@ -452,7 +462,11 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
   }
 
   if (attrName === 'style') {
-    return `Object.assign(${varName}.style, ${expression})`
+    // Object literal uses Object.assign, string/template literal uses cssText
+    if (expression.trim().startsWith('{')) {
+      return `Object.assign(${varName}.style, ${expression})`
+    }
+    return `${varName}.style.cssText = ${expression}`
   }
 
   if (['disabled', 'checked', 'hidden', 'readonly', 'required'].includes(attrName)) {
@@ -512,8 +526,10 @@ function generateClientJsWithCreateEffect(
   }
 
   // Find the component's scope element first
+  // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
   if (hasElements) {
-    lines.push(`const __scope = document.querySelector('[data-bf-scope="${componentName}"]')`)
+    lines.push(`const __allScopes = document.querySelectorAll('[data-bf-scope="${componentName}"]')`)
+    lines.push(`const __scope = __allScopes[__instanceIndex]`)
   }
 
   // Track declared variables and their paths for chaining optimization

@@ -82,7 +82,11 @@ export function generateAttributeUpdate(da: DynamicAttribute): string {
   }
 
   if (attrName === 'style') {
-    return `Object.assign(${id}.style, ${expression})`
+    // Object literal uses Object.assign, string/template literal uses cssText
+    if (expression.trim().startsWith('{')) {
+      return `Object.assign(${id}.style, ${expression})`
+    }
+    return `${id}.style.cssText = ${expression}`
   }
 
   if (isBooleanAttribute(attrName)) {

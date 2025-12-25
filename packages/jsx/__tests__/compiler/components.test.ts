@@ -177,8 +177,8 @@ describe('Components - Props and init function', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const formComponent = result.components.find(c => c.name === 'Form')
 
-    // Wrapped in init function
-    expect(formComponent!.clientJs).toContain('export function initForm({ onAdd })')
+    // Wrapped in init function (with __instanceIndex for multiple instance support)
+    expect(formComponent!.clientJs).toContain('export function initForm({ onAdd }, __instanceIndex = 0)')
     // Signal declaration is inside function
     expect(formComponent!.clientJs).toContain("const [text, setText] = createSignal('')")
     // Local function is also inside function
@@ -242,8 +242,8 @@ describe('Components - Props and init function', () => {
 
     // Child component import exists (with hash)
     expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
-    // init call exists (callback is passed as is because createEffect automatically tracks)
-    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd })')
+    // init call exists with instance index (callback is passed as is because createEffect automatically tracks)
+    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd }, 0)')
   })
 })
 
@@ -276,8 +276,8 @@ describe('Components - Callback props', () => {
     const result = await compileWithFiles('/test/Parent.tsx', files)
     const parent = result.components.find(c => c.name === 'Parent')
 
-    // Callback is passed as is (due to automatic tracking by createEffect)
-    expect(parent!.clientJs).toContain('initChild({ onClick: handleClick })')
+    // Callback is passed as is with instance index (due to automatic tracking by createEffect)
+    expect(parent!.clientJs).toContain('initChild({ onClick: handleClick }, 0)')
   })
 
   it('Even without dynamic content, callback props are passed as is', async () => {
