@@ -62,6 +62,12 @@ export type MemoDeclaration = {
   computation: string // () => count() * 2
 }
 
+export type ModuleConstant = {
+  name: string        // GRID_SIZE
+  value: string       // 100 (literal value as string)
+  code: string        // const GRID_SIZE = 100
+}
+
 export type LocalFunction = {
   name: string        // handleToggle
   code: string        // const handleToggle = (id) => { ... }
@@ -82,6 +88,7 @@ export type CompileResult = {
   clientJs: string
   signals: SignalDeclaration[]
   memos: MemoDeclaration[]         // Memoized computed values
+  moduleConstants: ModuleConstant[] // Module-level constants
   localFunctions: LocalFunction[]  // Functions defined within the component
   childInits: ChildComponentInit[] // Child components that need initialization
   interactiveElements: InteractiveElement[]

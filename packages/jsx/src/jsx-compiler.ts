@@ -31,6 +31,8 @@ import {
   extractImports,
   extractSignals,
   extractMemos,
+  extractModuleConstants,
+  isConstantUsedInClientCode,
   extractComponentPropsWithTypes,
   extractTypeDefinitions,
   extractLocalFunctions,
@@ -122,6 +124,7 @@ export async function compileJSX(
     name: string
     path: string
     result: CompileResult
+    constantDeclarations: string
     signalDeclarations: string
     memoDeclarations: string
     childInits: ChildComponentInit[]
@@ -138,10 +141,19 @@ export async function compileJSX(
         .map(m => `const ${m.getter} = createMemo(${m.computation})`)
         .join('\n')
 
+      // Filter constants to only those used in client code
+      const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
+      const refCallbacks = result.refElements.map(r => r.callback)
+      const usedConstants = result.moduleConstants.filter(c =>
+        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks)
+      )
+      const constantDeclarations = usedConstants.map(c => c.code).join('\n')
+
       componentData.push({
         name,
         path,
         result,
+        constantDeclarations,
         signalDeclarations,
         memoDeclarations,
         childInits: result.childInits,
@@ -152,9 +164,9 @@ export async function compileJSX(
   // 2. Calculate hash for each component (based on content excluding child component imports)
   const componentHashes: Map<string, string> = new Map()
   for (const data of componentData) {
-    const { name, result, signalDeclarations, memoDeclarations } = data
+    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations } = data
     const bodyCode = result.clientJs
-    const contentForHash = signalDeclarations + memoDeclarations + bodyCode
+    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
   }
@@ -163,7 +175,7 @@ export async function compileJSX(
   const components: ComponentOutput[] = []
 
   for (const data of componentData) {
-    const { name, result, signalDeclarations, memoDeclarations, childInits } = data
+    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
 
     // Generate child component imports (with hash)
     const childImports = childInits
@@ -224,7 +236,7 @@ if (__propsEl) {
   init${name}(__props)
 }
 `
-        const declarations = [signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
+        const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
         clientJs = `${allImports}
 
 export function init${name}(${propsParam}) {
@@ -233,7 +245,7 @@ ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 ${autoHydrateCode}`
       } else {
-        const declarations = [signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
+        const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
         clientJs = `${allImports}
 
 ${declarations}
@@ -318,6 +330,9 @@ function compileJsxWithComponents(
   // Extract memo declarations
   const memos = extractMemos(source, filePath)
 
+  // Extract module-level constants
+  const moduleConstants = extractModuleConstants(source, filePath)
+
   // Extract component props with types
   const props = extractComponentPropsWithTypes(source, filePath)
 
@@ -371,6 +386,7 @@ function compileJsxWithComponents(
     clientJs,
     signals,
     memos,
+    moduleConstants,
     localFunctions,
     childInits,
     interactiveElements,

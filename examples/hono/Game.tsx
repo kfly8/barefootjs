@@ -9,7 +9,18 @@
  * - Real-time FPS measurement
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
+
+const GRID_SIZE = 100
+const MAX_ENEMIES = 30
+const PLAYER_SPEED = 1
+const ENEMY_SPEED = 0.3
+const BULLET_SPEED = 2
+
+const EMPTY = 0
+const PLAYER = 1
+const ENEMY = 2
+const BULLET = 3
 
 type Entity = { x: number; y: number; vx?: number; vy?: number }
 
@@ -22,18 +33,6 @@ function Game() {
 
   // Game initialization (runs on client via ref)
   const initGame = (container: HTMLElement) => {
-    // Constants
-    const GRID_SIZE = 100
-    const CELL_SIZE = 4
-    const MAX_ENEMIES = 30
-    const PLAYER_SPEED = 1
-    const ENEMY_SPEED = 0.3
-    const BULLET_SPEED = 2
-    const EMPTY = 0
-    const PLAYER = 1
-    const ENEMY = 2
-    const BULLET = 3
-
     // Create grid cells
     const cells: HTMLDivElement[] = []
     const cellTypes: number[] = new Array(GRID_SIZE * GRID_SIZE).fill(EMPTY)
