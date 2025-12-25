@@ -316,10 +316,12 @@ ${bodyCode}
     if (options?.serverAdapter && result.ir) {
       // Calculate element paths to determine which elements need data-bf attributes
       // Elements with null paths (e.g., after component siblings) need data-bf for querySelector fallback
+      // Also include dynamic elements (elements with signal-dependent content) for effect-based updates
       const paths = calculateElementPaths(result.ir)
-      const needsDataBfIds = new Set(
-        paths.filter(p => p.path === null).map(p => p.id)
-      )
+      const needsDataBfIds = new Set([
+        ...paths.filter(p => p.path === null).map(p => p.id),
+        ...result.dynamicElements.map(el => el.id),
+      ])
       const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds, { outputEventAttrs: true, memos: result.memos })
       // Collect all child component names (including those in lists) for server imports
       const childComponents = collectAllChildComponentNames(result.ir)
@@ -640,12 +642,23 @@ function generateClientJsWithCreateEffect(
   }
 
   // createEffect for dynamic elements
-  // Re-query element inside effect to handle conditional branch switching
-  // Check scope itself first (for fragment root), then query children
+  // Use path-based navigation when path is known, otherwise fallback to querySelector
+  // (elements inside conditionals or after components get null paths)
   for (const el of dynamicElements) {
     const v = varName(el.id)
+    const path = elementPaths.get(el.id)
+
     lines.push(`createEffect(() => {`)
-    lines.push(`  const ${v} = __scope?.matches?.('[data-bf="${el.id}"]') ? __scope : __scope?.querySelector('[data-bf="${el.id}"]')`)
+
+    if (path !== undefined && path !== null) {
+      // Use path-based navigation when path is known and reliable
+      const accessCode = path === '' ? '__scope' : `__scope?.${path}`
+      lines.push(`  const ${v} = ${accessCode}`)
+    } else {
+      // Fallback to querySelector for elements with null paths (inside conditionals, after components)
+      lines.push(`  const ${v} = __scope?.matches?.('[data-bf="${el.id}"]') ? __scope : __scope?.querySelector('[data-bf="${el.id}"]')`)
+    }
+
     lines.push(`  if (${v}) {`)
     // Wrap in String() for consistent textContent assignment across environments
     lines.push(`    ${v}.textContent = String(${el.fullContent})`)
