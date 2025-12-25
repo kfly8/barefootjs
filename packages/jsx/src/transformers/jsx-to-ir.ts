@@ -22,12 +22,23 @@ import { isPascalCase } from '../utils/helpers'
 import { IdGenerator } from '../utils/id-generator'
 import { jsxToTemplateString } from '../compiler/template-generator'
 
+export type CompilerWarning = {
+  type: 'reactive-children'
+  message: string
+  componentName: string
+  parentComponent: string
+}
+
 export type JsxToIRContext = {
   sourceFile: ts.SourceFile
   signals: SignalDeclaration[]
   memos: MemoDeclaration[]
   components: Map<string, CompileResult>
   idGenerator: IdGenerator
+  /** Warnings collected during compilation */
+  warnings: CompilerWarning[]
+  /** Current component name being compiled */
+  currentComponentName: string
 }
 
 /**
@@ -219,10 +230,38 @@ function componentToIR(
     }
   }
 
+  // Check for reactive expressions in children
+  const hasReactiveChildren = children.some(child =>
+    irNodeContainsReactiveCall(child, ctx.signals, ctx.memos)
+  )
+  // Note: Lazy children pattern is now automatically applied when reactive children are detected.
+  // The warning is kept for informational purposes during development.
+
   // Child component initialization info
   let childInits = null
-  if (componentResult.props.length > 0 && props.length > 0) {
-    const propsExpr = `{ ${props.map(p => `${p.name}: ${p.value}`).join(', ')} }`
+
+  // Build props expression for child component init
+  const allPropsForInit = [...props]
+
+  // Add children as a lazy function if it has reactive expressions
+  if (hasReactiveChildren && children.length > 0) {
+    // Generate children expression as a function for lazy evaluation
+    const childrenExpr = generateChildrenExpression(children, ctx)
+    allPropsForInit.push({ name: 'children', value: `() => ${childrenExpr}`, isDynamic: true })
+  }
+
+  // Always set childInits for components that need client-side initialization
+  // This includes components with: signals, memos, childInits, or any client-side logic
+  // Note: componentResult.clientJs may be empty at this point (signals/childInits added later)
+  const needsClientInit = componentResult.signals.length > 0 ||
+                          componentResult.memos.length > 0 ||
+                          componentResult.childInits.length > 0 ||
+                          componentResult.clientJs.length > 0 ||
+                          allPropsForInit.length > 0
+  if (needsClientInit) {
+    const propsExpr = allPropsForInit.length > 0
+      ? `{ ${allPropsForInit.map(p => `${p.name}: ${p.value}`).join(', ')} }`
+      : '{}'
     childInits = { name: tagName, propsExpr }
   }
 
@@ -234,6 +273,7 @@ function componentToIR(
     staticHtml: '', // Not used - component HTML is generated in server adapter
     childInits,
     children,
+    hasLazyChildren: hasReactiveChildren,
   }
 }
 
@@ -307,7 +347,9 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
 
   // Regular expression
   const exprText = expr.getText(ctx.sourceFile)
-  const isDynamic = containsReactiveCall(exprText, ctx.signals, ctx.memos)
+  // Treat 'children' as dynamic to support lazy children pattern
+  // When children is passed as a function, it needs to be tracked for reactivity
+  const isDynamic = containsReactiveCall(exprText, ctx.signals, ctx.memos) || exprText === 'children'
 
   return {
     type: 'expression',
@@ -649,6 +691,70 @@ function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos:
     return regex.test(expr)
   })
   return hasMemoCall
+}
+
+/**
+ * Generates a JavaScript expression for children (used in client JS for lazy children)
+ *
+ * Converts IR children to a runtime expression that can be evaluated.
+ * Text nodes become string literals, expressions become their runtime values.
+ */
+function generateChildrenExpression(children: IRNode[], ctx: JsxToIRContext): string {
+  const parts: string[] = []
+
+  for (const child of children) {
+    switch (child.type) {
+      case 'text':
+        // Text node - escape and wrap in quotes
+        const escaped = child.content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+        parts.push(`"${escaped}"`)
+        break
+      case 'expression':
+        // Expression - keep as-is for runtime evaluation
+        parts.push(child.expression)
+        break
+      case 'element':
+      case 'fragment':
+      case 'component':
+      case 'conditional':
+        // Complex nodes - for now, we'll handle simple cases
+        // More complex cases would need runtime JSX rendering
+        parts.push(`"[${child.type}]"`)
+        break
+    }
+  }
+
+  // Return as array or single expression
+  if (parts.length === 0) {
+    return '""'
+  } else if (parts.length === 1) {
+    return parts[0]
+  } else {
+    // Join parts for textContent rendering
+    return `[${parts.join(', ')}].join('')`
+  }
+}
+
+/**
+ * Checks if IR node contains reactive expressions (recursively)
+ */
+function irNodeContainsReactiveCall(node: IRNode, signals: SignalDeclaration[], memos: MemoDeclaration[]): boolean {
+  switch (node.type) {
+    case 'expression':
+      return node.isDynamic && containsReactiveCall(node.expression, signals, memos)
+    case 'text':
+      return false
+    case 'element':
+      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos))
+    case 'fragment':
+      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos))
+    case 'component':
+      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos))
+    case 'conditional':
+      return containsReactiveCall(node.condition, signals, memos) ||
+             irNodeContainsReactiveCall(node.whenTrue, signals, memos) ||
+             irNodeContainsReactiveCall(node.whenFalse, signals, memos)
+  }
 }
 
 /**

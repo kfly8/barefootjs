@@ -294,7 +294,12 @@ export async function compileJSX(
     const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
     const childrenWithClientJs = uniqueChildNames.filter(childName => {
       const childData = componentData.find(d => d.name === childName)
-      return childData?.result.clientJs  // Only include if has client JS
+      if (!childData) return false
+      const { result } = childData
+      // Include if has raw client JS, signals, or nested child inits
+      return result.clientJs.length > 0 ||
+             result.signals.length > 0 ||
+             result.childInits.length > 0
     })
     const childImports = childrenWithClientJs
       .map(childName => {
@@ -307,13 +312,14 @@ export async function compileJSX(
     // Generate child component init calls
     // Only call init for children that have client JS
     // Track instance index for each child component type
+    // Pass __scope as parent scope so child components search within this component's DOM subtree
     const childInstanceCounts: Map<string, number> = new Map()
     const childInitCalls = childInits
       .filter(child => childrenWithClientJs.includes(child.name))
       .map(child => {
         const instanceIndex = childInstanceCounts.get(child.name) ?? 0
         childInstanceCounts.set(child.name, instanceIndex + 1)
-        return `init${child.name}(${child.propsExpr}, ${instanceIndex})`
+        return `init${child.name}(${child.propsExpr}, ${instanceIndex}, __scope)`
       })
       .join('\n')
 
@@ -359,32 +365,40 @@ export async function compileJSX(
         childInitCalls ? `\n// Initialize child components\n${childInitCalls}` : '',
       ].filter(Boolean).join('\n')
 
-      if (result.props.length > 0) {
-        const propsParam = `{ ${result.props.map(p => p.name).join(', ')} }`
-        // Add auto-hydration code that looks for embedded props and calls init
+      // Generate init function if component has props OR has child inits
+      // Child inits require an init function because parent calls initComponentName({}, index, scope)
+      const needsInitFunction = result.props.length > 0 || childInits.length > 0
+
+      if (needsInitFunction) {
+        const propsParam = result.props.length > 0
+          ? `{ ${result.props.map(p => p.name).join(', ')} }`
+          : '{}'  // Empty destructuring for components with no props but child inits
+        // Add auto-hydration code that initializes when scope element exists
+        // Only auto-hydrate root components (not nested inside another data-bf-scope)
         const autoHydrateCode = `
-// Auto-hydration: look for embedded props from server
-const __propsEl = document.querySelector('script[data-bf-props="${name}"]')
-if (__propsEl) {
-  const __props = JSON.parse(__propsEl.textContent || '{}')
+// Auto-hydration: initialize when scope element exists (root components only)
+const __scopeEl = document.querySelector('[data-bf-scope="${name}"]')
+if (__scopeEl && !__scopeEl.parentElement?.closest('[data-bf-scope]')) {
+  const __propsEl = document.querySelector('script[data-bf-props="${name}"]')
+  const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
   init${name}(__props)
 }
 `
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
         clientJs = `${allImports}
 
-export function init${name}(${propsParam}, __instanceIndex = 0) {
+export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
 ${declarations ? declarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
 ${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 ${autoHydrateCode}`
       } else {
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-        // Only define __instanceIndex if there's client logic that queries elements
-        const instanceIndexLine = hasClientLogic ? 'const __instanceIndex = 0\n' : ''
+        // Define __instanceIndex and __parentScope if there's client logic that queries elements
+        const instanceVarsLine = hasClientLogic ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
         clientJs = `${allImports}
 
-${instanceIndexLine}${declarations}
+${instanceVarsLine}${declarations}
 
 ${bodyCode}
 `
@@ -495,6 +509,9 @@ function compileJsxWithComponents(
   // Extract imports (for server JSX generation)
   const imports = extractImports(source, filePath)
 
+  // Extract component name from target or file path
+  const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
+
   // Create IR context
   const irContext: JsxToIRContext = {
     sourceFile,
@@ -502,10 +519,17 @@ function compileJsxWithComponents(
     memos,
     components,
     idGenerator,
+    warnings: [],
+    currentComponentName: componentName,
   }
 
   // Convert JSX to IR (for target component)
   const ir = findAndConvertJsxReturn(sourceFile, irContext, targetComponentName)
+
+  // Output warnings
+  for (const warning of irContext.warnings) {
+    console.warn(`[BarefootJS] Warning in ${componentName}: ${warning.message}`)
+  }
 
   // Collect client JS info from IR
   const interactiveElements: InteractiveElement[] = []
@@ -520,9 +544,6 @@ function compileJsxWithComponents(
     collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, { signals, memos })
   }
 
-  // Extract component name from target or file path
-  const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
-
   // Generate client JS (createEffect-based)
   const clientJs = generateClientJsWithCreateEffect(
     componentName,
@@ -533,7 +554,8 @@ function compileJsxWithComponents(
     localFunctions,
     refElements,
     conditionalElements,
-    ir
+    ir,
+    childInits
   )
 
   return {
@@ -602,7 +624,8 @@ function generateClientJsWithCreateEffect(
   localFunctions: LocalFunction[],
   refElements: RefElement[] = [],
   conditionalElements: ConditionalElement[] = [],
-  ir: IRNode | null = null
+  ir: IRNode | null = null,
+  childInits: ChildComponentInit[] = []
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
@@ -620,9 +643,11 @@ function generateClientJsWithCreateEffect(
   const queriedIds = new Set<string>()
 
   // Check if there are any elements to query
+  // Also need scope when there are child inits (to pass as parent scope)
   const hasElements = dynamicElements.length > 0 || listElements.length > 0 ||
                       attrElementIds.length > 0 || interactiveElements.length > 0 ||
-                      refElements.length > 0 || conditionalElements.length > 0
+                      refElements.length > 0 || conditionalElements.length > 0 ||
+                      childInits.length > 0
 
   // Calculate element paths from IR for tree position-based hydration
   const elementPaths: Map<string, string | null> = new Map()
@@ -635,8 +660,9 @@ function generateClientJsWithCreateEffect(
 
   // Find the component's scope element first
   // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
+  // __parentScope allows searching within a parent component's scope (for nested components)
   if (hasElements) {
-    lines.push(`const __allScopes = document.querySelectorAll('[data-bf-scope="${componentName}"]')`)
+    lines.push(`const __allScopes = (__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]')`)
     lines.push(`const __scope = __allScopes[__instanceIndex]`)
   }
 
@@ -754,8 +780,17 @@ function generateClientJsWithCreateEffect(
     }
 
     lines.push(`  if (${v}) {`)
-    // Wrap in String() for consistent textContent assignment across environments
-    lines.push(`    ${v}.textContent = String(${el.fullContent})`)
+    // Handle children prop - if it's a function (lazy children), call it
+    // Only update if children is defined (static children are rendered server-side)
+    if (el.expression === 'children' || el.fullContent === 'children') {
+      lines.push(`    if (children !== undefined) {`)
+      lines.push(`      const __childrenResult = typeof children === 'function' ? children() : children`)
+      lines.push(`      ${v}.textContent = String(__childrenResult)`)
+      lines.push(`    }`)
+    } else {
+      // Wrap in String() for consistent textContent assignment across environments
+      lines.push(`    ${v}.textContent = String(${el.fullContent})`)
+    }
     lines.push(`  }`)
     lines.push(`})`)
   }

@@ -259,6 +259,10 @@ export function collectClientJsInfo(
       if (node.childInits) {
         childInits.push(node.childInits)
       }
+      // Recursively process children passed to the component
+      for (const child of node.children) {
+        collectClientJsInfo(child, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
+      }
       break
     case 'fragment':
       // Recursively process fragment children
