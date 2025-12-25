@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { compileJSX } from '@barefootjs/jsx'
-import { honoServerAdapter } from '../src'
+import { compileJSX } from '../../src'
+import { honoServerAdapter } from '@barefootjs/hono'
 
 async function compile(source: string) {
   const files: Record<string, string> = {

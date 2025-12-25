@@ -47,7 +47,6 @@
     "hono": "^4.0.0"
   },
   "devDependencies": {
-    "@barefootjs/jsx": "workspace:*",
     "hono": "^4.6.0",
     "typescript": "^5.0.0"
   }
