@@ -102,13 +102,15 @@ export function extractModuleVariables(source: string, filePath: string): Module
       // Extract module-level values (including functions)
       if (isModuleLevelValue(decl.initializer)) {
         const name = decl.name.text
-        // Get the full declaration including type annotations
-        const fullDecl = node.getText(sourceFile)
+        const value = decl.initializer.getText(sourceFile)
+        // Reconstruct declaration without type annotations (for client JS)
+        const keyword = isConst ? 'const' : 'let'
+        const code = `${keyword} ${name} = ${value}`
 
         constants.push({
           name,
-          value: decl.initializer.getText(sourceFile),
-          code: fullDecl
+          value,
+          code
         })
       }
     }
@@ -124,12 +126,14 @@ export function extractModuleVariables(source: string, filePath: string): Module
  * - Local functions
  * - Event handlers
  * - Ref callbacks
+ * - Child component props expressions
  */
 export function isConstantUsedInClientCode(
   constantName: string,
   localFunctions: Array<{ code: string }>,
   eventHandlers: string[],
-  refCallbacks: string[]
+  refCallbacks: string[],
+  childPropsExpressions: string[] = []
 ): boolean {
   const pattern = new RegExp(`\\b${constantName}\\b`)
 
@@ -146,6 +150,11 @@ export function isConstantUsedInClientCode(
   // Check ref callbacks
   for (const callback of refCallbacks) {
     if (pattern.test(callback)) return true
+  }
+
+  // Check child component props expressions
+  for (const propsExpr of childPropsExpressions) {
+    if (pattern.test(propsExpr)) return true
   }
 
   return false

@@ -137,4 +137,17 @@ describe('isConstantUsedInClientCode', () => {
   test('returns false when not used', () => {
     expect(isConstantUsedInClientCode('UNUSED', [], [], [])).toBe(false)
   })
+
+  test('detects usage in child component props expressions', () => {
+    const childPropsExpressions = ['{ title: "Variants", code: variantCode }']
+    expect(isConstantUsedInClientCode('variantCode', [], [], [], childPropsExpressions)).toBe(true)
+    expect(isConstantUsedInClientCode('OTHER', [], [], [], childPropsExpressions)).toBe(false)
+  })
+
+  test('detects multiple constants in child props', () => {
+    const childPropsExpressions = ['{ items: itemList, config: CONFIG }']
+    expect(isConstantUsedInClientCode('itemList', [], [], [], childPropsExpressions)).toBe(true)
+    expect(isConstantUsedInClientCode('CONFIG', [], [], [], childPropsExpressions)).toBe(true)
+    expect(isConstantUsedInClientCode('OTHER', [], [], [], childPropsExpressions)).toBe(false)
+  })
 })

@@ -311,6 +311,99 @@ describe('Components - Callback props', () => {
   })
 })
 
+describe('Components - Module constants in child props', () => {
+  it('includes module constants used in child component props', async () => {
+    const files: Record<string, string> = {
+      '/test/Parent.tsx': `
+        import { createSignal } from 'barefoot'
+        import Example from './Example'
+
+        const variantCode = \`<Button>Default</Button>\`
+        const sizeCode = \`<Button size="sm">Small</Button>\`
+
+        function Parent() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <span>{count()}</span>
+              <Example title="Variants" code={variantCode} />
+              <Example title="Sizes" code={sizeCode} />
+            </div>
+          )
+        }
+        export default Parent
+      `,
+      '/test/Example.tsx': `
+        import { createSignal } from 'barefoot'
+        type Props = { title: string; code: string }
+        function Example({ title, code }: Props) {
+          const [expanded, setExpanded] = createSignal(false)
+          return (
+            <div>
+              <h3>{title}</h3>
+              <button onClick={() => setExpanded(!expanded())}>Toggle</button>
+              <pre>{code}</pre>
+            </div>
+          )
+        }
+        export default Example
+      `,
+    }
+    const result = await compileWithFiles('/test/Parent.tsx', files)
+    const parent = result.components.find(c => c.name === 'Parent')
+
+    // Module constants should be included in client JS
+    expect(parent!.clientJs).toContain('const variantCode = `<Button>Default</Button>`')
+    expect(parent!.clientJs).toContain('const sizeCode = `<Button size="sm">Small</Button>`')
+    // Child init calls should reference the constants
+    expect(parent!.clientJs).toContain('code: variantCode')
+    expect(parent!.clientJs).toContain('code: sizeCode')
+  })
+
+  it('does not include unused module constants', async () => {
+    const files: Record<string, string> = {
+      '/test/Parent.tsx': `
+        import { createSignal } from 'barefoot'
+        import Example from './Example'
+
+        const usedCode = \`used\`
+        const unusedCode = \`unused\`
+
+        function Parent() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <span>{count()}</span>
+              <Example code={usedCode} />
+            </div>
+          )
+        }
+        export default Parent
+      `,
+      '/test/Example.tsx': `
+        import { createSignal } from 'barefoot'
+        type Props = { code: string }
+        function Example({ code }: Props) {
+          const [show, setShow] = createSignal(true)
+          return (
+            <div>
+              <button onClick={() => setShow(!show())}>Toggle</button>
+              <pre>{code}</pre>
+            </div>
+          )
+        }
+        export default Example
+      `,
+    }
+    const result = await compileWithFiles('/test/Parent.tsx', files)
+    const parent = result.components.find(c => c.name === 'Parent')
+
+    // Only used constants should be included
+    expect(parent!.clientJs).toContain('const usedCode = `used`')
+    expect(parent!.clientJs).not.toContain('unusedCode')
+  })
+})
+
 describe('Components - Hash and filename', () => {
   it('ComponentOutput includes hash and filename for components with clientJs', async () => {
     const files: Record<string, string> = {

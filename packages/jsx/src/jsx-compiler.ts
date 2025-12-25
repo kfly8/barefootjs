@@ -254,8 +254,9 @@ export async function compileJSX(
       // Filter constants to only those used in client code
       const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
       const refCallbacks = result.refElements.map(r => r.callback)
+      const childPropsExpressions = result.childInits.map(c => c.propsExpr)
       const usedConstants = result.moduleConstants.filter(c =>
-        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks)
+        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks, childPropsExpressions)
       )
       const constantDeclarations = usedConstants.map(c => c.code).join('\n')
 
