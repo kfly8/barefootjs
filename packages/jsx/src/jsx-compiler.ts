@@ -762,9 +762,12 @@ function generateClientJsWithCreateEffect(
 
     lines.push(`  if (${v}) {`)
     // Handle children prop - if it's a function (lazy children), call it
+    // Only update if children is defined (static children are rendered server-side)
     if (el.expression === 'children' || el.fullContent === 'children') {
-      lines.push(`    const __childrenResult = typeof children === 'function' ? children() : children`)
-      lines.push(`    ${v}.textContent = String(__childrenResult)`)
+      lines.push(`    if (children !== undefined) {`)
+      lines.push(`      const __childrenResult = typeof children === 'function' ? children() : children`)
+      lines.push(`      ${v}.textContent = String(__childrenResult)`)
+      lines.push(`    }`)
     } else {
       // Wrap in String() for consistent textContent assignment across environments
       lines.push(`    ${v}.textContent = String(${el.fullContent})`)
