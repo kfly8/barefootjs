@@ -74,6 +74,10 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
     case 'expression':
       // Preserve expression as JSX (replace signal calls with prop references)
       const expr = replaceSignalCallsWithProps(node.expression, ctx.signals, ctx.memos)
+      // Handle children prop - it might be a function (lazy children pattern)
+      if (expr === 'children') {
+        return `{typeof children === 'function' ? children() : children}`
+      }
       return `{${expr}}`
 
     case 'component':
@@ -104,10 +108,21 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
         compPropParts.push('__listIndex={__index}')
       }
       const propsStr = compPropParts.join(' ')
-      // If component has children, output them
+
+      // Handle children - if hasLazyChildren, pass as function prop for deferred evaluation
       if (node.children && node.children.length > 0) {
-        const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
-        return `<${node.name}${propsStr ? ' ' + propsStr : ''}>${childrenJsx}</${node.name}>`
+        if (node.hasLazyChildren) {
+          // Lazy children: pass as children prop (function that returns content)
+          // The component will call children() to render them
+          const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+          const childrenProp = `children={() => <>${childrenJsx}</>}`
+          const allProps = propsStr ? `${propsStr} ${childrenProp}` : childrenProp
+          return `<${node.name} ${allProps} />`
+        } else {
+          // Static children: inline as usual
+          const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+          return `<${node.name}${propsStr ? ' ' + propsStr : ''}>${childrenJsx}</${node.name}>`
+        }
       }
       return `<${node.name}${propsStr ? ' ' + propsStr : ''} />`
 

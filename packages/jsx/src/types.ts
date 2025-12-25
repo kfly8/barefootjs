@@ -265,6 +265,8 @@ export type IRComponent = {
   staticHtml: string
   childInits: ChildComponentInit | null
   children: IRNode[]  // Children passed to the component
+  /** Whether children contain reactive expressions and should be lazy-evaluated */
+  hasLazyChildren: boolean
 }
 
 export type IRConditional = {

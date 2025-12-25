@@ -403,3 +403,137 @@ describe('Components - Auto-hydration', () => {
   })
 
 })
+
+describe('Components - Lazy Children', () => {
+  it('passes children as function when they contain reactive expressions', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import { createSignal } from 'barefoot'
+        import Button from './Button'
+        function App() {
+          const [count, setCount] = createSignal(0)
+          return <Button onClick={() => setCount(n => n + 1)}>Count: {count()}</Button>
+        }
+      `,
+      '/test/Button.tsx': `
+        function Button({ onClick, children }) {
+          return <button onClick={onClick}>{children}</button>
+        }
+        export default Button
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const app = result.components.find(c => c.name === 'App')
+
+    // App's client JS should pass children as a function
+    expect(app!.clientJs).toContain('children: () =>')
+    expect(app!.clientJs).toContain('initButton')
+  })
+
+  it('child component handles lazy children with function check', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import { createSignal } from 'barefoot'
+        import Button from './Button'
+        function App() {
+          const [count, setCount] = createSignal(0)
+          return <Button onClick={() => setCount(n => n + 1)}>Count: {count()}</Button>
+        }
+      `,
+      '/test/Button.tsx': `
+        function Button({ onClick, children }) {
+          return <button onClick={onClick}>{children}</button>
+        }
+        export default Button
+      `,
+    }
+    const result = await compileWithFiles('/test/Button.tsx', files)
+    const button = result.components.find(c => c.name === 'Button')
+
+    // Button's server JSX should handle children as function
+    expect(button!.serverJsx).toContain("typeof children === 'function' ? children() : children")
+    // Button's client JS should have effect for children
+    expect(button!.clientJs).toContain('createEffect')
+    expect(button!.clientJs).toContain('__childrenResult')
+  })
+
+  it('static children are not wrapped in function', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import Button from './Button'
+        function App() {
+          return <Button>Click me</Button>
+        }
+      `,
+      '/test/Button.tsx': `
+        function Button({ children }) {
+          return <button>{children}</button>
+        }
+        export default Button
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const app = result.components.find(c => c.name === 'App')
+
+    // App's server JSX should inline children (not pass as function)
+    expect(app!.serverJsx).toContain('>Click me<')
+    expect(app!.serverJsx).not.toContain('children={() =>')
+  })
+})
+
+describe('Components - Reactive Children (No Warning)', () => {
+  it('does not warn when lazy children pattern is applied', async () => {
+    const warnings: string[] = []
+    const originalWarn = console.warn
+    console.warn = (msg: string) => warnings.push(msg)
+
+    try {
+      const files = {
+        '/test/App.tsx': `
+          import { createSignal } from 'barefoot'
+          import Button from './Button'
+          function App() {
+            const [count, setCount] = createSignal(0)
+            return <Button onClick={() => setCount(n => n + 1)}>Count: {count()}</Button>
+          }
+        `,
+        '/test/Button.tsx': `
+          function Button({ onClick, children }) {
+            return <button onClick={onClick}>{children}</button>
+          }
+          export default Button
+        `,
+      }
+      await compileWithFiles('/test/App.tsx', files)
+
+      // No warning - lazy children pattern is now automatically applied
+      const reactiveWarnings = warnings.filter(w => w.includes('reactive expressions'))
+      expect(reactiveWarnings.length).toBe(0)
+    } finally {
+      console.warn = originalWarn
+    }
+  })
+
+  it('static children still work as expected', async () => {
+    const files = {
+      '/test/App.tsx': `
+        import Button from './Button'
+        function App() {
+          return <Button>Click me</Button>
+        }
+      `,
+      '/test/Button.tsx': `
+        function Button({ children }) {
+          return <button>{children}</button>
+        }
+        export default Button
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const app = result.components.find(c => c.name === 'App')
+
+    // Static children are inlined (not passed as function)
+    expect(app!.serverJsx).toContain('>Click me<')
+    expect(app!.serverJsx).not.toContain('children={() =>')
+  })
+})

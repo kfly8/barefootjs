@@ -495,6 +495,9 @@ function compileJsxWithComponents(
   // Extract imports (for server JSX generation)
   const imports = extractImports(source, filePath)
 
+  // Extract component name from target or file path
+  const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
+
   // Create IR context
   const irContext: JsxToIRContext = {
     sourceFile,
@@ -502,10 +505,17 @@ function compileJsxWithComponents(
     memos,
     components,
     idGenerator,
+    warnings: [],
+    currentComponentName: componentName,
   }
 
   // Convert JSX to IR (for target component)
   const ir = findAndConvertJsxReturn(sourceFile, irContext, targetComponentName)
+
+  // Output warnings
+  for (const warning of irContext.warnings) {
+    console.warn(`[BarefootJS] Warning in ${componentName}: ${warning.message}`)
+  }
 
   // Collect client JS info from IR
   const interactiveElements: InteractiveElement[] = []
@@ -519,9 +529,6 @@ function compileJsxWithComponents(
   if (ir) {
     collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, { signals, memos })
   }
-
-  // Extract component name from target or file path
-  const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
 
   // Generate client JS (createEffect-based)
   const clientJs = generateClientJsWithCreateEffect(
@@ -754,8 +761,14 @@ function generateClientJsWithCreateEffect(
     }
 
     lines.push(`  if (${v}) {`)
-    // Wrap in String() for consistent textContent assignment across environments
-    lines.push(`    ${v}.textContent = String(${el.fullContent})`)
+    // Handle children prop - if it's a function (lazy children), call it
+    if (el.expression === 'children' || el.fullContent === 'children') {
+      lines.push(`    const __childrenResult = typeof children === 'function' ? children() : children`)
+      lines.push(`    ${v}.textContent = String(__childrenResult)`)
+    } else {
+      // Wrap in String() for consistent textContent assignment across environments
+      lines.push(`    ${v}.textContent = String(${el.fullContent})`)
+    }
     lines.push(`  }`)
     lines.push(`})`)
   }
