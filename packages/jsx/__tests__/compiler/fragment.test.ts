@@ -103,9 +103,11 @@ describe('Fragment Support', () => {
     const component = result.components[0]
 
     // Fragment in conditional should work
-    expect(component.serverJsx).toContain('<span>A</span>')
-    expect(component.serverJsx).toContain('<span>B</span>')
-    expect(component.serverJsx).toContain('<span>Hidden</span>')
+    // Fragment branch uses comment markers, single element uses data-bf-cond
+    expect(component.serverJsx).toContain('__rawHtml("<!--bf-cond-start:0-->")')
+    expect(component.serverJsx).toContain('<span>A</span><span>B</span>')
+    expect(component.serverJsx).toContain('__rawHtml("<!--bf-cond-end:0-->")')
+    expect(component.serverJsx).toContain('<span data-bf-cond="0">Hidden</span>')
   })
 
   it('fragment with text and elements mixed', async () => {

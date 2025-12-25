@@ -19,6 +19,7 @@ import type {
   ListElement,
   DynamicAttribute,
   RefElement,
+  ConditionalElement,
   LocalFunction,
   ChildComponentInit,
   CompileResult,
@@ -419,9 +420,10 @@ function compileJsxWithComponents(
   const dynamicAttributes: DynamicAttribute[] = []
   const childInits: { name: string; propsExpr: string }[] = []
   const refElements: RefElement[] = []
+  const conditionalElements: ConditionalElement[] = []
 
   if (ir) {
-    collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
+    collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, { signals, memos })
   }
 
   // Extract component name from target or file path
@@ -436,6 +438,7 @@ function compileJsxWithComponents(
     dynamicAttributes,
     localFunctions,
     refElements,
+    conditionalElements,
     ir
   )
 
@@ -451,6 +454,7 @@ function compileJsxWithComponents(
     listElements,
     dynamicAttributes,
     refElements,
+    conditionalElements,
     props,
     typeDefinitions,
     source,
@@ -501,10 +505,11 @@ function generateClientJsWithCreateEffect(
   dynamicAttributes: DynamicAttribute[],
   localFunctions: LocalFunction[],
   refElements: RefElement[] = [],
+  conditionalElements: ConditionalElement[] = [],
   ir: IRNode | null = null
 ): string {
   const lines: string[] = []
-  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0
+  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
 
   // Collect element IDs with dynamic attributes (remove duplicates)
   const attrElementIds = [...new Set(dynamicAttributes.map(da => da.id))]
@@ -521,7 +526,7 @@ function generateClientJsWithCreateEffect(
   // Check if there are any elements to query
   const hasElements = dynamicElements.length > 0 || listElements.length > 0 ||
                       attrElementIds.length > 0 || interactiveElements.length > 0 ||
-                      refElements.length > 0
+                      refElements.length > 0 || conditionalElements.length > 0
 
   // Calculate element paths from IR for tree position-based hydration
   const elementPaths: Map<string, string | null> = new Map()
@@ -594,6 +599,7 @@ function generateClientJsWithCreateEffect(
   for (const id of attrElementIds) allElementIds.add(id)
   for (const el of interactiveElements) allElementIds.add(el.id)
   for (const el of refElements) allElementIds.add(el.id)
+  // Note: conditional elements are found by data-bf-cond attribute, not by ID/path
 
   // Sort by path length to ensure proper chaining order
   const sortedIds = Array.from(allElementIds).sort((a, b) => {
@@ -633,15 +639,18 @@ function generateClientJsWithCreateEffect(
     lines.push('')
   }
 
-  // createEffect for dynamic elements (with existence check)
+  // createEffect for dynamic elements
+  // Re-query element inside effect to handle conditional branch switching
+  // Check scope itself first (for fragment root), then query children
   for (const el of dynamicElements) {
     const v = varName(el.id)
-    lines.push(`if (${v}) {`)
-    lines.push(`  createEffect(() => {`)
+    lines.push(`createEffect(() => {`)
+    lines.push(`  const ${v} = __scope?.matches?.('[data-bf="${el.id}"]') ? __scope : __scope?.querySelector('[data-bf="${el.id}"]')`)
+    lines.push(`  if (${v}) {`)
     // Wrap in String() for consistent textContent assignment across environments
     lines.push(`    ${v}.textContent = String(${el.fullContent})`)
-    lines.push(`  })`)
-    lines.push(`}`)
+    lines.push(`  }`)
+    lines.push(`})`)
   }
 
   // createEffect for list elements (with existence check)
@@ -671,6 +680,87 @@ function generateClientJsWithCreateEffect(
     lines.push(`    ${generateAttributeUpdateWithVar(da, v)}`)
     lines.push(`  })`)
     lines.push(`}`)
+  }
+
+  // createEffect for conditional elements (DOM switching)
+  for (const cond of conditionalElements) {
+    const condId = cond.id
+    // Templates use backticks for template literals with ${} interpolation
+    // Only escape backticks that aren't part of nested template literals
+    const whenTrueTemplate = cond.whenTrueTemplate.replace(/\n/g, '\\n')
+    const whenFalseTemplate = cond.whenFalseTemplate.replace(/\n/g, '\\n')
+
+    // Check if this is a fragment conditional (uses comment markers)
+    const isFragmentCond = whenTrueTemplate.includes(`<!--bf-cond-start:${condId}-->`) ||
+                           whenFalseTemplate.includes(`<!--bf-cond-start:${condId}-->`)
+
+    lines.push(`createEffect(() => {`)
+    if (isFragmentCond) {
+      // Fragment conditional: find content between comment markers
+      lines.push(`  const __html = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
+      lines.push(`  // Find start comment marker`)
+      lines.push(`  let __startComment = null`)
+      lines.push(`  const __walker = document.createTreeWalker(__scope, NodeFilter.SHOW_COMMENT)`)
+      lines.push(`  while (__walker.nextNode()) {`)
+      lines.push(`    if (__walker.currentNode.nodeValue === 'bf-cond-start:${condId}') {`)
+      lines.push(`      __startComment = __walker.currentNode`)
+      lines.push(`      break`)
+      lines.push(`    }`)
+      lines.push(`  }`)
+      lines.push(`  // Also check for single element with data-bf-cond (for branch switching)`)
+      lines.push(`  const __condEl = __scope?.querySelector('[data-bf-cond="${condId}"]')`)
+      lines.push(`  if (__startComment) {`)
+      lines.push(`    // Remove nodes between start and end markers`)
+      lines.push(`    const __nodesToRemove = []`)
+      lines.push(`    let __node = __startComment.nextSibling`)
+      lines.push(`    while (__node && !((__node.nodeType === 8) && __node.nodeValue === 'bf-cond-end:${condId}')) {`)
+      lines.push(`      __nodesToRemove.push(__node)`)
+      lines.push(`      __node = __node.nextSibling`)
+      lines.push(`    }`)
+      lines.push(`    const __endComment = __node`)
+      lines.push(`    __nodesToRemove.forEach(n => n.remove())`)
+      lines.push(`    // Insert new content`)
+      lines.push(`    const __template = document.createElement('template')`)
+      lines.push(`    __template.innerHTML = __html`)
+      lines.push(`    // Extract content (skip comment markers from template)`)
+      lines.push(`    const __newNodes = []`)
+      lines.push(`    let __child = __template.content.firstChild`)
+      lines.push(`    while (__child) {`)
+      lines.push(`      if (!(__child.nodeType === 8 && (__child.nodeValue?.startsWith('bf-cond-') || false))) {`)
+      lines.push(`        __newNodes.push(__child.cloneNode(true))`)
+      lines.push(`      }`)
+      lines.push(`      __child = __child.nextSibling`)
+      lines.push(`    }`)
+      lines.push(`    __newNodes.forEach(n => __startComment.parentNode?.insertBefore(n, __endComment))`)
+      lines.push(`  } else if (__condEl) {`)
+      lines.push(`    // Single element: replace with new content`)
+      lines.push(`    const __template = document.createElement('template')`)
+      lines.push(`    __template.innerHTML = __html`)
+      lines.push(`    // Check if new content is fragment or single element`)
+      lines.push(`    const __firstChild = __template.content.firstChild`)
+      lines.push(`    if (__firstChild?.nodeType === 8 && __firstChild?.nodeValue === 'bf-cond-start:${condId}') {`)
+      lines.push(`      // Switching from element to fragment: insert markers and content`)
+      lines.push(`      const __parent = __condEl.parentNode`)
+      lines.push(`      const __nodes = Array.from(__template.content.childNodes).map(n => n.cloneNode(true))`)
+      lines.push(`      __nodes.forEach(n => __parent?.insertBefore(n, __condEl))`)
+      lines.push(`      __condEl.remove()`)
+      lines.push(`    } else if (__firstChild) {`)
+      lines.push(`      __condEl.replaceWith(__firstChild.cloneNode(true))`)
+      lines.push(`    }`)
+      lines.push(`  }`)
+    } else {
+      // Simple element conditional: use querySelector and replaceWith
+      lines.push(`  const __condEl = __scope?.querySelector('[data-bf-cond="${condId}"]')`)
+      lines.push(`  if (__condEl) {`)
+      lines.push(`    const __template = document.createElement('template')`)
+      lines.push(`    __template.innerHTML = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
+      lines.push(`    const __newEl = __template.content.firstChild`)
+      lines.push(`    if (__newEl) {`)
+      lines.push(`      __condEl.replaceWith(__newEl)`)
+      lines.push(`    }`)
+      lines.push(`  }`)
+    }
+    lines.push(`})`)
   }
 
   if (hasDynamicContent) {

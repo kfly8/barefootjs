@@ -100,7 +100,15 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
     case 'conditional':
       // Generate ternary expression
       const condition = replaceSignalCallsWithProps(node.condition, ctx.signals, ctx.memos)
-      // Use helper to get values suitable for inside JSX expression context
+
+      // For dynamic conditionals with ID, inject data-bf-cond attribute
+      if (node.id) {
+        const whenTrueJsx = injectConditionalMarker(node.whenTrue, node.id, ctx)
+        const whenFalseJsx = injectConditionalMarker(node.whenFalse, node.id, ctx)
+        return `{${condition} ? ${whenTrueJsx} : ${whenFalseJsx}}`
+      }
+
+      // Static conditional - use standard processing
       const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
       const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
       return `{${condition} ? ${whenTrue} : ${whenFalse}}`
@@ -382,6 +390,102 @@ function replaceSignalCallsWithProps(expr: string, signals: SignalDeclaration[],
  */
 function isSelfClosingTag(tagName: string): boolean {
   return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
+}
+
+/**
+ * Injects conditional markers into branch for DOM tracking
+ *
+ * For dynamic conditionals (element switching), we need to mark elements
+ * so the client can find and replace them when the condition changes.
+ *
+ * - Single elements: inject data-bf-cond attribute
+ * - Fragments (multiple children): use comment markers <!--bf-cond-start:N-->...<!--bf-cond-end:N-->
+ * - Null/undefined: use empty comment markers
+ * - Text: wrap in span with data-bf-cond
+ *
+ * @param node - IR node (branch of conditional)
+ * @param condId - Conditional slot ID
+ * @param ctx - Server JSX context
+ * @returns JSX string with conditional marker
+ */
+function injectConditionalMarker(node: IRNode, condId: string, ctx: ServerJsxContext): string {
+  switch (node.type) {
+    case 'element': {
+      // Generate JSX and inject data-bf-cond attribute
+      const jsx = elementToServerJsxInternal(node, ctx, false)
+      return injectDataBfCondAttribute(jsx, condId)
+    }
+
+    case 'fragment': {
+      // Empty fragment - use empty comment markers
+      if (node.children.length === 0) {
+        return `<>{__rawHtml("<!--bf-cond-start:${condId}-->")}{__rawHtml("<!--bf-cond-end:${condId}-->")}</>`
+      }
+
+      // Single element child - inject marker to that element
+      if (node.children.length === 1 && node.children[0].type === 'element') {
+        const childJsx = elementToServerJsxInternal(node.children[0], ctx, false)
+        return injectDataBfCondAttribute(childJsx, condId)
+      }
+
+      // Multiple children - use comment markers to wrap all content
+      // __rawHtml outputs raw HTML (comment nodes) without escaping
+      const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+      return `<>{__rawHtml("<!--bf-cond-start:${condId}-->")}<>${childrenJsx}</>{__rawHtml("<!--bf-cond-end:${condId}-->")}</>`
+    }
+
+    case 'expression': {
+      // Check if it's a null/undefined expression
+      const exprValue = node.expression.trim()
+      if (exprValue === 'null' || exprValue === 'undefined') {
+        // Use empty comment markers for null
+        return `<>{__rawHtml("<!--bf-cond-start:${condId}-->")}{__rawHtml("<!--bf-cond-end:${condId}-->")}</>`
+      }
+      // Other expressions - evaluate and wrap if needed
+      const expr = replaceSignalCallsWithProps(node.expression, ctx.signals, ctx.memos)
+      // Wrap in span with marker
+      return `<span data-bf-cond="${condId}">{${expr}}</span>`
+    }
+
+    case 'text': {
+      // Wrap text in span with marker
+      const escaped = node.content.replace(/"/g, '\\"')
+      return `<span data-bf-cond="${condId}">${node.content}</span>`
+    }
+
+    case 'component': {
+      // For components, we need to wrap in a div with the marker
+      // since we can't inject attributes into component tags
+      const compJsx = nodeToJsxExpressionValueInternal(node, ctx)
+      return `<div data-bf-cond="${condId}">${compJsx}</div>`
+    }
+
+    case 'conditional': {
+      // Nested conditional - wrap in span with marker
+      const innerCond = replaceSignalCallsWithProps(node.condition, ctx.signals, ctx.memos)
+      const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
+      const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
+      return `<span data-bf-cond="${condId}">{${innerCond} ? ${whenTrue} : ${whenFalse}}</span>`
+    }
+  }
+}
+
+/**
+ * Injects data-bf-cond attribute into JSX string
+ *
+ * Finds the first element tag and adds data-bf-cond="N" after the tag name.
+ * e.g., "<span className=\"visible\">" -> "<span data-bf-cond=\"0\" className=\"visible\">"
+ */
+function injectDataBfCondAttribute(jsx: string, condId: string): string {
+  // Match the first opening tag: <tagName followed by space, /, or >
+  const match = jsx.match(/^<([a-zA-Z][a-zA-Z0-9]*)/)
+  if (!match) return jsx
+
+  const tagName = match[1]
+  const tagLength = match[0].length
+
+  // Insert data-bf-cond after the tag name
+  return `<${tagName} data-bf-cond="${condId}"${jsx.slice(tagLength)}`
 }
 
 /**

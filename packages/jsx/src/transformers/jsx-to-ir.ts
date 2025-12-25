@@ -236,11 +236,19 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
     const jsxInRight = findJsxInExpression(expr.right)
     if (jsxInRight) {
       const condition = expr.left.getText(ctx.sourceFile)
+      const whenTrue = jsxToIR(jsxInRight, ctx)!
+      const whenFalse: IRNode = { type: 'expression', expression: 'null', isDynamic: false }
+
+      // Assign ID for dynamic conditionals
+      const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos)
+      const id = isDynamic ? ctx.idGenerator.generateSlotId() : null
+
       return {
         type: 'conditional',
+        id,
         condition,
-        whenTrue: jsxToIR(jsxInRight, ctx)!,
-        whenFalse: { type: 'expression', expression: 'null', isDynamic: false },
+        whenTrue,
+        whenFalse,
       }
     }
   }
@@ -250,11 +258,19 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
     const jsxInRight = findJsxInExpression(expr.right)
     if (jsxInRight) {
       const condition = expr.left.getText(ctx.sourceFile)
+      const whenTrue = jsxToIR(jsxInRight, ctx)!
+      const whenFalse: IRNode = { type: 'expression', expression: 'null', isDynamic: false }
+
+      // Assign ID for dynamic conditionals
+      const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos)
+      const id = isDynamic ? ctx.idGenerator.generateSlotId() : null
+
       return {
         type: 'conditional',
+        id,
         condition: `!(${condition})`,
-        whenTrue: jsxToIR(jsxInRight, ctx)!,
-        whenFalse: { type: 'expression', expression: 'null', isDynamic: false },
+        whenTrue,
+        whenFalse,
       }
     }
   }
@@ -292,8 +308,18 @@ function conditionalToIR(expr: ts.ConditionalExpression, ctx: JsxToIRContext): I
   const whenTrue = processConditionalBranch(expr.whenTrue, ctx)
   const whenFalse = processConditionalBranch(expr.whenFalse, ctx)
 
+  // Check if condition is dynamic (signal-dependent) and involves JSX elements
+  const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos)
+  const hasJsxBranch = whenTrue.type === 'element' || whenTrue.type === 'fragment' ||
+                       whenFalse.type === 'element' || whenFalse.type === 'fragment' ||
+                       (whenFalse.type === 'expression' && whenFalse.expression === 'null')
+
+  // Assign ID only for dynamic conditionals with JSX branches
+  const id = isDynamic && hasJsxBranch ? ctx.idGenerator.generateSlotId() : null
+
   return {
     type: 'conditional',
+    id,
     condition,
     whenTrue,
     whenFalse,
@@ -443,7 +469,9 @@ function processChildren(
         contentParts.push({ type: 'expression', value: irNode.expression })
       } else if (irNode.type === 'conditional') {
         // Conditional expression with signal-dependent condition
-        if (containsReactiveCall(irNode.condition, ctx.signals, ctx.memos)) {
+        // Only mark as dynamic content if it's a text-only conditional (no id)
+        // Element conditionals with id are handled by DOM switching, not textContent
+        if (!irNode.id && containsReactiveCall(irNode.condition, ctx.signals, ctx.memos)) {
           hasDynamicContent = true
           // Reconstruct the ternary expression for fullContent
           const whenTrueExpr = irNode.whenTrue.type === 'expression' ? irNode.whenTrue.expression : ''

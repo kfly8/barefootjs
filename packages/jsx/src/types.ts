@@ -51,6 +51,13 @@ export type RefElement = {
   callback: string       // (el) => inputRef = el
 }
 
+export type ConditionalElement = {
+  id: string
+  condition: string           // show()
+  whenTrueTemplate: string    // '<span data-bf-cond="0">Content</span>' or '<!--bf-cond-start:0-->...<!--bf-cond-end:0-->'
+  whenFalseTemplate: string   // '<!--bf-cond-start:0--><!--bf-cond-end:0-->' (for null)
+}
+
 export type SignalDeclaration = {
   getter: string      // count, on
   setter: string      // setCount, setOn
@@ -96,6 +103,7 @@ export type CompileResult = {
   listElements: ListElement[]
   dynamicAttributes: DynamicAttribute[]
   refElements: RefElement[]        // Elements with ref callbacks
+  conditionalElements: ConditionalElement[]  // Conditional rendering elements
   props: PropWithType[]            // Props with type information
   typeDefinitions: string[]        // Type definitions used by props
   source: string   // Component source code (for inline expansion in map)
@@ -145,6 +153,20 @@ export type ServerComponentAdapter = {
     /** Child components used by this component */
     childComponents: string[]
   }) => string
+
+  /**
+   * Raw HTML helper configuration for outputting comment nodes.
+   * Used for fragment conditional markers (<!--bf-cond-start:N-->).
+   *
+   * If undefined, the adapter doesn't support __rawHtml() in JSX output.
+   * For HTML-only adapters (like testHtmlAdapter), comments are embedded directly.
+   */
+  rawHtmlHelper?: {
+    /** Import statement for raw HTML function (e.g., "import { raw } from 'hono/html'") */
+    importStatement: string
+    /** Helper code to define __rawHtml (e.g., "const __rawHtml = raw") */
+    helperCode: string
+  }
 }
 
 export type CompileOptions = {
@@ -237,6 +259,7 @@ export type IRComponent = {
 
 export type IRConditional = {
   type: 'conditional'
+  id: string | null      // Slot ID for dynamic conditionals (null if static)
   condition: string
   whenTrue: IRNode
   whenFalse: IRNode

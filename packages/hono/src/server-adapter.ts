@@ -40,6 +40,12 @@ function injectDataKeyProp(jsx: string): string {
  * Hono JSX adapter for server component generation
  */
 export const honoServerAdapter: ServerComponentAdapter = {
+  // Raw HTML helper for comment nodes (fragment conditional markers)
+  rawHtmlHelper: {
+    importStatement: "import { raw } from 'hono/html'",
+    helperCode: "const __rawHtml = raw",
+  },
+
   generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents }) => {
     // Extract prop names for destructuring
     const propNames = props.map(p => p.name)
@@ -63,11 +69,18 @@ export const honoServerAdapter: ServerComponentAdapter = {
       .map(child => `import { ${child} } from './${child}'`)
       .join('\n')
 
+    // Check if JSX uses __rawHtml (for fragment conditional markers)
+    const needsRawHtml = jsx.includes('__rawHtml(')
+
     const allImports = [
       `import { useRequestContext } from 'hono/jsx-renderer'`,
       `import manifest from './manifest.json'`,
+      needsRawHtml ? `import { raw } from 'hono/html'` : '',
       childImports,
     ].filter(Boolean).join('\n')
+
+    // Raw HTML helper for comment nodes
+    const rawHtmlHelper = needsRawHtml ? '\nconst __rawHtml = raw\n' : ''
 
     // Include type definitions used by props
     const typeDefs = typeDefinitions.length > 0 ? '\n' + typeDefinitions.join('\n\n') + '\n' : ''
@@ -114,7 +127,7 @@ export const honoServerAdapter: ServerComponentAdapter = {
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
       return `${allImports}
-${typeDefs}
+${typeDefs}${rawHtmlHelper}
 export function ${name}(${propsParam}${propsType}) {
 ${contextHelper}
 
@@ -154,7 +167,7 @@ ${contextHelper}
     } else {
       // Components without props still need data-key and __listIndex support for list items
       return `${allImports}
-${typeDefs}
+${typeDefs}${rawHtmlHelper}
 export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
 ${contextHelper}
 

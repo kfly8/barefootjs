@@ -14,6 +14,7 @@ import { Toggle } from './dist/Toggle'
 import { TodoApp } from './dist/TodoApp'
 import { Dashboard } from './dist/Dashboard'
 import { Game } from './dist/Game'
+import { FizzBuzzCounter } from './dist/FizzBuzzCounter'
 import { AsyncUserList } from './AsyncUserList'
 import { AsyncCounterWrapper } from './AsyncCounterWrapper'
 
@@ -43,6 +44,7 @@ app.get('/', (c) => {
       <nav>
         <ul>
           <li><a href="/counter">Counter</a></li>
+          <li><a href="/fizzbuzz">Conditional Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
           <li><a href="/todos">Todo (SSR + API)</a></li>
           <li><a href="/dashboard">Dashboard (All widgets)</a></li>
@@ -62,6 +64,21 @@ app.get('/counter', (c) => {
     <div>
       <h1>Counter Example</h1>
       <Counter />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+app.get('/fizzbuzz', (c) => {
+  return c.render(
+    <div>
+      <h1>Conditional Counter</h1>
+      <p>Demonstrates conditional element switching:</p>
+      <ul>
+        <li>Toggle to switch between simple and detailed view</li>
+        <li>Detailed view shows count and doubled value</li>
+      </ul>
+      <FizzBuzzCounter />
       <p><a href="/">← Back</a></p>
     </div>
   )

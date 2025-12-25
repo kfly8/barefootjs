@@ -27,6 +27,12 @@ import { isSvgRoot } from '../utils/svg-helpers'
  * ```
  */
 export const testJsxAdapter: ServerComponentAdapter = {
+  // Raw HTML helper for comment nodes (returns dangerouslySetInnerHTML wrapper)
+  rawHtmlHelper: {
+    importStatement: '',
+    helperCode: "const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })",
+  },
+
   generateServerComponent: ({ name, props, typeDefinitions: _typeDefinitions, jsx }) => {
     let propsParam = ''
     if (props.length > 0) {
@@ -38,7 +44,11 @@ export const testJsxAdapter: ServerComponentAdapter = {
       propsParam = `{ ${propNames.join(', ')} }: { ${propsType} }`
     }
 
-    return `export function ${name}(${propsParam}) {
+    // Check if JSX uses __rawHtml (for fragment conditional markers)
+    const needsRawHtml = jsx.includes('__rawHtml(')
+    const rawHtmlHelper = needsRawHtml ? 'const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })\n\n' : ''
+
+    return `${rawHtmlHelper}export function ${name}(${propsParam}) {
   return (
     ${jsx}
   )
@@ -105,6 +115,13 @@ function irToHtmlInternal(node: IRNode, ctx: HtmlContext, isRoot: boolean): stri
       return `<!-- Component: ${node.name} -->`
 
     case 'conditional':
+      // Dynamic conditionals with ID need data-bf-cond marker for hydration
+      if (node.id) {
+        const conditionResult = evaluateExpression(node.condition, ctx.signals)
+        const branchNode = conditionResult ? node.whenTrue : node.whenFalse
+        return injectConditionalMarkerHtml(branchNode, node.id, ctx)
+      }
+      // Static conditionals just evaluate and render
       const conditionResult = evaluateExpression(node.condition, ctx.signals)
       if (conditionResult) {
         return irToHtmlInternal(node.whenTrue, ctx, false)
@@ -243,4 +260,55 @@ function injectDataKeyAttribute(html: string, keyValue: string): string {
   const tagLength = match[0].length
 
   return `<${tagName} data-key="${escapeAttr(keyValue)}"${html.slice(tagLength)}`
+}
+
+/**
+ * Injects data-bf-cond attribute into conditional branch HTML
+ */
+function injectConditionalMarkerHtml(node: IRNode, condId: string, ctx: HtmlContext): string {
+  switch (node.type) {
+    case 'element': {
+      const html = elementToHtml(node, ctx, false)
+      return injectDataBfCondAttribute(html, condId)
+    }
+
+    case 'fragment': {
+      // Use comment markers for fragment conditionals
+      // This allows proper switching of multiple sibling elements
+      const childrenHtml = node.children.map(child => irToHtmlInternal(child, ctx, false)).join('')
+      return `<!--bf-cond-start:${condId}-->${childrenHtml}<!--bf-cond-end:${condId}-->`
+    }
+
+    case 'expression': {
+      const exprValue = node.expression.trim()
+      if (exprValue === 'null' || exprValue === 'undefined') {
+        // Use empty comment markers for null
+        return `<!--bf-cond-start:${condId}--><!--bf-cond-end:${condId}-->`
+      }
+      const value = evaluateExpression(node.expression, ctx.signals)
+      return `<span data-bf-cond="${condId}">${escapeHtml(String(value))}</span>`
+    }
+
+    case 'text':
+      return `<span data-bf-cond="${condId}">${escapeHtml(node.content)}</span>`
+
+    case 'component':
+      return `<div data-bf-cond="${condId}"><!-- ${node.name} --></div>`
+
+    case 'conditional': {
+      const conditionResult = evaluateExpression(node.condition, ctx.signals)
+      const innerHtml = irToHtmlInternal(conditionResult ? node.whenTrue : node.whenFalse, ctx, false)
+      return `<span data-bf-cond="${condId}">${innerHtml}</span>`
+    }
+  }
+}
+
+function injectDataBfCondAttribute(html: string, condId: string): string {
+  const match = html.match(/^<([a-zA-Z][a-zA-Z0-9]*)/)
+  if (!match) return html
+
+  const tagName = match[1]
+  const tagLength = match[0].length
+
+  return `<${tagName} data-bf-cond="${condId}"${html.slice(tagLength)}`
 }

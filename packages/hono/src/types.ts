@@ -43,4 +43,15 @@ export type ServerComponentAdapter = {
     /** Child components used by this component */
     childComponents: string[]
   }) => string
+
+  /**
+   * Raw HTML helper configuration for outputting comment nodes.
+   * Used for fragment conditional markers (<!--bf-cond-start:N-->).
+   */
+  rawHtmlHelper?: {
+    /** Import statement for raw HTML function */
+    importStatement: string
+    /** Helper code to define __rawHtml */
+    helperCode: string
+  }
 }

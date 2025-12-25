@@ -34,3 +34,32 @@ Default to using Bun instead of Node.js.
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
 
+## Development Workflow
+
+### After modifying packages
+
+When you modify source files in `packages/`, you MUST rebuild the packages before testing `examples/`:
+
+```bash
+# Rebuild packages (in dependency order)
+cd packages/jsx && bun run build
+cd packages/hono && bun run build
+
+# Then rebuild examples
+cd examples/hono && bun run build
+```
+
+**Why?** Each package exports from `dist/` (built files), not `src/`. Without rebuilding, examples will use stale code.
+
+### Testing changes
+
+1. **Unit tests**: Run `bun test packages/jsx` to verify compiler changes
+2. **Package rebuild**: Rebuild affected packages
+3. **Example rebuild**: Rebuild examples to verify integration
+4. **Browser test (REQUIRED)**: Test in Chrome browser to verify client-side behavior
+   - Start server: `cd examples/hono && bun run server.tsx`
+   - Test interactive components (click buttons, verify state updates)
+   - Test conditional rendering (toggle views, verify correct values)
+
+**Important**: Unit tests alone are not sufficient. Client-side JavaScript must be tested in an actual browser to catch hydration and DOM manipulation issues.
+
