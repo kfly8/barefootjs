@@ -65,16 +65,11 @@ export const honoServerAdapter: ServerComponentAdapter = {
     const jsxWithDataKey = injectDataKeyProp(jsx)
 
     // Generate imports for child components
-    // Note: Generated server components always use named exports (export function X),
-    // so imports must use named import syntax regardless of original source format.
-    // The originalImports is used to preserve the correct path (e.g., '../shared/Button')
-    const childImports = originalImports.length > 0
-      ? originalImports
-          .map(imp => `import { ${imp.name} } from '${imp.path}'`)
-          .join('\n')
-      : childComponents
-          .map(child => `import { ${child} } from './${child}'`)
-          .join('\n')
+    // All generated server components are in the same dist/ directory,
+    // so always use ./${componentName} regardless of original import paths.
+    const childImports = childComponents
+      .map(child => `import { ${child} } from './${child}'`)
+      .join('\n')
 
     // Check if JSX uses __rawHtml (for fragment conditional markers)
     const needsRawHtml = jsx.includes('__rawHtml(')

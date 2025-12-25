@@ -1,15 +1,15 @@
 import { describe, test, expect } from 'bun:test'
-import { extractModuleConstants, isConstantUsedInClientCode } from '../../src/extractors/constants'
+import { extractModuleVariables, isConstantUsedInClientCode } from '../../src/extractors/constants'
 
-describe('extractModuleConstants', () => {
+describe('extractModuleVariables', () => {
   test('extracts numeric constants', () => {
     const source = `
       const SIZE = 100
       const SPEED = 1.5
       function Component() { return <div /> }
     `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toEqual([
       { name: 'SIZE', value: '100', code: 'const SIZE = 100' },
       { name: 'SPEED', value: '1.5', code: 'const SPEED = 1.5' }
     ])
@@ -21,8 +21,8 @@ describe('extractModuleConstants', () => {
       const LABEL = 'world'
       function Component() { return <div /> }
     `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toEqual([
       { name: 'NAME', value: '"hello"', code: 'const NAME = "hello"' },
       { name: 'LABEL', value: "'world'", code: "const LABEL = 'world'" }
     ])
@@ -34,33 +34,66 @@ describe('extractModuleConstants', () => {
       const DISABLED = false
       function Component() { return <div /> }
     `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toEqual([
       { name: 'ENABLED', value: 'true', code: 'const ENABLED = true' },
       { name: 'DISABLED', value: 'false', code: 'const DISABLED = false' }
     ])
   })
 
-  test('ignores let and var', () => {
+  test('extracts let declarations', () => {
     const source = `
-      let x = 1
-      var y = 2
+      let counter = 0
+      let state = { count: 0 }
       function Component() { return <div /> }
     `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([])
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toHaveLength(2)
+    expect(variables[0].name).toBe('counter')
+    expect(variables[1].name).toBe('state')
   })
 
-  test('ignores non-literal values', () => {
+  test('extracts arrow functions', () => {
     const source = `
-      const fn = () => {}
-      const obj = { a: 1 }
-      const arr = [1, 2, 3]
-      const expr = 1 + 2
+      const handleClick = () => console.log('clicked')
+      const handleSubmit = async (data) => await api.post(data)
       function Component() { return <div /> }
     `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([])
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toHaveLength(2)
+    expect(variables[0].name).toBe('handleClick')
+    expect(variables[1].name).toBe('handleSubmit')
+  })
+
+  test('extracts arrays and objects', () => {
+    const source = `
+      const items = [1, 2, 3]
+      const config = { a: 1, b: 'hello' }
+      function Component() { return <div /> }
+    `
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toHaveLength(2)
+    expect(variables[0].name).toBe('items')
+    expect(variables[1].name).toBe('config')
+  })
+
+  test('extracts template literals', () => {
+    const source = `
+      const code = \`const x = 1\`
+      function Component() { return <div /> }
+    `
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toHaveLength(1)
+    expect(variables[0].name).toBe('code')
+  })
+
+  test('ignores var declarations', () => {
+    const source = `
+      var x = 1
+      function Component() { return <div /> }
+    `
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toEqual([])
   })
 
   test('ignores constants inside functions', () => {
@@ -70,20 +103,8 @@ describe('extractModuleConstants', () => {
         return <div />
       }
     `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([])
-  })
-
-  test('handles multiple declarations on one line', () => {
-    const source = `
-      const A = 1, B = 2
-      function Component() { return <div /> }
-    `
-    const constants = extractModuleConstants(source, 'test.tsx')
-    expect(constants).toEqual([
-      { name: 'A', value: '1', code: 'const A = 1' },
-      { name: 'B', value: '2', code: 'const B = 2' }
-    ])
+    const variables = extractModuleVariables(source, 'test.tsx')
+    expect(variables).toEqual([])
   })
 })
 
@@ -100,6 +121,11 @@ describe('isConstantUsedInClientCode', () => {
     const eventHandlers = ['() => setCount(MAX_COUNT)']
     expect(isConstantUsedInClientCode('MAX_COUNT', [], eventHandlers, [])).toBe(true)
     expect(isConstantUsedInClientCode('OTHER', [], eventHandlers, [])).toBe(false)
+  })
+
+  test('detects function reference in event handlers', () => {
+    const eventHandlers = ['handleClick']
+    expect(isConstantUsedInClientCode('handleClick', [], eventHandlers, [])).toBe(true)
   })
 
   test('detects usage in ref callbacks', () => {

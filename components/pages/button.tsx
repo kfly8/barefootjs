@@ -2,6 +2,7 @@
  * Button Documentation Page
  */
 
+import { createSignal } from '@barefootjs/dom'
 import { Button } from '../button'
 import {
   PageHeader,
@@ -37,6 +38,14 @@ const sizeCode = `<Button size="sm">Small</Button>
 
 const disabledCode = `<Button disabled>Disabled</Button>
 <Button variant="outline" disabled>Disabled</Button>`
+
+const interactiveCode = `import { createSignal } from '@barefootjs/dom'
+
+const [count, setCount] = createSignal(0)
+
+<Button onClick={() => setCount(n => n + 1)}>
+  Clicked {count()} times
+</Button>`
 
 // Props definition
 const buttonProps: PropDefinition[] = [
@@ -77,6 +86,16 @@ function PlusIcon() {
       <path d="M5 12h14"/>
       <path d="M12 5v14"/>
     </svg>
+  )
+}
+
+// Interactive counter example
+function InteractiveCounter() {
+  const [count, setCount] = createSignal(0)
+  return (
+    <Button onClick={() => setCount(n => n + 1)}>
+      Clicked {count()} times
+    </Button>
   )
 }
 
@@ -127,6 +146,10 @@ export function ButtonPage() {
           <Example title="Disabled" code={disabledCode}>
             <Button disabled>Disabled</Button>
             <Button variant="outline" disabled>Disabled</Button>
+          </Example>
+
+          <Example title="Interactive" code={interactiveCode}>
+            <InteractiveCounter />
           </Example>
         </div>
       </Section>

@@ -78,23 +78,37 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
 
     case 'component':
       // Output component call with props (component will be rendered by server)
-      // Skip event handler props (they reference undefined functions in server context)
-      const compProps = node.props
-        .filter(p => !p.name.startsWith('on'))  // Skip event handlers like onToggle, onClick
-        .map(p => {
-          const value = replaceSignalCallsWithProps(p.value, ctx.signals, ctx.memos)
-          // String literals keep quotes, expressions use braces
-          if (value.startsWith('"') || value.startsWith("'")) {
-            return `${p.name}=${value}`
-          }
-          return `${p.name}={${value}}`
-        })
+      const compPropParts: string[] = []
+
+      // Spread props first ({...prop})
+      for (const spread of node.spreadProps || []) {
+        const expr = replaceSignalCallsWithProps(spread.expression, ctx.signals, ctx.memos)
+        compPropParts.push(`{...${expr}}`)
+      }
+
+      // Named props (skip event handlers which reference undefined functions in server context)
+      for (const p of node.props) {
+        if (p.name.startsWith('on')) continue  // Skip event handlers like onToggle, onClick
+        const value = replaceSignalCallsWithProps(p.value, ctx.signals, ctx.memos)
+        // String literals keep quotes, expressions use braces
+        if (value.startsWith('"') || value.startsWith("'")) {
+          compPropParts.push(`${p.name}=${value}`)
+        } else {
+          compPropParts.push(`${p.name}={${value}}`)
+        }
+      }
+
       // Pass __listIndex to child components when inside a list
       // This enables proper data-index attribute for event delegation
       if (ctx.inListContext) {
-        compProps.push('__listIndex={__index}')
+        compPropParts.push('__listIndex={__index}')
       }
-      const propsStr = compProps.join(' ')
+      const propsStr = compPropParts.join(' ')
+      // If component has children, output them
+      if (node.children && node.children.length > 0) {
+        const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+        return `<${node.name}${propsStr ? ' ' + propsStr : ''}>${childrenJsx}</${node.name}>`
+      }
       return `<${node.name}${propsStr ? ' ' + propsStr : ''} />`
 
     case 'conditional':
@@ -186,16 +200,31 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 
     case 'component':
       // Component call with props (skip event handlers)
-      const compPropsStr = node.props
-        .filter(p => !p.name.startsWith('on'))  // Skip event handlers
-        .map(p => {
-          const value = replaceSignalCallsWithProps(p.value, ctx.signals, ctx.memos)
-          if (value.startsWith('"') || value.startsWith("'")) {
-            return `${p.name}=${value}`
-          }
-          return `${p.name}={${value}}`
-        })
-        .join(' ')
+      const compPropPartsExpr: string[] = []
+
+      // Spread props first ({...prop})
+      for (const spread of node.spreadProps || []) {
+        const spreadExpr = replaceSignalCallsWithProps(spread.expression, ctx.signals, ctx.memos)
+        compPropPartsExpr.push(`{...${spreadExpr}}`)
+      }
+
+      // Named props (skip event handlers)
+      for (const p of node.props) {
+        if (p.name.startsWith('on')) continue  // Skip event handlers
+        const value = replaceSignalCallsWithProps(p.value, ctx.signals, ctx.memos)
+        if (value.startsWith('"') || value.startsWith("'")) {
+          compPropPartsExpr.push(`${p.name}=${value}`)
+        } else {
+          compPropPartsExpr.push(`${p.name}={${value}}`)
+        }
+      }
+
+      const compPropsStr = compPropPartsExpr.join(' ')
+      // If component has children, output them
+      if (node.children && node.children.length > 0) {
+        const compChildrenJsx = node.children.map(child => nodeToJsxExpressionValueInternal(child, ctx)).join('')
+        return `<${node.name}${compPropsStr ? ' ' + compPropsStr : ''}>${compChildrenJsx}</${node.name}>`
+      }
       return `<${node.name}${compPropsStr ? ' ' + compPropsStr : ''} />`
 
     case 'fragment':

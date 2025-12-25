@@ -296,8 +296,11 @@ function collectChildComponentNamesRecursive(node: IRNode, names: string[]): voi
       collectChildComponentNamesRecursive(node.whenFalse, names)
       break
     case 'component':
-      if (node.childInits?.name) {
-        names.push(node.childInits.name)
+      // Use node.name directly - this is the component name
+      names.push(node.name)
+      // Recursively process children passed to the component
+      for (const child of node.children) {
+        collectChildComponentNamesRecursive(child, names)
       }
       break
     case 'fragment':

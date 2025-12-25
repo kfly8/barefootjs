@@ -32,12 +32,13 @@ import {
   extractImports,
   extractSignals,
   extractMemos,
-  extractModuleConstants,
+  extractModuleVariables,
   isConstantUsedInClientCode,
   extractComponentPropsWithTypes,
   extractTypeDefinitions,
   extractLocalFunctions,
   extractLocalComponentFunctions,
+  extractExportedComponentNames,
 } from './extractors'
 import { IdGenerator } from './utils/id-generator'
 import {
@@ -138,31 +139,87 @@ export async function compileJSX(
       componentResults.set(imp.name, result)
     }
 
-    // Determine the main component name from file path
-    // For index.tsx files, use the directory name (e.g., button/index.tsx → Button)
+    // Extract all exported component names from the source
+    const exportedComponentNames = extractExportedComponentNames(source, fullPath)
+
+    // For index.tsx files, determine the main component name from directory
+    // e.g., button/index.tsx → Button (used for matching imports like '../button')
     const fileName = fullPath.split('/').pop()!.replace('.tsx', '')
-    const mainComponentName = fileName === 'index'
+    const directoryComponentName = fileName === 'index'
       ? capitalizeFirst(fullPath.split('/').slice(-2, -1)[0] || 'index')
-      : fileName
+      : null
 
-    // Extract and compile local components (defined in same file)
-    // Only do this for the main component, not for local components themselves
+    // Determine the main component name:
+    // 1. If targetComponentName is specified, use it
+    // 2. For index.tsx files, prefer the directoryComponentName if it exists in exports
+    // 3. Otherwise, use the first exported component
+    let mainComponentName: string
+    if (targetComponentName) {
+      mainComponentName = targetComponentName
+    } else if (directoryComponentName && exportedComponentNames.includes(directoryComponentName)) {
+      mainComponentName = directoryComponentName
+    } else if (exportedComponentNames.length > 0) {
+      mainComponentName = exportedComponentNames[0]
+    } else {
+      // Fallback to file name (shouldn't happen for valid components)
+      mainComponentName = fileName === 'index'
+        ? capitalizeFirst(fullPath.split('/').slice(-2, -1)[0] || 'index')
+        : capitalizeFirst(fileName)
+    }
+
+    // Extract local components (non-exported, defined in same file)
+    const localComponents = extractLocalComponentFunctions(source, fullPath, mainComponentName)
+
+    // Compile all components in the file (exported + local)
     if (!targetComponentName) {
-      const localComponents = extractLocalComponentFunctions(source, fullPath, mainComponentName)
-
+      // Compile other exported components (not the main one)
+      for (const exportedName of exportedComponentNames) {
+        if (exportedName !== mainComponentName) {
+          const result = await compileComponent(componentPath, exportedName)
+          componentResults.set(exportedName, result)
+        }
+      }
+      // Compile local (non-exported) components
       for (const localComp of localComponents) {
-        // Compile local component (same file, but targeting specific component)
         const result = await compileComponent(componentPath, localComp.name)
         componentResults.set(localComp.name, result)
+      }
+    } else {
+      // For local component compilation, add placeholder entries for other components
+      // This ensures they're recognized as components (not HTML elements) in the IR
+      const allComponentNames = [...exportedComponentNames, ...localComponents.map(c => c.name)]
+      for (const compName of allComponentNames) {
+        if (compName !== targetComponentName && !componentResults.has(compName)) {
+          // Create a minimal placeholder result - we just need it to exist in the map
+          componentResults.set(compName, {
+            componentName: compName,
+            ir: { type: 'text', content: '' } as any,
+            clientJs: '',
+            interactiveElements: [],
+            dynamicElements: [],
+            listElements: [],
+            dynamicAttributes: [],
+            conditionalElements: [],
+            refElements: [],
+            signals: [],
+            memos: [],
+            imports: [],
+            props: [],
+            typeDefinitions: [],
+            localFunctions: [],
+            moduleConstants: [],
+            childInits: [],
+            source: '',
+          })
+        }
       }
     }
 
     // Compile component with its own IdGenerator (each component has IDs starting from 0)
     const componentIdGenerator = new IdGenerator()
-    // For main component (not a local component), use the file name as target
-    const effectiveTargetName = targetComponentName || mainComponentName
-    const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, effectiveTargetName)
+    const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, mainComponentName)
 
+    // Store with the original cache key (path or path#TargetName)
     compiledComponents.set(cacheKey, result)
     return result
   }
@@ -185,16 +242,8 @@ export async function compileJSX(
   for (const [cacheKey, result] of compiledComponents) {
     // Include component if it has clientJs OR ir (for serverJsx generation)
     if (result.clientJs || result.ir) {
-      // Extract component name from cache key
-      // Cache key format: "path" or "path#LocalComponentName"
-      let name: string
-      if (cacheKey.includes('#')) {
-        // Local component: extract name after #
-        name = cacheKey.split('#')[1]
-      } else {
-        // Regular component: extract from file path
-        name = cacheKey.split('/').pop()!.replace('.tsx', '')
-      }
+      // Use the actual component name from the result
+      const name = result.componentName
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
         .join('\n')
@@ -241,8 +290,13 @@ export async function compileJSX(
     const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
 
     // Generate child component imports (with hash) - deduplicate by component name
+    // Only include child components that have actual client JS
     const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
-    const childImports = uniqueChildNames
+    const childrenWithClientJs = uniqueChildNames.filter(childName => {
+      const childData = componentData.find(d => d.name === childName)
+      return childData?.result.clientJs  // Only include if has client JS
+    })
+    const childImports = childrenWithClientJs
       .map(childName => {
         const childHash = componentHashes.get(childName) || ''
         const childFilename = childHash ? `${childName}-${childHash}.js` : `${childName}.js`
@@ -251,10 +305,11 @@ export async function compileJSX(
       .join('\n')
 
     // Generate child component init calls
-    // Automatically updated by createEffect, so no need to wrap in callback
+    // Only call init for children that have client JS
     // Track instance index for each child component type
     const childInstanceCounts: Map<string, number> = new Map()
     const childInitCalls = childInits
+      .filter(child => childrenWithClientJs.includes(child.name))
       .map(child => {
         const instanceIndex = childInstanceCounts.get(child.name) ?? 0
         childInstanceCounts.set(child.name, instanceIndex + 1)
@@ -275,11 +330,14 @@ export async function compileJSX(
 
     // Wrap in init function if props exist
     let clientJs = ''
-    if (result.clientJs || childInits.length > 0) {
-      // Only include barefoot imports if there's actual client-side logic
+    if (result.clientJs || childInits.length > 0 || signalDeclarations) {
+      // Determine which barefoot imports are needed
       const hasClientLogic = Boolean(result.clientJs)
+      const hasSignals = result.signals.length > 0
+      // Check if constantDeclarations contains createSignal calls
+      const hasSignalInConstants = constantDeclarations.includes('createSignal')
       const barefootImports: string[] = []
-      if (hasClientLogic) {
+      if (hasClientLogic || hasSignals || hasSignalInConstants) {
         barefootImports.push('createSignal', 'createEffect')
       }
       if (needsCreateMemo) {
@@ -422,7 +480,7 @@ function compileJsxWithComponents(
   const memos = extractMemos(source, filePath, targetComponentName)
 
   // Extract module-level constants (shared across all components in file)
-  const moduleConstants = extractModuleConstants(source, filePath)
+  const moduleConstants = extractModuleVariables(source, filePath)
 
   // Extract component props with types (for target component only)
   const props = extractComponentPropsWithTypes(source, filePath, targetComponentName)
@@ -479,6 +537,7 @@ function compileJsxWithComponents(
   )
 
   return {
+    componentName,
     clientJs,
     signals,
     memos,

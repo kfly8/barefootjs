@@ -92,6 +92,7 @@ export type PropWithType = {
 }
 
 export type CompileResult = {
+  componentName: string            // Actual component function name (e.g., 'ButtonPage')
   clientJs: string
   signals: SignalDeclaration[]
   memos: MemoDeclaration[]         // Memoized computed values
@@ -259,8 +260,11 @@ export type IRComponent = {
   type: 'component'
   name: string
   props: Array<{ name: string; value: string; isDynamic: boolean }>
+  /** Spread props ({...prop}) */
+  spreadProps: Array<{ expression: string }>
   staticHtml: string
   childInits: ChildComponentInit | null
+  children: IRNode[]  // Children passed to the component
 }
 
 export type IRConditional = {

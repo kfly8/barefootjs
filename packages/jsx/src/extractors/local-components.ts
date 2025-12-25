@@ -79,6 +79,39 @@ export function extractLocalComponentFunctions(
 }
 
 /**
+ * Extracts all exported component function names from a source file.
+ *
+ * Finds all PascalCase function declarations that:
+ * 1. Are exported (export function Foo or export { Foo })
+ * 2. Return JSX
+ *
+ * @param source - Source code
+ * @param filePath - File path
+ * @returns Array of exported component names
+ */
+export function extractExportedComponentNames(
+  source: string,
+  filePath: string
+): string[] {
+  const sourceFile = createSourceFile(source, filePath)
+  const exportedNames: string[] = []
+
+  ts.forEachChild(sourceFile, (node) => {
+    // Check for exported function declarations: export function Foo() { ... }
+    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
+      const hasExportModifier = node.modifiers?.some(
+        m => m.kind === ts.SyntaxKind.ExportKeyword
+      )
+      if (hasExportModifier && node.body && containsJsxReturn(node.body)) {
+        exportedNames.push(node.name.text)
+      }
+    }
+  })
+
+  return exportedNames
+}
+
+/**
  * Checks if a function body contains a JSX return statement
  */
 function containsJsxReturn(body: ts.Block): boolean {

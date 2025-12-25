@@ -114,7 +114,7 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
 
   // Component tag
   if (isPascalCase(tagName) && ctx.components.has(tagName)) {
-    return componentToIR(tagName, node.openingElement.attributes, ctx)
+    return componentToIR(tagName, node.openingElement.attributes, node.children, ctx)
   }
 
   // Regular HTML element
@@ -151,9 +151,9 @@ function jsxElementToIR(node: ts.JsxElement, ctx: JsxToIRContext): IRNode {
 function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext): IRNode {
   const tagName = node.tagName.getText(ctx.sourceFile)
 
-  // Component tag
+  // Component tag (self-closing has no children)
   if (isPascalCase(tagName) && ctx.components.has(tagName)) {
-    return componentToIR(tagName, node.attributes, ctx)
+    return componentToIR(tagName, node.attributes, [], ctx)
   }
 
   const { staticAttrs, dynamicAttrs, spreadAttrs, ref, events } = processAttributes(node.attributes, ctx)
@@ -182,12 +182,21 @@ function jsxSelfClosingToIR(node: ts.JsxSelfClosingElement, ctx: JsxToIRContext)
 function componentToIR(
   tagName: string,
   attributes: ts.JsxAttributes,
+  jsxChildren: ts.NodeArray<ts.JsxChild> | ts.JsxChild[],
   ctx: JsxToIRContext
 ): IRComponent {
   const componentResult = ctx.components.get(tagName)!
   const props: IRComponent['props'] = []
+  const spreadProps: IRComponent['spreadProps'] = []
 
   attributes.properties.forEach((attr) => {
+    // Handle spread attributes ({...prop})
+    if (ts.isJsxSpreadAttribute(attr)) {
+      const expression = attr.expression.getText(ctx.sourceFile)
+      spreadProps.push({ expression })
+      return
+    }
+
     if (ts.isJsxAttribute(attr) && attr.name) {
       const propName = attr.name.getText(ctx.sourceFile)
       if (attr.initializer) {
@@ -201,6 +210,15 @@ function componentToIR(
     }
   })
 
+  // Process children
+  const children: IRNode[] = []
+  for (const child of jsxChildren) {
+    const irNode = jsxToIR(child, ctx)
+    if (irNode) {
+      children.push(irNode)
+    }
+  }
+
   // Child component initialization info
   let childInits = null
   if (componentResult.props.length > 0 && props.length > 0) {
@@ -212,8 +230,10 @@ function componentToIR(
     type: 'component',
     name: tagName,
     props,
+    spreadProps,
     staticHtml: '', // Not used - component HTML is generated in server adapter
     childInits,
+    children,
   }
 }
 

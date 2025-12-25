@@ -7,7 +7,7 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
-import { ButtonPage } from './pages/button'
+import { ButtonPage } from './dist/ButtonPage'
 
 const app = new Hono()
 
