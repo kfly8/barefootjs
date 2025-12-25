@@ -62,6 +62,13 @@ import {
   type ElementPath,
 } from './utils/element-paths'
 
+/**
+ * Capitalize first letter of a string
+ */
+function capitalizeFirst(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
 export type { ComponentOutput, CompileJSXResult }
 
 /**
@@ -97,9 +104,25 @@ export async function compileJSX(
       return compiledComponents.get(cacheKey)!
     }
 
-    // Read file (append .tsx extension)
-    const fullPath = componentPath.endsWith('.tsx') ? componentPath : `${componentPath}.tsx`
-    const source = await readFile(fullPath)
+    // Read file (try path.tsx first, then path/index.tsx)
+    let fullPath: string
+    let source: string
+    if (componentPath.endsWith('.tsx')) {
+      fullPath = componentPath
+      source = await readFile(fullPath)
+    } else {
+      // Try path.tsx first
+      const directPath = `${componentPath}.tsx`
+      try {
+        source = await readFile(directPath)
+        fullPath = directPath
+      } catch {
+        // Fallback to path/index.tsx
+        const indexPath = `${componentPath}/index.tsx`
+        source = await readFile(indexPath)
+        fullPath = indexPath
+      }
+    }
 
     // Get base directory for this component (resolve imports relative to this file)
     const componentDir = fullPath.substring(0, fullPath.lastIndexOf('/'))
@@ -116,7 +139,11 @@ export async function compileJSX(
     }
 
     // Determine the main component name from file path
-    const mainComponentName = fullPath.split('/').pop()!.replace('.tsx', '')
+    // For index.tsx files, use the directory name (e.g., button/index.tsx → Button)
+    const fileName = fullPath.split('/').pop()!.replace('.tsx', '')
+    const mainComponentName = fileName === 'index'
+      ? capitalizeFirst(fullPath.split('/').slice(-2, -1)[0] || 'index')
+      : fileName
 
     // Extract and compile local components (defined in same file)
     // Only do this for the main component, not for local components themselves
