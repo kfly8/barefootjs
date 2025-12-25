@@ -80,8 +80,12 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
       }
       return `{${expr}}`
 
-    case 'component':
+    case 'component': {
       // Output component call with props (component will be rendered by server)
+      // If this is the root node and component needs a scope, wrap in span
+      // This happens when a component directly returns another component (no root element)
+      const needsScopeWrapper = isRoot && ctx.componentName
+
       const compPropParts: string[] = []
 
       // Spread props first ({...prop})
@@ -109,6 +113,8 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
       }
       const propsStr = compPropParts.join(' ')
 
+      // Build the component JSX output
+      let componentOutput: string
       // Handle children - if hasLazyChildren, pass as function prop for deferred evaluation
       if (node.children && node.children.length > 0) {
         if (node.hasLazyChildren) {
@@ -117,14 +123,22 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
           const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
           const childrenProp = `children={() => <>${childrenJsx}</>}`
           const allProps = propsStr ? `${propsStr} ${childrenProp}` : childrenProp
-          return `<${node.name} ${allProps} />`
+          componentOutput = `<${node.name} ${allProps} />`
         } else {
           // Static children: inline as usual
           const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
-          return `<${node.name}${propsStr ? ' ' + propsStr : ''}>${childrenJsx}</${node.name}>`
+          componentOutput = `<${node.name}${propsStr ? ' ' + propsStr : ''}>${childrenJsx}</${node.name}>`
         }
+      } else {
+        componentOutput = `<${node.name}${propsStr ? ' ' + propsStr : ''} />`
       }
-      return `<${node.name}${propsStr ? ' ' + propsStr : ''} />`
+
+      // Wrap in scope span if needed
+      if (needsScopeWrapper) {
+        return `<span data-bf-scope="${ctx.componentName}">${componentOutput}</span>`
+      }
+      return componentOutput
+    }
 
     case 'conditional':
       // Generate ternary expression

@@ -177,8 +177,8 @@ describe('Components - Props and init function', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const formComponent = result.components.find(c => c.name === 'Form')
 
-    // Wrapped in init function (with __instanceIndex for multiple instance support)
-    expect(formComponent!.clientJs).toContain('export function initForm({ onAdd }, __instanceIndex = 0)')
+    // Wrapped in init function (with __instanceIndex and __parentScope for multiple instance and scoping support)
+    expect(formComponent!.clientJs).toContain('export function initForm({ onAdd }, __instanceIndex = 0, __parentScope = null)')
     // Signal declaration is inside function
     expect(formComponent!.clientJs).toContain("const [text, setText] = createSignal('')")
     // Local function is also inside function
@@ -242,8 +242,8 @@ describe('Components - Props and init function', () => {
 
     // Child component import exists (with hash)
     expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
-    // init call exists with instance index (callback is passed as is because createEffect automatically tracks)
-    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd }, 0)')
+    // init call exists with instance index and scope (callback is passed as is because createEffect automatically tracks)
+    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd }, 0, __scope)')
   })
 })
 
@@ -276,8 +276,8 @@ describe('Components - Callback props', () => {
     const result = await compileWithFiles('/test/Parent.tsx', files)
     const parent = result.components.find(c => c.name === 'Parent')
 
-    // Callback is passed as is with instance index (due to automatic tracking by createEffect)
-    expect(parent!.clientJs).toContain('initChild({ onClick: handleClick }, 0)')
+    // Callback is passed as is with instance index and scope (due to automatic tracking by createEffect)
+    expect(parent!.clientJs).toContain('initChild({ onClick: handleClick }, 0, __scope)')
   })
 
   it('Even without dynamic content, callback props are passed as is', async () => {
@@ -349,12 +349,12 @@ describe('Components - Hash and filename', () => {
     expect(counter!.hash).toBeTruthy()
     expect(counter!.filename).toContain(counter!.hash)
 
-    // All components with JSX return are included (even without clientJs)
-    // App component has serverJsx but no clientJs
+    // All components with JSX return are included
+    // App component has serverJsx AND clientJs (because it calls initCounter for child component)
     const app = result.components.find(c => c.name === 'App')
     expect(app).toBeDefined()
-    expect(app!.hasClientJs).toBe(false)
-    expect(app!.filename).toBe('')
+    expect(app!.hasClientJs).toBe(true)  // App needs clientJs to initialize child Counter
+    expect(app!.filename).toContain(app!.hash)
     expect(app!.serverJsx).toContain('<Counter />')
   })
 })

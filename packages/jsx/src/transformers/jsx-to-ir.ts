@@ -250,8 +250,18 @@ function componentToIR(
     allPropsForInit.push({ name: 'children', value: `() => ${childrenExpr}`, isDynamic: true })
   }
 
-  if (componentResult.props.length > 0 && allPropsForInit.length > 0) {
-    const propsExpr = `{ ${allPropsForInit.map(p => `${p.name}: ${p.value}`).join(', ')} }`
+  // Always set childInits for components that need client-side initialization
+  // This includes components with: signals, memos, childInits, or any client-side logic
+  // Note: componentResult.clientJs may be empty at this point (signals/childInits added later)
+  const needsClientInit = componentResult.signals.length > 0 ||
+                          componentResult.memos.length > 0 ||
+                          componentResult.childInits.length > 0 ||
+                          componentResult.clientJs.length > 0 ||
+                          allPropsForInit.length > 0
+  if (needsClientInit) {
+    const propsExpr = allPropsForInit.length > 0
+      ? `{ ${allPropsForInit.map(p => `${p.name}: ${p.value}`).join(', ')} }`
+      : '{}'
     childInits = { name: tagName, propsExpr }
   }
 
