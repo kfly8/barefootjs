@@ -605,18 +605,41 @@ function containsSignalCall(expr: string, signals: SignalDeclaration[]): boolean
 
 /**
  * Finds component's JSX return and converts to IR
+ *
+ * @param sourceFile - TypeScript source file
+ * @param ctx - JSX to IR context
+ * @param targetComponentName - Optional: specific component name to find (if not provided, finds first PascalCase function)
  */
 export function findAndConvertJsxReturn(
   sourceFile: ts.SourceFile,
-  ctx: JsxToIRContext
+  ctx: JsxToIRContext,
+  targetComponentName?: string
 ): IRNode | null {
   let result: IRNode | null = null
 
+  // Track all found components for fallback
+  let fallbackResult: IRNode | null = null
+  let foundTargetComponent = false
+
   function visit(node: ts.Node) {
+    if (result) return // Already found target
+
     // Find function declaration with PascalCase name (component)
     if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      // Look for return statement in function body
-      findReturnInBody(node.body)
+      // If targetComponentName is specified, only process that component
+      if (targetComponentName && node.name.text !== targetComponentName) {
+        // Save first component as fallback (in case target is not found)
+        if (fallbackResult === null && node.body) {
+          const savedResult = result
+          findReturnInBody(node.body)
+          fallbackResult = result
+          result = savedResult
+        }
+      } else {
+        // Target found (or no target specified, use first PascalCase function)
+        foundTargetComponent = true
+        findReturnInBody(node.body)
+      }
     }
     ts.forEachChild(node, visit)
   }
@@ -639,5 +662,12 @@ export function findAndConvertJsxReturn(
   }
 
   visit(sourceFile)
+
+  // If target component not found but we have a fallback, use it
+  // This handles the case where file name doesn't match function name
+  if (!result && !foundTargetComponent && fallbackResult) {
+    result = fallbackResult
+  }
+
   return result
 }

@@ -62,14 +62,27 @@ export function extractTypeDefinitions(source: string, filePath: string, propTyp
  * Extracts component function parameters (props) with their types.
  * function Counter({ initial = 0 }: { initial?: number }) → [{ name: 'initial', type: 'number', optional: true }]
  * function Counter({ initial = 0 }: Props) → [{ name: 'initial', type: 'unknown', optional: true }] (type alias not resolved)
+ *
+ * @param source - Source code
+ * @param filePath - File path
+ * @param targetComponentName - Optional: specific component to extract props from
  */
-export function extractComponentPropsWithTypes(source: string, filePath: string): PropWithType[] {
+export function extractComponentPropsWithTypes(source: string, filePath: string, targetComponentName?: string): PropWithType[] {
   const sourceFile = createSourceFile(source, filePath)
 
   const props: PropWithType[] = []
+  let found = false
 
   ts.forEachChild(sourceFile, (node) => {
+    if (found) return
+
     if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
+      // If targetComponentName is specified, only process that component
+      if (targetComponentName && node.name.text !== targetComponentName) {
+        return
+      }
+
+      found = true
       const param = node.parameters[0]
       if (param && ts.isObjectBindingPattern(param.name)) {
         // Get the type annotation if present

@@ -88,19 +88,47 @@ export const honoServerAdapter: ServerComponentAdapter = {
     const scriptTags = `{__needsBarefoot && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
       {__needsThis && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
 
+    // Script deduplication helper - handles Suspense boundaries gracefully
+    const contextHelper = `
+  // Try to get request context for script deduplication
+  // Falls back to always outputting scripts when inside Suspense boundaries
+  let __outputScripts: Set<string> | null = null
+  let __needsBarefoot = true
+  let __needsThis = true
+  try {
+    const c = useRequestContext()
+    __outputScripts = c.get('bfOutputScripts') || new Set<string>()
+    __needsBarefoot = !__outputScripts.has('__barefoot__')
+    __needsThis = !__outputScripts.has('${name}')
+    if (__needsBarefoot) __outputScripts.add('__barefoot__')
+    if (__needsThis) __outputScripts.add('${name}')
+    c.set('bfOutputScripts', __outputScripts)
+  } catch {
+    // Inside Suspense boundary - context unavailable
+    // Always output scripts (browser will deduplicate)
+  }
+
+  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
+  const __thisSrc = (manifest as any)['${name}']?.clientJs`
+
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
       return `${allImports}
 ${typeDefs}
 export function ${name}(${propsParam}${propsType}) {
-  const c = useRequestContext()
-${scriptLogic}
+${contextHelper}
 
   // Check if this is the root BarefootJS component (first to render)
   // Only root component outputs data-bf-props to avoid duplicate hydration data
-  const __isRoot = !c.get('bfRootComponent')
-  if (__isRoot) {
-    c.set('bfRootComponent', '${name}')
+  let __isRoot = true
+  try {
+    const c = useRequestContext()
+    __isRoot = !c.get('bfRootComponent')
+    if (__isRoot) {
+      c.set('bfRootComponent', '${name}')
+    }
+  } catch {
+    // Inside Suspense boundary - treat as root
   }
 
   // Serialize props for client hydration (only serializable values)
@@ -128,8 +156,7 @@ ${scriptLogic}
       return `${allImports}
 ${typeDefs}
 export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
-  const c = useRequestContext()
-${scriptLogic}
+${contextHelper}
 
   return (
     <>

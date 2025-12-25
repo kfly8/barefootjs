@@ -36,6 +36,7 @@ import {
   extractComponentPropsWithTypes,
   extractTypeDefinitions,
   extractLocalFunctions,
+  extractLocalComponentFunctions,
 } from './extractors'
 import { IdGenerator } from './utils/id-generator'
 import {
@@ -82,11 +83,17 @@ export async function compileJSX(
 
   /**
    * Compile component (recursively resolve dependencies)
+   *
+   * @param componentPath - Path to component file
+   * @param targetComponentName - Optional: specific component name to compile from the file
    */
-  async function compileComponent(componentPath: string): Promise<CompileResult> {
+  async function compileComponent(componentPath: string, targetComponentName?: string): Promise<CompileResult> {
+    // Create cache key that includes target component name for local components
+    const cacheKey = targetComponentName ? `${componentPath}#${targetComponentName}` : componentPath
+
     // Check cache
-    if (compiledComponents.has(componentPath)) {
-      return compiledComponents.get(componentPath)!
+    if (compiledComponents.has(cacheKey)) {
+      return compiledComponents.get(cacheKey)!
     }
 
     // Read file (append .tsx extension)
@@ -99,7 +106,7 @@ export async function compileJSX(
     // Extract imports for this component
     const imports = extractImports(source, fullPath)
 
-    // Compile dependent components first
+    // Compile dependent components first (imported from other files)
     const componentResults: Map<string, CompileResult> = new Map()
     for (const imp of imports) {
       const depPath = resolvePath(componentDir, imp.path)
@@ -107,11 +114,28 @@ export async function compileJSX(
       componentResults.set(imp.name, result)
     }
 
+    // Determine the main component name from file path
+    const mainComponentName = fullPath.split('/').pop()!.replace('.tsx', '')
+
+    // Extract and compile local components (defined in same file)
+    // Only do this for the main component, not for local components themselves
+    if (!targetComponentName) {
+      const localComponents = extractLocalComponentFunctions(source, fullPath, mainComponentName)
+
+      for (const localComp of localComponents) {
+        // Compile local component (same file, but targeting specific component)
+        const result = await compileComponent(componentPath, localComp.name)
+        componentResults.set(localComp.name, result)
+      }
+    }
+
     // Compile component with its own IdGenerator (each component has IDs starting from 0)
     const componentIdGenerator = new IdGenerator()
-    const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator)
+    // For main component (not a local component), use the file name as target
+    const effectiveTargetName = targetComponentName || mainComponentName
+    const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, effectiveTargetName)
 
-    compiledComponents.set(componentPath, result)
+    compiledComponents.set(cacheKey, result)
     return result
   }
 
@@ -130,10 +154,19 @@ export async function compileJSX(
     childInits: ChildComponentInit[]
   }> = []
 
-  for (const [path, result] of compiledComponents) {
+  for (const [cacheKey, result] of compiledComponents) {
     // Include component if it has clientJs OR ir (for serverJsx generation)
     if (result.clientJs || result.ir) {
-      const name = path.split('/').pop()!.replace('.tsx', '')
+      // Extract component name from cache key
+      // Cache key format: "path" or "path#LocalComponentName"
+      let name: string
+      if (cacheKey.includes('#')) {
+        // Local component: extract name after #
+        name = cacheKey.split('#')[1]
+      } else {
+        // Regular component: extract from file path
+        name = cacheKey.split('/').pop()!.replace('.tsx', '')
+      }
       const signalDeclarations = result.signals
         .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
         .join('\n')
@@ -151,7 +184,7 @@ export async function compileJSX(
 
       componentData.push({
         name,
-        path,
+        path: cacheKey,
         result,
         constantDeclarations,
         signalDeclarations,
@@ -309,12 +342,19 @@ ${bodyCode}
  * 2. IR → HTML conversion (ir-to-html.ts)
  * 3. IR → ClientJS info collection (ir-to-client-js.ts)
  * 4. ClientJS generation (createEffect-based)
+ *
+ * @param source - Source code
+ * @param filePath - File path
+ * @param components - Map of available child components
+ * @param idGenerator - ID generator for element IDs
+ * @param targetComponentName - Optional: specific component to compile from the source
  */
 function compileJsxWithComponents(
   source: string,
   filePath: string,
   components: Map<string, CompileResult>,
-  idGenerator: IdGenerator
+  idGenerator: IdGenerator,
+  targetComponentName?: string
 ): CompileResult {
   const sourceFile = ts.createSourceFile(
     filePath,
@@ -324,24 +364,24 @@ function compileJsxWithComponents(
     ts.ScriptKind.TSX
   )
 
-  // Extract signal declarations
-  const signals = extractSignals(source, filePath)
+  // Extract signal declarations (for target component only)
+  const signals = extractSignals(source, filePath, targetComponentName)
 
-  // Extract memo declarations
-  const memos = extractMemos(source, filePath)
+  // Extract memo declarations (for target component only)
+  const memos = extractMemos(source, filePath, targetComponentName)
 
-  // Extract module-level constants
+  // Extract module-level constants (shared across all components in file)
   const moduleConstants = extractModuleConstants(source, filePath)
 
-  // Extract component props with types
-  const props = extractComponentPropsWithTypes(source, filePath)
+  // Extract component props with types (for target component only)
+  const props = extractComponentPropsWithTypes(source, filePath, targetComponentName)
 
   // Extract type definitions used by props
   const propTypes = props.map(p => p.type)
   const typeDefinitions = extractTypeDefinitions(source, filePath, propTypes)
 
-  // Extract local functions
-  const localFunctions = extractLocalFunctions(source, filePath, signals)
+  // Extract local functions (for target component only)
+  const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
 
   // Create IR context
   const irContext: JsxToIRContext = {
@@ -352,8 +392,8 @@ function compileJsxWithComponents(
     idGenerator,
   }
 
-  // Convert JSX to IR
-  const ir = findAndConvertJsxReturn(sourceFile, irContext)
+  // Convert JSX to IR (for target component)
+  const ir = findAndConvertJsxReturn(sourceFile, irContext, targetComponentName)
 
   // Collect client JS info from IR
   const interactiveElements: InteractiveElement[] = []
@@ -367,8 +407,8 @@ function compileJsxWithComponents(
     collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements)
   }
 
-  // Extract component name from file path
-  const componentName = filePath.split('/').pop()!.replace('.tsx', '')
+  // Extract component name from target or file path
+  const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
 
   // Generate client JS (createEffect-based)
   const clientJs = generateClientJsWithCreateEffect(

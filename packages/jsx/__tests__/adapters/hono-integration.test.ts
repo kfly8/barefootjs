@@ -34,7 +34,7 @@ describe('Hono Adapter Integration', () => {
     it('compiles simple counter with signals', async () => {
       const source = `
         import { createSignal } from 'barefoot'
-        function Counter() {
+        function Component() {
           const [count, setCount] = createSignal(0)
           return (
             <>
@@ -63,7 +63,7 @@ describe('Hono Adapter Integration', () => {
     it('compiles counter with derived values', async () => {
       const source = `
         import { createSignal } from 'barefoot'
-        function Counter() {
+        function Component() {
           const [count, setCount] = createSignal(0)
           return (
             <div>
@@ -121,7 +121,7 @@ describe('Hono Adapter Integration', () => {
       const source = `
         import { createSignal } from 'barefoot'
         type Props = { initialTodos: Array<{ id: number; text: string }> }
-        function TodoApp({ initialTodos }: Props) {
+        function Component({ initialTodos }: Props) {
           const [todos, setTodos] = createSignal(initialTodos)
           return (
             <ul>

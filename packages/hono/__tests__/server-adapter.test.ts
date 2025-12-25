@@ -93,6 +93,39 @@ describe('honoServerAdapter', () => {
       expect(result).toContain("import { AnotherChild } from './AnotherChild'")
     })
 
+    it('handles Suspense boundaries gracefully with try/catch', () => {
+      const ir = {
+        type: 'element',
+        tagName: 'div',
+        id: null,
+        staticAttrs: [],
+        dynamicAttrs: [],
+        events: [],
+        children: [],
+        listInfo: null,
+        dynamicContent: null,
+      }
+
+      const result = honoServerAdapter.generateServerComponent({
+        name: 'Counter',
+        props: [],
+        typeDefinitions: [],
+        jsx: '<div>0</div>',
+        ir,
+        signals: [],
+        childComponents: [],
+      })
+
+      // Should use try/catch for useRequestContext to handle Suspense boundaries
+      expect(result).toContain('try {')
+      expect(result).toContain('const c = useRequestContext()')
+      expect(result).toContain('} catch {')
+      expect(result).toContain('// Inside Suspense boundary - context unavailable')
+      // Should default to outputting scripts when context is unavailable
+      expect(result).toContain('let __needsBarefoot = true')
+      expect(result).toContain('let __needsThis = true')
+    })
+
     it('only outputs data-bf-props for root component (first to render)', () => {
       const ir = {
         type: 'element',
@@ -116,8 +149,9 @@ describe('honoServerAdapter', () => {
         childComponents: [],
       })
 
-      // Should check bfRootComponent context
-      expect(result).toContain("const __isRoot = !c.get('bfRootComponent')")
+      // Should check bfRootComponent context (with try/catch for Suspense boundaries)
+      expect(result).toContain("let __isRoot = true")
+      expect(result).toContain("__isRoot = !c.get('bfRootComponent')")
       expect(result).toContain("c.set('bfRootComponent', 'TodoApp')")
       // data-bf-props should only render when __isRoot is true
       expect(result).toContain('{__isRoot && __hasHydrateProps && (')
