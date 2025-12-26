@@ -40,3 +40,7 @@ examples/*/*.js
 examples/*/bun.lock
 examples/*/package-lock.json
 examples/*/node_modules
+
+# Playwright
+playwright-report/
+test-results/

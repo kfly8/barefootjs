@@ -6,8 +6,7 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "examples/*",
-    "components"
+    "examples/*"
   ],
   "scripts": {
     "test": "bun test --cwd . packages/",
@@ -15,6 +14,7 @@
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",
+    "@playwright/test": "^1.57.0",
     "@types/bun": "latest",
     "happy-dom": "^20.0.11",
     "typescript": "^5.9.3"

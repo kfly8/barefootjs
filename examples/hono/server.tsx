@@ -203,4 +203,15 @@ app.delete('/api/todos/:id', (c) => {
   return c.json({ success: true })
 })
 
+// Reset todos to initial state (for testing)
+app.post('/api/todos/reset', (c) => {
+  todos = [
+    { id: 1, text: 'Setup project', done: false },
+    { id: 2, text: 'Create components', done: false },
+    { id: 3, text: 'Write tests', done: true },
+  ]
+  nextId = 4
+  return c.json({ success: true })
+})
+
 export default { port: 3001, fetch: app.fetch }
