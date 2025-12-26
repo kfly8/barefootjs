@@ -365,10 +365,17 @@ export async function compileJSX(
         const childFilename = childHash ? `${childName}-${childHash}.js` : `${childName}.js`
 
         // Calculate relative path from current component to child component
-        const currentDir = data.fullPath.substring(rootDir.length + 1, data.fullPath.lastIndexOf('/'))
-        const childDir = childData?.fullPath
-          ? childData.fullPath.substring(rootDir.length + 1, childData.fullPath.lastIndexOf('/'))
-          : currentDir
+        const currentLastSlash = data.fullPath.lastIndexOf('/')
+        const currentDir = currentLastSlash > rootDir.length
+          ? data.fullPath.substring(rootDir.length + 1, currentLastSlash)
+          : ''
+        let childDir = currentDir
+        if (childData?.fullPath) {
+          const childLastSlash = childData.fullPath.lastIndexOf('/')
+          childDir = childLastSlash > rootDir.length
+            ? childData.fullPath.substring(rootDir.length + 1, childLastSlash)
+            : ''
+        }
 
         let relativePath: string
         if (currentDir === childDir) {
@@ -426,7 +433,11 @@ export async function compileJSX(
     let clientJs = ''
     if (result.clientJs || childInits.length > 0 || signalDeclarations) {
       // Calculate path to barefoot.js (at dist root)
-      const currentDir = data.fullPath.substring(rootDir.length + 1, data.fullPath.lastIndexOf('/'))
+      // Get the directory portion of the path relative to rootDir
+      const lastSlashIndex = data.fullPath.lastIndexOf('/')
+      const currentDir = lastSlashIndex > rootDir.length
+        ? data.fullPath.substring(rootDir.length + 1, lastSlashIndex)
+        : ''
       const dirDepth = currentDir ? currentDir.split('/').length : 0
       const barefootPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'barefoot.js' : './barefoot.js'
 
