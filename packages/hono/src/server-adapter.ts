@@ -46,7 +46,7 @@ export const honoServerAdapter: ServerComponentAdapter = {
     helperCode: "const __rawHtml = raw",
   },
 
-  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents, moduleConstants, originalImports, sourcePath }) => {
+  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents, moduleConstants, originalImports, sourcePath, isDefaultExport }) => {
     // Calculate relative path to manifest.json based on source path depth
     // e.g., 'pages/ButtonPage.tsx' -> '../manifest.json'
     // e.g., 'Button.tsx' -> './manifest.json'
@@ -141,11 +141,14 @@ export const honoServerAdapter: ServerComponentAdapter = {
   const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
   const __thisSrc = (manifest as any)['${name}']?.clientJs`
 
+    // Use 'export default function' for default exports, 'export function' for named exports
+    const exportKeyword = isDefaultExport ? 'export default function' : 'export function'
+
     if (props.length > 0) {
       // For components with props, embed serializable props for client hydration
       return `${allImports}
 ${typeDefs}${constantDefs}${rawHtmlHelper}
-export function ${name}(${propsParam}${propsType}) {
+${exportKeyword} ${name}(${propsParam}${propsType}) {
 ${contextHelper}
 
   // Check if this is the root BarefootJS component (first to render)
@@ -185,7 +188,7 @@ ${contextHelper}
       // Components without props still need data-key and __listIndex support for list items
       return `${allImports}
 ${typeDefs}${constantDefs}${rawHtmlHelper}
-export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
+${exportKeyword} ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
 ${contextHelper}
 
   return (
@@ -245,7 +248,7 @@ ${contextHelper}
 
     // Generate each component function
     const componentFunctions = components.map(comp => {
-      const { name, props, jsx } = comp
+      const { name, props, jsx, isDefaultExport } = comp
 
       // Extract prop names for destructuring
       const propNames = props.map(p => p.name)
@@ -287,8 +290,11 @@ ${contextHelper}
   const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
   const __thisSrc = (manifest as any)['__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}']?.clientJs`
 
+      // Use 'export default function' for default exports, 'export function' for named exports
+      const exportKeyword = isDefaultExport ? 'export default function' : 'export function'
+
       if (props.length > 0) {
-        return `export function ${name}(${propsParam}${propsType}) {
+        return `${exportKeyword} ${name}(${propsParam}${propsType}) {
 ${contextHelper}
 
   // Check if this is the root BarefootJS component
@@ -323,7 +329,7 @@ ${contextHelper}
   )
 }`
       } else {
-        return `export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
+        return `${exportKeyword} ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
 ${contextHelper}
 
   return (

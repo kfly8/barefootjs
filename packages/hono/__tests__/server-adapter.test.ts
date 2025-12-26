@@ -32,6 +32,7 @@ describe('honoServerAdapter', () => {
         childComponents: [],
         moduleConstants: [],
         originalImports: [],
+        sourcePath: 'Hello.tsx',
       })
 
       expect(result).toContain('export function Hello({ "data-key": __dataKey, __listIndex }')
@@ -63,6 +64,7 @@ describe('honoServerAdapter', () => {
         childComponents: [],
         moduleConstants: [],
         originalImports: [],
+        sourcePath: 'Counter.tsx',
       })
 
       expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, __listIndex }')
@@ -99,12 +101,12 @@ describe('honoServerAdapter', () => {
           { name: 'Child', path: './Child', isDefault: true },
           { name: 'SharedButton', path: '../shared/Button', isDefault: false },
         ],
+        sourcePath: 'Parent.tsx',
       })
 
-      // All generated components are in the same dist/ directory,
-      // so imports always use ./${componentName} format
-      expect(result).toContain("import { Child } from './Child'")
-      expect(result).toContain("import { SharedButton } from './SharedButton'")
+      // Imports use original paths and respect isDefault flag
+      expect(result).toContain("import Child from './Child'")
+      expect(result).toContain("import { SharedButton } from '../shared/Button'")
     })
 
     it('falls back to named imports when originalImports is empty', () => {
@@ -131,10 +133,11 @@ describe('honoServerAdapter', () => {
         childComponents: ['Child'],
         moduleConstants: [],
         originalImports: [],
+        sourcePath: 'Parent.tsx',
       })
 
-      // Falls back to named import when no original import info
-      expect(result).toContain("import { Child } from './Child'")
+      // No imports when originalImports is empty (childComponents alone doesn't add imports)
+      expect(result).not.toContain("import { Child }")
     })
 
     it('includes module constants in output', () => {
@@ -164,6 +167,7 @@ describe('honoServerAdapter', () => {
           { name: 'MAX_ENEMIES', value: '30', code: 'const MAX_ENEMIES = 30' },
         ],
         originalImports: [],
+        sourcePath: 'Game.tsx',
       })
 
       expect(result).toContain('const GRID_SIZE = 100')
@@ -194,6 +198,7 @@ describe('honoServerAdapter', () => {
         childComponents: [],
         moduleConstants: [],
         originalImports: [],
+        sourcePath: 'Counter.tsx',
       })
 
       // Should use try/catch for useRequestContext to handle Suspense boundaries
@@ -230,6 +235,7 @@ describe('honoServerAdapter', () => {
         childComponents: [],
         moduleConstants: [],
         originalImports: [],
+        sourcePath: 'TodoApp.tsx',
       })
 
       // Should check bfRootComponent context (with try/catch for Suspense boundaries)

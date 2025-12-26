@@ -138,3 +138,45 @@ function containsJsxReturn(body: ts.Block): boolean {
   visit(body)
   return hasJsx
 }
+
+/**
+ * Gets the default exported component name from a source file.
+ *
+ * Detects patterns like:
+ * - `export default function Foo() { ... }`
+ * - `export default Foo` (where Foo is a function)
+ *
+ * @param source - Source code
+ * @param filePath - File path
+ * @returns Default export name, or null if no default export
+ */
+export function getDefaultExportName(
+  source: string,
+  filePath: string
+): string | null {
+  const sourceFile = createSourceFile(source, filePath)
+  let defaultExportName: string | null = null
+
+  ts.forEachChild(sourceFile, (node) => {
+    // Pattern: export default Foo
+    if (ts.isExportAssignment(node) && !node.isExportEquals) {
+      if (ts.isIdentifier(node.expression)) {
+        defaultExportName = node.expression.getText(sourceFile)
+      }
+    }
+    // Pattern: export default function Foo() { ... }
+    if (ts.isFunctionDeclaration(node) && node.name) {
+      const hasExportModifier = node.modifiers?.some(
+        m => m.kind === ts.SyntaxKind.ExportKeyword
+      )
+      const hasDefaultModifier = node.modifiers?.some(
+        m => m.kind === ts.SyntaxKind.DefaultKeyword
+      )
+      if (hasExportModifier && hasDefaultModifier) {
+        defaultExportName = node.name.text
+      }
+    }
+  })
+
+  return defaultExportName
+}

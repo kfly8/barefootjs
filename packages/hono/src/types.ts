@@ -44,6 +44,8 @@ export type ServerComponentData = {
   memos: MemoDeclaration[]
   /** Child components used by this component */
   childComponents: string[]
+  /** Whether this component is the default export */
+  isDefaultExport?: boolean
 }
 
 /**
@@ -74,6 +76,8 @@ export type ServerComponentAdapter = {
     originalImports: ComponentImport[]
     /** Source path relative to root (e.g., 'pages/button.tsx') */
     sourcePath: string
+    /** Whether this component is the default export */
+    isDefaultExport?: boolean
   }) => string
 
   /**

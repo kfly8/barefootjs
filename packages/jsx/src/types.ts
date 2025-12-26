@@ -110,6 +110,7 @@ export type CompileResult = {
   source: string   // Component source code (for inline expansion in map)
   ir: IRNode | null  // Intermediate Representation for server JSX generation
   imports: ComponentImport[]       // Import statements from source file
+  isDefaultExport?: boolean        // Whether this component is the default export
 }
 
 export type ComponentImport = {
@@ -203,6 +204,8 @@ export type ServerComponentAdapter = {
     originalImports: ComponentImport[]
     /** Source path relative to root (e.g., 'pages/button.tsx') */
     sourcePath: string
+    /** Whether this component is the default export */
+    isDefaultExport?: boolean
   }) => string
 
   /**

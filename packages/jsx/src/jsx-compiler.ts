@@ -41,6 +41,7 @@ import {
   extractLocalFunctions,
   extractLocalComponentFunctions,
   extractExportedComponentNames,
+  getDefaultExportName,
 } from './extractors'
 import { IdGenerator } from './utils/id-generator'
 import {
@@ -137,6 +138,7 @@ export async function compileJSX(
         moduleConstants: [],
         childInits: [],
         source: '',
+        isDefaultExport: false,
       }
     }
 
@@ -256,6 +258,7 @@ export async function compileJSX(
               moduleConstants: [],
               childInits: [],
               source: '',
+              isDefaultExport: false,
             })
           }
         }
@@ -533,6 +536,7 @@ ${bodyCode}
         moduleConstants: result.moduleConstants,
         originalImports,
         sourcePath,
+        isDefaultExport: result.isDefaultExport,
       })
     }
 
@@ -802,6 +806,7 @@ ${autoHydrateCodes}
             signals: c.result.signals,
             memos: c.result.memos,
             childComponents,
+            isDefaultExport: c.result.isDefaultExport,
           }
         })
 
@@ -899,6 +904,10 @@ function compileJsxWithComponents(
   // Extract component name from target or file path
   const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
 
+  // Detect if this component is the default export
+  const defaultExportName = getDefaultExportName(source, filePath)
+  const isDefaultExport = componentName === defaultExportName
+
   // Create IR context
   const irContext: JsxToIRContext = {
     sourceFile,
@@ -964,6 +973,7 @@ function compileJsxWithComponents(
     source,
     ir,
     imports,
+    isDefaultExport,
   }
 }
 
