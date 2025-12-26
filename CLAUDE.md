@@ -3,6 +3,8 @@
 A JSX compiler that generates server-side JSX and client-side JavaScript from JSX components.
 Uses a signal-based reactive system similar to SolidJS, generating minimal client JS only for interactive parts.
 
+This project use Bun.
+
 ## Terminology
 
 ### Marked JSX
@@ -29,22 +31,6 @@ examples/
 └── hono/          # Sample components (Counter, TodoApp, etc.)
 ```
 
-## Use Bun
-
-Default to using Bun instead of Node.js.
-
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
-
 ## Development Workflow
 
 ### After modifying packages
@@ -62,15 +48,26 @@ cd examples/hono && bun run build
 
 **Why?** Each package exports from `dist/` (built files), not `src/`. Without rebuilding, examples will use stale code.
 
-### Testing changes
+### Testing
 
 1. **Unit tests**: Run `bun test packages/jsx` to verify compiler changes
 2. **Package rebuild**: Rebuild affected packages
 3. **Example rebuild**: Rebuild examples to verify integration
-4. **Browser test (REQUIRED)**: Test in Chrome browser to verify client-side behavior
-   - Start server: `cd examples/hono && bun run server.tsx`
-   - Test interactive components (click buttons, verify state updates)
-   - Test conditional rendering (toggle views, verify correct values)
+4. **E2E tests (Playwright)**: Run automated browser tests
 
-**Important**: Unit tests alone are not sufficient. Client-side JavaScript must be tested in an actual browser to catch hydration and DOM manipulation issues.
+```bash
+# Run examples/hono E2E tests (Counter, Toggle, FizzBuzz, TodoApp)
+cd examples/hono && bun run test:e2e
+
+# Run ui E2E tests (Button documentation, Home page)
+cd ui && bun run test:e2e
+
+# UI mode for debugging
+bun run test:e2e:ui
+
+# Run specific test
+bunx playwright test -g "adds a new todo"
+```
+
+**Important**: Unit tests alone are not sufficient. E2E tests verify client-side JavaScript behavior including hydration, event handling, and DOM manipulation in an actual browser.
 

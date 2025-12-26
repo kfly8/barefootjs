@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "scripts": {
     "build": "bun run build.ts",
-    "dev": "bun run --watch server.tsx"
+    "dev": "bun run --watch server.tsx",
+    "test:e2e": "bunx playwright test",
+    "test:e2e:ui": "bunx playwright test --ui"
   },
   "dependencies": {
     "@barefootjs/dom": "workspace:*",
