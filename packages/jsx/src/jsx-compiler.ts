@@ -96,6 +96,9 @@ export async function compileJSX(
   // Cache of compiled components: cacheKey -> { result, fullPath }
   const compiledComponents: Map<string, { result: CompileResult; fullPath: string }> = new Map()
 
+  // Track components currently being compiled (for cycle detection)
+  const compilingComponents: Set<string> = new Set()
+
   /**
    * Compile component (recursively resolve dependencies)
    *
@@ -110,6 +113,35 @@ export async function compileJSX(
     if (compiledComponents.has(cacheKey)) {
       return compiledComponents.get(cacheKey)!.result
     }
+
+    // Detect cycles - if we're already compiling this component, return a placeholder
+    if (compilingComponents.has(cacheKey)) {
+      // Return a placeholder to break the cycle
+      // The actual result will be available after compilation completes
+      return {
+        componentName: targetComponentName || 'Placeholder',
+        ir: { type: 'text', content: '' } as any,
+        clientJs: '',
+        interactiveElements: [],
+        dynamicElements: [],
+        listElements: [],
+        dynamicAttributes: [],
+        conditionalElements: [],
+        refElements: [],
+        signals: [],
+        memos: [],
+        imports: [],
+        props: [],
+        typeDefinitions: [],
+        localFunctions: [],
+        moduleConstants: [],
+        childInits: [],
+        source: '',
+      }
+    }
+
+    // Mark as currently compiling
+    compilingComponents.add(cacheKey)
 
     // Read file (try path.tsx first, then path/index.tsx)
     let fullPath: string
@@ -178,45 +210,54 @@ export async function compileJSX(
 
     // Compile all components in the file (exported + local)
     if (!targetComponentName) {
-      // Compile other exported components (not the main one)
+      // Compile local (non-exported) components FIRST
+      // This ensures they're available when exported components (which may use them) are compiled
+      for (const localComp of localComponents) {
+        const result = await compileComponent(componentPath, localComp.name)
+        componentResults.set(localComp.name, result)
+      }
+      // Then compile other exported components (not the main one)
       for (const exportedName of exportedComponentNames) {
         if (exportedName !== mainComponentName) {
           const result = await compileComponent(componentPath, exportedName)
           componentResults.set(exportedName, result)
         }
       }
-      // Compile local (non-exported) components
-      for (const localComp of localComponents) {
-        const result = await compileComponent(componentPath, localComp.name)
-        componentResults.set(localComp.name, result)
-      }
     } else {
-      // For local component compilation, add placeholder entries for other components
-      // This ensures they're recognized as components (not HTML elements) in the IR
+      // For local component compilation, add entries for sibling components
+      // First check if they're already compiled (in cache), otherwise add placeholders
       const allComponentNames = [...exportedComponentNames, ...localComponents.map(c => c.name)]
       for (const compName of allComponentNames) {
         if (compName !== targetComponentName && !componentResults.has(compName)) {
-          // Create a minimal placeholder result - we just need it to exist in the map
-          componentResults.set(compName, {
-            componentName: compName,
-            ir: { type: 'text', content: '' } as any,
-            clientJs: '',
-            interactiveElements: [],
-            dynamicElements: [],
-            listElements: [],
-            dynamicAttributes: [],
-            conditionalElements: [],
-            refElements: [],
-            signals: [],
-            memos: [],
-            imports: [],
-            props: [],
-            typeDefinitions: [],
-            localFunctions: [],
-            moduleConstants: [],
-            childInits: [],
-            source: '',
-          })
+          // Check if this component was already compiled (in the cache)
+          const cachedKey = `${componentPath}#${compName}`
+          const cached = compiledComponents.get(cachedKey)
+          if (cached) {
+            // Use the cached result - it has the real IR
+            componentResults.set(compName, cached.result)
+          } else {
+            // Create a minimal placeholder - component will be compiled later
+            componentResults.set(compName, {
+              componentName: compName,
+              ir: null,
+              clientJs: '',
+              interactiveElements: [],
+              dynamicElements: [],
+              listElements: [],
+              dynamicAttributes: [],
+              conditionalElements: [],
+              refElements: [],
+              signals: [],
+              memos: [],
+              imports: [],
+              props: [],
+              typeDefinitions: [],
+              localFunctions: [],
+              moduleConstants: [],
+              childInits: [],
+              source: '',
+            })
+          }
         }
       }
     }
@@ -227,6 +268,10 @@ export async function compileJSX(
 
     // Store with the original cache key (path or path#TargetName)
     compiledComponents.set(cacheKey, { result, fullPath })
+
+    // Remove from compiling set
+    compilingComponents.delete(cacheKey)
+
     return result
   }
 

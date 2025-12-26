@@ -7,7 +7,7 @@
  */
 
 import ts from 'typescript'
-import type { CompileResult, TemplateStringResult } from '../types'
+import type { CompileResult, TemplateStringResult, IRNode, IRElement, IRText, IRExpression, IRComponent, IRConditional, IRFragment } from '../types'
 import { isPascalCase } from '../utils/helpers'
 import { isArrowFunction, extractArrowParams, extractArrowBody } from '../utils/expression-parser'
 
@@ -23,6 +23,129 @@ export function jsxToTemplateString(
 ): TemplateStringResult {
   const events: Array<{ eventId: number; eventName: string; handler: string }> = []
   let eventIdCounter = 0
+
+  /**
+   * Converts IR to HTML template string.
+   * Defined inside jsxToTemplateString to access events array and eventIdCounter.
+   */
+  function irToHtmlTemplate(
+    ir: IRNode,
+    propsMap: Map<string, string>,
+    keyAttr?: string,
+    isRoot: boolean = true
+  ): string {
+    /**
+     * Substitutes prop references in expression
+     */
+    function substituteProps(expr: string): string {
+      let result = expr
+      for (const [propName, propValue] of propsMap) {
+        // Replace prop() calls
+        const callRegex = new RegExp(`\\b${propName}\\s*\\(([^)]*)\\)`, 'g')
+        result = result.replace(callRegex, (match, args) => {
+          if (isArrowFunction(propValue)) {
+            const arrowParamsWithParen = extractArrowParams(propValue)
+            const arrowParams = arrowParamsWithParen.slice(1, -1)
+            let body = extractArrowBody(propValue)
+            if (args && arrowParams) {
+              const paramNames = arrowParams.split(',').map(p => p.trim())
+              const argValues = args.split(',').map((a: string) => a.trim())
+              for (let i = 0; i < paramNames.length && i < argValues.length; i++) {
+                if (paramNames[i]) {
+                  body = body.replace(new RegExp(`\\b${paramNames[i]}\\b`, 'g'), argValues[i])
+                }
+              }
+            }
+            return body
+          }
+          return `(${propValue})(${args})`
+        })
+        // Replace simple references
+        const refRegex = new RegExp(`\\b${propName}\\b(?!\\s*\\()`, 'g')
+        result = result.replace(refRegex, propValue)
+      }
+      return result
+    }
+
+    function processIRNode(node: IRNode, injectDataKey: boolean = false): string {
+      switch (node.type) {
+        case 'element': {
+          const el = node as IRElement
+          const dataKeyAttr = injectDataKey && keyAttr ? ` data-key="\${${keyAttr}}"` : ''
+
+          // Build attributes
+          let attrs = ''
+          let eventAttrs = ''
+          let elementEventId: number | null = null
+
+          for (const attr of el.staticAttrs) {
+            const attrName = attr.name === 'class' ? 'class' : attr.name
+            attrs += ` ${attrName}="${attr.value}"`
+          }
+          for (const attr of el.dynamicAttrs) {
+            const expr = substituteProps(attr.expression)
+            attrs += ` ${attr.name}="\${${expr}}"`
+          }
+
+          // Handle events - convert to data-index and data-event-id for list item delegation
+          for (const event of el.events) {
+            const eventName = event.name.replace(/^on/, '').toLowerCase()
+            let handler = substituteProps(event.handler)
+            if (elementEventId === null) {
+              elementEventId = eventIdCounter++
+              eventAttrs = ` data-index="\${__index}" data-event-id="${elementEventId}"`
+            }
+            events.push({ eventId: elementEventId, eventName, handler })
+          }
+
+          // Build children
+          let children = ''
+          for (const child of el.children) {
+            children += processIRNode(child, false)
+          }
+
+          if (el.children.length === 0 && !children) {
+            return `<${el.tagName}${dataKeyAttr}${eventAttrs}${attrs} />`
+          }
+          return `<${el.tagName}${dataKeyAttr}${eventAttrs}${attrs}>${children}</${el.tagName}>`
+        }
+
+        case 'text': {
+          const text = node as IRText
+          return text.content
+        }
+
+        case 'expression': {
+          const expr = node as IRExpression
+          const substituted = substituteProps(expr.expression)
+          return `\${${substituted}}`
+        }
+
+        case 'component': {
+          // Nested components - for now return empty (would need recursive inline)
+          return ''
+        }
+
+        case 'conditional': {
+          const cond = node as IRConditional
+          const condition = substituteProps(cond.condition)
+          const whenTrue = processIRNode(cond.whenTrue, false)
+          const whenFalse = cond.whenFalse ? processIRNode(cond.whenFalse, false) : "''"
+          return `\${${condition} ? \`${whenTrue}\` : ${whenFalse}}`
+        }
+
+        case 'fragment': {
+          const frag = node as IRFragment
+          return frag.children.map(c => processIRNode(c, false)).join('')
+        }
+
+        default:
+          return ''
+      }
+    }
+
+    return processIRNode(ir, isRoot)
+  }
 
   /**
    * Processes expression (detects and converts JSX within ternary operators)
@@ -64,13 +187,37 @@ export function jsxToTemplateString(
   }
 
   /**
-   * Extracts props from component's JSX attributes
+   * Extracts props from component's JSX attributes.
+   * Handles both regular props and spread attributes.
+   * For spread attributes, generates mappings like `name` → `spreadExpr.name`
+   * based on the component's expected props.
    */
   function extractComponentProps(
     attributes: ts.JsxAttributes,
-    sf: ts.SourceFile
+    sf: ts.SourceFile,
+    componentExpectedProps?: Array<{ name: string }>
   ): Map<string, string> {
     const props = new Map<string, string>()
+
+    // First, collect spread expressions
+    const spreadExprs: string[] = []
+    attributes.properties.forEach((attr) => {
+      if (ts.isJsxSpreadAttribute(attr)) {
+        spreadExprs.push(attr.expression.getText(sf))
+      }
+    })
+
+    // If there are spread attributes and we know expected props, create mappings
+    if (spreadExprs.length > 0 && componentExpectedProps) {
+      for (const expectedProp of componentExpectedProps) {
+        // For spread, each expected prop gets mapped to spreadExpr.propName
+        // Use the last spread expression (later spreads override earlier ones)
+        const spreadExpr = spreadExprs[spreadExprs.length - 1]
+        props.set(expectedProp.name, `${spreadExpr}.${expectedProp.name}`)
+      }
+    }
+
+    // Then process regular attributes (which override spread values)
     attributes.properties.forEach((attr) => {
       if (ts.isJsxAttribute(attr) && attr.name) {
         const propName = attr.name.getText(sf)
@@ -88,7 +235,8 @@ export function jsxToTemplateString(
 
   /**
    * Inlines a component.
-   * Parses component source and generates template with props substituted.
+   * Uses IR to generate template when available (more reliable for same-file components).
+   * Falls back to source parsing if IR is not available.
    */
   function inlineComponent(
     componentResult: CompileResult,
@@ -100,8 +248,19 @@ export function jsxToTemplateString(
       propsMap.delete('key')  // Don't substitute 'key' as a regular prop
     }
 
-    // Parse component source
+    // Prefer IR when available - it's component-specific and more reliable
+    // This is especially important for same-file components where source
+    // contains multiple components and parsing would find the wrong one
+    if (componentResult.ir) {
+      return irToHtmlTemplate(componentResult.ir, propsMap, keyAttr, true)
+    }
+
+    // Fall back to parsing source if no IR
     const componentSource = componentResult.source
+    if (!componentSource) {
+      return ''
+    }
+
     const componentSf = ts.createSourceFile(
       'component.tsx',
       componentSource,
@@ -133,6 +292,7 @@ export function jsxToTemplateString(
     })
 
     if (!componentJsx) {
+      // No JSX found in source
       return ''
     }
 
@@ -351,7 +511,7 @@ export function jsxToTemplateString(
       // Detect component tag and inline expand
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
-        const propsMap = extractComponentProps(n.attributes, sourceFile)
+        const propsMap = extractComponentProps(n.attributes, sourceFile, componentResult.props)
         return inlineComponent(componentResult, propsMap)
       }
 
@@ -365,7 +525,7 @@ export function jsxToTemplateString(
       // Detect component tag and inline expand
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
-        const propsMap = extractComponentProps(n.openingElement.attributes, sourceFile)
+        const propsMap = extractComponentProps(n.openingElement.attributes, sourceFile, componentResult.props)
         return inlineComponent(componentResult, propsMap)
       }
 
