@@ -27,6 +27,8 @@ import type {
   CompileJSXResult,
   CompileOptions,
   IRNode,
+  FileOutput,
+  ServerComponentData,
 } from './types'
 import {
   extractImports,
@@ -87,8 +89,12 @@ export async function compileJSX(
   readFile: (path: string) => Promise<string>,
   options?: CompileOptions
 ): Promise<CompileJSXResult> {
-  // Cache of compiled components
-  const compiledComponents: Map<string, CompileResult> = new Map()
+  // Get root directory for calculating relative paths
+  // If rootDir is specified, use it; otherwise use entry file's parent directory
+  const rootDir = options?.rootDir || entryPath.substring(0, entryPath.lastIndexOf('/'))
+
+  // Cache of compiled components: cacheKey -> { result, fullPath }
+  const compiledComponents: Map<string, { result: CompileResult; fullPath: string }> = new Map()
 
   /**
    * Compile component (recursively resolve dependencies)
@@ -102,7 +108,7 @@ export async function compileJSX(
 
     // Check cache
     if (compiledComponents.has(cacheKey)) {
-      return compiledComponents.get(cacheKey)!
+      return compiledComponents.get(cacheKey)!.result
     }
 
     // Read file (try path.tsx first, then path/index.tsx)
@@ -220,7 +226,7 @@ export async function compileJSX(
     const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, mainComponentName)
 
     // Store with the original cache key (path or path#TargetName)
-    compiledComponents.set(cacheKey, result)
+    compiledComponents.set(cacheKey, { result, fullPath })
     return result
   }
 
@@ -232,6 +238,7 @@ export async function compileJSX(
   const componentData: Array<{
     name: string
     path: string
+    fullPath: string
     result: CompileResult
     constantDeclarations: string
     signalDeclarations: string
@@ -239,7 +246,7 @@ export async function compileJSX(
     childInits: ChildComponentInit[]
   }> = []
 
-  for (const [cacheKey, result] of compiledComponents) {
+  for (const [cacheKey, { result, fullPath }] of compiledComponents) {
     // Include component if it has clientJs OR ir (for serverJsx generation)
     if (result.clientJs || result.ir) {
       // Use the actual component name from the result
@@ -263,6 +270,7 @@ export async function compileJSX(
       componentData.push({
         name,
         path: cacheKey,
+        fullPath,
         result,
         constantDeclarations,
         signalDeclarations,
@@ -304,9 +312,40 @@ export async function compileJSX(
     })
     const childImports = childrenWithClientJs
       .map(childName => {
+        const childData = componentData.find(d => d.name === childName)
         const childHash = componentHashes.get(childName) || ''
         const childFilename = childHash ? `${childName}-${childHash}.js` : `${childName}.js`
-        return `import { init${childName} } from './${childFilename}'`
+
+        // Calculate relative path from current component to child component
+        const currentDir = data.fullPath.substring(rootDir.length + 1, data.fullPath.lastIndexOf('/'))
+        const childDir = childData?.fullPath
+          ? childData.fullPath.substring(rootDir.length + 1, childData.fullPath.lastIndexOf('/'))
+          : currentDir
+
+        let relativePath: string
+        if (currentDir === childDir) {
+          relativePath = `./${childFilename}`
+        } else {
+          // Calculate relative path between directories
+          const currentParts = currentDir ? currentDir.split('/') : []
+          const childParts = childDir ? childDir.split('/') : []
+
+          // Find common prefix
+          let commonLength = 0
+          while (commonLength < currentParts.length &&
+                 commonLength < childParts.length &&
+                 currentParts[commonLength] === childParts[commonLength]) {
+            commonLength++
+          }
+
+          // Build relative path
+          const upCount = currentParts.length - commonLength
+          const downPath = childParts.slice(commonLength).join('/')
+          const upPath = '../'.repeat(upCount)
+          relativePath = upPath + (downPath ? downPath + '/' : '') + childFilename
+        }
+
+        return `import { init${childName} } from '${relativePath}'`
       })
       .join('\n')
 
@@ -338,6 +377,11 @@ export async function compileJSX(
     // Wrap in init function if props exist
     let clientJs = ''
     if (result.clientJs || childInits.length > 0 || signalDeclarations) {
+      // Calculate path to barefoot.js (at dist root)
+      const currentDir = data.fullPath.substring(rootDir.length + 1, data.fullPath.lastIndexOf('/'))
+      const dirDepth = currentDir ? currentDir.split('/').length : 0
+      const barefootPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'barefoot.js' : './barefoot.js'
+
       // Determine which barefoot imports are needed
       const hasClientLogic = Boolean(result.clientJs)
       const hasSignals = result.signals.length > 0
@@ -354,7 +398,7 @@ export async function compileJSX(
         barefootImports.push('reconcileList')
       }
       const barefootImportLine = barefootImports.length > 0
-        ? `import { ${barefootImports.join(', ')} } from './barefoot.js'`
+        ? `import { ${barefootImports.join(', ')} } from '${barefootPath}'`
         : ''
       const allImports = [
         barefootImportLine,
@@ -411,6 +455,11 @@ ${bodyCode}
     const hash = componentHashes.get(name) || ''
     const filename = hasClientJs ? (hash ? `${name}-${hash}.js` : `${name}.js`) : ''
 
+    // Calculate relative path from root directory
+    const sourcePath = data.fullPath.startsWith(rootDir + '/')
+      ? data.fullPath.substring(rootDir.length + 1)
+      : data.fullPath
+
     // Generate server JSX component (only if adapter is provided)
     let serverJsx = ''
     if (options?.serverAdapter && result.ir) {
@@ -438,6 +487,7 @@ ${bodyCode}
         childComponents,
         moduleConstants: result.moduleConstants,
         originalImports,
+        sourcePath,
       })
     }
 
@@ -449,11 +499,302 @@ ${bodyCode}
       serverJsx,
       props: result.props,
       hasClientJs,
+      sourcePath,
+    })
+  }
+
+  // Generate file-based output (group components by source file)
+  const files: FileOutput[] = []
+
+  // Group components by source file path
+  const fileGroups: Map<string, typeof componentData> = new Map()
+  for (const data of componentData) {
+    // Use fullPath to group components from the same source file
+    const sourceFile = data.fullPath
+    if (!fileGroups.has(sourceFile)) {
+      fileGroups.set(sourceFile, [])
+    }
+    fileGroups.get(sourceFile)!.push(data)
+  }
+
+  // Pre-calculate file hashes and create component-to-file mapping
+  const fileHashes: Map<string, string> = new Map()
+  const componentToFile: Map<string, string> = new Map()
+  const fileToSourcePath: Map<string, string> = new Map()
+
+  for (const [sourceFile, fileComponents] of fileGroups) {
+    const sourcePath = sourceFile.startsWith(rootDir + '/')
+      ? sourceFile.substring(rootDir.length + 1)
+      : sourceFile
+
+    fileToSourcePath.set(sourceFile, sourcePath)
+
+    // Calculate file-level hash
+    const fileContentForHash = fileComponents
+      .map(c => {
+        const { constantDeclarations, signalDeclarations, memoDeclarations, result, childInits } = c
+        const childInitsStr = childInits.map(ci => `${ci.name}:${ci.propsExpr}`).join(',')
+        return constantDeclarations + signalDeclarations + memoDeclarations + result.clientJs + childInitsStr
+      })
+      .join('|')
+    const fileHash = generateContentHash(fileContentForHash)
+    fileHashes.set(sourceFile, fileHash)
+
+    // Map each component to its file
+    for (const comp of fileComponents) {
+      componentToFile.set(comp.name, sourceFile)
+    }
+  }
+
+  // Generate FileOutput for each source file
+  for (const [sourceFile, fileComponents] of fileGroups) {
+    // Use pre-calculated values
+    const sourcePath = fileToSourcePath.get(sourceFile)!
+    const fileHash = fileHashes.get(sourceFile)!
+
+    // Collect component names and props
+    const componentNames = fileComponents.map(c => c.name)
+    const componentProps: Record<string, typeof fileComponents[0]['result']['props']> = {}
+    for (const comp of fileComponents) {
+      componentProps[comp.name] = comp.result.props
+    }
+
+    // Check if any component in this file needs client JS
+    const hasClientJs = fileComponents.some(c => {
+      const compOutput = components.find(co => co.name === c.name)
+      return compOutput?.hasClientJs ?? false
+    })
+
+    // Get base filename from source path (e.g., '_shared/docs.tsx' -> 'docs')
+    const baseFileName = sourcePath.split('/').pop()!.replace('.tsx', '')
+    const clientJsFilename = hasClientJs ? `${baseFileName}-${fileHash}.js` : ''
+
+    // Generate combined client JS
+    let combinedClientJs = ''
+    if (hasClientJs) {
+      // Collect all imports from all components (deduplicated)
+      const allImports: Set<string> = new Set()
+      const allInitFunctions: string[] = []
+
+      // Calculate path to barefoot.js (at dist root)
+      const currentDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
+      const dirDepth = currentDir ? currentDir.split('/').length : 0
+      const barefootPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'barefoot.js' : './barefoot.js'
+
+      // Collect all barefoot imports needed
+      const barefootImports: Set<string> = new Set()
+      let needsReconcileList = false
+
+      for (const comp of fileComponents) {
+        const compOutput = components.find(co => co.name === comp.name)
+        if (!compOutput?.hasClientJs) continue
+
+        // Check what imports this component needs
+        if (comp.result.clientJs || comp.result.signals.length > 0 || comp.constantDeclarations.includes('createSignal')) {
+          barefootImports.add('createSignal')
+          barefootImports.add('createEffect')
+        }
+        if (comp.result.memos.length > 0) {
+          barefootImports.add('createMemo')
+        }
+        if (comp.result.listElements.some(el => el.keyExpression !== null)) {
+          needsReconcileList = true
+        }
+      }
+
+      if (needsReconcileList) {
+        barefootImports.add('reconcileList')
+      }
+
+      if (barefootImports.size > 0) {
+        allImports.add(`import { ${Array.from(barefootImports).join(', ')} } from '${barefootPath}'`)
+      }
+
+      // Collect child component imports (from other files only)
+      for (const comp of fileComponents) {
+        const compOutput = components.find(co => co.name === comp.name)
+        if (!compOutput?.hasClientJs) continue
+
+        const uniqueChildNames = [...new Set(comp.childInits.map(child => child.name))]
+        const childrenWithClientJs = uniqueChildNames.filter(childName => {
+          // Skip if child is in the same file
+          if (componentNames.includes(childName)) return false
+          const childData = componentData.find(d => d.name === childName)
+          if (!childData) return false
+          return childData.result.clientJs.length > 0 ||
+                 childData.result.signals.length > 0 ||
+                 childData.result.childInits.length > 0
+        })
+
+        for (const childName of childrenWithClientJs) {
+          // Find which file contains this child component
+          const childFile = componentToFile.get(childName)
+          if (!childFile) continue
+
+          const childSourcePath = fileToSourcePath.get(childFile) || ''
+          const childFileHash = fileHashes.get(childFile) || ''
+          const childDir = childSourcePath.includes('/') ? childSourcePath.substring(0, childSourcePath.lastIndexOf('/')) : ''
+          const childBaseFileName = childSourcePath.split('/').pop()!.replace('.tsx', '')
+          const childFilename = childFileHash ? `${childBaseFileName}-${childFileHash}.js` : `${childBaseFileName}.js`
+
+          // Calculate relative path
+          let relativePath: string
+          if (currentDir === childDir) {
+            relativePath = `./${childFilename}`
+          } else {
+            const currentParts = currentDir ? currentDir.split('/') : []
+            const childParts = childDir ? childDir.split('/') : []
+            let commonLength = 0
+            while (commonLength < currentParts.length &&
+                   commonLength < childParts.length &&
+                   currentParts[commonLength] === childParts[commonLength]) {
+              commonLength++
+            }
+            const upCount = currentParts.length - commonLength
+            const downPath = childParts.slice(commonLength).join('/')
+            const upPath = '../'.repeat(upCount)
+            relativePath = upPath + (downPath ? downPath + '/' : '') + childFilename
+          }
+
+          allImports.add(`import { init${childName} } from '${relativePath}'`)
+        }
+      }
+
+      // Generate init functions for each component
+      for (const comp of fileComponents) {
+        const compOutput = components.find(co => co.name === comp.name)
+        if (!compOutput?.hasClientJs) continue
+
+        const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = comp
+
+        // Generate child init calls (including same-file children)
+        const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
+        const childrenWithClientJs = uniqueChildNames.filter(childName => {
+          const childData = componentData.find(d => d.name === childName)
+          if (!childData) return false
+          return childData.result.clientJs.length > 0 ||
+                 childData.result.signals.length > 0 ||
+                 childData.result.childInits.length > 0
+        })
+
+        const childInstanceCounts: Map<string, number> = new Map()
+        const childInitCalls = childInits
+          .filter(child => childrenWithClientJs.includes(child.name))
+          .map(child => {
+            const instanceIndex = childInstanceCounts.get(child.name) ?? 0
+            childInstanceCounts.set(child.name, instanceIndex + 1)
+            return `  init${child.name}(${child.propsExpr}, ${instanceIndex}, __scope)`
+          })
+          .join('\n')
+
+        const bodyCode = [
+          result.clientJs,
+          childInitCalls ? `\n  // Initialize child components\n${childInitCalls}` : '',
+        ].filter(Boolean).join('\n')
+
+        const needsInitFunction = result.props.length > 0 || childInits.length > 0
+        const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
+
+        if (needsInitFunction) {
+          const propsParam = result.props.length > 0
+            ? `{ ${result.props.map(p => p.name).join(', ')} }`
+            : '{}'
+          allInitFunctions.push(`export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
+${declarations ? declarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
+}`)
+        } else {
+          const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
+          allInitFunctions.push(`// ${name} (no init function needed)
+${instanceVarsLine}${declarations}
+
+${bodyCode}`)
+        }
+      }
+
+      // Auto-hydration code for root components
+      const rootComponents = fileComponents.filter(c => {
+        const compOutput = components.find(co => co.name === c.name)
+        return compOutput?.hasClientJs && (c.result.props.length > 0 || c.childInits.length > 0)
+      })
+
+      const autoHydrateCodes = rootComponents.map(c => `
+// Auto-hydration: initialize ${c.name} when scope element exists (root components only)
+const __scopeEl_${c.name} = document.querySelector('[data-bf-scope="${c.name}"]')
+if (__scopeEl_${c.name} && !__scopeEl_${c.name}.parentElement?.closest('[data-bf-scope]')) {
+  const __propsEl = document.querySelector('script[data-bf-props="${c.name}"]')
+  const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
+  init${c.name}(__props)
+}`).join('\n')
+
+      combinedClientJs = `${Array.from(allImports).join('\n')}
+
+${allInitFunctions.join('\n\n')}
+${autoHydrateCodes}
+`
+    }
+
+    // Generate combined server JSX (if adapter supports it)
+    let combinedServerJsx = ''
+    if (options?.serverAdapter?.generateServerFile) {
+      // Collect component data for server file generation
+      const serverComponents: ServerComponentData[] = fileComponents
+        .filter(c => c.result.ir)
+        .map(c => {
+          const paths = calculateElementPaths(c.result.ir!)
+          const needsDataBfIds = new Set([
+            ...paths.filter(p => p.path === null).map(p => p.id),
+            ...c.result.dynamicElements.map(el => el.id),
+          ])
+          const jsx = irToServerJsx(c.result.ir!, c.name, c.result.signals, needsDataBfIds, { outputEventAttrs: true, memos: c.result.memos })
+          const childComponents = collectAllChildComponentNames(c.result.ir!)
+
+          return {
+            name: c.name,
+            props: c.result.props,
+            typeDefinitions: c.result.typeDefinitions,
+            jsx,
+            ir: c.result.ir,
+            signals: c.result.signals,
+            memos: c.result.memos,
+            childComponents,
+          }
+        })
+
+      // Collect all module constants (deduplicated)
+      const allModuleConstants = fileComponents.flatMap(c => c.result.moduleConstants)
+      const uniqueModuleConstants = allModuleConstants.filter((c, i, arr) =>
+        arr.findIndex(x => x.name === c.name) === i
+      )
+
+      // Collect all imports (deduplicated)
+      const allOriginalImports = fileComponents.flatMap(c => c.result.imports)
+      const uniqueImports = allOriginalImports.filter((imp, i, arr) =>
+        arr.findIndex(x => x.name === imp.name && x.path === imp.path) === i
+      )
+
+      combinedServerJsx = options.serverAdapter.generateServerFile({
+        sourcePath,
+        components: serverComponents,
+        moduleConstants: uniqueModuleConstants,
+        originalImports: uniqueImports,
+      })
+    }
+
+    files.push({
+      sourcePath,
+      serverJsx: combinedServerJsx,
+      clientJs: combinedClientJs,
+      hash: fileHash,
+      clientJsFilename,
+      hasClientJs,
+      componentNames,
+      componentProps,
     })
   }
 
   return {
     components,
+    files,
   }
 }
 

@@ -3,7 +3,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Button } from '../button'
+import { Button } from '../components/Button'
 import {
   PageHeader,
   Section,

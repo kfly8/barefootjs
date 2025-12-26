@@ -212,6 +212,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       childComponents: [],
       moduleConstants: [],
       originalImports: [],
+      sourcePath: 'Counter.tsx',
     })
 
     expect(result).toContain('import { useRequestContext }')
@@ -267,6 +268,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       childComponents: [],
       moduleConstants: [],
       originalImports: [],
+      sourcePath: 'TodoApp.tsx',
     })
 
     expect(result).toContain('export function TodoApp({ initialTodos, "data-key": __dataKey, __listIndex }')

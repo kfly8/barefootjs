@@ -33,6 +33,19 @@ export type ComponentImport = {
 
 export type IRNode = unknown // Simplified - full IR types are in @barefootjs/jsx
 
+/** Component data for file-based generation */
+export type ServerComponentData = {
+  name: string
+  props: PropWithType[]
+  typeDefinitions: string[]
+  jsx: string
+  ir: IRNode | null
+  signals: SignalDeclaration[]
+  memos: MemoDeclaration[]
+  /** Child components used by this component */
+  childComponents: string[]
+}
+
 /**
  * Server Component Adapter
  *
@@ -40,9 +53,10 @@ export type IRNode = unknown // Simplified - full IR types are in @barefootjs/js
  */
 export type ServerComponentAdapter = {
   /**
-   * Generate server component code
+   * Generate server component code (single component)
    * @param options - Component information
    * @returns Server component source code
+   * @deprecated Use generateServerFile for file-based output
    */
   generateServerComponent: (options: {
     name: string
@@ -55,6 +69,24 @@ export type ServerComponentAdapter = {
     /** Child components used by this component */
     childComponents: string[]
     /** Module-level constants (e.g., const GRID_SIZE = 100) */
+    moduleConstants: ModuleConstant[]
+    /** Original import statements for child components */
+    originalImports: ComponentImport[]
+    /** Source path relative to root (e.g., 'pages/button.tsx') */
+    sourcePath: string
+  }) => string
+
+  /**
+   * Generate server file code (multiple components in one file)
+   * @param options - File and component information
+   * @returns Server file source code with all component exports
+   */
+  generateServerFile?: (options: {
+    /** Source file path relative to root (e.g., '_shared/docs.tsx') */
+    sourcePath: string
+    /** All components in this file */
+    components: ServerComponentData[]
+    /** Module-level constants shared by all components */
     moduleConstants: ModuleConstant[]
     /** Original import statements for child components */
     originalImports: ComponentImport[]

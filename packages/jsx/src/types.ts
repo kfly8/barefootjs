@@ -126,10 +126,38 @@ export type ComponentOutput = {
   serverJsx: string      // Server JSX component (for hono/jsx integration)
   props: PropWithType[]  // Props with type information
   hasClientJs: boolean   // Whether this component needs client-side JS
+  sourcePath: string     // Relative path from entry (e.g., 'components/Button.tsx')
+}
+
+/**
+ * File-based output (preserves source file structure)
+ *
+ * Multiple components in a single source file are kept together in the output.
+ */
+export type FileOutput = {
+  /** Source file path relative to root (e.g., '_shared/docs.tsx') */
+  sourcePath: string
+  /** Combined server JSX containing all component exports */
+  serverJsx: string
+  /** Combined client JS containing all init functions */
+  clientJs: string
+  /** Content hash based on all components */
+  hash: string
+  /** Client JS filename with hash (e.g., 'docs-abc123.js') */
+  clientJsFilename: string
+  /** Whether this file needs client-side JS */
+  hasClientJs: boolean
+  /** Component names exported from this file */
+  componentNames: string[]
+  /** Props for each component (keyed by component name) */
+  componentProps: Record<string, PropWithType[]>
 }
 
 export type CompileJSXResult = {
+  /** @deprecated Use files instead. Component-based output for backward compatibility */
   components: ComponentOutput[]
+  /** File-based output (preserves source file structure) */
+  files: FileOutput[]
 }
 
 export type OutputFormat = 'html' | 'jsx'
@@ -139,11 +167,25 @@ export type OutputFormat = 'html' | 'jsx'
  *
  * Abstracts framework-specific server component generation.
  */
+/** Component data for file-based generation */
+export type ServerComponentData = {
+  name: string
+  props: PropWithType[]
+  typeDefinitions: string[]
+  jsx: string
+  ir: IRNode | null
+  signals: SignalDeclaration[]
+  memos: MemoDeclaration[]
+  /** Child components used by this component */
+  childComponents: string[]
+}
+
 export type ServerComponentAdapter = {
   /**
-   * Generate server component code
+   * Generate server component code (single component)
    * @param options - Component information
    * @returns Server component source code
+   * @deprecated Use generateServerFile for file-based output
    */
   generateServerComponent: (options: {
     name: string
@@ -156,6 +198,24 @@ export type ServerComponentAdapter = {
     /** Child components used by this component */
     childComponents: string[]
     /** Module-level constants (e.g., const GRID_SIZE = 100) */
+    moduleConstants: ModuleConstant[]
+    /** Original import statements for child components */
+    originalImports: ComponentImport[]
+    /** Source path relative to root (e.g., 'pages/button.tsx') */
+    sourcePath: string
+  }) => string
+
+  /**
+   * Generate server file code (multiple components in one file)
+   * @param options - File and component information
+   * @returns Server file source code with all component exports
+   */
+  generateServerFile?: (options: {
+    /** Source file path relative to root (e.g., '_shared/docs.tsx') */
+    sourcePath: string
+    /** All components in this file */
+    components: ServerComponentData[]
+    /** Module-level constants shared by all components */
     moduleConstants: ModuleConstant[]
     /** Original import statements for child components */
     originalImports: ComponentImport[]
@@ -179,6 +239,7 @@ export type ServerComponentAdapter = {
 export type CompileOptions = {
   outputFormat?: OutputFormat  // Default: 'html'
   serverAdapter?: ServerComponentAdapter  // Required for 'jsx' output
+  rootDir?: string  // Root directory for computing relative source paths
 }
 
 export type ListExpressionInfo = {

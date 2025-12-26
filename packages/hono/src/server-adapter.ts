@@ -6,7 +6,7 @@
  * This enables automatic script inclusion even inside Suspense boundaries.
  */
 
-import type { ServerComponentAdapter } from './types'
+import type { ServerComponentAdapter, ServerComponentData } from './types'
 
 /**
  * Injects conditional data-key prop into the root element of JSX string.
@@ -46,7 +46,13 @@ export const honoServerAdapter: ServerComponentAdapter = {
     helperCode: "const __rawHtml = raw",
   },
 
-  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents, moduleConstants, originalImports }) => {
+  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents, moduleConstants, originalImports, sourcePath }) => {
+    // Calculate relative path to manifest.json based on source path depth
+    // e.g., 'pages/ButtonPage.tsx' -> '../manifest.json'
+    // e.g., 'Button.tsx' -> './manifest.json'
+    const sourceDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
+    const dirDepth = sourceDir ? sourceDir.split('/').length : 0
+    const manifestPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'manifest.json' : './manifest.json'
     // Extract prop names for destructuring
     const propNames = props.map(p => p.name)
     // Always include "data-key" for list item reconciliation support
@@ -65,10 +71,14 @@ export const honoServerAdapter: ServerComponentAdapter = {
     const jsxWithDataKey = injectDataKeyProp(jsx)
 
     // Generate imports for child components
-    // All generated server components are in the same dist/ directory,
-    // so always use ./${componentName} regardless of original import paths.
-    const childImports = childComponents
-      .map(child => `import { ${child} } from './${child}'`)
+    // Use original import paths to maintain directory structure
+    const childImports = originalImports
+      .map(imp => {
+        if (imp.isDefault) {
+          return `import ${imp.name} from '${imp.path}'`
+        }
+        return `import { ${imp.name} } from '${imp.path}'`
+      })
       .join('\n')
 
     // Check if JSX uses __rawHtml (for fragment conditional markers)
@@ -76,7 +86,7 @@ export const honoServerAdapter: ServerComponentAdapter = {
 
     const allImports = [
       `import { useRequestContext } from 'hono/jsx-renderer'`,
-      `import manifest from './manifest.json'`,
+      `import manifest from '${manifestPath}'`,
       needsRawHtml ? `import { raw } from 'hono/html'` : '',
       childImports,
     ].filter(Boolean).join('\n')
@@ -187,5 +197,148 @@ ${contextHelper}
 }
 `
     }
+  },
+
+  /**
+   * Generate server file code (multiple components in one file)
+   */
+  generateServerFile: ({ sourcePath, components, moduleConstants, originalImports }) => {
+    // Calculate relative path to manifest.json based on source path depth
+    const sourceDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
+    const dirDepth = sourceDir ? sourceDir.split('/').length : 0
+    const manifestPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'manifest.json' : './manifest.json'
+
+    // Check if any component JSX uses __rawHtml
+    const needsRawHtml = components.some(c => c.jsx.includes('__rawHtml('))
+
+    // Generate imports for child components (from other files)
+    // Use original import paths to maintain directory structure
+    const childImports = originalImports
+      .map(imp => {
+        if (imp.isDefault) {
+          return `import ${imp.name} from '${imp.path}'`
+        }
+        return `import { ${imp.name} } from '${imp.path}'`
+      })
+      .join('\n')
+
+    // Shared imports
+    const allImports = [
+      `import { useRequestContext } from 'hono/jsx-renderer'`,
+      `import manifest from '${manifestPath}'`,
+      needsRawHtml ? `import { raw } from 'hono/html'` : '',
+      childImports,
+    ].filter(Boolean).join('\n')
+
+    // Raw HTML helper for comment nodes
+    const rawHtmlHelper = needsRawHtml ? '\nconst __rawHtml = raw\n' : ''
+
+    // Collect all type definitions (deduplicated)
+    const allTypeDefs = components.flatMap(c => c.typeDefinitions)
+    const uniqueTypeDefs = [...new Set(allTypeDefs)]
+    const typeDefs = uniqueTypeDefs.length > 0 ? '\n' + uniqueTypeDefs.join('\n\n') + '\n' : ''
+
+    // Module-level constants (shared)
+    const constantDefs = moduleConstants.length > 0
+      ? '\n' + moduleConstants.map(c => c.code).join('\n') + '\n'
+      : ''
+
+    // Generate each component function
+    const componentFunctions = components.map(comp => {
+      const { name, props, jsx } = comp
+
+      // Extract prop names for destructuring
+      const propNames = props.map(p => p.name)
+      const allProps = [...propNames, '"data-key": __dataKey', '__listIndex']
+      const propsParam = `{ ${allProps.join(', ')} }`
+
+      // Build propsType with actual type annotations
+      const basePropsType = props.map(p => {
+        const optionalMark = p.optional ? '?' : ''
+        return `${p.name}${optionalMark}: ${p.type}`
+      }).join('; ')
+      const propsType = `: { ${basePropsType}${basePropsType ? '; ' : ''}"data-key"?: string | number; __listIndex?: number }`
+
+      // Inject conditional data-key attribute
+      const jsxWithDataKey = injectDataKeyProp(jsx)
+
+      // Script tags use file-level client JS
+      const scriptTags = `{__needsBarefoot && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
+      {__needsThis && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
+
+      // Context helper with file-level script tracking
+      const contextHelper = `
+  // Try to get request context for script deduplication
+  let __outputScripts: Set<string> | null = null
+  let __needsBarefoot = true
+  let __needsThis = true
+  try {
+    const c = useRequestContext()
+    __outputScripts = c.get('bfOutputScripts') || new Set<string>()
+    __needsBarefoot = !__outputScripts.has('__barefoot__')
+    __needsThis = !__outputScripts.has('__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}')
+    if (__needsBarefoot) __outputScripts.add('__barefoot__')
+    if (__needsThis) __outputScripts.add('__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}')
+    c.set('bfOutputScripts', __outputScripts)
+  } catch {
+    // Inside Suspense boundary - always output scripts
+  }
+
+  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
+  const __thisSrc = (manifest as any)['__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}']?.clientJs`
+
+      if (props.length > 0) {
+        return `export function ${name}(${propsParam}${propsType}) {
+${contextHelper}
+
+  // Check if this is the root BarefootJS component
+  let __isRoot = true
+  try {
+    const c = useRequestContext()
+    __isRoot = !c.get('bfRootComponent')
+    if (__isRoot) {
+      c.set('bfRootComponent', '${name}')
+    }
+  } catch {
+    // Inside Suspense boundary - treat as root
+  }
+
+  // Serialize props for client hydration
+  const __hydrateProps: Record<string, unknown> = {}
+  ${propNames.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
+  const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
+
+  return (
+    <>
+      ${scriptTags}
+      {__isRoot && __hasHydrateProps && (
+        <script
+          type="application/json"
+          data-bf-props="${name}"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
+        />
+      )}
+      ${jsxWithDataKey}
+    </>
+  )
+}`
+      } else {
+        return `export function ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
+${contextHelper}
+
+  return (
+    <>
+      ${scriptTags}
+      ${jsxWithDataKey}
+    </>
+  )
+}`
+      }
+    }).join('\n\n')
+
+    return `${allImports}
+${typeDefs}${constantDefs}${rawHtmlHelper}
+${componentFunctions}
+`
   }
 }
