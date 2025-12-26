@@ -136,8 +136,8 @@ describe('honoServerAdapter', () => {
         sourcePath: 'Parent.tsx',
       })
 
-      // No imports when originalImports is empty (childComponents alone doesn't add imports)
-      expect(result).not.toContain("import { Child }")
+      // Local components (in childComponents but not originalImports) get ./ComponentName imports
+      expect(result).toContain("import { Child } from './Child'")
     })
 
     it('includes module constants in output', () => {

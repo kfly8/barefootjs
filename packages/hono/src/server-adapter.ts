@@ -72,14 +72,20 @@ export const honoServerAdapter: ServerComponentAdapter = {
 
     // Generate imports for child components
     // Use original import paths to maintain directory structure
-    const childImports = originalImports
+    const importedNames = new Set(originalImports.map(imp => imp.name))
+    const externalImports = originalImports
       .map(imp => {
         if (imp.isDefault) {
           return `import ${imp.name} from '${imp.path}'`
         }
         return `import { ${imp.name} } from '${imp.path}'`
       })
-      .join('\n')
+    // Local components (defined in same file, not in originalImports) need ./ComponentName imports
+    // Use named imports since local components are not default exports
+    const localComponentImports = childComponents
+      .filter(name => !importedNames.has(name))
+      .map(name => `import { ${name} } from './${name}'`)
+    const childImports = [...externalImports, ...localComponentImports].join('\n')
 
     // Check if JSX uses __rawHtml (for fragment conditional markers)
     const needsRawHtml = jsx.includes('__rawHtml(')
