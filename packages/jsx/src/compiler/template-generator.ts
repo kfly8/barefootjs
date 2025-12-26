@@ -130,8 +130,8 @@ export function jsxToTemplateString(
           const cond = node as IRConditional
           const condition = substituteProps(cond.condition)
           const whenTrue = processIRNode(cond.whenTrue, false)
-          const whenFalse = cond.whenFalse ? processIRNode(cond.whenFalse, false) : "''"
-          return `\${${condition} ? \`${whenTrue}\` : ${whenFalse}}`
+          const whenFalse = cond.whenFalse ? processIRNode(cond.whenFalse, false) : ''
+          return `\${${condition} ? \`${whenTrue}\` : \`${whenFalse}\`}`
         }
 
         case 'fragment': {
