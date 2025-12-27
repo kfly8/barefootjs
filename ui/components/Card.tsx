@@ -5,8 +5,10 @@
  * Supports composable sub-components: CardHeader, CardTitle, CardDescription, CardContent, CardFooter.
  */
 
+import type { Child } from '../types'
+
 export interface CardProps {
-  children?: any
+  children?: Child
   class?: string
 }
 
@@ -19,7 +21,7 @@ export function Card({ children, class: className = '' }: CardProps) {
 }
 
 export interface CardHeaderProps {
-  children?: any
+  children?: Child
   class?: string
 }
 
@@ -32,7 +34,7 @@ export function CardHeader({ children, class: className = '' }: CardHeaderProps)
 }
 
 export interface CardTitleProps {
-  children?: any
+  children?: Child
   class?: string
 }
 
@@ -45,7 +47,7 @@ export function CardTitle({ children, class: className = '' }: CardTitleProps) {
 }
 
 export interface CardDescriptionProps {
-  children?: any
+  children?: Child
   class?: string
 }
 
@@ -58,7 +60,7 @@ export function CardDescription({ children, class: className = '' }: CardDescrip
 }
 
 export interface CardContentProps {
-  children?: any
+  children?: Child
   class?: string
 }
 
@@ -71,7 +73,7 @@ export function CardContent({ children, class: className = '' }: CardContentProp
 }
 
 export interface CardFooterProps {
-  children?: any
+  children?: Child
   class?: string
 }
 
