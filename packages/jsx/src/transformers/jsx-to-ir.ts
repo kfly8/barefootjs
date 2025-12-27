@@ -215,8 +215,13 @@ function componentToIR(
           props.push({ name: propName, value: `"${attr.initializer.text}"`, isDynamic: false })
         } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
           const expr = attr.initializer.expression.getText(ctx.sourceFile)
-          props.push({ name: propName, value: expr, isDynamic: true })
+          // Only mark as dynamic if it contains reactive calls (signal/memo getters)
+          const isReactive = containsReactiveCall(expr, ctx.signals, ctx.memos)
+          props.push({ name: propName, value: expr, isDynamic: isReactive })
         }
+      } else {
+        // Boolean shorthand: <Component checked /> → checked={true}
+        props.push({ name: propName, value: 'true', isDynamic: false })
       }
     }
   })
@@ -260,7 +265,14 @@ function componentToIR(
                           allPropsForInit.length > 0
   if (needsClientInit) {
     const propsExpr = allPropsForInit.length > 0
-      ? `{ ${allPropsForInit.map(p => `${p.name}: ${p.value}`).join(', ')} }`
+      ? `{ ${allPropsForInit.map(p => {
+          // Wrap dynamic props in getter functions for reactivity
+          // Skip 'children' - it's already wrapped as a function when reactive
+          if (p.isDynamic && p.name !== 'children') {
+            return `${p.name}: () => ${p.value}`
+          }
+          return `${p.name}: ${p.value}`
+        }).join(', ')} }`
       : '{}'
     childInits = { name: tagName, propsExpr }
   }
@@ -474,25 +486,21 @@ function processAttributes(
       return
     }
 
-    // Dynamic attribute (signal-dependent expression or specific attribute targets)
+    // Dynamic attribute - all JSX expressions are treated as dynamic
+    // This ensures attributes like type={inputType} are properly passed through
     if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
       const expression = attr.initializer.expression.getText(ctx.sourceFile)
-      // Treat as dynamic if it's a known target OR contains signal calls
-      if (isDynamicAttributeTarget(attrName) || containsReactiveCall(expression, ctx.signals, ctx.memos)) {
-        dynamicAttrs.push({ name: attrName, expression })
-        return
-      }
+      dynamicAttrs.push({ name: attrName, expression })
+      return
     }
 
-    // Static attribute
+    // Static attribute - string literals or boolean shorthand
     if (attr.initializer) {
       if (ts.isStringLiteral(attr.initializer)) {
         staticAttrs.push({ name: attrName, value: attr.initializer.text })
-      } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-        // Expression without signal calls - store as static
-        staticAttrs.push({ name: attrName, value: attr.initializer.expression.getText(ctx.sourceFile) })
       }
     } else {
+      // Boolean shorthand: <input disabled />
       staticAttrs.push({ name: attrName, value: '' })
     }
   })
@@ -667,13 +675,6 @@ function extractKeyAttribute(
  */
 function generateSlotId(ctx: JsxToIRContext): string {
   return ctx.idGenerator.generateSlotId()
-}
-
-/**
- * Checks if an attribute is a dynamic attribute target
- */
-function isDynamicAttributeTarget(attrName: string): boolean {
-  return ['class', 'className', 'style', 'disabled', 'value', 'checked', 'hidden', 'data-key'].includes(attrName)
 }
 
 /**

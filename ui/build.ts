@@ -21,7 +21,11 @@ const DOM_PKG_DIR = resolve(ROOT_DIR, '../packages/dom')
 // Entry files to compile
 const ENTRIES: string[] = [
   'components/Button.tsx',
+  'components/Checkbox.tsx',
+  'components/Input.tsx',
   'pages/button.tsx',
+  'pages/checkbox.tsx',
+  'pages/input.tsx',
 ]
 
 // Build and copy barefoot.js from @barefootjs/dom

@@ -34,8 +34,10 @@ describe('Form Inputs - Input Element', () => {
     const component = result.components[0]
 
     // Dynamic value is updated with createEffect
+    // Includes undefined check to preserve server-rendered defaults
     expect(component.clientJs).toContain('createEffect(')
-    expect(component.clientJs).toContain('.value = text()')
+    expect(component.clientJs).toContain('.value = __val')
+    expect(component.clientJs).toContain('if (__val !== undefined)')
 
     // Input handler is set
     expect(component.clientJs).toContain('.oninput = (e) =>')
@@ -91,8 +93,9 @@ describe('Form Inputs - Input Element', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Dynamic value is updated
-    expect(component.clientJs).toContain('.value = num()')
+    // Dynamic value is updated with undefined check
+    expect(component.clientJs).toContain('.value = __val')
+    expect(component.clientJs).toContain('if (__val !== undefined)')
     expect(component.clientJs).toContain('setNum(Number(e.target.value))')
   })
 })
@@ -111,9 +114,10 @@ describe('Form Inputs - Textarea', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Dynamic value is updated with createEffect
+    // Dynamic value is updated with createEffect and undefined check
     expect(component.clientJs).toContain('createEffect(')
-    expect(component.clientJs).toContain('.value = content()')
+    expect(component.clientJs).toContain('.value = __val')
+    expect(component.clientJs).toContain('if (__val !== undefined)')
 
     // Input handler is set
     expect(component.clientJs).toContain('.oninput = (e) =>')
@@ -138,9 +142,10 @@ describe('Form Inputs - Select', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Dynamic value is updated with createEffect
+    // Dynamic value is updated with createEffect and undefined check
     expect(component.clientJs).toContain('createEffect(')
-    expect(component.clientJs).toContain('.value = selected()')
+    expect(component.clientJs).toContain('.value = __val')
+    expect(component.clientJs).toContain('if (__val !== undefined)')
 
     // Change handler is set
     expect(component.clientJs).toContain('.onchange = (e) =>')
@@ -235,9 +240,9 @@ describe('Form Inputs - Combined Patterns', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // All three inputs have dynamic bindings
-    expect(component.clientJs).toContain('.value = name()')
-    expect(component.clientJs).toContain('.value = email()')
+    // All three inputs have dynamic bindings with undefined checks for value
+    expect(component.clientJs).toContain('.value = __val')
+    expect(component.clientJs).toContain('if (__val !== undefined)')
     expect(component.clientJs).toContain('.checked = agreed()')
 
     // All three inputs have event handlers
@@ -260,8 +265,10 @@ describe('Form Inputs - Combined Patterns', () => {
     const component = result.components[0]
 
     // Dynamic placeholder is updated with createEffect using setAttribute
+    // Includes undefined check to preserve server-rendered defaults
     expect(component.clientJs).toContain('createEffect(')
-    expect(component.clientJs).toContain("setAttribute('placeholder', placeholder())")
+    expect(component.clientJs).toContain("setAttribute('placeholder', __val)")
+    expect(component.clientJs).toContain('if (__val !== undefined)')
   })
 
   it('input with dynamic disabled state', async () => {

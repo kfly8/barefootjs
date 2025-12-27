@@ -474,9 +474,29 @@ export async function compileJSX(
       const needsInitFunction = result.props.length > 0 || childInits.length > 0
 
       if (needsInitFunction) {
-        const propsParam = result.props.length > 0
-          ? `{ ${result.props.map(p => p.name).join(', ')} }`
+        // Separate callback props (on*) from value props
+        const isCallbackProp = (name: string) => /^on[A-Z]/.test(name)
+        const callbackProps = result.props.filter(p => isCallbackProp(p.name))
+        const valueProps = result.props.filter(p => !isCallbackProp(p.name))
+
+        // Destructure props:
+        // - Callback props are used directly
+        // - Value props get aliases for getter unwrapping
+        const propsParamParts = [
+          ...callbackProps.map(p => p.name),
+          ...valueProps.map(p => `${p.name}: __raw_${p.name}`)
+        ]
+        const propsParam = propsParamParts.length > 0
+          ? `{ ${propsParamParts.join(', ')} }`
           : '{}'  // Empty destructuring for components with no props but child inits
+
+        // Generate getter unwrapping code for value props only
+        // This allows props to be passed as either values or getter functions
+        const propUnwrapCode = valueProps.length > 0
+          ? valueProps.map(p =>
+              `const ${p.name} = typeof __raw_${p.name} === 'function' ? __raw_${p.name} : () => __raw_${p.name}`
+            ).join('\n')
+          : ''
         // Add auto-hydration code that initializes when scope element exists
         // Only auto-hydrate root components (not nested inside another data-bf-scope)
         const autoHydrateCode = `
@@ -489,11 +509,38 @@ if (__scopeEl && !__scopeEl.parentElement?.closest('[data-bf-scope]')) {
 }
 `
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
+        const allDeclarations = [propUnwrapCode, declarations].filter(Boolean).join('\n')
+
+        // Post-process bodyCode to replace value prop usages with getter calls
+        // e.g., `checked` becomes `checked()` for value props (not callback props)
+        // We need to be careful not to replace inside strings or HTML attribute names
+        let processedBodyCode = bodyCode
+        for (const prop of valueProps) {
+          // Replace standalone prop usage with getter call
+          // Match: propName not followed by ( or : and not preceded by:
+          // - . (object property access)
+          // - __raw_ (our raw prop prefix)
+          // - - (hyphen, part of HTML attribute like aria-checked)
+          // Also skip if inside simple quotes (single/double quote string literals)
+          // Note: We preserve template literals for replacement since ${...} contains JS expressions
+          // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
+          processedBodyCode = processedBodyCode.replace(
+            new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
+            (match, stringLiteral, identifier) => {
+              // If it's a string literal, keep it unchanged
+              if (stringLiteral) return stringLiteral
+              // If it's the identifier, replace with getter call
+              if (identifier) return `${prop.name}()`
+              return match
+            }
+          )
+        }
+
         clientJs = `${allImports}
 
 export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
-${declarations ? declarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
-${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
+${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
+${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }
 ${autoHydrateCode}`
       } else {
@@ -756,11 +803,56 @@ ${bodyCode}
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
 
         if (needsInitFunction) {
-          const propsParam = result.props.length > 0
-            ? `{ ${result.props.map(p => p.name).join(', ')} }`
+          // Separate callback props (on*) from value props
+          const isCallbackProp = (name: string) => /^on[A-Z]/.test(name)
+          const callbackProps = result.props.filter(p => isCallbackProp(p.name))
+          const valueProps = result.props.filter(p => !isCallbackProp(p.name))
+
+          // Destructure props:
+          // - Callback props are used directly
+          // - Value props get aliases for getter unwrapping
+          const propsParamParts = [
+            ...callbackProps.map(p => p.name),
+            ...valueProps.map(p => `${p.name}: __raw_${p.name}`)
+          ]
+          const propsParam = propsParamParts.length > 0
+            ? `{ ${propsParamParts.join(', ')} }`
             : '{}'
+
+          // Generate getter unwrapping code for value props only
+          const propUnwrapCode = valueProps.length > 0
+            ? valueProps.map(p =>
+                `const ${p.name} = typeof __raw_${p.name} === 'function' ? __raw_${p.name} : () => __raw_${p.name}`
+              ).join('\n')
+            : ''
+          const allDeclarations = [propUnwrapCode, declarations].filter(Boolean).join('\n')
+
+          // Post-process bodyCode to replace value prop usages with getter calls
+          // We need to be careful not to replace inside strings or HTML attribute names
+          let processedBodyCode = bodyCode
+          for (const prop of valueProps) {
+            // Replace standalone prop usage with getter call
+            // Match: propName not followed by ( or : and not preceded by:
+            // - . (object property access)
+            // - __raw_ (our raw prop prefix)
+            // - - (hyphen, part of HTML attribute like aria-checked)
+            // Also skip if inside simple quotes (single/double quote string literals)
+            // Note: We preserve template literals for replacement since ${...} contains JS expressions
+            // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
+            processedBodyCode = processedBodyCode.replace(
+              new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
+              (match, stringLiteral, identifier) => {
+                // If it's a string literal, keep it unchanged
+                if (stringLiteral) return stringLiteral
+                // If it's the identifier, replace with getter call
+                if (identifier) return `${prop.name}()`
+                return match
+              }
+            )
+          }
+
           allInitFunctions.push(`export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
-${declarations ? declarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${bodyCode.split('\n').map(l => '  ' + l).join('\n')}
+${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }`)
         } else {
           const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
@@ -990,6 +1082,9 @@ function compileJsxWithComponents(
 
 /**
  * Generates update code for dynamic attributes (with custom variable name)
+ *
+ * For setAttribute, we add an undefined check to prevent overwriting
+ * server-rendered default values when props are not passed.
  */
 function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): string {
   const { attrName, expression } = da
@@ -1011,10 +1106,13 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
   }
 
   if (attrName === 'value') {
-    return `${varName}.value = ${expression}`
+    // Add undefined check for value to prevent showing "undefined" string
+    return `{ const __val = ${expression}; if (__val !== undefined) ${varName}.value = __val }`
   }
 
-  return `${varName}.setAttribute('${attrName}', ${expression})`
+  // Add undefined check to preserve server-rendered default values
+  // when props are not passed to child components
+  return `{ const __val = ${expression}; if (__val !== undefined) ${varName}.setAttribute('${attrName}', __val) }`
 }
 
 /**

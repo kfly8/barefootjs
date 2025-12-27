@@ -75,6 +75,9 @@ export function isBooleanAttribute(attrName: string): boolean {
 
 /**
  * Generates update code for dynamic attributes
+ *
+ * For setAttribute, we add an undefined check to prevent overwriting
+ * server-rendered default values when props are not passed.
  */
 export function generateAttributeUpdate(da: DynamicAttribute): string {
   const { id, attrName, expression } = da
@@ -96,10 +99,15 @@ export function generateAttributeUpdate(da: DynamicAttribute): string {
   }
 
   if (attrName === 'value') {
-    return `${id}.value = ${expression}`
+    // Add undefined check for value to prevent showing "undefined" string
+    const valVar = `__val_${id}`
+    return `const ${valVar} = ${expression}; if (${valVar} !== undefined) ${id}.value = ${valVar}`
   }
 
-  return `${id}.setAttribute('${attrName}', ${expression})`
+  // Add undefined check to preserve server-rendered default values
+  // when props are not passed to child components
+  const valVar = `__val_${id}`
+  return `const ${valVar} = ${expression}; if (${valVar} !== undefined) ${id}.setAttribute('${attrName}', ${valVar})`
 }
 
 /**

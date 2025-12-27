@@ -98,7 +98,8 @@ describe('HTML Attributes - Form related', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // Value is updated in client JS (with existence check)
-    expect(component.clientJs).toContain('_0.value = text()')
+    // Value is updated in client JS (with undefined check)
+    expect(component.clientJs).toContain('.value = __val')
+    expect(component.clientJs).toContain('if (__val !== undefined)')
   })
 })
