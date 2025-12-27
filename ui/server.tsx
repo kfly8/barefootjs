@@ -8,6 +8,7 @@ import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
 import { ButtonPage } from './dist/pages/button'
+import { CardPage } from './dist/pages/card'
 import { CheckboxPage } from './dist/pages/checkbox'
 import { InputPage } from './dist/pages/input'
 
@@ -42,6 +43,15 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
+          href="/components/card"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Card</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            Displays a card with header, content, and footer.
+          </p>
+        </a>
+        <a
           href="/components/checkbox"
           class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
         >
@@ -67,6 +77,11 @@ app.get('/', (c) => {
 // Button documentation
 app.get('/components/button', (c) => {
   return c.render(<ButtonPage />)
+})
+
+// Card documentation
+app.get('/components/card', (c) => {
+  return c.render(<CardPage />)
 })
 
 // Checkbox documentation
