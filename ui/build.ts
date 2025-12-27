@@ -20,9 +20,11 @@ const DOM_PKG_DIR = resolve(ROOT_DIR, '../packages/dom')
 
 // Entry files to compile
 const ENTRIES: string[] = [
+  'components/Badge.tsx',
   'components/Button.tsx',
   'components/Checkbox.tsx',
   'components/Input.tsx',
+  'pages/badge.tsx',
   'pages/button.tsx',
   'pages/checkbox.tsx',
   'pages/input.tsx',

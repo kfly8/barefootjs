@@ -7,6 +7,7 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
+import { BadgePage } from './dist/pages/badge'
 import { ButtonPage } from './dist/pages/button'
 import { CheckboxPage } from './dist/pages/checkbox'
 import { InputPage } from './dist/pages/input'
@@ -32,6 +33,15 @@ app.get('/', (c) => {
       </div>
 
       <div class="grid gap-4">
+        <a
+          href="/components/badge"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Badge</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            Displays a badge or a component that looks like a badge.
+          </p>
+        </a>
         <a
           href="/components/button"
           class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
@@ -62,6 +72,11 @@ app.get('/', (c) => {
       </div>
     </div>
   )
+})
+
+// Badge documentation
+app.get('/components/badge', (c) => {
+  return c.render(<BadgePage />)
 })
 
 // Button documentation
