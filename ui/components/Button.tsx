@@ -6,6 +6,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
+import type { Child } from '../types'
 
 export type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon'
@@ -14,7 +15,7 @@ export interface ButtonProps {
   variant?: ButtonVariant
   size?: ButtonSize
   disabled?: boolean
-  children?: any
+  children?: Child
   onClick?: () => void
 }
 
