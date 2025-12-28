@@ -121,7 +121,7 @@ test.describe('Tabs Documentation Page', () => {
     })
 
     test('displays Tabs props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Tabs")')).toBeVisible()
+      await expect(page.locator('h3').filter({ hasText: /^Tabs$/ })).toBeVisible()
     })
 
     test('displays TabsTrigger props', async ({ page }) => {

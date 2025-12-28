@@ -89,6 +89,7 @@ function InteractiveSwitch() {
     <div class="flex items-center gap-2">
       <Switch
         checked={checked()}
+        disabled={false}
         onCheckedChange={setChecked}
       />
       <span class="text-zinc-100">{checked() ? 'On' : 'Off'}</span>
@@ -106,15 +107,15 @@ function SettingsPanel() {
     <div class="w-64 space-y-4">
       <div class="flex items-center justify-between">
         <span class="text-zinc-100">Wi-Fi</span>
-        <Switch checked={wifi()} onCheckedChange={setWifi} />
+        <Switch checked={wifi()} disabled={false} onCheckedChange={setWifi} />
       </div>
       <div class="flex items-center justify-between">
         <span class="text-zinc-100">Bluetooth</span>
-        <Switch checked={bluetooth()} onCheckedChange={setBluetooth} />
+        <Switch checked={bluetooth()} disabled={false} onCheckedChange={setBluetooth} />
       </div>
       <div class="flex items-center justify-between">
         <span class="text-zinc-100">Notifications</span>
-        <Switch checked={notifications()} onCheckedChange={setNotifications} />
+        <Switch checked={notifications()} disabled={false} onCheckedChange={setNotifications} />
       </div>
     </div>
   )

@@ -77,7 +77,7 @@ export function TabsTrigger({
     <button
       role="tab"
       aria-selected={selected}
-      disabled={disabled}
+      {...(disabled ? { disabled: true } : {})}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
       class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 ${

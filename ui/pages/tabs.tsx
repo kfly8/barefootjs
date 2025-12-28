@@ -198,6 +198,7 @@ function BasicTabs() {
         <TabsTrigger
           value="account"
           selected={isAccountSelected()}
+          disabled={false}
           onClick={() => setActiveTab('account')}
         >
           Account
@@ -205,6 +206,7 @@ function BasicTabs() {
         <TabsTrigger
           value="password"
           selected={isPasswordSelected()}
+          disabled={false}
           onClick={() => setActiveTab('password')}
         >
           Password
@@ -241,6 +243,7 @@ function MultipleTabs() {
         <TabsTrigger
           value="overview"
           selected={isOverviewSelected()}
+          disabled={false}
           onClick={() => setActiveTab('overview')}
         >
           Overview
@@ -248,6 +251,7 @@ function MultipleTabs() {
         <TabsTrigger
           value="analytics"
           selected={isAnalyticsSelected()}
+          disabled={false}
           onClick={() => setActiveTab('analytics')}
         >
           Analytics
@@ -255,6 +259,7 @@ function MultipleTabs() {
         <TabsTrigger
           value="reports"
           selected={isReportsSelected()}
+          disabled={false}
           onClick={() => setActiveTab('reports')}
         >
           Reports
@@ -262,6 +267,7 @@ function MultipleTabs() {
         <TabsTrigger
           value="notifications"
           selected={isNotificationsSelected()}
+          disabled={false}
           onClick={() => setActiveTab('notifications')}
         >
           Notifications
@@ -304,19 +310,22 @@ function DisabledTabsExample() {
         <TabsTrigger
           value="active"
           selected={isActiveSelected()}
+          disabled={false}
           onClick={() => setActiveTab('active')}
         >
           Active
         </TabsTrigger>
         <TabsTrigger
           value="disabled"
-          disabled
+          selected={false}
+          disabled={true}
         >
           Disabled
         </TabsTrigger>
         <TabsTrigger
           value="another"
           selected={isAnotherSelected()}
+          disabled={false}
           onClick={() => setActiveTab('another')}
         >
           Another

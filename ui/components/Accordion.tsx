@@ -65,7 +65,7 @@ export function AccordionTrigger({
         class={`flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline ${
           disabled ? 'cursor-not-allowed opacity-50' : ''
         }`}
-        disabled={disabled}
+        {...(disabled ? { disabled: true } : {})}
         aria-expanded={open}
         onClick={onClick}
       >

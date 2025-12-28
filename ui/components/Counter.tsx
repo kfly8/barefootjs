@@ -33,7 +33,7 @@ export function Counter({
         class={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-sm font-medium shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 ${
           disabled ? 'cursor-not-allowed opacity-50' : ''
         }`}
-        disabled={disabled}
+        {...(disabled ? { disabled: true } : {})}
         onClick={onDecrement}
         aria-label="Decrement"
       >
@@ -48,7 +48,7 @@ export function Counter({
         class={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-sm font-medium shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 ${
           disabled ? 'cursor-not-allowed opacity-50' : ''
         }`}
-        disabled={disabled}
+        {...(disabled ? { disabled: true } : {})}
         onClick={onIncrement}
         aria-label="Increment"
       >

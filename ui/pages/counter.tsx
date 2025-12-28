@@ -86,6 +86,7 @@ function InteractiveCounter() {
   return (
     <Counter
       value={count()}
+      disabled={false}
       onIncrement={() => setCount(n => n + 1)}
       onDecrement={() => setCount(n => n - 1)}
     />
@@ -102,6 +103,7 @@ function DerivedCounter() {
     <div class="space-y-2">
       <Counter
         value={count()}
+        disabled={false}
         onIncrement={() => setCount(n => n + 1)}
         onDecrement={() => setCount(n => n - 1)}
       />

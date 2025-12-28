@@ -170,6 +170,7 @@ function SingleOpenAccordion() {
       <AccordionItem value="item-1">
         <AccordionTrigger
           open={isItem1Open()}
+          disabled={false}
           onClick={() => toggle('item-1')}
         >
           Is it accessible?
@@ -181,6 +182,7 @@ function SingleOpenAccordion() {
       <AccordionItem value="item-2">
         <AccordionTrigger
           open={isItem2Open()}
+          disabled={false}
           onClick={() => toggle('item-2')}
         >
           Is it styled?
@@ -192,6 +194,7 @@ function SingleOpenAccordion() {
       <AccordionItem value="item-3">
         <AccordionTrigger
           open={isItem3Open()}
+          disabled={false}
           onClick={() => toggle('item-3')}
         >
           Is it animated?
@@ -215,6 +218,7 @@ function MultipleOpenAccordion() {
       <AccordionItem value="item-1">
         <AccordionTrigger
           open={item1Open()}
+          disabled={false}
           onClick={() => setItem1Open(!item1Open())}
         >
           First Item
@@ -226,6 +230,7 @@ function MultipleOpenAccordion() {
       <AccordionItem value="item-2">
         <AccordionTrigger
           open={item2Open()}
+          disabled={false}
           onClick={() => setItem2Open(!item2Open())}
         >
           Second Item
@@ -237,6 +242,7 @@ function MultipleOpenAccordion() {
       <AccordionItem value="item-3">
         <AccordionTrigger
           open={item3Open()}
+          disabled={false}
           onClick={() => setItem3Open(!item3Open())}
         >
           Third Item
