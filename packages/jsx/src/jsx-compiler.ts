@@ -509,32 +509,39 @@ if (__scopeEl && !__scopeEl.parentElement?.closest('[data-bf-scope]')) {
 }
 `
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-        const allDeclarations = [propUnwrapCode, declarations].filter(Boolean).join('\n')
 
-        // Post-process bodyCode to replace value prop usages with getter calls
+        // Helper to replace value prop usages with getter calls
         // e.g., `checked` becomes `checked()` for value props (not callback props)
         // We need to be careful not to replace inside strings or HTML attribute names
-        let processedBodyCode = bodyCode
-        for (const prop of valueProps) {
-          // Replace standalone prop usage with getter call
-          // Match: propName not followed by ( or : and not preceded by:
-          // - . (object property access)
-          // - __raw_ (our raw prop prefix)
-          // - - (hyphen, part of HTML attribute like aria-checked)
-          // Also skip if inside simple quotes (single/double quote string literals)
-          // Note: We preserve template literals for replacement since ${...} contains JS expressions
-          // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
-          processedBodyCode = processedBodyCode.replace(
-            new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
-            (match, stringLiteral, identifier) => {
-              // If it's a string literal, keep it unchanged
-              if (stringLiteral) return stringLiteral
-              // If it's the identifier, replace with getter call
-              if (identifier) return `${prop.name}()`
-              return match
-            }
-          )
+        const replacePropsWithGetterCalls = (code: string): string => {
+          let result = code
+          for (const prop of valueProps) {
+            // Replace standalone prop usage with getter call
+            // Match: propName not followed by ( or : and not preceded by:
+            // - . (object property access)
+            // - __raw_ (our raw prop prefix)
+            // - - (hyphen, part of HTML attribute like aria-checked)
+            // Also skip if inside simple quotes (single/double quote string literals)
+            // Note: We preserve template literals for replacement since ${...} contains JS expressions
+            // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
+            result = result.replace(
+              new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
+              (match, stringLiteral, identifier) => {
+                // If it's a string literal, keep it unchanged
+                if (stringLiteral) return stringLiteral
+                // If it's the identifier, replace with getter call
+                if (identifier) return `${prop.name}()`
+                return match
+              }
+            )
+          }
+          return result
         }
+
+        // Apply prop getter replacement to both declarations (for signal initial values) and body code
+        const processedDeclarations = replacePropsWithGetterCalls(declarations)
+        const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
+        const processedBodyCode = replacePropsWithGetterCalls(bodyCode)
 
         clientJs = `${allImports}
 
@@ -825,31 +832,38 @@ ${bodyCode}
                 `const ${p.name} = typeof __raw_${p.name} === 'function' ? __raw_${p.name} : () => __raw_${p.name}`
               ).join('\n')
             : ''
-          const allDeclarations = [propUnwrapCode, declarations].filter(Boolean).join('\n')
 
-          // Post-process bodyCode to replace value prop usages with getter calls
+          // Helper to replace value prop usages with getter calls
           // We need to be careful not to replace inside strings or HTML attribute names
-          let processedBodyCode = bodyCode
-          for (const prop of valueProps) {
-            // Replace standalone prop usage with getter call
-            // Match: propName not followed by ( or : and not preceded by:
-            // - . (object property access)
-            // - __raw_ (our raw prop prefix)
-            // - - (hyphen, part of HTML attribute like aria-checked)
-            // Also skip if inside simple quotes (single/double quote string literals)
-            // Note: We preserve template literals for replacement since ${...} contains JS expressions
-            // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
-            processedBodyCode = processedBodyCode.replace(
-              new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
-              (match, stringLiteral, identifier) => {
-                // If it's a string literal, keep it unchanged
-                if (stringLiteral) return stringLiteral
-                // If it's the identifier, replace with getter call
-                if (identifier) return `${prop.name}()`
-                return match
-              }
-            )
+          const replacePropsWithGetterCalls = (code: string): string => {
+            let result = code
+            for (const prop of valueProps) {
+              // Replace standalone prop usage with getter call
+              // Match: propName not followed by ( or : and not preceded by:
+              // - . (object property access)
+              // - __raw_ (our raw prop prefix)
+              // - - (hyphen, part of HTML attribute like aria-checked)
+              // Also skip if inside simple quotes (single/double quote string literals)
+              // Note: We preserve template literals for replacement since ${...} contains JS expressions
+              // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
+              result = result.replace(
+                new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
+                (match, stringLiteral, identifier) => {
+                  // If it's a string literal, keep it unchanged
+                  if (stringLiteral) return stringLiteral
+                  // If it's the identifier, replace with getter call
+                  if (identifier) return `${prop.name}()`
+                  return match
+                }
+              )
+            }
+            return result
           }
+
+          // Apply prop getter replacement to both declarations (for signal initial values) and body code
+          const processedDeclarations = replacePropsWithGetterCalls(declarations)
+          const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
+          const processedBodyCode = replacePropsWithGetterCalls(bodyCode)
 
           allInitFunctions.push(`export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
 ${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
