@@ -25,11 +25,19 @@ const ENTRIES: string[] = [
   'components/Card.tsx',
   'components/Checkbox.tsx',
   'components/Input.tsx',
+  'components/Switch.tsx',
+  'components/Counter.tsx',
+  'components/Accordion.tsx',
+  'components/Tabs.tsx',
   'pages/badge.tsx',
   'pages/button.tsx',
   'pages/card.tsx',
   'pages/checkbox.tsx',
   'pages/input.tsx',
+  'pages/switch.tsx',
+  'pages/counter.tsx',
+  'pages/accordion.tsx',
+  'pages/tabs.tsx',
 ]
 
 // Build and copy barefoot.js from @barefootjs/dom

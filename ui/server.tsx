@@ -12,6 +12,10 @@ import { ButtonPage } from './dist/pages/button'
 import { CardPage } from './dist/pages/card'
 import { CheckboxPage } from './dist/pages/checkbox'
 import { InputPage } from './dist/pages/input'
+import { SwitchPage } from './dist/pages/switch'
+import { CounterPage } from './dist/pages/counter'
+import { AccordionPage } from './dist/pages/accordion'
+import { TabsPage } from './dist/pages/tabs'
 
 const app = new Hono()
 
@@ -79,6 +83,42 @@ app.get('/', (c) => {
             Displays an input field for user text entry.
           </p>
         </a>
+        <a
+          href="/components/switch"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Switch</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A control that allows the user to toggle between checked and not checked.
+          </p>
+        </a>
+        <a
+          href="/components/counter"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Counter</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A numeric input with increment and decrement buttons.
+          </p>
+        </a>
+        <a
+          href="/components/accordion"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Accordion</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A vertically stacked set of interactive headings that each reveal content.
+          </p>
+        </a>
+        <a
+          href="/components/tabs"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Tabs</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A set of layered sections of content displayed one at a time.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -107,6 +147,26 @@ app.get('/components/checkbox', (c) => {
 // Input documentation
 app.get('/components/input', (c) => {
   return c.render(<InputPage />)
+})
+
+// Switch documentation
+app.get('/components/switch', (c) => {
+  return c.render(<SwitchPage />)
+})
+
+// Counter documentation
+app.get('/components/counter', (c) => {
+  return c.render(<CounterPage />)
+})
+
+// Accordion documentation
+app.get('/components/accordion', (c) => {
+  return c.render(<AccordionPage />)
+})
+
+// Tabs documentation
+app.get('/components/tabs', (c) => {
+  return c.render(<TabsPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }
