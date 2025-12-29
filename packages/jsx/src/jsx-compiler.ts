@@ -552,14 +552,31 @@ ${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
 ${autoHydrateCode}`
       } else {
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-        // Define __instanceIndex and __parentScope if there's client logic that queries elements
-        const instanceVarsLine = hasClientLogic ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
-        clientJs = `${allImports}
+        // Module-level code that contains `return` statements needs to be wrapped in an IIFE
+        // because `return` is invalid at module top-level in ES modules
+        const hasReturnStatement = bodyCode.includes('return')
+        if (hasReturnStatement) {
+          // Wrap in IIFE to allow return statements
+          clientJs = `${allImports}
+
+;(function() {
+const __instanceIndex = 0
+const __parentScope = null
+${declarations}
+
+${bodyCode}
+})()
+`
+        } else {
+          // No return statements, can use module-level code directly
+          const instanceVarsLine = hasClientLogic ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
+          clientJs = `${allImports}
 
 ${instanceVarsLine}${declarations}
 
 ${bodyCode}
 `
+        }
       }
     }
 
@@ -869,11 +886,25 @@ ${bodyCode}
 ${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }`)
         } else {
-          const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
-          allInitFunctions.push(`// ${name} (no init function needed)
+          // Module-level code that contains `return` statements needs to be wrapped in an IIFE
+          // because `return` is invalid at module top-level in ES modules
+          const hasReturnStatement = bodyCode.includes('return')
+          if (hasReturnStatement) {
+            allInitFunctions.push(`// ${name} (wrapped in IIFE for return statement)
+;(function() {
+const __instanceIndex = 0
+const __parentScope = null
+${declarations}
+
+${bodyCode}
+})()`)
+          } else {
+            const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
+            allInitFunctions.push(`// ${name} (no init function needed)
 ${instanceVarsLine}${declarations}
 
 ${bodyCode}`)
+          }
         }
       }
 
@@ -1025,6 +1056,12 @@ function compileJsxWithComponents(
   const defaultExportName = getDefaultExportName(source, filePath)
   const isDefaultExport = componentName === defaultExportName
 
+  // Extract value prop names (non-callback props) for reactivity detection
+  // Props starting with 'on' followed by uppercase are callback props (e.g., onClick, onSubmit)
+  // Exclude 'children' as it's a special prop that's already rendered and shouldn't be re-rendered
+  const isCallbackProp = (name: string) => /^on[A-Z]/.test(name)
+  const valueProps = props.filter(p => !isCallbackProp(p.name) && p.name !== 'children').map(p => p.name)
+
   // Create IR context
   const irContext: JsxToIRContext = {
     sourceFile,
@@ -1034,6 +1071,7 @@ function compileJsxWithComponents(
     idGenerator,
     warnings: [],
     currentComponentName: componentName,
+    valueProps,
   }
 
   // Convert JSX to IR (for target component)
@@ -1181,9 +1219,13 @@ function generateClientJsWithCreateEffect(
   // Find the component's scope element first
   // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
   // __parentScope allows searching within a parent component's scope (for nested components)
+  // Child components are initialized first, so they mark their scopes with data-bf-init
+  // Parent components skip already-marked scopes to prevent duplicate initialization
   if (hasElements) {
     lines.push(`const __allScopes = (__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]')`)
     lines.push(`const __scope = __allScopes[__instanceIndex]`)
+    lines.push(`if (__scope?.hasAttribute('data-bf-init')) return`)
+    lines.push(`if (__scope) __scope.setAttribute('data-bf-init', 'true')`)
   }
 
   // Track declared variables and their paths for chaining optimization
