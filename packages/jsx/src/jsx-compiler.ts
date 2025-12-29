@@ -406,15 +406,13 @@ export async function compileJSX(
 
     // Generate child component init calls
     // Only call init for children that have client JS
-    // Track instance index for each child component type
+    // Always use index 0 because each init function filters out already-initialized scopes
+    // The first uninitialized scope is always at index 0 after filtering
     // Pass __scope as parent scope so child components search within this component's DOM subtree
-    const childInstanceCounts: Map<string, number> = new Map()
     const childInitCalls = childInits
       .filter(child => childrenWithClientJs.includes(child.name))
       .map(child => {
-        const instanceIndex = childInstanceCounts.get(child.name) ?? 0
-        childInstanceCounts.set(child.name, instanceIndex + 1)
-        return `init${child.name}(${child.propsExpr}, ${instanceIndex}, __scope)`
+        return `init${child.name}(${child.propsExpr}, 0, __scope)`
       })
       .join('\n')
 
@@ -808,13 +806,15 @@ ${bodyCode}
                  childData.result.childInits.length > 0
         })
 
-        const childInstanceCounts: Map<string, number> = new Map()
+        // Always use index 0 for child init calls because:
+        // 1. Each init function filters out already-initialized scopes
+        // 2. The first uninitialized scope is always at index 0 after filtering
+        // 3. Components are initialized in DOM order, so the first uninitialized
+        //    scope matches the component we want to initialize
         const childInitCalls = childInits
           .filter(child => childrenWithClientJs.includes(child.name))
           .map(child => {
-            const instanceIndex = childInstanceCounts.get(child.name) ?? 0
-            childInstanceCounts.set(child.name, instanceIndex + 1)
-            return `  init${child.name}(${child.propsExpr}, ${instanceIndex}, __scope)`
+            return `  init${child.name}(${child.propsExpr}, 0, __scope)`
           })
           .join('\n')
 
@@ -1220,12 +1220,14 @@ function generateClientJsWithCreateEffect(
   // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
   // __parentScope allows searching within a parent component's scope (for nested components)
   // Child components are initialized first, so they mark their scopes with data-bf-init
-  // Parent components skip already-marked scopes to prevent duplicate initialization
+  // Parent components filter out already-initialized scopes and select from remaining ones
+  // This ensures correct indexing even when child components have already initialized some scopes
   if (hasElements) {
-    lines.push(`const __allScopes = (__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]')`)
-    lines.push(`const __scope = __allScopes[__instanceIndex]`)
-    lines.push(`if (__scope?.hasAttribute('data-bf-init')) return`)
-    lines.push(`if (__scope) __scope.setAttribute('data-bf-init', 'true')`)
+    lines.push(`const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]'))`)
+    lines.push(`const __uninitializedScopes = __allScopes.filter(s => !s.hasAttribute('data-bf-init'))`)
+    lines.push(`const __scope = __uninitializedScopes[__instanceIndex]`)
+    lines.push(`if (!__scope) return`)
+    lines.push(`__scope.setAttribute('data-bf-init', 'true')`)
   }
 
   // Track declared variables and their paths for chaining optimization
