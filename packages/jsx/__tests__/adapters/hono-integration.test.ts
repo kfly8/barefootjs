@@ -78,8 +78,10 @@ describe('Hono Adapter Integration', () => {
 
       expect(component.serverJsx).toContain('{0}')       // count()
       expect(component.serverJsx).toContain('{0 * 2}')   // count() * 2
-      expect(component.clientJs).toContain('String(count())')
-      expect(component.clientJs).toContain('String(count() * 2)')
+      // Expression is evaluated before element check to ensure signal dependencies are tracked
+      expect(component.clientJs).toContain('const __textValue = count()')
+      expect(component.clientJs).toContain('const __textValue = "doubled: " + String(count() * 2)')
+      expect(component.clientJs).toContain('String(__textValue)')
     })
   })
 

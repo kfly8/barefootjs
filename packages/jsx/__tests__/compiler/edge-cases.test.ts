@@ -36,8 +36,10 @@ describe('Deeply Nested JSX', () => {
     const component = result.components[0]
 
     // createEffect should be generated for the dynamic content with String() wrapper
+    // Expression is evaluated before element check to ensure signal dependencies are tracked
     expect(component.clientJs).toContain('createEffect')
-    expect(component.clientJs).toContain('_0.textContent = String(count())')
+    expect(component.clientJs).toContain('const __textValue = count()')
+    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
   })
 
   it('handles nested elements with multiple dynamic values', async () => {
@@ -64,9 +66,13 @@ describe('Deeply Nested JSX', () => {
     const component = result.components[0]
 
     // Three createEffect calls (sequential slot IDs) with String() wrapper
-    expect(component.clientJs).toContain('_0.textContent = String(a())')
-    expect(component.clientJs).toContain('_1.textContent = String(b())')
-    expect(component.clientJs).toContain('_2.textContent = String(c())')
+    // Expression is evaluated before element check to ensure signal dependencies are tracked
+    expect(component.clientJs).toContain('const __textValue = a()')
+    expect(component.clientJs).toContain('const __textValue = b()')
+    expect(component.clientJs).toContain('const __textValue = c()')
+    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(component.clientJs).toContain('_1.textContent = String(__textValue)')
+    expect(component.clientJs).toContain('_2.textContent = String(__textValue)')
   })
 
   it('handles nested elements with events at different levels', async () => {

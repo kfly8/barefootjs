@@ -83,7 +83,9 @@ export function generateAttributeUpdate(da: DynamicAttribute): string {
   const { id, attrName, expression } = da
 
   if (attrName === 'class' || attrName === 'className') {
-    return `${id}.className = ${expression}`
+    // Use setAttribute for class to support both HTML and SVG elements
+    // SVG elements have className as SVGAnimatedString (read-only)
+    return `${id}.setAttribute('class', ${expression})`
   }
 
   if (attrName === 'style') {
@@ -250,6 +252,12 @@ export function collectClientJsInfo(
     case 'conditional':
       // If this conditional has an ID, it's a dynamic element conditional that needs DOM switching
       if (node.id) {
+        // Collect interactive elements from conditional branches separately
+        // These need event re-attachment after DOM updates
+        const condInteractiveElements: InteractiveElement[] = []
+        collectClientJsInfo(node.whenTrue, condInteractiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
+        collectClientJsInfo(node.whenFalse, condInteractiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
+
         const whenTrueTemplate = irToHtmlTemplate(node.whenTrue, node.id, ctx)
         const whenFalseTemplate = irToHtmlTemplate(node.whenFalse, node.id, ctx)
         conditionalElements.push({
@@ -257,11 +265,13 @@ export function collectClientJsInfo(
           condition: node.condition,
           whenTrueTemplate,
           whenFalseTemplate,
+          interactiveElements: condInteractiveElements,
         })
+      } else {
+        // Static conditional - still recurse into branches
+        collectClientJsInfo(node.whenTrue, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
+        collectClientJsInfo(node.whenFalse, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
       }
-      // Still recurse into branches to collect any nested elements
-      collectClientJsInfo(node.whenTrue, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
-      collectClientJsInfo(node.whenFalse, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
       break
     case 'component':
       if (node.childInits) {
@@ -394,8 +404,9 @@ function elementToHtmlTemplate(el: IRElement, condId: string, ctx: CollectContex
 
   const attrParts: string[] = [`data-bf-cond="${condId}"`]
 
-  // Add data-bf for elements with dynamic content
-  if (el.id && el.dynamicContent) {
+  // Add data-bf for elements with dynamic content or events
+  // This allows client JS to find these elements after conditional DOM replacement
+  if (el.id && (el.dynamicContent || el.events.length > 0)) {
     attrParts.push(`data-bf="${el.id}"`)
   }
 
@@ -448,8 +459,9 @@ function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContext): string {
       const { tagName, staticAttrs, dynamicAttrs, children } = node
       const attrParts: string[] = []
 
-      // Add data-bf for elements with dynamic content
-      if (node.id && node.dynamicContent) {
+      // Add data-bf for elements with dynamic content or events
+      // This allows client JS to find these elements after conditional DOM replacement
+      if (node.id && (node.dynamicContent || node.events.length > 0)) {
         attrParts.push(`data-bf="${node.id}"`)
       }
 
@@ -512,8 +524,9 @@ function irNodeToHtml(node: IRNode, ctx: CollectContext): string {
       const { tagName, staticAttrs, dynamicAttrs, children } = node
       const attrParts: string[] = []
 
-      // Add data-bf for elements with dynamic content
-      if (node.id && node.dynamicContent) {
+      // Add data-bf for elements with dynamic content or events
+      // This allows client JS to find these elements after conditional DOM replacement
+      if (node.id && (node.dynamicContent || node.events.length > 0)) {
         attrParts.push(`data-bf="${node.id}"`)
       }
 

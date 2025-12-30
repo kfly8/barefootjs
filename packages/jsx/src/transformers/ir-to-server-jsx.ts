@@ -133,9 +133,10 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
         componentOutput = `<${node.name}${propsStr ? ' ' + propsStr : ''} />`
       }
 
-      // Wrap in scope span if needed
+      // Wrap in scope div if needed
+      // Use div instead of span because components often contain block elements
       if (needsScopeWrapper) {
-        return `<span data-bf-scope="${ctx.componentName}">${componentOutput}</span>`
+        return `<div data-bf-scope="${ctx.componentName}">${componentOutput}</div>`
       }
       return componentOutput
     }

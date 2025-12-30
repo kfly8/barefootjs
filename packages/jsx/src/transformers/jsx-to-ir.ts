@@ -270,7 +270,11 @@ function componentToIR(
       ? `{ ${allPropsForInit.map(p => {
           // Wrap dynamic props in getter functions for reactivity
           // Skip 'children' - it's already wrapped as a function when reactive
-          if (p.isDynamic && p.name !== 'children') {
+          // Skip event handlers (on*) - they should be passed as-is, not wrapped
+          // Skip arrow functions - they're already functions and shouldn't be double-wrapped
+          const isEventHandler = p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()
+          const isArrowFunction = /^\s*\(?\s*[\w,\s]*\)?\s*=>/.test(p.value)
+          if (p.isDynamic && p.name !== 'children' && !isEventHandler && !isArrowFunction) {
             return `${p.name}: () => ${p.value}`
           }
           return `${p.name}: ${p.value}`

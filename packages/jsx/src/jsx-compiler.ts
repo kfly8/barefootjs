@@ -1142,7 +1142,9 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
   const { attrName, expression } = da
 
   if (attrName === 'class' || attrName === 'className') {
-    return `${varName}.className = ${expression}`
+    // Use setAttribute for class to support both HTML and SVG elements
+    // SVG elements have className as SVGAnimatedString (read-only)
+    return `${varName}.setAttribute('class', ${expression})`
   }
 
   if (attrName === 'style') {
@@ -1230,6 +1232,9 @@ function generateClientJsWithCreateEffect(
     lines.push(`__scope.setAttribute('data-bf-init', 'true')`)
   }
 
+  // Check if we need a scoped element finder (for elements with null paths)
+  const needsScopedFinder = [...elementPaths.values()].some(p => p === null || p === undefined)
+
   // Track declared variables and their paths for chaining optimization
   // e.g., { '': '__scope', 'nextElementSibling': '_1' }
   const declaredPaths: Map<string, string> = new Map()
@@ -1240,9 +1245,10 @@ function generateClientJsWithCreateEffect(
   const getElementAccessCode = (id: string): string => {
     const path = elementPaths.get(id)
 
-    // Fallback to querySelector for null paths or when path not found
+    // Fallback to scoped finder for null paths or when path not found
+    // The scoped finder excludes elements inside nested data-bf-scope components
     if (path === undefined || path === null) {
-      return `__scope?.querySelector('[data-bf="${id}"]')`
+      return `__findInScope('[data-bf="${id}"]')`
     }
 
     // Find the best base variable (longest matching prefix)
@@ -1286,6 +1292,18 @@ function generateClientJsWithCreateEffect(
   for (const el of interactiveElements) allElementIds.add(el.id)
   for (const el of refElements) allElementIds.add(el.id)
   // Note: conditional elements are found by data-bf-cond attribute, not by ID/path
+
+  // Add scoped element finder helper if needed (for elements with null paths)
+  // This finder excludes elements that are inside nested data-bf-scope components
+  if (needsScopedFinder || conditionalElements.length > 0) {
+    lines.push(`const __findInScope = (sel) => {`)
+    lines.push(`  if (__scope?.matches?.(sel)) return __scope`)
+    lines.push(`  for (const el of __scope?.querySelectorAll(sel) || []) {`)
+    lines.push(`    if (el.parentElement?.closest('[data-bf-scope]') === __scope) return el`)
+    lines.push(`  }`)
+    lines.push(`  return null`)
+    lines.push(`}`)
+  }
 
   // Sort by path length to ensure proper chaining order
   const sortedIds = Array.from(allElementIds).sort((a, b) => {
@@ -1339,23 +1357,28 @@ function generateClientJsWithCreateEffect(
       const accessCode = path === '' ? '__scope' : `__scope?.${path}`
       lines.push(`  const ${v} = ${accessCode}`)
     } else {
-      // Fallback to querySelector for elements with null paths (inside conditionals, after components)
-      lines.push(`  const ${v} = __scope?.matches?.('[data-bf="${el.id}"]') ? __scope : __scope?.querySelector('[data-bf="${el.id}"]')`)
+      // Fallback to scoped finder for elements with null paths (inside conditionals, after components)
+      // Uses __findInScope to exclude elements inside nested data-bf-scope components
+      lines.push(`  const ${v} = __findInScope('[data-bf="${el.id}"]')`)
     }
 
-    lines.push(`  if (${v}) {`)
-    // Handle children prop - if it's a function (lazy children), call it
-    // Only update if children is defined (static children are rendered server-side)
+    // Evaluate the expression BEFORE checking if element exists
+    // This ensures signal dependencies are always tracked, even when element doesn't exist yet
+    // (e.g., element is inside a conditional that's currently false)
     if (el.expression === 'children' || el.fullContent === 'children') {
-      lines.push(`    if (children !== undefined) {`)
-      lines.push(`      const __childrenResult = typeof children === 'function' ? children() : children`)
-      lines.push(`      ${v}.textContent = String(__childrenResult)`)
-      lines.push(`    }`)
+      // Handle children prop - if it's a function (lazy children), call it
+      // Only update if children is defined (static children are rendered server-side)
+      lines.push(`  const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined`)
+      lines.push(`  if (${v} && __childrenResult !== undefined) {`)
+      lines.push(`    ${v}.textContent = String(__childrenResult)`)
+      lines.push(`  }`)
     } else {
-      // Wrap in String() for consistent textContent assignment across environments
-      lines.push(`    ${v}.textContent = String(${el.fullContent})`)
+      // Evaluate expression first to track dependencies
+      lines.push(`  const __textValue = ${el.fullContent}`)
+      lines.push(`  if (${v}) {`)
+      lines.push(`    ${v}.textContent = String(__textValue)`)
+      lines.push(`  }`)
     }
-    lines.push(`  }`)
     lines.push(`})`)
   }
 
@@ -1400,7 +1423,13 @@ function generateClientJsWithCreateEffect(
     const isFragmentCond = whenTrueTemplate.includes(`<!--bf-cond-start:${condId}-->`) ||
                            whenFalseTemplate.includes(`<!--bf-cond-start:${condId}-->`)
 
+    // Track previous condition value to only replace DOM when condition changes
+    // This prevents unnecessary DOM replacement when only content signals change
+    lines.push(`let __prevCond_${condId}`)
     lines.push(`createEffect(() => {`)
+    lines.push(`  const __currCond = Boolean(${cond.condition})`)
+    lines.push(`  if (__currCond === __prevCond_${condId}) return`)
+    lines.push(`  __prevCond_${condId} = __currCond`)
     if (isFragmentCond) {
       // Fragment conditional: find content between comment markers
       lines.push(`  const __html = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
@@ -1466,6 +1495,34 @@ function generateClientJsWithCreateEffect(
       lines.push(`    }`)
       lines.push(`  }`)
     }
+
+    // Re-attach event handlers for interactive elements inside this conditional
+    // After DOM update, elements need their handlers re-attached
+    if (cond.interactiveElements && cond.interactiveElements.length > 0) {
+      lines.push(`  // Re-attach event handlers for elements inside conditional`)
+      for (const el of cond.interactiveElements) {
+        const elVar = `__cond_el_${el.id}`
+        lines.push(`  const ${elVar} = __findInScope('[data-bf="${el.id}"]')`)
+        for (const event of el.events) {
+          const handlerBody = extractArrowBody(event.handler)
+          const conditionalHandler = parseConditionalHandler(handlerBody)
+
+          lines.push(`  if (${elVar}) {`)
+          if (conditionalHandler) {
+            const params = extractArrowParams(event.handler)
+            lines.push(`    ${elVar}.on${event.eventName} = ${params} => {`)
+            lines.push(`      if (${conditionalHandler.condition}) {`)
+            lines.push(`        ${conditionalHandler.action}`)
+            lines.push(`      }`)
+            lines.push(`    }`)
+          } else {
+            lines.push(`    ${elVar}.on${event.eventName} = ${event.handler}`)
+          }
+          lines.push(`  }`)
+        }
+      }
+    }
+
     lines.push(`})`)
   }
 

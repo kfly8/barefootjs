@@ -54,8 +54,10 @@ describe('Fragment Support', () => {
     const component = result.components[0]
 
     // Dynamic content should be properly handled
+    // Expression is evaluated before element check to ensure signal dependencies are tracked
     expect(component.clientJs).toContain('createSignal(0)')
-    expect(component.clientJs).toContain('_0.textContent = String(count())')
+    expect(component.clientJs).toContain('const __textValue = count()')
+    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
     expect(component.clientJs).toContain('_1.onclick')
   })
 
