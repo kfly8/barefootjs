@@ -177,6 +177,7 @@ ${contextHelper}
 
   return (
     <>
+      ${jsxWithDataKey}
       ${scriptTags}
       {__isRoot && __hasHydrateProps && (
         <script
@@ -185,7 +186,6 @@ ${contextHelper}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
         />
       )}
-      ${jsxWithDataKey}
     </>
   )
 }
@@ -199,8 +199,8 @@ ${contextHelper}
 
   return (
     <>
-      ${scriptTags}
       ${jsxWithDataKey}
+      ${scriptTags}
     </>
   )
 }
@@ -322,6 +322,7 @@ ${contextHelper}
 
   return (
     <>
+      ${jsxWithDataKey}
       ${scriptTags}
       {__isRoot && __hasHydrateProps && (
         <script
@@ -330,7 +331,6 @@ ${contextHelper}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
         />
       )}
-      ${jsxWithDataKey}
     </>
   )
 }`
@@ -340,8 +340,8 @@ ${contextHelper}
 
   return (
     <>
-      ${scriptTags}
       ${jsxWithDataKey}
+      ${scriptTags}
     </>
   )
 }`

@@ -39,6 +39,8 @@ export type JsxToIRContext = {
   warnings: CompilerWarning[]
   /** Current component name being compiled */
   currentComponentName: string
+  /** Value prop names (non-callback props) for reactivity detection */
+  valueProps: string[]
 }
 
 /**
@@ -215,8 +217,8 @@ function componentToIR(
           props.push({ name: propName, value: `"${attr.initializer.text}"`, isDynamic: false })
         } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
           const expr = attr.initializer.expression.getText(ctx.sourceFile)
-          // Only mark as dynamic if it contains reactive calls (signal/memo getters)
-          const isReactive = containsReactiveCall(expr, ctx.signals, ctx.memos)
+          // Only mark as dynamic if it contains reactive calls (signal/memo getters or prop references)
+          const isReactive = containsReactiveCall(expr, ctx.signals, ctx.memos, ctx.valueProps)
           props.push({ name: propName, value: expr, isDynamic: isReactive })
         }
       } else {
@@ -237,7 +239,7 @@ function componentToIR(
 
   // Check for reactive expressions in children
   const hasReactiveChildren = children.some(child =>
-    irNodeContainsReactiveCall(child, ctx.signals, ctx.memos)
+    irNodeContainsReactiveCall(child, ctx.signals, ctx.memos, ctx.valueProps)
   )
   // Note: Lazy children pattern is now automatically applied when reactive children are detected.
   // The warning is kept for informational purposes during development.
@@ -268,7 +270,11 @@ function componentToIR(
       ? `{ ${allPropsForInit.map(p => {
           // Wrap dynamic props in getter functions for reactivity
           // Skip 'children' - it's already wrapped as a function when reactive
-          if (p.isDynamic && p.name !== 'children') {
+          // Skip event handlers (on*) - they should be passed as-is, not wrapped
+          // Skip arrow functions - they're already functions and shouldn't be double-wrapped
+          const isEventHandler = p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()
+          const isArrowFunction = /^\s*\(?\s*[\w,\s]*\)?\s*=>/.test(p.value)
+          if (p.isDynamic && p.name !== 'children' && !isEventHandler && !isArrowFunction) {
             return `${p.name}: () => ${p.value}`
           }
           return `${p.name}: ${p.value}`
@@ -322,7 +328,7 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
       const whenFalse: IRNode = { type: 'expression', expression: 'null', isDynamic: false }
 
       // Assign ID for dynamic conditionals
-      const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos)
+      const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos, ctx.valueProps)
       const id = isDynamic ? ctx.idGenerator.generateSlotId() : null
 
       return {
@@ -344,7 +350,7 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
       const whenFalse: IRNode = { type: 'expression', expression: 'null', isDynamic: false }
 
       // Assign ID for dynamic conditionals
-      const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos)
+      const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos, ctx.valueProps)
       const id = isDynamic ? ctx.idGenerator.generateSlotId() : null
 
       return {
@@ -361,7 +367,7 @@ function jsxExpressionToIR(expr: ts.Expression, ctx: JsxToIRContext): IRNode {
   const exprText = expr.getText(ctx.sourceFile)
   // Treat 'children' as dynamic to support lazy children pattern
   // When children is passed as a function, it needs to be tracked for reactivity
-  const isDynamic = containsReactiveCall(exprText, ctx.signals, ctx.memos) || exprText === 'children'
+  const isDynamic = containsReactiveCall(exprText, ctx.signals, ctx.memos, ctx.valueProps) || exprText === 'children'
 
   return {
     type: 'expression',
@@ -392,8 +398,8 @@ function conditionalToIR(expr: ts.ConditionalExpression, ctx: JsxToIRContext): I
   const whenTrue = processConditionalBranch(expr.whenTrue, ctx)
   const whenFalse = processConditionalBranch(expr.whenFalse, ctx)
 
-  // Check if condition is dynamic (signal-dependent) and involves JSX elements
-  const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos)
+  // Check if condition is dynamic (signal/memo/prop-dependent) and involves JSX elements
+  const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos, ctx.valueProps)
   const hasJsxBranch = whenTrue.type === 'element' || whenTrue.type === 'fragment' ||
                        whenFalse.type === 'element' || whenFalse.type === 'fragment' ||
                        (whenFalse.type === 'expression' && whenFalse.expression === 'null')
@@ -428,7 +434,7 @@ function processConditionalBranch(node: ts.Expression, ctx: JsxToIRContext): IRN
   return {
     type: 'expression',
     expression: node.getText(ctx.sourceFile),
-    isDynamic: containsReactiveCall(node.getText(ctx.sourceFile), ctx.signals, ctx.memos),
+    isDynamic: containsReactiveCall(node.getText(ctx.sourceFile), ctx.signals, ctx.memos, ctx.valueProps),
   }
 }
 
@@ -548,10 +554,10 @@ function processChildren(
       } else if (irNode.type === 'expression' && !irNode.isDynamic) {
         contentParts.push({ type: 'expression', value: irNode.expression })
       } else if (irNode.type === 'conditional') {
-        // Conditional expression with signal-dependent condition
+        // Conditional expression with signal/memo/prop-dependent condition
         // Only mark as dynamic content if it's a text-only conditional (no id)
         // Element conditionals with id are handled by DOM switching, not textContent
-        if (!irNode.id && containsReactiveCall(irNode.condition, ctx.signals, ctx.memos)) {
+        if (!irNode.id && containsReactiveCall(irNode.condition, ctx.signals, ctx.memos, ctx.valueProps)) {
           hasDynamicContent = true
           // Reconstruct the ternary expression for fullContent
           const whenTrueExpr = irNode.whenTrue.type === 'expression' ? irNode.whenTrue.expression : ''
@@ -678,9 +684,12 @@ function generateSlotId(ctx: JsxToIRContext): string {
 }
 
 /**
- * Checks if expression contains signal or memo calls
+ * Checks if expression contains signal, memo calls, or prop references
+ *
+ * Props passed from parent components may be reactive (wrapped in getter functions),
+ * so expressions containing prop references should be treated as potentially reactive.
  */
-function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[]): boolean {
+function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[], valueProps: string[] = []): boolean {
   const hasSignalCall = signals.some(s => {
     const regex = new RegExp(`\\b${s.getter}\\s*\\(`)
     return regex.test(expr)
@@ -691,7 +700,16 @@ function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos:
     const regex = new RegExp(`\\b${m.getter}\\s*\\(`)
     return regex.test(expr)
   })
-  return hasMemoCall
+  if (hasMemoCall) return true
+
+  // Check for prop references (value props may be reactive when passed from parent)
+  const hasPropReference = valueProps.some(propName => {
+    // Match standalone prop name (not followed by ( to avoid false positives with function calls)
+    // Also avoid matching as part of other identifiers
+    const regex = new RegExp(`\\b${propName}\\b(?!\\s*\\()`)
+    return regex.test(expr)
+  })
+  return hasPropReference
 }
 
 /**
@@ -739,22 +757,22 @@ function generateChildrenExpression(children: IRNode[], ctx: JsxToIRContext): st
 /**
  * Checks if IR node contains reactive expressions (recursively)
  */
-function irNodeContainsReactiveCall(node: IRNode, signals: SignalDeclaration[], memos: MemoDeclaration[]): boolean {
+function irNodeContainsReactiveCall(node: IRNode, signals: SignalDeclaration[], memos: MemoDeclaration[], valueProps: string[] = []): boolean {
   switch (node.type) {
     case 'expression':
-      return node.isDynamic && containsReactiveCall(node.expression, signals, memos)
+      return node.isDynamic && containsReactiveCall(node.expression, signals, memos, valueProps)
     case 'text':
       return false
     case 'element':
-      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos))
+      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos, valueProps))
     case 'fragment':
-      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos))
+      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos, valueProps))
     case 'component':
-      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos))
+      return node.children.some(child => irNodeContainsReactiveCall(child, signals, memos, valueProps))
     case 'conditional':
-      return containsReactiveCall(node.condition, signals, memos) ||
-             irNodeContainsReactiveCall(node.whenTrue, signals, memos) ||
-             irNodeContainsReactiveCall(node.whenFalse, signals, memos)
+      return containsReactiveCall(node.condition, signals, memos, valueProps) ||
+             irNodeContainsReactiveCall(node.whenTrue, signals, memos, valueProps) ||
+             irNodeContainsReactiveCall(node.whenFalse, signals, memos, valueProps)
   }
 }
 

@@ -406,15 +406,13 @@ export async function compileJSX(
 
     // Generate child component init calls
     // Only call init for children that have client JS
-    // Track instance index for each child component type
+    // Always use index 0 because each init function filters out already-initialized scopes
+    // The first uninitialized scope is always at index 0 after filtering
     // Pass __scope as parent scope so child components search within this component's DOM subtree
-    const childInstanceCounts: Map<string, number> = new Map()
     const childInitCalls = childInits
       .filter(child => childrenWithClientJs.includes(child.name))
       .map(child => {
-        const instanceIndex = childInstanceCounts.get(child.name) ?? 0
-        childInstanceCounts.set(child.name, instanceIndex + 1)
-        return `init${child.name}(${child.propsExpr}, ${instanceIndex}, __scope)`
+        return `init${child.name}(${child.propsExpr}, 0, __scope)`
       })
       .join('\n')
 
@@ -552,14 +550,31 @@ ${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
 ${autoHydrateCode}`
       } else {
         const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-        // Define __instanceIndex and __parentScope if there's client logic that queries elements
-        const instanceVarsLine = hasClientLogic ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
-        clientJs = `${allImports}
+        // Module-level code that contains `return` statements needs to be wrapped in an IIFE
+        // because `return` is invalid at module top-level in ES modules
+        const hasReturnStatement = bodyCode.includes('return')
+        if (hasReturnStatement) {
+          // Wrap in IIFE to allow return statements
+          clientJs = `${allImports}
+
+;(function() {
+const __instanceIndex = 0
+const __parentScope = null
+${declarations}
+
+${bodyCode}
+})()
+`
+        } else {
+          // No return statements, can use module-level code directly
+          const instanceVarsLine = hasClientLogic ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
+          clientJs = `${allImports}
 
 ${instanceVarsLine}${declarations}
 
 ${bodyCode}
 `
+        }
       }
     }
 
@@ -791,13 +806,15 @@ ${bodyCode}
                  childData.result.childInits.length > 0
         })
 
-        const childInstanceCounts: Map<string, number> = new Map()
+        // Always use index 0 for child init calls because:
+        // 1. Each init function filters out already-initialized scopes
+        // 2. The first uninitialized scope is always at index 0 after filtering
+        // 3. Components are initialized in DOM order, so the first uninitialized
+        //    scope matches the component we want to initialize
         const childInitCalls = childInits
           .filter(child => childrenWithClientJs.includes(child.name))
           .map(child => {
-            const instanceIndex = childInstanceCounts.get(child.name) ?? 0
-            childInstanceCounts.set(child.name, instanceIndex + 1)
-            return `  init${child.name}(${child.propsExpr}, ${instanceIndex}, __scope)`
+            return `  init${child.name}(${child.propsExpr}, 0, __scope)`
           })
           .join('\n')
 
@@ -869,11 +886,25 @@ ${bodyCode}
 ${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
 }`)
         } else {
-          const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
-          allInitFunctions.push(`// ${name} (no init function needed)
+          // Module-level code that contains `return` statements needs to be wrapped in an IIFE
+          // because `return` is invalid at module top-level in ES modules
+          const hasReturnStatement = bodyCode.includes('return')
+          if (hasReturnStatement) {
+            allInitFunctions.push(`// ${name} (wrapped in IIFE for return statement)
+;(function() {
+const __instanceIndex = 0
+const __parentScope = null
+${declarations}
+
+${bodyCode}
+})()`)
+          } else {
+            const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
+            allInitFunctions.push(`// ${name} (no init function needed)
 ${instanceVarsLine}${declarations}
 
 ${bodyCode}`)
+          }
         }
       }
 
@@ -1025,6 +1056,12 @@ function compileJsxWithComponents(
   const defaultExportName = getDefaultExportName(source, filePath)
   const isDefaultExport = componentName === defaultExportName
 
+  // Extract value prop names (non-callback props) for reactivity detection
+  // Props starting with 'on' followed by uppercase are callback props (e.g., onClick, onSubmit)
+  // Exclude 'children' as it's a special prop that's already rendered and shouldn't be re-rendered
+  const isCallbackProp = (name: string) => /^on[A-Z]/.test(name)
+  const valueProps = props.filter(p => !isCallbackProp(p.name) && p.name !== 'children').map(p => p.name)
+
   // Create IR context
   const irContext: JsxToIRContext = {
     sourceFile,
@@ -1034,6 +1071,7 @@ function compileJsxWithComponents(
     idGenerator,
     warnings: [],
     currentComponentName: componentName,
+    valueProps,
   }
 
   // Convert JSX to IR (for target component)
@@ -1104,7 +1142,9 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
   const { attrName, expression } = da
 
   if (attrName === 'class' || attrName === 'className') {
-    return `${varName}.className = ${expression}`
+    // Use setAttribute for class to support both HTML and SVG elements
+    // SVG elements have className as SVGAnimatedString (read-only)
+    return `${varName}.setAttribute('class', ${expression})`
   }
 
   if (attrName === 'style') {
@@ -1181,10 +1221,19 @@ function generateClientJsWithCreateEffect(
   // Find the component's scope element first
   // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
   // __parentScope allows searching within a parent component's scope (for nested components)
+  // Child components are initialized first, so they mark their scopes with data-bf-init
+  // Parent components filter out already-initialized scopes and select from remaining ones
+  // This ensures correct indexing even when child components have already initialized some scopes
   if (hasElements) {
-    lines.push(`const __allScopes = (__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]')`)
-    lines.push(`const __scope = __allScopes[__instanceIndex]`)
+    lines.push(`const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]'))`)
+    lines.push(`const __uninitializedScopes = __allScopes.filter(s => !s.hasAttribute('data-bf-init'))`)
+    lines.push(`const __scope = __uninitializedScopes[__instanceIndex]`)
+    lines.push(`if (!__scope) return`)
+    lines.push(`__scope.setAttribute('data-bf-init', 'true')`)
   }
+
+  // Check if we need a scoped element finder (for elements with null paths)
+  const needsScopedFinder = [...elementPaths.values()].some(p => p === null || p === undefined)
 
   // Track declared variables and their paths for chaining optimization
   // e.g., { '': '__scope', 'nextElementSibling': '_1' }
@@ -1196,9 +1245,10 @@ function generateClientJsWithCreateEffect(
   const getElementAccessCode = (id: string): string => {
     const path = elementPaths.get(id)
 
-    // Fallback to querySelector for null paths or when path not found
+    // Fallback to scoped finder for null paths or when path not found
+    // The scoped finder excludes elements inside nested data-bf-scope components
     if (path === undefined || path === null) {
-      return `__scope?.querySelector('[data-bf="${id}"]')`
+      return `__findInScope('[data-bf="${id}"]')`
     }
 
     // Find the best base variable (longest matching prefix)
@@ -1242,6 +1292,18 @@ function generateClientJsWithCreateEffect(
   for (const el of interactiveElements) allElementIds.add(el.id)
   for (const el of refElements) allElementIds.add(el.id)
   // Note: conditional elements are found by data-bf-cond attribute, not by ID/path
+
+  // Add scoped element finder helper if needed (for elements with null paths)
+  // This finder excludes elements that are inside nested data-bf-scope components
+  if (needsScopedFinder || conditionalElements.length > 0) {
+    lines.push(`const __findInScope = (sel) => {`)
+    lines.push(`  if (__scope?.matches?.(sel)) return __scope`)
+    lines.push(`  for (const el of __scope?.querySelectorAll(sel) || []) {`)
+    lines.push(`    if (el.parentElement?.closest('[data-bf-scope]') === __scope) return el`)
+    lines.push(`  }`)
+    lines.push(`  return null`)
+    lines.push(`}`)
+  }
 
   // Sort by path length to ensure proper chaining order
   const sortedIds = Array.from(allElementIds).sort((a, b) => {
@@ -1295,23 +1357,28 @@ function generateClientJsWithCreateEffect(
       const accessCode = path === '' ? '__scope' : `__scope?.${path}`
       lines.push(`  const ${v} = ${accessCode}`)
     } else {
-      // Fallback to querySelector for elements with null paths (inside conditionals, after components)
-      lines.push(`  const ${v} = __scope?.matches?.('[data-bf="${el.id}"]') ? __scope : __scope?.querySelector('[data-bf="${el.id}"]')`)
+      // Fallback to scoped finder for elements with null paths (inside conditionals, after components)
+      // Uses __findInScope to exclude elements inside nested data-bf-scope components
+      lines.push(`  const ${v} = __findInScope('[data-bf="${el.id}"]')`)
     }
 
-    lines.push(`  if (${v}) {`)
-    // Handle children prop - if it's a function (lazy children), call it
-    // Only update if children is defined (static children are rendered server-side)
+    // Evaluate the expression BEFORE checking if element exists
+    // This ensures signal dependencies are always tracked, even when element doesn't exist yet
+    // (e.g., element is inside a conditional that's currently false)
     if (el.expression === 'children' || el.fullContent === 'children') {
-      lines.push(`    if (children !== undefined) {`)
-      lines.push(`      const __childrenResult = typeof children === 'function' ? children() : children`)
-      lines.push(`      ${v}.textContent = String(__childrenResult)`)
-      lines.push(`    }`)
+      // Handle children prop - if it's a function (lazy children), call it
+      // Only update if children is defined (static children are rendered server-side)
+      lines.push(`  const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined`)
+      lines.push(`  if (${v} && __childrenResult !== undefined) {`)
+      lines.push(`    ${v}.textContent = String(__childrenResult)`)
+      lines.push(`  }`)
     } else {
-      // Wrap in String() for consistent textContent assignment across environments
-      lines.push(`    ${v}.textContent = String(${el.fullContent})`)
+      // Evaluate expression first to track dependencies
+      lines.push(`  const __textValue = ${el.fullContent}`)
+      lines.push(`  if (${v}) {`)
+      lines.push(`    ${v}.textContent = String(__textValue)`)
+      lines.push(`  }`)
     }
-    lines.push(`  }`)
     lines.push(`})`)
   }
 
@@ -1356,7 +1423,13 @@ function generateClientJsWithCreateEffect(
     const isFragmentCond = whenTrueTemplate.includes(`<!--bf-cond-start:${condId}-->`) ||
                            whenFalseTemplate.includes(`<!--bf-cond-start:${condId}-->`)
 
+    // Track previous condition value to only replace DOM when condition changes
+    // This prevents unnecessary DOM replacement when only content signals change
+    lines.push(`let __prevCond_${condId}`)
     lines.push(`createEffect(() => {`)
+    lines.push(`  const __currCond = Boolean(${cond.condition})`)
+    lines.push(`  if (__currCond === __prevCond_${condId}) return`)
+    lines.push(`  __prevCond_${condId} = __currCond`)
     if (isFragmentCond) {
       // Fragment conditional: find content between comment markers
       lines.push(`  const __html = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
@@ -1422,6 +1495,34 @@ function generateClientJsWithCreateEffect(
       lines.push(`    }`)
       lines.push(`  }`)
     }
+
+    // Re-attach event handlers for interactive elements inside this conditional
+    // After DOM update, elements need their handlers re-attached
+    if (cond.interactiveElements && cond.interactiveElements.length > 0) {
+      lines.push(`  // Re-attach event handlers for elements inside conditional`)
+      for (const el of cond.interactiveElements) {
+        const elVar = `__cond_el_${el.id}`
+        lines.push(`  const ${elVar} = __findInScope('[data-bf="${el.id}"]')`)
+        for (const event of el.events) {
+          const handlerBody = extractArrowBody(event.handler)
+          const conditionalHandler = parseConditionalHandler(handlerBody)
+
+          lines.push(`  if (${elVar}) {`)
+          if (conditionalHandler) {
+            const params = extractArrowParams(event.handler)
+            lines.push(`    ${elVar}.on${event.eventName} = ${params} => {`)
+            lines.push(`      if (${conditionalHandler.condition}) {`)
+            lines.push(`        ${conditionalHandler.action}`)
+            lines.push(`      }`)
+            lines.push(`    }`)
+          } else {
+            lines.push(`    ${elVar}.on${event.eventName} = ${event.handler}`)
+          }
+          lines.push(`  }`)
+        }
+      }
+    }
+
     lines.push(`})`)
   }
 

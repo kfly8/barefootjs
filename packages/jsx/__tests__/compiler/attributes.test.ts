@@ -47,8 +47,8 @@ describe('HTML Attributes - Dynamic class', () => {
     const result = await compile(source)
     const component = result.components[0]
 
-    // className is updated in client JS (with existence check)
-    expect(component.clientJs).toContain("_0.className = isActive() ? 'active' : ''")
+    // class is updated via setAttribute in client JS (for SVG compatibility)
+    expect(component.clientJs).toContain("_0.setAttribute('class', isActive() ? 'active' : '')")
   })
 })
 

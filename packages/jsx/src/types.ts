@@ -56,6 +56,8 @@ export type ConditionalElement = {
   condition: string           // show()
   whenTrueTemplate: string    // '<span data-bf-cond="0">Content</span>' or '<!--bf-cond-start:0-->...<!--bf-cond-end:0-->'
   whenFalseTemplate: string   // '<!--bf-cond-start:0--><!--bf-cond-end:0-->' (for null)
+  /** Interactive elements inside this conditional that need event re-attachment after DOM updates */
+  interactiveElements: InteractiveElement[]
 }
 
 export type SignalDeclaration = {
