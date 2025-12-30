@@ -23,6 +23,29 @@ export type CompileResult = {
 }
 
 /**
+ * Converts file-based output to component-like array for backward compatibility
+ */
+function toComponentsArray(result: { files: Array<{
+  sourcePath: string
+  serverJsx: string
+  clientJs: string
+  componentNames: string[]
+}> }): CompileResult['components'] {
+  const components: CompileResult['components'] = []
+  for (const file of result.files) {
+    for (const compName of file.componentNames) {
+      components.push({
+        name: compName,
+        html: file.serverJsx,  // HTML is stored in serverJsx for HTML adapter
+        clientJs: file.clientJs,
+        serverJsx: file.serverJsx,
+      })
+    }
+  }
+  return components
+}
+
+/**
  * Compiles JSX source code and returns HTML + clientJs
  */
 export async function compile(source: string): Promise<CompileResult> {
@@ -34,17 +57,14 @@ export async function compile(source: string): Promise<CompileResult> {
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: testHtmlAdapter })
 
-  // Extract HTML and clientJs from the first component
-  const component = result.components[0]
+  // Convert file-based output to components array
+  const components = toComponentsArray(result)
+  const firstComponent = components[0]
+
   return {
-    html: component?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
-    clientJs: component?.clientJs || '',
-    components: result.components.map(c => ({
-      name: c.name,
-      html: c.serverJsx,  // HTML is stored in serverJsx for compatibility
-      clientJs: c.clientJs,
-      serverJsx: c.serverJsx,
-    })),
+    html: firstComponent?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
+    clientJs: firstComponent?.clientJs || '',
+    components,
   }
 }
 
@@ -60,16 +80,14 @@ export async function compileWithFiles(
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: testHtmlAdapter })
 
-  const component = result.components[0]
+  // Convert file-based output to components array
+  const components = toComponentsArray(result)
+  const firstComponent = components[0]
+
   return {
-    html: component?.serverJsx || '',
-    clientJs: component?.clientJs || '',
-    components: result.components.map(c => ({
-      name: c.name,
-      html: c.serverJsx,
-      clientJs: c.clientJs,
-      serverJsx: c.serverJsx,
-    })),
+    html: firstComponent?.serverJsx || '',
+    clientJs: firstComponent?.clientJs || '',
+    components,
   }
 }
 

@@ -8,8 +8,8 @@
  *
  * Usage example:
  *   const result = await compileJSX(entryPath, readFile)
- *   // result.components[].serverJsx: Marked JSX (server-side JSX with hydration markers)
- *   // result.components[].clientJs: Client JS
+ *   // result.files[].serverJsx: Marked JSX (server-side JSX with hydration markers)
+ *   // result.files[].clientJs: Client JS
  */
 
 import ts from 'typescript'
@@ -23,7 +23,6 @@ import type {
   LocalFunction,
   ChildComponentInit,
   CompileResult,
-  ComponentOutput,
   CompileJSXResult,
   CompileOptions,
   IRNode,
@@ -49,7 +48,6 @@ import {
   extractArrowParams,
   needsCapturePhase,
   parseConditionalHandler,
-  generateAttributeUpdate,
   irToServerJsx,
   collectClientJsInfo,
   collectAllChildComponentNames,
@@ -62,8 +60,6 @@ import {
 } from './compiler/utils'
 import {
   calculateElementPaths,
-  generatePathExpression,
-  type ElementPath,
 } from './utils/element-paths'
 
 /**
@@ -73,7 +69,7 @@ function capitalizeFirst(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export type { ComponentOutput, CompileJSXResult }
+export type { CompileJSXResult }
 
 /**
  * Compile application from entry point
@@ -292,6 +288,7 @@ export async function compileJSX(
     signalDeclarations: string
     memoDeclarations: string
     childInits: ChildComponentInit[]
+    hasClientJs: boolean
   }> = []
 
   for (const [cacheKey, { result, fullPath }] of compiledComponents) {
@@ -315,6 +312,15 @@ export async function compileJSX(
       )
       const constantDeclarations = usedConstants.map(c => c.code).join('\n')
 
+      // Calculate hasClientJs early (before ComponentOutput generation)
+      // A component needs client JS if it has:
+      // - Raw client JS code
+      // - Signals (reactive state)
+      // - Child component inits (needs to initialize children)
+      const hasClientJs = result.clientJs.length > 0 ||
+                          result.signals.length > 0 ||
+                          result.childInits.length > 0
+
       componentData.push({
         name,
         path: cacheKey,
@@ -324,6 +330,7 @@ export async function compileJSX(
         signalDeclarations,
         memoDeclarations,
         childInits: result.childInits,
+        hasClientJs,
       })
     }
   }
@@ -338,298 +345,6 @@ export async function compileJSX(
     const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode + childInitsStr
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
-  }
-
-  // 3. Generate final clientJs (with correct hash-suffixed import paths)
-  const components: ComponentOutput[] = []
-
-  for (const data of componentData) {
-    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
-
-    // Generate child component imports (with hash) - deduplicate by component name
-    // Only include child components that have actual client JS
-    const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
-    const childrenWithClientJs = uniqueChildNames.filter(childName => {
-      const childData = componentData.find(d => d.name === childName)
-      if (!childData) return false
-      const { result } = childData
-      // Include if has raw client JS, signals, or nested child inits
-      return result.clientJs.length > 0 ||
-             result.signals.length > 0 ||
-             result.childInits.length > 0
-    })
-    const childImports = childrenWithClientJs
-      .map(childName => {
-        const childData = componentData.find(d => d.name === childName)
-        const childHash = componentHashes.get(childName) || ''
-        const childFilename = childHash ? `${childName}-${childHash}.js` : `${childName}.js`
-
-        // Calculate relative path from current component to child component
-        const currentLastSlash = data.fullPath.lastIndexOf('/')
-        const currentDir = currentLastSlash > rootDir.length
-          ? data.fullPath.substring(rootDir.length + 1, currentLastSlash)
-          : ''
-        let childDir = currentDir
-        if (childData?.fullPath) {
-          const childLastSlash = childData.fullPath.lastIndexOf('/')
-          childDir = childLastSlash > rootDir.length
-            ? childData.fullPath.substring(rootDir.length + 1, childLastSlash)
-            : ''
-        }
-
-        let relativePath: string
-        if (currentDir === childDir) {
-          relativePath = `./${childFilename}`
-        } else {
-          // Calculate relative path between directories
-          const currentParts = currentDir ? currentDir.split('/') : []
-          const childParts = childDir ? childDir.split('/') : []
-
-          // Find common prefix
-          let commonLength = 0
-          while (commonLength < currentParts.length &&
-                 commonLength < childParts.length &&
-                 currentParts[commonLength] === childParts[commonLength]) {
-            commonLength++
-          }
-
-          // Build relative path
-          const upCount = currentParts.length - commonLength
-          const downPath = childParts.slice(commonLength).join('/')
-          const upPath = '../'.repeat(upCount)
-          relativePath = upPath + (downPath ? downPath + '/' : '') + childFilename
-        }
-
-        return `import { init${childName} } from '${relativePath}'`
-      })
-      .join('\n')
-
-    // Generate child component init calls
-    // Only call init for children that have client JS
-    // Always use index 0 because each init function filters out already-initialized scopes
-    // The first uninitialized scope is always at index 0 after filtering
-    // Pass __scope as parent scope so child components search within this component's DOM subtree
-    const childInitCalls = childInits
-      .filter(child => childrenWithClientJs.includes(child.name))
-      .map(child => {
-        return `init${child.name}(${child.propsExpr}, 0, __scope)`
-      })
-      .join('\n')
-
-    // Check if there's dynamic content (whether createEffect is generated)
-    const hasDynamicContent = result.dynamicElements.length > 0 ||
-                              result.listElements.length > 0 ||
-                              result.dynamicAttributes.length > 0
-
-    // Check if any list uses key-based reconciliation
-    const needsReconcileList = result.listElements.some(el => el.keyExpression !== null)
-
-    // Check if component uses memos
-    const needsCreateMemo = result.memos.length > 0
-
-    // Wrap in init function if props exist
-    let clientJs = ''
-    if (result.clientJs || childInits.length > 0 || signalDeclarations) {
-      // Calculate path to barefoot.js (at dist root)
-      // Get the directory portion of the path relative to rootDir
-      const lastSlashIndex = data.fullPath.lastIndexOf('/')
-      const currentDir = lastSlashIndex > rootDir.length
-        ? data.fullPath.substring(rootDir.length + 1, lastSlashIndex)
-        : ''
-      const dirDepth = currentDir ? currentDir.split('/').length : 0
-      const barefootPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'barefoot.js' : './barefoot.js'
-
-      // Determine which barefoot imports are needed
-      const hasClientLogic = Boolean(result.clientJs)
-      const hasSignals = result.signals.length > 0
-      // Check if constantDeclarations contains createSignal calls
-      const hasSignalInConstants = constantDeclarations.includes('createSignal')
-      const barefootImports: string[] = []
-      if (hasClientLogic || hasSignals || hasSignalInConstants) {
-        barefootImports.push('createSignal', 'createEffect')
-      }
-      if (needsCreateMemo) {
-        barefootImports.push('createMemo')
-      }
-      if (needsReconcileList) {
-        barefootImports.push('reconcileList')
-      }
-      const barefootImportLine = barefootImports.length > 0
-        ? `import { ${barefootImports.join(', ')} } from '${barefootPath}'`
-        : ''
-      const allImports = [
-        barefootImportLine,
-        childImports,
-      ].filter(Boolean).join('\n')
-
-      const bodyCode = [
-        result.clientJs,
-        childInitCalls ? `\n// Initialize child components\n${childInitCalls}` : '',
-      ].filter(Boolean).join('\n')
-
-      // Generate init function if component has props OR has child inits
-      // Child inits require an init function because parent calls initComponentName({}, index, scope)
-      const needsInitFunction = result.props.length > 0 || childInits.length > 0
-
-      if (needsInitFunction) {
-        // Separate callback props (on*) from value props
-        const isCallbackProp = (name: string) => /^on[A-Z]/.test(name)
-        const callbackProps = result.props.filter(p => isCallbackProp(p.name))
-        const valueProps = result.props.filter(p => !isCallbackProp(p.name))
-
-        // Destructure props:
-        // - Callback props are used directly
-        // - Value props get aliases for getter unwrapping
-        const propsParamParts = [
-          ...callbackProps.map(p => p.name),
-          ...valueProps.map(p => `${p.name}: __raw_${p.name}`)
-        ]
-        const propsParam = propsParamParts.length > 0
-          ? `{ ${propsParamParts.join(', ')} }`
-          : '{}'  // Empty destructuring for components with no props but child inits
-
-        // Generate getter unwrapping code for value props only
-        // This allows props to be passed as either values or getter functions
-        const propUnwrapCode = valueProps.length > 0
-          ? valueProps.map(p =>
-              `const ${p.name} = typeof __raw_${p.name} === 'function' ? __raw_${p.name} : () => __raw_${p.name}`
-            ).join('\n')
-          : ''
-        // Add auto-hydration code that initializes when scope element exists
-        // Only auto-hydrate root components (not nested inside another data-bf-scope)
-        const autoHydrateCode = `
-// Auto-hydration: initialize when scope element exists (root components only)
-const __scopeEl = document.querySelector('[data-bf-scope="${name}"]')
-if (__scopeEl && !__scopeEl.parentElement?.closest('[data-bf-scope]')) {
-  const __propsEl = document.querySelector('script[data-bf-props="${name}"]')
-  const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
-  init${name}(__props)
-}
-`
-        const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-
-        // Helper to replace value prop usages with getter calls
-        // e.g., `checked` becomes `checked()` for value props (not callback props)
-        // We need to be careful not to replace inside strings or HTML attribute names
-        const replacePropsWithGetterCalls = (code: string): string => {
-          let result = code
-          for (const prop of valueProps) {
-            // Replace standalone prop usage with getter call
-            // Match: propName not followed by ( or : and not preceded by:
-            // - . (object property access)
-            // - __raw_ (our raw prop prefix)
-            // - - (hyphen, part of HTML attribute like aria-checked)
-            // Also skip if inside simple quotes (single/double quote string literals)
-            // Note: We preserve template literals for replacement since ${...} contains JS expressions
-            // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
-            result = result.replace(
-              new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
-              (match, stringLiteral, identifier) => {
-                // If it's a string literal, keep it unchanged
-                if (stringLiteral) return stringLiteral
-                // If it's the identifier, replace with getter call
-                if (identifier) return `${prop.name}()`
-                return match
-              }
-            )
-          }
-          return result
-        }
-
-        // Apply prop getter replacement to both declarations (for signal initial values) and body code
-        const processedDeclarations = replacePropsWithGetterCalls(declarations)
-        const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-        const processedBodyCode = replacePropsWithGetterCalls(bodyCode)
-
-        clientJs = `${allImports}
-
-export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
-${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}
-${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
-}
-${autoHydrateCode}`
-      } else {
-        const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
-        // Module-level code that contains `return` statements needs to be wrapped in an IIFE
-        // because `return` is invalid at module top-level in ES modules
-        const hasReturnStatement = bodyCode.includes('return')
-        if (hasReturnStatement) {
-          // Wrap in IIFE to allow return statements
-          clientJs = `${allImports}
-
-;(function() {
-const __instanceIndex = 0
-const __parentScope = null
-${declarations}
-
-${bodyCode}
-})()
-`
-        } else {
-          // No return statements, can use module-level code directly
-          const instanceVarsLine = hasClientLogic ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
-          clientJs = `${allImports}
-
-${instanceVarsLine}${declarations}
-
-${bodyCode}
-`
-        }
-      }
-    }
-
-    // Determine if this component needs client-side JS
-    const hasClientJs = Boolean(clientJs.trim())
-    const hash = componentHashes.get(name) || ''
-    const filename = hasClientJs ? (hash ? `${name}-${hash}.js` : `${name}.js`) : ''
-
-    // Calculate relative path from root directory
-    const sourcePath = data.fullPath.startsWith(rootDir + '/')
-      ? data.fullPath.substring(rootDir.length + 1)
-      : data.fullPath
-
-    // Generate server JSX component (only if adapter is provided)
-    let serverJsx = ''
-    if (options?.serverAdapter && result.ir) {
-      // Calculate element paths to determine which elements need data-bf attributes
-      // Elements with null paths (e.g., after component siblings) need data-bf for querySelector fallback
-      // Also include dynamic elements (elements with signal-dependent content) for effect-based updates
-      const paths = calculateElementPaths(result.ir)
-      const needsDataBfIds = new Set([
-        ...paths.filter(p => p.path === null).map(p => p.id),
-        ...result.dynamicElements.map(el => el.id),
-      ])
-      const jsx = irToServerJsx(result.ir, name, result.signals, needsDataBfIds, { outputEventAttrs: true, memos: result.memos })
-      // Collect all child component names (including those in lists) for server imports
-      const childComponents = collectAllChildComponentNames(result.ir)
-      // Filter imports to only include child components
-      const originalImports = result.imports.filter(imp => childComponents.includes(imp.name))
-      serverJsx = options.serverAdapter.generateServerComponent({
-        name,
-        props: result.props,
-        typeDefinitions: result.typeDefinitions,
-        jsx,
-        ir: result.ir,
-        signals: result.signals,
-        memos: result.memos,
-        childComponents,
-        moduleConstants: result.moduleConstants,
-        originalImports,
-        sourcePath,
-        isDefaultExport: result.isDefaultExport,
-      })
-    }
-
-    components.push({
-      name,
-      hash,
-      filename,
-      clientJs,
-      serverJsx,
-      props: result.props,
-      hasClientJs,
-      sourcePath,
-    })
   }
 
   // Generate file-based output (group components by source file)
@@ -689,10 +404,7 @@ ${bodyCode}
     }
 
     // Check if any component in this file needs client JS
-    const hasClientJs = fileComponents.some(c => {
-      const compOutput = components.find(co => co.name === c.name)
-      return compOutput?.hasClientJs ?? false
-    })
+    const hasClientJs = fileComponents.some(c => c.hasClientJs)
 
     // Get base filename from source path (e.g., '_shared/docs.tsx' -> 'docs')
     const baseFileName = sourcePath.split('/').pop()!.replace('.tsx', '')
@@ -715,8 +427,7 @@ ${bodyCode}
       let needsReconcileList = false
 
       for (const comp of fileComponents) {
-        const compOutput = components.find(co => co.name === comp.name)
-        if (!compOutput?.hasClientJs) continue
+        if (!comp.hasClientJs) continue
 
         // Check what imports this component needs
         if (comp.result.clientJs || comp.result.signals.length > 0 || comp.constantDeclarations.includes('createSignal')) {
@@ -741,8 +452,7 @@ ${bodyCode}
 
       // Collect child component imports (from other files only)
       for (const comp of fileComponents) {
-        const compOutput = components.find(co => co.name === comp.name)
-        if (!compOutput?.hasClientJs) continue
+        if (!comp.hasClientJs) continue
 
         const uniqueChildNames = [...new Set(comp.childInits.map(child => child.name))]
         const childrenWithClientJs = uniqueChildNames.filter(childName => {
@@ -750,9 +460,7 @@ ${bodyCode}
           if (componentNames.includes(childName)) return false
           const childData = componentData.find(d => d.name === childName)
           if (!childData) return false
-          return childData.result.clientJs.length > 0 ||
-                 childData.result.signals.length > 0 ||
-                 childData.result.childInits.length > 0
+          return childData.hasClientJs
         })
 
         for (const childName of childrenWithClientJs) {
@@ -791,8 +499,7 @@ ${bodyCode}
 
       // Generate init functions for each component
       for (const comp of fileComponents) {
-        const compOutput = components.find(co => co.name === comp.name)
-        if (!compOutput?.hasClientJs) continue
+        if (!comp.hasClientJs) continue
 
         const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = comp
 
@@ -801,9 +508,7 @@ ${bodyCode}
         const childrenWithClientJs = uniqueChildNames.filter(childName => {
           const childData = componentData.find(d => d.name === childName)
           if (!childData) return false
-          return childData.result.clientJs.length > 0 ||
-                 childData.result.signals.length > 0 ||
-                 childData.result.childInits.length > 0
+          return childData.hasClientJs
         })
 
         // Always use index 0 for child init calls because:
@@ -910,8 +615,7 @@ ${bodyCode}`)
 
       // Auto-hydration code for root components
       const rootComponents = fileComponents.filter(c => {
-        const compOutput = components.find(co => co.name === c.name)
-        return compOutput?.hasClientJs && (c.result.props.length > 0 || c.childInits.length > 0)
+        return c.hasClientJs && (c.result.props.length > 0 || c.childInits.length > 0)
       })
 
       const autoHydrateCodes = rootComponents.map(c => `
@@ -991,7 +695,6 @@ ${autoHydrateCodes}
   }
 
   return {
-    components,
     files,
   }
 }

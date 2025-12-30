@@ -157,8 +157,6 @@ export type FileOutput = {
 }
 
 export type CompileJSXResult = {
-  /** @deprecated Use files instead. Component-based output for backward compatibility */
-  components: ComponentOutput[]
   /** File-based output (preserves source file structure) */
   files: FileOutput[]
 }

@@ -55,6 +55,34 @@ export const testJsxAdapter: ServerComponentAdapter = {
 }
 `
   },
+
+  generateServerFile: ({ components }) => {
+    // For test adapter, only output the first component's JSX
+    // This matches the behavior expected by existing tests
+    const comp = components[0]
+    if (!comp) return ''
+
+    let propsParam = ''
+    if (comp.props.length > 0) {
+      const propNames = comp.props.map(p => p.name)
+      const propsType = comp.props.map(p => {
+        const optionalMark = p.optional ? '?' : ''
+        return `${p.name}${optionalMark}: ${p.type}`
+      }).join('; ')
+      propsParam = `{ ${propNames.join(', ')} }: { ${propsType} }`
+    }
+
+    // Check if JSX uses __rawHtml (for fragment conditional markers)
+    const needsRawHtml = comp.jsx.includes('__rawHtml(')
+    const rawHtmlHelper = needsRawHtml ? 'const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })\n\n' : ''
+
+    return `${rawHtmlHelper}export function ${comp.name}(${propsParam}) {
+  return (
+    ${comp.jsx}
+  )
+}
+`
+  },
 }
 
 // Legacy alias for backwards compatibility
@@ -81,6 +109,17 @@ export const testHtmlAdapter: ServerComponentAdapter = {
       return `<!-- No IR for ${name} -->`
     }
     return irToHtml(ir, name, signals)
+  },
+
+  generateServerFile: ({ components }) => {
+    // For test adapter, only output the first component's HTML
+    // This matches the behavior expected by existing tests
+    const comp = components[0]
+    if (!comp) return ''
+    if (!comp.ir) {
+      return `<!-- No IR for ${comp.name} -->`
+    }
+    return irToHtml(comp.ir, comp.name, comp.signals)
   },
 }
 

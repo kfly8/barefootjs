@@ -3,7 +3,7 @@
  *
  * Generates server JSX components for use with hono/jsx:
  * - dist/{Component}.tsx (server JSX component)
- * - dist/{Component}-{hash}.js (client JS)
+ * - dist/{basename}-{hash}.js (client JS)
  * - dist/manifest.json
  */
 
@@ -48,24 +48,35 @@ for (const componentName of COMPONENTS) {
     return await Bun.file(path).text()
   }, { serverAdapter: honoServerAdapter })
 
-  for (const component of result.components) {
-    // Server JSX component
-    const jsxFileName = `${component.name}.tsx`
-    await Bun.write(resolve(DIST_DIR, jsxFileName), component.serverJsx)
+  for (const file of result.files) {
+    // Server JSX file - use base filename without path
+    const baseFileName = file.sourcePath.split('/').pop()!
+    const jsxFileName = baseFileName
+    await Bun.write(resolve(DIST_DIR, jsxFileName), file.serverJsx)
     console.log(`Generated: dist/${jsxFileName}`)
 
     // Client JS
-    let clientFileName: string | undefined
-    if (component.hasClientJs) {
-      clientFileName = component.filename
-      await Bun.write(resolve(DIST_DIR, clientFileName), component.clientJs)
-      console.log(`Generated: dist/${clientFileName}`)
+    if (file.hasClientJs) {
+      await Bun.write(resolve(DIST_DIR, file.clientJsFilename), file.clientJs)
+      console.log(`Generated: dist/${file.clientJsFilename}`)
     }
 
-    manifest[component.name] = {
+    // Manifest entries for file-level script deduplication
+    // Key format: __file_{sourcePath} with non-alphanumeric chars replaced by underscores
+    const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
+    manifest[fileKey] = {
       serverJsx: jsxFileName,
-      clientJs: clientFileName,
-      props: component.props,
+      clientJs: file.hasClientJs ? file.clientJsFilename : undefined,
+      props: [],
+    }
+
+    // Manifest entries for each component in file
+    for (const compName of file.componentNames) {
+      manifest[compName] = {
+        serverJsx: jsxFileName,
+        clientJs: file.hasClientJs ? file.clientJsFilename : undefined,
+        props: file.componentProps[compName],
+      }
     }
   }
 }

@@ -6,27 +6,70 @@
  */
 
 import { describe, it, expect } from 'bun:test'
-import { compileJSX } from '../../src'
+import { compileJSX, type CompileJSXResult } from '../../src'
+import type { PropWithType } from '../../src/types'
 import { honoServerAdapter } from '@barefootjs/hono'
 
-async function compile(source: string) {
+/**
+ * Component-like interface for backward compatibility with tests
+ */
+interface ComponentLike {
+  name: string
+  clientJs: string
+  serverJsx: string
+  hasClientJs: boolean
+  props: PropWithType[]
+}
+
+interface CompileResultWithComponents extends CompileJSXResult {
+  components: ComponentLike[]
+}
+
+/**
+ * Converts file-based output to component-like array for backward compatibility
+ */
+function toComponentsArray(result: CompileJSXResult): ComponentLike[] {
+  const components: ComponentLike[] = []
+  for (const file of result.files) {
+    for (const compName of file.componentNames) {
+      components.push({
+        name: compName,
+        clientJs: file.clientJs,
+        serverJsx: file.serverJsx,
+        hasClientJs: file.hasClientJs,
+        props: file.componentProps[compName] || [],
+      })
+    }
+  }
+  return components
+}
+
+async function compile(source: string): Promise<CompileResultWithComponents> {
   const files: Record<string, string> = {
     '/test/Component.tsx': source,
   }
-  return compileJSX('/test/Component.tsx', async (path) => {
+  const result = await compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: honoServerAdapter })
+  return {
+    ...result,
+    components: toComponentsArray(result),
+  }
 }
 
 async function compileWithFiles(
   entryPath: string,
   files: Record<string, string>
-) {
-  return compileJSX(entryPath, async (path) => {
+): Promise<CompileResultWithComponents> {
+  const result = await compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: honoServerAdapter })
+  return {
+    ...result,
+    components: toComponentsArray(result),
+  }
 }
 
 describe('Hono Adapter Integration', () => {
