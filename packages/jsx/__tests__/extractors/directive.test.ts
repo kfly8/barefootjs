@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { extractUseClientDirective, validateDomImports } from '../../src/extractors/directive'
+import { extractUseClientDirective, validateDomImports, validateEventHandlers } from '../../src/extractors/directive'
 
 describe('extractUseClientDirective', () => {
   test('detects "use client" directive with double quotes', () => {
@@ -88,5 +88,75 @@ function Counter() { return <div /> }`
     const source = `import { db } from './db'
 async function ServerComponent() { return <div /> }`
     expect(() => validateDomImports(source, 'test.tsx', false)).not.toThrow()
+  })
+})
+
+describe('validateEventHandlers', () => {
+  test('throws error when onClick is used without directive', () => {
+    const source = `function Button() {
+  return <button onClick={() => console.log('clicked')}>Click</button>
+}`
+    expect(() => validateEventHandlers(source, 'test.tsx', false)).toThrow()
+  })
+
+  test('includes handler names in error message', () => {
+    const source = `function Form() {
+  return (
+    <form>
+      <input onChange={(e) => {}} onBlur={() => {}} />
+      <button onClick={() => {}}>Submit</button>
+    </form>
+  )
+}`
+    try {
+      validateEventHandlers(source, 'test.tsx', false)
+      expect(true).toBe(false) // Should not reach here
+    } catch (e: any) {
+      expect(e.message).toContain('onClick')
+      expect(e.message).toContain('onChange')
+      expect(e.message).toContain('onBlur')
+      expect(e.message).toContain('"use client"')
+    }
+  })
+
+  test('does not throw when directive is present', () => {
+    const source = `"use client"
+function Button() {
+  return <button onClick={() => console.log('clicked')}>Click</button>
+}`
+    expect(() => validateEventHandlers(source, 'test.tsx', true)).not.toThrow()
+  })
+
+  test('does not throw for components without event handlers', () => {
+    const source = `function Header() {
+  return <h1>Welcome</h1>
+}`
+    expect(() => validateEventHandlers(source, 'test.tsx', false)).not.toThrow()
+  })
+
+  test('does not throw for server components with only static content', () => {
+    const source = `function Card({ title, description }) {
+  return (
+    <div class="card">
+      <h2>{title}</h2>
+      <p>{description}</p>
+    </div>
+  )
+}`
+    expect(() => validateEventHandlers(source, 'test.tsx', false)).not.toThrow()
+  })
+
+  test('detects onKeyDown and other keyboard events', () => {
+    const source = `function Input() {
+  return <input onKeyDown={(e) => e.key === 'Enter' && submit()} />
+}`
+    expect(() => validateEventHandlers(source, 'test.tsx', false)).toThrow()
+  })
+
+  test('detects onSubmit on forms', () => {
+    const source = `function Form() {
+  return <form onSubmit={(e) => e.preventDefault()}>Submit</form>
+}`
+    expect(() => validateEventHandlers(source, 'test.tsx', false)).toThrow()
   })
 })

@@ -99,6 +99,7 @@ describe('Inline component expansion in map', () => {
         }
       `,
       '/test/Item.tsx': `
+        "use client"
         type Props = {
           item: { id: number; text: string }
           onDelete: () => void
@@ -190,6 +191,7 @@ describe('Inline component expansion in map', () => {
         }
       `,
       '/test/Item.tsx': `
+        "use client"
         type Props = {
           item: { id: number; text: string; done: boolean }
           onToggle: () => void

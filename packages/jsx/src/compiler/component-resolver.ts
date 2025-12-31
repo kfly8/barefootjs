@@ -13,6 +13,7 @@ import {
   getDefaultExportName,
   extractUseClientDirective,
   validateDomImports,
+  validateEventHandlers,
 } from '../extractors'
 import { resolvePath } from './utils'
 
@@ -185,6 +186,9 @@ export async function resolveComponent(
 
     // Validate @barefootjs/dom imports (only once per file)
     validateDomImports(source, fullPath, hasUseClientDirective)
+
+    // Validate event handlers (only once per file)
+    validateEventHandlers(source, fullPath, hasUseClientDirective)
   }
 
   // Detect cycles - if we're already compiling this component, return a placeholder

@@ -95,3 +95,56 @@ export function validateDomImports(
     }
   }
 }
+
+/**
+ * Validates that event handlers are only used with "use client" directive
+ *
+ * Event handlers like onClick, onChange, etc. require client-side JavaScript
+ * to function, so files using them must have the "use client" directive.
+ *
+ * @param source - Source code
+ * @param filePath - File path (for error messages)
+ * @param hasUseClientDirective - Whether the file has "use client" directive
+ * @throws Error if event handlers are used without "use client"
+ */
+export function validateEventHandlers(
+  source: string,
+  filePath: string,
+  hasUseClientDirective: boolean
+): void {
+  if (hasUseClientDirective) {
+    // Directive present, no validation needed
+    return
+  }
+
+  const sourceFile = createSourceFile(source, filePath)
+  const eventHandlers: string[] = []
+
+  // Recursively find event handlers in JSX
+  function visit(node: ts.Node): void {
+    if (ts.isJsxAttribute(node)) {
+      const attrName = node.name.getText(sourceFile)
+      // Check for event handler attributes (onClick, onChange, onBlur, etc.)
+      if (/^on[A-Z]/.test(attrName)) {
+        if (!eventHandlers.includes(attrName)) {
+          eventHandlers.push(attrName)
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+
+  if (eventHandlers.length > 0) {
+    const handlersStr = eventHandlers.join(', ')
+    throw new Error(
+      `Build error in ${filePath}: ` +
+      `Event handlers (${handlersStr}) require "use client" directive.\n\n` +
+      `Components with event handlers need client-side JavaScript to function.\n` +
+      `Add "use client" at the top of the file:\n\n` +
+      `  "use client"\n` +
+      `  // ... your component code\n`
+    )
+  }
+}
