@@ -5,22 +5,18 @@
  * Unlike ir-to-html which evaluates expressions, this preserves them as JSX.
  */
 
-import type { IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
+import type {
+  IRNode,
+  IRElement,
+  IRFragment,
+  SignalDeclaration,
+  MemoDeclaration,
+  ServerJsxContext,
+} from '../types'
 import { isSvgRoot } from '../utils/svg-helpers'
 
-/**
- * Context for server JSX generation
- */
-export type ServerJsxContext = {
-  componentName: string
-  signals: SignalDeclaration[]
-  memos: MemoDeclaration[]
-  needsDataBfIds: Set<string>  // IDs that need data-bf attribute for querySelector fallback
-  /** Event ID counter for event attribute output (to match client-side event delegation) */
-  eventIdCounter: { value: number } | null
-  /** Whether we're inside a list context (for passing __listIndex to child components) */
-  inListContext: boolean
-}
+// Re-export type for backwards compatibility
+export type { ServerJsxContext }
 
 /**
  * Converts HTML to JSX format (internal helper)

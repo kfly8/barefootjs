@@ -16,7 +16,11 @@ import type {
   DynamicAttribute,
   RefElement,
   ConditionalElement,
+  CollectContext,
 } from '../types'
+
+// Re-export type for backwards compatibility
+export type { CollectContext }
 
 // Import parsers using TypeScript API
 import {
@@ -205,13 +209,6 @@ function collectChildComponentNamesRecursive(node: IRNode, names: string[]): voi
   }
 }
 
-/**
- * Context for collecting conditional elements
- */
-export type CollectContext = {
-  signals: SignalDeclaration[]
-  memos: MemoDeclaration[]
-}
 
 /**
  * Converts IR node to HTML template string for client-side rendering

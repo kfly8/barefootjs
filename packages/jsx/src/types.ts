@@ -2,6 +2,103 @@
  * BarefootJS JSX Compiler - Type Definitions
  */
 
+// ============================================================================
+// Compiler Warning Types
+// ============================================================================
+
+export type CompilerWarning = {
+  type: 'reactive-children'
+  message: string
+  componentName: string
+  parentComponent: string
+}
+
+// ============================================================================
+// Transform Context Types
+// ============================================================================
+
+/**
+ * Base context shared by all transformation phases.
+ *
+ * Contains reactive declarations (signals and memos) that are needed
+ * across JSX → IR, IR → Server JSX, and IR → Client JS transformations.
+ */
+export interface BaseTransformContext {
+  signals: SignalDeclaration[]
+  memos: MemoDeclaration[]
+}
+
+/**
+ * Context for JSX to IR transformation.
+ *
+ * Used during the first phase of compilation where JSX AST is converted
+ * to Intermediate Representation (IR).
+ */
+export interface JsxToIRContext extends BaseTransformContext {
+  /** TypeScript source file being compiled */
+  sourceFile: any  // ts.SourceFile - using 'any' to avoid TypeScript import in types
+  /** Map of available child components for inlining */
+  components: Map<string, CompileResult>
+  /** ID generator for creating unique slot IDs */
+  idGenerator: any  // IdGenerator - using 'any' to avoid circular import
+  /** Warnings collected during compilation */
+  warnings: CompilerWarning[]
+  /** Current component name being compiled */
+  currentComponentName: string
+  /** Value prop names (non-callback props) for reactivity detection */
+  valueProps: string[]
+}
+
+/**
+ * Context for Server JSX generation.
+ *
+ * Used when converting IR to server-side JSX code that includes
+ * hydration markers (data-bf-scope, data-bf, etc.).
+ */
+export interface ServerJsxContext extends BaseTransformContext {
+  /** Name of the component being generated */
+  componentName: string
+  /** IDs that need data-bf attribute for querySelector fallback */
+  needsDataBfIds: Set<string>
+  /** Event ID counter for event attribute output (to match client-side event delegation) */
+  eventIdCounter: { value: number } | null
+  /** Whether we're inside a list context (for passing __listIndex to child components) */
+  inListContext: boolean
+}
+
+/**
+ * Context for collecting Client JS information from IR.
+ *
+ * A lightweight context that only needs signal and memo declarations
+ * for determining reactivity during IR traversal.
+ */
+export type CollectContext = BaseTransformContext
+
+/**
+ * Context for Client JS code generation.
+ *
+ * Used during the final phase when generating executable client-side
+ * JavaScript for hydration and interactivity.
+ */
+export interface ClientJsGeneratorContext {
+  /** Name of the component being generated */
+  componentName: string
+  /** Map of element IDs to their DOM traversal paths */
+  elementPaths: Map<string, string | null>
+  /** Map of declared path prefixes to their variable names for chaining optimization */
+  declaredPaths: Map<string, string>
+  /** Set of element IDs that have already been queried */
+  queriedIds: Set<string>
+  /** Function to generate variable name from element ID */
+  varName: (id: string) => string
+  /** Function to generate optimized element access code */
+  getElementAccessCode: (id: string) => string
+}
+
+// ============================================================================
+// Element Types
+// ============================================================================
+
 export type InteractiveElement = {
   id: string
   tagName: string
