@@ -36,7 +36,7 @@ describe('Key Attribute Support', () => {
     const file = result.files[0]
 
     // Server JSX should contain data-key attribute
-    expect(file.serverJsx).toContain('data-key={item.id}')
+    expect(file.markedJsx).toContain('data-key={item.id}')
 
     // Client JS should use reconcileList
     expect(file.clientJs).toContain('reconcileList')
@@ -60,7 +60,7 @@ describe('Key Attribute Support', () => {
     const file = result.files[0]
 
     // key with index should use __index
-    expect(file.serverJsx).toContain('data-key={__index}')
+    expect(file.markedJsx).toContain('data-key={__index}')
   })
 
   it('key with computed expression', async () => {
@@ -84,7 +84,7 @@ describe('Key Attribute Support', () => {
     const file = result.files[0]
 
     // Complex key expression should be preserved
-    expect(file.serverJsx).toContain('data-key={`${item.type}-${item.id}`}')
+    expect(file.markedJsx).toContain('data-key={`${item.type}-${item.id}`}')
   })
 
   it('list without key uses innerHTML', async () => {
@@ -127,9 +127,9 @@ describe('Key Attribute Support', () => {
     const file = result.files[0]
 
     // key should be converted to data-key
-    expect(file.serverJsx).toContain('data-key={item.id}')
+    expect(file.markedJsx).toContain('data-key={item.id}')
     // Regular key attribute should not exist
-    expect(file.serverJsx).not.toMatch(/\skey=/)
+    expect(file.markedJsx).not.toMatch(/\skey=/)
   })
 })
 

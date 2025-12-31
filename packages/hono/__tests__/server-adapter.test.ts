@@ -1,12 +1,12 @@
 /**
- * Hono Server Component Adapter Tests
+ * Hono Marked JSX Adapter Tests
  */
 
 import { describe, it, expect } from 'bun:test'
-import { honoServerAdapter } from '../src'
+import { honoMarkedJsxAdapter } from '../src'
 
-describe('honoServerAdapter', () => {
-  describe('generateServerComponent', () => {
+describe('honoMarkedJsxAdapter', () => {
+  describe('generateMarkedJsxComponent', () => {
     it('generates component without props', () => {
       // IR is not used by the adapter, just passed through
       const ir = {
@@ -21,7 +21,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'Hello',
         props: [],
         typeDefinitions: [],
@@ -53,7 +53,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'Counter',
         props: [{ name: 'initialCount', type: 'number', optional: true }],
         typeDefinitions: [],
@@ -87,7 +87,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'Parent',
         props: [],
         typeDefinitions: [],
@@ -122,7 +122,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'Parent',
         props: [],
         typeDefinitions: [],
@@ -153,7 +153,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'Game',
         props: [],
         typeDefinitions: [],
@@ -187,7 +187,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'Counter',
         props: [],
         typeDefinitions: [],
@@ -224,7 +224,7 @@ describe('honoServerAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoServerAdapter.generateServerComponent({
+      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
         name: 'TodoApp',
         props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
         typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],

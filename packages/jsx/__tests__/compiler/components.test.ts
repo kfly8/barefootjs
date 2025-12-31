@@ -448,7 +448,7 @@ describe('Components - Hash and filename', () => {
     expect(app).toBeDefined()
     expect(app!.hasClientJs).toBe(true)  // App needs clientJs to initialize child Counter
     expect(app!.clientJsFilename).toContain(app!.hash)
-    expect(app!.serverJsx).toContain('<Counter />')
+    expect(app!.markedJsx).toContain('<Counter />')
   })
 })
 
@@ -544,7 +544,7 @@ describe('Components - Lazy Children', () => {
     const button = result.files.find(f => f.componentNames.includes('Button'))
 
     // Button's server JSX should handle children as function
-    expect(button!.serverJsx).toContain("typeof children === 'function' ? children() : children")
+    expect(button!.markedJsx).toContain("typeof children === 'function' ? children() : children")
     // Button's client JS should have effect for children
     expect(button!.clientJs).toContain('createEffect')
     expect(button!.clientJs).toContain('__childrenResult')
@@ -569,8 +569,8 @@ describe('Components - Lazy Children', () => {
     const app = result.files.find(f => f.componentNames.includes('App'))
 
     // App's server JSX should inline children (not pass as function)
-    expect(app!.serverJsx).toContain('>Click me<')
-    expect(app!.serverJsx).not.toContain('children={() =>')
+    expect(app!.markedJsx).toContain('>Click me<')
+    expect(app!.markedJsx).not.toContain('children={() =>')
   })
 })
 
@@ -626,7 +626,7 @@ describe('Components - Reactive Children (No Warning)', () => {
     const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Static children are inlined (not passed as function)
-    expect(app!.serverJsx).toContain('>Click me<')
-    expect(app!.serverJsx).not.toContain('children(() =>')
+    expect(app!.markedJsx).toContain('>Click me<')
+    expect(app!.markedJsx).not.toContain('children(() =>')
   })
 })

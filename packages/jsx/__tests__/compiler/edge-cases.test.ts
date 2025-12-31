@@ -232,7 +232,7 @@ describe('Whitespace Handling', () => {
     const file = result.files[0]
 
     // The "Done: " text (including trailing space) should be preserved
-    expect(file.serverJsx).toContain('Done: <span>')
+    expect(file.markedJsx).toContain('Done: <span>')
   })
 
   it('preserves leading text in whitespace after closing element', async () => {
@@ -252,7 +252,7 @@ describe('Whitespace Handling', () => {
     const file = result.files[0]
 
     // The "/ " text (including leading slash and trailing space) should be preserved
-    expect(file.serverJsx).toContain('/ <span')
+    expect(file.markedJsx).toContain('/ <span')
   })
 
   it('removes indentation whitespace between block elements', async () => {
@@ -270,7 +270,7 @@ describe('Whitespace Handling', () => {
     const file = result.files[0]
 
     // No extra whitespace between p elements (indentation stripped)
-    expect(file.serverJsx).toContain('<p>First</p><p>Second</p>')
+    expect(file.markedJsx).toContain('<p>First</p><p>Second</p>')
   })
 
   it('preserves explicit space expression between elements', async () => {
@@ -286,7 +286,7 @@ describe('Whitespace Handling', () => {
     const file = result.files[0]
 
     // The explicit space expression should be in the output
-    expect(file.serverJsx).toContain('<span>A</span>{')
-    expect(file.serverJsx).toContain('}<span>B</span>')
+    expect(file.markedJsx).toContain('<span>A</span>{')
+    expect(file.markedJsx).toContain('}<span>B</span>')
   })
 })

@@ -34,7 +34,7 @@ describe('Ref Attribute Support', () => {
     // Client JS should include ref callback execution
     expect(file.clientJs).toContain('inputRef = el')
     // Server JSX should NOT contain ref attribute
-    expect(file.serverJsx).not.toContain('ref=')
+    expect(file.markedJsx).not.toContain('ref=')
   })
 
   it('ref is not output in server JSX', async () => {
@@ -52,8 +52,8 @@ describe('Ref Attribute Support', () => {
     const file = result.files[0]
 
     // Server JSX should have className but not ref
-    expect(file.serverJsx).toContain('className="container"')
-    expect(file.serverJsx).not.toContain('ref=')
+    expect(file.markedJsx).toContain('className="container"')
+    expect(file.markedJsx).not.toContain('ref=')
   })
 
   it('ref on element with event handler', async () => {
@@ -76,7 +76,7 @@ describe('Ref Attribute Support', () => {
     const file = result.files[0]
 
     // Elements with dynamic content get data-bf for effect-based updates
-    expect(file.serverJsx).toContain('data-bf="0"')
+    expect(file.markedJsx).toContain('data-bf="0"')
     // Client JS should have both ref and click handler
     expect(file.clientJs).toContain('buttonRef = el')
     expect(file.clientJs).toContain('onclick')

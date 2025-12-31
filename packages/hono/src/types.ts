@@ -34,7 +34,7 @@ export type ComponentImport = {
 export type IRNode = unknown // Simplified - full IR types are in @barefootjs/jsx
 
 /** Component data for file-based generation */
-export type ServerComponentData = {
+export type MarkedJsxComponentData = {
   name: string
   props: PropWithType[]
   typeDefinitions: string[]
@@ -49,18 +49,18 @@ export type ServerComponentData = {
 }
 
 /**
- * Server Component Adapter
+ * Marked JSX Adapter
  *
- * Abstracts framework-specific server component generation.
+ * Abstracts framework-specific Marked JSX component generation.
  */
-export type ServerComponentAdapter = {
+export type MarkedJsxAdapter = {
   /**
-   * Generate server component code (single component)
+   * Generate Marked JSX component code (single component)
    * @param options - Component information
-   * @returns Server component source code
-   * @deprecated Use generateServerFile for file-based output
+   * @returns Marked JSX component source code
+   * @deprecated Use generateMarkedJsxFile for file-based output
    */
-  generateServerComponent: (options: {
+  generateMarkedJsxComponent: (options: {
     name: string
     props: PropWithType[]
     typeDefinitions: string[]
@@ -81,15 +81,15 @@ export type ServerComponentAdapter = {
   }) => string
 
   /**
-   * Generate server file code (multiple components in one file)
+   * Generate Marked JSX file code (multiple components in one file)
    * @param options - File and component information
-   * @returns Server file source code with all component exports
+   * @returns Marked JSX file source code with all component exports
    */
-  generateServerFile?: (options: {
+  generateMarkedJsxFile?: (options: {
     /** Source file path relative to root (e.g., '_shared/docs.tsx') */
     sourcePath: string
     /** All components in this file */
-    components: ServerComponentData[]
+    components: MarkedJsxComponentData[]
     /** Module-level constants shared by all components */
     moduleConstants: ModuleConstant[]
     /** Original import statements for child components */

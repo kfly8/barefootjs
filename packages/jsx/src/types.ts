@@ -21,7 +21,7 @@ export type CompilerWarning = {
  * Base context shared by all transformation phases.
  *
  * Contains reactive declarations (signals and memos) that are needed
- * across JSX → IR, IR → Server JSX, and IR → Client JS transformations.
+ * across JSX → IR, IR → Marked JSX, and IR → Client JS transformations.
  */
 export interface BaseTransformContext {
   signals: SignalDeclaration[]
@@ -50,12 +50,12 @@ export interface JsxToIRContext extends BaseTransformContext {
 }
 
 /**
- * Context for Server JSX generation.
+ * Context for Marked JSX generation.
  *
- * Used when converting IR to server-side JSX code that includes
+ * Used when converting IR to Marked JSX code that includes
  * hydration markers (data-bf-scope, data-bf, etc.).
  */
-export interface ServerJsxContext extends BaseTransformContext {
+export interface MarkedJsxContext extends BaseTransformContext {
   /** Name of the component being generated */
   componentName: string
   /** IDs that need data-bf attribute for querySelector fallback */
@@ -207,7 +207,7 @@ export type CompileResult = {
   props: PropWithType[]            // Props with type information
   typeDefinitions: string[]        // Type definitions used by props
   source: string   // Component source code (for inline expansion in map)
-  ir: IRNode | null  // Intermediate Representation for server JSX generation
+  ir: IRNode | null  // Intermediate Representation for Marked JSX generation
   imports: ComponentImport[]       // Import statements from source file
   isDefaultExport?: boolean        // Whether this component is the default export
 }
@@ -223,7 +223,7 @@ export type ComponentOutput = {
   hash: string           // Content hash (e.g., 7dc6817c)
   filename: string       // Filename with hash (e.g., AddTodoForm-7dc6817c.js), empty if no client JS
   clientJs: string
-  serverJsx: string      // Server JSX component (for hono/jsx integration)
+  markedJsx: string      // Marked JSX component (for hono/jsx integration)
   props: PropWithType[]  // Props with type information
   hasClientJs: boolean   // Whether this component needs client-side JS
   sourcePath: string     // Relative path from entry (e.g., 'components/Button.tsx')
@@ -237,8 +237,8 @@ export type ComponentOutput = {
 export type FileOutput = {
   /** Source file path relative to root (e.g., '_shared/docs.tsx') */
   sourcePath: string
-  /** Combined server JSX containing all component exports */
-  serverJsx: string
+  /** Combined Marked JSX containing all component exports */
+  markedJsx: string
   /** Combined client JS containing all init functions */
   clientJs: string
   /** Content hash based on all components */
@@ -261,12 +261,12 @@ export type CompileJSXResult = {
 export type OutputFormat = 'html' | 'jsx'
 
 /**
- * Server Component Adapter
+ * Marked JSX Adapter
  *
- * Abstracts framework-specific server component generation.
+ * Abstracts framework-specific Marked JSX component generation.
  */
 /** Component data for file-based generation */
-export type ServerComponentData = {
+export type MarkedJsxComponentData = {
   name: string
   props: PropWithType[]
   typeDefinitions: string[]
@@ -278,14 +278,14 @@ export type ServerComponentData = {
   childComponents: string[]
 }
 
-export type ServerComponentAdapter = {
+export type MarkedJsxAdapter = {
   /**
-   * Generate server component code (single component)
+   * Generate Marked JSX component code (single component)
    * @param options - Component information
-   * @returns Server component source code
-   * @deprecated Use generateServerFile for file-based output
+   * @returns Marked JSX component source code
+   * @deprecated Use generateMarkedJsxFile for file-based output
    */
-  generateServerComponent: (options: {
+  generateMarkedJsxComponent: (options: {
     name: string
     props: PropWithType[]
     typeDefinitions: string[]
@@ -306,15 +306,15 @@ export type ServerComponentAdapter = {
   }) => string
 
   /**
-   * Generate server file code (multiple components in one file)
+   * Generate Marked JSX file code (multiple components in one file)
    * @param options - File and component information
-   * @returns Server file source code with all component exports
+   * @returns Marked JSX file source code with all component exports
    */
-  generateServerFile?: (options: {
+  generateMarkedJsxFile?: (options: {
     /** Source file path relative to root (e.g., '_shared/docs.tsx') */
     sourcePath: string
     /** All components in this file */
-    components: ServerComponentData[]
+    components: MarkedJsxComponentData[]
     /** Module-level constants shared by all components */
     moduleConstants: ModuleConstant[]
     /** Original import statements for child components */
@@ -338,7 +338,7 @@ export type ServerComponentAdapter = {
 
 export type CompileOptions = {
   outputFormat?: OutputFormat  // Default: 'html'
-  serverAdapter?: ServerComponentAdapter  // Required for 'jsx' output
+  markedJsxAdapter?: MarkedJsxAdapter  // Required for 'jsx' output
   rootDir?: string  // Root directory for computing relative source paths
 }
 
@@ -378,7 +378,7 @@ export type TemplateStringResult = {
 /**
  * Intermediate Representation (IR) Type Definitions
  *
- * Transformed from JSX AST and used to generate various outputs (HTML, ClientJS, ServerJSX).
+ * Transformed from JSX AST and used to generate various outputs (HTML, ClientJS, MarkedJSX).
  */
 
 export type IRNode =

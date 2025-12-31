@@ -28,7 +28,7 @@ describe('Spread Attributes Support', () => {
     const file = result.files[0]
 
     // Server JSX should contain spread
-    expect(file.serverJsx).toContain('{...buttonProps}')
+    expect(file.markedJsx).toContain('{...buttonProps}')
   })
 
   it('spread with additional attributes', async () => {
@@ -44,8 +44,8 @@ describe('Spread Attributes Support', () => {
     const file = result.files[0]
 
     // Server JSX should contain both spread and additional attributes
-    expect(file.serverJsx).toContain('{...inputProps}')
-    expect(file.serverJsx).toContain('className="form-input"')
+    expect(file.markedJsx).toContain('{...inputProps}')
+    expect(file.markedJsx).toContain('className="form-input"')
   })
 
   it('spread attributes override order', async () => {
@@ -62,8 +62,8 @@ describe('Spread Attributes Support', () => {
     const file = result.files[0]
 
     // Server JSX should contain both spreads in order
-    expect(file.serverJsx).toContain('{...baseProps}')
-    expect(file.serverJsx).toContain('{...overrideProps}')
+    expect(file.markedJsx).toContain('{...baseProps}')
+    expect(file.markedJsx).toContain('{...overrideProps}')
   })
 
   it('spread with dynamic expression', async () => {
@@ -80,7 +80,7 @@ describe('Spread Attributes Support', () => {
     const file = result.files[0]
 
     // Server JSX should contain spread with signal call replaced
-    expect(file.serverJsx).toContain('{...{ class: \'active\' }}')
+    expect(file.markedJsx).toContain('{...{ class: \'active\' }}')
   })
 
   it('spread on self-closing element', async () => {
@@ -96,7 +96,7 @@ describe('Spread Attributes Support', () => {
     const file = result.files[0]
 
     // Server JSX should contain spread on self-closing element
-    expect(file.serverJsx).toContain('{...imgProps}')
-    expect(file.serverJsx).toMatch(/<img[^>]*\/>/)
+    expect(file.markedJsx).toContain('{...imgProps}')
+    expect(file.markedJsx).toMatch(/<img[^>]*\/>/)
   })
 })

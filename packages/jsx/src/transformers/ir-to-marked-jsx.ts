@@ -1,7 +1,7 @@
 /**
- * BarefootJS JSX Compiler - IR to Server JSX Transformer
+ * BarefootJS JSX Compiler - IR to Marked JSX Transformer
  *
- * Generates server-side JSX components from Intermediate Representation (IR).
+ * Generates Marked JSX components from Intermediate Representation (IR).
  * Unlike ir-to-html which evaluates expressions, this preserves them as JSX.
  */
 
@@ -11,12 +11,12 @@ import type {
   IRFragment,
   SignalDeclaration,
   MemoDeclaration,
-  ServerJsxContext,
+  MarkedJsxContext,
 } from '../types'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 // Re-export type for backwards compatibility
-export type { ServerJsxContext }
+export type { MarkedJsxContext }
 
 /**
  * Converts HTML to JSX format (internal helper)
@@ -40,14 +40,14 @@ function htmlToJsx(html: string): string {
  * @param needsDataBfIds - Set of element IDs that need data-bf attribute (for querySelector fallback)
  * @returns JSX string
  */
-export function irToServerJsx(
+export function irToMarkedJsx(
   node: IRNode,
   componentName: string,
   signals: SignalDeclaration[],
   needsDataBfIds: Set<string> = new Set(),
   options: { outputEventAttrs?: boolean; memos?: MemoDeclaration[] } = {}
 ): string {
-  const ctx: ServerJsxContext = {
+  const ctx: MarkedJsxContext = {
     componentName,
     signals,
     memos: options.memos || [],
@@ -56,13 +56,13 @@ export function irToServerJsx(
     eventIdCounter: options.outputEventAttrs ? { value: 0 } : null,
     inListContext: false,
   }
-  return irToServerJsxInternal(node, ctx, true)
+  return irToMarkedJsxInternal(node, ctx, true)
 }
 
 /**
- * Internal implementation of IR to Server JSX conversion
+ * Internal implementation of IR to Marked JSX conversion
  */
-function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: boolean): string {
+function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: boolean): string {
   switch (node.type) {
     case 'text':
       return node.content
@@ -116,13 +116,13 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
         if (node.hasLazyChildren) {
           // Lazy children: pass as children prop (function that returns content)
           // The component will call children() to render them
-          const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+          const childrenJsx = node.children.map(child => irToMarkedJsxInternal(child, ctx, false)).join('')
           const childrenProp = `children={() => <>${childrenJsx}</>}`
           const allProps = propsStr ? `${propsStr} ${childrenProp}` : childrenProp
           componentOutput = `<${node.name} ${allProps} />`
         } else {
           // Static children: inline as usual
-          const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+          const childrenJsx = node.children.map(child => irToMarkedJsxInternal(child, ctx, false)).join('')
           componentOutput = `<${node.name}${propsStr ? ' ' + propsStr : ''}>${childrenJsx}</${node.name}>`
         }
       } else {
@@ -154,24 +154,24 @@ function irToServerJsxInternal(node: IRNode, ctx: ServerJsxContext, isRoot: bool
       return `{${condition} ? ${whenTrue} : ${whenFalse}}`
 
     case 'element':
-      return elementToServerJsxInternal(node, ctx, isRoot)
+      return elementToMarkedJsxInternal(node, ctx, isRoot)
 
     case 'fragment':
-      return fragmentToServerJsxInternal(node, ctx, isRoot)
+      return fragmentToMarkedJsxInternal(node, ctx, isRoot)
   }
 }
 
 /**
- * Internal implementation of fragment to server JSX conversion
+ * Internal implementation of fragment to Marked JSX conversion
  *
  * Fragments output as-is (<>...</>). When fragment is at root,
  * data-bf-scope is added to the first element child.
  */
-function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext, isRoot: boolean): string {
+function fragmentToMarkedJsxInternal(node: IRFragment, ctx: MarkedJsxContext, isRoot: boolean): string {
   const childrenJsx = node.children.map((child, index) => {
     // Pass isRoot to the first element child when fragment is root
     const childIsRoot = isRoot && index === 0 && child.type === 'element'
-    return irToServerJsxInternal(child, ctx, childIsRoot)
+    return irToMarkedJsxInternal(child, ctx, childIsRoot)
   }).join('')
   return `<>${childrenJsx}</>`
 }
@@ -190,7 +190,7 @@ function fragmentToServerJsxInternal(node: IRFragment, ctx: ServerJsxContext, is
  * @returns String suitable for use inside JSX expression (e.g., ternary)
  */
 function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set(), memos: MemoDeclaration[] = []): string {
-  const ctx: ServerJsxContext = {
+  const ctx: MarkedJsxContext = {
     componentName: '',
     signals,
     memos,
@@ -201,7 +201,7 @@ function nodeToJsxExpressionValue(node: IRNode, signals: SignalDeclaration[], ne
   return nodeToJsxExpressionValueInternal(node, ctx)
 }
 
-function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): string {
+function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext): string {
   switch (node.type) {
     case 'text':
       // Text inside expression context needs to be a quoted string
@@ -215,7 +215,7 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 
     case 'element':
       // Element is valid JSX, use as-is
-      return elementToServerJsxInternal(node, ctx, false)
+      return elementToMarkedJsxInternal(node, ctx, false)
 
     case 'conditional':
       // Nested conditional - recursively process
@@ -255,15 +255,15 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: ServerJsxContext): 
 
     case 'fragment':
       // Fragment inside expression context (not root)
-      return fragmentToServerJsxInternal(node, ctx, false)
+      return fragmentToMarkedJsxInternal(node, ctx, false)
   }
 }
 
 /**
  * Generates JSX from an IR element (legacy wrapper)
  */
-function elementToServerJsx(el: IRElement, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set(), memos: MemoDeclaration[] = []): string {
-  const ctx: ServerJsxContext = {
+function elementToMarkedJsx(el: IRElement, signals: SignalDeclaration[], needsDataBfIds: Set<string> = new Set(), memos: MemoDeclaration[] = []): string {
+  const ctx: MarkedJsxContext = {
     componentName: '',
     signals,
     memos,
@@ -271,13 +271,13 @@ function elementToServerJsx(el: IRElement, signals: SignalDeclaration[], needsDa
     eventIdCounter: null,
     inListContext: false,
   }
-  return elementToServerJsxInternal(el, ctx, false)
+  return elementToMarkedJsxInternal(el, ctx, false)
 }
 
 /**
- * Internal implementation of element to server JSX conversion
+ * Internal implementation of element to Marked JSX conversion
  */
-function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot: boolean): string {
+function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot: boolean): string {
   const { tagName, id, staticAttrs, dynamicAttrs, spreadAttrs = [], events, children, listInfo, dynamicContent } = el
 
   // Build attributes
@@ -357,12 +357,12 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
       //   This enables event delegation: handlers look for specific event-ids,
       //   and data-index identifies which item was interacted with.
       // - Set inListContext to true so child components get __listIndex
-      const itemCtx: ServerJsxContext = {
+      const itemCtx: MarkedJsxContext = {
         ...ctx,
         eventIdCounter: ctx.eventIdCounter ? { value: 0 } : null,
         inListContext: true,
       }
-      let itemJsx = irToServerJsxInternal(listInfo.itemIR, itemCtx, false)
+      let itemJsx = irToMarkedJsxInternal(listInfo.itemIR, itemCtx, false)
       // Inject data-key attribute if key expression is present
       if (listInfo.keyExpression) {
         itemJsx = injectDataKeyAttribute(itemJsx, listInfo.keyExpression)
@@ -378,7 +378,7 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
   }
 
   // Process children
-  const childrenJsx = children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+  const childrenJsx = children.map(child => irToMarkedJsxInternal(child, ctx, false)).join('')
 
   // Self-closing tag
   if (children.length === 0 && isSelfClosingTag(tagName)) {
@@ -391,7 +391,7 @@ function elementToServerJsxInternal(el: IRElement, ctx: ServerJsxContext, isRoot
 /**
  * Replaces signal and memo calls with their values
  *
- * For server JSX, signals don't exist - we use their initial values.
+ * For Marked JSX, signals don't exist - we use their initial values.
  * Memos are evaluated with signals replaced by their initial values.
  * e.g., count() -> 0 (if signal 'count' has initialValue '0')
  * e.g., doubled() -> 0 * 2 (if memo 'doubled' computes count() * 2)
@@ -460,14 +460,14 @@ function isSelfClosingTag(tagName: string): boolean {
  *
  * @param node - IR node (branch of conditional)
  * @param condId - Conditional slot ID
- * @param ctx - Server JSX context
+ * @param ctx - Marked JSX context
  * @returns JSX string with conditional marker
  */
-function injectConditionalMarker(node: IRNode, condId: string, ctx: ServerJsxContext): string {
+function injectConditionalMarker(node: IRNode, condId: string, ctx: MarkedJsxContext): string {
   switch (node.type) {
     case 'element': {
       // Generate JSX and inject data-bf-cond attribute
-      const jsx = elementToServerJsxInternal(node, ctx, false)
+      const jsx = elementToMarkedJsxInternal(node, ctx, false)
       return injectDataBfCondAttribute(jsx, condId)
     }
 
@@ -479,13 +479,13 @@ function injectConditionalMarker(node: IRNode, condId: string, ctx: ServerJsxCon
 
       // Single element child - inject marker to that element
       if (node.children.length === 1 && node.children[0].type === 'element') {
-        const childJsx = elementToServerJsxInternal(node.children[0], ctx, false)
+        const childJsx = elementToMarkedJsxInternal(node.children[0], ctx, false)
         return injectDataBfCondAttribute(childJsx, condId)
       }
 
       // Multiple children - use comment markers to wrap all content
       // __rawHtml outputs raw HTML (comment nodes) without escaping
-      const childrenJsx = node.children.map(child => irToServerJsxInternal(child, ctx, false)).join('')
+      const childrenJsx = node.children.map(child => irToMarkedJsxInternal(child, ctx, false)).join('')
       return `<>{__rawHtml("<!--bf-cond-start:${condId}-->")}<>${childrenJsx}</>{__rawHtml("<!--bf-cond-end:${condId}-->")}</>`
     }
 
