@@ -34,9 +34,9 @@ describe('Signal declarations', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    expect(file.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
   it('Boolean signal', async () => {
@@ -48,9 +48,9 @@ describe('Signal declarations', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain('const [on, setOn] = createSignal(false)')
+    expect(file.clientJs).toContain('const [on, setOn] = createSignal(false)')
   })
 
   it('String signal', async () => {
@@ -62,9 +62,9 @@ describe('Signal declarations', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain("const [text, setText] = createSignal('hello')")
+    expect(file.clientJs).toContain("const [text, setText] = createSignal('hello')")
   })
 
   it('Multiple signals', async () => {
@@ -77,10 +77,10 @@ describe('Signal declarations', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
-    expect(component.clientJs).toContain("const [name, setName] = createSignal('Alice')")
+    expect(file.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    expect(file.clientJs).toContain("const [name, setName] = createSignal('Alice')")
   })
 
   it('Object signal', async () => {
@@ -92,9 +92,9 @@ describe('Signal declarations', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain("const [user, setUser] = createSignal({ name: 'Alice', age: 20 })")
+    expect(file.clientJs).toContain("const [user, setUser] = createSignal({ name: 'Alice', age: 20 })")
   })
 
   it('Array signal', async () => {
@@ -106,8 +106,8 @@ describe('Signal declarations', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain('const [items, setItems] = createSignal([])')
+    expect(file.clientJs).toContain('const [items, setItems] = createSignal([])')
   })
 })

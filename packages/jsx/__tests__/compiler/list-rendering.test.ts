@@ -55,12 +55,12 @@ describe('List Rendering - Basic', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Updated with innerHTML in client JS (with __index for event delegation support)
-    expect(component.clientJs).toContain('_0.innerHTML = items().map((item, __index) => `<li>${item}</li>`).join(\'\')')
+    expect(file.clientJs).toContain('_0.innerHTML = items().map((item, __index) => `<li>${item}</li>`).join(\'\')')
     // Existence check is included
-    expect(component.clientJs).toContain('if (_0)')
+    expect(file.clientJs).toContain('if (_0)')
   })
 
   it('array filter + map', async () => {
@@ -76,10 +76,10 @@ describe('List Rendering - Basic', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // filter + map is used in client JS (with __index for event delegation support)
-    expect(component.clientJs).toContain('items().filter(x => x.done).map((item, __index) =>')
+    expect(file.clientJs).toContain('items().filter(x => x.done).map((item, __index) =>')
   })
 })
 
@@ -97,15 +97,15 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // data-index attribute is included in template
-    expect(component.clientJs).toContain('data-index="${__index}"')
+    expect(file.clientJs).toContain('data-index="${__index}"')
 
     // Event delegation is set up (with existence check)
-    expect(component.clientJs).toContain("_1.addEventListener('click'")
-    expect(component.clientJs).toContain('const item = items()[__index]')
-    expect(component.clientJs).toContain('remove(item.id)')
+    expect(file.clientJs).toContain("_1.addEventListener('click'")
+    expect(file.clientJs).toContain('const item = items()[__index]')
+    expect(file.clientJs).toContain('remove(item.id)')
   })
 
   it('multiple onClick in map (different elements)', async () => {
@@ -130,19 +130,19 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Each button gets a different data-event-id
-    expect(component.clientJs).toContain('data-event-id="0"')
-    expect(component.clientJs).toContain('data-event-id="1"')
+    expect(file.clientJs).toContain('data-event-id="0"')
+    expect(file.clientJs).toContain('data-event-id="1"')
 
     // Each event handler is set up individually
-    expect(component.clientJs).toContain('toggle(todo.id)')
-    expect(component.clientJs).toContain('remove(todo.id)')
+    expect(file.clientJs).toContain('toggle(todo.id)')
+    expect(file.clientJs).toContain('remove(todo.id)')
 
     // Event delegation checks event-id
-    expect(component.clientJs).toContain("dataset.eventId === '0'")
-    expect(component.clientJs).toContain("dataset.eventId === '1'")
+    expect(file.clientJs).toContain("dataset.eventId === '0'")
+    expect(file.clientJs).toContain("dataset.eventId === '1'")
   })
 
   it('onChange in map', async () => {
@@ -158,11 +158,11 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // onchange event delegation is set up
-    expect(component.clientJs).toContain("addEventListener('change'")
-    expect(component.clientJs).toContain('toggle(item.id)')
+    expect(file.clientJs).toContain("addEventListener('change'")
+    expect(file.clientJs).toContain('toggle(item.id)')
   })
 
   it('multiple events on same element in map', async () => {
@@ -184,14 +184,14 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // All events on same element share the same event-id
-    expect(component.clientJs).toContain('data-event-id="0"')
+    expect(file.clientJs).toContain('data-event-id="0"')
     // All event listeners check the same event-id
-    expect(component.clientJs).toMatch(/addEventListener\('input'[\s\S]*?data-event-id="0"/)
-    expect(component.clientJs).toMatch(/addEventListener\('blur'[\s\S]*?data-event-id="0"/)
-    expect(component.clientJs).toMatch(/addEventListener\('keydown'[\s\S]*?data-event-id="0"/)
+    expect(file.clientJs).toMatch(/addEventListener\('input'[\s\S]*?data-event-id="0"/)
+    expect(file.clientJs).toMatch(/addEventListener\('blur'[\s\S]*?data-event-id="0"/)
+    expect(file.clientJs).toMatch(/addEventListener\('keydown'[\s\S]*?data-event-id="0"/)
   })
 
   it('blur event in map (capture phase)', async () => {
@@ -207,11 +207,11 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Blur event uses capture phase
-    expect(component.clientJs).toContain("addEventListener('blur'")
-    expect(component.clientJs).toContain('}, true)')
+    expect(file.clientJs).toContain("addEventListener('blur'")
+    expect(file.clientJs).toContain('}, true)')
   })
 
   it('keydown event in map (conditional execution)', async () => {
@@ -227,11 +227,11 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Conditional execution: if (condition) { action }
-    expect(component.clientJs).toContain("if (e.key === 'Enter')")
-    expect(component.clientJs).toContain("console.log('enter')")
+    expect(file.clientJs).toContain("if (e.key === 'Enter')")
+    expect(file.clientJs).toContain("console.log('enter')")
   })
 
   it('keydown event in map (multiple conditions && execution)', async () => {
@@ -250,15 +250,15 @@ describe('List Rendering - Events', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Multiple conditions are also wrapped in if statement
     // Expected: if (e.key === 'Enter' && !e.isComposing) { handleFinish(...) }
-    expect(component.clientJs).toContain("if (e.key === 'Enter' && !e.isComposing)")
-    expect(component.clientJs).toContain("handleFinish(item.id, e.target.value)")
+    expect(file.clientJs).toContain("if (e.key === 'Enter' && !e.isComposing)")
+    expect(file.clientJs).toContain("handleFinish(item.id, e.target.value)")
 
     // Action should be inside the if statement
-    const clientJs = component.clientJs
+    const clientJs = file.clientJs
     const ifMatch = clientJs.match(/if \(e\.key === 'Enter' && !e\.isComposing\) \{[\s\S]*?handleFinish\(item\.id, e\.target\.value\)[\s\S]*?\}/)
     expect(ifMatch).not.toBeNull()
   })
@@ -277,10 +277,10 @@ describe('List Rendering - Dynamic Attributes', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Template contains dynamic class attribute
-    expect(component.clientJs).toContain("class=\"${item.done ? 'done' : ''}\"")
+    expect(file.clientJs).toContain("class=\"${item.done ? 'done' : ''}\"")
   })
 
   it('dynamic style attribute in map', async () => {
@@ -295,10 +295,10 @@ describe('List Rendering - Dynamic Attributes', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Template contains dynamic style attribute
-    expect(component.clientJs).toContain('style="${item.color}"')
+    expect(file.clientJs).toContain('style="${item.color}"')
   })
 
   it('dynamic checked attribute in map', async () => {
@@ -313,10 +313,10 @@ describe('List Rendering - Dynamic Attributes', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Template contains dynamic checked attribute
-    expect(component.clientJs).toContain('checked="${item.checked}"')
+    expect(file.clientJs).toContain('checked="${item.checked}"')
   })
 })
 
@@ -339,14 +339,14 @@ describe('List Rendering - Conditionals', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Template contains ternary operator
-    expect(component.clientJs).toContain('${item.editing ?')
+    expect(file.clientJs).toContain('${item.editing ?')
     // Input element is included
-    expect(component.clientJs).toContain('<input')
+    expect(file.clientJs).toContain('<input')
     // Span element is included
-    expect(component.clientJs).toContain('<span>')
+    expect(file.clientJs).toContain('<span>')
   })
 
 })

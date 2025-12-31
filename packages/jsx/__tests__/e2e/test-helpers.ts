@@ -8,41 +8,16 @@
  * - Signal updates cause correct DOM changes
  */
 
-import { compileJSX } from '../../src/jsx-compiler'
+import { compileJSX, type CompileJSXResult } from '../../src/jsx-compiler'
 import { testHtmlAdapter } from '../../src/adapters/testing'
 
 export type CompileResult = {
+  /** HTML output (from serverJsx field for HTML adapter) */
   html: string
+  /** Client-side JavaScript */
   clientJs: string
-  components: Array<{
-    name: string
-    html: string
-    clientJs: string
-    serverJsx: string
-  }>
-}
-
-/**
- * Converts file-based output to component-like array for backward compatibility
- */
-function toComponentsArray(result: { files: Array<{
-  sourcePath: string
-  serverJsx: string
-  clientJs: string
-  componentNames: string[]
-}> }): CompileResult['components'] {
-  const components: CompileResult['components'] = []
-  for (const file of result.files) {
-    for (const compName of file.componentNames) {
-      components.push({
-        name: compName,
-        html: file.serverJsx,  // HTML is stored in serverJsx for HTML adapter
-        clientJs: file.clientJs,
-        serverJsx: file.serverJsx,
-      })
-    }
-  }
-  return components
+  /** Full compilation result */
+  files: CompileJSXResult['files']
 }
 
 /**
@@ -57,14 +32,12 @@ export async function compile(source: string): Promise<CompileResult> {
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: testHtmlAdapter })
 
-  // Convert file-based output to components array
-  const components = toComponentsArray(result)
-  const firstComponent = components[0]
+  const firstFile = result.files[0]
 
   return {
-    html: firstComponent?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
-    clientJs: firstComponent?.clientJs || '',
-    components,
+    html: firstFile?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
+    clientJs: firstFile?.clientJs || '',
+    files: result.files,
   }
 }
 
@@ -80,14 +53,12 @@ export async function compileWithFiles(
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: testHtmlAdapter })
 
-  // Convert file-based output to components array
-  const components = toComponentsArray(result)
-  const firstComponent = components[0]
+  const firstFile = result.files[0]
 
   return {
-    html: firstComponent?.serverJsx || '',
-    clientJs: firstComponent?.clientJs || '',
-    components,
+    html: firstFile?.serverJsx || '',
+    clientJs: firstFile?.clientJs || '',
+    files: result.files,
   }
 }
 

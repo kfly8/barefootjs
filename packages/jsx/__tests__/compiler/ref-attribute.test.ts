@@ -29,12 +29,12 @@ describe('Ref Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Client JS should include ref callback execution
-    expect(component.clientJs).toContain('inputRef = el')
+    expect(file.clientJs).toContain('inputRef = el')
     // Server JSX should NOT contain ref attribute
-    expect(component.serverJsx).not.toContain('ref=')
+    expect(file.serverJsx).not.toContain('ref=')
   })
 
   it('ref is not output in server JSX', async () => {
@@ -49,11 +49,11 @@ describe('Ref Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should have className but not ref
-    expect(component.serverJsx).toContain('className="container"')
-    expect(component.serverJsx).not.toContain('ref=')
+    expect(file.serverJsx).toContain('className="container"')
+    expect(file.serverJsx).not.toContain('ref=')
   })
 
   it('ref on element with event handler', async () => {
@@ -73,13 +73,13 @@ describe('Ref Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Elements with dynamic content get data-bf for effect-based updates
-    expect(component.serverJsx).toContain('data-bf="0"')
+    expect(file.serverJsx).toContain('data-bf="0"')
     // Client JS should have both ref and click handler
-    expect(component.clientJs).toContain('buttonRef = el')
-    expect(component.clientJs).toContain('onclick')
+    expect(file.clientJs).toContain('buttonRef = el')
+    expect(file.clientJs).toContain('onclick')
   })
 
   it('ref on element with dynamic content', async () => {
@@ -94,12 +94,12 @@ describe('Ref Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Client JS should have ref callback
-    expect(component.clientJs).toContain('spanRef = el')
+    expect(file.clientJs).toContain('spanRef = el')
     // Should also have createEffect for dynamic content
-    expect(component.clientJs).toContain('createEffect')
+    expect(file.clientJs).toContain('createEffect')
   })
 
   it('multiple refs on different elements', async () => {
@@ -116,10 +116,10 @@ describe('Ref Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Both refs should be in client JS
-    expect(component.clientJs).toContain('input1Ref = el')
-    expect(component.clientJs).toContain('input2Ref = el')
+    expect(file.clientJs).toContain('input1Ref = el')
+    expect(file.clientJs).toContain('input2Ref = el')
   })
 })

@@ -59,17 +59,17 @@ describe('Event Handlers - Basic', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // onclick handler is set (with existence check)
-    expect(component.clientJs).toContain('_1.onclick')
-    expect(component.clientJs).toContain('setCount(n => n + 1)')
+    expect(file.clientJs).toContain('_1.onclick')
+    expect(file.clientJs).toContain('setCount(n => n + 1)')
 
     // Dynamic content is updated with createEffect
-    expect(component.clientJs).toContain('createEffect(')
+    expect(file.clientJs).toContain('createEffect(')
 
     // Existence checks are added
-    expect(component.clientJs).toContain('if (_1)')
+    expect(file.clientJs).toContain('if (_1)')
   })
 
   it('multiple onClick', async () => {
@@ -87,11 +87,11 @@ describe('Event Handlers - Basic', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Multiple onclick handlers with sequential IDs
-    expect(component.clientJs).toContain('_1.onclick')
-    expect(component.clientJs).toContain('_2.onclick')
+    expect(file.clientJs).toContain('_1.onclick')
+    expect(file.clientJs).toContain('_2.onclick')
   })
 })
 
@@ -110,14 +110,14 @@ describe('Event Handlers - Form', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // onchange handler is set (event argument is preserved)
-    expect(component.clientJs).toContain('_1.onchange = (e) =>')
-    expect(component.clientJs).toContain('setText(e.target.value)')
+    expect(file.clientJs).toContain('_1.onchange = (e) =>')
+    expect(file.clientJs).toContain('setText(e.target.value)')
 
     // Dynamic content is updated with createEffect
-    expect(component.clientJs).toContain('createEffect(')
+    expect(file.clientJs).toContain('createEffect(')
   })
 
   it('onInput (with event argument)', async () => {
@@ -134,11 +134,11 @@ describe('Event Handlers - Form', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // oninput handler is set (event argument is preserved)
-    expect(component.clientJs).toContain('_1.oninput = (e) =>')
-    expect(component.clientJs).toContain('setText(e.target.value)')
+    expect(file.clientJs).toContain('_1.oninput = (e) =>')
+    expect(file.clientJs).toContain('setText(e.target.value)')
   })
 
   it('onSubmit', async () => {
@@ -157,12 +157,12 @@ describe('Event Handlers - Form', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // onsubmit handler is set
-    expect(component.clientJs).toContain('_1.onsubmit')
-    expect(component.clientJs).toContain('e.preventDefault()')
-    expect(component.clientJs).toContain('setSubmitted(true)')
+    expect(file.clientJs).toContain('_1.onsubmit')
+    expect(file.clientJs).toContain('e.preventDefault()')
+    expect(file.clientJs).toContain('setSubmitted(true)')
   })
 })
 
@@ -182,11 +182,11 @@ describe('Event Handlers - Keyboard', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // onkeydown handler is set
-    expect(component.clientJs).toContain('_1.onkeydown')
-    expect(component.clientJs).toContain("e.key === 'Enter'")
-    expect(component.clientJs).toContain('setSubmitted(true)')
+    expect(file.clientJs).toContain('_1.onkeydown')
+    expect(file.clientJs).toContain("e.key === 'Enter'")
+    expect(file.clientJs).toContain('setSubmitted(true)')
   })
 })

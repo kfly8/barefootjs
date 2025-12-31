@@ -33,13 +33,13 @@ describe('Deeply Nested JSX', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // createEffect should be generated for the dynamic content with String() wrapper
     // Expression is evaluated before element check to ensure signal dependencies are tracked
-    expect(component.clientJs).toContain('createEffect')
-    expect(component.clientJs).toContain('const __textValue = count()')
-    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('createEffect')
+    expect(file.clientJs).toContain('const __textValue = count()')
+    expect(file.clientJs).toContain('_0.textContent = String(__textValue)')
   })
 
   it('handles nested elements with multiple dynamic values', async () => {
@@ -63,16 +63,16 @@ describe('Deeply Nested JSX', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Three createEffect calls (sequential slot IDs) with String() wrapper
     // Expression is evaluated before element check to ensure signal dependencies are tracked
-    expect(component.clientJs).toContain('const __textValue = a()')
-    expect(component.clientJs).toContain('const __textValue = b()')
-    expect(component.clientJs).toContain('const __textValue = c()')
-    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
-    expect(component.clientJs).toContain('_1.textContent = String(__textValue)')
-    expect(component.clientJs).toContain('_2.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('const __textValue = a()')
+    expect(file.clientJs).toContain('const __textValue = b()')
+    expect(file.clientJs).toContain('const __textValue = c()')
+    expect(file.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('_1.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('_2.textContent = String(__textValue)')
   })
 
   it('handles nested elements with events at different levels', async () => {
@@ -94,12 +94,12 @@ describe('Deeply Nested JSX', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Event handlers should be set (sequential slot IDs)
-    expect(component.clientJs).toContain('_0.onclick')
-    expect(component.clientJs).toContain('_1.onclick')
-    expect(component.clientJs).toContain('_2.onclick')
+    expect(file.clientJs).toContain('_0.onclick')
+    expect(file.clientJs).toContain('_1.onclick')
+    expect(file.clientJs).toContain('_2.onclick')
   })
 })
 
@@ -125,10 +125,10 @@ describe('Complex Expressions', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Nested ternary should be in template
-    expect(component.clientJs).toContain("item.type === 'a' ? 'first' : item.type === 'b' ? 'second' : 'third'")
+    expect(file.clientJs).toContain("item.type === 'a' ? 'first' : item.type === 'b' ? 'second' : 'third'")
   })
 
   it('handles arrow function with object destructuring in params', async () => {
@@ -146,12 +146,12 @@ describe('Complex Expressions', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Should handle destructured params (parentheses may be omitted)
-    expect(component.clientJs).toContain('{ id, name }')
-    expect(component.clientJs).toContain('${name}')
-    expect(component.clientJs).toContain('${id}')
+    expect(file.clientJs).toContain('{ id, name }')
+    expect(file.clientJs).toContain('${name}')
+    expect(file.clientJs).toContain('${id}')
   })
 
   it('handles string literals with special characters in conditions', async () => {
@@ -167,10 +167,10 @@ describe('Complex Expressions', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Should preserve string with special characters
-    expect(component.clientJs).toContain("e.key === \"'\"")
+    expect(file.clientJs).toContain("e.key === \"'\"")
   })
 })
 
@@ -189,10 +189,10 @@ describe('Component Composition', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Ternary should be preserved in template or evaluated
-    expect(component.clientJs).toContain('createEffect')
+    expect(file.clientJs).toContain('createEffect')
   })
 
   it('handles multiple signal dependencies', async () => {
@@ -210,11 +210,11 @@ describe('Component Composition', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Both signals should be in the effect
-    expect(component.clientJs).toContain('firstName()')
-    expect(component.clientJs).toContain('lastName()')
+    expect(file.clientJs).toContain('firstName()')
+    expect(file.clientJs).toContain('lastName()')
   })
 })
 
@@ -229,10 +229,10 @@ describe('Whitespace Handling', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // The "Done: " text (including trailing space) should be preserved
-    expect(component.serverJsx).toContain('Done: <span>')
+    expect(file.serverJsx).toContain('Done: <span>')
   })
 
   it('preserves leading text in whitespace after closing element', async () => {
@@ -249,10 +249,10 @@ describe('Whitespace Handling', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // The "/ " text (including leading slash and trailing space) should be preserved
-    expect(component.serverJsx).toContain('/ <span')
+    expect(file.serverJsx).toContain('/ <span')
   })
 
   it('removes indentation whitespace between block elements', async () => {
@@ -267,10 +267,10 @@ describe('Whitespace Handling', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // No extra whitespace between p elements (indentation stripped)
-    expect(component.serverJsx).toContain('<p>First</p><p>Second</p>')
+    expect(file.serverJsx).toContain('<p>First</p><p>Second</p>')
   })
 
   it('preserves explicit space expression between elements', async () => {
@@ -283,10 +283,10 @@ describe('Whitespace Handling', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // The explicit space expression should be in the output
-    expect(component.serverJsx).toContain('<span>A</span>{')
-    expect(component.serverJsx).toContain('}<span>B</span>')
+    expect(file.serverJsx).toContain('<span>A</span>{')
+    expect(file.serverJsx).toContain('}<span>B</span>')
   })
 })

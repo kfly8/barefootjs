@@ -7,69 +7,26 @@
 
 import { describe, it, expect } from 'bun:test'
 import { compileJSX, type CompileJSXResult } from '../../src'
-import type { PropWithType } from '../../src/types'
 import { honoServerAdapter } from '@barefootjs/hono'
 
-/**
- * Component-like interface for backward compatibility with tests
- */
-interface ComponentLike {
-  name: string
-  clientJs: string
-  serverJsx: string
-  hasClientJs: boolean
-  props: PropWithType[]
-}
-
-interface CompileResultWithComponents extends CompileJSXResult {
-  components: ComponentLike[]
-}
-
-/**
- * Converts file-based output to component-like array for backward compatibility
- */
-function toComponentsArray(result: CompileJSXResult): ComponentLike[] {
-  const components: ComponentLike[] = []
-  for (const file of result.files) {
-    for (const compName of file.componentNames) {
-      components.push({
-        name: compName,
-        clientJs: file.clientJs,
-        serverJsx: file.serverJsx,
-        hasClientJs: file.hasClientJs,
-        props: file.componentProps[compName] || [],
-      })
-    }
-  }
-  return components
-}
-
-async function compile(source: string): Promise<CompileResultWithComponents> {
+async function compile(source: string): Promise<CompileJSXResult> {
   const files: Record<string, string> = {
     '/test/Component.tsx': source,
   }
-  const result = await compileJSX('/test/Component.tsx', async (path) => {
+  return compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: honoServerAdapter })
-  return {
-    ...result,
-    components: toComponentsArray(result),
-  }
 }
 
 async function compileWithFiles(
   entryPath: string,
   files: Record<string, string>
-): Promise<CompileResultWithComponents> {
-  const result = await compileJSX(entryPath, async (path) => {
+): Promise<CompileJSXResult> {
+  return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: honoServerAdapter })
-  return {
-    ...result,
-    components: toComponentsArray(result),
-  }
 }
 
 describe('Hono Adapter Integration', () => {
@@ -88,19 +45,19 @@ describe('Hono Adapter Integration', () => {
         }
       `
       const result = await compile(source)
-      const component = result.components[0]
+      const file = result.files[0]
 
       // Server JSX should have:
-      expect(component.serverJsx).toContain('import { useRequestContext }')
-      expect(component.serverJsx).toContain('import manifest from')
-      expect(component.serverJsx).toContain('export function Component')
-      expect(component.serverJsx).toContain('className="counter"')
-      expect(component.serverJsx).toContain('{0}')  // Initial value
+      expect(file.serverJsx).toContain('import { useRequestContext }')
+      expect(file.serverJsx).toContain('import manifest from')
+      expect(file.serverJsx).toContain('export function Component')
+      expect(file.serverJsx).toContain('className="counter"')
+      expect(file.serverJsx).toContain('{0}')  // Initial value
 
       // Client JS should have:
-      expect(component.clientJs).toContain('createSignal(0)')
-      expect(component.clientJs).toContain('createEffect')
-      expect(component.clientJs).toContain('setCount(n => n + 1)')
+      expect(file.clientJs).toContain('createSignal(0)')
+      expect(file.clientJs).toContain('createEffect')
+      expect(file.clientJs).toContain('setCount(n => n + 1)')
     })
 
     it('compiles counter with derived values', async () => {
@@ -117,14 +74,14 @@ describe('Hono Adapter Integration', () => {
         }
       `
       const result = await compile(source)
-      const component = result.components[0]
+      const file = result.files[0]
 
-      expect(component.serverJsx).toContain('{0}')       // count()
-      expect(component.serverJsx).toContain('{0 * 2}')   // count() * 2
+      expect(file.serverJsx).toContain('{0}')       // count()
+      expect(file.serverJsx).toContain('{0 * 2}')   // count() * 2
       // Expression is evaluated before element check to ensure signal dependencies are tracked
-      expect(component.clientJs).toContain('const __textValue = count()')
-      expect(component.clientJs).toContain('const __textValue = "doubled: " + String(count() * 2)')
-      expect(component.clientJs).toContain('String(__textValue)')
+      expect(file.clientJs).toContain('const __textValue = count()')
+      expect(file.clientJs).toContain('const __textValue = "doubled: " + String(count() * 2)')
+      expect(file.clientJs).toContain('String(__textValue)')
     })
   })
 
@@ -150,16 +107,16 @@ describe('Hono Adapter Integration', () => {
         }
       `
       const result = await compile(source)
-      const component = result.components[0]
+      const file = result.files[0]
 
       // Server JSX should use map with key
-      expect(component.serverJsx).toContain('.map((todo, __index) =>')
-      expect(component.serverJsx).toContain('data-key={todo.id}')
+      expect(file.serverJsx).toContain('.map((todo, __index) =>')
+      expect(file.serverJsx).toContain('data-key={todo.id}')
 
       // Client JS should have event delegation
-      expect(component.clientJs).toContain('reconcileList')
-      expect(component.clientJs).toContain("addEventListener('click'")
-      expect(component.clientJs).toContain('data-event-id')
+      expect(file.clientJs).toContain('reconcileList')
+      expect(file.clientJs).toContain("addEventListener('click'")
+      expect(file.clientJs).toContain('data-event-id')
     })
 
     it('compiles component with props for hydration', async () => {
@@ -176,17 +133,17 @@ describe('Hono Adapter Integration', () => {
         }
       `
       const result = await compile(source)
-      const component = result.components[0]
+      const file = result.files[0]
 
       // Should include props in function signature
-      expect(component.serverJsx).toContain('initialTodos')
-      expect(component.serverJsx).toContain('__isRoot')
-      expect(component.serverJsx).toContain('__hydrateProps')
-      expect(component.serverJsx).toContain('data-bf-props="Component"')
+      expect(file.serverJsx).toContain('initialTodos')
+      expect(file.serverJsx).toContain('__isRoot')
+      expect(file.serverJsx).toContain('__hydrateProps')
+      expect(file.serverJsx).toContain('data-bf-props="Component"')
 
       // Client JS should have auto-hydration
-      expect(component.clientJs).toContain('initComponent')
-      expect(component.clientJs).toContain('data-bf-props')
+      expect(file.clientJs).toContain('initComponent')
+      expect(file.clientJs).toContain('data-bf-props')
     })
   })
 
@@ -210,8 +167,8 @@ describe('Hono Adapter Integration', () => {
         `,
       })
 
-      const parent = result.components.find(c => c.name === 'Parent')
-      const child = result.components.find(c => c.name === 'Child')
+      const parent = result.files.find(f => f.componentNames.includes('Parent'))
+      const child = result.files.find(f => f.componentNames.includes('Child'))
 
       expect(parent).toBeDefined()
       expect(child).toBeDefined()
@@ -254,8 +211,8 @@ describe('Hono Adapter Integration', () => {
         `,
       })
 
-      const parent = result.components.find(c => c.name === 'Parent')
-      const todoItem = result.components.find(c => c.name === 'TodoItem')
+      const parent = result.files.find(f => f.componentNames.includes('Parent'))
+      const todoItem = result.files.find(f => f.componentNames.includes('TodoItem'))
 
       expect(parent).toBeDefined()
       expect(todoItem).toBeDefined()
@@ -276,13 +233,13 @@ describe('Hono Adapter Integration', () => {
         }
       `
       const result = await compile(source)
-      const component = result.components[0]
+      const file = result.files[0]
 
       // Should track which scripts have been output
-      expect(component.serverJsx).toContain('bfOutputScripts')
-      expect(component.serverJsx).toContain('__needsBarefoot')
-      expect(component.serverJsx).toContain('__needsThis')
-      expect(component.serverJsx).toContain('__barefootSrc')
+      expect(file.serverJsx).toContain('bfOutputScripts')
+      expect(file.serverJsx).toContain('__needsBarefoot')
+      expect(file.serverJsx).toContain('__needsThis')
+      expect(file.serverJsx).toContain('__barefootSrc')
     })
   })
 })
