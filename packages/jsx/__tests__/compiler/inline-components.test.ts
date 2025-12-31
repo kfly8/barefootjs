@@ -73,10 +73,10 @@ describe('Inline component expansion in map', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const appComponent = result.components.find(c => c.name === 'App')
+    const appFile = result.files.find(f => f.componentNames.includes('App'))
 
     // Item component is expanded inline in HTML (with __index for event delegation support)
-    expect(appComponent!.clientJs).toContain('items().map((item, __index) => `<li>${item.text}</li>`).join(\'\')')
+    expect(appFile!.clientJs).toContain('items().map((item, __index) => `<li>${item.text}</li>`).join(\'\')')
   })
 
   it('Inline expansion of components with event handlers', async () => {
@@ -113,15 +113,15 @@ describe('Inline component expansion in map', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const appComponent = result.components.find(c => c.name === 'App')
+    const appFile = result.files.find(f => f.componentNames.includes('App'))
 
     // Event handlers are converted to data-index and data-event-id
-    expect(appComponent!.clientJs).toContain('data-index="${__index}"')
-    expect(appComponent!.clientJs).toContain('data-event-id="0"')
+    expect(appFile!.clientJs).toContain('data-index="${__index}"')
+    expect(appFile!.clientJs).toContain('data-event-id="0"')
     // Event delegation is generated
-    expect(appComponent!.clientJs).toContain("addEventListener('click'")
+    expect(appFile!.clientJs).toContain("addEventListener('click'")
     // Handler content is expanded inline (onDelete() → remove(item.id))
-    expect(appComponent!.clientJs).toContain('remove(item.id)')
+    expect(appFile!.clientJs).toContain('remove(item.id)')
   })
 
   it('Inline expansion of components with conditional rendering', async () => {
@@ -157,10 +157,10 @@ describe('Inline component expansion in map', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const appComponent = result.components.find(c => c.name === 'App')
+    const appFile = result.files.find(f => f.componentNames.includes('App'))
 
     // Conditional rendering is included in template
-    expect(appComponent!.clientJs).toContain('item.editing ?')
+    expect(appFile!.clientJs).toContain('item.editing ?')
   })
 
   it('Components with multiple event handlers', async () => {
@@ -204,13 +204,13 @@ describe('Inline component expansion in map', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const appComponent = result.components.find(c => c.name === 'App')
+    const appFile = result.files.find(f => f.componentNames.includes('App'))
 
     // Multiple event delegations are generated
-    expect(appComponent!.clientJs).toContain('toggle(item.id)')
-    expect(appComponent!.clientJs).toContain('remove(item.id)')
+    expect(appFile!.clientJs).toContain('toggle(item.id)')
+    expect(appFile!.clientJs).toContain('remove(item.id)')
     // Different event-ids are used
-    expect(appComponent!.clientJs).toContain('data-event-id="0"')
-    expect(appComponent!.clientJs).toContain('data-event-id="1"')
+    expect(appFile!.clientJs).toContain('data-event-id="0"')
+    expect(appFile!.clientJs).toContain('data-event-id="1"')
   })
 })

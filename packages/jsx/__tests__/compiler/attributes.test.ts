@@ -45,10 +45,10 @@ describe('HTML Attributes - Dynamic class', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // class is updated via setAttribute in client JS (for SVG compatibility)
-    expect(component.clientJs).toContain("_0.setAttribute('class', isActive() ? 'active' : '')")
+    expect(file.clientJs).toContain("_0.setAttribute('class', isActive() ? 'active' : '')")
   })
 })
 
@@ -62,10 +62,10 @@ describe('HTML Attributes - Dynamic style', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Style is updated in client JS (with existence check)
-    expect(component.clientJs).toContain("Object.assign(_0.style, { color: isRed() ? 'red' : 'blue' })")
+    expect(file.clientJs).toContain("Object.assign(_0.style, { color: isRed() ? 'red' : 'blue' })")
   })
 })
 
@@ -79,10 +79,10 @@ describe('HTML Attributes - Boolean attributes', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Disabled is updated in client JS (with existence check)
-    expect(component.clientJs).toContain('_0.disabled = isLoading()')
+    expect(file.clientJs).toContain('_0.disabled = isLoading()')
   })
 })
 
@@ -96,10 +96,10 @@ describe('HTML Attributes - Form related', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Value is updated in client JS (with undefined check)
-    expect(component.clientJs).toContain('.value = __val')
-    expect(component.clientJs).toContain('if (__val !== undefined)')
+    expect(file.clientJs).toContain('.value = __val')
+    expect(file.clientJs).toContain('if (__val !== undefined)')
   })
 })

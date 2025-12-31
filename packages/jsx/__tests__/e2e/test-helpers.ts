@@ -8,18 +8,16 @@
  * - Signal updates cause correct DOM changes
  */
 
-import { compileJSX } from '../../src/jsx-compiler'
+import { compileJSX, type CompileJSXResult } from '../../src/jsx-compiler'
 import { testHtmlAdapter } from '../../src/adapters/testing'
 
 export type CompileResult = {
+  /** HTML output (from serverJsx field for HTML adapter) */
   html: string
+  /** Client-side JavaScript */
   clientJs: string
-  components: Array<{
-    name: string
-    html: string
-    clientJs: string
-    serverJsx: string
-  }>
+  /** Full compilation result */
+  files: CompileJSXResult['files']
 }
 
 /**
@@ -34,17 +32,12 @@ export async function compile(source: string): Promise<CompileResult> {
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: testHtmlAdapter })
 
-  // Extract HTML and clientJs from the first component
-  const component = result.components[0]
+  const firstFile = result.files[0]
+
   return {
-    html: component?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
-    clientJs: component?.clientJs || '',
-    components: result.components.map(c => ({
-      name: c.name,
-      html: c.serverJsx,  // HTML is stored in serverJsx for compatibility
-      clientJs: c.clientJs,
-      serverJsx: c.serverJsx,
-    })),
+    html: firstFile?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
+    clientJs: firstFile?.clientJs || '',
+    files: result.files,
   }
 }
 
@@ -60,16 +53,12 @@ export async function compileWithFiles(
     throw new Error(`File not found: ${path}`)
   }, { serverAdapter: testHtmlAdapter })
 
-  const component = result.components[0]
+  const firstFile = result.files[0]
+
   return {
-    html: component?.serverJsx || '',
-    clientJs: component?.clientJs || '',
-    components: result.components.map(c => ({
-      name: c.name,
-      html: c.serverJsx,
-      clientJs: c.clientJs,
-      serverJsx: c.serverJsx,
-    })),
+    html: firstFile?.serverJsx || '',
+    clientJs: firstFile?.clientJs || '',
+    files: result.files,
   }
 }
 

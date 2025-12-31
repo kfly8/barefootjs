@@ -64,9 +64,9 @@ describe('Components - Basics', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
 
     // Counter component is output
-    const counterComponent = result.components.find(c => c.name === 'Counter')
-    expect(counterComponent).toBeDefined()
-    expect(counterComponent!.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    const counterFile = result.files.find(f => f.componentNames.includes('Counter'))
+    expect(counterFile).toBeDefined()
+    expect(counterFile!.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
   it('Component with props', async () => {
@@ -98,10 +98,10 @@ describe('Components - Basics', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
 
     // Counter component takes props
-    const counterComponent = result.components.find(c => c.name === 'Counter')
-    expect(counterComponent).toBeDefined()
-    // Props are stored in component output
-    expect(counterComponent!.props.map(p => p.name)).toContain('initial')
+    const counterFile = result.files.find(f => f.componentNames.includes('Counter'))
+    expect(counterFile).toBeDefined()
+    // Props are stored in componentProps keyed by component name
+    expect(counterFile!.componentProps['Counter'].map(p => p.name)).toContain('initial')
   })
 
   it('Component with children and clientJs', async () => {
@@ -128,10 +128,10 @@ describe('Components - Basics', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
 
     // Button component takes children and has clientJs
-    const buttonComponent = result.components.find(c => c.name === 'Button')
-    expect(buttonComponent).toBeDefined()
+    const buttonFile = result.files.find(f => f.componentNames.includes('Button'))
+    expect(buttonFile).toBeDefined()
     // Children prop is handled
-    expect(buttonComponent!.props.map(p => p.name)).toContain('children')
+    expect(buttonFile!.componentProps['Button'].map(p => p.name)).toContain('children')
   })
 })
 
@@ -175,16 +175,16 @@ describe('Components - Props and init function', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const formComponent = result.components.find(c => c.name === 'Form')
+    const formFile = result.files.find(f => f.componentNames.includes('Form'))
 
     // Wrapped in init function (with __instanceIndex and __parentScope for multiple instance and scoping support)
-    expect(formComponent!.clientJs).toContain('export function initForm({ onAdd }, __instanceIndex = 0, __parentScope = null)')
+    expect(formFile!.clientJs).toContain('export function initForm({ onAdd }, __instanceIndex = 0, __parentScope = null)')
     // Signal declaration is inside function
-    expect(formComponent!.clientJs).toContain("const [text, setText] = createSignal('')")
+    expect(formFile!.clientJs).toContain("const [text, setText] = createSignal('')")
     // Local function is also inside function
-    expect(formComponent!.clientJs).toContain('const handleSubmit = () =>')
+    expect(formFile!.clientJs).toContain('const handleSubmit = () =>')
     // onAdd can be used
-    expect(formComponent!.clientJs).toContain('onAdd(text().trim())')
+    expect(formFile!.clientJs).toContain('onAdd(text().trim())')
   })
 
   it('Components without props are not wrapped', async () => {
@@ -196,12 +196,12 @@ describe('Components - Props and init function', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Not wrapped in init function
-    expect(component.clientJs).not.toContain('export function init')
+    expect(file.clientJs).not.toContain('export function init')
     // Signal declaration is at top level
-    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    expect(file.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
   it('Parent component calls child init function', async () => {
@@ -238,12 +238,12 @@ describe('Components - Props and init function', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const appComponent = result.components.find(c => c.name === 'App')
+    const appFile = result.files.find(f => f.componentNames.includes('App'))
 
     // Child component import exists (with hash)
-    expect(appComponent!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
+    expect(appFile!.clientJs).toMatch(/import { initForm } from '\.\/Form-[a-f0-9]+\.js'/)
     // init call exists with instance index and scope (callback is passed as is because createEffect automatically tracks)
-    expect(appComponent!.clientJs).toContain('initForm({ onAdd: handleAdd }, 0, __scope)')
+    expect(appFile!.clientJs).toContain('initForm({ onAdd: handleAdd }, 0, __scope)')
   })
 })
 
@@ -274,7 +274,7 @@ describe('Components - Callback props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Parent.tsx', files)
-    const parent = result.components.find(c => c.name === 'Parent')
+    const parent = result.files.find(f => f.componentNames.includes('Parent'))
 
     // Callback is passed as is with instance index and scope (due to automatic tracking by createEffect)
     expect(parent!.clientJs).toContain('initChild({ onClick: handleClick }, 0, __scope)')
@@ -303,7 +303,7 @@ describe('Components - Callback props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Parent.tsx', files)
-    const parent = result.components.find(c => c.name === 'Parent')
+    const parent = result.files.find(f => f.componentNames.includes('Parent'))
 
     // Callback is not wrapped
     expect(parent!.clientJs).toContain('onClick: handleClick')
@@ -350,7 +350,7 @@ describe('Components - Module constants in child props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Parent.tsx', files)
-    const parent = result.components.find(c => c.name === 'Parent')
+    const parent = result.files.find(f => f.componentNames.includes('Parent'))
 
     // Module constants should be included in client JS
     expect(parent!.clientJs).toContain('const variantCode = `<Button>Default</Button>`')
@@ -396,7 +396,7 @@ describe('Components - Module constants in child props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Parent.tsx', files)
-    const parent = result.components.find(c => c.name === 'Parent')
+    const parent = result.files.find(f => f.componentNames.includes('Parent'))
 
     // Only used constants should be included
     expect(parent!.clientJs).toContain('const usedCode = `used`')
@@ -425,29 +425,29 @@ describe('Components - Hash and filename', () => {
     }
     const result = await compileWithFiles('/test/App.tsx', files)
 
-    // Components with clientJs have hash and filename
-    for (const c of result.components) {
-      expect(c.hash).toMatch(/^[a-f0-9]{8}$/)
-      if (c.hasClientJs) {
-        expect(c.filename).toBe(`${c.name}-${c.hash}.js`)
+    // Files with clientJs have hash and clientJsFilename
+    for (const f of result.files) {
+      expect(f.hash).toMatch(/^[a-f0-9]{8}$/)
+      if (f.hasClientJs) {
+        expect(f.clientJsFilename).toMatch(new RegExp(`(${f.componentNames.join('|')})-${f.hash}\\.js`))
       } else {
-        expect(c.filename).toBe('')
+        expect(f.clientJsFilename).toBe('')
       }
     }
 
-    // Counter component has clientJs
-    const counter = result.components.find(c => c.name === 'Counter')
+    // Counter file has clientJs
+    const counter = result.files.find(f => f.componentNames.includes('Counter'))
     expect(counter).toBeDefined()
     expect(counter!.hasClientJs).toBe(true)
     expect(counter!.hash).toBeTruthy()
-    expect(counter!.filename).toContain(counter!.hash)
+    expect(counter!.clientJsFilename).toContain(counter!.hash)
 
-    // All components with JSX return are included
-    // App component has serverJsx AND clientJs (because it calls initCounter for child component)
-    const app = result.components.find(c => c.name === 'App')
+    // All files with JSX return are included
+    // App file has serverJsx AND clientJs (because it calls initCounter for child component)
+    const app = result.files.find(f => f.componentNames.includes('App'))
     expect(app).toBeDefined()
     expect(app!.hasClientJs).toBe(true)  // App needs clientJs to initialize child Counter
-    expect(app!.filename).toContain(app!.hash)
+    expect(app!.clientJsFilename).toContain(app!.hash)
     expect(app!.serverJsx).toContain('<Counter />')
   })
 })
@@ -470,7 +470,7 @@ describe('Components - Auto-hydration', () => {
       `,
     }
     const result = await compileWithFiles('/test/Counter.tsx', files)
-    const counter = result.components.find(c => c.name === 'Counter')
+    const counter = result.files.find(f => f.componentNames.includes('Counter'))
 
     // Client JS should include auto-hydration code
     expect(counter!.clientJs).toContain('// Auto-hydration')
@@ -488,7 +488,7 @@ describe('Components - Auto-hydration', () => {
       }
     `
     const result = await compile(source)
-    const counter = result.components[0]
+    const counter = result.files[0]
 
     // No auto-hydration code for components without props
     expect(counter.clientJs).not.toContain('Auto-hydration')
@@ -516,7 +516,7 @@ describe('Components - Lazy Children', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // App's client JS should pass children as a function
     expect(app!.clientJs).toContain('children: () =>')
@@ -541,7 +541,7 @@ describe('Components - Lazy Children', () => {
       `,
     }
     const result = await compileWithFiles('/test/Button.tsx', files)
-    const button = result.components.find(c => c.name === 'Button')
+    const button = result.files.find(f => f.componentNames.includes('Button'))
 
     // Button's server JSX should handle children as function
     expect(button!.serverJsx).toContain("typeof children === 'function' ? children() : children")
@@ -566,7 +566,7 @@ describe('Components - Lazy Children', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // App's server JSX should inline children (not pass as function)
     expect(app!.serverJsx).toContain('>Click me<')
@@ -623,10 +623,10 @@ describe('Components - Reactive Children (No Warning)', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Static children are inlined (not passed as function)
     expect(app!.serverJsx).toContain('>Click me<')
-    expect(app!.serverJsx).not.toContain('children={() =>')
+    expect(app!.serverJsx).not.toContain('children(() =>')
   })
 })

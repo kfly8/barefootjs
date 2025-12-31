@@ -54,11 +54,11 @@ describe('Local functions in components', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Handler function is defined
-    expect(component.clientJs).toContain('const handleToggle = (id) =>')
-    expect(component.clientJs).toContain('setItems(items().map(t => t.id === id ? { ...t, done: !t.done } : t))')
+    expect(file.clientJs).toContain('const handleToggle = (id) =>')
+    expect(file.clientJs).toContain('setItems(items().map(t => t.id === id ? { ...t, done: !t.done } : t))')
   })
 
   it('Multiple handler functions are output', async () => {
@@ -87,11 +87,11 @@ describe('Local functions in components', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Both handler functions are defined
-    expect(component.clientJs).toContain('const handleAdd = () =>')
-    expect(component.clientJs).toContain('const handleDelete = (id) =>')
+    expect(file.clientJs).toContain('const handleAdd = () =>')
+    expect(file.clientJs).toContain('const handleDelete = (id) =>')
   })
 
   it('Correctly extracted even when mixed with signal declarations', async () => {
@@ -116,14 +116,14 @@ describe('Local functions in components', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Signal declarations are as usual
-    expect(component.clientJs).toContain('const [count, setCount] = createSignal(0)')
-    expect(component.clientJs).toContain("const [name, setName] = createSignal('')")
+    expect(file.clientJs).toContain('const [count, setCount] = createSignal(0)')
+    expect(file.clientJs).toContain("const [name, setName] = createSignal('')")
     // Handler functions are also output
-    expect(component.clientJs).toContain('const increment = () =>')
-    expect(component.clientJs).toContain('const reset = () =>')
+    expect(file.clientJs).toContain('const increment = () =>')
+    expect(file.clientJs).toContain('const reset = () =>')
   })
 
   it('TypeScript type annotations are removed', async () => {
@@ -151,14 +151,14 @@ describe('Local functions in components', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Type annotations are removed
-    expect(component.clientJs).not.toContain(': number')
-    expect(component.clientJs).not.toContain(': string')
-    expect(component.clientJs).not.toContain(': {')
+    expect(file.clientJs).not.toContain(': number')
+    expect(file.clientJs).not.toContain(': string')
+    expect(file.clientJs).not.toContain(': {')
     // Functions themselves are output
-    expect(component.clientJs).toContain('const handleToggle = (id) =>')
-    expect(component.clientJs).toContain('const handleAdd = (text, priority = 1) =>')
+    expect(file.clientJs).toContain('const handleToggle = (id) =>')
+    expect(file.clientJs).toContain('const handleAdd = (text, priority = 1) =>')
   })
 })

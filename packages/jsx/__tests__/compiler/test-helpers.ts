@@ -4,14 +4,14 @@
  * Provides common setup and utilities for tests.
  */
 
-import { compileJSX } from '../../src/jsx-compiler'
+import { compileJSX, type CompileJSXResult } from '../../src/jsx-compiler'
 import { testJsxAdapter } from '../../src/adapters/testing'
 
 /**
  * Compiles a single component
  *
  * @param source - JSX source code
- * @returns Compilation result
+ * @returns Compilation result with files array
  *
  * @example
  * ```typescript
@@ -22,10 +22,10 @@ import { testJsxAdapter } from '../../src/adapters/testing'
  *     return <p>{count()}</p>
  *   }
  * `)
- * expect(result.components[0].clientJs).toContain('signal(0)')
+ * expect(result.files[0].clientJs).toContain('signal(0)')
  * ```
  */
-export async function compile(source: string) {
+export async function compile(source: string): Promise<CompileJSXResult> {
   const files: Record<string, string> = {
     '/test/Component.tsx': source,
   }
@@ -40,7 +40,7 @@ export async function compile(source: string) {
  *
  * @param entryPath - Entry point path
  * @param files - Map of file paths to source code
- * @returns Compilation result
+ * @returns Compilation result with files array
  *
  * @example
  * ```typescript
@@ -59,7 +59,7 @@ export async function compile(source: string) {
 export async function compileWithFiles(
   entryPath: string,
   files: Record<string, string>
-) {
+): Promise<CompileJSXResult> {
   return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)

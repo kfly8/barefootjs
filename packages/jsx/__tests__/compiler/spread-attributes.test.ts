@@ -25,10 +25,10 @@ describe('Spread Attributes Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should contain spread
-    expect(component.serverJsx).toContain('{...buttonProps}')
+    expect(file.serverJsx).toContain('{...buttonProps}')
   })
 
   it('spread with additional attributes', async () => {
@@ -41,11 +41,11 @@ describe('Spread Attributes Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should contain both spread and additional attributes
-    expect(component.serverJsx).toContain('{...inputProps}')
-    expect(component.serverJsx).toContain('className="form-input"')
+    expect(file.serverJsx).toContain('{...inputProps}')
+    expect(file.serverJsx).toContain('className="form-input"')
   })
 
   it('spread attributes override order', async () => {
@@ -59,11 +59,11 @@ describe('Spread Attributes Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should contain both spreads in order
-    expect(component.serverJsx).toContain('{...baseProps}')
-    expect(component.serverJsx).toContain('{...overrideProps}')
+    expect(file.serverJsx).toContain('{...baseProps}')
+    expect(file.serverJsx).toContain('{...overrideProps}')
   })
 
   it('spread with dynamic expression', async () => {
@@ -77,10 +77,10 @@ describe('Spread Attributes Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should contain spread with signal call replaced
-    expect(component.serverJsx).toContain('{...{ class: \'active\' }}')
+    expect(file.serverJsx).toContain('{...{ class: \'active\' }}')
   })
 
   it('spread on self-closing element', async () => {
@@ -93,10 +93,10 @@ describe('Spread Attributes Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should contain spread on self-closing element
-    expect(component.serverJsx).toContain('{...imgProps}')
-    expect(component.serverJsx).toMatch(/<img[^>]*\/>/)
+    expect(file.serverJsx).toContain('{...imgProps}')
+    expect(file.serverJsx).toMatch(/<img[^>]*\/>/)
   })
 })

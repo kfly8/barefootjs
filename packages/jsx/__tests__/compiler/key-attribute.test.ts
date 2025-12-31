@@ -33,13 +33,13 @@ describe('Key Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Server JSX should contain data-key attribute
-    expect(component.serverJsx).toContain('data-key={item.id}')
+    expect(file.serverJsx).toContain('data-key={item.id}')
 
     // Client JS should use reconcileList
-    expect(component.clientJs).toContain('reconcileList')
+    expect(file.clientJs).toContain('reconcileList')
   })
 
   it('key with index', async () => {
@@ -57,10 +57,10 @@ describe('Key Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // key with index should use __index
-    expect(component.serverJsx).toContain('data-key={__index}')
+    expect(file.serverJsx).toContain('data-key={__index}')
   })
 
   it('key with computed expression', async () => {
@@ -81,10 +81,10 @@ describe('Key Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Complex key expression should be preserved
-    expect(component.serverJsx).toContain('data-key={`${item.type}-${item.id}`}')
+    expect(file.serverJsx).toContain('data-key={`${item.type}-${item.id}`}')
   })
 
   it('list without key uses innerHTML', async () => {
@@ -102,11 +102,11 @@ describe('Key Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Without key, should use innerHTML (existing behavior)
-    expect(component.clientJs).toContain('.innerHTML =')
-    expect(component.clientJs).not.toContain('reconcileList')
+    expect(file.clientJs).toContain('.innerHTML =')
+    expect(file.clientJs).not.toContain('reconcileList')
   })
 
   it('key attribute is not output as regular attribute', async () => {
@@ -124,12 +124,12 @@ describe('Key Attribute Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // key should be converted to data-key
-    expect(component.serverJsx).toContain('data-key={item.id}')
+    expect(file.serverJsx).toContain('data-key={item.id}')
     // Regular key attribute should not exist
-    expect(component.serverJsx).not.toMatch(/\skey=/)
+    expect(file.serverJsx).not.toMatch(/\skey=/)
   })
 })
 
@@ -149,9 +149,9 @@ describe('reconcileList Runtime', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Should import reconcileList from barefoot
-    expect(component.clientJs).toContain('reconcileList')
+    expect(file.clientJs).toContain('reconcileList')
   })
 })

@@ -30,7 +30,7 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Boolean shorthand should be passed as true
     expect(app!.clientJs).toContain('checked: true')
@@ -52,7 +52,7 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Both boolean shorthands should be passed as true
     expect(app!.clientJs).toContain('checked: true')
@@ -75,7 +75,7 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Boolean shorthand and string prop should both be passed
     expect(app!.clientJs).toContain('disabled: true')
@@ -92,11 +92,11 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // type={inputType} should be dynamic, not literal "inputType"
-    expect(component.clientJs).toContain('inputType')
-    expect(component.clientJs).not.toContain('type="inputType"')
+    expect(file.clientJs).toContain('inputType')
+    expect(file.clientJs).not.toContain('type="inputType"')
   })
 
   it('expression in placeholder attribute is dynamic', async () => {
@@ -107,10 +107,10 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // placeholder={placeholder} should reference the variable
-    expect(component.clientJs).toContain('placeholder')
+    expect(file.clientJs).toContain('placeholder')
   })
 
   it('all JSX expression attributes are treated as dynamic', async () => {
@@ -123,10 +123,10 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // All should be dynamic, not literal strings
-    expect(component.clientJs).toContain('createEffect')
+    expect(file.clientJs).toContain('createEffect')
   })
 })
 
@@ -149,7 +149,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Dynamic prop should be wrapped in getter function
     expect(app!.clientJs).toContain('checked: () => checked()')
@@ -173,7 +173,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Callback prop should not be wrapped
     expect(app!.clientJs).toContain('onCheckedChange: setChecked')
@@ -198,7 +198,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Checkbox.tsx', files)
-    const checkbox = result.components.find(c => c.name === 'Checkbox')
+    const checkbox = result.files.find(f => f.componentNames.includes('Checkbox'))
 
     // Props should be unwrapped to getters
     expect(checkbox!.clientJs).toContain('checked: __raw_checked')
@@ -225,7 +225,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Checkbox.tsx', files)
-    const checkbox = result.components.find(c => c.name === 'Checkbox')
+    const checkbox = result.files.find(f => f.componentNames.includes('Checkbox'))
 
     // Prop usages should be replaced with getter calls
     expect(checkbox!.clientJs).toContain('checked()')
@@ -250,7 +250,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Checkbox.tsx', files)
-    const checkbox = result.components.find(c => c.name === 'Checkbox')
+    const checkbox = result.files.find(f => f.componentNames.includes('Checkbox'))
 
     // CSS pseudo-class "disabled:" should not be replaced with "disabled():"
     expect(checkbox!.clientJs).toContain('disabled:cursor-not-allowed')
@@ -272,7 +272,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/Checkbox.tsx', files)
-    const checkbox = result.components.find(c => c.name === 'Checkbox')
+    const checkbox = result.files.find(f => f.componentNames.includes('Checkbox'))
 
     // "aria-checked" should remain as is (hyphenated attribute name)
     expect(checkbox!.clientJs).toContain('aria-checked')
@@ -295,7 +295,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
       `,
     }
     const result = await compileWithFiles('/test/App.tsx', files)
-    const app = result.components.find(c => c.name === 'App')
+    const app = result.files.find(f => f.componentNames.includes('App'))
 
     // Static props should not be wrapped in getters
     expect(app!.clientJs).toContain('checked: true')

@@ -5,7 +5,7 @@
  * Scripts are automatically included by the component itself.
  */
 
-import Counter from './dist/Counter'
+import Counter from '@/components/Counter'
 
 // Simulate async data fetching
 async function fetchData(): Promise<string> {

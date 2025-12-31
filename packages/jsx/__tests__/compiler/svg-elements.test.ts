@@ -26,13 +26,13 @@ describe('SVG Elements Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // SVG should have xmlns attribute
-    expect(component.serverJsx).toContain('xmlns="http://www.w3.org/2000/svg"')
+    expect(file.serverJsx).toContain('xmlns="http://www.w3.org/2000/svg"')
     // Should contain circle element
-    expect(component.serverJsx).toContain('<circle')
-    expect(component.serverJsx).toContain('cx="50"')
+    expect(file.serverJsx).toContain('<circle')
+    expect(file.serverJsx).toContain('cx="50"')
   })
 
   it('svg with viewBox (camelCase)', async () => {
@@ -46,11 +46,11 @@ describe('SVG Elements Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // viewBox should be preserved as camelCase
-    expect(component.serverJsx).toContain('viewBox="0 0 100 100"')
-    expect(component.serverJsx).toContain('<rect')
+    expect(file.serverJsx).toContain('viewBox="0 0 100 100"')
+    expect(file.serverJsx).toContain('<rect')
   })
 
   it('svg with stroke attributes', async () => {
@@ -70,11 +70,11 @@ describe('SVG Elements Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // stroke attributes should be preserved
-    expect(component.serverJsx).toContain('strokeWidth="2"')
-    expect(component.serverJsx).toContain('strokeLinecap="round"')
+    expect(file.serverJsx).toContain('strokeWidth="2"')
+    expect(file.serverJsx).toContain('strokeLinecap="round"')
   })
 
   it('svg with dynamic attributes', async () => {
@@ -90,13 +90,13 @@ describe('SVG Elements Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Elements reachable via path-based navigation don't need data-bf
-    expect(component.serverJsx).not.toContain('data-bf=')
-    expect(component.serverJsx).toContain('<circle')
+    expect(file.serverJsx).not.toContain('data-bf=')
+    expect(file.serverJsx).toContain('<circle')
     // Should use path-based navigation in client JS
-    expect(component.clientJs).toContain('firstElementChild')
+    expect(file.clientJs).toContain('firstElementChild')
   })
 
   it('svg with events', async () => {
@@ -118,12 +118,12 @@ describe('SVG Elements Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Elements reachable via path-based navigation don't need data-bf
-    expect(component.serverJsx).not.toContain('data-bf=')
+    expect(file.serverJsx).not.toContain('data-bf=')
     // Should generate click handler
-    expect(component.clientJs).toContain('onclick')
+    expect(file.clientJs).toContain('onclick')
   })
 
   it('nested svg groups', async () => {
@@ -140,11 +140,11 @@ describe('SVG Elements Support', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.serverJsx).toContain('<g')
-    expect(component.serverJsx).toContain('transform="translate(10, 10)"')
-    expect(component.serverJsx).toContain('<circle')
-    expect(component.serverJsx).toContain('<rect')
+    expect(file.serverJsx).toContain('<g')
+    expect(file.serverJsx).toContain('transform="translate(10, 10)"')
+    expect(file.serverJsx).toContain('<circle')
+    expect(file.serverJsx).toContain('<rect')
   })
 })

@@ -40,13 +40,13 @@ describe('Dynamic Content', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // Updated with createEffect, existence check, and String() wrapper
     // Expression is evaluated before element check to ensure signal dependencies are tracked
-    expect(component.clientJs).toContain('const __textValue = count()')
-    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
-    expect(component.clientJs).toContain('if (_0)')
+    expect(file.clientJs).toContain('const __textValue = count()')
+    expect(file.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('if (_0)')
   })
 
   it('binary operation', async () => {
@@ -58,10 +58,10 @@ describe('Dynamic Content', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain('const __textValue = count() * 2')
-    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('const __textValue = count() * 2')
+    expect(file.clientJs).toContain('_0.textContent = String(__textValue)')
   })
 
   it('conditional expression (ternary operator)', async () => {
@@ -73,10 +73,10 @@ describe('Dynamic Content', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
-    expect(component.clientJs).toContain("const __textValue = on() ? 'ON' : 'OFF'")
-    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(file.clientJs).toContain("const __textValue = on() ? 'ON' : 'OFF'")
+    expect(file.clientJs).toContain('_0.textContent = String(__textValue)')
   })
 
   it('text + dynamic content', async () => {
@@ -88,13 +88,13 @@ describe('Dynamic Content', () => {
       }
     `
     const result = await compile(source)
-    const component = result.components[0]
+    const file = result.files[0]
 
     // String() wrapper is added for safe concatenation with text (now double-wrapped)
     // Note: whitespace after "Count:" is preserved
     // Expression is evaluated before element check to ensure signal dependencies are tracked
-    expect(component.clientJs).toContain('const __textValue = "Count: " + String(count())')
-    expect(component.clientJs).toContain('_0.textContent = String(__textValue)')
+    expect(file.clientJs).toContain('const __textValue = "Count: " + String(count())')
+    expect(file.clientJs).toContain('_0.textContent = String(__textValue)')
   })
 
 })
