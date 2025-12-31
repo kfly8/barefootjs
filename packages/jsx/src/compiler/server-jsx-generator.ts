@@ -1,7 +1,7 @@
 /**
- * Server JSX Generator
+ * Marked JSX Generator
  *
- * Generates server-side JSX for file-based output.
+ * Generates Marked JSX (server-side JSX with hydration markers) for file-based output.
  * Collects component data and delegates to the server adapter.
  */
 
@@ -11,7 +11,7 @@ import { irToServerJsx, collectAllChildComponentNames } from '../transformers'
 import { calculateElementPaths } from '../utils/element-paths'
 
 /**
- * Generate combined server JSX for a file
+ * Generate combined Marked JSX for a file
  */
 export function generateFileServerJsx(
   fileComponents: ComponentData[],

@@ -45,7 +45,7 @@ export function collectComponentData(
   const componentData: ComponentData[] = []
 
   for (const [cacheKey, { result, fullPath }] of compiledComponents) {
-    // Include component if it has clientJs OR ir (for serverJsx generation)
+    // Include component if it has clientJs OR ir (for Marked JSX generation)
     if (result.clientJs || result.ir) {
       // Use the actual component name from the result
       const name = result.componentName

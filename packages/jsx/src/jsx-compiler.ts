@@ -137,7 +137,7 @@ export async function compileJSX(
     }
     const combinedClientJs = generateFileClientJs(fileComponents, clientJsCtx)
 
-    // Generate combined server JSX using new module
+    // Generate combined Marked JSX using new module
     const combinedServerJsx = generateFileServerJsx(fileComponents, sourcePath, options)
 
     files.push({
@@ -207,7 +207,7 @@ function compileJsxWithComponents(
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
 
-  // Extract imports (for server JSX generation)
+  // Extract imports (for Marked JSX generation)
   const imports = extractImports(source, filePath)
 
   // Extract component name from target or file path
