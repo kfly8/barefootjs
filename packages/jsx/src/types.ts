@@ -210,6 +210,7 @@ export type CompileResult = {
   ir: IRNode | null  // Intermediate Representation for Marked JSX generation
   imports: ComponentImport[]       // Import statements from source file
   isDefaultExport?: boolean        // Whether this component is the default export
+  hasUseClientDirective: boolean   // Whether file has "use client" directive
 }
 
 export type ComponentImport = {
@@ -251,6 +252,8 @@ export type FileOutput = {
   componentNames: string[]
   /** Props for each component (keyed by component name) */
   componentProps: Record<string, PropWithType[]>
+  /** Whether file has "use client" directive */
+  hasUseClientDirective: boolean
 }
 
 export type CompileJSXResult = {

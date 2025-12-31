@@ -17,6 +17,7 @@ import { compile } from './test-helpers'
 describe('SVG Elements Support', () => {
   it('basic svg element', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <svg width="100" height="100">
@@ -37,6 +38,7 @@ describe('SVG Elements Support', () => {
 
   it('svg with viewBox (camelCase)', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <svg viewBox="0 0 100 100" width="50" height="50">
@@ -55,6 +57,7 @@ describe('SVG Elements Support', () => {
 
   it('svg with stroke attributes', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <svg viewBox="0 0 100 100">
@@ -79,6 +82,7 @@ describe('SVG Elements Support', () => {
 
   it('svg with dynamic attributes', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [color, setColor] = createSignal('red')
@@ -101,6 +105,7 @@ describe('SVG Elements Support', () => {
 
   it('svg with events', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [clicked, setClicked] = createSignal(false)
@@ -128,6 +133,7 @@ describe('SVG Elements Support', () => {
 
   it('nested svg groups', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <svg viewBox="0 0 100 100">

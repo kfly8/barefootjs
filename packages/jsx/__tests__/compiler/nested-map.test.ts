@@ -16,6 +16,7 @@ import { compile } from './test-helpers'
 describe('Nested Map Support', () => {
   it('two levels of nesting', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [groups, setGroups] = createSignal([
@@ -50,6 +51,7 @@ describe('Nested Map Support', () => {
 
   it('nested map with keys', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [categories, setCategories] = createSignal([
@@ -82,6 +84,7 @@ describe('Nested Map Support', () => {
 
   it('matrix rendering (grid of items)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [matrix, setMatrix] = createSignal([

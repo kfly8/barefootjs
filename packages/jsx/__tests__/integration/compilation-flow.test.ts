@@ -12,6 +12,7 @@ describe('Full Compilation Flow', () => {
   describe('simple components', () => {
     it('compiles a simple counter component', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         function Counter() {
@@ -44,10 +45,12 @@ describe('Full Compilation Flow', () => {
       expect(file.clientJs).toContain('createSignal(0)')
       expect(file.clientJs).toContain('setCount')
       expect(file.hasClientJs).toBe(true)
+      expect(file.hasUseClientDirective).toBe(true)
     })
 
     it('compiles a static component without client JS', async () => {
       const source = `
+        "use client"
         function Header() {
           return (
             <header class="main-header">
@@ -64,7 +67,7 @@ describe('Full Compilation Flow', () => {
 
       expect(file.markedJsx).toContain('data-bf-scope="Header"')
       expect(file.markedJsx).toContain('<h1>Welcome</h1>')
-      // Static component has no client JS
+      // Static component with "use client" but no dynamic content has no client JS
       expect(file.hasClientJs).toBe(false)
     })
   })
@@ -72,6 +75,7 @@ describe('Full Compilation Flow', () => {
   describe('conditional rendering', () => {
     it('compiles component with ternary conditional', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         function Toggle() {
@@ -100,6 +104,7 @@ describe('Full Compilation Flow', () => {
 
     it('compiles component with logical AND conditional', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         function Greeting() {
@@ -124,6 +129,7 @@ describe('Full Compilation Flow', () => {
   describe('list rendering', () => {
     it('compiles component with map expression', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         type Todo = { id: number; text: string }
@@ -154,6 +160,7 @@ describe('Full Compilation Flow', () => {
 
     it('compiles component with list and event handlers', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         type Item = { id: number; text: string }
@@ -190,6 +197,7 @@ describe('Full Compilation Flow', () => {
     it('compiles parent and child components', async () => {
       const result = await compileWithFiles('/test/App.tsx', {
         '/test/App.tsx': `
+          "use client"
           import Counter from './Counter'
 
           function App() {
@@ -202,6 +210,7 @@ describe('Full Compilation Flow', () => {
           }
         `,
         '/test/Counter.tsx': `
+          "use client"
           import { createSignal } from 'barefoot'
 
           function Counter() {
@@ -218,7 +227,7 @@ describe('Full Compilation Flow', () => {
         `,
       })
 
-      // Should have two output files (App and Counter)
+      // Should have two output files (both have "use client")
       expect(result.files.length).toBe(2)
 
       // Find App file
@@ -231,11 +240,47 @@ describe('Full Compilation Flow', () => {
       expect(counterFile).toBeDefined()
       expect(counterFile!.clientJs).toContain('createSignal')
     })
+
+    it('server component using client component only outputs client component', async () => {
+      const result = await compileWithFiles('/test/App.tsx', {
+        '/test/App.tsx': `
+          import Counter from './Counter'
+
+          function App() {
+            return (
+              <div class="app">
+                <h1>My App</h1>
+                <Counter />
+              </div>
+            )
+          }
+        `,
+        '/test/Counter.tsx': `
+          "use client"
+          import { createSignal } from 'barefoot'
+
+          function Counter() {
+            const [count, setCount] = createSignal(0)
+            return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+          }
+
+          export default Counter
+        `,
+      })
+
+      // Only Counter has "use client", so only Counter is in output
+      expect(result.files.length).toBe(1)
+
+      const counterFile = result.files[0]
+      expect(counterFile.componentNames).toContain('Counter')
+      expect(counterFile.clientJs).toContain('createSignal')
+    })
   })
 
   describe('edge cases', () => {
     it('compiles component with ref', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         function InputForm() {
@@ -260,6 +305,7 @@ describe('Full Compilation Flow', () => {
 
     it('compiles component with memo', async () => {
       const source = `
+        "use client"
         import { createSignal, createMemo } from 'barefoot'
 
         function Doubler() {
@@ -287,6 +333,7 @@ describe('Full Compilation Flow', () => {
 
     it('compiles component with spread attributes', async () => {
       const source = `
+        "use client"
         function Wrapper({ className, ...rest }: { className: string; [key: string]: any }) {
           return <div class={className} {...rest}>Content</div>
         }
@@ -300,6 +347,7 @@ describe('Full Compilation Flow', () => {
 
     it('compiles component with multiple exports', async () => {
       const source = `
+        "use client"
         export function Header() {
           return <header>Header</header>
         }
@@ -324,6 +372,7 @@ describe('Full Compilation Flow', () => {
   describe('props handling', () => {
     it('compiles component with typed props', async () => {
       const source = `
+        "use client"
         type ButtonProps = {
           label: string
           disabled?: boolean
@@ -346,6 +395,7 @@ describe('Full Compilation Flow', () => {
 
     it('compiles component with callback props', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
 
         type ToggleProps = {
@@ -369,6 +419,69 @@ describe('Full Compilation Flow', () => {
       expect(file.clientJs).toContain('onToggle')
       // Server JSX should have the conditional expression
       expect(file.markedJsx).toContain("checked ? 'ON' : 'OFF'")
+    })
+  })
+
+  describe('server-only components', () => {
+    it('files without directive are not included in output', async () => {
+      const source = `
+        function Counter() {
+          return <div>Static content</div>
+        }
+      `
+
+      const result = await compile(source)
+
+      // No "use client" directive means no output
+      expect(result.files.length).toBe(0)
+    })
+
+    it('only files with directive are included in output', async () => {
+      const result = await compileWithFiles('/test/App.tsx', {
+        '/test/App.tsx': `
+          import Counter from './Counter'
+          import Header from './Header'
+
+          function App() {
+            return (
+              <div>
+                <Header />
+                <Counter />
+              </div>
+            )
+          }
+        `,
+        '/test/Counter.tsx': `
+          "use client"
+          import { createSignal } from 'barefoot'
+
+          function Counter() {
+            const [count, setCount] = createSignal(0)
+            return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+          }
+
+          export default Counter
+        `,
+        '/test/Header.tsx': `
+          function Header() {
+            return <h1>Welcome</h1>
+          }
+
+          export default Header
+        `,
+      })
+
+      // Only Counter has "use client", so only Counter is in output
+      expect(result.files.length).toBe(1)
+
+      const counterFile = result.files[0]
+      expect(counterFile.componentNames).toContain('Counter')
+      expect(counterFile.hasClientJs).toBe(true)
+      expect(counterFile.hasUseClientDirective).toBe(true)
+
+      // App and Header are NOT in output (no "use client")
+      expect(result.files.find(f => f.componentNames.includes('App'))).toBeUndefined()
+      expect(result.files.find(f => f.componentNames.includes('Header'))).toBeUndefined()
     })
   })
 })

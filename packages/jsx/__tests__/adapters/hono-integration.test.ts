@@ -33,6 +33,7 @@ describe('Hono Adapter Integration', () => {
   describe('Counter pattern (like examples/hono/Counter.tsx)', () => {
     it('compiles simple counter with signals', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [count, setCount] = createSignal(0)
@@ -62,6 +63,7 @@ describe('Hono Adapter Integration', () => {
 
     it('compiles counter with derived values', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [count, setCount] = createSignal(0)
@@ -88,6 +90,7 @@ describe('Hono Adapter Integration', () => {
   describe('TodoApp pattern (like examples/hono/TodoApp.tsx)', () => {
     it('compiles list with key and event delegation', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
         function TodoApp() {
           const [todos, setTodos] = createSignal([
@@ -121,6 +124,7 @@ describe('Hono Adapter Integration', () => {
 
     it('compiles component with props for hydration', async () => {
       const source = `
+        "use client"
         import { createSignal } from 'barefoot'
         type Props = { initialTodos: Array<{ id: number; text: string }> }
         function Component({ initialTodos }: Props) {
@@ -151,6 +155,7 @@ describe('Hono Adapter Integration', () => {
     it('compiles parent with child component imports', async () => {
       const result = await compileWithFiles('/test/Parent.tsx', {
         '/test/Parent.tsx': `
+          "use client"
           import Child from './Child'
           function Parent() {
             return (
@@ -161,6 +166,7 @@ describe('Hono Adapter Integration', () => {
           }
         `,
         '/test/Child.tsx': `
+          "use client"
           function Child({ name }) {
             return <span>{name}</span>
           }
@@ -181,6 +187,7 @@ describe('Hono Adapter Integration', () => {
     it('compiles child component with callback props (event handlers excluded from server)', async () => {
       const result = await compileWithFiles('/test/Parent.tsx', {
         '/test/Parent.tsx': `
+          "use client"
           import { createSignal } from 'barefoot'
           import TodoItem from './TodoItem'
           function Parent() {
@@ -200,6 +207,7 @@ describe('Hono Adapter Integration', () => {
           }
         `,
         '/test/TodoItem.tsx': `
+          "use client"
           function TodoItem({ item, onDelete }) {
             return (
               <li>
@@ -228,6 +236,7 @@ describe('Hono Adapter Integration', () => {
   describe('Script output deduplication', () => {
     it('generates script tracking logic', async () => {
       const source = `
+        "use client"
         function Simple() {
           return <div>Hello</div>
         }

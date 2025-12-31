@@ -2,6 +2,7 @@
  * BarefootJS JSX Compiler - Extractors
  */
 
+export { extractUseClientDirective, validateDomImports } from './directive'
 export { extractImports } from './imports'
 export { extractSignals } from './signals'
 export { extractMemos } from './memos'

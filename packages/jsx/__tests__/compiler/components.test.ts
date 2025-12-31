@@ -37,6 +37,7 @@ describe('Components - Basics', () => {
   it('Component without props', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Counter from './Counter'
         function App() {
           return (
@@ -48,6 +49,7 @@ describe('Components - Basics', () => {
         }
       `,
       '/test/Counter.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         function Counter() {
           const [count, setCount] = createSignal(0)
@@ -72,6 +74,7 @@ describe('Components - Basics', () => {
   it('Component with props', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Counter from './Counter'
         function App() {
           return (
@@ -82,6 +85,7 @@ describe('Components - Basics', () => {
         }
       `,
       '/test/Counter.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         function Counter({ initial }) {
           const [count, setCount] = createSignal(initial)
@@ -107,6 +111,7 @@ describe('Components - Basics', () => {
   it('Component with children and clientJs', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Button from './Button'
         function App() {
           return (
@@ -117,6 +122,7 @@ describe('Components - Basics', () => {
         }
       `,
       '/test/Button.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         function Button({ children }) {
           const [clicked, setClicked] = createSignal(false)
@@ -139,6 +145,7 @@ describe('Components - Props and init function', () => {
   it('Components with props are wrapped in init function', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Form from './Form'
         function App() {
@@ -154,6 +161,7 @@ describe('Components - Props and init function', () => {
         }
       `,
       '/test/Form.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         type Props = { onAdd: (text: string) => void }
         function Form({ onAdd }: Props) {
@@ -189,6 +197,7 @@ describe('Components - Props and init function', () => {
 
   it('Components without props are not wrapped', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -207,6 +216,7 @@ describe('Components - Props and init function', () => {
   it('Parent component calls child init function', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Form from './Form'
         function App() {
@@ -223,6 +233,7 @@ describe('Components - Props and init function', () => {
         }
       `,
       '/test/Form.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         type Props = { onAdd: (text: string) => void }
         function Form({ onAdd }: Props) {
@@ -251,6 +262,7 @@ describe('Components - Callback props', () => {
   it('When there is dynamic content, callback props are passed as is (automatically tracked by createEffect)', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Child from './Child'
         function Parent() {
@@ -266,6 +278,7 @@ describe('Components - Callback props', () => {
         export default Parent
       `,
       '/test/Child.tsx': `
+        "use client"
         type Props = { onClick: () => void }
         function Child({ onClick }: Props) {
           return <button onClick={() => onClick()}>Click</button>
@@ -283,6 +296,7 @@ describe('Components - Callback props', () => {
   it('Even without dynamic content, callback props are passed as is', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
+        "use client"
         import Child from './Child'
         function Parent() {
           const handleClick = () => console.log('clicked')
@@ -295,6 +309,7 @@ describe('Components - Callback props', () => {
         export default Parent
       `,
       '/test/Child.tsx': `
+        "use client"
         type Props = { onClick: () => void }
         function Child({ onClick }: Props) {
           return <button onClick={() => onClick()}>Click</button>
@@ -315,6 +330,7 @@ describe('Components - Module constants in child props', () => {
   it('includes module constants used in child component props', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Example from './Example'
 
@@ -334,6 +350,7 @@ describe('Components - Module constants in child props', () => {
         export default Parent
       `,
       '/test/Example.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         type Props = { title: string; code: string }
         function Example({ title, code }: Props) {
@@ -363,6 +380,7 @@ describe('Components - Module constants in child props', () => {
   it('does not include unused module constants', async () => {
     const files: Record<string, string> = {
       '/test/Parent.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Example from './Example'
 
@@ -381,6 +399,7 @@ describe('Components - Module constants in child props', () => {
         export default Parent
       `,
       '/test/Example.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         type Props = { code: string }
         function Example({ code }: Props) {
@@ -408,6 +427,7 @@ describe('Components - Hash and filename', () => {
   it('ComponentOutput includes hash and filename for components with clientJs', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import Counter from './Counter'
         function App() {
           return <div><Counter /></div>
@@ -415,6 +435,7 @@ describe('Components - Hash and filename', () => {
         export default App
       `,
       '/test/Counter.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         function Counter() {
           const [count, setCount] = createSignal(0)
@@ -456,6 +477,7 @@ describe('Components - Auto-hydration', () => {
   it('Client JS includes auto-hydration code for components with props', async () => {
     const files: Record<string, string> = {
       '/test/Counter.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         function Counter({ initial }) {
           const [count, setCount] = createSignal(initial)
@@ -481,6 +503,7 @@ describe('Components - Auto-hydration', () => {
 
   it('Components without props do not have auto-hydration code', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Counter() {
         const [count, setCount] = createSignal(0)
@@ -501,6 +524,7 @@ describe('Components - Lazy Children', () => {
   it('passes children as function when they contain reactive expressions', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Button from './Button'
         function App() {
@@ -509,6 +533,7 @@ describe('Components - Lazy Children', () => {
         }
       `,
       '/test/Button.tsx': `
+        "use client"
         function Button({ onClick, children }) {
           return <button onClick={onClick}>{children}</button>
         }
@@ -526,6 +551,7 @@ describe('Components - Lazy Children', () => {
   it('child component handles lazy children with function check', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Button from './Button'
         function App() {
@@ -534,6 +560,7 @@ describe('Components - Lazy Children', () => {
         }
       `,
       '/test/Button.tsx': `
+        "use client"
         function Button({ onClick, children }) {
           return <button onClick={onClick}>{children}</button>
         }
@@ -553,12 +580,14 @@ describe('Components - Lazy Children', () => {
   it('static children are not wrapped in function', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Button from './Button'
         function App() {
           return <Button>Click me</Button>
         }
       `,
       '/test/Button.tsx': `
+        "use client"
         function Button({ children }) {
           return <button>{children}</button>
         }
@@ -583,6 +612,7 @@ describe('Components - Reactive Children (No Warning)', () => {
     try {
       const files = {
         '/test/App.tsx': `
+        "use client"
           import { createSignal } from 'barefoot'
           import Button from './Button'
           function App() {
@@ -591,6 +621,7 @@ describe('Components - Reactive Children (No Warning)', () => {
           }
         `,
         '/test/Button.tsx': `
+        "use client"
           function Button({ onClick, children }) {
             return <button onClick={onClick}>{children}</button>
           }
@@ -610,12 +641,14 @@ describe('Components - Reactive Children (No Warning)', () => {
   it('static children still work as expected', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Button from './Button'
         function App() {
           return <Button>Click me</Button>
         }
       `,
       '/test/Button.tsx': `
+        "use client"
         function Button({ children }) {
           return <button>{children}</button>
         }

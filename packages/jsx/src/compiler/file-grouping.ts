@@ -22,6 +22,7 @@ export interface ComponentData {
   memoDeclarations: string
   childInits: ChildComponentInit[]
   hasClientJs: boolean
+  hasUseClientDirective: boolean
 }
 
 /**
@@ -65,14 +66,19 @@ export function collectComponentData(
       )
       const constantDeclarations = usedConstants.map(c => c.code).join('\n')
 
+      // Get directive status from compile result
+      const hasUseClientDirective = result.hasUseClientDirective
+
       // Calculate hasClientJs early (before ComponentOutput generation)
-      // A component needs client JS if it has:
+      // A component needs client JS if it has "use client" directive AND:
       // - Raw client JS code
       // - Signals (reactive state)
       // - Child component inits (needs to initialize children)
-      const hasClientJs = result.clientJs.length > 0 ||
-                          result.signals.length > 0 ||
-                          result.childInits.length > 0
+      const hasClientJs = hasUseClientDirective && (
+        result.clientJs.length > 0 ||
+        result.signals.length > 0 ||
+        result.childInits.length > 0
+      )
 
       componentData.push({
         name,
@@ -84,6 +90,7 @@ export function collectComponentData(
         memoDeclarations,
         childInits: result.childInits,
         hasClientJs,
+        hasUseClientDirective,
       })
     }
   }

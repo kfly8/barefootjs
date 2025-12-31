@@ -27,6 +27,7 @@ afterEach(() => {
 describe('List E2E', () => {
   it('renders initial list', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function List() {
         const [items, setItems] = createSignal(['Apple', 'Banana', 'Cherry'])
@@ -51,6 +52,7 @@ describe('List E2E', () => {
 
   it('updates list when signal changes', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function List() {
         const [items, setItems] = createSignal(['A', 'B'])
@@ -84,6 +86,7 @@ describe('List E2E', () => {
 
   it('handles click events within list items', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function List() {
         const [items, setItems] = createSignal([
@@ -126,6 +129,7 @@ describe('List E2E', () => {
 
   it('handles toggle state in list items', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function TodoList() {
         const [todos, setTodos] = createSignal([
@@ -169,6 +173,7 @@ describe('List E2E', () => {
 
   it('shows computed values from list', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function TodoCounter() {
         const [todos, setTodos] = createSignal([

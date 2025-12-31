@@ -38,6 +38,7 @@ import { compile } from './test-helpers'
 describe('HTML Attributes - Dynamic class', () => {
   it('dynamic class attribute', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [isActive, setIsActive] = createSignal(false)
@@ -55,6 +56,7 @@ describe('HTML Attributes - Dynamic class', () => {
 describe('HTML Attributes - Dynamic style', () => {
   it('dynamic style attribute', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [isRed, setIsRed] = createSignal(true)
@@ -72,6 +74,7 @@ describe('HTML Attributes - Dynamic style', () => {
 describe('HTML Attributes - Boolean attributes', () => {
   it('dynamic disabled attribute', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [isLoading, setIsLoading] = createSignal(false)
@@ -89,6 +92,7 @@ describe('HTML Attributes - Boolean attributes', () => {
 describe('HTML Attributes - Form related', () => {
   it('dynamic value attribute', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [text, setText] = createSignal('hello')

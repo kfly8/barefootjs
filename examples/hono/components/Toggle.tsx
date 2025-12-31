@@ -1,3 +1,5 @@
+"use client"
+
 import { createSignal } from '@barefootjs/dom'
 
 // Reusable toggle component with label

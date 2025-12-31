@@ -565,6 +565,7 @@ describe('jsxToIR', () => {
 describe('findAndConvertJsxReturn', () => {
   it('finds and converts component JSX return', () => {
     const source = `
+      "use client"
       function Counter() {
         return <div>Counter</div>
       }
@@ -580,6 +581,7 @@ describe('findAndConvertJsxReturn', () => {
 
   it('finds specific component by name', () => {
     const source = `
+      "use client"
       function Header() {
         return <header>Header</header>
       }
@@ -597,6 +599,7 @@ describe('findAndConvertJsxReturn', () => {
 
   it('handles parenthesized return', () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <div>
@@ -615,6 +618,7 @@ describe('findAndConvertJsxReturn', () => {
 
   it('handles fragment return', () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <>
@@ -634,6 +638,7 @@ describe('findAndConvertJsxReturn', () => {
 
   it('returns null for non-component functions', () => {
     const source = `
+      "use client"
       function helper() {
         return 42
       }

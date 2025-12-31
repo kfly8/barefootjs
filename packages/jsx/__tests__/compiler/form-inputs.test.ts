@@ -20,6 +20,7 @@ import { compile } from './test-helpers'
 describe('Form Inputs - Input Element', () => {
   it('input with dynamic value binding', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [text, setText] = createSignal('hello')
@@ -46,6 +47,7 @@ describe('Form Inputs - Input Element', () => {
 
   it('input with onBlur event', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [touched, setTouched] = createSignal(false)
@@ -64,6 +66,7 @@ describe('Form Inputs - Input Element', () => {
 
   it('input with onFocus event', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [focused, setFocused] = createSignal(false)
@@ -82,6 +85,7 @@ describe('Form Inputs - Input Element', () => {
 
   it('input type="number" with dynamic value', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [num, setNum] = createSignal(0)
@@ -103,6 +107,7 @@ describe('Form Inputs - Input Element', () => {
 describe('Form Inputs - Textarea', () => {
   it('textarea with dynamic value binding', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [content, setContent] = createSignal('')
@@ -127,6 +132,7 @@ describe('Form Inputs - Textarea', () => {
 describe('Form Inputs - Select', () => {
   it('select with dynamic value binding', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [selected, setSelected] = createSignal('a')
@@ -156,6 +162,7 @@ describe('Form Inputs - Select', () => {
 describe('Form Inputs - Checkbox', () => {
   it('checkbox with dynamic checked binding', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [checked, setChecked] = createSignal(false)
@@ -178,6 +185,7 @@ describe('Form Inputs - Checkbox', () => {
 
   it('checkbox onChange with event target', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [checked, setChecked] = createSignal(false)
@@ -198,6 +206,7 @@ describe('Form Inputs - Checkbox', () => {
 describe('Form Inputs - Radio', () => {
   it('radio buttons with checked binding', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [selected, setSelected] = createSignal('a')
@@ -221,6 +230,7 @@ describe('Form Inputs - Radio', () => {
 describe('Form Inputs - Combined Patterns', () => {
   it('form with multiple controlled inputs', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [name, setName] = createSignal('')
@@ -253,6 +263,7 @@ describe('Form Inputs - Combined Patterns', () => {
 
   it('input with dynamic placeholder', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [placeholder, setPlaceholder] = createSignal('Enter text...')
@@ -273,6 +284,7 @@ describe('Form Inputs - Combined Patterns', () => {
 
   it('input with dynamic disabled state', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [disabled, setDisabled] = createSignal(false)

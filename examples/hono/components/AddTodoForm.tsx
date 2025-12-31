@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * AddTodoForm Component
  * Form to add new todos

@@ -33,6 +33,7 @@ import { compile } from './test-helpers'
 describe('Dynamic Content', () => {
   it('function call', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -51,6 +52,7 @@ describe('Dynamic Content', () => {
 
   it('binary operation', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -66,6 +68,7 @@ describe('Dynamic Content', () => {
 
   it('conditional expression (ternary operator)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [on, setOn] = createSignal(false)
@@ -81,6 +84,7 @@ describe('Dynamic Content', () => {
 
   it('text + dynamic content', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)

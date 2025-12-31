@@ -95,10 +95,11 @@ export async function compileJSX(
     source: string,
     fullPath: string,
     componentResults: Map<string, CompileResult>,
-    targetComponentName: string
+    targetComponentName: string,
+    hasUseClientDirective: boolean
   ): CompileResult => {
     const componentIdGenerator = new IdGenerator()
-    return compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, targetComponentName)
+    return compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, targetComponentName, hasUseClientDirective)
   }
 
   // 1. Resolve all components recursively
@@ -110,10 +111,19 @@ export async function compileJSX(
   const fileGroups = groupComponentsByFile(componentData)
   const mappings = calculateFileMappings(fileGroups, rootDir)
 
-  // 3. Generate output for each file
+  // 3. Generate output for each file (only client components)
   const files: FileOutput[] = []
 
   for (const [sourceFile, fileComponents] of fileGroups) {
+    // Get directive status from first component (all components in same file share directive)
+    const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
+
+    // Skip server components (files without "use client")
+    // They are compiled for dependency resolution but not included in output
+    if (!hasUseClientDirective) {
+      continue
+    }
+
     const sourcePath = mappings.fileToSourcePath.get(sourceFile)!
     const fileHash = mappings.fileHashes.get(sourceFile)!
 
@@ -125,13 +135,14 @@ export async function compileJSX(
     }
 
     // Check if any component in this file needs client JS
-    const hasClientJs = fileComponents.some(c => c.hasClientJs)
+    // Only generate client JS if the file has "use client" directive
+    const hasClientJs = hasUseClientDirective && fileComponents.some(c => c.hasClientJs)
 
     // Get base filename from source path (e.g., '_shared/docs.tsx' -> 'docs')
     const baseFileName = sourcePath.split('/').pop()!.replace('.tsx', '')
     const clientJsFilename = hasClientJs ? `${baseFileName}-${fileHash}.js` : ''
 
-    // Generate combined client JS using new module
+    // Generate combined client JS using new module (only if directive present)
     const clientJsCtx = {
       sourcePath,
       fileHash,
@@ -140,7 +151,9 @@ export async function compileJSX(
       fileToSourcePath: mappings.fileToSourcePath,
       allComponentData: componentData,
     }
-    const combinedClientJs = generateFileClientJs(fileComponents, clientJsCtx)
+    const combinedClientJs = hasUseClientDirective
+      ? generateFileClientJs(fileComponents, clientJsCtx)
+      : ''
 
     // Generate combined Marked JSX using new module
     const combinedMarkedJsx = generateFileMarkedJsx(fileComponents, sourcePath, options)
@@ -154,6 +167,7 @@ export async function compileJSX(
       hasClientJs,
       componentNames,
       componentProps,
+      hasUseClientDirective,
     })
   }
 
@@ -177,13 +191,15 @@ export async function compileJSX(
  * @param components - Map of available child components
  * @param idGenerator - ID generator for element IDs
  * @param targetComponentName - Optional: specific component to compile from the source
+ * @param hasUseClientDirective - Whether file has "use client" directive
  */
 function compileJsxWithComponents(
   source: string,
   filePath: string,
   components: Map<string, CompileResult>,
   idGenerator: IdGenerator,
-  targetComponentName?: string
+  targetComponentName?: string,
+  hasUseClientDirective: boolean = false
 ): CompileResult {
   const sourceFile = ts.createSourceFile(
     filePath,
@@ -295,6 +311,7 @@ function compileJsxWithComponents(
     ir,
     imports,
     isDefaultExport,
+    hasUseClientDirective,
   }
 }
 

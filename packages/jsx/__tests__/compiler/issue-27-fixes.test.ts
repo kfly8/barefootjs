@@ -17,12 +17,14 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
   it('boolean shorthand prop is passed as true', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Checkbox from './Checkbox'
         function App() {
           return <Checkbox checked />
         }
       `,
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, disabled }) {
           return <button aria-checked={checked} disabled={disabled}>Check</button>
         }
@@ -39,12 +41,14 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
   it('multiple boolean shorthand props work together', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Checkbox from './Checkbox'
         function App() {
           return <Checkbox checked disabled />
         }
       `,
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, disabled }) {
           return <button aria-checked={checked} disabled={disabled}>Check</button>
         }
@@ -62,12 +66,14 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
   it('boolean shorthand works with other props', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Input from './Input'
         function App() {
           return <Input disabled placeholder="Enter text" />
         }
       `,
       '/test/Input.tsx': `
+        "use client"
         function Input({ disabled, placeholder }) {
           return <input disabled={disabled} placeholder={placeholder} />
         }
@@ -86,6 +92,7 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
 describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
   it('variable in type attribute is dynamic, not literal string', async () => {
     const source = `
+      "use client"
       function Component() {
         const inputType = 'password'
         return <input type={inputType} />
@@ -101,6 +108,7 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
 
   it('expression in placeholder attribute is dynamic', async () => {
     const source = `
+      "use client"
       function Component() {
         const placeholder = 'Enter your name'
         return <input placeholder={placeholder} />
@@ -115,6 +123,7 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
 
   it('all JSX expression attributes are treated as dynamic', async () => {
     const source = `
+      "use client"
       function Component() {
         const name = 'username'
         const id = 'user-input'
@@ -134,6 +143,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('dynamic props are wrapped in getter functions', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Checkbox from './Checkbox'
         function App() {
@@ -142,6 +152,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
         }
       `,
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, onCheckedChange }) {
           return <button aria-checked={checked} onClick={() => onCheckedChange(!checked)}>Check</button>
         }
@@ -158,6 +169,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('callback props (on*) are not wrapped in getters', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Checkbox from './Checkbox'
         function App() {
@@ -166,6 +178,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
         }
       `,
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, onCheckedChange }) {
           return <button aria-checked={checked} onClick={() => onCheckedChange(!checked)}>Check</button>
         }
@@ -183,6 +196,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('child component unwraps getter props', async () => {
     const files = {
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, disabled }) {
           return (
             <button
@@ -210,6 +224,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('prop usages are replaced with getter calls', async () => {
     const files = {
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, disabled }) {
           return (
             <button
@@ -235,6 +250,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('CSS pseudo-classes are not affected by prop replacement', async () => {
     const files = {
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, disabled }) {
           return (
             <button
@@ -261,6 +277,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('HTML attribute names are not affected by prop replacement', async () => {
     const files = {
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked }) {
           return (
             <button aria-checked={checked}>
@@ -282,12 +299,14 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
   it('static props are not wrapped in getters', async () => {
     const files = {
       '/test/App.tsx': `
+        "use client"
         import Checkbox from './Checkbox'
         function App() {
           return <Checkbox checked={true} disabled={false} />
         }
       `,
       '/test/Checkbox.tsx': `
+        "use client"
         function Checkbox({ checked, disabled }) {
           return <button aria-checked={checked} disabled={disabled}>Check</button>
         }

@@ -27,6 +27,7 @@ import { compile } from './test-helpers'
 describe('Signal declarations', () => {
   it('Number signal', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -41,6 +42,7 @@ describe('Signal declarations', () => {
 
   it('Boolean signal', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [on, setOn] = createSignal(false)
@@ -55,6 +57,7 @@ describe('Signal declarations', () => {
 
   it('String signal', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [text, setText] = createSignal('hello')
@@ -69,6 +72,7 @@ describe('Signal declarations', () => {
 
   it('Multiple signals', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -85,6 +89,7 @@ describe('Signal declarations', () => {
 
   it('Object signal', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [user, setUser] = createSignal({ name: 'Alice', age: 20 })
@@ -99,6 +104,7 @@ describe('Signal declarations', () => {
 
   it('Array signal', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([])
