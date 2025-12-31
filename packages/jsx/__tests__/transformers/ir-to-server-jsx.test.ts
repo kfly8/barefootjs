@@ -174,6 +174,383 @@ describe('irToServerJsx', () => {
   })
 })
 
+describe('irToServerJsx - fragment handling', () => {
+  it('converts empty fragment', () => {
+    const node: IRNode = {
+      type: 'fragment',
+      children: [],
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toBe('<></>')
+  })
+
+  it('converts fragment with multiple children', () => {
+    const node: IRNode = {
+      type: 'fragment',
+      children: [
+        { type: 'element', tagName: 'p', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [{ type: 'text', content: 'First' }], listInfo: null, dynamicContent: null },
+        { type: 'element', tagName: 'p', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [{ type: 'text', content: 'Second' }], listInfo: null, dynamicContent: null },
+      ],
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('<p data-bf-scope="Test">First</p>')
+    expect(result).toContain('<p>Second</p>')
+  })
+
+  it('passes data-bf-scope to first element child in fragment', () => {
+    const node: IRNode = {
+      type: 'fragment',
+      children: [
+        { type: 'element', tagName: 'header', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [], listInfo: null, dynamicContent: null },
+        { type: 'element', tagName: 'main', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [], listInfo: null, dynamicContent: null },
+      ],
+    }
+    const result = irToServerJsx(node, 'TestComponent', [])
+    expect(result).toContain('data-bf-scope="TestComponent"')
+    // The first element should have the scope, not the second
+    // header and main are not self-closing tags, so they have explicit closing tags
+    expect(result).toBe('<><header data-bf-scope="TestComponent"></header><main></main></>')
+  })
+})
+
+describe('irToServerJsx - component handling', () => {
+  it('converts component with static props', () => {
+    const node: IRNode = {
+      type: 'component',
+      name: 'Button',
+      props: [
+        { name: 'label', value: '"Click me"', isDynamic: false },
+        { name: 'size', value: '"lg"', isDynamic: false },
+      ],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('<Button')
+    expect(result).toContain('label="Click me"')
+    expect(result).toContain('size="lg"')
+  })
+
+  it('converts component with dynamic props using signal initial values', () => {
+    const signals: SignalDeclaration[] = [
+      { getter: 'count', setter: 'setCount', initialValue: '0' },
+    ]
+    const node: IRNode = {
+      type: 'component',
+      name: 'Counter',
+      props: [
+        { name: 'value', value: 'count()', isDynamic: true },
+      ],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToServerJsx(node, 'Test', signals)
+    expect(result).toContain('value={0}')
+  })
+
+  it('converts component with spread props', () => {
+    const node: IRNode = {
+      type: 'component',
+      name: 'Input',
+      props: [],
+      spreadProps: [{ expression: 'inputProps' }],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('{...inputProps}')
+  })
+
+  it('converts component with children', () => {
+    const node: IRNode = {
+      type: 'component',
+      name: 'Card',
+      props: [],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [
+        { type: 'element', tagName: 'p', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [{ type: 'text', content: 'Content' }], listInfo: null, dynamicContent: null },
+      ],
+      hasLazyChildren: false,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('<Card>')
+    expect(result).toContain('<p>Content</p>')
+    expect(result).toContain('</Card>')
+  })
+
+  it('skips event handler props (they reference undefined functions on server)', () => {
+    const node: IRNode = {
+      type: 'component',
+      name: 'Toggle',
+      props: [
+        { name: 'checked', value: 'false', isDynamic: false },
+        { name: 'onToggle', value: 'handleToggle', isDynamic: true },
+      ],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('checked={false}')
+    expect(result).not.toContain('onToggle')
+  })
+
+  it('wraps root component in div with data-bf-scope', () => {
+    const node: IRNode = {
+      type: 'component',
+      name: 'Child',
+      props: [],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToServerJsx(node, 'Parent', [])
+    expect(result).toContain('data-bf-scope="Parent"')
+    expect(result).toContain('<Child />')
+  })
+})
+
+describe('irToServerJsx - nested structures', () => {
+  it('handles element inside conditional', () => {
+    const signals: SignalDeclaration[] = [
+      { getter: 'show', setter: 'setShow', initialValue: 'true' },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        {
+          type: 'conditional',
+          id: 'c0',
+          condition: 'show()',
+          whenTrue: { type: 'element', tagName: 'span', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [{ type: 'text', content: 'Visible' }], listInfo: null, dynamicContent: null },
+          whenFalse: { type: 'expression', expression: 'null', isDynamic: false },
+        },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', signals)
+    expect(result).toContain('true ?')
+    expect(result).toContain('data-bf-cond="c0"')
+    expect(result).toContain('Visible')
+  })
+
+  it('handles conditional inside element', () => {
+    const signals: SignalDeclaration[] = [
+      { getter: 'isActive', setter: 'setIsActive', initialValue: 'false' },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [{ name: 'class', value: 'wrapper' }],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        {
+          type: 'conditional',
+          id: null,  // Static conditional (text-only)
+          condition: 'isActive()',
+          whenTrue: { type: 'expression', expression: '"Active"', isDynamic: false },
+          whenFalse: { type: 'expression', expression: '"Inactive"', isDynamic: false },
+        },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', signals)
+    expect(result).toContain('false ? "Active" : "Inactive"')
+  })
+
+  it('handles list with nested elements', () => {
+    const signals: SignalDeclaration[] = [
+      { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'ul',
+      id: 'l0',
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: {
+        arrayExpression: 'todos()',
+        paramName: 'todo',
+        itemTemplate: '`<li>${todo.text}</li>`',
+        itemIR: {
+          type: 'element',
+          tagName: 'li',
+          id: null,
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [{ type: 'expression', expression: 'todo.text', isDynamic: false }],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        itemEvents: [],
+        keyExpression: 'todo.id',
+      },
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', signals)
+    expect(result).toContain('initialTodos?.map')
+    expect(result).toContain('(todo, __index)')
+    expect(result).toContain('{todo.text}')
+    expect(result).toContain('data-key={todo.id}')
+  })
+})
+
+describe('irToServerJsx - edge cases', () => {
+  it('handles empty element', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toBe('<div data-bf-scope="Test"></div>')
+  })
+
+  it('handles element with spread attributes', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [{ expression: 'props' }],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('{...props}')
+  })
+
+  it('handles children prop with lazy evaluation (typeof check)', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        { type: 'expression', expression: 'children', isDynamic: true },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain("typeof children === 'function' ? children() : children")
+  })
+
+  it('handles memo calls with signal replacement', () => {
+    const signals: SignalDeclaration[] = [
+      { getter: 'count', setter: 'setCount', initialValue: '5' },
+    ]
+    const memos = [
+      { getter: 'doubled', computation: '() => count() * 2' },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'span',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        { type: 'expression', expression: 'doubled()', isDynamic: true },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', signals, new Set(), { memos })
+    // doubled() -> () => count() * 2 -> 5 * 2
+    expect(result).toContain('(5 * 2)')
+  })
+
+  it('adds xmlns for svg root element', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'svg',
+      id: null,
+      staticAttrs: [{ name: 'width', value: '100' }],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('xmlns="http://www.w3.org/2000/svg"')
+  })
+
+  it('converts class to className', () => {
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [{ name: 'class', value: 'container' }],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToServerJsx(node, 'Test', [])
+    expect(result).toContain('className="container"')
+    expect(result).not.toContain('class="container"')
+  })
+})
+
 describe('irToServerJsx with honoServerAdapter integration', () => {
   it('generates JSX that works with Hono adapter', async () => {
     const { honoServerAdapter } = await import('@barefootjs/hono')
