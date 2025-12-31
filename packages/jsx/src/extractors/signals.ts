@@ -4,7 +4,8 @@
 
 import ts from 'typescript'
 import type { SignalDeclaration } from '../types'
-import { createSourceFile, isPascalCase } from '../utils/helpers'
+import { createSourceFile } from '../utils/helpers'
+import { findComponentFunction, forEachVariableDeclaration, isComponentFunction } from './common'
 
 /**
  * Extracts signal declarations from source code.
@@ -21,41 +22,6 @@ export function extractSignals(source: string, filePath: string, targetComponent
   const fallbackSignals: SignalDeclaration[] = []
   let foundTargetComponent = false
   let currentTarget: SignalDeclaration[] = signals
-
-  function visitComponent(node: ts.Node) {
-    // Find the target component function
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      // If targetComponentName is specified, only process that component
-      if (targetComponentName && node.name.text !== targetComponentName) {
-        // Save first component's signals as fallback
-        if (fallbackSignals.length === 0 && node.body) {
-          currentTarget = fallbackSignals
-          extractSignalsFromBlock(node.body)
-          currentTarget = signals
-        }
-      } else if (!targetComponentName && signals.length > 0) {
-        // If no target specified, only process the first PascalCase function found
-        return
-      } else {
-        // Target found (or no target specified)
-        foundTargetComponent = true
-        if (node.body) {
-          extractSignalsFromBlock(node.body)
-        }
-      }
-    }
-    ts.forEachChild(node, visitComponent)
-  }
-
-  function extractSignalsFromBlock(block: ts.Block) {
-    for (const statement of block.statements) {
-      if (ts.isVariableStatement(statement)) {
-        for (const decl of statement.declarationList.declarations) {
-          extractSignalFromDeclaration(decl)
-        }
-      }
-    }
-  }
 
   function extractSignalFromDeclaration(node: ts.VariableDeclaration) {
     if (ts.isArrayBindingPattern(node.name) &&
@@ -81,6 +47,35 @@ export function extractSignals(source: string, filePath: string, targetComponent
         }
       }
     }
+  }
+
+  function visitComponent(node: ts.Node) {
+    // Find the target component function
+    if (isComponentFunction(node)) {
+      // If targetComponentName is specified, only process that component
+      if (targetComponentName && node.name.text !== targetComponentName) {
+        // Save first component's signals as fallback
+        if (fallbackSignals.length === 0 && node.body) {
+          currentTarget = fallbackSignals
+          forEachVariableDeclaration(node.body, (decl) => {
+            extractSignalFromDeclaration(decl)
+          })
+          currentTarget = signals
+        }
+      } else if (!targetComponentName && signals.length > 0) {
+        // If no target specified, only process the first PascalCase function found
+        return
+      } else {
+        // Target found (or no target specified)
+        foundTargetComponent = true
+        if (node.body) {
+          forEachVariableDeclaration(node.body, (decl) => {
+            extractSignalFromDeclaration(decl)
+          })
+        }
+      }
+    }
+    ts.forEachChild(node, visitComponent)
   }
 
   visitComponent(sourceFile)

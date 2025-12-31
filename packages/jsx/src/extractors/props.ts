@@ -3,8 +3,9 @@
  */
 
 import ts from 'typescript'
-import { createSourceFile, isPascalCase } from '../utils/helpers'
+import { createSourceFile } from '../utils/helpers'
 import type { PropWithType } from '../types'
+import { findComponentFunction } from './common'
 
 /**
  * Extracts type definitions used in props from the source file.
@@ -71,61 +72,53 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
   const sourceFile = createSourceFile(source, filePath)
 
   const props: PropWithType[] = []
-  let found = false
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (found) return
+  const component = findComponentFunction(sourceFile, targetComponentName)
+  if (!component) {
+    return props
+  }
 
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      // If targetComponentName is specified, only process that component
-      if (targetComponentName && node.name.text !== targetComponentName) {
-        return
+  const param = component.parameters[0]
+  if (param && ts.isObjectBindingPattern(param.name)) {
+    // Get the type annotation if present
+    const typeAnnotation = param.type
+    let typeMembers: Map<string, { type: string; optional: boolean }> = new Map()
+
+    if (typeAnnotation && ts.isTypeLiteralNode(typeAnnotation)) {
+      // Inline type: { prop: string; prop2?: number }
+      for (const member of typeAnnotation.members) {
+        if (ts.isPropertySignature(member) && member.name) {
+          const propName = member.name.getText(sourceFile)
+          const propType = member.type ? member.type.getText(sourceFile) : 'unknown'
+          const isOptional = !!member.questionToken
+          typeMembers.set(propName, { type: propType, optional: isOptional })
+        }
       }
-
-      found = true
-      const param = node.parameters[0]
-      if (param && ts.isObjectBindingPattern(param.name)) {
-        // Get the type annotation if present
-        const typeAnnotation = param.type
-        let typeMembers: Map<string, { type: string; optional: boolean }> = new Map()
-
-        if (typeAnnotation && ts.isTypeLiteralNode(typeAnnotation)) {
-          // Inline type: { prop: string; prop2?: number }
-          for (const member of typeAnnotation.members) {
-            if (ts.isPropertySignature(member) && member.name) {
-              const propName = member.name.getText(sourceFile)
-              const propType = member.type ? member.type.getText(sourceFile) : 'unknown'
-              const isOptional = !!member.questionToken
-              typeMembers.set(propName, { type: propType, optional: isOptional })
-            }
-          }
-        } else if (typeAnnotation && ts.isTypeReferenceNode(typeAnnotation)) {
-          // Type reference: Props
-          // Try to find and resolve the type alias
-          const typeName = typeAnnotation.typeName.getText(sourceFile)
-          const resolvedType = resolveTypeAlias(sourceFile, typeName)
-          if (resolvedType) {
-            typeMembers = resolvedType
-          }
-        }
-
-        // Extract binding elements
-        for (const element of param.name.elements) {
-          if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
-            const propName = element.name.text
-            const hasDefault = !!element.initializer
-            const typeInfo = typeMembers.get(propName)
-
-            props.push({
-              name: propName,
-              type: typeInfo?.type || 'unknown',
-              optional: typeInfo?.optional || hasDefault,
-            })
-          }
-        }
+    } else if (typeAnnotation && ts.isTypeReferenceNode(typeAnnotation)) {
+      // Type reference: Props
+      // Try to find and resolve the type alias
+      const typeName = typeAnnotation.typeName.getText(sourceFile)
+      const resolvedType = resolveTypeAlias(sourceFile, typeName)
+      if (resolvedType) {
+        typeMembers = resolvedType
       }
     }
-  })
+
+    // Extract binding elements
+    for (const element of param.name.elements) {
+      if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
+        const propName = element.name.text
+        const hasDefault = !!element.initializer
+        const typeInfo = typeMembers.get(propName)
+
+        props.push({
+          name: propName,
+          type: typeInfo?.type || 'unknown',
+          optional: typeInfo?.optional || hasDefault,
+        })
+      }
+    }
+  }
 
   return props
 }

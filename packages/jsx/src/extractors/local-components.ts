@@ -6,7 +6,8 @@
  */
 
 import ts from 'typescript'
-import { createSourceFile, isPascalCase } from '../utils/helpers'
+import { createSourceFile } from '../utils/helpers'
+import { forEachComponentFunction, isComponentFunction } from './common'
 
 export type LocalComponentFunction = {
   name: string      // ToggleItem
@@ -46,22 +47,15 @@ export function extractLocalComponentFunctions(
   })
 
   // If mainComponentName is provided, use it; otherwise use the detected default export
-  const excludeName = mainComponentName || defaultExportName
+  const excludeName = mainComponentName || defaultExportName || undefined
 
-  ts.forEachChild(sourceFile, (node) => {
-    // Check for function declarations with PascalCase names
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      const name = node.name.text
-
-      // Skip the main component
-      if (name === excludeName) {
-        return
-      }
-
+  forEachComponentFunction(
+    sourceFile,
+    (component, name) => {
       // Check if this function returns JSX
-      if (node.body && containsJsxReturn(node.body)) {
-        const start = node.getStart(sourceFile)
-        const end = node.getEnd()
+      if (component.body && containsJsxReturn(component.body)) {
+        const start = component.getStart(sourceFile)
+        const end = component.getEnd()
         const funcSource = source.substring(start, end)
 
         const { line } = sourceFile.getLineAndCharacterOfPosition(start)
@@ -72,8 +66,9 @@ export function extractLocalComponentFunctions(
           startLine: line + 1, // 1-based line number
         })
       }
-    }
-  })
+    },
+    { excludeName }
+  )
 
   return localComponents
 }
@@ -98,7 +93,7 @@ export function extractExportedComponentNames(
 
   ts.forEachChild(sourceFile, (node) => {
     // Check for exported function declarations: export function Foo() { ... }
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
+    if (isComponentFunction(node)) {
       const hasExportModifier = node.modifiers?.some(
         m => m.kind === ts.SyntaxKind.ExportKeyword
       )
