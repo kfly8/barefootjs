@@ -17,31 +17,14 @@ import type {
   SignalDeclaration,
   MemoDeclaration,
   CompileResult,
+  JsxToIRContext,
+  CompilerWarning,
 } from '../types'
 import { isPascalCase } from '../utils/helpers'
-import { IdGenerator } from '../utils/id-generator'
 import { jsxToTemplateString } from '../compiler/template-generator'
 
-export type CompilerWarning = {
-  type: 'reactive-children'
-  message: string
-  componentName: string
-  parentComponent: string
-}
-
-export type JsxToIRContext = {
-  sourceFile: ts.SourceFile
-  signals: SignalDeclaration[]
-  memos: MemoDeclaration[]
-  components: Map<string, CompileResult>
-  idGenerator: IdGenerator
-  /** Warnings collected during compilation */
-  warnings: CompilerWarning[]
-  /** Current component name being compiled */
-  currentComponentName: string
-  /** Value prop names (non-callback props) for reactivity detection */
-  valueProps: string[]
-}
+// Re-export types for backwards compatibility
+export type { JsxToIRContext, CompilerWarning }
 
 /**
  * Converts JSX AST node to IR

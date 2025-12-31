@@ -28,6 +28,8 @@ import type {
   IRNode,
   FileOutput,
   ServerComponentData,
+  JsxToIRContext,
+  ClientJsGeneratorContext,
 } from './types'
 import {
   extractImports,
@@ -52,7 +54,6 @@ import {
   collectClientJsInfo,
   collectAllChildComponentNames,
   findAndConvertJsxReturn,
-  type JsxToIRContext,
 } from './transformers'
 import {
   generateContentHash,
@@ -866,17 +867,6 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
   return `{ const __val = ${expression}; if (__val !== undefined) ${varName}.setAttribute('${attrName}', __val) }`
 }
 
-/**
- * Context for client JS generation functions
- */
-type ClientJsGeneratorContext = {
-  componentName: string
-  elementPaths: Map<string, string | null>
-  declaredPaths: Map<string, string>
-  queriedIds: Set<string>
-  varName: (id: string) => string
-  getElementAccessCode: (id: string) => string
-}
 
 /**
  * Generate element queries: scope setup, path calculation, element declarations
