@@ -10,7 +10,7 @@
  */
 
 import { compileJSX, type PropWithType } from '@barefootjs/jsx'
-import { honoServerAdapter } from '@barefootjs/hono'
+import { honoMarkedJsxAdapter } from '@barefootjs/hono'
 import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -59,11 +59,11 @@ console.log(`Generated: dist/${barefootFileName}`)
 // Manifest (file-based: maps file path to client JS)
 type ManifestEntry = {
   clientJs?: string
-  serverJsx: string
+  markedJsx: string
   props: PropWithType[]
 }
 const manifest: Record<string, ManifestEntry> = {
-  '__barefoot__': { serverJsx: '', clientJs: barefootFileName, props: [] }
+  '__barefoot__': { markedJsx: '', clientJs: barefootFileName, props: [] }
 }
 
 // Track all generated files for index.ts generation
@@ -74,7 +74,7 @@ for (const source of ENTRIES) {
   const entryPath = resolve(ROOT_DIR, source)
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { serverAdapter: honoServerAdapter, rootDir: ROOT_DIR })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter, rootDir: ROOT_DIR })
 
   // Use file-based output
   for (const file of result.files) {
@@ -85,8 +85,8 @@ for (const source of ENTRIES) {
     const targetDir = sourceDir ? resolve(DIST_DIR, sourceDir) : DIST_DIR
     await mkdir(targetDir, { recursive: true })
 
-    // Write server JSX (preserves original filename)
-    await Bun.write(resolve(DIST_DIR, file.sourcePath), file.serverJsx)
+    // Write Marked JSX (preserves original filename)
+    await Bun.write(resolve(DIST_DIR, file.sourcePath), file.markedJsx)
     console.log(`Generated: dist/${file.sourcePath}`)
 
     // Write client JS (same directory)
@@ -106,7 +106,7 @@ for (const source of ENTRIES) {
     // Add file-level manifest entry
     const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
     manifest[fileKey] = {
-      serverJsx: file.sourcePath,
+      markedJsx: file.sourcePath,
       clientJs: clientJsPath,
       props: [],
     }
@@ -114,7 +114,7 @@ for (const source of ENTRIES) {
     // Add component-level manifest entries (for backward compatibility)
     for (const componentName of file.componentNames) {
       manifest[componentName] = {
-        serverJsx: file.sourcePath,
+        markedJsx: file.sourcePath,
         clientJs: clientJsPath,
         props: file.componentProps[componentName] || [],
       }
