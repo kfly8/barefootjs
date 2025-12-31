@@ -2,43 +2,36 @@
  * BarefootJS UI build script
  *
  * Generates (file-based output):
- * - dist/{source-path}.tsx (Marked JSX with all components from source)
- * - dist/{source-path}-{hash}.js (Client JS with all init functions)
+ * - dist/components/{Component}.tsx (Marked JSX)
+ * - dist/components/{Component}-{hash}.js (Client JS)
  * - dist/barefoot.js (Runtime)
  * - dist/uno.css (UnoCSS output)
  * - dist/manifest.json
+ *
+ * Note: pages/* are server components imported directly from source by server.tsx.
+ * Only components/* with "use client" are compiled to dist/.
  */
 
 import { compileJSX, type PropWithType } from '@barefootjs/jsx'
 import { honoMarkedJsxAdapter } from '@barefootjs/hono'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
+const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
+const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../packages/dom')
 
-// Entry files to compile
-const ENTRIES: string[] = [
-  'components/Badge.tsx',
-  'components/Button.tsx',
-  'components/Card.tsx',
-  'components/Checkbox.tsx',
-  'components/Input.tsx',
-  'components/Switch.tsx',
-  'components/Counter.tsx',
-  'components/Accordion.tsx',
-  'components/Tabs.tsx',
-  'pages/badge.tsx',
-  'pages/button.tsx',
-  'pages/card.tsx',
-  'pages/checkbox.tsx',
-  'pages/input.tsx',
-  'pages/switch.tsx',
-  'pages/counter.tsx',
-  'pages/accordion.tsx',
-  'pages/tabs.tsx',
-]
+// Discover all component files
+// The compiler handles "use client" filtering:
+// - Files with "use client" are included in output
+// - Files without "use client" are processed for dependency resolution only
+const componentFiles = (await readdir(COMPONENTS_DIR))
+  .filter(f => f.endsWith('.tsx'))
+  .map(f => resolve(COMPONENTS_DIR, f))
+
+await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
 // Build and copy barefoot.js from @barefootjs/dom
 const barefootFileName = 'barefoot.js'
@@ -51,98 +44,76 @@ if (!await Bun.file(domDistFile).exists()) {
 }
 
 await Bun.write(
-  resolve(DIST_DIR, barefootFileName),
+  resolve(DIST_COMPONENTS_DIR, barefootFileName),
   Bun.file(domDistFile)
 )
-console.log(`Generated: dist/${barefootFileName}`)
+console.log(`Generated: dist/components/${barefootFileName}`)
 
-// Manifest (file-based: maps file path to client JS)
-type ManifestEntry = {
-  clientJs?: string
-  markedJsx: string
-  props: PropWithType[]
-}
-const manifest: Record<string, ManifestEntry> = {
-  '__barefoot__': { markedJsx: '', clientJs: barefootFileName, props: [] }
+// Manifest
+const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[] }> = {
+  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
 }
 
-// Track all generated files for index.ts generation
-const generatedFiles: Map<string, { sourcePath: string; componentNames: string[] }> = new Map()
-
-// Compile each entry
-for (const source of ENTRIES) {
-  const entryPath = resolve(ROOT_DIR, source)
+// Compile each component
+for (const entryPath of componentFiles) {
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { markedJsxAdapter: honoMarkedJsxAdapter, rootDir: ROOT_DIR })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter })
 
-  // Use file-based output
   for (const file of result.files) {
-    // Create output directory
-    const sourceDir = file.sourcePath.includes('/')
-      ? file.sourcePath.substring(0, file.sourcePath.lastIndexOf('/'))
-      : ''
-    const targetDir = sourceDir ? resolve(DIST_DIR, sourceDir) : DIST_DIR
-    await mkdir(targetDir, { recursive: true })
+    // Marked JSX file - output to dist/components/
+    const baseFileName = file.sourcePath.split('/').pop()!
+    const jsxFileName = baseFileName
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, jsxFileName), file.markedJsx)
+    console.log(`Generated: dist/components/${jsxFileName}`)
 
-    // Write Marked JSX (preserves original filename)
-    await Bun.write(resolve(DIST_DIR, file.sourcePath), file.markedJsx)
-    console.log(`Generated: dist/${file.sourcePath}`)
-
-    // Write client JS (same directory)
-    let clientJsPath: string | undefined
+    // Client JS - colocate with Marked JSX
     if (file.hasClientJs) {
-      clientJsPath = sourceDir ? `${sourceDir}/${file.clientJsFilename}` : file.clientJsFilename
-      await Bun.write(resolve(DIST_DIR, clientJsPath), file.clientJs)
-      console.log(`Generated: dist/${clientJsPath}`)
+      await Bun.write(resolve(DIST_COMPONENTS_DIR, file.clientJsFilename), file.clientJs)
+      console.log(`Generated: dist/components/${file.clientJsFilename}`)
     }
 
-    // Track for index.ts generation
-    generatedFiles.set(file.sourcePath, {
-      sourcePath: file.sourcePath,
-      componentNames: file.componentNames,
-    })
-
-    // Add file-level manifest entry
+    // Manifest entries for file-level script deduplication
     const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
+    const markedJsxPath = `components/${jsxFileName}`
+    const clientJsPath = file.hasClientJs ? `components/${file.clientJsFilename}` : undefined
     manifest[fileKey] = {
-      markedJsx: file.sourcePath,
+      markedJsx: markedJsxPath,
       clientJs: clientJsPath,
       props: [],
     }
 
-    // Add component-level manifest entries (for backward compatibility)
-    for (const componentName of file.componentNames) {
-      manifest[componentName] = {
-        markedJsx: file.sourcePath,
+    // Manifest entries for each component in file
+    for (const compName of file.componentNames) {
+      manifest[compName] = {
+        markedJsx: markedJsxPath,
         clientJs: clientJsPath,
-        props: file.componentProps[componentName] || [],
+        props: file.componentProps[compName] || [],
       }
     }
   }
 }
 
 // Output manifest
-await Bun.write(resolve(DIST_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
-console.log('Generated: dist/manifest.json')
+await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
+console.log('Generated: dist/components/manifest.json')
 
-// Generate index files for subdirectories (for re-exporting)
-const dirExports: Map<string, Array<{ fileName: string; componentNames: string[] }>> = new Map()
-for (const [sourcePath, info] of generatedFiles) {
-  if (!sourcePath.includes('/')) continue
-  const dir = sourcePath.substring(0, sourcePath.lastIndexOf('/'))
-  const fileName = sourcePath.split('/').pop()!.replace('.tsx', '')
-  if (!dirExports.has(dir)) dirExports.set(dir, [])
-  dirExports.get(dir)!.push({ fileName, componentNames: info.componentNames })
+// Generate index.ts for re-exporting all components
+const componentExports: string[] = []
+for (const file of await readdir(DIST_COMPONENTS_DIR)) {
+  if (file.endsWith('.tsx')) {
+    const baseName = file.replace('.tsx', '')
+    // Read the file to find exported component names
+    const content = await Bun.file(resolve(DIST_COMPONENTS_DIR, file)).text()
+    const exportMatches = content.matchAll(/export\s+(?:function|const)\s+(\w+)/g)
+    for (const match of exportMatches) {
+      componentExports.push(`export { ${match[1]} } from './${baseName}'`)
+    }
+  }
 }
-
-for (const [dir, files] of dirExports) {
-  // Export each component from its source file
-  const exports = files.flatMap(f =>
-    f.componentNames.map(name => `export { ${name} } from './${f.fileName}'`)
-  ).join('\n')
-  await Bun.write(resolve(DIST_DIR, dir, 'index.ts'), exports + '\n')
-  console.log(`Generated: dist/${dir}/index.ts`)
+if (componentExports.length > 0) {
+  await Bun.write(resolve(DIST_COMPONENTS_DIR, 'index.ts'), componentExports.join('\n') + '\n')
+  console.log('Generated: dist/components/index.ts')
 }
 
 // Generate UnoCSS
