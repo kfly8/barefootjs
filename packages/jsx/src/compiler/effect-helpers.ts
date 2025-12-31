@@ -62,7 +62,13 @@ export interface EffectWithPreCheckOptions {
  *
  * @example
  * generateEffectWithPreCheck({ varName: '_el1', effectBody: '_el1.textContent = value' })
- * // → ['if (_el1) {', '  createEffect(() => {', '    _el1.textContent = value', '  })', '}']
+ * // → [
+ * //   'if (_el1) {',
+ * //   '  createEffect(() => {',
+ * //   '    _el1.textContent = value',
+ * //   '  })',
+ * //   '}'
+ * // ]
  */
 export function generateEffectWithPreCheck(options: EffectWithPreCheckOptions): string[] {
   const { varName, effectBody } = options
