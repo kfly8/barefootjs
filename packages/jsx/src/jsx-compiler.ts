@@ -63,6 +63,11 @@ import {
 } from './compiler/file-grouping'
 import { generateFileClientJs } from './compiler/client-js-generator'
 import { generateFileMarkedJsx } from './compiler/marked-jsx-generator'
+import {
+  generateScopedElementFinder,
+  generateEffectWithPreCheck,
+  generateEffectWithInnerFinder,
+} from './compiler/effect-helpers'
 
 export type { CompileJSXResult }
 
@@ -426,36 +431,29 @@ function generateDynamicElementEffects(
     const v = ctx.varName(el.id)
     const path = ctx.elementPaths.get(el.id)
 
-    lines.push(`createEffect(() => {`)
-
-    if (path !== undefined && path !== null) {
-      // Use path-based navigation when path is known and reliable
-      const accessCode = path === '' ? '__scope' : `__scope?.${path}`
-      lines.push(`  const ${v} = ${accessCode}`)
-    } else {
-      // Fallback to scoped finder for elements with null paths (inside conditionals, after components)
-      // Uses __findInScope to exclude elements inside nested data-bf-scope components
-      lines.push(`  const ${v} = __findInScope('[data-bf="${el.id}"]')`)
-    }
-
     // Evaluate the expression BEFORE checking if element exists
     // This ensures signal dependencies are always tracked, even when element doesn't exist yet
     // (e.g., element is inside a conditional that's currently false)
     if (el.expression === 'children' || el.fullContent === 'children') {
       // Handle children prop - if it's a function (lazy children), call it
       // Only update if children is defined (static children are rendered server-side)
-      lines.push(`  const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined`)
-      lines.push(`  if (${v} && __childrenResult !== undefined) {`)
-      lines.push(`    ${v}.textContent = String(__childrenResult)`)
-      lines.push(`  }`)
+      lines.push(...generateEffectWithInnerFinder({
+        varName: v,
+        elementId: el.id,
+        path,
+        effectBody: `${v}.textContent = String(__childrenResult)`,
+        evaluateFirst: `const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined\nif (!${v} || __childrenResult === undefined) return`,
+      }))
     } else {
       // Evaluate expression first to track dependencies
-      lines.push(`  const __textValue = ${el.fullContent}`)
-      lines.push(`  if (${v}) {`)
-      lines.push(`    ${v}.textContent = String(__textValue)`)
-      lines.push(`  }`)
+      lines.push(...generateEffectWithInnerFinder({
+        varName: v,
+        elementId: el.id,
+        path,
+        effectBody: `${v}.textContent = String(__textValue)`,
+        evaluateFirst: `const __textValue = ${el.fullContent}`,
+      }))
     }
-    lines.push(`})`)
   }
 
   return lines
@@ -472,20 +470,19 @@ function generateListElementEffects(
 
   for (const el of listElements) {
     const v = ctx.varName(el.id)
-    lines.push(`if (${v}) {`)
-    lines.push(`  createEffect(() => {`)
+    let effectBody: string
+
     if (el.keyExpression) {
       // Use reconcileList for efficient key-based updates
-      // Convert key expression to work in render context (e.g., item.id -> item.id)
       const renderFn = `(${el.paramName}, __index) => ${el.itemTemplate}`
       const getKeyFn = `(${el.paramName}) => ${el.keyExpression}`
-      lines.push(`    reconcileList(${v}, ${el.arrayExpression}, ${renderFn}, ${getKeyFn})`)
+      effectBody = `reconcileList(${v}, ${el.arrayExpression}, ${renderFn}, ${getKeyFn})`
     } else {
       // Fall back to innerHTML for lists without key
-      lines.push(`    ${v}.innerHTML = ${el.mapExpression}`)
+      effectBody = `${v}.innerHTML = ${el.mapExpression}`
     }
-    lines.push(`  })`)
-    lines.push(`}`)
+
+    lines.push(...generateEffectWithPreCheck({ varName: v, effectBody }))
   }
 
   return lines
@@ -502,11 +499,8 @@ function generateAttributeEffects(
 
   for (const da of dynamicAttributes) {
     const v = ctx.varName(da.id)
-    lines.push(`if (${v}) {`)
-    lines.push(`  createEffect(() => {`)
-    lines.push(`    ${generateAttributeUpdateWithVar(da, v)}`)
-    lines.push(`  })`)
-    lines.push(`}`)
+    const effectBody = generateAttributeUpdateWithVar(da, v)
+    lines.push(...generateEffectWithPreCheck({ varName: v, effectBody }))
   }
 
   return lines
@@ -610,7 +604,7 @@ function generateConditionalEffects(
       lines.push(`  // Re-attach event handlers for elements inside conditional`)
       for (const el of cond.interactiveElements) {
         const elVar = `__cond_el_${el.id}`
-        lines.push(`  const ${elVar} = __findInScope('[data-bf="${el.id}"]')`)
+        lines.push(`  ${generateScopedElementFinder({ varName: elVar, elementId: el.id, path: null })}`)
         for (const event of el.events) {
           const handlerBody = extractArrowBody(event.handler)
           const conditionalHandler = parseConditionalHandler(handlerBody)
