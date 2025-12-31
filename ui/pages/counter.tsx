@@ -4,7 +4,7 @@
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import { Counter } from '../components/Counter'
+import { Counter } from '@/components/Counter'
 import {
   PageHeader,
   Section,

@@ -7,6 +7,8 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
+// All pages imported from source
+// Pages import compiled components via @/components (dist/components)
 import { BadgePage } from './pages/badge'
 import { ButtonPage } from './pages/button'
 import { CardPage } from './pages/card'

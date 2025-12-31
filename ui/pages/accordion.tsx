@@ -9,7 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '../components/Accordion'
+} from '@/components/Accordion'
 import {
   PageHeader,
   Section,

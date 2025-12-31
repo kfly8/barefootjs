@@ -9,7 +9,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from '../components/Tabs'
+} from '@/components/Tabs'
 import {
   PageHeader,
   Section,

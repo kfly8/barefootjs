@@ -4,7 +4,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Checkbox } from '../components/Checkbox'
+import { Checkbox } from '@/components/Checkbox'
 import {
   PageHeader,
   Section,

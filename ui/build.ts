@@ -8,8 +8,10 @@
  * - dist/uno.css (UnoCSS output)
  * - dist/manifest.json
  *
- * Note: pages/* are server components imported directly from source by server.tsx.
- * Only components/* with "use client" are compiled to dist/.
+ * Only components/* are compiled. Pages import compiled components via @/components.
+ * The compiler handles "use client" filtering:
+ * - Files with "use client" are included in output
+ * - Files without "use client" are processed for dependency resolution only
  */
 
 import { compileJSX, type PropWithType } from '@barefootjs/jsx'
@@ -24,9 +26,7 @@ const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../packages/dom')
 
 // Discover all component files
-// The compiler handles "use client" filtering:
-// - Files with "use client" are included in output
-// - Files without "use client" are processed for dependency resolution only
+// The compiler handles "use client" filtering
 const componentFiles = (await readdir(COMPONENTS_DIR))
   .filter(f => f.endsWith('.tsx'))
   .map(f => resolve(COMPONENTS_DIR, f))
@@ -63,9 +63,8 @@ for (const entryPath of componentFiles) {
   for (const file of result.files) {
     // Marked JSX file - output to dist/components/
     const baseFileName = file.sourcePath.split('/').pop()!
-    const jsxFileName = baseFileName
-    await Bun.write(resolve(DIST_COMPONENTS_DIR, jsxFileName), file.markedJsx)
-    console.log(`Generated: dist/components/${jsxFileName}`)
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), file.markedJsx)
+    console.log(`Generated: dist/components/${baseFileName}`)
 
     // Client JS - colocate with Marked JSX
     if (file.hasClientJs) {
@@ -73,9 +72,9 @@ for (const entryPath of componentFiles) {
       console.log(`Generated: dist/components/${file.clientJsFilename}`)
     }
 
-    // Manifest entries for file-level script deduplication
+    // Manifest entries
     const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
-    const markedJsxPath = `components/${jsxFileName}`
+    const markedJsxPath = `components/${baseFileName}`
     const clientJsPath = file.hasClientJs ? `components/${file.clientJsFilename}` : undefined
     manifest[fileKey] = {
       markedJsx: markedJsxPath,
@@ -103,7 +102,6 @@ const componentExports: string[] = []
 for (const file of await readdir(DIST_COMPONENTS_DIR)) {
   if (file.endsWith('.tsx')) {
     const baseName = file.replace('.tsx', '')
-    // Read the file to find exported component names
     const content = await Bun.file(resolve(DIST_COMPONENTS_DIR, file)).text()
     const exportMatches = content.matchAll(/export\s+(?:function|const)\s+(\w+)/g)
     for (const match of exportMatches) {

@@ -4,7 +4,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Switch } from '../components/Switch'
+import { Switch } from '@/components/Switch'
 import {
   PageHeader,
   Section,

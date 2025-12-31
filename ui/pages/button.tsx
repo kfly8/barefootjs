@@ -4,7 +4,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Button } from '../components/Button'
+import { Button } from '@/components/Button'
 import {
   PageHeader,
   Section,

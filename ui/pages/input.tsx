@@ -4,7 +4,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Input } from '../components/Input'
+import { Input } from '@/components/Input'
 import {
   PageHeader,
   Section,
