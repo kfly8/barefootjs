@@ -36,14 +36,14 @@ if (!await Bun.file(domDistFile).exists()) {
   await proc.exited
 }
 await Bun.write(
-  resolve(DIST_DIR, barefootFileName),
+  resolve(DIST_COMPONENTS_DIR, barefootFileName),
   Bun.file(domDistFile)
 )
-console.log(`Generated: dist/${barefootFileName}`)
+console.log(`Generated: dist/components/${barefootFileName}`)
 
 // Manifest
 const manifest: Record<string, { clientJs?: string; serverJsx: string; props: PropWithType[] }> = {
-  '__barefoot__': { serverJsx: '', clientJs: barefootFileName, props: [] }
+  '__barefoot__': { serverJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
 }
 
 // Compile each component
@@ -59,19 +59,20 @@ for (const entryPath of componentFiles) {
     await Bun.write(resolve(DIST_COMPONENTS_DIR, jsxFileName), file.serverJsx)
     console.log(`Generated: dist/components/${jsxFileName}`)
 
-    // Client JS
+    // Client JS - colocate with server JSX
     if (file.hasClientJs) {
-      await Bun.write(resolve(DIST_DIR, file.clientJsFilename), file.clientJs)
-      console.log(`Generated: dist/${file.clientJsFilename}`)
+      await Bun.write(resolve(DIST_COMPONENTS_DIR, file.clientJsFilename), file.clientJs)
+      console.log(`Generated: dist/components/${file.clientJsFilename}`)
     }
 
     // Manifest entries for file-level script deduplication
     // Key format: __file_{sourcePath} with non-alphanumeric chars replaced by underscores
     const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
     const serverJsxPath = `components/${jsxFileName}`
+    const clientJsPath = file.hasClientJs ? `components/${file.clientJsFilename}` : undefined
     manifest[fileKey] = {
       serverJsx: serverJsxPath,
-      clientJs: file.hasClientJs ? file.clientJsFilename : undefined,
+      clientJs: clientJsPath,
       props: [],
     }
 
@@ -79,7 +80,7 @@ for (const entryPath of componentFiles) {
     for (const compName of file.componentNames) {
       manifest[compName] = {
         serverJsx: serverJsxPath,
-        clientJs: file.hasClientJs ? file.clientJsFilename : undefined,
+        clientJs: clientJsPath,
         props: file.componentProps[compName],
       }
     }
