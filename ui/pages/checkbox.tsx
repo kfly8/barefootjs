@@ -1,10 +1,9 @@
-"use client"
 /**
  * Checkbox Documentation Page
  */
 
-import { createSignal } from '@barefootjs/dom'
 import { Checkbox } from '@/components/Checkbox'
+import { CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/CheckboxDemo'
 import {
   PageHeader,
   Section,
@@ -65,38 +64,6 @@ const checkboxProps: PropDefinition[] = [
   },
 ]
 
-// Interactive binding example
-function BindingExample() {
-  const [checked, setChecked] = createSignal(false)
-  return (
-    <div class="space-y-2">
-      <Checkbox
-        checked={checked()}
-        onCheckedChange={setChecked}
-      />
-      <p class="text-sm text-zinc-600">
-        Status: <span class="checked-status font-medium">{checked() ? 'Checked' : 'Unchecked'}</span>
-      </p>
-    </div>
-  )
-}
-
-// With label example
-function WithLabelExample() {
-  const [accepted, setAccepted] = createSignal(false)
-  return (
-    <div class="space-y-2">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
-        <span class="text-sm">Accept terms and conditions</span>
-      </label>
-      <p class="text-sm text-zinc-600">
-        Terms: <span class="terms-status font-medium">{accepted() ? 'Accepted' : 'Not accepted'}</span>
-      </p>
-    </div>
-  )
-}
-
 export function CheckboxPage() {
   return (
     <div class="space-y-12">
@@ -138,11 +105,11 @@ export function CheckboxPage() {
           </Example>
 
           <Example title="State Binding" code={bindingCode}>
-            <BindingExample />
+            <CheckboxBindingDemo />
           </Example>
 
           <Example title="With Label" code={withLabelCode}>
-            <WithLabelExample />
+            <CheckboxWithLabelDemo />
           </Example>
         </div>
       </Section>

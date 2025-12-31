@@ -63,7 +63,7 @@ test.describe('Checkbox Documentation Page', () => {
 
   test.describe('State Binding', () => {
     test('displays binding example section', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="BindingExample"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope="CheckboxBindingDemo"]')).toBeVisible()
     })
 
     test('shows initial unchecked state', async ({ page }) => {
@@ -72,7 +72,7 @@ test.describe('Checkbox Documentation Page', () => {
     })
 
     test('toggles to checked state on first click', async ({ page }) => {
-      const bindingSection = page.locator('[data-bf-scope="BindingExample"]')
+      const bindingSection = page.locator('[data-bf-scope="CheckboxBindingDemo"]')
       const checkbox = bindingSection.locator('button[role="checkbox"]')
       const status = page.locator('.checked-status')
 
@@ -91,7 +91,7 @@ test.describe('Checkbox Documentation Page', () => {
 
   test.describe('With Label', () => {
     test('displays with label example', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="WithLabelExample"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope="CheckboxWithLabelDemo"]')).toBeVisible()
     })
 
     test('shows initial not accepted state', async ({ page }) => {
@@ -100,7 +100,7 @@ test.describe('Checkbox Documentation Page', () => {
     })
 
     test('toggles to accepted on first click', async ({ page }) => {
-      const labelExample = page.locator('[data-bf-scope="WithLabelExample"]')
+      const labelExample = page.locator('[data-bf-scope="CheckboxWithLabelDemo"]')
       const checkbox = labelExample.locator('button[role="checkbox"]')
       const status = page.locator('.terms-status')
 

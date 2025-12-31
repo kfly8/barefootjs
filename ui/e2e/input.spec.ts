@@ -36,7 +36,7 @@ test.describe('Input Documentation Page', () => {
 
   test.describe('Value Binding', () => {
     test('displays value binding section', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="BindingExample"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope="InputBindingDemo"]')).toBeVisible()
     })
 
     // Note: Value binding interaction tests are skipped due to a compiler bug
@@ -50,7 +50,7 @@ test.describe('Input Documentation Page', () => {
     })
 
     test('shows focused state on focus', async ({ page }) => {
-      const focusSection = page.locator('[data-bf-scope="FocusExample"]')
+      const focusSection = page.locator('[data-bf-scope="InputFocusDemo"]')
       const input = focusSection.locator('input')
       const status = page.locator('.focus-status')
 
@@ -61,7 +61,7 @@ test.describe('Input Documentation Page', () => {
     })
 
     test('shows not focused state on blur', async ({ page }) => {
-      const focusSection = page.locator('[data-bf-scope="FocusExample"]')
+      const focusSection = page.locator('[data-bf-scope="InputFocusDemo"]')
       const input = focusSection.locator('input')
       const status = page.locator('.focus-status')
 

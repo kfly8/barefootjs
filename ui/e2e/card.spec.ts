@@ -50,16 +50,20 @@ test.describe('Card Documentation Page', () => {
   test.describe('Children Composition', () => {
     test('CardHeader contains CardTitle and CardDescription', async ({ page }) => {
       // Verify composition: CardHeader should contain both title and description
-      const cardHeader = page.locator('[data-bf-scope="CardHeader"]').first()
-      await expect(cardHeader.locator('h3')).toBeVisible()
-      await expect(cardHeader.locator('p')).toBeVisible()
+      // Card is a Server Component, so we use text-based selectors
+      const card = page.locator('.w-\\[350px\\]').first()
+      await expect(card.locator('h3:has-text("Card Title")')).toBeVisible()
+      await expect(card.locator('p:has-text("Card Description")')).toBeVisible()
     })
 
     test('Card contains nested sub-components', async ({ page }) => {
-      // Verify composition: Card contains CardHeader, CardContent, CardFooter
-      const card = page.locator('[data-bf-scope="Card"]').first()
-      await expect(card.locator('[data-bf-scope="CardHeader"]')).toBeVisible()
-      await expect(card.locator('[data-bf-scope="CardContent"]')).toBeVisible()
+      // Verify composition: Card contains header, content, and footer areas
+      // Card is a Server Component, so no data-bf-scope attributes
+      const card = page.locator('.w-\\[350px\\]').first()
+      // Card structure includes title, description, and content
+      await expect(card.locator('text=Card Title')).toBeVisible()
+      await expect(card.locator('text=Card Description')).toBeVisible()
+      await expect(card.locator('text=Card Content')).toBeVisible()
     })
   })
 

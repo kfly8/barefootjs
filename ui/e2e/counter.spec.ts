@@ -30,17 +30,17 @@ test.describe('Counter Documentation Page', () => {
 
   test.describe('Interactive Counter', () => {
     test('displays interactive counter', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="InteractiveCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterInteractiveDemo"]').first()
       await expect(counter).toBeVisible()
     })
 
     test('shows initial value of 0', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="InteractiveCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterInteractiveDemo"]').first()
       await expect(counter.locator('.tabular-nums')).toContainText('0')
     })
 
     test('increments count on plus button click', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="InteractiveCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterInteractiveDemo"]').first()
       const incrementButton = counter.locator('button[aria-label="Increment"]')
       const valueDisplay = counter.locator('.tabular-nums')
 
@@ -52,7 +52,7 @@ test.describe('Counter Documentation Page', () => {
     })
 
     test('decrements count on minus button click', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="InteractiveCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterInteractiveDemo"]').first()
       const incrementButton = counter.locator('button[aria-label="Increment"]')
       const decrementButton = counter.locator('button[aria-label="Decrement"]')
       const valueDisplay = counter.locator('.tabular-nums')
@@ -70,22 +70,22 @@ test.describe('Counter Documentation Page', () => {
 
   test.describe('Derived State (Memo)', () => {
     test('displays derived counter example', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="DerivedCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterDerivedDemo"]').first()
       await expect(counter).toBeVisible()
     })
 
     test('shows doubled value', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="DerivedCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterDerivedDemo"]').first()
       await expect(counter.locator('text=Doubled:')).toBeVisible()
     })
 
     test('shows is even indicator', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="DerivedCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterDerivedDemo"]').first()
       await expect(counter.locator('text=Is even:')).toBeVisible()
     })
 
     test('updates derived values on increment', async ({ page }) => {
-      const counter = page.locator('[data-bf-scope="DerivedCounter"]').first()
+      const counter = page.locator('[data-bf-scope="CounterDerivedDemo"]').first()
       const incrementButton = counter.locator('button[aria-label="Increment"]')
 
       // Initial: 0, doubled: 0, is even: Yes
