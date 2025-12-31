@@ -62,7 +62,7 @@ import {
   calculateFileMappings,
 } from './compiler/file-grouping'
 import { generateFileClientJs } from './compiler/client-js-generator'
-import { generateFileServerJsx } from './compiler/server-jsx-generator'
+import { generateFileMarkedJsx } from './compiler/marked-jsx-generator'
 
 export type { CompileJSXResult }
 
@@ -138,11 +138,11 @@ export async function compileJSX(
     const combinedClientJs = generateFileClientJs(fileComponents, clientJsCtx)
 
     // Generate combined Marked JSX using new module
-    const combinedServerJsx = generateFileServerJsx(fileComponents, sourcePath, options)
+    const combinedMarkedJsx = generateFileMarkedJsx(fileComponents, sourcePath, options)
 
     files.push({
       sourcePath,
-      serverJsx: combinedServerJsx,
+      serverJsx: combinedMarkedJsx,
       clientJs: combinedClientJs,
       hash: fileHash,
       clientJsFilename,

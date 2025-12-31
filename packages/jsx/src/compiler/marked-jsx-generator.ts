@@ -13,7 +13,7 @@ import { calculateElementPaths } from '../utils/element-paths'
 /**
  * Generate combined Marked JSX for a file
  */
-export function generateFileServerJsx(
+export function generateFileMarkedJsx(
   fileComponents: ComponentData[],
   sourcePath: string,
   options?: CompileOptions
