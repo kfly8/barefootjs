@@ -867,37 +867,34 @@ function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): 
 }
 
 /**
- * Generate client JS with createEffect (reactive updates)
- *
- * Uses tree position-based hydration: elements are found by DOM traversal
- * instead of querySelector. This enables Fragment root support.
+ * Context for client JS generation functions
  */
-function generateClientJsWithCreateEffect(
-  componentName: string,
-  interactiveElements: InteractiveElement[],
+type ClientJsGeneratorContext = {
+  componentName: string
+  elementPaths: Map<string, string | null>
+  declaredPaths: Map<string, string>
+  queriedIds: Set<string>
+  varName: (id: string) => string
+  getElementAccessCode: (id: string) => string
+}
+
+/**
+ * Generate element queries: scope setup, path calculation, element declarations
+ */
+function generateElementQueries(
+  ctx: ClientJsGeneratorContext,
   dynamicElements: DynamicElement[],
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[],
-  localFunctions: LocalFunction[],
-  refElements: RefElement[] = [],
-  conditionalElements: ConditionalElement[] = [],
-  ir: IRNode | null = null,
-  childInits: ChildComponentInit[] = []
-): string {
+  interactiveElements: InteractiveElement[],
+  refElements: RefElement[],
+  conditionalElements: ConditionalElement[],
+  childInits: ChildComponentInit[]
+): string[] {
   const lines: string[] = []
-  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
 
   // Collect element IDs with dynamic attributes (remove duplicates)
   const attrElementIds = [...new Set(dynamicAttributes.map(da => da.id))]
-
-  // Collect element IDs with refs (remove duplicates)
-  const refElementIds = [...new Set(refElements.map(r => r.id))]
-
-  // Helper to make valid JS variable name from slot ID
-  const varName = (id: string) => `_${id}`
-
-  // Track which IDs we've already added queries for
-  const queriedIds = new Set<string>()
 
   // Check if there are any elements to query
   // Also need scope when there are child inits (to pass as parent scope)
@@ -906,15 +903,6 @@ function generateClientJsWithCreateEffect(
                       refElements.length > 0 || conditionalElements.length > 0 ||
                       childInits.length > 0
 
-  // Calculate element paths from IR for tree position-based hydration
-  const elementPaths: Map<string, string | null> = new Map()
-  if (ir) {
-    const paths = calculateElementPaths(ir)
-    for (const { id, path } of paths) {
-      elementPaths.set(id, path)
-    }
-  }
-
   // Find the component's scope element first
   // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
   // __parentScope allows searching within a parent component's scope (for nested components)
@@ -922,7 +910,7 @@ function generateClientJsWithCreateEffect(
   // Parent components filter out already-initialized scopes and select from remaining ones
   // This ensures correct indexing even when child components have already initialized some scopes
   if (hasElements) {
-    lines.push(`const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope="${componentName}"]'))`)
+    lines.push(`const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope="${ctx.componentName}"]'))`)
     lines.push(`const __uninitializedScopes = __allScopes.filter(s => !s.hasAttribute('data-bf-init'))`)
     lines.push(`const __scope = __uninitializedScopes[__instanceIndex]`)
     lines.push(`if (!__scope) return`)
@@ -930,55 +918,7 @@ function generateClientJsWithCreateEffect(
   }
 
   // Check if we need a scoped element finder (for elements with null paths)
-  const needsScopedFinder = [...elementPaths.values()].some(p => p === null || p === undefined)
-
-  // Track declared variables and their paths for chaining optimization
-  // e.g., { '': '__scope', 'nextElementSibling': '_1' }
-  const declaredPaths: Map<string, string> = new Map()
-  declaredPaths.set('', '__scope')
-
-  // Helper to generate optimized element access code
-  // Instead of always using __scope, chain from previously declared variables
-  const getElementAccessCode = (id: string): string => {
-    const path = elementPaths.get(id)
-
-    // Fallback to scoped finder for null paths or when path not found
-    // The scoped finder excludes elements inside nested data-bf-scope components
-    if (path === undefined || path === null) {
-      return `__findInScope('[data-bf="${id}"]')`
-    }
-
-    // Find the best base variable (longest matching prefix)
-    let bestBase = '__scope'
-    let bestBasePath = ''
-    let remainingPath = path
-
-    for (const [declaredPath, varNameStr] of declaredPaths) {
-      if (path === declaredPath) {
-        // Exact match - just use that variable
-        return varNameStr
-      }
-      if (path.startsWith(declaredPath) && declaredPath.length > bestBasePath.length) {
-        // This declared path is a prefix of our target path
-        const suffix = path.slice(declaredPath.length)
-        // Make sure it's a proper prefix (starts with '.' or is empty)
-        if (suffix === '' || suffix.startsWith('.')) {
-          bestBase = varNameStr
-          bestBasePath = declaredPath
-          remainingPath = suffix.startsWith('.') ? suffix.slice(1) : suffix
-        }
-      }
-    }
-
-    // Register this path for future chaining
-    declaredPaths.set(path, varName(id))
-
-    // Generate the access code
-    if (remainingPath === '') {
-      return bestBase
-    }
-    return `${bestBase}?.${remainingPath}`
-  }
+  const needsScopedFinder = [...ctx.elementPaths.values()].some(p => p === null || p === undefined)
 
   // Collect all element IDs that need to be queried, sorted by path length
   // This ensures shorter paths are declared first for optimal chaining
@@ -1004,48 +944,34 @@ function generateClientJsWithCreateEffect(
 
   // Sort by path length to ensure proper chaining order
   const sortedIds = Array.from(allElementIds).sort((a, b) => {
-    const pathA = elementPaths.get(a) ?? ''
-    const pathB = elementPaths.get(b) ?? ''
+    const pathA = ctx.elementPaths.get(a) ?? ''
+    const pathB = ctx.elementPaths.get(b) ?? ''
     return pathA.length - pathB.length
   })
 
   // Generate element declarations in sorted order
   for (const id of sortedIds) {
-    if (!queriedIds.has(id)) {
-      lines.push(`const ${varName(id)} = ${getElementAccessCode(id)}`)
-      queriedIds.add(id)
+    if (!ctx.queriedIds.has(id)) {
+      lines.push(`const ${ctx.varName(id)} = ${ctx.getElementAccessCode(id)}`)
+      ctx.queriedIds.add(id)
     }
   }
 
-  if (hasDynamicContent || interactiveElements.length > 0 || refElements.length > 0) {
-    lines.push('')
-  }
+  return lines
+}
 
-  // Output local functions
-  for (const fn of localFunctions) {
-    lines.push(fn.code)
-  }
-  if (localFunctions.length > 0) {
-    lines.push('')
-  }
+/**
+ * Generate createEffect blocks for dynamic text content
+ */
+function generateDynamicElementEffects(
+  ctx: ClientJsGeneratorContext,
+  dynamicElements: DynamicElement[]
+): string[] {
+  const lines: string[] = []
 
-  // Execute ref callbacks (with existence check)
-  for (const ref of refElements) {
-    const v = varName(ref.id)
-    lines.push(`if (${v}) {`)
-    lines.push(`  (${ref.callback})(${v})`)
-    lines.push(`}`)
-  }
-  if (refElements.length > 0) {
-    lines.push('')
-  }
-
-  // createEffect for dynamic elements
-  // Use path-based navigation when path is known, otherwise fallback to querySelector
-  // (elements inside conditionals or after components get null paths)
   for (const el of dynamicElements) {
-    const v = varName(el.id)
-    const path = elementPaths.get(el.id)
+    const v = ctx.varName(el.id)
+    const path = ctx.elementPaths.get(el.id)
 
     lines.push(`createEffect(() => {`)
 
@@ -1079,9 +1005,20 @@ function generateClientJsWithCreateEffect(
     lines.push(`})`)
   }
 
-  // createEffect for list elements (with existence check)
+  return lines
+}
+
+/**
+ * Generate createEffect blocks for list rendering
+ */
+function generateListElementEffects(
+  ctx: ClientJsGeneratorContext,
+  listElements: ListElement[]
+): string[] {
+  const lines: string[] = []
+
   for (const el of listElements) {
-    const v = varName(el.id)
+    const v = ctx.varName(el.id)
     lines.push(`if (${v}) {`)
     lines.push(`  createEffect(() => {`)
     if (el.keyExpression) {
@@ -1098,9 +1035,20 @@ function generateClientJsWithCreateEffect(
     lines.push(`}`)
   }
 
-  // createEffect for dynamic attributes (with existence check)
+  return lines
+}
+
+/**
+ * Generate createEffect blocks for dynamic attributes
+ */
+function generateAttributeEffects(
+  ctx: ClientJsGeneratorContext,
+  dynamicAttributes: DynamicAttribute[]
+): string[] {
+  const lines: string[] = []
+
   for (const da of dynamicAttributes) {
-    const v = varName(da.id)
+    const v = ctx.varName(da.id)
     lines.push(`if (${v}) {`)
     lines.push(`  createEffect(() => {`)
     lines.push(`    ${generateAttributeUpdateWithVar(da, v)}`)
@@ -1108,7 +1056,17 @@ function generateClientJsWithCreateEffect(
     lines.push(`}`)
   }
 
-  // createEffect for conditional elements (DOM switching)
+  return lines
+}
+
+/**
+ * Generate createEffect blocks for conditional DOM switching
+ */
+function generateConditionalEffects(
+  conditionalElements: ConditionalElement[]
+): string[] {
+  const lines: string[] = []
+
   for (const cond of conditionalElements) {
     const condId = cond.id
     // Templates use backticks for template literals with ${} interpolation
@@ -1223,14 +1181,23 @@ function generateClientJsWithCreateEffect(
     lines.push(`})`)
   }
 
-  if (hasDynamicContent) {
-    lines.push('')
-  }
+  return lines
+}
+
+/**
+ * Generate event handlers: list delegation + direct event handlers
+ */
+function generateEventHandlers(
+  ctx: ClientJsGeneratorContext,
+  listElements: ListElement[],
+  interactiveElements: InteractiveElement[]
+): string[] {
+  const lines: string[] = []
 
   // Event delegation for list elements (with existence check)
   for (const el of listElements) {
     if (el.itemEvents.length > 0) {
-      const v = varName(el.id)
+      const v = ctx.varName(el.id)
       for (const event of el.itemEvents) {
         const handlerBody = extractArrowBody(event.handler)
         const conditionalHandler = parseConditionalHandler(handlerBody)
@@ -1262,7 +1229,7 @@ function generateClientJsWithCreateEffect(
 
   // Event handlers for interactive elements (with existence check)
   for (const el of interactiveElements) {
-    const v = varName(el.id)
+    const v = ctx.varName(el.id)
     for (const event of el.events) {
       const handlerBody = extractArrowBody(event.handler)
       const conditionalHandler = parseConditionalHandler(handlerBody)
@@ -1282,6 +1249,151 @@ function generateClientJsWithCreateEffect(
       lines.push(`}`)
     }
   }
+
+  return lines
+}
+
+/**
+ * Generate client JS with createEffect (reactive updates)
+ *
+ * Uses tree position-based hydration: elements are found by DOM traversal
+ * instead of querySelector. This enables Fragment root support.
+ */
+function generateClientJsWithCreateEffect(
+  componentName: string,
+  interactiveElements: InteractiveElement[],
+  dynamicElements: DynamicElement[],
+  listElements: ListElement[],
+  dynamicAttributes: DynamicAttribute[],
+  localFunctions: LocalFunction[],
+  refElements: RefElement[] = [],
+  conditionalElements: ConditionalElement[] = [],
+  ir: IRNode | null = null,
+  childInits: ChildComponentInit[] = []
+): string {
+  const lines: string[] = []
+  const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
+
+  // Helper to make valid JS variable name from slot ID
+  const varName = (id: string) => `_${id}`
+
+  // Calculate element paths from IR for tree position-based hydration
+  const elementPaths: Map<string, string | null> = new Map()
+  if (ir) {
+    const paths = calculateElementPaths(ir)
+    for (const { id, path } of paths) {
+      elementPaths.set(id, path)
+    }
+  }
+
+  // Track declared variables and their paths for chaining optimization
+  // e.g., { '': '__scope', 'nextElementSibling': '_1' }
+  const declaredPaths: Map<string, string> = new Map()
+  declaredPaths.set('', '__scope')
+
+  // Track which IDs we've already added queries for
+  const queriedIds = new Set<string>()
+
+  // Helper to generate optimized element access code
+  // Instead of always using __scope, chain from previously declared variables
+  const getElementAccessCode = (id: string): string => {
+    const path = elementPaths.get(id)
+
+    // Fallback to scoped finder for null paths or when path not found
+    // The scoped finder excludes elements inside nested data-bf-scope components
+    if (path === undefined || path === null) {
+      return `__findInScope('[data-bf="${id}"]')`
+    }
+
+    // Find the best base variable (longest matching prefix)
+    let bestBase = '__scope'
+    let bestBasePath = ''
+    let remainingPath = path
+
+    for (const [declaredPath, varNameStr] of declaredPaths) {
+      if (path === declaredPath) {
+        // Exact match - just use that variable
+        return varNameStr
+      }
+      if (path.startsWith(declaredPath) && declaredPath.length > bestBasePath.length) {
+        // This declared path is a prefix of our target path
+        const suffix = path.slice(declaredPath.length)
+        // Make sure it's a proper prefix (starts with '.' or is empty)
+        if (suffix === '' || suffix.startsWith('.')) {
+          bestBase = varNameStr
+          bestBasePath = declaredPath
+          remainingPath = suffix.startsWith('.') ? suffix.slice(1) : suffix
+        }
+      }
+    }
+
+    // Register this path for future chaining
+    declaredPaths.set(path, varName(id))
+
+    // Generate the access code
+    if (remainingPath === '') {
+      return bestBase
+    }
+    return `${bestBase}?.${remainingPath}`
+  }
+
+  // Create context for helper functions
+  const ctx: ClientJsGeneratorContext = {
+    componentName,
+    elementPaths,
+    declaredPaths,
+    queriedIds,
+    varName,
+    getElementAccessCode
+  }
+
+  // Generate element queries (scope setup, scoped finder, element declarations)
+  lines.push(...generateElementQueries(
+    ctx,
+    dynamicElements,
+    listElements,
+    dynamicAttributes,
+    interactiveElements,
+    refElements,
+    conditionalElements,
+    childInits
+  ))
+
+  if (hasDynamicContent || interactiveElements.length > 0 || refElements.length > 0) {
+    lines.push('')
+  }
+
+  // Output local functions
+  for (const fn of localFunctions) {
+    lines.push(fn.code)
+  }
+  if (localFunctions.length > 0) {
+    lines.push('')
+  }
+
+  // Execute ref callbacks (with existence check)
+  for (const ref of refElements) {
+    const v = varName(ref.id)
+    lines.push(`if (${v}) {`)
+    lines.push(`  (${ref.callback})(${v})`)
+    lines.push(`}`)
+  }
+  if (refElements.length > 0) {
+    lines.push('')
+  }
+
+  // Generate createEffect blocks for each type
+  lines.push(...generateDynamicElementEffects(ctx, dynamicElements))
+  lines.push(...generateListElementEffects(ctx, listElements))
+  lines.push(...generateAttributeEffects(ctx, dynamicAttributes))
+  lines.push(...generateConditionalEffects(conditionalElements))
+
+  if (hasDynamicContent) {
+    lines.push('')
+  }
+
+  // Generate event handlers
+  lines.push(...generateEventHandlers(ctx, listElements, interactiveElements))
 
   return lines.join('\n')
 }
