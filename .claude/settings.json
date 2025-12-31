@@ -1,10 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(git push origin :*)",
-      "Bash(git push -u origin :*)",
-      "Bash(gh pr create :*)"
-    ],
+    "allow": [],
     "deny": [
       "Bash(git push origin main)",
       "Bash(gh pr merge :*)"
