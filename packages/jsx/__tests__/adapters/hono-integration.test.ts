@@ -16,7 +16,7 @@ async function compile(source: string): Promise<CompileJSXResult> {
   return compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: honoServerAdapter })
+  }, { markedJsxAdapter: honoServerAdapter })
 }
 
 async function compileWithFiles(
@@ -26,7 +26,7 @@ async function compileWithFiles(
   return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: honoServerAdapter })
+  }, { markedJsxAdapter: honoServerAdapter })
 }
 
 describe('Hono Adapter Integration', () => {
@@ -48,11 +48,11 @@ describe('Hono Adapter Integration', () => {
       const file = result.files[0]
 
       // Server JSX should have:
-      expect(file.serverJsx).toContain('import { useRequestContext }')
-      expect(file.serverJsx).toContain('import manifest from')
-      expect(file.serverJsx).toContain('export function Component')
-      expect(file.serverJsx).toContain('className="counter"')
-      expect(file.serverJsx).toContain('{0}')  // Initial value
+      expect(file.markedJsx).toContain('import { useRequestContext }')
+      expect(file.markedJsx).toContain('import manifest from')
+      expect(file.markedJsx).toContain('export function Component')
+      expect(file.markedJsx).toContain('className="counter"')
+      expect(file.markedJsx).toContain('{0}')  // Initial value
 
       // Client JS should have:
       expect(file.clientJs).toContain('createSignal(0)')
@@ -76,8 +76,8 @@ describe('Hono Adapter Integration', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      expect(file.serverJsx).toContain('{0}')       // count()
-      expect(file.serverJsx).toContain('{0 * 2}')   // count() * 2
+      expect(file.markedJsx).toContain('{0}')       // count()
+      expect(file.markedJsx).toContain('{0 * 2}')   // count() * 2
       // Expression is evaluated before element check to ensure signal dependencies are tracked
       expect(file.clientJs).toContain('const __textValue = count()')
       expect(file.clientJs).toContain('const __textValue = "doubled: " + String(count() * 2)')
@@ -110,8 +110,8 @@ describe('Hono Adapter Integration', () => {
       const file = result.files[0]
 
       // Server JSX should use map with key
-      expect(file.serverJsx).toContain('.map((todo, __index) =>')
-      expect(file.serverJsx).toContain('data-key={todo.id}')
+      expect(file.markedJsx).toContain('.map((todo, __index) =>')
+      expect(file.markedJsx).toContain('data-key={todo.id}')
 
       // Client JS should have event delegation
       expect(file.clientJs).toContain('reconcileList')
@@ -136,10 +136,10 @@ describe('Hono Adapter Integration', () => {
       const file = result.files[0]
 
       // Should include props in function signature
-      expect(file.serverJsx).toContain('initialTodos')
-      expect(file.serverJsx).toContain('__isRoot')
-      expect(file.serverJsx).toContain('__hydrateProps')
-      expect(file.serverJsx).toContain('data-bf-props="Component"')
+      expect(file.markedJsx).toContain('initialTodos')
+      expect(file.markedJsx).toContain('__isRoot')
+      expect(file.markedJsx).toContain('__hydrateProps')
+      expect(file.markedJsx).toContain('data-bf-props="Component"')
 
       // Client JS should have auto-hydration
       expect(file.clientJs).toContain('initComponent')
@@ -174,8 +174,8 @@ describe('Hono Adapter Integration', () => {
       expect(child).toBeDefined()
 
       // Parent should import Child (preserving original import style - default import in this case)
-      expect(parent!.serverJsx).toContain("import Child from './Child'")
-      expect(parent!.serverJsx).toContain('<Child')
+      expect(parent!.markedJsx).toContain("import Child from './Child'")
+      expect(parent!.markedJsx).toContain('<Child')
     })
 
     it('compiles child component with callback props (event handlers excluded from server)', async () => {
@@ -218,10 +218,10 @@ describe('Hono Adapter Integration', () => {
       expect(todoItem).toBeDefined()
 
       // TodoItem in list should have props (item) but not onDelete (event handler)
-      expect(parent!.serverJsx).toContain('<TodoItem')
-      expect(parent!.serverJsx).toContain('item={item}')
+      expect(parent!.markedJsx).toContain('<TodoItem')
+      expect(parent!.markedJsx).toContain('item={item}')
       // Event handlers are stripped from server JSX
-      expect(parent!.serverJsx).not.toContain('onDelete={')
+      expect(parent!.markedJsx).not.toContain('onDelete={')
     })
   })
 
@@ -236,10 +236,10 @@ describe('Hono Adapter Integration', () => {
       const file = result.files[0]
 
       // Should track which scripts have been output
-      expect(file.serverJsx).toContain('bfOutputScripts')
-      expect(file.serverJsx).toContain('__needsBarefoot')
-      expect(file.serverJsx).toContain('__needsThis')
-      expect(file.serverJsx).toContain('__barefootSrc')
+      expect(file.markedJsx).toContain('bfOutputScripts')
+      expect(file.markedJsx).toContain('__needsBarefoot')
+      expect(file.markedJsx).toContain('__needsThis')
+      expect(file.markedJsx).toContain('__barefootSrc')
     })
   })
 })

@@ -31,10 +31,10 @@ describe('Fragment Support', () => {
     const file = result.files[0]
 
     // Fragment outputs as-is, first element gets data-bf-scope
-    expect(file.serverJsx).toContain('<>')
-    expect(file.serverJsx).toContain('</>')
-    expect(file.serverJsx).toContain('<h1 data-bf-scope="Component">Title</h1>')
-    expect(file.serverJsx).toContain('<p>Content</p>')
+    expect(file.markedJsx).toContain('<>')
+    expect(file.markedJsx).toContain('</>')
+    expect(file.markedJsx).toContain('<h1 data-bf-scope="Component">Title</h1>')
+    expect(file.markedJsx).toContain('<p>Content</p>')
   })
 
   it('fragment with dynamic content', async () => {
@@ -78,8 +78,8 @@ describe('Fragment Support', () => {
     const file = result.files[0]
 
     // Nested fragments should work
-    expect(file.serverJsx).toContain('<span>Nested</span>')
-    expect(file.serverJsx).toContain('<div>Sibling</div>')
+    expect(file.markedJsx).toContain('<span>Nested</span>')
+    expect(file.markedJsx).toContain('<div>Sibling</div>')
   })
 
   it('fragment as conditional result', async () => {
@@ -106,10 +106,10 @@ describe('Fragment Support', () => {
 
     // Fragment in conditional should work
     // Fragment branch uses comment markers, single element uses data-bf-cond
-    expect(file.serverJsx).toContain('__rawHtml("<!--bf-cond-start:0-->")')
-    expect(file.serverJsx).toContain('<span>A</span><span>B</span>')
-    expect(file.serverJsx).toContain('__rawHtml("<!--bf-cond-end:0-->")')
-    expect(file.serverJsx).toContain('<span data-bf-cond="0">Hidden</span>')
+    expect(file.markedJsx).toContain('__rawHtml("<!--bf-cond-start:0-->")')
+    expect(file.markedJsx).toContain('<span>A</span><span>B</span>')
+    expect(file.markedJsx).toContain('__rawHtml("<!--bf-cond-end:0-->")')
+    expect(file.markedJsx).toContain('<span data-bf-cond="0">Hidden</span>')
   })
 
   it('fragment with text and elements mixed', async () => {
@@ -127,8 +127,8 @@ describe('Fragment Support', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    expect(file.serverJsx).toContain('Hello')
-    expect(file.serverJsx).toContain('<span>World</span>')
+    expect(file.markedJsx).toContain('Hello')
+    expect(file.markedJsx).toContain('<span>World</span>')
   })
 
   it('fragment with single child', async () => {
@@ -145,7 +145,7 @@ describe('Fragment Support', () => {
     const file = result.files[0]
 
     // Fragment outputs as-is, first element gets data-bf-scope
-    expect(file.serverJsx).toContain('<div data-bf-scope="Component">Only child</div>')
+    expect(file.markedJsx).toContain('<div data-bf-scope="Component">Only child</div>')
   })
 
   it('empty fragment', async () => {
@@ -158,6 +158,6 @@ describe('Fragment Support', () => {
     const file = result.files[0]
 
     // Empty fragment outputs as-is (no element to add data-bf-scope)
-    expect(file.serverJsx).toContain('<></>')
+    expect(file.markedJsx).toContain('<></>')
   })
 })

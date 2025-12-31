@@ -2,7 +2,7 @@
  * BarefootJS JSX Compiler - Transformers
  */
 
-export { irToServerJsx } from './ir-to-server-jsx'
+export { irToMarkedJsx } from './ir-to-marked-jsx'
 export {
   collectClientJsInfo,
   collectAllChildComponentNames,
@@ -18,7 +18,7 @@ export { jsxToIR, findAndConvertJsxReturn } from './jsx-to-ir'
 // Re-export context types from types.ts for backwards compatibility
 export type {
   JsxToIRContext,
-  ServerJsxContext,
+  MarkedJsxContext,
   CollectContext,
   CompilerWarning,
 } from '../types'

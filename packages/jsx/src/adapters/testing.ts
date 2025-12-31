@@ -1,5 +1,5 @@
 /**
- * Testing Server Adapters
+ * Testing Marked JSX Adapters
  *
  * Adapters specifically designed for testing purposes.
  * NOT for production use - use hono.ts or similar for real applications.
@@ -9,11 +9,11 @@
  * - testHtmlAdapter: Outputs static HTML (for E2E DOM testing)
  */
 
-import type { ServerComponentAdapter, IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
+import type { MarkedJsxAdapter, IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
- * Test adapter that generates minimal server JSX components.
+ * Test adapter that generates minimal Marked JSX components.
  *
  * Use this for testing compiler output patterns:
  * - Verifying generated JSX structure
@@ -22,18 +22,18 @@ import { isSvgRoot } from '../utils/svg-helpers'
  *
  * @example
  * ```typescript
- * const result = await compileJSX(path, readFile, { serverAdapter: testJsxAdapter })
- * expect(result.components[0].serverJsx).toContain('<p className="count">')
+ * const result = await compileJSX(path, readFile, { markedJsxAdapter: testJsxAdapter })
+ * expect(result.files[0].markedJsx).toContain('<p className="count">')
  * ```
  */
-export const testJsxAdapter: ServerComponentAdapter = {
+export const testJsxAdapter: MarkedJsxAdapter = {
   // Raw HTML helper for comment nodes (returns dangerouslySetInnerHTML wrapper)
   rawHtmlHelper: {
     importStatement: '',
     helperCode: "const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })",
   },
 
-  generateServerComponent: ({ name, props, typeDefinitions: _typeDefinitions, jsx }) => {
+  generateMarkedJsxComponent: ({ name, props, typeDefinitions: _typeDefinitions, jsx }) => {
     let propsParam = ''
     if (props.length > 0) {
       const propNames = props.map(p => p.name)
@@ -56,7 +56,7 @@ export const testJsxAdapter: ServerComponentAdapter = {
 `
   },
 
-  generateServerFile: ({ components }) => {
+  generateMarkedJsxFile: ({ components }) => {
     // For test adapter, only output the first component's JSX
     // This matches the behavior expected by existing tests
     const comp = components[0]
@@ -86,7 +86,7 @@ export const testJsxAdapter: ServerComponentAdapter = {
 }
 
 // Legacy alias for backwards compatibility
-export const testServerAdapter = testJsxAdapter
+export const testMarkedJsxAdapter = testJsxAdapter
 
 /**
  * Test adapter that generates static HTML with initial values evaluated.
@@ -98,20 +98,20 @@ export const testServerAdapter = testJsxAdapter
  *
  * @example
  * ```typescript
- * const result = await compileJSX(path, readFile, { serverAdapter: testHtmlAdapter })
- * document.body.innerHTML = result.components[0].serverJsx
+ * const result = await compileJSX(path, readFile, { markedJsxAdapter: testHtmlAdapter })
+ * document.body.innerHTML = result.files[0].markedJsx
  * // Execute clientJs, simulate events, verify DOM
  * ```
  */
-export const testHtmlAdapter: ServerComponentAdapter = {
-  generateServerComponent: ({ name, ir, signals }) => {
+export const testHtmlAdapter: MarkedJsxAdapter = {
+  generateMarkedJsxComponent: ({ name, ir, signals }) => {
     if (!ir) {
       return `<!-- No IR for ${name} -->`
     }
     return irToHtml(ir, name, signals)
   },
 
-  generateServerFile: ({ components }) => {
+  generateMarkedJsxFile: ({ components }) => {
     // For test adapter, only output the first component's HTML
     // This matches the behavior expected by existing tests
     const comp = components[0]

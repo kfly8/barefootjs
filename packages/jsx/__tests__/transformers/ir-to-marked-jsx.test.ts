@@ -1,12 +1,12 @@
 /**
- * IR to Server JSX Transformer Tests
+ * IR to Marked JSX Transformer Tests
  */
 
 import { describe, it, expect } from 'bun:test'
-import { irToServerJsx } from '../../src/transformers/ir-to-server-jsx'
+import { irToMarkedJsx } from '../../src/transformers/ir-to-marked-jsx'
 import type { IRNode, IRElement, SignalDeclaration } from '../../src/types'
 
-describe('irToServerJsx', () => {
+describe('irToMarkedJsx', () => {
   const signals: SignalDeclaration[] = [
     { getter: 'count', setter: 'setCount', initialValue: '0' },
     { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },
@@ -14,12 +14,12 @@ describe('irToServerJsx', () => {
 
   it('converts text node', () => {
     const node: IRNode = { type: 'text', content: 'Hello World' }
-    expect(irToServerJsx(node, 'Test', [])).toBe('Hello World')
+    expect(irToMarkedJsx(node, 'Test', [])).toBe('Hello World')
   })
 
   it('converts expression node preserving expression', () => {
     const node: IRNode = { type: 'expression', expression: 'count()', isDynamic: true }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     expect(result).toBe('{0}')  // count() replaced with initial value
   })
 
@@ -35,7 +35,7 @@ describe('irToServerJsx', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toBe('<div data-bf-scope="Test" className="container">Hello</div>')
   })
 
@@ -51,7 +51,7 @@ describe('irToServerJsx', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     // Root elements use path-based navigation (empty path), no data-bf needed
     expect(result).not.toContain('data-bf="d0"')
     expect(result).toContain('className={0 > 0 ? "active" : ""}')
@@ -85,7 +85,7 @@ describe('irToServerJsx', () => {
       },
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     expect(result).toContain('<ul')
     expect(result).toContain('className="todo-list"')
     // With itemIR, the list generates proper JSX instead of template string
@@ -99,7 +99,7 @@ describe('irToServerJsx', () => {
       whenTrue: { type: 'text', content: 'Positive' },
       whenFalse: { type: 'text', content: 'Zero or Negative' },
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     // Text inside ternary must be quoted strings for valid JSX
     expect(result).toBe('{0 > 0 ? "Positive" : "Zero or Negative"}')
   })
@@ -114,7 +114,7 @@ describe('irToServerJsx', () => {
     const isOnSignal: SignalDeclaration[] = [
       { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
     ]
-    const result = irToServerJsx(node, 'Test', isOnSignal)
+    const result = irToMarkedJsx(node, 'Test', isOnSignal)
     // Expression inside ternary should NOT have extra curly braces
     // Valid: {false ? 'ON' : 'OFF'}
     // Invalid: {false ? {'ON'} : {'OFF'}}
@@ -151,7 +151,7 @@ describe('irToServerJsx', () => {
     const isOnSignal: SignalDeclaration[] = [
       { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
     ]
-    const result = irToServerJsx(node, 'Test', isOnSignal)
+    const result = irToMarkedJsx(node, 'Test', isOnSignal)
     // Element branches are valid JSX as-is
     expect(result).toBe('{false ? <span className="on">ON</span> : <span className="off">OFF</span>}')
   })
@@ -168,19 +168,19 @@ describe('irToServerJsx', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     // Root elements use path-based navigation, no data-bf needed
     expect(result).toBe('<input data-bf-scope="Test" type="text" />')
   })
 })
 
-describe('irToServerJsx - fragment handling', () => {
+describe('irToMarkedJsx - fragment handling', () => {
   it('converts empty fragment', () => {
     const node: IRNode = {
       type: 'fragment',
       children: [],
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toBe('<></>')
   })
 
@@ -192,7 +192,7 @@ describe('irToServerJsx - fragment handling', () => {
         { type: 'element', tagName: 'p', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [{ type: 'text', content: 'Second' }], listInfo: null, dynamicContent: null },
       ],
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('<p data-bf-scope="Test">First</p>')
     expect(result).toContain('<p>Second</p>')
   })
@@ -205,7 +205,7 @@ describe('irToServerJsx - fragment handling', () => {
         { type: 'element', tagName: 'main', id: null, staticAttrs: [], dynamicAttrs: [], spreadAttrs: [], ref: null, events: [], children: [], listInfo: null, dynamicContent: null },
       ],
     }
-    const result = irToServerJsx(node, 'TestComponent', [])
+    const result = irToMarkedJsx(node, 'TestComponent', [])
     expect(result).toContain('data-bf-scope="TestComponent"')
     // The first element should have the scope, not the second
     // header and main are not self-closing tags, so they have explicit closing tags
@@ -213,7 +213,7 @@ describe('irToServerJsx - fragment handling', () => {
   })
 })
 
-describe('irToServerJsx - component handling', () => {
+describe('irToMarkedJsx - component handling', () => {
   it('converts component with static props', () => {
     const node: IRNode = {
       type: 'component',
@@ -228,7 +228,7 @@ describe('irToServerJsx - component handling', () => {
       children: [],
       hasLazyChildren: false,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('<Button')
     expect(result).toContain('label="Click me"')
     expect(result).toContain('size="lg"')
@@ -250,7 +250,7 @@ describe('irToServerJsx - component handling', () => {
       children: [],
       hasLazyChildren: false,
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     expect(result).toContain('value={0}')
   })
 
@@ -265,7 +265,7 @@ describe('irToServerJsx - component handling', () => {
       children: [],
       hasLazyChildren: false,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('{...inputProps}')
   })
 
@@ -282,7 +282,7 @@ describe('irToServerJsx - component handling', () => {
       ],
       hasLazyChildren: false,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('<Card>')
     expect(result).toContain('<p>Content</p>')
     expect(result).toContain('</Card>')
@@ -302,7 +302,7 @@ describe('irToServerJsx - component handling', () => {
       children: [],
       hasLazyChildren: false,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('checked={false}')
     expect(result).not.toContain('onToggle')
   })
@@ -318,13 +318,13 @@ describe('irToServerJsx - component handling', () => {
       children: [],
       hasLazyChildren: false,
     }
-    const result = irToServerJsx(node, 'Parent', [])
+    const result = irToMarkedJsx(node, 'Parent', [])
     expect(result).toContain('data-bf-scope="Parent"')
     expect(result).toContain('<Child />')
   })
 })
 
-describe('irToServerJsx - nested structures', () => {
+describe('irToMarkedJsx - nested structures', () => {
   it('handles element inside conditional', () => {
     const signals: SignalDeclaration[] = [
       { getter: 'show', setter: 'setShow', initialValue: 'true' },
@@ -350,7 +350,7 @@ describe('irToServerJsx - nested structures', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     expect(result).toContain('true ?')
     expect(result).toContain('data-bf-cond="c0"')
     expect(result).toContain('Visible')
@@ -381,7 +381,7 @@ describe('irToServerJsx - nested structures', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     expect(result).toContain('false ? "Active" : "Inactive"')
   })
 
@@ -421,7 +421,7 @@ describe('irToServerJsx - nested structures', () => {
       },
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', signals)
+    const result = irToMarkedJsx(node, 'Test', signals)
     expect(result).toContain('initialTodos?.map')
     expect(result).toContain('(todo, __index)')
     expect(result).toContain('{todo.text}')
@@ -429,7 +429,7 @@ describe('irToServerJsx - nested structures', () => {
   })
 })
 
-describe('irToServerJsx - edge cases', () => {
+describe('irToMarkedJsx - edge cases', () => {
   it('handles empty element', () => {
     const node: IRElement = {
       type: 'element',
@@ -444,7 +444,7 @@ describe('irToServerJsx - edge cases', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toBe('<div data-bf-scope="Test"></div>')
   })
 
@@ -462,7 +462,7 @@ describe('irToServerJsx - edge cases', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('{...props}')
   })
 
@@ -482,7 +482,7 @@ describe('irToServerJsx - edge cases', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain("typeof children === 'function' ? children() : children")
   })
 
@@ -508,7 +508,7 @@ describe('irToServerJsx - edge cases', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', signals, new Set(), { memos })
+    const result = irToMarkedJsx(node, 'Test', signals, new Set(), { memos })
     // doubled() -> () => count() * 2 -> 5 * 2
     expect(result).toContain('(5 * 2)')
   })
@@ -527,7 +527,7 @@ describe('irToServerJsx - edge cases', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('xmlns="http://www.w3.org/2000/svg"')
   })
 
@@ -545,15 +545,15 @@ describe('irToServerJsx - edge cases', () => {
       listInfo: null,
       dynamicContent: null,
     }
-    const result = irToServerJsx(node, 'Test', [])
+    const result = irToMarkedJsx(node, 'Test', [])
     expect(result).toContain('className="container"')
     expect(result).not.toContain('class="container"')
   })
 })
 
-describe('irToServerJsx with honoServerAdapter integration', () => {
+describe('irToMarkedJsx with honoMarkedJsxAdapter integration', () => {
   it('generates JSX that works with Hono adapter', async () => {
-    const { honoServerAdapter } = await import('@barefootjs/hono')
+    const { honoMarkedJsxAdapter } = await import('@barefootjs/hono')
 
     const ir: IRElement = {
       type: 'element',
@@ -577,8 +577,8 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       dynamicContent: null,
     }
 
-    const jsx = irToServerJsx(ir, 'Counter', [])
-    const result = honoServerAdapter.generateServerComponent({
+    const jsx = irToMarkedJsx(ir, 'Counter', [])
+    const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
       name: 'Counter',
       props: [],
       typeDefinitions: [],
@@ -599,7 +599,7 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
   })
 
   it('generates JSX with props that Hono adapter can use for hydration', async () => {
-    const { honoServerAdapter } = await import('@barefootjs/hono')
+    const { honoMarkedJsxAdapter } = await import('@barefootjs/hono')
 
     const signals: SignalDeclaration[] = [
       { getter: 'todos', setter: 'setTodos', initialValue: 'initialTodos' },
@@ -633,8 +633,8 @@ describe('irToServerJsx with honoServerAdapter integration', () => {
       dynamicContent: null,
     }
 
-    const jsx = irToServerJsx(ir, 'Counter', signals)
-    const result = honoServerAdapter.generateServerComponent({
+    const jsx = irToMarkedJsx(ir, 'Counter', signals)
+    const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
       name: 'TodoApp',
       props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
       typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],

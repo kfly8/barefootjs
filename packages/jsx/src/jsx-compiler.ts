@@ -8,7 +8,7 @@
  *
  * Usage example:
  *   const result = await compileJSX(entryPath, readFile)
- *   // result.files[].serverJsx: Marked JSX (server-side JSX with hydration markers)
+ *   // result.files[].markedJsx: Marked JSX (server-side JSX with hydration markers)
  *   // result.files[].clientJs: Client JS
  */
 
@@ -142,7 +142,7 @@ export async function compileJSX(
 
     files.push({
       sourcePath,
-      serverJsx: combinedMarkedJsx,
+      markedJsx: combinedMarkedJsx,
       clientJs: combinedClientJs,
       hash: fileHash,
       clientJsFilename,
@@ -163,7 +163,7 @@ export async function compileJSX(
  *
  * IR-based processing flow:
  * 1. JSX → IR conversion (jsx-to-ir.ts)
- * 2. IR → Marked JSX conversion (ir-to-server-jsx.ts)
+ * 2. IR → Marked JSX conversion (ir-to-marked-jsx.ts)
  * 3. IR → Client JS info collection (ir-to-client-js.ts)
  * 4. Client JS generation (createEffect-based)
  *

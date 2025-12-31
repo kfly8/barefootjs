@@ -1,12 +1,12 @@
 /**
- * Hono Server Component Adapter
+ * Hono Marked JSX Adapter
  *
- * Generates server components compatible with Hono's JSX runtime.
+ * Generates Marked JSX components compatible with Hono's JSX runtime.
  * Each component outputs its own script tags for self-contained hydration.
  * This enables automatic script inclusion even inside Suspense boundaries.
  */
 
-import type { ServerComponentAdapter, ServerComponentData } from './types'
+import type { MarkedJsxAdapter, MarkedJsxComponentData } from './types'
 
 /**
  * Injects conditional data-key prop into the root element of JSX string.
@@ -37,16 +37,16 @@ function injectDataKeyProp(jsx: string): string {
 }
 
 /**
- * Hono JSX adapter for server component generation
+ * Hono Marked JSX adapter for component generation
  */
-export const honoServerAdapter: ServerComponentAdapter = {
+export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
   // Raw HTML helper for comment nodes (fragment conditional markers)
   rawHtmlHelper: {
     importStatement: "import { raw } from 'hono/html'",
     helperCode: "const __rawHtml = raw",
   },
 
-  generateServerComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents, moduleConstants, originalImports, sourcePath, isDefaultExport }) => {
+  generateMarkedJsxComponent: ({ name, props, typeDefinitions, jsx, ir: _ir, signals: _signals, memos: _memos, childComponents, moduleConstants, originalImports, sourcePath, isDefaultExport }) => {
     // Calculate relative path to manifest.json based on source path depth
     // e.g., 'pages/ButtonPage.tsx' -> '../manifest.json'
     // e.g., 'Button.tsx' -> './manifest.json'
@@ -209,9 +209,9 @@ ${contextHelper}
   },
 
   /**
-   * Generate server file code (multiple components in one file)
+   * Generate Marked JSX file code (multiple components in one file)
    */
-  generateServerFile: ({ sourcePath, components, moduleConstants, originalImports }) => {
+  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, originalImports }) => {
     // Calculate relative path to manifest.json based on source path depth
     const sourceDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
     const dirDepth = sourceDir ? sourceDir.split('/').length : 0

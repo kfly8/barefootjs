@@ -34,9 +34,9 @@ describe('Full Compilation Flow', () => {
       // - data-bf-scope marker
       // - className (converted from class)
       // - initial signal value (0)
-      expect(file.serverJsx).toContain('data-bf-scope="Counter"')
-      expect(file.serverJsx).toContain('className="counter"')
-      expect(file.serverJsx).toContain('{0}')
+      expect(file.markedJsx).toContain('data-bf-scope="Counter"')
+      expect(file.markedJsx).toContain('className="counter"')
+      expect(file.markedJsx).toContain('{0}')
 
       // Client JS should contain:
       // - createSignal call
@@ -62,8 +62,8 @@ describe('Full Compilation Flow', () => {
 
       const file = result.files[0]
 
-      expect(file.serverJsx).toContain('data-bf-scope="Header"')
-      expect(file.serverJsx).toContain('<h1>Welcome</h1>')
+      expect(file.markedJsx).toContain('data-bf-scope="Header"')
+      expect(file.markedJsx).toContain('<h1>Welcome</h1>')
       // Static component has no client JS
       expect(file.hasClientJs).toBe(false)
     })
@@ -89,10 +89,10 @@ describe('Full Compilation Flow', () => {
       const file = result.files[0]
 
       // Server JSX should have conditional with data-bf-cond marker
-      expect(file.serverJsx).toContain('data-bf-cond')
-      expect(file.serverJsx).toContain('false ?')
-      expect(file.serverJsx).toContain('className="on"')
-      expect(file.serverJsx).toContain('className="off"')
+      expect(file.markedJsx).toContain('data-bf-cond')
+      expect(file.markedJsx).toContain('false ?')
+      expect(file.markedJsx).toContain('className="on"')
+      expect(file.markedJsx).toContain('className="off"')
 
       // Client JS should handle conditional updates
       expect(file.clientJs).toContain('isOn')
@@ -116,7 +116,7 @@ describe('Full Compilation Flow', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      expect(file.serverJsx).toContain('Hello, World!')
+      expect(file.markedJsx).toContain('Hello, World!')
       expect(file.clientJs).toContain('show')
     })
   })
@@ -144,9 +144,9 @@ describe('Full Compilation Flow', () => {
       const file = result.files[0]
 
       // Server JSX should have map expression
-      expect(file.serverJsx).toContain('initialTodos?.map')
-      expect(file.serverJsx).toContain('data-key={todo.id}')
-      expect(file.serverJsx).toContain('{todo.text}')
+      expect(file.markedJsx).toContain('initialTodos?.map')
+      expect(file.markedJsx).toContain('data-key={todo.id}')
+      expect(file.markedJsx).toContain('{todo.text}')
 
       // Client JS should handle list updates
       expect(file.clientJs).toContain('todos')
@@ -178,8 +178,8 @@ describe('Full Compilation Flow', () => {
       const file = result.files[0]
 
       // Server JSX should have map expression (signals replaced with initial values)
-      expect(file.serverJsx).toContain('initialItems?.map')
-      expect(file.serverJsx).toContain('data-key={item.id}')
+      expect(file.markedJsx).toContain('initialItems?.map')
+      expect(file.markedJsx).toContain('data-key={item.id}')
 
       // Client JS should have remove function
       expect(file.clientJs).toContain('remove')
@@ -224,7 +224,7 @@ describe('Full Compilation Flow', () => {
       // Find App file
       const appFile = result.files.find(f => f.componentNames.includes('App'))
       expect(appFile).toBeDefined()
-      expect(appFile!.serverJsx).toContain('<Counter')
+      expect(appFile!.markedJsx).toContain('<Counter')
 
       // Find Counter file
       const counterFile = result.files.find(f => f.componentNames.includes('Counter'))
@@ -278,7 +278,7 @@ describe('Full Compilation Flow', () => {
       const file = result.files[0]
 
       // Server JSX should show computed initial value
-      expect(file.serverJsx).toContain('(5 * 2)')
+      expect(file.markedJsx).toContain('(5 * 2)')
 
       // Client JS should have memo
       expect(file.clientJs).toContain('createMemo')
@@ -295,7 +295,7 @@ describe('Full Compilation Flow', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      expect(file.serverJsx).toContain('{...rest}')
+      expect(file.markedJsx).toContain('{...rest}')
     })
 
     it('compiles component with multiple exports', async () => {
@@ -337,8 +337,8 @@ describe('Full Compilation Flow', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      expect(file.serverJsx).toContain('disabled={disabled}')
-      expect(file.serverJsx).toContain('{label}')
+      expect(file.markedJsx).toContain('disabled={disabled}')
+      expect(file.markedJsx).toContain('{label}')
 
       // Check componentProps
       expect(file.componentProps['Button']).toBeDefined()
@@ -368,7 +368,7 @@ describe('Full Compilation Flow', () => {
       // Client JS should reference onToggle (event handlers are handled client-side)
       expect(file.clientJs).toContain('onToggle')
       // Server JSX should have the conditional expression
-      expect(file.serverJsx).toContain("checked ? 'ON' : 'OFF'")
+      expect(file.markedJsx).toContain("checked ? 'ON' : 'OFF'")
     })
   })
 })

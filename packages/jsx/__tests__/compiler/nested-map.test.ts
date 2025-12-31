@@ -42,10 +42,10 @@ describe('Nested Map Support', () => {
     const file = result.files[0]
 
     // Server JSX should have nested maps (signal call replaced with initial value)
-    expect(file.serverJsx).toContain('.map((group')
-    expect(file.serverJsx).toContain('group.items?.map((item')
+    expect(file.markedJsx).toContain('.map((group')
+    expect(file.markedJsx).toContain('group.items?.map((item')
     // Should have two levels of nesting
-    expect(file.serverJsx).toContain('<li>{item}</li>')
+    expect(file.markedJsx).toContain('<li>{item}</li>')
   })
 
   it('nested map with keys', async () => {
@@ -76,8 +76,8 @@ describe('Nested Map Support', () => {
     const file = result.files[0]
 
     // Both outer and inner elements should have data-key
-    expect(file.serverJsx).toContain('data-key={category.id}')
-    expect(file.serverJsx).toContain('data-key={product.id}')
+    expect(file.markedJsx).toContain('data-key={category.id}')
+    expect(file.markedJsx).toContain('data-key={product.id}')
   })
 
   it('matrix rendering (grid of items)', async () => {
@@ -108,9 +108,9 @@ describe('Nested Map Support', () => {
     const file = result.files[0]
 
     // Should handle matrix rendering (signal call replaced with initial value)
-    expect(file.serverJsx).toContain('.map((row')
-    expect(file.serverJsx).toContain('row?.map((cell')
-    expect(file.serverJsx).toContain('<tr')
-    expect(file.serverJsx).toContain('<td')
+    expect(file.markedJsx).toContain('.map((row')
+    expect(file.markedJsx).toContain('row?.map((cell')
+    expect(file.markedJsx).toContain('<tr')
+    expect(file.markedJsx).toContain('<td')
   })
 })

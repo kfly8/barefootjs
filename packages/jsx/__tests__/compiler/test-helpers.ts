@@ -32,7 +32,7 @@ export async function compile(source: string): Promise<CompileJSXResult> {
   return compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: testJsxAdapter })
+  }, { markedJsxAdapter: testJsxAdapter })
 }
 
 /**
@@ -63,5 +63,5 @@ export async function compileWithFiles(
   return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: testJsxAdapter })
+  }, { markedJsxAdapter: testJsxAdapter })
 }

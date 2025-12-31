@@ -1,14 +1,14 @@
 /**
  * BarefootJS + Hono/JSX build script
  *
- * Generates server JSX components for use with hono/jsx:
- * - dist/{Component}.tsx (server JSX component)
+ * Generates Marked JSX components for use with hono/jsx:
+ * - dist/{Component}.tsx (Marked JSX component)
  * - dist/{basename}-{hash}.js (client JS)
  * - dist/manifest.json
  */
 
 import { compileJSX, type PropWithType } from '@barefootjs/jsx'
-import { honoServerAdapter } from '@barefootjs/hono'
+import { honoMarkedJsxAdapter } from '@barefootjs/hono'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -42,24 +42,24 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 // Manifest
-const manifest: Record<string, { clientJs?: string; serverJsx: string; props: PropWithType[] }> = {
-  '__barefoot__': { serverJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
+const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[] }> = {
+  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
 }
 
 // Compile each component
 for (const entryPath of componentFiles) {
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { serverAdapter: honoServerAdapter })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter })
 
   for (const file of result.files) {
-    // Server JSX file - output to dist/components/
+    // Marked JSX file - output to dist/components/
     const baseFileName = file.sourcePath.split('/').pop()!
     const jsxFileName = baseFileName
-    await Bun.write(resolve(DIST_COMPONENTS_DIR, jsxFileName), file.serverJsx)
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, jsxFileName), file.markedJsx)
     console.log(`Generated: dist/components/${jsxFileName}`)
 
-    // Client JS - colocate with server JSX
+    // Client JS - colocate with Marked JSX
     if (file.hasClientJs) {
       await Bun.write(resolve(DIST_COMPONENTS_DIR, file.clientJsFilename), file.clientJs)
       console.log(`Generated: dist/components/${file.clientJsFilename}`)
@@ -68,10 +68,10 @@ for (const entryPath of componentFiles) {
     // Manifest entries for file-level script deduplication
     // Key format: __file_{sourcePath} with non-alphanumeric chars replaced by underscores
     const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
-    const serverJsxPath = `components/${jsxFileName}`
+    const markedJsxPath = `components/${jsxFileName}`
     const clientJsPath = file.hasClientJs ? `components/${file.clientJsFilename}` : undefined
     manifest[fileKey] = {
-      serverJsx: serverJsxPath,
+      markedJsx: markedJsxPath,
       clientJs: clientJsPath,
       props: [],
     }
@@ -79,7 +79,7 @@ for (const entryPath of componentFiles) {
     // Manifest entries for each component in file
     for (const compName of file.componentNames) {
       manifest[compName] = {
-        serverJsx: serverJsxPath,
+        markedJsx: markedJsxPath,
         clientJs: clientJsPath,
         props: file.componentProps[compName],
       }
@@ -87,7 +87,7 @@ for (const entryPath of componentFiles) {
   }
 }
 
-// Output manifest (in components/ alongside the server JSX files)
+// Output manifest (in components/ alongside the Marked JSX files)
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/components/manifest.json')
 

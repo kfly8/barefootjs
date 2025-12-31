@@ -30,12 +30,12 @@ export async function compile(source: string): Promise<CompileResult> {
   const result = await compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: testHtmlAdapter })
+  }, { markedJsxAdapter: testHtmlAdapter })
 
   const firstFile = result.files[0]
 
   return {
-    html: firstFile?.serverJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
+    html: firstFile?.markedJsx || '',  // htmlServerAdapter puts HTML in serverJsx field
     clientJs: firstFile?.clientJs || '',
     files: result.files,
   }
@@ -51,12 +51,12 @@ export async function compileWithFiles(
   const result = await compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { serverAdapter: testHtmlAdapter })
+  }, { markedJsxAdapter: testHtmlAdapter })
 
   const firstFile = result.files[0]
 
   return {
-    html: firstFile?.serverJsx || '',
+    html: firstFile?.markedJsx || '',
     clientJs: firstFile?.clientJs || '',
     files: result.files,
   }

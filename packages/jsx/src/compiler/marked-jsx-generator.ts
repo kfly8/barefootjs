@@ -5,9 +5,9 @@
  * Collects component data and delegates to the server adapter.
  */
 
-import type { CompileOptions, ServerComponentData } from '../types'
+import type { CompileOptions, MarkedJsxComponentData } from '../types'
 import type { ComponentData } from './file-grouping'
-import { irToServerJsx, collectAllChildComponentNames } from '../transformers'
+import { irToMarkedJsx, collectAllChildComponentNames } from '../transformers'
 import { calculateElementPaths } from '../utils/element-paths'
 
 /**
@@ -19,12 +19,12 @@ export function generateFileMarkedJsx(
   options?: CompileOptions
 ): string {
   // Only generate if adapter supports file-based generation
-  if (!options?.serverAdapter?.generateServerFile) {
+  if (!options?.markedJsxAdapter?.generateMarkedJsxFile) {
     return ''
   }
 
-  // Collect component data for server file generation
-  const serverComponents: ServerComponentData[] = fileComponents
+  // Collect component data for Marked JSX file generation
+  const markedJsxComponents: MarkedJsxComponentData[] = fileComponents
     .filter(c => c.result.ir)
     .map(c => {
       const paths = calculateElementPaths(c.result.ir!)
@@ -32,7 +32,7 @@ export function generateFileMarkedJsx(
         ...paths.filter(p => p.path === null).map(p => p.id),
         ...c.result.dynamicElements.map(el => el.id),
       ])
-      const jsx = irToServerJsx(
+      const jsx = irToMarkedJsx(
         c.result.ir!,
         c.name,
         c.result.signals,
@@ -66,9 +66,9 @@ export function generateFileMarkedJsx(
     arr.findIndex(x => x.name === imp.name && x.path === imp.path) === i
   )
 
-  return options.serverAdapter.generateServerFile({
+  return options.markedJsxAdapter.generateMarkedJsxFile({
     sourcePath,
-    components: serverComponents,
+    components: markedJsxComponents,
     moduleConstants: uniqueModuleConstants,
     originalImports: uniqueImports,
   })

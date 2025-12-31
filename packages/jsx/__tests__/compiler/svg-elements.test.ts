@@ -29,10 +29,10 @@ describe('SVG Elements Support', () => {
     const file = result.files[0]
 
     // SVG should have xmlns attribute
-    expect(file.serverJsx).toContain('xmlns="http://www.w3.org/2000/svg"')
+    expect(file.markedJsx).toContain('xmlns="http://www.w3.org/2000/svg"')
     // Should contain circle element
-    expect(file.serverJsx).toContain('<circle')
-    expect(file.serverJsx).toContain('cx="50"')
+    expect(file.markedJsx).toContain('<circle')
+    expect(file.markedJsx).toContain('cx="50"')
   })
 
   it('svg with viewBox (camelCase)', async () => {
@@ -49,8 +49,8 @@ describe('SVG Elements Support', () => {
     const file = result.files[0]
 
     // viewBox should be preserved as camelCase
-    expect(file.serverJsx).toContain('viewBox="0 0 100 100"')
-    expect(file.serverJsx).toContain('<rect')
+    expect(file.markedJsx).toContain('viewBox="0 0 100 100"')
+    expect(file.markedJsx).toContain('<rect')
   })
 
   it('svg with stroke attributes', async () => {
@@ -73,8 +73,8 @@ describe('SVG Elements Support', () => {
     const file = result.files[0]
 
     // stroke attributes should be preserved
-    expect(file.serverJsx).toContain('strokeWidth="2"')
-    expect(file.serverJsx).toContain('strokeLinecap="round"')
+    expect(file.markedJsx).toContain('strokeWidth="2"')
+    expect(file.markedJsx).toContain('strokeLinecap="round"')
   })
 
   it('svg with dynamic attributes', async () => {
@@ -93,8 +93,8 @@ describe('SVG Elements Support', () => {
     const file = result.files[0]
 
     // Elements reachable via path-based navigation don't need data-bf
-    expect(file.serverJsx).not.toContain('data-bf=')
-    expect(file.serverJsx).toContain('<circle')
+    expect(file.markedJsx).not.toContain('data-bf=')
+    expect(file.markedJsx).toContain('<circle')
     // Should use path-based navigation in client JS
     expect(file.clientJs).toContain('firstElementChild')
   })
@@ -121,7 +121,7 @@ describe('SVG Elements Support', () => {
     const file = result.files[0]
 
     // Elements reachable via path-based navigation don't need data-bf
-    expect(file.serverJsx).not.toContain('data-bf=')
+    expect(file.markedJsx).not.toContain('data-bf=')
     // Should generate click handler
     expect(file.clientJs).toContain('onclick')
   })
@@ -142,9 +142,9 @@ describe('SVG Elements Support', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    expect(file.serverJsx).toContain('<g')
-    expect(file.serverJsx).toContain('transform="translate(10, 10)"')
-    expect(file.serverJsx).toContain('<circle')
-    expect(file.serverJsx).toContain('<rect')
+    expect(file.markedJsx).toContain('<g')
+    expect(file.markedJsx).toContain('transform="translate(10, 10)"')
+    expect(file.markedJsx).toContain('<circle')
+    expect(file.markedJsx).toContain('<rect')
   })
 })
