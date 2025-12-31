@@ -1,3 +1,4 @@
+"use client"
 /**
  * Counter Documentation Page
  */
