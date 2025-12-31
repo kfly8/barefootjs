@@ -59,6 +59,10 @@ import {
   resolvePath,
 } from './compiler/utils'
 import {
+  filterChildrenWithClientJs,
+  joinDeclarations,
+} from './compiler/client-js-helpers'
+import {
   calculateElementPaths,
 } from './utils/element-paths'
 
@@ -455,13 +459,7 @@ export async function compileJSX(
         if (!comp.hasClientJs) continue
 
         const uniqueChildNames = [...new Set(comp.childInits.map(child => child.name))]
-        const childrenWithClientJs = uniqueChildNames.filter(childName => {
-          // Skip if child is in the same file
-          if (componentNames.includes(childName)) return false
-          const childData = componentData.find(d => d.name === childName)
-          if (!childData) return false
-          return childData.hasClientJs
-        })
+        const childrenWithClientJs = filterChildrenWithClientJs(uniqueChildNames, componentData, componentNames)
 
         for (const childName of childrenWithClientJs) {
           // Find which file contains this child component
@@ -505,11 +503,7 @@ export async function compileJSX(
 
         // Generate child init calls (including same-file children)
         const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
-        const childrenWithClientJs = uniqueChildNames.filter(childName => {
-          const childData = componentData.find(d => d.name === childName)
-          if (!childData) return false
-          return childData.hasClientJs
-        })
+        const childrenWithClientJs = filterChildrenWithClientJs(uniqueChildNames, componentData)
 
         // Always use index 0 for child init calls because:
         // 1. Each init function filters out already-initialized scopes
@@ -529,7 +523,7 @@ export async function compileJSX(
         ].filter(Boolean).join('\n')
 
         const needsInitFunction = result.props.length > 0 || childInits.length > 0
-        const declarations = [constantDeclarations, signalDeclarations, memoDeclarations].filter(Boolean).join('\n')
+        const declarations = joinDeclarations(constantDeclarations, signalDeclarations, memoDeclarations)
 
         if (needsInitFunction) {
           // Separate callback props (on*) from value props
