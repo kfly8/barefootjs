@@ -4,7 +4,8 @@
 
 import ts from 'typescript'
 import type { MemoDeclaration } from '../types'
-import { createSourceFile, isPascalCase } from '../utils/helpers'
+import { createSourceFile } from '../utils/helpers'
+import { forEachVariableDeclaration, isComponentFunction } from './common'
 
 /**
  * Extracts memo declarations from source code.
@@ -18,35 +19,6 @@ export function extractMemos(source: string, filePath: string, targetComponentNa
   const sourceFile = createSourceFile(source, filePath)
 
   const memos: MemoDeclaration[] = []
-
-  function visitComponent(node: ts.Node) {
-    // Find the target component function
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
-      // If targetComponentName is specified, only process that component
-      if (targetComponentName && node.name.text !== targetComponentName) {
-        // Skip this function and continue to siblings
-      } else if (!targetComponentName && memos.length > 0) {
-        // If no target specified, only process the first PascalCase function found
-        return
-      } else {
-        // Extract memos from within this component function
-        if (node.body) {
-          extractMemosFromBlock(node.body)
-        }
-      }
-    }
-    ts.forEachChild(node, visitComponent)
-  }
-
-  function extractMemosFromBlock(block: ts.Block) {
-    for (const statement of block.statements) {
-      if (ts.isVariableStatement(statement)) {
-        for (const decl of statement.declarationList.declarations) {
-          extractMemoFromDeclaration(decl)
-        }
-      }
-    }
-  }
 
   function extractMemoFromDeclaration(node: ts.VariableDeclaration) {
     if (ts.isIdentifier(node.name) &&
@@ -63,6 +35,27 @@ export function extractMemos(source: string, filePath: string, targetComponentNa
         memos.push({ getter, computation })
       }
     }
+  }
+
+  function visitComponent(node: ts.Node) {
+    // Find the target component function
+    if (isComponentFunction(node)) {
+      // If targetComponentName is specified, only process that component
+      if (targetComponentName && node.name.text !== targetComponentName) {
+        // Skip this function and continue to siblings
+      } else if (!targetComponentName && memos.length > 0) {
+        // If no target specified, only process the first PascalCase function found
+        return
+      } else {
+        // Extract memos from within this component function
+        if (node.body) {
+          forEachVariableDeclaration(node.body, (decl) => {
+            extractMemoFromDeclaration(decl)
+          })
+        }
+      }
+    }
+    ts.forEachChild(node, visitComponent)
   }
 
   visitComponent(sourceFile)

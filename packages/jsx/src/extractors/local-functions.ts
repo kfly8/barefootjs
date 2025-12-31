@@ -4,7 +4,8 @@
 
 import ts from 'typescript'
 import type { SignalDeclaration, LocalFunction } from '../types'
-import { createSourceFile, isPascalCase, stripTypeAnnotations } from '../utils/helpers'
+import { createSourceFile, stripTypeAnnotations } from '../utils/helpers'
+import { forEachVariableDeclaration, isComponentFunction } from './common'
 
 /**
  * Extracts local functions defined within a component.
@@ -34,7 +35,7 @@ export function extractLocalFunctions(
     if (found) return
 
     // Only explore within component functions
-    if (ts.isFunctionDeclaration(node) && node.name && isPascalCase(node.name.text)) {
+    if (isComponentFunction(node)) {
       // If targetComponentName is specified, only process that component
       if (targetComponentName && node.name.text !== targetComponentName) {
         // Skip this function and continue to siblings
@@ -43,30 +44,25 @@ export function extractLocalFunctions(
 
         // Explore component function body
         if (node.body) {
-          for (const statement of node.body.statements) {
-            // Pattern: const handleToggle = (id) => { ... }
-            if (ts.isVariableStatement(statement)) {
-              for (const decl of statement.declarationList.declarations) {
-                if (ts.isIdentifier(decl.name) && decl.initializer) {
-                  const name = decl.name.text
-                  // Exclude signal declarations (const [count, setCount] = signal(0) is already processed separately)
-                  if (signalNames.has(name)) continue
-                  // Exclude signal() calls
-                  if (ts.isCallExpression(decl.initializer) &&
-                      ts.isIdentifier(decl.initializer.expression) &&
-                      decl.initializer.expression.text === 'signal') continue
+          forEachVariableDeclaration(node.body, (decl, statement) => {
+            if (ts.isIdentifier(decl.name) && decl.initializer) {
+              const name = decl.name.text
+              // Exclude signal declarations (const [count, setCount] = signal(0) is already processed separately)
+              if (signalNames.has(name)) return
+              // Exclude signal() calls
+              if (ts.isCallExpression(decl.initializer) &&
+                  ts.isIdentifier(decl.initializer.expression) &&
+                  decl.initializer.expression.text === 'signal') return
 
-                  // If it's an arrow function or function expression
-                  if (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer)) {
-                    const tsCode = statement.getText(sourceFile)
-                    // Strip TypeScript type annotations
-                    const code = stripTypeAnnotations(tsCode)
-                    localFunctions.push({ name, code })
-                  }
-                }
+              // If it's an arrow function or function expression
+              if (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer)) {
+                const tsCode = statement.getText(sourceFile)
+                // Strip TypeScript type annotations
+                const code = stripTypeAnnotations(tsCode)
+                localFunctions.push({ name, code })
               }
             }
-          }
+          })
         }
       }
     }
