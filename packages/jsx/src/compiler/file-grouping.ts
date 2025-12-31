@@ -1,0 +1,175 @@
+/**
+ * File Grouping
+ *
+ * Groups compiled components by their source file and calculates
+ * file-level hashes and component-to-file mappings.
+ */
+
+import type { CompileResult, ChildComponentInit } from '../types'
+import { generateContentHash } from './utils'
+import { isConstantUsedInClientCode } from '../extractors'
+
+/**
+ * Component data with pre-calculated declarations
+ */
+export interface ComponentData {
+  name: string
+  path: string
+  fullPath: string
+  result: CompileResult
+  constantDeclarations: string
+  signalDeclarations: string
+  memoDeclarations: string
+  childInits: ChildComponentInit[]
+  hasClientJs: boolean
+}
+
+/**
+ * Mappings for file-based output generation
+ */
+export interface FileMappings {
+  /** File-level hashes: sourceFile -> hash */
+  fileHashes: Map<string, string>
+  /** Component to file mapping: componentName -> sourceFile */
+  componentToFile: Map<string, string>
+  /** File to source path mapping: sourceFile -> sourcePath */
+  fileToSourcePath: Map<string, string>
+}
+
+/**
+ * Collect and process component data from compiled components
+ */
+export function collectComponentData(
+  compiledComponents: Map<string, { result: CompileResult; fullPath: string }>
+): ComponentData[] {
+  const componentData: ComponentData[] = []
+
+  for (const [cacheKey, { result, fullPath }] of compiledComponents) {
+    // Include component if it has clientJs OR ir (for serverJsx generation)
+    if (result.clientJs || result.ir) {
+      // Use the actual component name from the result
+      const name = result.componentName
+      const signalDeclarations = result.signals
+        .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
+        .join('\n')
+      const memoDeclarations = result.memos
+        .map(m => `const ${m.getter} = createMemo(${m.computation})`)
+        .join('\n')
+
+      // Filter constants to only those used in client code
+      const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
+      const refCallbacks = result.refElements.map(r => r.callback)
+      const childPropsExpressions = result.childInits.map(c => c.propsExpr)
+      const usedConstants = result.moduleConstants.filter(c =>
+        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks, childPropsExpressions)
+      )
+      const constantDeclarations = usedConstants.map(c => c.code).join('\n')
+
+      // Calculate hasClientJs early (before ComponentOutput generation)
+      // A component needs client JS if it has:
+      // - Raw client JS code
+      // - Signals (reactive state)
+      // - Child component inits (needs to initialize children)
+      const hasClientJs = result.clientJs.length > 0 ||
+                          result.signals.length > 0 ||
+                          result.childInits.length > 0
+
+      componentData.push({
+        name,
+        path: cacheKey,
+        fullPath,
+        result,
+        constantDeclarations,
+        signalDeclarations,
+        memoDeclarations,
+        childInits: result.childInits,
+        hasClientJs,
+      })
+    }
+  }
+
+  return componentData
+}
+
+/**
+ * Group components by their source file path
+ */
+export function groupComponentsByFile(
+  componentData: ComponentData[]
+): Map<string, ComponentData[]> {
+  const fileGroups: Map<string, ComponentData[]> = new Map()
+
+  for (const data of componentData) {
+    // Use fullPath to group components from the same source file
+    const sourceFile = data.fullPath
+    if (!fileGroups.has(sourceFile)) {
+      fileGroups.set(sourceFile, [])
+    }
+    fileGroups.get(sourceFile)!.push(data)
+  }
+
+  return fileGroups
+}
+
+/**
+ * Calculate file-level hashes and create component-to-file mappings
+ */
+export function calculateFileMappings(
+  fileGroups: Map<string, ComponentData[]>,
+  rootDir: string
+): FileMappings {
+  const fileHashes: Map<string, string> = new Map()
+  const componentToFile: Map<string, string> = new Map()
+  const fileToSourcePath: Map<string, string> = new Map()
+
+  for (const [sourceFile, fileComponents] of fileGroups) {
+    const sourcePath = sourceFile.startsWith(rootDir + '/')
+      ? sourceFile.substring(rootDir.length + 1)
+      : sourceFile
+
+    fileToSourcePath.set(sourceFile, sourcePath)
+
+    // Calculate file-level hash
+    const fileContentForHash = fileComponents
+      .map(c => {
+        const { constantDeclarations, signalDeclarations, memoDeclarations, result, childInits } = c
+        const childInitsStr = childInits.map(ci => `${ci.name}:${ci.propsExpr}`).join(',')
+        return constantDeclarations + signalDeclarations + memoDeclarations + result.clientJs + childInitsStr
+      })
+      .join('|')
+    const fileHash = generateContentHash(fileContentForHash)
+    fileHashes.set(sourceFile, fileHash)
+
+    // Map each component to its file
+    for (const comp of fileComponents) {
+      componentToFile.set(comp.name, sourceFile)
+    }
+  }
+
+  return {
+    fileHashes,
+    componentToFile,
+    fileToSourcePath,
+  }
+}
+
+/**
+ * Calculate component-level hashes
+ */
+export function calculateComponentHashes(
+  componentData: ComponentData[]
+): Map<string, string> {
+  const componentHashes: Map<string, string> = new Map()
+
+  for (const data of componentData) {
+    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
+    const bodyCode = result.clientJs
+    // Include childInits in hash to invalidate cache when child components change
+    const childInitsStr = childInits.map(c => `${c.name}:${c.propsExpr}`).join(',')
+    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode + childInitsStr
+    const hash = generateContentHash(contentForHash)
+    componentHashes.set(name, hash)
+  }
+
+  return componentHashes
+}

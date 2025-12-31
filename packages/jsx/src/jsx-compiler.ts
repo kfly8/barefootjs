@@ -27,21 +27,17 @@ import type {
   CompileOptions,
   IRNode,
   FileOutput,
-  ServerComponentData,
   JsxToIRContext,
   ClientJsGeneratorContext,
 } from './types'
 import {
-  extractImports,
   extractSignals,
   extractMemos,
   extractModuleVariables,
-  isConstantUsedInClientCode,
   extractComponentPropsWithTypes,
   extractTypeDefinitions,
   extractLocalFunctions,
-  extractLocalComponentFunctions,
-  extractExportedComponentNames,
+  extractImports,
   getDefaultExportName,
 } from './extractors'
 import { IdGenerator } from './utils/id-generator'
@@ -50,29 +46,23 @@ import {
   extractArrowParams,
   needsCapturePhase,
   parseConditionalHandler,
-  irToServerJsx,
   collectClientJsInfo,
-  collectAllChildComponentNames,
   findAndConvertJsxReturn,
 } from './transformers'
 import {
-  generateContentHash,
-  resolvePath,
-} from './compiler/utils'
-import {
-  filterChildrenWithClientJs,
-  joinDeclarations,
-} from './compiler/client-js-helpers'
-import {
   calculateElementPaths,
 } from './utils/element-paths'
-
-/**
- * Capitalize first letter of a string
- */
-function capitalizeFirst(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
+import {
+  createResolveContext,
+  resolveComponent,
+} from './compiler/component-resolver'
+import {
+  collectComponentData,
+  groupComponentsByFile,
+  calculateFileMappings,
+} from './compiler/file-grouping'
+import { generateFileClientJs } from './compiler/client-js-generator'
+import { generateFileServerJsx } from './compiler/server-jsx-generator'
 
 export type { CompileJSXResult }
 
@@ -95,311 +85,32 @@ export async function compileJSX(
   // If rootDir is specified, use it; otherwise use entry file's parent directory
   const rootDir = options?.rootDir || entryPath.substring(0, entryPath.lastIndexOf('/'))
 
-  // Cache of compiled components: cacheKey -> { result, fullPath }
-  const compiledComponents: Map<string, { result: CompileResult; fullPath: string }> = new Map()
-
-  // Track components currently being compiled (for cycle detection)
-  const compilingComponents: Set<string> = new Set()
-
-  /**
-   * Compile component (recursively resolve dependencies)
-   *
-   * @param componentPath - Path to component file
-   * @param targetComponentName - Optional: specific component name to compile from the file
-   */
-  async function compileComponent(componentPath: string, targetComponentName?: string): Promise<CompileResult> {
-    // Create cache key that includes target component name for local components
-    const cacheKey = targetComponentName ? `${componentPath}#${targetComponentName}` : componentPath
-
-    // Check cache
-    if (compiledComponents.has(cacheKey)) {
-      return compiledComponents.get(cacheKey)!.result
-    }
-
-    // Detect cycles - if we're already compiling this component, return a placeholder
-    if (compilingComponents.has(cacheKey)) {
-      // Return a placeholder to break the cycle
-      // The actual result will be available after compilation completes
-      return {
-        componentName: targetComponentName || 'Placeholder',
-        ir: { type: 'text', content: '' } as any,
-        clientJs: '',
-        interactiveElements: [],
-        dynamicElements: [],
-        listElements: [],
-        dynamicAttributes: [],
-        conditionalElements: [],
-        refElements: [],
-        signals: [],
-        memos: [],
-        imports: [],
-        props: [],
-        typeDefinitions: [],
-        localFunctions: [],
-        moduleConstants: [],
-        childInits: [],
-        source: '',
-        isDefaultExport: false,
-      }
-    }
-
-    // Mark as currently compiling
-    compilingComponents.add(cacheKey)
-
-    // Read file (try path.tsx first, then path/index.tsx)
-    let fullPath: string
-    let source: string
-    if (componentPath.endsWith('.tsx')) {
-      fullPath = componentPath
-      source = await readFile(fullPath)
-    } else {
-      // Try path.tsx first
-      const directPath = `${componentPath}.tsx`
-      try {
-        source = await readFile(directPath)
-        fullPath = directPath
-      } catch {
-        // Fallback to path/index.tsx
-        const indexPath = `${componentPath}/index.tsx`
-        source = await readFile(indexPath)
-        fullPath = indexPath
-      }
-    }
-
-    // Get base directory for this component (resolve imports relative to this file)
-    const componentDir = fullPath.substring(0, fullPath.lastIndexOf('/'))
-
-    // Extract imports for this component
-    const imports = extractImports(source, fullPath)
-
-    // Compile dependent components first (imported from other files)
-    const componentResults: Map<string, CompileResult> = new Map()
-    for (const imp of imports) {
-      const depPath = resolvePath(componentDir, imp.path)
-      const result = await compileComponent(depPath)
-      componentResults.set(imp.name, result)
-    }
-
-    // Extract all exported component names from the source
-    const exportedComponentNames = extractExportedComponentNames(source, fullPath)
-
-    // For index.tsx files, determine the main component name from directory
-    // e.g., button/index.tsx → Button (used for matching imports like '../button')
-    const fileName = fullPath.split('/').pop()!.replace('.tsx', '')
-    const directoryComponentName = fileName === 'index'
-      ? capitalizeFirst(fullPath.split('/').slice(-2, -1)[0] || 'index')
-      : null
-
-    // Determine the main component name:
-    // 1. If targetComponentName is specified, use it
-    // 2. For index.tsx files, prefer the directoryComponentName if it exists in exports
-    // 3. Otherwise, use the first exported component
-    let mainComponentName: string
-    if (targetComponentName) {
-      mainComponentName = targetComponentName
-    } else if (directoryComponentName && exportedComponentNames.includes(directoryComponentName)) {
-      mainComponentName = directoryComponentName
-    } else if (exportedComponentNames.length > 0) {
-      mainComponentName = exportedComponentNames[0]
-    } else {
-      // Fallback to file name (shouldn't happen for valid components)
-      mainComponentName = fileName === 'index'
-        ? capitalizeFirst(fullPath.split('/').slice(-2, -1)[0] || 'index')
-        : capitalizeFirst(fileName)
-    }
-
-    // Extract local components (non-exported, defined in same file)
-    const localComponents = extractLocalComponentFunctions(source, fullPath, mainComponentName)
-
-    // Compile all components in the file (exported + local)
-    if (!targetComponentName) {
-      // Compile local (non-exported) components FIRST
-      // This ensures they're available when exported components (which may use them) are compiled
-      for (const localComp of localComponents) {
-        const result = await compileComponent(componentPath, localComp.name)
-        componentResults.set(localComp.name, result)
-      }
-      // Then compile other exported components (not the main one)
-      for (const exportedName of exportedComponentNames) {
-        if (exportedName !== mainComponentName) {
-          const result = await compileComponent(componentPath, exportedName)
-          componentResults.set(exportedName, result)
-        }
-      }
-    } else {
-      // For local component compilation, add entries for sibling components
-      // First check if they're already compiled (in cache), otherwise add placeholders
-      const allComponentNames = [...exportedComponentNames, ...localComponents.map(c => c.name)]
-      for (const compName of allComponentNames) {
-        if (compName !== targetComponentName && !componentResults.has(compName)) {
-          // Check if this component was already compiled (in the cache)
-          const cachedKey = `${componentPath}#${compName}`
-          const cached = compiledComponents.get(cachedKey)
-          if (cached) {
-            // Use the cached result - it has the real IR
-            componentResults.set(compName, cached.result)
-          } else {
-            // Create a minimal placeholder - component will be compiled later
-            componentResults.set(compName, {
-              componentName: compName,
-              ir: null,
-              clientJs: '',
-              interactiveElements: [],
-              dynamicElements: [],
-              listElements: [],
-              dynamicAttributes: [],
-              conditionalElements: [],
-              refElements: [],
-              signals: [],
-              memos: [],
-              imports: [],
-              props: [],
-              typeDefinitions: [],
-              localFunctions: [],
-              moduleConstants: [],
-              childInits: [],
-              source: '',
-              isDefaultExport: false,
-            })
-          }
-        }
-      }
-    }
-
-    // Compile component with its own IdGenerator (each component has IDs starting from 0)
+  // Create component compilation function for the resolver
+  const compileComponentFn = (
+    source: string,
+    fullPath: string,
+    componentResults: Map<string, CompileResult>,
+    targetComponentName: string
+  ): CompileResult => {
     const componentIdGenerator = new IdGenerator()
-    const result = compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, mainComponentName)
-
-    // Store with the original cache key (path or path#TargetName)
-    compiledComponents.set(cacheKey, { result, fullPath })
-
-    // Remove from compiling set
-    compilingComponents.delete(cacheKey)
-
-    return result
+    return compileJsxWithComponents(source, fullPath, componentResults, componentIdGenerator, targetComponentName)
   }
 
-  // Compile entry point
-  const entryResult = await compileComponent(entryPath)
+  // 1. Resolve all components recursively
+  const ctx = createResolveContext(readFile, rootDir, compileComponentFn)
+  await resolveComponent(entryPath, ctx)
 
-  // Generate JS/server component for each component
-  // 1. First generate code for all components (with placeholder import paths)
-  const componentData: Array<{
-    name: string
-    path: string
-    fullPath: string
-    result: CompileResult
-    constantDeclarations: string
-    signalDeclarations: string
-    memoDeclarations: string
-    childInits: ChildComponentInit[]
-    hasClientJs: boolean
-  }> = []
+  // 2. Collect and organize component data
+  const componentData = collectComponentData(ctx.compiledComponents)
+  const fileGroups = groupComponentsByFile(componentData)
+  const mappings = calculateFileMappings(fileGroups, rootDir)
 
-  for (const [cacheKey, { result, fullPath }] of compiledComponents) {
-    // Include component if it has clientJs OR ir (for serverJsx generation)
-    if (result.clientJs || result.ir) {
-      // Use the actual component name from the result
-      const name = result.componentName
-      const signalDeclarations = result.signals
-        .map(s => `const [${s.getter}, ${s.setter}] = createSignal(${s.initialValue})`)
-        .join('\n')
-      const memoDeclarations = result.memos
-        .map(m => `const ${m.getter} = createMemo(${m.computation})`)
-        .join('\n')
-
-      // Filter constants to only those used in client code
-      const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
-      const refCallbacks = result.refElements.map(r => r.callback)
-      const childPropsExpressions = result.childInits.map(c => c.propsExpr)
-      const usedConstants = result.moduleConstants.filter(c =>
-        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks, childPropsExpressions)
-      )
-      const constantDeclarations = usedConstants.map(c => c.code).join('\n')
-
-      // Calculate hasClientJs early (before ComponentOutput generation)
-      // A component needs client JS if it has:
-      // - Raw client JS code
-      // - Signals (reactive state)
-      // - Child component inits (needs to initialize children)
-      const hasClientJs = result.clientJs.length > 0 ||
-                          result.signals.length > 0 ||
-                          result.childInits.length > 0
-
-      componentData.push({
-        name,
-        path: cacheKey,
-        fullPath,
-        result,
-        constantDeclarations,
-        signalDeclarations,
-        memoDeclarations,
-        childInits: result.childInits,
-        hasClientJs,
-      })
-    }
-  }
-
-  // 2. Calculate hash for each component (based on content including child init calls)
-  const componentHashes: Map<string, string> = new Map()
-  for (const data of componentData) {
-    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
-    const bodyCode = result.clientJs
-    // Include childInits in hash to invalidate cache when child components change
-    const childInitsStr = childInits.map(c => `${c.name}:${c.propsExpr}`).join(',')
-    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode + childInitsStr
-    const hash = generateContentHash(contentForHash)
-    componentHashes.set(name, hash)
-  }
-
-  // Generate file-based output (group components by source file)
+  // 3. Generate output for each file
   const files: FileOutput[] = []
 
-  // Group components by source file path
-  const fileGroups: Map<string, typeof componentData> = new Map()
-  for (const data of componentData) {
-    // Use fullPath to group components from the same source file
-    const sourceFile = data.fullPath
-    if (!fileGroups.has(sourceFile)) {
-      fileGroups.set(sourceFile, [])
-    }
-    fileGroups.get(sourceFile)!.push(data)
-  }
-
-  // Pre-calculate file hashes and create component-to-file mapping
-  const fileHashes: Map<string, string> = new Map()
-  const componentToFile: Map<string, string> = new Map()
-  const fileToSourcePath: Map<string, string> = new Map()
-
   for (const [sourceFile, fileComponents] of fileGroups) {
-    const sourcePath = sourceFile.startsWith(rootDir + '/')
-      ? sourceFile.substring(rootDir.length + 1)
-      : sourceFile
-
-    fileToSourcePath.set(sourceFile, sourcePath)
-
-    // Calculate file-level hash
-    const fileContentForHash = fileComponents
-      .map(c => {
-        const { constantDeclarations, signalDeclarations, memoDeclarations, result, childInits } = c
-        const childInitsStr = childInits.map(ci => `${ci.name}:${ci.propsExpr}`).join(',')
-        return constantDeclarations + signalDeclarations + memoDeclarations + result.clientJs + childInitsStr
-      })
-      .join('|')
-    const fileHash = generateContentHash(fileContentForHash)
-    fileHashes.set(sourceFile, fileHash)
-
-    // Map each component to its file
-    for (const comp of fileComponents) {
-      componentToFile.set(comp.name, sourceFile)
-    }
-  }
-
-  // Generate FileOutput for each source file
-  for (const [sourceFile, fileComponents] of fileGroups) {
-    // Use pre-calculated values
-    const sourcePath = fileToSourcePath.get(sourceFile)!
-    const fileHash = fileHashes.get(sourceFile)!
+    const sourcePath = mappings.fileToSourcePath.get(sourceFile)!
+    const fileHash = mappings.fileHashes.get(sourceFile)!
 
     // Collect component names and props
     const componentNames = fileComponents.map(c => c.name)
@@ -415,267 +126,19 @@ export async function compileJSX(
     const baseFileName = sourcePath.split('/').pop()!.replace('.tsx', '')
     const clientJsFilename = hasClientJs ? `${baseFileName}-${fileHash}.js` : ''
 
-    // Generate combined client JS
-    let combinedClientJs = ''
-    if (hasClientJs) {
-      // Collect all imports from all components (deduplicated)
-      const allImports: Set<string> = new Set()
-      const allInitFunctions: string[] = []
-
-      // Calculate path to barefoot.js (at dist root)
-      const currentDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
-      const dirDepth = currentDir ? currentDir.split('/').length : 0
-      const barefootPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'barefoot.js' : './barefoot.js'
-
-      // Collect all barefoot imports needed
-      const barefootImports: Set<string> = new Set()
-      let needsReconcileList = false
-
-      for (const comp of fileComponents) {
-        if (!comp.hasClientJs) continue
-
-        // Check what imports this component needs
-        if (comp.result.clientJs || comp.result.signals.length > 0 || comp.constantDeclarations.includes('createSignal')) {
-          barefootImports.add('createSignal')
-          barefootImports.add('createEffect')
-        }
-        if (comp.result.memos.length > 0) {
-          barefootImports.add('createMemo')
-        }
-        if (comp.result.listElements.some(el => el.keyExpression !== null)) {
-          needsReconcileList = true
-        }
-      }
-
-      if (needsReconcileList) {
-        barefootImports.add('reconcileList')
-      }
-
-      if (barefootImports.size > 0) {
-        allImports.add(`import { ${Array.from(barefootImports).join(', ')} } from '${barefootPath}'`)
-      }
-
-      // Collect child component imports (from other files only)
-      for (const comp of fileComponents) {
-        if (!comp.hasClientJs) continue
-
-        const uniqueChildNames = [...new Set(comp.childInits.map(child => child.name))]
-        const childrenWithClientJs = filterChildrenWithClientJs(uniqueChildNames, componentData, componentNames)
-
-        for (const childName of childrenWithClientJs) {
-          // Find which file contains this child component
-          const childFile = componentToFile.get(childName)
-          if (!childFile) continue
-
-          const childSourcePath = fileToSourcePath.get(childFile) || ''
-          const childFileHash = fileHashes.get(childFile) || ''
-          const childDir = childSourcePath.includes('/') ? childSourcePath.substring(0, childSourcePath.lastIndexOf('/')) : ''
-          const childBaseFileName = childSourcePath.split('/').pop()!.replace('.tsx', '')
-          const childFilename = childFileHash ? `${childBaseFileName}-${childFileHash}.js` : `${childBaseFileName}.js`
-
-          // Calculate relative path
-          let relativePath: string
-          if (currentDir === childDir) {
-            relativePath = `./${childFilename}`
-          } else {
-            const currentParts = currentDir ? currentDir.split('/') : []
-            const childParts = childDir ? childDir.split('/') : []
-            let commonLength = 0
-            while (commonLength < currentParts.length &&
-                   commonLength < childParts.length &&
-                   currentParts[commonLength] === childParts[commonLength]) {
-              commonLength++
-            }
-            const upCount = currentParts.length - commonLength
-            const downPath = childParts.slice(commonLength).join('/')
-            const upPath = '../'.repeat(upCount)
-            relativePath = upPath + (downPath ? downPath + '/' : '') + childFilename
-          }
-
-          allImports.add(`import { init${childName} } from '${relativePath}'`)
-        }
-      }
-
-      // Generate init functions for each component
-      for (const comp of fileComponents) {
-        if (!comp.hasClientJs) continue
-
-        const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = comp
-
-        // Generate child init calls (including same-file children)
-        const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
-        const childrenWithClientJs = filterChildrenWithClientJs(uniqueChildNames, componentData)
-
-        // Always use index 0 for child init calls because:
-        // 1. Each init function filters out already-initialized scopes
-        // 2. The first uninitialized scope is always at index 0 after filtering
-        // 3. Components are initialized in DOM order, so the first uninitialized
-        //    scope matches the component we want to initialize
-        const childInitCalls = childInits
-          .filter(child => childrenWithClientJs.includes(child.name))
-          .map(child => {
-            return `  init${child.name}(${child.propsExpr}, 0, __scope)`
-          })
-          .join('\n')
-
-        const bodyCode = [
-          result.clientJs,
-          childInitCalls ? `\n  // Initialize child components\n${childInitCalls}` : '',
-        ].filter(Boolean).join('\n')
-
-        const needsInitFunction = result.props.length > 0 || childInits.length > 0
-        const declarations = joinDeclarations(constantDeclarations, signalDeclarations, memoDeclarations)
-
-        if (needsInitFunction) {
-          // Separate callback props (on*) from value props
-          const isCallbackProp = (name: string) => /^on[A-Z]/.test(name)
-          const callbackProps = result.props.filter(p => isCallbackProp(p.name))
-          const valueProps = result.props.filter(p => !isCallbackProp(p.name))
-
-          // Destructure props:
-          // - Callback props are used directly
-          // - Value props get aliases for getter unwrapping
-          const propsParamParts = [
-            ...callbackProps.map(p => p.name),
-            ...valueProps.map(p => `${p.name}: __raw_${p.name}`)
-          ]
-          const propsParam = propsParamParts.length > 0
-            ? `{ ${propsParamParts.join(', ')} }`
-            : '{}'
-
-          // Generate getter unwrapping code for value props only
-          const propUnwrapCode = valueProps.length > 0
-            ? valueProps.map(p =>
-                `const ${p.name} = typeof __raw_${p.name} === 'function' ? __raw_${p.name} : () => __raw_${p.name}`
-              ).join('\n')
-            : ''
-
-          // Helper to replace value prop usages with getter calls
-          // We need to be careful not to replace inside strings or HTML attribute names
-          const replacePropsWithGetterCalls = (code: string): string => {
-            let result = code
-            for (const prop of valueProps) {
-              // Replace standalone prop usage with getter call
-              // Match: propName not followed by ( or : and not preceded by:
-              // - . (object property access)
-              // - __raw_ (our raw prop prefix)
-              // - - (hyphen, part of HTML attribute like aria-checked)
-              // Also skip if inside simple quotes (single/double quote string literals)
-              // Note: We preserve template literals for replacement since ${...} contains JS expressions
-              // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
-              result = result.replace(
-                new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
-                (match, stringLiteral, identifier) => {
-                  // If it's a string literal, keep it unchanged
-                  if (stringLiteral) return stringLiteral
-                  // If it's the identifier, replace with getter call
-                  if (identifier) return `${prop.name}()`
-                  return match
-                }
-              )
-            }
-            return result
-          }
-
-          // Apply prop getter replacement to both declarations (for signal initial values) and body code
-          const processedDeclarations = replacePropsWithGetterCalls(declarations)
-          const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-          const processedBodyCode = replacePropsWithGetterCalls(bodyCode)
-
-          allInitFunctions.push(`export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
-${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
-}`)
-        } else {
-          // Module-level code that contains `return` statements needs to be wrapped in an IIFE
-          // because `return` is invalid at module top-level in ES modules
-          const hasReturnStatement = bodyCode.includes('return')
-          if (hasReturnStatement) {
-            allInitFunctions.push(`// ${name} (wrapped in IIFE for return statement)
-;(function() {
-const __instanceIndex = 0
-const __parentScope = null
-${declarations}
-
-${bodyCode}
-})()`)
-          } else {
-            const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
-            allInitFunctions.push(`// ${name} (no init function needed)
-${instanceVarsLine}${declarations}
-
-${bodyCode}`)
-          }
-        }
-      }
-
-      // Auto-hydration code for root components
-      const rootComponents = fileComponents.filter(c => {
-        return c.hasClientJs && (c.result.props.length > 0 || c.childInits.length > 0)
-      })
-
-      const autoHydrateCodes = rootComponents.map(c => `
-// Auto-hydration: initialize ${c.name} when scope element exists (root components only)
-const __scopeEl_${c.name} = document.querySelector('[data-bf-scope="${c.name}"]')
-if (__scopeEl_${c.name} && !__scopeEl_${c.name}.parentElement?.closest('[data-bf-scope]')) {
-  const __propsEl = document.querySelector('script[data-bf-props="${c.name}"]')
-  const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
-  init${c.name}(__props)
-}`).join('\n')
-
-      combinedClientJs = `${Array.from(allImports).join('\n')}
-
-${allInitFunctions.join('\n\n')}
-${autoHydrateCodes}
-`
+    // Generate combined client JS using new module
+    const clientJsCtx = {
+      sourcePath,
+      fileHash,
+      componentToFile: mappings.componentToFile,
+      fileHashes: mappings.fileHashes,
+      fileToSourcePath: mappings.fileToSourcePath,
+      allComponentData: componentData,
     }
+    const combinedClientJs = generateFileClientJs(fileComponents, clientJsCtx)
 
-    // Generate combined server JSX (if adapter supports it)
-    let combinedServerJsx = ''
-    if (options?.serverAdapter?.generateServerFile) {
-      // Collect component data for server file generation
-      const serverComponents: ServerComponentData[] = fileComponents
-        .filter(c => c.result.ir)
-        .map(c => {
-          const paths = calculateElementPaths(c.result.ir!)
-          const needsDataBfIds = new Set([
-            ...paths.filter(p => p.path === null).map(p => p.id),
-            ...c.result.dynamicElements.map(el => el.id),
-          ])
-          const jsx = irToServerJsx(c.result.ir!, c.name, c.result.signals, needsDataBfIds, { outputEventAttrs: true, memos: c.result.memos })
-          const childComponents = collectAllChildComponentNames(c.result.ir!)
-
-          return {
-            name: c.name,
-            props: c.result.props,
-            typeDefinitions: c.result.typeDefinitions,
-            jsx,
-            ir: c.result.ir,
-            signals: c.result.signals,
-            memos: c.result.memos,
-            childComponents,
-            isDefaultExport: c.result.isDefaultExport,
-          }
-        })
-
-      // Collect all module constants (deduplicated)
-      const allModuleConstants = fileComponents.flatMap(c => c.result.moduleConstants)
-      const uniqueModuleConstants = allModuleConstants.filter((c, i, arr) =>
-        arr.findIndex(x => x.name === c.name) === i
-      )
-
-      // Collect all imports (deduplicated)
-      const allOriginalImports = fileComponents.flatMap(c => c.result.imports)
-      const uniqueImports = allOriginalImports.filter((imp, i, arr) =>
-        arr.findIndex(x => x.name === imp.name && x.path === imp.path) === i
-      )
-
-      combinedServerJsx = options.serverAdapter.generateServerFile({
-        sourcePath,
-        components: serverComponents,
-        moduleConstants: uniqueModuleConstants,
-        originalImports: uniqueImports,
-      })
-    }
+    // Generate combined server JSX using new module
+    const combinedServerJsx = generateFileServerJsx(fileComponents, sourcePath, options)
 
     files.push({
       sourcePath,
