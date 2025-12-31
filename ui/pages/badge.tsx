@@ -1,3 +1,4 @@
+"use client"
 /**
  * Badge Documentation Page
  */
