@@ -18,6 +18,7 @@ import { compile } from './test-helpers'
 describe('Fragment Support', () => {
   it('basic fragment with multiple children', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <>
@@ -39,6 +40,7 @@ describe('Fragment Support', () => {
 
   it('fragment with dynamic content', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -63,6 +65,7 @@ describe('Fragment Support', () => {
 
   it('nested fragments', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <>
@@ -84,6 +87,7 @@ describe('Fragment Support', () => {
 
   it('fragment as conditional result', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [show, setShow] = createSignal(true)
@@ -114,6 +118,7 @@ describe('Fragment Support', () => {
 
   it('fragment with text and elements mixed', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <>
@@ -133,6 +138,7 @@ describe('Fragment Support', () => {
 
   it('fragment with single child', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <>
@@ -150,6 +156,7 @@ describe('Fragment Support', () => {
 
   it('empty fragment', async () => {
     const source = `
+      "use client"
       function Component() {
         return <></>
       }

@@ -14,6 +14,7 @@ import { compile } from './test-helpers'
 describe('Deeply Nested JSX', () => {
   it('handles 5 levels of nesting', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -44,6 +45,7 @@ describe('Deeply Nested JSX', () => {
 
   it('handles nested elements with multiple dynamic values', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [a, setA] = createSignal(1)
@@ -77,6 +79,7 @@ describe('Deeply Nested JSX', () => {
 
   it('handles nested elements with events at different levels', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -106,6 +109,7 @@ describe('Deeply Nested JSX', () => {
 describe('Complex Expressions', () => {
   it('handles nested ternary in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -133,6 +137,7 @@ describe('Complex Expressions', () => {
 
   it('handles arrow function with object destructuring in params', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1, name: 'test' }])
@@ -156,6 +161,7 @@ describe('Complex Expressions', () => {
 
   it('handles string literals with special characters in conditions', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const handleKeyDown = (e) => {
@@ -177,6 +183,7 @@ describe('Complex Expressions', () => {
 describe('Component Composition', () => {
   it('handles ternary with JSX elements', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
 
       function Component() {
@@ -197,6 +204,7 @@ describe('Component Composition', () => {
 
   it('handles multiple signal dependencies', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
 
       function Component() {
@@ -222,6 +230,7 @@ describe('Whitespace Handling', () => {
   it('preserves trailing whitespace in text before elements', async () => {
     // JSX parser preserves whitespace within text nodes
     const source = `
+      "use client"
       function Component() {
         return (
           <p>Done: <span>5</span></p>
@@ -239,6 +248,7 @@ describe('Whitespace Handling', () => {
     // Note: JSX drops pure whitespace between sibling elements at parser level
     // To preserve whitespace between elements, use {' '} or include text
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [done, setDone] = createSignal(5)
@@ -257,6 +267,7 @@ describe('Whitespace Handling', () => {
 
   it('removes indentation whitespace between block elements', async () => {
     const source = `
+      "use client"
       function Component() {
         return (
           <div>
@@ -276,6 +287,7 @@ describe('Whitespace Handling', () => {
   it('preserves explicit space expression between elements', async () => {
     // Use {' '} to explicitly add whitespace between sibling elements
     const source = `
+      "use client"
       function Component() {
         return (
           <p><span>A</span>{' '}<span>B</span></p>

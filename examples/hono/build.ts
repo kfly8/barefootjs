@@ -20,10 +20,13 @@ const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
-// Discover component files from components directory
-// Exclude Async*.tsx files (plain async wrappers, not BarefootJS components)
+// Discover all component files
+// The compiler handles "use client" filtering:
+// - Files with "use client" are included in output
+// - Files without "use client" are processed for dependency resolution only
+// - Files importing @barefootjs/dom without "use client" will error
 const componentFiles = (await readdir(COMPONENTS_DIR))
-  .filter(f => f.endsWith('.tsx') && !f.startsWith('Async'))
+  .filter(f => f.endsWith('.tsx'))
   .map(f => resolve(COMPONENTS_DIR, f))
 
 // Build and copy barefoot.js from @barefootjs/dom

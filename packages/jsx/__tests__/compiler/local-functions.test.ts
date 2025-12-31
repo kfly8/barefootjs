@@ -36,6 +36,7 @@ import { compile } from './test-helpers'
 describe('Local functions in components', () => {
   it('Handlers defined as arrow functions are output', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1, done: false }])
@@ -63,6 +64,7 @@ describe('Local functions in components', () => {
 
   it('Multiple handler functions are output', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([])
@@ -96,6 +98,7 @@ describe('Local functions in components', () => {
 
   it('Correctly extracted even when mixed with signal declarations', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -128,6 +131,7 @@ describe('Local functions in components', () => {
 
   it('TypeScript type annotations are removed', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = signal<{ id: number; done: boolean }[]>([])

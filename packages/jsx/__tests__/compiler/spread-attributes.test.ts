@@ -17,6 +17,7 @@ import { compile } from './test-helpers'
 describe('Spread Attributes Support', () => {
   it('basic spread attributes', async () => {
     const source = `
+      "use client"
       function Component() {
         const buttonProps = { type: 'submit', disabled: true }
         return (
@@ -33,6 +34,7 @@ describe('Spread Attributes Support', () => {
 
   it('spread with additional attributes', async () => {
     const source = `
+      "use client"
       function Component() {
         const inputProps = { type: 'text', placeholder: 'Enter name' }
         return (
@@ -50,6 +52,7 @@ describe('Spread Attributes Support', () => {
 
   it('spread attributes override order', async () => {
     const source = `
+      "use client"
       function Component() {
         const baseProps = { type: 'text' }
         const overrideProps = { type: 'password' }
@@ -68,6 +71,7 @@ describe('Spread Attributes Support', () => {
 
   it('spread with dynamic expression', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [props, setProps] = createSignal({ class: 'active' })
@@ -85,6 +89,7 @@ describe('Spread Attributes Support', () => {
 
   it('spread on self-closing element', async () => {
     const source = `
+      "use client"
       function Component() {
         const imgProps = { src: '/image.png', alt: 'Image' }
         return (

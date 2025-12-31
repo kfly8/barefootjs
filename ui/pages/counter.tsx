@@ -2,8 +2,8 @@
  * Counter Documentation Page
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
-import { Counter } from '../components/Counter'
+import { Counter } from '@/components/Counter'
+import { CounterInteractiveDemo, CounterDerivedDemo } from '@/components/CounterDemo'
 import {
   PageHeader,
   Section,
@@ -80,39 +80,6 @@ const counterProps: PropDefinition[] = [
   },
 ]
 
-// Interactive example component
-function InteractiveCounter() {
-  const [count, setCount] = createSignal(0)
-  return (
-    <Counter
-      value={count()}
-      disabled={false}
-      onIncrement={() => setCount(n => n + 1)}
-      onDecrement={() => setCount(n => n - 1)}
-    />
-  )
-}
-
-// Derived state example
-function DerivedCounter() {
-  const [count, setCount] = createSignal(0)
-  const doubled = createMemo(() => count() * 2)
-  const isEven = createMemo(() => count() % 2 === 0)
-
-  return (
-    <div class="space-y-2">
-      <Counter
-        value={count()}
-        disabled={false}
-        onIncrement={() => setCount(n => n + 1)}
-        onDecrement={() => setCount(n => n - 1)}
-      />
-      <p class="text-zinc-100">Doubled: <span class="font-mono">{doubled()}</span></p>
-      <p class="text-zinc-100">Is even: <span class="font-mono">{isEven() ? 'Yes' : 'No'}</span></p>
-    </div>
-  )
-}
-
 export function CounterPage() {
   return (
     <div class="space-y-12">
@@ -123,7 +90,7 @@ export function CounterPage() {
 
       {/* Preview */}
       <Example title="" code={`<Counter />`}>
-        <InteractiveCounter />
+        <CounterInteractiveDemo />
       </Example>
 
       {/* Installation */}
@@ -140,11 +107,11 @@ export function CounterPage() {
       <Section title="Examples">
         <div class="space-y-8">
           <Example title="Basic" code={basicCode}>
-            <InteractiveCounter />
+            <CounterInteractiveDemo />
           </Example>
 
           <Example title="Derived State (Memo)" code={derivedCode}>
-            <DerivedCounter />
+            <CounterDerivedDemo />
           </Example>
 
           <Example title="Disabled" code={disabledCode}>

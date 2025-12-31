@@ -27,6 +27,7 @@ afterEach(() => {
 describe('Counter E2E', () => {
   it('renders initial count', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Counter() {
         const [count, setCount] = createSignal(0)
@@ -43,6 +44,7 @@ describe('Counter E2E', () => {
 
   it('increments count on button click', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Counter() {
         const [count, setCount] = createSignal(0)
@@ -79,6 +81,7 @@ describe('Counter E2E', () => {
 
   it('handles multiple buttons with different actions', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Counter() {
         const [count, setCount] = createSignal(0)
@@ -127,6 +130,7 @@ describe('Counter E2E', () => {
 
   it('updates multiple elements from same signal', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Counter() {
         const [count, setCount] = createSignal(0)
@@ -169,6 +173,7 @@ describe('Counter E2E', () => {
 
   it('handles fragment root element', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Counter() {
         const [count, setCount] = createSignal(0)

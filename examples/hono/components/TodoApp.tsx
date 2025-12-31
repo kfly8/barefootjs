@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * BarefootJS TodoApp for Hono with SSR
  *

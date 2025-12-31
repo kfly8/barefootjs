@@ -28,6 +28,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('className', () => {
     it('renders initial className based on signal', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [active, setActive] = createSignal(false)
@@ -45,6 +46,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('updates className when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [active, setActive] = createSignal(false)
@@ -77,6 +79,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('handles multiple classes with ternary', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [state, setState] = createSignal('idle')
@@ -118,6 +121,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('disabled', () => {
     it('renders initial disabled state', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [loading, setLoading] = createSignal(true)
@@ -135,6 +139,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('updates disabled when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [loading, setLoading] = createSignal(true)
@@ -169,6 +174,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('hidden', () => {
     it('renders initial hidden state', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [isHidden, setIsHidden] = createSignal(true)
@@ -186,6 +192,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('updates hidden when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [isHidden, setIsHidden] = createSignal(true)
@@ -220,6 +227,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('checked', () => {
     it('renders initial checked state', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [isChecked, setIsChecked] = createSignal(true)
@@ -237,6 +245,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('updates checked when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [isChecked, setIsChecked] = createSignal(false)
@@ -271,6 +280,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('value', () => {
     it('renders initial value', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [text, setText] = createSignal('initial')
@@ -288,6 +298,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('updates value when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [text, setText] = createSignal('hello')
@@ -318,6 +329,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('style', () => {
     it('renders initial style object', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [isError, setIsError] = createSignal(false)
@@ -335,6 +347,7 @@ describe('Dynamic Attributes E2E', () => {
 
     it('updates style when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [isError, setIsError] = createSignal(false)
@@ -369,6 +382,7 @@ describe('Dynamic Attributes E2E', () => {
   describe('Multiple dynamic attributes', () => {
     it('handles multiple dynamic attributes on same element', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Component() {
           const [active, setActive] = createSignal(false)

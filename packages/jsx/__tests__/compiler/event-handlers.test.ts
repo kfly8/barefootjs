@@ -47,6 +47,7 @@ import { compile } from './test-helpers'
 describe('Event Handlers - Basic', () => {
   it('onClick', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -74,6 +75,7 @@ describe('Event Handlers - Basic', () => {
 
   it('multiple onClick', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [count, setCount] = createSignal(0)
@@ -98,6 +100,7 @@ describe('Event Handlers - Basic', () => {
 describe('Event Handlers - Form', () => {
   it('onChange', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [text, setText] = createSignal('')
@@ -122,6 +125,7 @@ describe('Event Handlers - Form', () => {
 
   it('onInput (with event argument)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [text, setText] = createSignal('')
@@ -143,6 +147,7 @@ describe('Event Handlers - Form', () => {
 
   it('onSubmit', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [submitted, setSubmitted] = createSignal(false)
@@ -169,6 +174,7 @@ describe('Event Handlers - Form', () => {
 describe('Event Handlers - Keyboard', () => {
   it('onKeyDown', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [text, setText] = createSignal('')

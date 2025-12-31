@@ -51,6 +51,7 @@ describe('Inline component expansion in map', () => {
   it('Inline expansion of components with props', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
@@ -82,6 +83,7 @@ describe('Inline component expansion in map', () => {
   it('Inline expansion of components with event handlers', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
@@ -97,6 +99,7 @@ describe('Inline component expansion in map', () => {
         }
       `,
       '/test/Item.tsx': `
+        "use client"
         type Props = {
           item: { id: number; text: string }
           onDelete: () => void
@@ -127,6 +130,7 @@ describe('Inline component expansion in map', () => {
   it('Inline expansion of components with conditional rendering', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
@@ -166,6 +170,7 @@ describe('Inline component expansion in map', () => {
   it('Components with multiple event handlers', async () => {
     const files: Record<string, string> = {
       '/test/App.tsx': `
+        "use client"
         import { createSignal } from 'barefoot'
         import Item from './Item'
         function App() {
@@ -186,6 +191,7 @@ describe('Inline component expansion in map', () => {
         }
       `,
       '/test/Item.tsx': `
+        "use client"
         type Props = {
           item: { id: number; text: string; done: boolean }
           onToggle: () => void

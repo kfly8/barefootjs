@@ -11,6 +11,9 @@ import {
   extractLocalComponentFunctions,
   extractExportedComponentNames,
   getDefaultExportName,
+  extractUseClientDirective,
+  validateDomImports,
+  validateEventHandlers,
 } from '../extractors'
 import { resolvePath } from './utils'
 
@@ -22,6 +25,8 @@ export interface ResolveContext {
   compiledComponents: Map<string, { result: CompileResult; fullPath: string }>
   /** Track components currently being compiled (for cycle detection) */
   compilingComponents: Set<string>
+  /** Cache of "use client" directive status per file: fullPath -> hasDirective */
+  fileDirectives: Map<string, boolean>
   /** Function to read file contents */
   readFile: (path: string) => Promise<string>
   /** Root directory for calculating relative paths */
@@ -31,7 +36,8 @@ export interface ResolveContext {
     source: string,
     fullPath: string,
     componentResults: Map<string, CompileResult>,
-    targetComponentName: string
+    targetComponentName: string,
+    hasUseClientDirective: boolean
   ) => CompileResult
 }
 
@@ -46,6 +52,7 @@ export function createResolveContext(
   return {
     compiledComponents: new Map(),
     compilingComponents: new Set(),
+    fileDirectives: new Map(),
     readFile,
     rootDir,
     compileComponentFn,
@@ -55,7 +62,7 @@ export function createResolveContext(
 /**
  * Create a placeholder result for cycle detection
  */
-function createCyclePlaceholder(targetComponentName?: string): CompileResult {
+function createCyclePlaceholder(targetComponentName?: string, hasUseClientDirective: boolean = false): CompileResult {
   return {
     componentName: targetComponentName || 'Placeholder',
     ir: { type: 'text', content: '' } as any,
@@ -76,6 +83,7 @@ function createCyclePlaceholder(targetComponentName?: string): CompileResult {
     childInits: [],
     source: '',
     isDefaultExport: false,
+    hasUseClientDirective,
   }
 }
 
@@ -165,16 +173,31 @@ export async function resolveComponent(
     return ctx.compiledComponents.get(cacheKey)!.result
   }
 
+  // Read file first to get fullPath for directive cache lookup
+  const { fullPath, source } = await resolveFilePath(componentPath, ctx.readFile)
+
+  // Check and cache "use client" directive status (per file, not per component)
+  let hasUseClientDirective: boolean
+  if (ctx.fileDirectives.has(fullPath)) {
+    hasUseClientDirective = ctx.fileDirectives.get(fullPath)!
+  } else {
+    hasUseClientDirective = extractUseClientDirective(source, fullPath)
+    ctx.fileDirectives.set(fullPath, hasUseClientDirective)
+
+    // Validate @barefootjs/dom imports (only once per file)
+    validateDomImports(source, fullPath, hasUseClientDirective)
+
+    // Validate event handlers (only once per file)
+    validateEventHandlers(source, fullPath, hasUseClientDirective)
+  }
+
   // Detect cycles - if we're already compiling this component, return a placeholder
   if (ctx.compilingComponents.has(cacheKey)) {
-    return createCyclePlaceholder(targetComponentName)
+    return createCyclePlaceholder(targetComponentName, hasUseClientDirective)
   }
 
   // Mark as currently compiling
   ctx.compilingComponents.add(cacheKey)
-
-  // Read file
-  const { fullPath, source } = await resolveFilePath(componentPath, ctx.readFile)
 
   // Get base directory for this component (resolve imports relative to this file)
   const componentDir = fullPath.substring(0, fullPath.lastIndexOf('/'))
@@ -244,14 +267,14 @@ export async function resolveComponent(
           componentResults.set(compName, cached.result)
         } else {
           // Create a minimal placeholder - component will be compiled later
-          componentResults.set(compName, createCyclePlaceholder(compName))
+          componentResults.set(compName, createCyclePlaceholder(compName, hasUseClientDirective))
         }
       }
     }
   }
 
   // Compile component with its dependencies
-  const result = ctx.compileComponentFn(source, fullPath, componentResults, mainComponentName)
+  const result = ctx.compileComponentFn(source, fullPath, componentResults, mainComponentName, hasUseClientDirective)
 
   // Store with the original cache key (path or path#TargetName)
   ctx.compiledComponents.set(cacheKey, { result, fullPath })

@@ -7,15 +7,17 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
-import { BadgePage } from './dist/pages/badge'
-import { ButtonPage } from './dist/pages/button'
-import { CardPage } from './dist/pages/card'
-import { CheckboxPage } from './dist/pages/checkbox'
-import { InputPage } from './dist/pages/input'
-import { SwitchPage } from './dist/pages/switch'
-import { CounterPage } from './dist/pages/counter'
-import { AccordionPage } from './dist/pages/accordion'
-import { TabsPage } from './dist/pages/tabs'
+// All pages imported from source
+// Pages import compiled components via @/components (dist/components)
+import { BadgePage } from './pages/badge'
+import { ButtonPage } from './pages/button'
+import { CardPage } from './pages/card'
+import { CheckboxPage } from './pages/checkbox'
+import { InputPage } from './pages/input'
+import { SwitchPage } from './pages/switch'
+import { CounterPage } from './pages/counter'
+import { AccordionPage } from './pages/accordion'
+import { TabsPage } from './pages/tabs'
 
 const app = new Hono()
 

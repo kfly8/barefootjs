@@ -2,8 +2,8 @@
  * Button Documentation Page
  */
 
-import { createSignal } from '@barefootjs/dom'
-import { Button } from '../components/Button'
+import { Button } from '@/components/Button'
+import { ButtonDemo } from '@/components/ButtonDemo'
 import {
   PageHeader,
   Section,
@@ -89,16 +89,6 @@ function PlusIcon() {
   )
 }
 
-// Interactive counter example
-function InteractiveCounter() {
-  const [count, setCount] = createSignal(0)
-  return (
-    <Button onClick={() => setCount(n => n + 1)}>
-      Clicked {count()} times
-    </Button>
-  )
-}
-
 export function ButtonPage() {
   return (
     <div class="space-y-12">
@@ -149,7 +139,7 @@ export function ButtonPage() {
           </Example>
 
           <Example title="Interactive" code={interactiveCode}>
-            <InteractiveCounter />
+            <ButtonDemo />
           </Example>
         </div>
       </Section>

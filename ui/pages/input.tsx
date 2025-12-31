@@ -2,8 +2,8 @@
  * Input Documentation Page
  */
 
-import { createSignal } from '@barefootjs/dom'
-import { Input } from '../components/Input'
+import { Input } from '@/components/Input'
+import { InputBindingDemo, InputFocusDemo } from '@/components/InputDemo'
 import {
   PageHeader,
   Section,
@@ -93,38 +93,6 @@ const inputProps: PropDefinition[] = [
   },
 ]
 
-// Interactive binding example
-function BindingExample() {
-  const [value, setValue] = createSignal('')
-  return (
-    <div class="space-y-2">
-      <Input
-        inputValue={value()}
-        onInput={(e) => setValue(e.target.value)}
-        inputPlaceholder="Type something..."
-      />
-      <p class="text-sm text-zinc-600">You typed: <span class="typed-value font-medium">{value()}</span></p>
-    </div>
-  )
-}
-
-// Focus/blur example
-function FocusExample() {
-  const [focused, setFocused] = createSignal(false)
-  return (
-    <div class="space-y-2">
-      <Input
-        inputPlaceholder="Focus me..."
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-      />
-      <p class="text-sm">
-        Status: <span class="focus-status font-medium">{focused() ? 'Focused' : 'Not focused'}</span>
-      </p>
-    </div>
-  )
-}
-
 export function InputPage() {
   return (
     <div class="space-y-12">
@@ -169,13 +137,13 @@ export function InputPage() {
 
           <Example title="Value Binding" code={bindingCode}>
             <div class="max-w-sm">
-              <BindingExample />
+              <InputBindingDemo />
             </div>
           </Example>
 
           <Example title="Focus State" code={`<Input onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
             <div class="max-w-sm">
-              <FocusExample />
+              <InputFocusDemo />
             </div>
           </Example>
         </div>

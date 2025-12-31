@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Dashboard with feature flag-based conditional rendering
  *

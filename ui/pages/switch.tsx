@@ -2,8 +2,8 @@
  * Switch Documentation Page
  */
 
-import { createSignal } from '@barefootjs/dom'
-import { Switch } from '../components/Switch'
+import { Switch } from '@/components/Switch'
+import { SwitchInteractiveDemo, SwitchSettingsPanelDemo } from '@/components/SwitchDemo'
 import {
   PageHeader,
   Section,
@@ -82,45 +82,6 @@ const switchProps: PropDefinition[] = [
   },
 ]
 
-// Interactive example component
-function InteractiveSwitch() {
-  const [checked, setChecked] = createSignal(false)
-  return (
-    <div class="flex items-center gap-2">
-      <Switch
-        checked={checked()}
-        disabled={false}
-        onCheckedChange={setChecked}
-      />
-      <span class="text-zinc-100">{checked() ? 'On' : 'Off'}</span>
-    </div>
-  )
-}
-
-// Settings panel example
-function SettingsPanel() {
-  const [wifi, setWifi] = createSignal(true)
-  const [bluetooth, setBluetooth] = createSignal(false)
-  const [notifications, setNotifications] = createSignal(true)
-
-  return (
-    <div class="w-64 space-y-4">
-      <div class="flex items-center justify-between">
-        <span class="text-zinc-100">Wi-Fi</span>
-        <Switch checked={wifi()} disabled={false} onCheckedChange={setWifi} />
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-zinc-100">Bluetooth</span>
-        <Switch checked={bluetooth()} disabled={false} onCheckedChange={setBluetooth} />
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-zinc-100">Notifications</span>
-        <Switch checked={notifications()} disabled={false} onCheckedChange={setNotifications} />
-      </div>
-    </div>
-  )
-}
-
 export function SwitchPage() {
   return (
     <div class="space-y-12">
@@ -131,7 +92,7 @@ export function SwitchPage() {
 
       {/* Preview */}
       <Example title="" code={`<Switch />`}>
-        <InteractiveSwitch />
+        <SwitchInteractiveDemo />
       </Example>
 
       {/* Installation */}
@@ -148,7 +109,7 @@ export function SwitchPage() {
       <Section title="Examples">
         <div class="space-y-8">
           <Example title="Basic" code={basicCode}>
-            <InteractiveSwitch />
+            <SwitchInteractiveDemo />
           </Example>
 
           <Example title="Disabled" code={disabledCode}>
@@ -159,7 +120,7 @@ export function SwitchPage() {
           </Example>
 
           <Example title="Multiple Switches" code={multipleCode}>
-            <SettingsPanel />
+            <SwitchSettingsPanelDemo />
           </Example>
         </div>
       </Section>

@@ -48,6 +48,7 @@ import { compile } from './test-helpers'
 describe('List Rendering - Basic', () => {
   it('array map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal(['a', 'b', 'c'])
@@ -65,6 +66,7 @@ describe('List Rendering - Basic', () => {
 
   it('array filter + map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -86,6 +88,7 @@ describe('List Rendering - Basic', () => {
 describe('List Rendering - Events', () => {
   it('onClick in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -110,6 +113,7 @@ describe('List Rendering - Events', () => {
 
   it('multiple onClick in map (different elements)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -147,6 +151,7 @@ describe('List Rendering - Events', () => {
 
   it('onChange in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -167,6 +172,7 @@ describe('List Rendering - Events', () => {
 
   it('multiple events on same element in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1, text: 'a' }])
@@ -196,6 +202,7 @@ describe('List Rendering - Events', () => {
 
   it('blur event in map (capture phase)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1 }])
@@ -216,6 +223,7 @@ describe('List Rendering - Events', () => {
 
   it('keydown event in map (conditional execution)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1 }])
@@ -236,6 +244,7 @@ describe('List Rendering - Events', () => {
 
   it('keydown event in map (multiple conditions && execution)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1, text: 'hello' }])
@@ -267,6 +276,7 @@ describe('List Rendering - Events', () => {
 describe('List Rendering - Dynamic Attributes', () => {
   it('dynamic class attribute in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -285,6 +295,7 @@ describe('List Rendering - Dynamic Attributes', () => {
 
   it('dynamic style attribute in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -303,6 +314,7 @@ describe('List Rendering - Dynamic Attributes', () => {
 
   it('dynamic checked attribute in map', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -323,6 +335,7 @@ describe('List Rendering - Dynamic Attributes', () => {
 describe('List Rendering - Conditionals', () => {
   it('conditional rendering in map (ternary operator)', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([

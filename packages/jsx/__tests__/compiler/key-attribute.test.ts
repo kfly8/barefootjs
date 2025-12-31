@@ -17,6 +17,7 @@ import { compile } from './test-helpers'
 describe('Key Attribute Support', () => {
   it('key with item id', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -44,6 +45,7 @@ describe('Key Attribute Support', () => {
 
   it('key with index', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal(['a', 'b', 'c'])
@@ -65,6 +67,7 @@ describe('Key Attribute Support', () => {
 
   it('key with computed expression', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([
@@ -89,6 +92,7 @@ describe('Key Attribute Support', () => {
 
   it('list without key uses innerHTML', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal(['a', 'b', 'c'])
@@ -111,6 +115,7 @@ describe('Key Attribute Support', () => {
 
   it('key attribute is not output as regular attribute', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1, text: 'a' }])
@@ -136,6 +141,7 @@ describe('Key Attribute Support', () => {
 describe('reconcileList Runtime', () => {
   it('generates correct reconcileList import', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         const [items, setItems] = createSignal([{ id: 1, text: 'a' }])

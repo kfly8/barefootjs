@@ -16,6 +16,7 @@ import { compile } from './test-helpers'
 describe('Ref Attribute Support', () => {
   it('ref callback sets element reference', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         let inputRef
@@ -39,6 +40,7 @@ describe('Ref Attribute Support', () => {
 
   it('ref is not output in server JSX', async () => {
     const source = `
+      "use client"
       function Component() {
         let divRef
         return (
@@ -58,6 +60,7 @@ describe('Ref Attribute Support', () => {
 
   it('ref on element with event handler', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         let buttonRef
@@ -84,6 +87,7 @@ describe('Ref Attribute Support', () => {
 
   it('ref on element with dynamic content', async () => {
     const source = `
+      "use client"
       import { createSignal } from 'barefoot'
       function Component() {
         let spanRef
@@ -104,6 +108,7 @@ describe('Ref Attribute Support', () => {
 
   it('multiple refs on different elements', async () => {
     const source = `
+      "use client"
       function Component() {
         let input1Ref
         let input2Ref

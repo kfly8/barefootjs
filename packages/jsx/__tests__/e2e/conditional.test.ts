@@ -30,6 +30,7 @@ describe('Conditional Rendering E2E', () => {
   describe('Text Conditionals (Supported)', () => {
     it('renders initial text based on signal value', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Toggle() {
           const [on, setOn] = createSignal(false)
@@ -46,6 +47,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('updates text when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Toggle() {
           const [on, setOn] = createSignal(false)
@@ -81,6 +83,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('handles nested ternary operators for text', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Nested() {
           const [level, setLevel] = createSignal(0)
@@ -115,6 +118,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('handles text with multiple conditions', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Status() {
           const [status, setStatus] = createSignal('idle')
@@ -160,6 +164,7 @@ describe('Conditional Rendering E2E', () => {
   describe('Element Conditionals (Initial Render Only)', () => {
     it('renders initial element based on signal value (true)', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Toggle() {
           const [show, setShow] = createSignal(true)
@@ -180,6 +185,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('renders initial element based on signal value (false)', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Toggle() {
           const [show, setShow] = createSignal(false)
@@ -200,6 +206,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('switches elements when signal changes', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Toggle() {
           const [show, setShow] = createSignal(true)
@@ -236,6 +243,7 @@ describe('Conditional Rendering E2E', () => {
   describe('Logical AND (Initial Render Only)', () => {
     it('renders element when condition is true', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Show() {
           const [visible, setVisible] = createSignal(true)
@@ -255,6 +263,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('does not render element when condition is false', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Show() {
           const [visible, setVisible] = createSignal(false)
@@ -273,6 +282,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('toggles element visibility with &&', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Show() {
           const [visible, setVisible] = createSignal(false)
@@ -307,6 +317,7 @@ describe('Conditional Rendering E2E', () => {
   describe('Null/Undefined Handling (Initial Render Only)', () => {
     it('handles null in ternary (initial render)', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Show() {
           const [show, setShow] = createSignal(false)
@@ -326,6 +337,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('transitions between element and null', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function Show() {
           const [show, setShow] = createSignal(false)
@@ -360,6 +372,7 @@ describe('Conditional Rendering E2E', () => {
   describe('Fragment in Conditionals (Initial Render Only)', () => {
     it('renders fragment in conditional branch (initial render)', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function FragmentConditional() {
           const [show, setShow] = createSignal(true)
@@ -392,6 +405,7 @@ describe('Conditional Rendering E2E', () => {
 
     it('handles fragment in conditional branch (dynamic)', async () => {
       const source = `
+      "use client"
         import { createSignal } from 'barefoot'
         function FragmentConditional() {
           const [show, setShow] = createSignal(true)

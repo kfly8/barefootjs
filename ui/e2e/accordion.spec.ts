@@ -33,17 +33,17 @@ test.describe('Accordion Documentation Page', () => {
 
   test.describe('Single Open Accordion', () => {
     test('displays single open accordion example', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="SingleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
       await expect(accordion).toBeVisible()
     })
 
     test('first item is open by default', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="SingleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
       await expect(accordion.locator('text=Yes. It adheres to the WAI-ARIA design pattern.')).toBeVisible()
     })
 
     test('clicking another item closes the first', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="SingleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
       const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
 
       // Click second item
@@ -57,7 +57,7 @@ test.describe('Accordion Documentation Page', () => {
     })
 
     test('clicking open item closes it', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="SingleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
       const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
 
       // First item is open, click to close
@@ -70,17 +70,17 @@ test.describe('Accordion Documentation Page', () => {
 
   test.describe('Multiple Open Accordion', () => {
     test('displays multiple open accordion example', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="MultipleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionMultipleOpenDemo"]').first()
       await expect(accordion).toBeVisible()
     })
 
     test('first item is open by default', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="MultipleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionMultipleOpenDemo"]').first()
       await expect(accordion.locator('text=This accordion allows multiple items to be open')).toBeVisible()
     })
 
     test('can open multiple items simultaneously', async ({ page }) => {
-      const accordion = page.locator('[data-bf-scope="MultipleOpenAccordion"]').first()
+      const accordion = page.locator('[data-bf-scope="AccordionMultipleOpenDemo"]').first()
       const secondTrigger = accordion.locator('button:has-text("Second Item")')
 
       // Click second item to open it
