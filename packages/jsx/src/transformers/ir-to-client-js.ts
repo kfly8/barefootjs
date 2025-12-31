@@ -10,7 +10,6 @@ import type {
   IRElement,
   SignalDeclaration,
   MemoDeclaration,
-  LocalFunction,
   InteractiveElement,
   DynamicElement,
   ListElement,
@@ -25,15 +24,6 @@ import {
   extractArrowParams as parseArrowParams,
   parseConditionalHandler as parseConditional,
 } from '../utils/expression-parser'
-
-export type ClientJsContext = {
-  signals: SignalDeclaration[]
-  localFunctions: LocalFunction[]
-  interactiveElements: InteractiveElement[]
-  dynamicElements: DynamicElement[]
-  listElements: ListElement[]
-  dynamicAttributes: DynamicAttribute[]
-}
 
 /**
  * Extracts the body part from an arrow function.
@@ -110,125 +100,6 @@ export function generateAttributeUpdate(da: DynamicAttribute): string {
   // when props are not passed to child components
   const valVar = `__val_${id}`
   return `const ${valVar} = ${expression}; if (${valVar} !== undefined) ${id}.setAttribute('${attrName}', ${valVar})`
-}
-
-/**
- * Generates client JS from context
- */
-export function generateClientJs(ctx: ClientJsContext): string {
-  const lines: string[] = []
-  const hasDynamicContent = ctx.dynamicElements.length > 0 ||
-                            ctx.listElements.length > 0 ||
-                            ctx.dynamicAttributes.length > 0
-
-  // Collect element IDs with dynamic attributes (remove duplicates)
-  const attrElementIds = [...new Set(ctx.dynamicAttributes.map(da => da.id))]
-
-  // Get DOM elements
-  for (const el of ctx.dynamicElements) {
-    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
-  }
-
-  for (const el of ctx.listElements) {
-    lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
-  }
-
-  for (const id of attrElementIds) {
-    lines.push(`const ${id} = document.querySelector('[data-bf="${id}"]')`)
-  }
-
-  for (const el of ctx.interactiveElements) {
-    if (!attrElementIds.includes(el.id)) {
-      lines.push(`const ${el.id} = document.querySelector('[data-bf="${el.id}"]')`)
-    }
-  }
-
-  if (hasDynamicContent || ctx.interactiveElements.length > 0) {
-    lines.push('')
-  }
-
-  // Output local functions
-  for (const fn of ctx.localFunctions) {
-    lines.push(fn.code)
-  }
-  if (ctx.localFunctions.length > 0) {
-    lines.push('')
-  }
-
-  // updateAll function
-  if (hasDynamicContent) {
-    lines.push('function updateAll() {')
-    for (const el of ctx.dynamicElements) {
-      // Wrap in String() for consistent textContent assignment across environments
-      lines.push(`  ${el.id}.textContent = String(${el.fullContent})`)
-    }
-    for (const el of ctx.listElements) {
-      lines.push(`  ${el.id}.innerHTML = ${el.mapExpression}`)
-    }
-    for (const da of ctx.dynamicAttributes) {
-      lines.push(`  ${generateAttributeUpdate(da)}`)
-    }
-    lines.push('}')
-    lines.push('')
-  }
-
-  // Event delegation within list elements
-  for (const el of ctx.listElements) {
-    if (el.itemEvents.length > 0) {
-      for (const event of el.itemEvents) {
-        const handlerBody = extractArrowBody(event.handler)
-        const conditionalHandler = parseConditionalHandler(handlerBody)
-        const useCapture = needsCapturePhase(event.eventName)
-        const captureArg = useCapture ? ', true' : ''
-
-        lines.push(`${el.id}.addEventListener('${event.eventName}', (e) => {`)
-        lines.push(`  const target = e.target.closest('[data-event-id="${event.eventId}"]')`)
-        lines.push(`  if (target && target.dataset.eventId === '${event.eventId}') {`)
-        lines.push(`    const __index = parseInt(target.dataset.index, 10)`)
-        lines.push(`    const ${event.paramName} = ${el.arrayExpression}[__index]`)
-
-        if (conditionalHandler && hasDynamicContent) {
-          lines.push(`    if (${conditionalHandler.condition}) {`)
-          lines.push(`      ${conditionalHandler.action}`)
-          lines.push(`      updateAll()`)
-          lines.push(`    }`)
-        } else {
-          lines.push(`    ${handlerBody}`)
-          if (hasDynamicContent) {
-            lines.push(`    updateAll()`)
-          }
-        }
-
-        lines.push(`  }`)
-        lines.push(`}${captureArg})`)
-      }
-    }
-  }
-
-  // Event handlers for interactive elements
-  for (const el of ctx.interactiveElements) {
-    for (const event of el.events) {
-      const handlerBody = extractArrowBody(event.handler)
-      const handlerParams = extractArrowParams(event.handler)
-      if (hasDynamicContent) {
-        lines.push(`${el.id}.on${event.eventName} = ${handlerParams} => {`)
-        lines.push(`  ${handlerBody}`)
-        lines.push(`  updateAll()`)
-        lines.push(`}`)
-      } else {
-        lines.push(`${el.id}.on${event.eventName} = ${event.handler}`)
-      }
-    }
-  }
-
-  // Initial display
-  if (hasDynamicContent) {
-    lines.push('')
-    lines.push('// Initial display')
-    lines.push('updateAll()')
-  }
-
-  return lines.join('\n')
 }
 
 /**
