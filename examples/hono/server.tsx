@@ -15,8 +15,8 @@ import TodoApp from './dist/TodoApp'
 import Dashboard from './dist/Dashboard'
 import Game from './dist/Game'
 import FizzBuzzCounter from './dist/FizzBuzzCounter'
-import { AsyncUserList } from './AsyncUserList'
-import { AsyncCounterWrapper } from './AsyncCounterWrapper'
+import { AsyncUserList } from './components/AsyncUserList'
+import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
 const app = new Hono()
 

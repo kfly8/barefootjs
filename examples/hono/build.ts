@@ -13,6 +13,7 @@ import { mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
+const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
@@ -43,7 +44,7 @@ const manifest: Record<string, { clientJs?: string; serverJsx: string; props: Pr
 
 // Compile each component
 for (const componentName of COMPONENTS) {
-  const entryPath = resolve(ROOT_DIR, `${componentName}.tsx`)
+  const entryPath = resolve(COMPONENTS_DIR, `${componentName}.tsx`)
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
   }, { serverAdapter: honoServerAdapter })
