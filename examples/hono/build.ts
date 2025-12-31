@@ -9,7 +9,7 @@
 
 import { compileJSX, type PropWithType } from '@barefootjs/jsx'
 import { honoServerAdapter } from '@barefootjs/hono'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
@@ -17,10 +17,13 @@ const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
-// Components to compile
-const COMPONENTS = ['Counter', 'FizzBuzzCounter', 'Toggle', 'TodoApp', 'TodoItem', 'AddTodoForm', 'Dashboard', 'Game']
-
 await mkdir(DIST_DIR, { recursive: true })
+
+// Discover component files from components directory
+// Exclude Async*.tsx files (plain async wrappers, not BarefootJS components)
+const componentFiles = (await readdir(COMPONENTS_DIR))
+  .filter(f => f.endsWith('.tsx') && !f.startsWith('Async'))
+  .map(f => resolve(COMPONENTS_DIR, f))
 
 // Build and copy barefoot.js from @barefootjs/dom
 const barefootFileName = 'barefoot.js'
@@ -43,8 +46,7 @@ const manifest: Record<string, { clientJs?: string; serverJsx: string; props: Pr
 }
 
 // Compile each component
-for (const componentName of COMPONENTS) {
-  const entryPath = resolve(COMPONENTS_DIR, `${componentName}.tsx`)
+for (const entryPath of componentFiles) {
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
   }, { serverAdapter: honoServerAdapter })
