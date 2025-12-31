@@ -1,3 +1,4 @@
+"use client"
 /**
  * TodoItem Component
  * Displays and edits individual todo items
