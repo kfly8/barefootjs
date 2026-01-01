@@ -205,4 +205,50 @@ describe('createPortal', () => {
       expect(container.children[0].textContent).toBe('Updated content')
     })
   })
+
+  describe('with Renderable (JSX.Element)', () => {
+    test('mounts object with toString() method', () => {
+      // Simulates Hono's HtmlEscapedString / JSX.Element
+      const jsxElement = {
+        toString() {
+          return '<div class="modal">From JSX</div>'
+        }
+      }
+
+      const portal = createPortal(jsxElement, container)
+
+      expect(container.children.length).toBe(1)
+      expect(portal.element.className).toBe('modal')
+      expect(portal.element.textContent).toBe('From JSX')
+    })
+
+    test('mounts complex JSX-like structure', () => {
+      const jsxElement = {
+        toString() {
+          return `
+            <div class="dialog" role="dialog">
+              <h2>Dialog Title</h2>
+              <p>Dialog content</p>
+            </div>
+          `
+        }
+      }
+
+      const portal = createPortal(jsxElement, container)
+
+      expect(portal.element.className).toBe('dialog')
+      expect(portal.element.getAttribute('role')).toBe('dialog')
+      expect(portal.element.querySelector('h2')?.textContent).toBe('Dialog Title')
+    })
+
+    test('throws error for Renderable returning empty HTML', () => {
+      const emptyJsx = {
+        toString() {
+          return ''
+        }
+      }
+
+      expect(() => createPortal(emptyJsx, container)).toThrow('createPortal: Invalid HTML provided')
+    })
+  })
 })

@@ -10,4 +10,9 @@ export {
   type EffectFn,
 } from './reactive'
 
-export { createPortal, type Portal } from './portal'
+export {
+  createPortal,
+  type Portal,
+  type Renderable,
+  type PortalChildren,
+} from './portal'

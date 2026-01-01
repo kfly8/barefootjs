@@ -14,13 +14,19 @@ export type Portal = {
   unmount: () => void
 }
 
+/** Anything that can be converted to HTML string via toString() */
+export type Renderable = { toString(): string }
+
+/** Valid children types for createPortal */
+export type PortalChildren = HTMLElement | string | Renderable
+
 /**
  * Create a portal to mount an element at a specific container
  *
  * Similar to React's createPortal(children, domNode), this function
  * mounts the given element/HTML to the specified container.
  *
- * @param children - Element to mount (HTMLElement or HTML string)
+ * @param children - Element to mount (HTMLElement, HTML string, or JSX.Element)
  * @param container - Target container element (defaults to document.body)
  * @returns Portal object with element reference and unmount method
  *
@@ -39,6 +45,9 @@ export type Portal = {
  * modalEl.className = 'modal'
  * const portal = createPortal(modalEl, document.body)
  *
+ * // With JSX.Element (Hono)
+ * const portal = createPortal(<Modal />, document.body)
+ *
  * // Access the mounted element
  * console.log(portal.element)
  *
@@ -46,15 +55,19 @@ export type Portal = {
  * portal.unmount()
  */
 export function createPortal(
-  children: HTMLElement | string,
+  children: PortalChildren,
   container: HTMLElement = document.body
 ): Portal {
   let element: HTMLElement
 
-  if (typeof children === 'string') {
-    // Parse HTML string
+  if (children instanceof HTMLElement) {
+    element = children
+  } else {
+    // Convert to string (handles both string and Renderable)
+    const html = typeof children === 'string' ? children : children.toString()
+
     const temp = document.createElement('div')
-    temp.innerHTML = children
+    temp.innerHTML = html
     const parsed = temp.firstElementChild as HTMLElement
 
     if (!parsed) {
@@ -62,8 +75,6 @@ export function createPortal(
     }
 
     element = parsed
-  } else {
-    element = children
   }
 
   container.appendChild(element)
