@@ -254,7 +254,7 @@ ${contextHelper}
 
     // Generate each component function
     const componentFunctions = components.map(comp => {
-      const { name, props, jsx, isDefaultExport } = comp
+      const { name, props, jsx, isDefaultExport, localVariables } = comp
 
       // Extract prop names for destructuring
       const propNames = props.map(p => p.name)
@@ -296,12 +296,17 @@ ${contextHelper}
   const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
   const __thisSrc = (manifest as any)['__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}']?.clientJs`
 
+      // Local variable declarations (computed from props)
+      const localVarDefs = localVariables && localVariables.length > 0
+        ? '\n  ' + localVariables.map(v => v.code).join('\n  ')
+        : ''
+
       // Use 'export default function' for default exports, 'export function' for named exports
       const exportKeyword = isDefaultExport ? 'export default function' : 'export function'
 
       if (props.length > 0) {
         return `${exportKeyword} ${name}(${propsParam}${propsType}) {
-${contextHelper}
+${contextHelper}${localVarDefs}
 
   // Check if this is the root BarefootJS component
   let __isRoot = true
@@ -336,7 +341,7 @@ ${contextHelper}
 }`
       } else {
         return `${exportKeyword} ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
-${contextHelper}
+${contextHelper}${localVarDefs}
 
   return (
     <>

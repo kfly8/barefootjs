@@ -76,7 +76,12 @@ export const testJsxAdapter: MarkedJsxAdapter = {
     const needsRawHtml = comp.jsx.includes('__rawHtml(')
     const rawHtmlHelper = needsRawHtml ? 'const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })\n\n' : ''
 
-    return `${rawHtmlHelper}export function ${comp.name}(${propsParam}) {
+    // Local variable declarations (computed from props)
+    const localVarDefs = comp.localVariables && comp.localVariables.length > 0
+      ? '\n  ' + comp.localVariables.map(v => v.code).join('\n  ') + '\n'
+      : ''
+
+    return `${rawHtmlHelper}export function ${comp.name}(${propsParam}) {${localVarDefs}
   return (
     ${comp.jsx}
   )
