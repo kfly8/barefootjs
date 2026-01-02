@@ -7,13 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import {
-  TooltipTrigger,
-  TooltipContent,
-  TooltipContentRight,
-  TooltipContentBottom,
-  TooltipContentLeft,
-} from './Tooltip'
+import { TooltipTrigger, TooltipContent } from './Tooltip'
 
 /**
  * Basic tooltip demo
@@ -115,9 +109,9 @@ export function TooltipRightDemo() {
           Right
         </button>
       </TooltipTrigger>
-      <TooltipContentRight open={open()} id="tooltip-right">
+      <TooltipContent placement="right" open={open()} id="tooltip-right">
         Right placement
-      </TooltipContentRight>
+      </TooltipContent>
     </div>
   )
 }
@@ -142,9 +136,9 @@ export function TooltipBottomDemo() {
           Bottom
         </button>
       </TooltipTrigger>
-      <TooltipContentBottom open={open()} id="tooltip-bottom">
+      <TooltipContent placement="bottom" open={open()} id="tooltip-bottom">
         Bottom placement
-      </TooltipContentBottom>
+      </TooltipContent>
     </div>
   )
 }
@@ -169,9 +163,9 @@ export function TooltipLeftDemo() {
           Left
         </button>
       </TooltipTrigger>
-      <TooltipContentLeft open={open()} id="tooltip-left">
+      <TooltipContent placement="left" open={open()} id="tooltip-left">
         Left placement
-      </TooltipContentLeft>
+      </TooltipContent>
     </div>
   )
 }
