@@ -394,11 +394,11 @@ export function jsxToTemplateString(
        * Whether to inject data-key attribute on this element.
        *
        * Set to true only for the root element of an inlined component when the
-       * parent component passes a `key` prop. This enables reconcileList to
-       * identify and reuse DOM elements during list updates.
+       * parent component passes a `key` prop. This enables external libraries
+       * (e.g., morphdom) to identify and reuse DOM elements during list updates.
        *
        * Defaults to false because child elements should not have data-key;
-       * only the root element of each list item needs it for reconciliation.
+       * only the root element of each list item needs it for identification.
        */
       injectDataKey: boolean
     }

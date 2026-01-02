@@ -565,7 +565,7 @@ function collectFromElement(
       itemTemplate: el.listInfo.itemTemplate,
     })
 
-    // List items are rendered as innerHTML/reconcileList template
+    // List items are rendered as innerHTML template
     // Their events are handled via event delegation (itemEvents)
     // Their dynamic attributes are embedded in the template string
     // So we should NOT collect them as separate clientJs info

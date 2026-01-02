@@ -116,8 +116,8 @@ describe('Hono Adapter Integration', () => {
       expect(file.markedJsx).toContain('.map((todo, __index) =>')
       expect(file.markedJsx).toContain('data-key={todo.id}')
 
-      // Client JS should have event delegation
-      expect(file.clientJs).toContain('reconcileList')
+      // Client JS should use innerHTML and have event delegation
+      expect(file.clientJs).toContain('.innerHTML =')
       expect(file.clientJs).toContain("addEventListener('click'")
       expect(file.clientJs).toContain('data-event-id')
     })

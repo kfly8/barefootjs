@@ -3,7 +3,6 @@ export {
   createEffect,
   createMemo,
   onCleanup,
-  reconcileList,
   type Signal,
   type Memo,
   type CleanupFn,

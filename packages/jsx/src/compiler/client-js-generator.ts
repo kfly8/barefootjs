@@ -84,7 +84,6 @@ ${autoHydrateCodes}
  */
 function collectBarefootImports(fileComponents: ComponentData[]): Set<string> {
   const barefootImports: Set<string> = new Set()
-  let needsReconcileList = false
 
   for (const comp of fileComponents) {
     if (!comp.hasClientJs) continue
@@ -97,13 +96,6 @@ function collectBarefootImports(fileComponents: ComponentData[]): Set<string> {
     if (comp.result.memos.length > 0) {
       barefootImports.add('createMemo')
     }
-    if (comp.result.listElements.some(el => el.keyExpression !== null)) {
-      needsReconcileList = true
-    }
-  }
-
-  if (needsReconcileList) {
-    barefootImports.add('reconcileList')
   }
 
   return barefootImports
