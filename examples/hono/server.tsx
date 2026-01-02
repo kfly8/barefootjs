@@ -46,7 +46,6 @@ app.get('/', (c) => {
           <li><a href="/counter">Counter</a></li>
           <li><a href="/fizzbuzz">Conditional Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
-          <li><a href="/select">Select</a></li>
           <li><a href="/todos">Todo (SSR + API)</a></li>
           <li><a href="/dashboard">Dashboard (All widgets)</a></li>
           <li><a href="/dashboard/counter-only">Dashboard (Counter only)</a></li>
@@ -90,16 +89,6 @@ app.get('/toggle', (c) => {
     <div>
       <h1>Toggle Example</h1>
       <Toggle />
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-app.get('/select', (c) => {
-  return c.render(
-    <div>
-      <h1>Select Example</h1>
-      <Select initialValue="option-a" />
       <p><a href="/">← Back</a></p>
     </div>
   )
