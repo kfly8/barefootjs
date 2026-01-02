@@ -19,6 +19,7 @@ import { CounterPage } from './pages/counter'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
+import { TooltipPage } from './pages/tooltip'
 
 const app = new Hono()
 
@@ -131,6 +132,15 @@ app.get('/', (c) => {
             A modal dialog that displays content in a layer above the page.
           </p>
         </a>
+        <a
+          href="/components/tooltip"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Tooltip</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A popup that displays contextual information on hover or focus.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -184,6 +194,11 @@ app.get('/components/tabs', (c) => {
 // Dialog documentation
 app.get('/components/dialog', (c) => {
   return c.render(<DialogPage />)
+})
+
+// Tooltip documentation
+app.get('/components/tooltip', (c) => {
+  return c.render(<TooltipPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }
