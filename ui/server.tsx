@@ -20,6 +20,7 @@ import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { ToastPage } from './pages/toast'
+import { TooltipPage } from './pages/tooltip'
 
 const app = new Hono()
 
@@ -141,6 +142,15 @@ app.get('/', (c) => {
             A non-blocking notification that displays brief messages to users.
           </p>
         </a>
+        <a
+          href="/components/tooltip"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Tooltip</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A popup that displays contextual information on hover or focus.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -199,6 +209,11 @@ app.get('/components/dialog', (c) => {
 // Toast documentation
 app.get('/components/toast', (c) => {
   return c.render(<ToastPage />)
+})
+
+// Tooltip documentation
+app.get('/components/tooltip', (c) => {
+  return c.render(<TooltipPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }
