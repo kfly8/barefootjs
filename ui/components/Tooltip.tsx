@@ -31,6 +31,10 @@ export interface TooltipTriggerProps {
   onBlur?: () => void
   ariaDescribedby?: string
   children?: Child
+  /** Delay in ms before showing tooltip on hover (default: 700) */
+  delayDuration?: number
+  /** Delay in ms before hiding tooltip after mouse leave (default: 0) */
+  closeDelay?: number
 }
 
 export function TooltipTrigger({
@@ -40,12 +44,53 @@ export function TooltipTrigger({
   onBlur,
   ariaDescribedby,
   children,
+  delayDuration = 700,
+  closeDelay = 0,
 }: TooltipTriggerProps) {
+  let openTimerId: number | undefined = undefined
+  let closeTimerId: number | undefined = undefined
+
+  const handleMouseEnter = () => {
+    // Clear any pending close timer
+    if (closeTimerId !== undefined) {
+      clearTimeout(closeTimerId)
+      closeTimerId = undefined
+    }
+
+    // Set open timer with delay
+    if (delayDuration > 0) {
+      openTimerId = setTimeout(() => {
+        onMouseEnter?.()
+        openTimerId = undefined
+      }, delayDuration) as unknown as number
+    } else {
+      onMouseEnter?.()
+    }
+  }
+
+  const handleMouseLeave = () => {
+    // Clear any pending open timer
+    if (openTimerId !== undefined) {
+      clearTimeout(openTimerId)
+      openTimerId = undefined
+    }
+
+    // Set close timer with delay
+    if (closeDelay > 0) {
+      closeTimerId = setTimeout(() => {
+        onMouseLeave?.()
+        closeTimerId = undefined
+      }, closeDelay) as unknown as number
+    } else {
+      onMouseLeave?.()
+    }
+  }
+
   return (
     <span
       class="inline-block"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onFocus={onFocus}
       onBlur={onBlur}
       aria-describedby={ariaDescribedby}

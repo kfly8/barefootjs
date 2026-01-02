@@ -169,3 +169,53 @@ export function TooltipLeftDemo() {
     </div>
   )
 }
+
+/**
+ * Tooltip with delay demo (700ms default)
+ */
+export function TooltipDelayDemo() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div class="relative inline-block">
+      <TooltipTrigger
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        ariaDescribedby="tooltip-delay"
+        delayDuration={700}
+      >
+        <span class="underline decoration-dotted cursor-help">
+          Hover me (700ms delay)
+        </span>
+      </TooltipTrigger>
+      <TooltipContent open={open()} id="tooltip-delay">
+        This tooltip has a 700ms delay
+      </TooltipContent>
+    </div>
+  )
+}
+
+/**
+ * Tooltip with no delay (immediate)
+ */
+export function TooltipNoDelayDemo() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div class="relative inline-block">
+      <TooltipTrigger
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        ariaDescribedby="tooltip-no-delay"
+        delayDuration={0}
+      >
+        <span class="underline decoration-dotted cursor-help">
+          Hover me (no delay)
+        </span>
+      </TooltipTrigger>
+      <TooltipContent open={open()} id="tooltip-no-delay">
+        This tooltip appears immediately
+      </TooltipContent>
+    </div>
+  )
+}

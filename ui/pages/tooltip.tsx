@@ -9,6 +9,8 @@ import {
   TooltipRightDemo,
   TooltipBottomDemo,
   TooltipLeftDemo,
+  TooltipDelayDemo,
+  TooltipNoDelayDemo,
 } from '@/components/TooltipDemo'
 import {
   PageHeader,
@@ -94,6 +96,24 @@ const placementCode = `import { TooltipContent } from '@/components/tooltip'
 // Left placement
 <TooltipContent placement="left" open={open()}>...</TooltipContent>`
 
+const delayCode = `// With 700ms delay (default)
+<TooltipTrigger
+  onMouseEnter={() => setOpen(true)}
+  onMouseLeave={() => setOpen(false)}
+  delayDuration={700}
+>
+  ...
+</TooltipTrigger>
+
+// No delay (immediate)
+<TooltipTrigger
+  onMouseEnter={() => setOpen(true)}
+  onMouseLeave={() => setOpen(false)}
+  delayDuration={0}
+>
+  ...
+</TooltipTrigger>`
+
 // Props definitions
 const tooltipTriggerProps: PropDefinition[] = [
   {
@@ -120,6 +140,18 @@ const tooltipTriggerProps: PropDefinition[] = [
     name: 'ariaDescribedby',
     type: 'string',
     description: 'ID of the tooltip element for accessibility.',
+  },
+  {
+    name: 'delayDuration',
+    type: 'number',
+    defaultValue: '700',
+    description: 'Delay in ms before showing tooltip on hover.',
+  },
+  {
+    name: 'closeDelay',
+    type: 'number',
+    defaultValue: '0',
+    description: 'Delay in ms before hiding tooltip after mouse leave.',
   },
 ]
 
@@ -196,6 +228,13 @@ export function TooltipPage() {
               <TooltipRightDemo />
               <TooltipBottomDemo />
               <TooltipLeftDemo />
+            </div>
+          </Example>
+
+          <Example title="Delay Options" code={delayCode}>
+            <div class="flex flex-wrap gap-8 py-4">
+              <TooltipDelayDemo />
+              <TooltipNoDelayDemo />
             </div>
           </Example>
         </div>

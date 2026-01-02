@@ -155,6 +155,57 @@ test.describe('Tooltip Documentation Page', () => {
   })
 })
 
+test.describe('Tooltip with Delay', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/tooltip')
+  })
+
+  test('does not show tooltip before delay duration', async ({ page }) => {
+    const delayDemo = page.locator('[data-bf-scope="TooltipDelayDemo"]').first()
+    const trigger = delayDemo.locator('[data-tooltip-trigger]')
+    const tooltip = delayDemo.locator('[role="tooltip"]')
+
+    // Initially hidden
+    await expect(tooltip).not.toBeVisible()
+
+    // Hover and immediately check - should NOT be visible yet
+    await trigger.hover()
+    await expect(tooltip).not.toBeVisible()
+
+    // Wait for delay + buffer
+    await page.waitForTimeout(800)
+    await expect(tooltip).toBeVisible()
+  })
+
+  test('cancels open timer on mouse leave before delay', async ({ page }) => {
+    const delayDemo = page.locator('[data-bf-scope="TooltipDelayDemo"]').first()
+    const trigger = delayDemo.locator('[data-tooltip-trigger]')
+    const tooltip = delayDemo.locator('[role="tooltip"]')
+
+    // Hover briefly then leave
+    await trigger.hover()
+    await page.waitForTimeout(300) // Less than 700ms delay
+    await page.mouse.move(0, 0)
+
+    // Wait past original delay - should still not appear
+    await page.waitForTimeout(500)
+    await expect(tooltip).not.toBeVisible()
+  })
+
+  test('immediate tooltip shows without delay when delayDuration is 0', async ({ page }) => {
+    const noDelayDemo = page.locator('[data-bf-scope="TooltipNoDelayDemo"]').first()
+    const trigger = noDelayDemo.locator('[data-tooltip-trigger]')
+    const tooltip = noDelayDemo.locator('[role="tooltip"]')
+
+    // Initially hidden
+    await expect(tooltip).not.toBeVisible()
+
+    // Hover and immediately check - should be visible
+    await trigger.hover()
+    await expect(tooltip).toBeVisible()
+  })
+})
+
 test.describe('Home Page - Tooltip Link', () => {
   test('displays Tooltip component link', async ({ page }) => {
     await page.goto('/')
