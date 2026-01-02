@@ -80,24 +80,19 @@ const buttonCode = `const [open, setOpen] = createSignal(false)
   </TooltipContent>
 </div>`
 
-const placementCode = `import {
-  TooltipContent,        // Top (default)
-  TooltipContentRight,   // Right
-  TooltipContentBottom,  // Bottom
-  TooltipContentLeft,    // Left
-} from '@/components/tooltip'
+const placementCode = `import { TooltipContent } from '@/components/tooltip'
 
 // Top placement (default)
 <TooltipContent open={open()}>...</TooltipContent>
 
 // Right placement
-<TooltipContentRight open={open()}>...</TooltipContentRight>
+<TooltipContent placement="right" open={open()}>...</TooltipContent>
 
 // Bottom placement
-<TooltipContentBottom open={open()}>...</TooltipContentBottom>
+<TooltipContent placement="bottom" open={open()}>...</TooltipContent>
 
 // Left placement
-<TooltipContentLeft open={open()}>...</TooltipContentLeft>`
+<TooltipContent placement="left" open={open()}>...</TooltipContent>`
 
 // Props definitions
 const tooltipTriggerProps: PropDefinition[] = [
@@ -129,6 +124,12 @@ const tooltipTriggerProps: PropDefinition[] = [
 ]
 
 const tooltipContentProps: PropDefinition[] = [
+  {
+    name: 'placement',
+    type: "'top' | 'right' | 'bottom' | 'left'",
+    defaultValue: "'top'",
+    description: 'Position of the tooltip relative to the trigger.',
+  },
   {
     name: 'open',
     type: 'boolean',
@@ -208,9 +209,9 @@ export function TooltipPage() {
             <PropsTable props={tooltipTriggerProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">TooltipContent / TooltipContentRight / TooltipContentBottom / TooltipContentLeft</h3>
+            <h3 class="text-lg font-medium text-zinc-100 mb-4">TooltipContent</h3>
             <p class="text-zinc-400 text-sm mb-4">
-              Use TooltipContent for top placement (default), or use the directional variants for other placements.
+              The tooltip popup. Use the placement prop to control positioning.
             </p>
             <PropsTable props={tooltipContentProps} />
           </div>
