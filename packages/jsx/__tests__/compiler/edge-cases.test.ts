@@ -301,4 +301,72 @@ describe('Whitespace Handling', () => {
     expect(file.markedJsx).toContain('<span>A</span>{')
     expect(file.markedJsx).toContain('}<span>B</span>')
   })
+
+  it('preserves whitespace after closing element in text (#80)', async () => {
+    // Issue #80: whitespace between </span> and "remaining" was being removed
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [remaining, setRemaining] = createSignal(100)
+        return (
+          <p><span class="remaining-count">{remaining()}</span> remaining</p>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // The space between </span> and "remaining" should be preserved
+    expect(file.markedJsx).toContain('</span> remaining')
+  })
+
+  it('preserves whitespace in list template after element', async () => {
+    // Whitespace should be preserved in map expressions too
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([
+          { id: 1, count: 5 }
+        ])
+        return (
+          <ul>
+            {items().map(item => (
+              <li><span>{item.count}</span> items left</li>
+            ))}
+          </ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // The template should preserve the space before "items left"
+    expect(file.clientJs).toContain('</span> items left')
+  })
+
+  it('preserves whitespace before element in list template', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([
+          { id: 1, name: 'Test' }
+        ])
+        return (
+          <ul>
+            {items().map(item => (
+              <li>Item: <span>{item.name}</span></li>
+            ))}
+          </ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // The template should preserve "Item: " with trailing space
+    expect(file.clientJs).toContain('Item: <span>')
+  })
 })

@@ -49,7 +49,8 @@ export function jsxToIR(node: ts.Node, ctx: JsxToIRContext): IRNode | null {
     // 3. Leading/trailing newlines with their indentation are trimmed
     // 4. Internal newlines are converted to single space
     // 5. Adjacent whitespace is preserved (e.g., "text: " keeps trailing space)
-    const rawText = node.getText(ctx.sourceFile)
+    // Note: node.text preserves leading/trailing whitespace, unlike getText()
+    const rawText = node.text
 
     // If text is only whitespace
     if (/^\s*$/.test(rawText)) {
