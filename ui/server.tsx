@@ -22,6 +22,7 @@ import { DialogPage } from './pages/dialog'
 import { DropdownPage } from './pages/dropdown'
 import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
+import { SelectPage } from './pages/select'
 
 const app = new Hono()
 
@@ -161,6 +162,15 @@ app.get('/', (c) => {
             A popup that displays contextual information on hover or focus.
           </p>
         </a>
+        <a
+          href="/components/select"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Select</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A dropdown for choosing from a list of options.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -229,6 +239,11 @@ app.get('/components/toast', (c) => {
 // Tooltip documentation
 app.get('/components/tooltip', (c) => {
   return c.render(<TooltipPage />)
+})
+
+// Select documentation
+app.get('/components/select', (c) => {
+  return c.render(<SelectPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }

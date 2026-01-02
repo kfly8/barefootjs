@@ -15,7 +15,6 @@ import TodoApp from '@/components/TodoApp'
 import Dashboard from '@/components/Dashboard'
 import Game from '@/components/Game'
 import FizzBuzzCounter from '@/components/FizzBuzzCounter'
-import Select from '@/components/Select'
 import { AsyncUserList } from './components/AsyncUserList'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
