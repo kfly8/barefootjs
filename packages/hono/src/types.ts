@@ -25,6 +25,11 @@ export type ModuleConstant = {
   code: string        // const GRID_SIZE = 100
 }
 
+export type LocalVariable = {
+  name: string        // placementClass
+  code: string        // const placementClass = placementStyles[placement]
+}
+
 export type ComponentImport = {
   name: string      // Counter
   path: string      // ./Counter
@@ -44,6 +49,8 @@ export type MarkedJsxComponentData = {
   memos: MemoDeclaration[]
   /** Child components used by this component */
   childComponents: string[]
+  /** Local variables defined within the component */
+  localVariables?: LocalVariable[]
   /** Whether this component is the default export */
   isDefaultExport?: boolean
 }
@@ -72,6 +79,8 @@ export type MarkedJsxAdapter = {
     childComponents: string[]
     /** Module-level constants (e.g., const GRID_SIZE = 100) */
     moduleConstants: ModuleConstant[]
+    /** Local variables defined within the component */
+    localVariables?: LocalVariable[]
     /** Original import statements for child components */
     originalImports: ComponentImport[]
     /** Source path relative to root (e.g., 'pages/button.tsx') */

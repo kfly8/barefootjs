@@ -21,6 +21,7 @@ import type {
   RefElement,
   ConditionalElement,
   LocalFunction,
+  LocalVariable,
   ChildComponentInit,
   CompileResult,
   CompileJSXResult,
@@ -37,6 +38,7 @@ import {
   extractComponentPropsWithTypes,
   extractTypeDefinitions,
   extractLocalFunctions,
+  extractLocalVariables,
   extractImports,
   getDefaultExportName,
 } from './extractors'
@@ -228,6 +230,9 @@ function compileJsxWithComponents(
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
 
+  // Extract local variables (for target component only, non-function declarations)
+  const localVariables = extractLocalVariables(source, filePath, signals, targetComponentName)
+
   // Extract imports (for Marked JSX generation)
   const imports = extractImports(source, filePath)
 
@@ -285,6 +290,7 @@ function compileJsxWithComponents(
     listElements,
     dynamicAttributes,
     localFunctions,
+    localVariables,
     refElements,
     conditionalElements,
     ir,
@@ -298,6 +304,7 @@ function compileJsxWithComponents(
     memos,
     moduleConstants,
     localFunctions,
+    localVariables,
     childInits,
     interactiveElements,
     dynamicElements,
@@ -730,6 +737,7 @@ function generateClientJsWithCreateEffect(
   listElements: ListElement[],
   dynamicAttributes: DynamicAttribute[],
   localFunctions: LocalFunction[],
+  localVariables: LocalVariable[],
   refElements: RefElement[] = [],
   conditionalElements: ConditionalElement[] = [],
   ir: IRNode | null = null,
@@ -832,6 +840,14 @@ function generateClientJsWithCreateEffect(
     lines.push(fn.code)
   }
   if (localFunctions.length > 0) {
+    lines.push('')
+  }
+
+  // Output local variables
+  for (const lv of localVariables) {
+    lines.push(lv.code)
+  }
+  if (localVariables.length > 0) {
     lines.push('')
   }
 

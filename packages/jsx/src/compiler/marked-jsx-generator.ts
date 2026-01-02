@@ -50,6 +50,7 @@ export function generateFileMarkedJsx(
         signals: c.result.signals,
         memos: c.result.memos,
         childComponents,
+        localVariables: c.result.localVariables,
         isDefaultExport: c.result.isDefaultExport,
       }
     })

@@ -179,6 +179,11 @@ export type LocalFunction = {
   code: string        // const handleToggle = (id) => { ... }
 }
 
+export type LocalVariable = {
+  name: string        // placementClass
+  code: string        // const placementClass = placementStyles[placement]
+}
+
 export type ChildComponentInit = {
   name: string        // AddTodoForm
   propsExpr: string   // { onAdd: handleAdd }
@@ -197,6 +202,7 @@ export type CompileResult = {
   memos: MemoDeclaration[]         // Memoized computed values
   moduleConstants: ModuleConstant[] // Module-level constants
   localFunctions: LocalFunction[]  // Functions defined within the component
+  localVariables: LocalVariable[]  // Local variables defined within the component (non-function)
   childInits: ChildComponentInit[] // Child components that need initialization
   interactiveElements: InteractiveElement[]
   dynamicElements: DynamicElement[]
@@ -279,6 +285,8 @@ export type MarkedJsxComponentData = {
   memos: MemoDeclaration[]
   /** Child components used by this component */
   childComponents: string[]
+  /** Local variables defined within the component */
+  localVariables?: LocalVariable[]
 }
 
 export type MarkedJsxAdapter = {
@@ -300,6 +308,8 @@ export type MarkedJsxAdapter = {
     childComponents: string[]
     /** Module-level constants (e.g., const GRID_SIZE = 100) */
     moduleConstants: ModuleConstant[]
+    /** Local variables defined within the component */
+    localVariables?: LocalVariable[]
     /** Original import statements for child components */
     originalImports: ComponentImport[]
     /** Source path relative to root (e.g., 'pages/button.tsx') */
