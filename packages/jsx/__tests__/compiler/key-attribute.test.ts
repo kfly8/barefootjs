@@ -3,7 +3,8 @@
  *
  * ## Overview
  * Tests for JSX key attribute support in list rendering.
- * Key attribute enables efficient DOM reconciliation.
+ * Key attribute is converted to data-key for server-side rendering.
+ * Client-side uses innerHTML for all lists (no reconcileList).
  *
  * ## Supported Patterns
  * - key with item id: key={item.id}
@@ -15,7 +16,7 @@ import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
 describe('Key Attribute Support', () => {
-  it('key with item id', async () => {
+  it('key with item id renders data-key in server JSX', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -39,8 +40,9 @@ describe('Key Attribute Support', () => {
     // Server JSX should contain data-key attribute
     expect(file.markedJsx).toContain('data-key={item.id}')
 
-    // Client JS should use reconcileList
-    expect(file.clientJs).toContain('reconcileList')
+    // Client JS uses innerHTML (no reconcileList)
+    expect(file.clientJs).toContain('.innerHTML =')
+    expect(file.clientJs).not.toContain('reconcileList')
   })
 
   it('key with index', async () => {
@@ -108,7 +110,7 @@ describe('Key Attribute Support', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Without key, should use innerHTML (existing behavior)
+    // Without key, should use innerHTML
     expect(file.clientJs).toContain('.innerHTML =')
     expect(file.clientJs).not.toContain('reconcileList')
   })
@@ -136,10 +138,8 @@ describe('Key Attribute Support', () => {
     // Regular key attribute should not exist
     expect(file.markedJsx).not.toMatch(/\skey=/)
   })
-})
 
-describe('reconcileList Runtime', () => {
-  it('generates correct reconcileList import', async () => {
+  it('list with key uses innerHTML (same as without key)', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -157,7 +157,8 @@ describe('reconcileList Runtime', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Should import reconcileList from barefoot
-    expect(file.clientJs).toContain('reconcileList')
+    // Client JS should use innerHTML (not reconcileList)
+    expect(file.clientJs).toContain('.innerHTML =')
+    expect(file.clientJs).not.toContain('reconcileList')
   })
 })

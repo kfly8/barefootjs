@@ -494,17 +494,9 @@ function generateListElementEffects(
 
   for (const el of listElements) {
     const v = ctx.varName(el.id)
-    let effectBody: string
-
-    if (el.keyExpression) {
-      // Use reconcileList for efficient key-based updates
-      const renderFn = `(${el.paramName}, __index) => ${el.itemTemplate}`
-      const getKeyFn = `(${el.paramName}) => ${el.keyExpression}`
-      effectBody = `reconcileList(${v}, ${el.arrayExpression}, ${renderFn}, ${getKeyFn})`
-    } else {
-      // Fall back to innerHTML for lists without key
-      effectBody = `${v}.innerHTML = ${el.mapExpression}`
-    }
+    // Always use innerHTML for list updates
+    // Key attribute is still rendered as data-key in server JSX for CSS/testing purposes
+    const effectBody = `${v}.innerHTML = ${el.mapExpression}`
 
     lines.push(...generateEffectWithPreCheck({ varName: v, effectBody }))
   }
