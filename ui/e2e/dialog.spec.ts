@@ -66,8 +66,10 @@ test.describe('Dialog Documentation Page', () => {
       const dialog = basicDemo.locator('[role="dialog"]')
       await expect(dialog).toBeVisible()
 
-      // Press ESC without explicitly focusing the dialog
-      // This tests real user behavior where ESC should work from anywhere
+      // Wait for dialog to receive focus (DialogBasicDemo uses setTimeout to focus)
+      await expect(dialog).toBeFocused()
+
+      // Press ESC to close dialog
       await page.keyboard.press('Escape')
 
       // Dialog should be closed
