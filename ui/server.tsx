@@ -19,6 +19,7 @@ import { CounterPage } from './pages/counter'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
+import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 
 const app = new Hono()
@@ -133,6 +134,15 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
+          href="/components/toast"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Toast</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A non-blocking notification that displays brief messages to users.
+          </p>
+        </a>
+        <a
           href="/components/tooltip"
           class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
         >
@@ -194,6 +204,11 @@ app.get('/components/tabs', (c) => {
 // Dialog documentation
 app.get('/components/dialog', (c) => {
   return c.render(<DialogPage />)
+})
+
+// Toast documentation
+app.get('/components/toast', (c) => {
+  return c.render(<ToastPage />)
 })
 
 // Tooltip documentation
