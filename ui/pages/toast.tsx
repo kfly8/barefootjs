@@ -181,7 +181,7 @@ export function ToastPage() {
       {/* Preview */}
       <Example title="" code={`<Toast variant="success" open={open()}>...</Toast>`}>
         <div class="flex gap-4">
-          <ToastBasicDemo />
+          <ToastVariantsDemo />
         </div>
       </Example>
 

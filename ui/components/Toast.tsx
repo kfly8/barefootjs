@@ -38,7 +38,7 @@ export function ToastProvider({
 }: ToastProviderProps) {
   return (
     <div
-      class={`fixed z-50 flex flex-col gap-2 ${
+      class={`fixed z-50 flex flex-col gap-2 pointer-events-none ${
         position === 'top-right' ? 'top-4 right-4' :
         position === 'top-left' ? 'top-4 left-4' :
         position === 'bottom-left' ? 'bottom-4 left-4' :
@@ -67,13 +67,13 @@ export function Toast({
 }: ToastProps) {
   return (
     <div
-      class={`flex items-start gap-3 w-80 p-4 rounded-lg border shadow-lg transition-all ${
+      class={`${open ? 'flex' : 'hidden'} items-start gap-3 w-80 p-4 rounded-lg border shadow-lg transition-all pointer-events-auto ${
         variant === 'success' ? 'bg-green-50 border-green-200 text-green-900' :
         variant === 'error' ? 'bg-red-50 border-red-200 text-red-900' :
         variant === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' :
         variant === 'info' ? 'bg-blue-50 border-blue-200 text-blue-900' :
         'bg-white border-zinc-200 text-zinc-900'
-      } ${open ? '' : 'hidden'}`}
+      }`}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
       data-toast
