@@ -18,6 +18,7 @@ import { SwitchPage } from './pages/switch'
 import { CounterPage } from './pages/counter'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
+import { DialogPage } from './pages/dialog'
 
 const app = new Hono()
 
@@ -121,6 +122,15 @@ app.get('/', (c) => {
             A set of layered sections of content displayed one at a time.
           </p>
         </a>
+        <a
+          href="/components/dialog"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Dialog</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            A modal dialog that displays content in a layer above the page.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -169,6 +179,11 @@ app.get('/components/accordion', (c) => {
 // Tabs documentation
 app.get('/components/tabs', (c) => {
   return c.render(<TabsPage />)
+})
+
+// Dialog documentation
+app.get('/components/dialog', (c) => {
+  return c.render(<DialogPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }
