@@ -23,6 +23,7 @@ import { DropdownPage } from './pages/dropdown'
 import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+import { ControlledInputPage } from './pages/forms/controlled-input'
 
 const app = new Hono()
 
@@ -172,6 +173,25 @@ app.get('/', (c) => {
           </p>
         </a>
       </div>
+
+      <div class="space-y-2 mt-8">
+        <h2 class="text-2xl font-bold tracking-tight text-zinc-50">Form Patterns</h2>
+        <p class="text-zinc-400">
+          Common patterns for building forms with BarefootJS.
+        </p>
+      </div>
+
+      <div class="grid gap-4">
+        <a
+          href="/forms/controlled-input"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Controlled Input</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            Two-way binding between signals and input values.
+          </p>
+        </a>
+      </div>
     </div>
   )
 })
@@ -244,6 +264,11 @@ app.get('/components/tooltip', (c) => {
 // Select documentation
 app.get('/components/select', (c) => {
   return c.render(<SelectPage />)
+})
+
+// Controlled Input pattern documentation
+app.get('/forms/controlled-input', (c) => {
+  return c.render(<ControlledInputPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }

@@ -1,0 +1,155 @@
+/**
+ * Controlled Input Documentation Page
+ *
+ * Demonstrates Signal ↔ input value synchronization patterns.
+ */
+
+import { Input } from '@/components/Input'
+import {
+  BasicControlledDemo,
+  CharacterCountDemo,
+  LivePreviewDemo,
+  MultiInputSyncDemo,
+} from '@/components/ControlledInputDemo'
+import {
+  PageHeader,
+  Section,
+  Example,
+  CodeBlock,
+} from '../../_shared/docs'
+
+// Code examples
+const basicCode = `import { createSignal } from '@barefootjs/dom'
+import { Input } from '@/components/input'
+
+const [text, setText] = createSignal('')
+
+<Input
+  inputValue={text()}
+  onInput={(e) => setText(e.target.value)}
+  inputPlaceholder="Type something..."
+/>
+<p>Current value: {text()}</p>`
+
+const characterCountCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+
+const [text, setText] = createSignal('')
+const charCount = createMemo(() => text().length)
+const remaining = createMemo(() => 100 - text().length)
+
+<Input
+  inputValue={text()}
+  onInput={(e) => setText(e.target.value)}
+/>
+<p>Characters: {charCount()}</p>
+<p>{remaining()} remaining</p>`
+
+const livePreviewCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+
+const [text, setText] = createSignal('')
+const uppercase = createMemo(() => text().toUpperCase())
+const wordCount = createMemo(() => {
+  const trimmed = text().trim()
+  return trimmed === '' ? 0 : trimmed.split(/\\s+/).length
+})
+
+<Input
+  inputValue={text()}
+  onInput={(e) => setText(e.target.value)}
+/>
+<p>Uppercase: {uppercase()}</p>
+<p>Word count: {wordCount()}</p>`
+
+const multiInputCode = `import { createSignal } from '@barefootjs/dom'
+
+const [text, setText] = createSignal('')
+
+// Both inputs share the same signal
+<Input inputValue={text()} onInput={(e) => setText(e.target.value)} />
+<Input inputValue={text()} onInput={(e) => setText(e.target.value)} />
+<p>Shared value: {text()}</p>`
+
+export function ControlledInputPage() {
+  return (
+    <div class="space-y-12">
+      <PageHeader
+        title="Controlled Input"
+        description="Demonstrates Signal ↔ input value synchronization patterns for two-way data binding."
+      />
+
+      {/* Preview - Static example (interactive demos are in Examples section) */}
+      <Example title="" code={basicCode}>
+        <div class="max-w-sm">
+          <Input inputPlaceholder="Type something..." />
+          <p class="text-sm text-zinc-400 mt-2">
+            See interactive examples below.
+          </p>
+        </div>
+      </Example>
+
+      {/* Pattern Overview */}
+      <Section title="Pattern Overview">
+        <div class="prose prose-invert max-w-none">
+          <p class="text-zinc-400">
+            The controlled input pattern uses <code class="text-zinc-200">value={'{signal()}'}</code> combined with{' '}
+            <code class="text-zinc-200">onInput</code> to create two-way binding between a signal and an input element.
+            This pattern enables real-time synchronization and derived computations.
+          </p>
+        </div>
+        <CodeBlock code={basicCode} />
+      </Section>
+
+      {/* Examples */}
+      <Section title="Examples">
+        <div class="space-y-8">
+          <Example title="Basic Two-Way Binding" code={basicCode}>
+            <div class="max-w-sm">
+              <BasicControlledDemo />
+            </div>
+          </Example>
+
+          <Example title="Character Count" code={characterCountCode}>
+            <div class="max-w-sm">
+              <CharacterCountDemo />
+            </div>
+          </Example>
+
+          <Example title="Live Preview" code={livePreviewCode}>
+            <div class="max-w-sm">
+              <LivePreviewDemo />
+            </div>
+          </Example>
+
+          <Example title="Multi-Input Sync" code={multiInputCode}>
+            <div class="max-w-sm">
+              <MultiInputSyncDemo />
+            </div>
+          </Example>
+        </div>
+      </Section>
+
+      {/* Key Points */}
+      <Section title="Key Points">
+        <div class="space-y-4">
+          <div class="p-4 bg-zinc-800 rounded-lg">
+            <h3 class="font-semibold text-zinc-100 mb-2">Pattern Structure</h3>
+            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+              <li><code class="text-zinc-200">inputValue={'{signal()}'}</code> - Binds signal value to input</li>
+              <li><code class="text-zinc-200">{'onInput={(e) => setSignal(e.target.value)}'}</code> - Updates signal on input</li>
+              <li>Use <code class="text-zinc-200">createMemo</code> for derived values (character count, transformations)</li>
+            </ul>
+          </div>
+          <div class="p-4 bg-zinc-800 rounded-lg">
+            <h3 class="font-semibold text-zinc-100 mb-2">Use Cases</h3>
+            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+              <li>Form validation with real-time feedback</li>
+              <li>Character/word counters</li>
+              <li>Live search/filter</li>
+              <li>Synced inputs (e.g., mirrored text fields)</li>
+            </ul>
+          </div>
+        </div>
+      </Section>
+    </div>
+  )
+}
