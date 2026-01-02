@@ -12,6 +12,38 @@ import { isPascalCase } from '../utils/helpers'
 import { isArrowFunction, extractArrowParams, extractArrowBody } from '../utils/expression-parser'
 
 /**
+ * Normalizes JSX text following React-like whitespace rules:
+ * 1. Pure indentation (starts with newline) is removed
+ * 2. Inline spaces only (spaces/tabs without newlines) are preserved
+ * 3. Leading/trailing whitespace with newlines is trimmed
+ * 4. Internal newlines are converted to single space
+ */
+function normalizeJsxText(rawText: string): string {
+  // If text is only whitespace
+  if (/^\s*$/.test(rawText)) {
+    // Pure indentation (starts with newline) - skip it
+    if (rawText.startsWith('\n') || rawText.startsWith('\r')) {
+      return ''
+    }
+    // Inline spaces (e.g., " " between elements) - preserve
+    if (/^[ \t]+$/.test(rawText)) {
+      return rawText
+    }
+    // Other whitespace patterns with embedded newlines - skip
+    return ''
+  }
+
+  // Normalize: collapse leading/trailing whitespace with newlines, preserve inline spaces
+  return rawText
+    // Remove leading whitespace that includes newlines
+    .replace(/^[\t ]*\n[\s]*/, '')
+    // Remove trailing whitespace that includes newlines
+    .replace(/[\s]*\n[\t ]*$/, '')
+    // Convert internal newlines to single space
+    .replace(/\s*\n\s*/g, ' ')
+}
+
+/**
  * Converts JSX element to template literal string.
  * <li>{item}</li> → `<li>${item}</li>`
  */
@@ -419,7 +451,8 @@ export function jsxToTemplateString(
         let children = ''
         for (const child of node.children) {
           if (ts.isJsxText(child)) {
-            const text = child.getText(sf).trim()
+            // Note: child.text preserves leading/trailing whitespace, unlike getText()
+            const text = normalizeJsxText(child.text)
             if (text) {
               children += text
             }
@@ -535,7 +568,8 @@ export function jsxToTemplateString(
       let children = ''
       for (const child of n.children) {
         if (ts.isJsxText(child)) {
-          const text = child.getText(sourceFile).trim()
+          // Note: child.text preserves leading/trailing whitespace, unlike getText()
+          const text = normalizeJsxText(child.text)
           if (text) {
             children += text
           }
