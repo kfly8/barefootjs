@@ -11,7 +11,7 @@ import type {
   SignalDeclaration,
   MapExpressionResult,
 } from '../types'
-import { replaceSignalCalls } from '../utils/expression-parser'
+import { replaceSignalCalls } from '../extractors/expression'
 import { evaluateArrayExpression, evaluateTemplate } from './utils'
 import { jsxToTemplateString } from './template-generator'
 

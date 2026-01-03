@@ -8,8 +8,10 @@ import { describe, it, expect } from 'bun:test'
 import {
   extractArrowBody,
   extractArrowParams,
-  needsCapturePhase,
   parseConditionalHandler,
+} from '../../src/extractors/expression'
+import {
+  needsCapturePhase,
   isBooleanAttribute,
   generateAttributeUpdate,
   collectClientJsInfo,

@@ -31,26 +31,18 @@ import type {
   JsxToIRContext,
   ClientJsGeneratorContext,
 } from './types'
-import {
-  extractSignals,
-  extractMemos,
-  extractModuleVariables,
-  extractComponentPropsWithTypes,
-  extractTypeDefinitions,
-  extractLocalFunctions,
-  extractLocalVariables,
-  extractImports,
-  getDefaultExportName,
-} from './extractors'
+import { extractSignals } from './extractors/signals'
+import { extractMemos } from './extractors/memos'
+import { extractModuleVariables } from './extractors/constants'
+import { extractComponentPropsWithTypes, extractTypeDefinitions } from './extractors/props'
+import { extractLocalFunctions } from './extractors/local-functions'
+import { extractLocalVariables } from './extractors/local-variables'
+import { extractImports } from './extractors/imports'
+import { getDefaultExportName } from './extractors/local-components'
+import { extractArrowBody, extractArrowParams, parseConditionalHandler } from './extractors/expression'
 import { IdGenerator } from './utils/id-generator'
-import {
-  extractArrowBody,
-  extractArrowParams,
-  needsCapturePhase,
-  parseConditionalHandler,
-  collectClientJsInfo,
-  findAndConvertJsxReturn,
-} from './transformers'
+import { needsCapturePhase, collectClientJsInfo } from './transformers/ir-to-client-js'
+import { findAndConvertJsxReturn } from './transformers/jsx-to-ir'
 import {
   calculateElementPaths,
 } from './utils/element-paths'

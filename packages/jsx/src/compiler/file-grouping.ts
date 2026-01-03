@@ -7,7 +7,7 @@
 
 import type { CompileResult, ChildComponentInit } from '../types'
 import { generateContentHash } from './utils'
-import { isConstantUsedInClientCode } from '../extractors'
+import { isConstantUsedInClientCode } from '../extractors/constants'
 
 /**
  * Component data with pre-calculated declarations
