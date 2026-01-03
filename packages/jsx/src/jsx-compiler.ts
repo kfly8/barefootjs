@@ -538,6 +538,13 @@ function generateConditionalEffects(
     lines.push(`let __prevCond_${condId}`)
     lines.push(`createEffect(() => {`)
     lines.push(`  const __currCond = Boolean(${cond.condition})`)
+    lines.push(`  // Skip first run - server already rendered correct content for initial condition`)
+    lines.push(`  // This is critical for conditionals containing child components, as templates`)
+    lines.push(`  // use placeholders (<!-- ComponentName -->) that would break hydration`)
+    lines.push(`  if (__prevCond_${condId} === undefined) {`)
+    lines.push(`    __prevCond_${condId} = __currCond`)
+    lines.push(`    return`)
+    lines.push(`  }`)
     lines.push(`  if (__currCond === __prevCond_${condId}) return`)
     lines.push(`  __prevCond_${condId} = __currCond`)
     if (isFragmentCond) {

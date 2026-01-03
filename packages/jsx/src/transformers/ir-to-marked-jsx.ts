@@ -416,6 +416,7 @@ function replaceSignalAndMemoCalls(expr: string, signals: SignalDeclaration[], m
     if (getterPattern.test(result)) {
       // Extract the arrow function body from computation
       // e.g., "() => count() * 2" -> "count() * 2"
+      // e.g., "() => { if (x) return 'a'; return 'b' }" -> "{ if (x) return 'a'; return 'b' }"
       let computationBody = memo.computation
       const arrowMatch = computationBody.match(/^\s*\(\s*\)\s*=>\s*(.+)$/s)
       if (arrowMatch) {
@@ -426,7 +427,14 @@ function replaceSignalAndMemoCalls(expr: string, signals: SignalDeclaration[], m
         const signalPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
         computationBody = computationBody.replace(signalPattern, signal.initialValue)
       }
-      result = result.replace(getterPattern, `(${computationBody})`)
+      // Check if computation body is a block (starts with {)
+      // Block bodies need to be wrapped as IIFE: (() => {...})()
+      // Simple expressions can just be wrapped in parentheses: (expr)
+      if (computationBody.startsWith('{')) {
+        result = result.replace(getterPattern, `(() => ${computationBody})()`)
+      } else {
+        result = result.replace(getterPattern, `(${computationBody})`)
+      }
     }
   }
 
