@@ -538,15 +538,17 @@ function generateConditionalEffects(
     lines.push(`let __prevCond_${condId}`)
     lines.push(`createEffect(() => {`)
     lines.push(`  const __currCond = Boolean(${cond.condition})`)
-    lines.push(`  // Skip first run - server already rendered correct content for initial condition`)
-    lines.push(`  // This is critical for conditionals containing child components, as templates`)
-    lines.push(`  // use placeholders (<!-- ComponentName -->) that would break hydration`)
-    lines.push(`  if (__prevCond_${condId} === undefined) {`)
-    lines.push(`    __prevCond_${condId} = __currCond`)
+    lines.push(`  const __isFirstRun = __prevCond_${condId} === undefined`)
+    lines.push(`  const __prevVal = __prevCond_${condId}`)
+    lines.push(`  __prevCond_${condId} = __currCond`)
+    // On first run, skip DOM replacement but attach handlers
+    // On subsequent runs, skip if condition unchanged
+    lines.push(`  if (__isFirstRun) {`)
+    lines.push(`    if (!__currCond) return`)
+    lines.push(`  } else if (__currCond === __prevVal) {`)
     lines.push(`    return`)
     lines.push(`  }`)
-    lines.push(`  if (__currCond === __prevCond_${condId}) return`)
-    lines.push(`  __prevCond_${condId} = __currCond`)
+    lines.push(`  if (!__isFirstRun) {`)
     if (isFragmentCond) {
       // Fragment conditional: find content between comment markers
       lines.push(`  const __html = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
@@ -612,9 +614,10 @@ function generateConditionalEffects(
       lines.push(`    }`)
       lines.push(`  }`)
     }
+    lines.push(`  }`)  // Close if (!__isFirstRun) block
 
-    // Re-attach event handlers for interactive elements inside this conditional
-    // After DOM update, elements need their handlers re-attached
+    // Attach event handlers for interactive elements inside this conditional
+    // This runs on first run (to attach) and after DOM update (to re-attach)
     if (cond.interactiveElements && cond.interactiveElements.length > 0) {
       lines.push(`  // Re-attach event handlers for elements inside conditional`)
       for (const el of cond.interactiveElements) {
