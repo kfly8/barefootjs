@@ -23,9 +23,6 @@ import type {
 import { isPascalCase } from '../utils/helpers'
 import { jsxToTemplateString } from '../compiler/template-generator'
 
-// Re-export types for backwards compatibility
-export type { JsxToIRContext, CompilerWarning }
-
 /**
  * Converts JSX AST node to IR
  */
@@ -758,16 +755,6 @@ function irNodeContainsReactiveCall(node: IRNode, signals: SignalDeclaration[], 
              irNodeContainsReactiveCall(node.whenTrue, signals, memos, valueProps) ||
              irNodeContainsReactiveCall(node.whenFalse, signals, memos, valueProps)
   }
-}
-
-/**
- * Checks if expression contains signal calls (legacy - for backwards compatibility)
- */
-function containsSignalCall(expr: string, signals: SignalDeclaration[]): boolean {
-  return signals.some(s => {
-    const regex = new RegExp(`\\b${s.getter}\\s*\\(`)
-    return regex.test(expr)
-  })
 }
 
 /**

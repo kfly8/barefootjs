@@ -29,23 +29,4 @@ export class IdGenerator {
   getCurrentCount(): number {
     return this.slotCounter
   }
-
-  // Legacy methods for backwards compatibility during migration
-  // TODO: Remove after full migration to slot registry pattern
-
-  generateButtonId(): string {
-    return this.generateSlotId()
-  }
-
-  generateDynamicId(): string {
-    return this.generateSlotId()
-  }
-
-  generateListId(): string {
-    return this.generateSlotId()
-  }
-
-  generateAttrId(): string {
-    return this.generateSlotId()
-  }
 }
