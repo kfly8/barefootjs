@@ -90,9 +90,6 @@ export const testJsxAdapter: MarkedJsxAdapter = {
   },
 }
 
-// Legacy alias for backwards compatibility
-export const testMarkedJsxAdapter = testJsxAdapter
-
 /**
  * Test adapter that generates static HTML with initial values evaluated.
  *

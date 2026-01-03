@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'bun:test'
 import { compileJSX, type CompileJSXResult } from '../../src'
-import { honoServerAdapter } from '@barefootjs/hono'
+import { honoMarkedJsxAdapter } from '@barefootjs/hono'
 
 async function compile(source: string): Promise<CompileJSXResult> {
   const files: Record<string, string> = {
@@ -16,7 +16,7 @@ async function compile(source: string): Promise<CompileJSXResult> {
   return compileJSX('/test/Component.tsx', async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { markedJsxAdapter: honoServerAdapter })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter })
 }
 
 async function compileWithFiles(
@@ -26,7 +26,7 @@ async function compileWithFiles(
   return compileJSX(entryPath, async (path) => {
     if (files[path]) return files[path]
     throw new Error(`File not found: ${path}`)
-  }, { markedJsxAdapter: honoServerAdapter })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter })
 }
 
 describe('Hono Adapter Integration', () => {
