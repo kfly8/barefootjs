@@ -37,7 +37,9 @@ describe('honoMarkedJsxAdapter', () => {
 
       expect(result).toContain('export function Hello({ "data-key": __dataKey, __listIndex }')
       expect(result).toContain('useRequestContext')
+      // Scripts are now collected for deferred rendering (via BfScripts)
       expect(result).toContain("bfOutputScripts")
+      expect(result).toContain("bfCollectedScripts")
     })
 
     it('generates component with props and hydration script', () => {
@@ -205,10 +207,10 @@ describe('honoMarkedJsxAdapter', () => {
       expect(result).toContain('try {')
       expect(result).toContain('const c = useRequestContext()')
       expect(result).toContain('} catch {')
-      expect(result).toContain('// Inside Suspense boundary - context unavailable')
-      // Should default to outputting scripts when context is unavailable
-      expect(result).toContain('let __needsBarefoot = true')
-      expect(result).toContain('let __needsThis = true')
+      expect(result).toContain('// Inside Suspense boundary')
+      // Inside Suspense, falls back to inline scripts
+      expect(result).toContain('__inSuspense = true')
+      expect(result).toContain('{__inSuspense && __barefootSrc &&')
     })
 
     it('only outputs data-bf-props for root component (first to render)', () => {
@@ -239,11 +241,13 @@ describe('honoMarkedJsxAdapter', () => {
       })
 
       // Should check bfRootComponent context (with try/catch for Suspense boundaries)
-      expect(result).toContain("let __isRoot = true")
+      expect(result).toContain("let __isRoot = false")
       expect(result).toContain("__isRoot = !c.get('bfRootComponent')")
       expect(result).toContain("c.set('bfRootComponent', 'TodoApp')")
-      // data-bf-props should only render when __isRoot is true
-      expect(result).toContain('{__isRoot && __hasHydrateProps && (')
+      // Props scripts are collected for deferred rendering
+      expect(result).toContain("bfCollectedPropsScripts")
+      // data-bf-props should only render inline when __inSuspense is true
+      expect(result).toContain('{__inSuspense && __isRoot && __hasHydrateProps && (')
     })
   })
 })

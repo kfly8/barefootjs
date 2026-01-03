@@ -2,9 +2,11 @@
  * BarefootJS Components Renderer
  *
  * Uses hono/jsx-renderer with UnoCSS.
+ * BfScripts component renders collected script tags at body end.
  */
 
 import { jsxRenderer } from 'hono/jsx-renderer'
+import { BfScripts } from '../packages/hono/src/scripts'
 
 export const renderer = jsxRenderer(
   ({ children }) => {
@@ -33,6 +35,7 @@ export const renderer = jsxRenderer(
         </head>
         <body>
           {children}
+          <BfScripts />
         </body>
       </html>
     )

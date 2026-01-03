@@ -7,6 +7,7 @@
  */
 
 import type { MarkedJsxAdapter, MarkedJsxComponentData } from './types'
+import type { CollectedScript, CollectedPropsScript } from './scripts'
 
 /**
  * Injects conditional data-key prop into the root element of JSX string.
@@ -108,44 +109,39 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       ? '\n' + moduleConstants.map(c => c.code).join('\n') + '\n'
       : ''
 
-    // Script output logic (self-contained)
-    const scriptLogic = `
-  // Track which scripts have been output to avoid duplicates
-  const __outputScripts = c.get('bfOutputScripts') || new Set<string>()
-  const __needsBarefoot = !__outputScripts.has('__barefoot__')
-  const __needsThis = !__outputScripts.has('${name}')
-  if (__needsBarefoot) __outputScripts.add('__barefoot__')
-  if (__needsThis) __outputScripts.add('${name}')
-  c.set('bfOutputScripts', __outputScripts)
-
-  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
-  const __thisSrc = (manifest as any)['${name}']?.clientJs`
-
-    const scriptTags = `{__needsBarefoot && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
-      {__needsThis && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
-
-    // Script deduplication helper - handles Suspense boundaries gracefully
+    // Script collection helper - collects scripts for deferred rendering at body end
+    // This avoids DOM traversal issues caused by inline script tags between siblings
     const contextHelper = `
-  // Try to get request context for script deduplication
-  // Falls back to always outputting scripts when inside Suspense boundaries
-  let __outputScripts: Set<string> | null = null
-  let __needsBarefoot = true
-  let __needsThis = true
+  // Collect scripts for deferred rendering (via BfScripts component)
+  // Falls back to inline output inside Suspense boundaries
+  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
+  const __thisSrc = (manifest as any)['${name}']?.clientJs
+  let __inSuspense = false
   try {
     const c = useRequestContext()
-    __outputScripts = c.get('bfOutputScripts') || new Set<string>()
-    __needsBarefoot = !__outputScripts.has('__barefoot__')
-    __needsThis = !__outputScripts.has('${name}')
-    if (__needsBarefoot) __outputScripts.add('__barefoot__')
-    if (__needsThis) __outputScripts.add('${name}')
+    const __outputScripts: Set<string> = c.get('bfOutputScripts') || new Set<string>()
+    const __collectedScripts: { src: string }[] = c.get('bfCollectedScripts') || []
+
+    if (__barefootSrc && !__outputScripts.has('__barefoot__')) {
+      __outputScripts.add('__barefoot__')
+      __collectedScripts.push({ src: \`/static/\${__barefootSrc}\` })
+    }
+    if (__thisSrc && !__outputScripts.has('${name}')) {
+      __outputScripts.add('${name}')
+      __collectedScripts.push({ src: \`/static/\${__thisSrc}\` })
+    }
+
     c.set('bfOutputScripts', __outputScripts)
+    c.set('bfCollectedScripts', __collectedScripts)
   } catch {
     // Inside Suspense boundary - context unavailable
-    // Always output scripts (browser will deduplicate)
-  }
+    // Will output inline scripts as fallback
+    __inSuspense = true
+  }`
 
-  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
-  const __thisSrc = (manifest as any)['${name}']?.clientJs`
+    // Fallback inline script tags for Suspense boundaries
+    const suspenseFallbackScripts = `{__inSuspense && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
+      {__inSuspense && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
 
     // Use 'export default function' for default exports, 'export function' for named exports
     const exportKeyword = isDefaultExport ? 'export default function' : 'export function'
@@ -159,27 +155,33 @@ ${contextHelper}
 
   // Check if this is the root BarefootJS component (first to render)
   // Only root component outputs data-bf-props to avoid duplicate hydration data
-  let __isRoot = true
-  try {
-    const c = useRequestContext()
-    __isRoot = !c.get('bfRootComponent')
-    if (__isRoot) {
-      c.set('bfRootComponent', '${name}')
-    }
-  } catch {
-    // Inside Suspense boundary - treat as root
-  }
-
   // Serialize props for client hydration (only serializable values)
   const __hydrateProps: Record<string, unknown> = {}
   ${propNames.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 
+  let __isRoot = false
+  try {
+    const c = useRequestContext()
+    __isRoot = !c.get('bfRootComponent')
+    if (__isRoot) {
+      c.set('bfRootComponent', '${name}')
+      // Collect props script for deferred rendering
+      if (__hasHydrateProps) {
+        const __propsScripts: { name: string; props: Record<string, unknown> }[] = c.get('bfCollectedPropsScripts') || []
+        __propsScripts.push({ name: '${name}', props: __hydrateProps })
+        c.set('bfCollectedPropsScripts', __propsScripts)
+      }
+    }
+  } catch {
+    // Inside Suspense boundary - treat as root, output inline
+  }
+
   return (
     <>
       ${jsxWithDataKey}
-      ${scriptTags}
-      {__isRoot && __hasHydrateProps && (
+      ${suspenseFallbackScripts}
+      {__inSuspense && __isRoot && __hasHydrateProps && (
         <script
           type="application/json"
           data-bf-props="${name}"
@@ -200,7 +202,7 @@ ${contextHelper}
   return (
     <>
       ${jsxWithDataKey}
-      ${scriptTags}
+      ${suspenseFallbackScripts}
     </>
   )
 }
@@ -271,30 +273,39 @@ ${contextHelper}
       // Inject conditional data-key attribute
       const jsxWithDataKey = injectDataKeyProp(jsx)
 
-      // Script tags use file-level client JS
-      const scriptTags = `{__needsBarefoot && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
-      {__needsThis && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
+      // File identifier for script deduplication
+      const fileId = `__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
 
-      // Context helper with file-level script tracking
+      // Context helper with file-level script collection
       const contextHelper = `
-  // Try to get request context for script deduplication
-  let __outputScripts: Set<string> | null = null
-  let __needsBarefoot = true
-  let __needsThis = true
+  // Collect scripts for deferred rendering (via BfScripts component)
+  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
+  const __thisSrc = (manifest as any)['${fileId}']?.clientJs
+  let __inSuspense = false
   try {
     const c = useRequestContext()
-    __outputScripts = c.get('bfOutputScripts') || new Set<string>()
-    __needsBarefoot = !__outputScripts.has('__barefoot__')
-    __needsThis = !__outputScripts.has('__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}')
-    if (__needsBarefoot) __outputScripts.add('__barefoot__')
-    if (__needsThis) __outputScripts.add('__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}')
-    c.set('bfOutputScripts', __outputScripts)
-  } catch {
-    // Inside Suspense boundary - always output scripts
-  }
+    const __outputScripts: Set<string> = c.get('bfOutputScripts') || new Set<string>()
+    const __collectedScripts: { src: string }[] = c.get('bfCollectedScripts') || []
 
-  const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
-  const __thisSrc = (manifest as any)['__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}']?.clientJs`
+    if (__barefootSrc && !__outputScripts.has('__barefoot__')) {
+      __outputScripts.add('__barefoot__')
+      __collectedScripts.push({ src: \`/static/\${__barefootSrc}\` })
+    }
+    if (__thisSrc && !__outputScripts.has('${fileId}')) {
+      __outputScripts.add('${fileId}')
+      __collectedScripts.push({ src: \`/static/\${__thisSrc}\` })
+    }
+
+    c.set('bfOutputScripts', __outputScripts)
+    c.set('bfCollectedScripts', __collectedScripts)
+  } catch {
+    // Inside Suspense boundary - will output inline scripts
+    __inSuspense = true
+  }`
+
+      // Fallback inline script tags for Suspense boundaries
+      const suspenseFallbackScripts = `{__inSuspense && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
+      {__inSuspense && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
 
       // Local variable declarations (computed from props)
       const localVarDefs = localVariables && localVariables.length > 0
@@ -308,28 +319,34 @@ ${contextHelper}
         return `${exportKeyword} ${name}(${propsParam}${propsType}) {
 ${contextHelper}${localVarDefs}
 
-  // Check if this is the root BarefootJS component
-  let __isRoot = true
-  try {
-    const c = useRequestContext()
-    __isRoot = !c.get('bfRootComponent')
-    if (__isRoot) {
-      c.set('bfRootComponent', '${name}')
-    }
-  } catch {
-    // Inside Suspense boundary - treat as root
-  }
-
   // Serialize props for client hydration
   const __hydrateProps: Record<string, unknown> = {}
   ${propNames.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 
+  // Check if this is the root BarefootJS component
+  let __isRoot = false
+  try {
+    const c = useRequestContext()
+    __isRoot = !c.get('bfRootComponent')
+    if (__isRoot) {
+      c.set('bfRootComponent', '${name}')
+      // Collect props script for deferred rendering
+      if (__hasHydrateProps) {
+        const __propsScripts: { name: string; props: Record<string, unknown> }[] = c.get('bfCollectedPropsScripts') || []
+        __propsScripts.push({ name: '${name}', props: __hydrateProps })
+        c.set('bfCollectedPropsScripts', __propsScripts)
+      }
+    }
+  } catch {
+    // Inside Suspense boundary - treat as root, output inline
+  }
+
   return (
     <>
       ${jsxWithDataKey}
-      ${scriptTags}
-      {__isRoot && __hasHydrateProps && (
+      ${suspenseFallbackScripts}
+      {__inSuspense && __isRoot && __hasHydrateProps && (
         <script
           type="application/json"
           data-bf-props="${name}"
@@ -346,7 +363,7 @@ ${contextHelper}${localVarDefs}
   return (
     <>
       ${jsxWithDataKey}
-      ${scriptTags}
+      ${suspenseFallbackScripts}
     </>
   )
 }`
