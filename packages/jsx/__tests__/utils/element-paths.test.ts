@@ -391,3 +391,208 @@ describe('generatePathExpression', () => {
     expect(generatePathExpression('__scope', 'firstElementChild.nextElementSibling')).toBe('__scope?.firstElementChild.nextElementSibling')
   })
 })
+
+describe('conditionals between siblings', () => {
+  it('does not count conditionals as elements in fragment', () => {
+    // Issue #82: Conditionals render as comments, not elements
+    // They should not affect sibling indices
+    const ir: IRFragment = {
+      type: 'fragment',
+      children: [
+        {
+          type: 'element',
+          tagName: 'div',
+          id: '0',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        {
+          type: 'conditional',
+          whenTrue: {
+            type: 'element',
+            tagName: 'span',
+            id: 'cond-0',
+            staticAttrs: [],
+            dynamicAttrs: [],
+            spreadAttrs: [],
+            ref: null,
+            events: [],
+            children: [],
+            listInfo: null,
+            dynamicContent: null,
+          },
+          whenFalse: { type: 'fragment', children: [] },
+        },
+        {
+          type: 'element',
+          tagName: 'div',
+          id: '1',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+      ],
+    }
+
+    const paths = calculateElementPaths(ir)
+    expect(paths).toEqual([
+      { id: '0', path: '' },  // First element is scope
+      { id: 'cond-0', path: null },  // Element inside conditional gets null path
+      { id: '1', path: 'nextElementSibling' },  // NOT 'nextElementSibling.nextElementSibling'
+    ])
+  })
+
+  it('does not count conditionals as elements in children', () => {
+    // Issue #82: Conditionals between child elements should not affect indices
+    const ir: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        {
+          type: 'element',
+          tagName: 'p',
+          id: '0',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        {
+          type: 'conditional',
+          whenTrue: {
+            type: 'element',
+            tagName: 'span',
+            id: 'cond-0',
+            staticAttrs: [],
+            dynamicAttrs: [],
+            spreadAttrs: [],
+            ref: null,
+            events: [],
+            children: [],
+            listInfo: null,
+            dynamicContent: null,
+          },
+          whenFalse: { type: 'fragment', children: [] },
+        },
+        {
+          type: 'element',
+          tagName: 'button',
+          id: '1',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+
+    const paths = calculateElementPaths(ir)
+    expect(paths).toEqual([
+      { id: '0', path: 'firstElementChild' },
+      { id: 'cond-0', path: null },  // Element inside conditional
+      { id: '1', path: 'firstElementChild.nextElementSibling' },  // NOT .nextElementSibling.nextElementSibling
+    ])
+  })
+
+  it('handles multiple conditionals between elements', () => {
+    // Issue #82: Multiple conditionals should not affect sibling indices
+    const ir: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        {
+          type: 'element',
+          tagName: 'div',
+          id: '0',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        {
+          type: 'element',
+          tagName: 'div',
+          id: '1',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        {
+          type: 'conditional',
+          whenTrue: { type: 'text', content: 'Error 1' },
+          whenFalse: { type: 'fragment', children: [] },
+        },
+        {
+          type: 'conditional',
+          whenTrue: { type: 'text', content: 'Error 2' },
+          whenFalse: { type: 'fragment', children: [] },
+        },
+        {
+          type: 'element',
+          tagName: 'div',
+          id: '2',
+          staticAttrs: [],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+
+    const paths = calculateElementPaths(ir)
+    expect(paths).toEqual([
+      { id: '0', path: 'firstElementChild' },
+      { id: '1', path: 'firstElementChild.nextElementSibling' },
+      // Two conditionals don't add to the index
+      { id: '2', path: 'firstElementChild.nextElementSibling.nextElementSibling' },
+    ])
+  })
+})

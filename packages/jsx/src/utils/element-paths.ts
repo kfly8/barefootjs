@@ -80,8 +80,8 @@ function calculateFragmentPaths(fragment: IRFragment, paths: ElementPath[]): voi
       siblingIndex++
     } else if (child.type === 'conditional') {
       // Conditional at fragment level
+      // Don't increment siblingIndex - conditionals render as comments, not elements
       processConditional(child, siblingIndex === 0 ? '' : buildSiblingPath(siblingIndex), paths)
-      siblingIndex++
     }
     // Skip text and expression nodes (they don't affect element position)
   }
@@ -114,9 +114,9 @@ function processChildren(children: IRNode[], basePath: string, paths: ElementPat
       processChildren(child.children, childPath ?? buildChildPath(basePath, elementIndex), paths)
       elementIndex++
     } else if (child.type === 'conditional') {
+      // Don't increment elementIndex - conditionals render as comments, not elements
       const childPath = hasComponentBefore ? null : buildChildPath(basePath, elementIndex)
       processConditional(child, childPath, paths, hasComponentBefore)
-      elementIndex++
     } else if (child.type === 'fragment') {
       // Nested fragment: process its children as if they were direct children
       for (const fragChild of child.children) {
