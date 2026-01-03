@@ -552,7 +552,6 @@ function generateConditionalEffects(
     if (isFragmentCond) {
       // Fragment conditional: find content between comment markers
       lines.push(`  const __html = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
-      lines.push(`  // Find start comment marker`)
       lines.push(`  let __startComment = null`)
       lines.push(`  const __walker = document.createTreeWalker(__scope, NodeFilter.SHOW_COMMENT)`)
       lines.push(`  while (__walker.nextNode()) {`)
@@ -561,10 +560,8 @@ function generateConditionalEffects(
       lines.push(`      break`)
       lines.push(`    }`)
       lines.push(`  }`)
-      lines.push(`  // Also check for single element with data-bf-cond (for branch switching)`)
       lines.push(`  const __condEl = __scope?.querySelector('[data-bf-cond="${condId}"]')`)
       lines.push(`  if (__startComment) {`)
-      lines.push(`    // Remove nodes between start and end markers`)
       lines.push(`    const __nodesToRemove = []`)
       lines.push(`    let __node = __startComment.nextSibling`)
       lines.push(`    while (__node && !((__node.nodeType === 8) && __node.nodeValue === 'bf-cond-end:${condId}')) {`)
@@ -573,10 +570,8 @@ function generateConditionalEffects(
       lines.push(`    }`)
       lines.push(`    const __endComment = __node`)
       lines.push(`    __nodesToRemove.forEach(n => n.remove())`)
-      lines.push(`    // Insert new content`)
       lines.push(`    const __template = document.createElement('template')`)
       lines.push(`    __template.innerHTML = __html`)
-      lines.push(`    // Extract content (skip comment markers from template)`)
       lines.push(`    const __newNodes = []`)
       lines.push(`    let __child = __template.content.firstChild`)
       lines.push(`    while (__child) {`)
@@ -587,13 +582,10 @@ function generateConditionalEffects(
       lines.push(`    }`)
       lines.push(`    __newNodes.forEach(n => __startComment.parentNode?.insertBefore(n, __endComment))`)
       lines.push(`  } else if (__condEl) {`)
-      lines.push(`    // Single element: replace with new content`)
       lines.push(`    const __template = document.createElement('template')`)
       lines.push(`    __template.innerHTML = __html`)
-      lines.push(`    // Check if new content is fragment or single element`)
       lines.push(`    const __firstChild = __template.content.firstChild`)
       lines.push(`    if (__firstChild?.nodeType === 8 && __firstChild?.nodeValue === 'bf-cond-start:${condId}') {`)
-      lines.push(`      // Switching from element to fragment: insert markers and content`)
       lines.push(`      const __parent = __condEl.parentNode`)
       lines.push(`      const __nodes = Array.from(__template.content.childNodes).map(n => n.cloneNode(true))`)
       lines.push(`      __nodes.forEach(n => __parent?.insertBefore(n, __condEl))`)
@@ -619,7 +611,6 @@ function generateConditionalEffects(
     // Attach event handlers for interactive elements inside this conditional
     // This runs on first run (to attach) and after DOM update (to re-attach)
     if (cond.interactiveElements && cond.interactiveElements.length > 0) {
-      lines.push(`  // Re-attach event handlers for elements inside conditional`)
       for (const el of cond.interactiveElements) {
         const elVar = `__cond_el_${el.id}`
         lines.push(`  ${generateScopedElementFinder({ varName: elVar, elementId: el.id, path: null })}`)
