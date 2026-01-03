@@ -234,7 +234,7 @@ describe('Hono Adapter Integration', () => {
   })
 
   describe('Script output deduplication', () => {
-    it('generates script tracking logic', async () => {
+    it('generates script collection logic for deferred rendering', async () => {
       const source = `
         "use client"
         function Simple() {
@@ -244,11 +244,12 @@ describe('Hono Adapter Integration', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      // Should track which scripts have been output
+      // Should collect scripts for deferred rendering (via BfScripts component)
       expect(file.markedJsx).toContain('bfOutputScripts')
-      expect(file.markedJsx).toContain('__needsBarefoot')
-      expect(file.markedJsx).toContain('__needsThis')
+      expect(file.markedJsx).toContain('bfCollectedScripts')
       expect(file.markedJsx).toContain('__barefootSrc')
+      // Should have fallback for Suspense boundaries
+      expect(file.markedJsx).toContain('__inSuspense')
     })
   })
 })
