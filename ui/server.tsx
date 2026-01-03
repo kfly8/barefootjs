@@ -24,6 +24,7 @@ import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
 import { ControlledInputPage } from './pages/forms/controlled-input'
+import { ValidationPage } from './pages/forms/validation'
 
 const app = new Hono()
 
@@ -191,6 +192,15 @@ app.get('/', (c) => {
             Two-way binding between signals and input values.
           </p>
         </a>
+        <a
+          href="/forms/validation"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Form Validation</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            Error state management and multi-field validation patterns.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -269,6 +279,11 @@ app.get('/components/select', (c) => {
 // Controlled Input pattern documentation
 app.get('/forms/controlled-input', (c) => {
   return c.render(<ControlledInputPage />)
+})
+
+// Form Validation pattern documentation
+app.get('/forms/validation', (c) => {
+  return c.render(<ValidationPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }

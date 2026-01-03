@@ -513,6 +513,47 @@ describe('irToMarkedJsx - edge cases', () => {
     expect(result).toContain('(5 * 2)')
   })
 
+  it('handles memo calls with block body (if statements) - generates IIFE', () => {
+    // Regression test for issue #76: createMemo with block body containing if statements
+    // was generating invalid code like ({if (!false) return ''; ...}) instead of IIFE
+    const signals: SignalDeclaration[] = [
+      { getter: 'touched', setter: 'setTouched', initialValue: 'false' },
+      { getter: 'name', setter: 'setName', initialValue: "''" },
+    ]
+    const memos = [
+      {
+        getter: 'error',
+        computation: `() => {
+    if (!touched()) return ''
+    return name().trim() === '' ? 'Name is required' : ''
+  }`,
+      },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'p',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [
+        { type: 'expression', expression: 'error()', isDynamic: true },
+      ],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToMarkedJsx(node, 'Test', signals, new Set(), { memos })
+    // Block body should be wrapped as IIFE: (() => {...})()
+    // NOT as invalid object literal: ({...})
+    expect(result).toContain('(() =>')
+    expect(result).toContain('})()')
+    // Verify signal calls are replaced with initial values
+    expect(result).toContain('!false')
+    expect(result).toContain("''.trim()")
+  })
+
   it('adds xmlns for svg root element', () => {
     const node: IRElement = {
       type: 'element',
