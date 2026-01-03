@@ -36,7 +36,7 @@ export type CollectedPropsScript = {
  * Renders all collected BarefootJS script tags.
  * Place this component at the end of your <body> element.
  */
-export function BfScripts(): JSX.Element | null {
+export function BfScripts() {
   try {
     const c = useRequestContext()
     const scripts: CollectedScript[] = c.get('bfCollectedScripts') || []
