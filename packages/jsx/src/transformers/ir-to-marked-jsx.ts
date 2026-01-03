@@ -92,7 +92,10 @@ function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: bool
         if (p.name.startsWith('on')) continue  // Skip event handlers like onToggle, onClick
         const value = replaceSignalAndMemoCalls(p.value, ctx.signals, ctx.memos)
         // String literals keep quotes, expressions use braces
-        if (value.startsWith('"') || value.startsWith("'")) {
+        // Check for complete string literal pattern, not just starting quote
+        // This prevents expressions like `'' !== ''` from being misidentified as string literals
+        const isSimpleStringLiteral = /^"[^"]*"$/.test(value) || /^'[^']*'$/.test(value)
+        if (isSimpleStringLiteral) {
           compPropParts.push(`${p.name}=${value}`)
         } else {
           compPropParts.push(`${p.name}={${value}}`)
@@ -371,43 +374,56 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
  * @returns Expression with signal/memo calls replaced
  */
 function replaceSignalAndMemoCalls(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[]): string {
-  let result = expr
+  // Internal function to handle recursive memo replacement
+  // processedMemos tracks already processed memos to prevent infinite loops from circular references
+  function replaceInternal(expr: string, processedMemos: Set<string>): string {
+    let result = expr
 
-  // First, replace signal getter calls with their initial values
-  for (const signal of signals) {
-    const getterPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
-    result = result.replace(getterPattern, signal.initialValue)
-  }
+    // First, replace signal getter calls with their initial values
+    for (const signal of signals) {
+      const getterPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
+      result = result.replace(getterPattern, signal.initialValue)
+    }
 
-  // Then, replace memo getter calls with their evaluated computation
-  for (const memo of memos) {
-    const getterPattern = new RegExp(`\\b${memo.getter}\\(\\)`, 'g')
-    if (getterPattern.test(result)) {
-      // Extract the arrow function body from computation
-      // e.g., "() => count() * 2" -> "count() * 2"
-      // e.g., "() => { if (x) return 'a'; return 'b' }" -> "{ if (x) return 'a'; return 'b' }"
-      let computationBody = memo.computation
-      const arrowMatch = computationBody.match(/^\s*\(\s*\)\s*=>\s*(.+)$/s)
-      if (arrowMatch) {
-        computationBody = arrowMatch[1].trim()
-      }
-      // Replace signals in the computation body
-      for (const signal of signals) {
-        const signalPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
-        computationBody = computationBody.replace(signalPattern, signal.initialValue)
-      }
-      // Check if computation body is a block (starts with {)
-      // Block bodies need to be wrapped as IIFE: (() => {...})()
-      // Simple expressions can just be wrapped in parentheses: (expr)
-      if (computationBody.startsWith('{')) {
-        result = result.replace(getterPattern, `(() => ${computationBody})()`)
-      } else {
-        result = result.replace(getterPattern, `(${computationBody})`)
+    // Then, replace memo getter calls with their evaluated computation
+    for (const memo of memos) {
+      // Skip already processed memos to prevent circular reference loops
+      if (processedMemos.has(memo.getter)) continue
+
+      const getterPattern = new RegExp(`\\b${memo.getter}\\(\\)`, 'g')
+      if (getterPattern.test(result)) {
+        // Mark this memo as processed before recursion
+        const newProcessedMemos = new Set(processedMemos)
+        newProcessedMemos.add(memo.getter)
+
+        // Extract the arrow function body from computation
+        // e.g., "() => count() * 2" -> "count() * 2"
+        // e.g., "() => { if (x) return 'a'; return 'b' }" -> "{ if (x) return 'a'; return 'b' }"
+        let computationBody = memo.computation
+        const arrowMatch = computationBody.match(/^\s*\(\s*\)\s*=>\s*(.+)$/s)
+        if (arrowMatch) {
+          computationBody = arrowMatch[1].trim()
+        }
+
+        // Recursively replace signals and memos in the computation body
+        // This handles cases where one memo references another memo
+        computationBody = replaceInternal(computationBody, newProcessedMemos)
+
+        // Check if computation body is a block (starts with {)
+        // Block bodies need to be wrapped as IIFE: (() => {...})()
+        // Simple expressions can just be wrapped in parentheses: (expr)
+        if (computationBody.startsWith('{')) {
+          result = result.replace(getterPattern, `(() => ${computationBody})()`)
+        } else {
+          result = result.replace(getterPattern, `(${computationBody})`)
+        }
       }
     }
+
+    return result
   }
 
-  return result
+  return replaceInternal(expr, new Set())
 }
 
 /**
