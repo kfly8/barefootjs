@@ -6,15 +6,9 @@
  */
 
 import type { CompileResult, ChildComponentInit } from '../types'
-import {
-  extractImports,
-  extractLocalComponentFunctions,
-  extractExportedComponentNames,
-  getDefaultExportName,
-  extractUseClientDirective,
-  validateDomImports,
-  validateEventHandlers,
-} from '../extractors'
+import { extractImports } from '../extractors/imports'
+import { extractLocalComponentFunctions, extractExportedComponentNames, getDefaultExportName } from '../extractors/local-components'
+import { extractUseClientDirective, validateDomImports, validateEventHandlers } from '../extractors/directive'
 import { resolvePath } from './utils'
 
 /**

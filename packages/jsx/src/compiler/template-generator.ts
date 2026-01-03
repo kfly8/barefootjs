@@ -9,7 +9,7 @@
 import ts from 'typescript'
 import type { CompileResult, TemplateStringResult, IRNode, IRElement, IRText, IRExpression, IRComponent, IRConditional, IRFragment } from '../types'
 import { isPascalCase } from '../utils/helpers'
-import { isArrowFunction, extractArrowParams, extractArrowBody } from '../utils/expression-parser'
+import { isArrowFunction, extractArrowParams, extractArrowBody } from '../extractors/expression'
 
 /**
  * Normalizes JSX text following React-like whitespace rules:

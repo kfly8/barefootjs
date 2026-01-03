@@ -7,7 +7,8 @@
 
 import type { CompileOptions, MarkedJsxComponentData } from '../types'
 import type { ComponentData } from './file-grouping'
-import { irToMarkedJsx, collectAllChildComponentNames } from '../transformers'
+import { irToMarkedJsx } from '../transformers/ir-to-marked-jsx'
+import { collectAllChildComponentNames } from '../transformers/ir-to-client-js'
 import { calculateElementPaths } from '../utils/element-paths'
 
 /**

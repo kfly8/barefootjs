@@ -19,45 +19,11 @@ import type {
   CollectContext,
 } from '../types'
 
-// Re-export type for backwards compatibility
-export type { CollectContext }
-
-// Import parsers using TypeScript API
-import {
-  extractArrowBody as parseArrowBody,
-  extractArrowParams as parseArrowParams,
-  parseConditionalHandler as parseConditional,
-} from '../utils/expression-parser'
-
-/**
- * Extracts the body part from an arrow function.
- * Uses TypeScript API for accurate parsing.
- */
-export function extractArrowBody(handler: string): string {
-  return parseArrowBody(handler)
-}
-
-/**
- * Extracts the parameter part from an arrow function.
- * Uses TypeScript API for accurate parsing.
- */
-export function extractArrowParams(handler: string): string {
-  return parseArrowParams(handler)
-}
-
 /**
  * Checks if an event requires capture phase (non-bubbling events)
  */
 export function needsCapturePhase(eventName: string): boolean {
   return ['blur', 'focus', 'focusin', 'focusout'].includes(eventName)
-}
-
-/**
- * Parses conditional handlers.
- * Uses TypeScript API for accurate parsing.
- */
-export function parseConditionalHandler(body: string): { condition: string; action: string } | null {
-  return parseConditional(body)
 }
 
 /**
