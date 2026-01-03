@@ -322,6 +322,52 @@ describe('irToMarkedJsx - component handling', () => {
     expect(result).toContain('data-bf-scope="Parent"')
     expect(result).toContain('<Child />')
   })
+
+  it('handles comparison expressions in component props (not misidentified as string literals)', () => {
+    // Regression test for issue #77: expressions like `errorMsg() !== ''` were being
+    // misidentified as string literals because they start with a single quote,
+    // resulting in invalid JSX like `open='' !== ''` instead of `open={'' !== ''}`
+    const signals: SignalDeclaration[] = [
+      { getter: 'errorMsg', setter: 'setErrorMsg', initialValue: "''" },
+    ]
+    const node: IRNode = {
+      type: 'component',
+      name: 'Toast',
+      props: [
+        { name: 'variant', value: '"error"', isDynamic: false },
+        { name: 'open', value: "errorMsg() !== ''", isDynamic: true },
+      ],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToMarkedJsx(node, 'Test', signals)
+    // The comparison expression should be wrapped in braces, not treated as string literal
+    expect(result).toContain("open={'' !== ''}")
+    // And should NOT produce invalid JSX like open='' !== ''
+    expect(result).not.toMatch(/open=''[^}]/)
+  })
+
+  it('handles empty string props correctly', () => {
+    // Empty string literals should still be handled correctly
+    const node: IRNode = {
+      type: 'component',
+      name: 'Input',
+      props: [
+        { name: 'placeholder', value: "''", isDynamic: false },
+      ],
+      spreadProps: [],
+      staticHtml: '',
+      childInits: null,
+      children: [],
+      hasLazyChildren: false,
+    }
+    const result = irToMarkedJsx(node, 'Test', [])
+    // Empty string literal should be output as attribute without braces
+    expect(result).toContain("placeholder=''")
+  })
 })
 
 describe('irToMarkedJsx - nested structures', () => {
@@ -552,6 +598,47 @@ describe('irToMarkedJsx - edge cases', () => {
     // Verify signal calls are replaced with initial values
     expect(result).toContain('!false')
     expect(result).toContain("''.trim()")
+  })
+
+  it('handles memo referencing another memo (nested memo replacement)', () => {
+    // Regression test for issue #77: when a memo references another memo,
+    // both should be expanded. E.g., isValid() referencing error()
+    const signals: SignalDeclaration[] = [
+      { getter: 'email', setter: 'setEmail', initialValue: "''" },
+    ]
+    const memos = [
+      {
+        getter: 'error',
+        computation: `() => {
+    if (''.trim() === '') return 'Email is required'
+    return ''
+  }`,
+      },
+      {
+        getter: 'isValid',
+        computation: `() => error() === '' && email().trim() !== ''`,
+      },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'button',
+      id: null,
+      staticAttrs: [],
+      dynamicAttrs: [{ name: 'disabled', expression: '!isValid()' }],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: null,
+      dynamicContent: null,
+    }
+    const result = irToMarkedJsx(node, 'Test', signals, new Set(), { memos })
+    // isValid() should be expanded, and error() inside it should also be expanded
+    // The result should NOT contain error() as that function is not defined on server
+    expect(result).not.toContain('error()')
+    expect(result).not.toContain('isValid()')
+    // Should contain the expanded expressions
+    expect(result).toContain('disabled=')
   })
 
   it('adds xmlns for svg root element', () => {
