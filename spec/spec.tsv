@@ -1,161 +1,161 @@
-id	category	input_pattern	expected_output	status	test_file	notes
-JSX-001	Basic JSX	<div>Hello</div>	<div>Hello</div>	✅ Implemented	jsx-to-ir.test.ts:31	Text content preserved
-JSX-002	Basic JSX	<div>\n  Hello\n</div>	<div>Hello</div>	✅ Implemented	jsx-to-ir.test.ts:45	Indentation whitespace removed
-JSX-003	Basic JSX	<div>{' '}</div>	<div> </div>	✅ Implemented	jsx-to-ir.test.ts:61	Explicit space preserved
-JSX-004	Basic JSX	<div><p>A</p><span>B</span></div>	<div><p>A</p><span>B</span></div>	✅ Implemented	jsx-to-ir.test.ts:151	Nested elements preserved
-JSX-005	Basic JSX	<input type='text' />	<input type='text' />	✅ Implemented	jsx-to-ir.test.ts:189	Self-closing preserved
-JSX-006	Basic JSX	<br />	<br />	✅ Implemented	jsx-to-ir.test.ts:203	Void element supported
-JSX-007	Basic JSX	<img src='x.png' alt='X' />	<img src='x.png' alt='X' />	✅ Implemented	jsx-to-ir.test.ts:215	Attrs on void element
-JSX-008	Basic JSX	<></>	<></>	✅ Implemented	jsx-to-ir.test.ts:230	Empty fragment
-JSX-009	Basic JSX	<><p>A</p><p>B</p></>	<><p>A</p><p>B</p></>	✅ Implemented	jsx-to-ir.test.ts:242	Fragment with children
-JSX-010	Basic JSX	<><p>{count()}</p></>	<><p data-bf-scope='C' data-bf='0'>{count()}</p></>	✅ Implemented	fragment.test.ts:42	First element gets scope marker
-JSX-011	Basic JSX	<><><span>A</span></><div>B</div></>	<><span>A</span><div>B</div></>	✅ Implemented	fragment.test.ts:67	Nested fragments flattened
-JSX-012	Basic JSX	<>Hello<span>World</span>!</>	<>Hello<span>World</span>!</>	✅ Implemented	fragment.test.ts:120	Mixed text and elements
-JSX-013	Basic JSX	<><div>Only</div></>	<><div data-bf-scope='C'>Only</div></>	✅ Implemented	fragment.test.ts:140	Single child gets scope
-ATTR-001	Attributes	<div id='main'>X</div>	<div id='main'>X</div>	✅ Implemented	jsx-to-ir.test.ts:79	Static string attr preserved
-ATTR-002	Attributes	<input disabled />	<input disabled />	✅ Implemented	jsx-to-ir.test.ts:164	Boolean shorthand
-ATTR-003	Attributes	<div class='foo'>X</div>	<div className='foo'>X</div>	✅ Implemented	ir-to-marked-jsx.test.ts:662	class -> className
-ATTR-004	Attributes	<svg>...</svg>	<svg xmlns='http://www.w3.org/2000/svg'>...</svg>	✅ Implemented	svg-elements.test.ts:18	SVG gets xmlns
-ATTR-005	Attributes	<svg viewBox='0 0 24 24'>	<svg viewBox='0 0 24 24'>	✅ Implemented	svg-elements.test.ts:39	camelCase preserved
-ATTR-010	Attributes	<p class={active ? 'on' : 'off'}>X</p>	clientJs: _0.setAttribute('class', active ? 'on' : 'off')	✅ Implemented	attributes.test.ts:40	Dynamic class in effect
-ATTR-011	Attributes	<p style={{ color: isRed() ? 'red' : 'blue' }}>X</p>	clientJs: Object.assign(_0.style, {...})	✅ Implemented	attributes.test.ts:58	Style object assignment
-ATTR-012	Attributes	<p style={styleStr}>X</p>	clientJs: _0.style.cssText = styleStr	⚠️ Partial	ir-to-client-js.test.ts:188	Indirect test only (no E2E)
-ATTR-013	Attributes	<button disabled={loading()}>Go</button>	clientJs: _0.disabled = loading()	✅ Implemented	attributes.test.ts:76	Boolean property
-ATTR-014	Attributes	<input value={text()} />	clientJs: if (__val !== undefined) _0.value = __val	✅ Implemented	attributes.test.ts:94	Value with undefined check
-ATTR-015	Attributes	<div hidden={isHidden()}>X</div>	clientJs: _0.hidden = isHidden()	✅ Implemented	dynamic-attributes.test.ts:175	Hidden property
-ATTR-016	Attributes	<input checked={isOn()} />	clientJs: _0.checked = isOn()	✅ Implemented	dynamic-attributes.test.ts:228	Checked property
-ATTR-017	Attributes	<div data-id={id()}>X</div>	clientJs: _0.setAttribute('data-id', id())	⚠️ Partial	ir-to-client-js.test.ts:223	Indirect test only (no E2E)
-ATTR-018	Attributes	<p class={a() ? b() : c()}>X</p>	clientJs: createEffect(() => _0.setAttribute('class', ...))	✅ Implemented	dynamic-attributes.test.ts:80	Complex ternary in effect
-ATTR-020	Attributes	<div {...props}>X</div>	<div {...props}>X</div>	✅ Implemented	jsx-to-ir.test.ts:175	Spread preserved
-ATTR-021	Attributes	<div {...a} {...b}>X</div>	<div {...a} {...b}>X</div>	✅ Implemented	spread-attributes.test.ts:53	Multiple spreads
-ATTR-022	Attributes	<div id='x' {...props}>X</div>	<div id='x' {...props}>X</div>	✅ Implemented	spread-attributes.test.ts:35	Static + spread
-ATTR-023	Attributes	<input {...props} />	<input {...props} />	✅ Implemented	spread-attributes.test.ts:90	Spread on self-closing
-EXPR-001	Expressions	const [count, setCount] = createSignal(0)	clientJs: const [count, setCount] = createSignal(0)	✅ Implemented	signal.test.ts:29	Number signal extracted
-EXPR-002	Expressions	const [on, setOn] = createSignal(false)	clientJs: const [on, setOn] = createSignal(false)	✅ Implemented	signal.test.ts:45	Boolean signal
-EXPR-003	Expressions	const [text, setText] = createSignal('hi')	clientJs: const [text, setText] = createSignal('hi')	✅ Implemented	signal.test.ts:61	String signal
-EXPR-004	Expressions	const [a] = createSignal(0); const [b] = createSignal(1)	clientJs: both signals extracted	✅ Implemented	signal.test.ts:77	Multiple signals
-EXPR-005	Expressions	const [user, setUser] = createSignal({name: 'A'})	clientJs: const [user, setUser] = createSignal({name: 'A'})	✅ Implemented	signal.test.ts:95	Object signal
-EXPR-006	Expressions	const [items, setItems] = createSignal([])	clientJs: const [items, setItems] = createSignal([])	✅ Implemented	signal.test.ts:111	Array signal
-EXPR-010	Expressions	const doubled = createMemo(() => count() * 2)	clientJs: const doubled = createMemo(() => count() * 2)	✅ Implemented	compilation-flow.test.ts:306	Memo extracted
-EXPR-011	Expressions	const memo = createMemo(() => { return x })	clientJs: (() => { return x })()	⚠️ Partial	ir-to-marked-jsx.test.ts:562	Indirect test only (no E2E)
-EXPR-012	Expressions	const a = createMemo(...); const b = createMemo(() => a())	clientJs: both memos with deps	⚠️ Partial	ir-to-marked-jsx.test.ts:603	Indirect test only (no E2E)
-EXPR-020	Expressions	<p>{count()}</p>	clientJs: createEffect(() => { _0.textContent = count() })	✅ Implemented	jsx-to-ir.test.ts:272	Signal in text
-EXPR-021	Expressions	<p>{a() + b()}</p>	clientJs: createEffect(() => { _0.textContent = a() + b() })	✅ Implemented	dynamic-content.test.ts:53	Multiple deps
-EXPR-022	Expressions	<p>{show() ? 'A' : 'B'}</p>	clientJs: createEffect(() => { _0.textContent = show() ? 'A' : 'B' })	✅ Implemented	dynamic-content.test.ts:69	Ternary in text
-EXPR-023	Expressions	<p>Count: {count()}</p>	clientJs: _0.textContent = 'Count: ' + count()	✅ Implemented	jsx-to-ir.test.ts:565	Text + dynamic
-EXPR-024	Expressions	<p>{doubled()}</p>	clientJs: createEffect(() => { _0.textContent = doubled() })	✅ Implemented	jsx-to-ir.test.ts:287	Memo call
-EXPR-025	Expressions	<p>{value}</p> (value is prop)	clientJs: createEffect(() => { _0.textContent = value() })	✅ Implemented	jsx-to-ir.test.ts:299	Prop becomes getter
-EXPR-026	Expressions	<div>{children}</div>	clientJs: always dynamic (lazy children)	✅ Implemented	jsx-to-ir.test.ts:311	Children always dynamic
-EXPR-030	Expressions	const X = 5; <p>{X}</p>	clientJs: const X = 5	✅ Implemented	constants.test.ts:5	Module const extracted
-EXPR-031	Expressions	function fmt(x) {...}; <p>{fmt(v)}</p>	clientJs: function fmt(x) {...}	✅ Implemented	constants.test.ts:56	Module fn extracted
-EXPR-032	Expressions	function C() { const x = 1; return <p>{x}</p> }	clientJs: const x = 1	✅ Implemented	local-variables.test.ts:22	Local var included
-EXPR-033	Expressions	function C() { const fn = () => {}; ... }	clientJs: const fn = () => {}	✅ Implemented	local-functions.test.ts:37	Local fn included
-EXPR-034	Expressions	const X = 5; <Child value={X} />	clientJs: const X = 5	✅ Implemented	constants.test.ts:141	Const in child props
-CTRL-001	Control Flow	{true ? 'A' : 'B'}	'A' (evaluated at compile time)	✅ Implemented	conditional.test.ts:31	Static ternary
-CTRL-002	Control Flow	<p>{show() ? 'Yes' : 'No'}</p>	clientJs: _0.textContent = show() ? 'Yes' : 'No'	✅ Implemented	jsx-to-ir.test.ts:326	Dynamic text ternary
-CTRL-003	Control Flow	{show() ? <A/> : <B/>}	markedJsx: <A data-bf-cond='0'/> + <B data-bf-cond='0'/>	✅ Implemented	jsx-to-ir.test.ts:342	Element ternary
-CTRL-004	Control Flow	{show() && <A/>}	Same as {show() ? <A/> : null}	✅ Implemented	jsx-to-ir.test.ts:357	Logical AND
-CTRL-005	Control Flow	{loading || <A/>}	Inverted: {!loading ? <A/> : null}	✅ Implemented	jsx-to-ir.test.ts:373	Logical OR
-CTRL-006	Control Flow	{show() ? <A/> : null}	markedJsx: <A data-bf-cond='0'/> + DOM remove/insert	✅ Implemented	conditional.test.ts:318	Null branch
-CTRL-007	Control Flow	{show() ? <><A/><B/></> : <C/>}	markedJsx: <!--bf-cond-start:0--><A/><B/><!--bf-cond-end:0-->	✅ Implemented	fragment.test.ts:89	Fragment uses comments
-CTRL-008	Control Flow	{a() ? <A/> : b() ? <B/> : <C/>}	Nested data-bf-cond markers	✅ Implemented	conditional.test.ts:84	Nested ternary
-CTRL-009	Control Flow	{true ? <A/> : <B/>}	No data-bf-cond (static)	✅ Implemented	jsx-to-ir.test.ts:387	Static conditional
-CTRL-010	Control Flow	<ul>{items().map(i => <li>{i}</li>)}</ul>	clientJs: _0.innerHTML = items().map(...).join('')	✅ Implemented	jsx-to-ir.test.ts:500	Array map
-CTRL-011	Control Flow	items().filter(...).map(...)	Chain preserved in clientJs	✅ Implemented	list-rendering.test.ts:67	Filter + map
-CTRL-012	Control Flow	<li key={item.id}>...</li>	<li data-key={item.id}>...</li>	✅ Implemented	jsx-to-ir.test.ts:515	key -> data-key
-CTRL-013	Control Flow	items().map((item, i) => <li key={i}>)	key uses __index	✅ Implemented	jsx-to-ir.test.ts:526	Index key
-CTRL-014	Control Flow	<li key={item.a + item.b}>	Complex key expression preserved	✅ Implemented	key-attribute.test.ts:70	Computed key
-CTRL-015	Control Flow	items().map(i => i.subs.map(s => <X/>))	Nested innerHTML	✅ Implemented	nested-map.test.ts:17	Nested map
-CTRL-016	Control Flow	items().map(i => i.done ? <A/> : <B/>)	Ternary in template string	✅ Implemented	list-rendering.test.ts:336	Conditional in map
-COMP-001	Components	<Child />	<Child /> (direct render)	✅ Implemented	components.test.ts:37	Static component
-COMP-002	Components	<Child name='A' />	Props passed to Child	✅ Implemented	jsx-to-ir.test.ts:389	Static props
-COMP-003	Components	<Child value={count()} />	Props wrapped: { value: () => count() }	✅ Implemented	jsx-to-ir.test.ts:406	Dynamic props wrapped
-COMP-004	Components	<Child {...props} />	Spread preserved	✅ Implemented	jsx-to-ir.test.ts:458	Spread props
-COMP-005	Components	<Card><p>X</p></Card>	Children passed to Card	✅ Implemented	jsx-to-ir.test.ts:445	Children
-COMP-006	Components	<Toggle active />	active={true}	✅ Implemented	jsx-to-ir.test.ts:432	Boolean shorthand
-COMP-010	Components	function C({ name }: { name: string })	Type info extracted	✅ Implemented	props-extraction.test.ts:35	Typed props
-COMP-011	Components	function C({ x = 5 }: Props)	x marked optional	✅ Implemented	props-extraction.test.ts:35	Default value
-COMP-012	Components	<Child value={sig()} />	value: () => sig()	✅ Implemented	issue-27-fixes.test.ts:143	Dynamic wrapped
-COMP-013	Components	<Child onClick={fn} />	onClick: fn (not wrapped)	✅ Implemented	issue-27-fixes.test.ts:169	Callback not wrapped
-COMP-014	Components	function Child({ value }) { return <p>{value()}</p> }	Prop accessed as getter	✅ Implemented	issue-27-fixes.test.ts:196	Prop usage
-COMP-015	Components	<Child name='A' />	name: 'A' (not wrapped)	✅ Implemented	issue-27-fixes.test.ts:299	Static not wrapped
-COMP-020	Components	<Card>{count()}</Card>	children: () => count()	✅ Implemented	jsx-to-ir.test.ts:486	Reactive children
-COMP-021	Components	<Card><p>Static</p></Card>	children: <p>Static</p>	✅ Implemented	components.test.ts:580	Static children
-COMP-022	Components	{children} in component	typeof children === 'function' ? children() : children	✅ Implemented	components.test.ts:551	Lazy children
-COMP-030	Components	Component with signals/events	clientJs: function initComponentName(i, scope) {...}	✅ Implemented	components.test.ts:145	Init fn generated
-COMP-031	Components	Static component (no signals/events)	No clientJs generated	✅ Implemented	components.test.ts:198	No init wrapper
-COMP-032	Components	<Parent><Child with signals/></Parent>	Parent clientJs: initChild(i, scope)	✅ Implemented	jsx-to-ir.test.ts:471	Parent calls child init
-COMP-033	Components	Auto-hydration	document.querySelectorAll('[data-bf-scope]')	✅ Implemented	components.test.ts:477	Auto-hydration
-COMP-034	Components	Component compilation	{ hash: 'abc123', filename: 'Component.bf.js' }	✅ Implemented	components.test.ts:427	Hash generated
-COMP-040	Components	<ul>{items().map(i => <Item i={i}/>)}</ul>	Item JSX inlined in template	✅ Implemented	inline-components.test.ts:51	Inlined component
-COMP-041	Components	Inlined component with onClick	data-event-id added	✅ Implemented	inline-components.test.ts:83	Inlined events
-COMP-042	Components	Inlined component with conditional	Conditional in template	✅ Implemented	inline-components.test.ts:130	Inlined conditional
-EVT-001	Events	<button onClick={() => setCount(n => n+1)}>	clientJs: _0.onclick = () => setCount(n => n+1)	✅ Implemented	event-handlers.test.ts:49	Click handler
-EVT-002	Events	<button onClick={fn1}/><button onClick={fn2}/>	clientJs: _0.onclick = fn1; _1.onclick = fn2	✅ Implemented	event-handlers.test.ts:77	Multiple handlers
-EVT-003	Events	<input onChange={(e) => setText(e.target.value)}/>	clientJs: _0.onchange = (e) => ...	✅ Implemented	event-handlers.test.ts:103	Change handler
-EVT-004	Events	<input onInput={(e) => setText(e.target.value)}/>	clientJs: _0.oninput = (e) => ...	✅ Implemented	event-handlers.test.ts:127	Input handler
-EVT-005	Events	<form onSubmit={(e) => { e.preventDefault() }}>	clientJs: _0.onsubmit = (e) => ...	✅ Implemented	event-handlers.test.ts:149	Submit handler
-EVT-006	Events	<input onKeyDown={(e) => e.key === 'Enter' && fn()}>	clientJs: _0.onkeydown = (e) => ...	✅ Implemented	event-handlers.test.ts:176	KeyDown handler
-EVT-007	Events	<input onBlur={() => validate()}/>	clientJs: addEventListener('blur', fn, { capture: true })	⚠️ Partial	form-inputs.test.ts:48	No explicit capture verification
-EVT-008	Events	<input onFocus={() => highlight()}/>	clientJs: addEventListener('focus', fn, { capture: true })	⚠️ Partial	form-inputs.test.ts:67	No explicit capture verification
-EVT-010	Events	<ul>{items().map(i => <li onClick={...}>)}</ul>	markedJsx: data-event-id='0' data-index={__index}	✅ Implemented	list-rendering.test.ts:89	List delegation
-EVT-011	Events	<li onClick={...} onDoubleClick={...}>	Multiple data-event-id attrs	✅ Implemented	list-rendering.test.ts:114	Multiple list events
-EVT-012	Events	<li onFocus={...}> in list	addEventListener with capture	⚠️ Partial	list-rendering.test.ts:203	No explicit capture verification
-EVT-020	Events	onKeyDown={(e) => e.key === 'Enter' && submit()}	clientJs: if (e.key === 'Enter') { submit() }	✅ Implemented	list-rendering.test.ts:224	Conditional handler
-EVT-021	Events	Complex conditional in handler	Multiple if checks in clientJs	✅ Implemented	list-rendering.test.ts:245	Complex conditional
-REF-001	Refs	<input ref={(el) => inputRef = el}/>	clientJs: (el) => inputRef = el	✅ Implemented	jsx-to-ir.test.ts:139	Ref callback
-REF-002	Refs	<input ref={...}/>	ref not in markedJsx	✅ Implemented	ref-attribute.test.ts:41	Ref excluded from server
-REF-003	Refs	<input ref={...} onClick={...}/>	Both work independently	✅ Implemented	ref-attribute.test.ts:61	Ref + event
-REF-004	Refs	<input ref={...} value={sig()}/>	Effect + ref both work	✅ Implemented	ref-attribute.test.ts:88	Ref + dynamic
-REF-005	Refs	<input ref={ref1}/><input ref={ref2}/>	All refs executed	✅ Implemented	ref-attribute.test.ts:109	Multiple refs
-EDGE-001	Edge Cases	<div> <span>X</span></div>	Space before span preserved	✅ Implemented	edge-cases.test.ts:230	Trailing whitespace
-EDGE-002	Edge Cases	<div></div>X	X preserved after closing	✅ Implemented	edge-cases.test.ts:247	Leading text
-EDGE-003	Edge Cases	<div>\n  <span>X</span>\n</div>	Indentation removed	✅ Implemented	edge-cases.test.ts:268	Block indentation
-EDGE-004	Edge Cases	<span>{' '}</span>	Space preserved	✅ Implemented	edge-cases.test.ts:287	Explicit space
-EDGE-005	Edge Cases	items().map(i => <li> {i} </li>)	Spaces in template preserved	✅ Implemented	edge-cases.test.ts:324	List whitespace
-EDGE-010	Edge Cases	<a><b><c><d><e>X</e></d></c></b></a>	5 levels processed correctly	✅ Implemented	edge-cases.test.ts:15	Deep nesting
-EDGE-011	Edge Cases	<div><p>{a()}</p><span>{b()}</span></div>	All dynamics tracked	✅ Implemented	edge-cases.test.ts:46	Multiple dynamics
-EDGE-012	Edge Cases	<div onClick={f1}><span onClick={f2}>X</span></div>	All events attached	✅ Implemented	edge-cases.test.ts:80	Nested events
-EDGE-013	Edge Cases	items().map(i => i.x ? <A/> : <B/>)	Ternary in template	✅ Implemented	edge-cases.test.ts:110	Ternary in map
-EDGE-020	Edge Cases	({a, b}) => <p>{a}</p>	Destructured params parsed	✅ Implemented	edge-cases.test.ts:138	Object destructuring
-EDGE-021	Edge Cases	{x && y > 0 && <A/>}	Operators escaped correctly	✅ Implemented	edge-cases.test.ts:162	Special chars
-EDGE-022	Edge Cases	<p>{a() + b() + c()}</p>	All 3 signals tracked	✅ Implemented	edge-cases.test.ts:205	Multiple deps
-EDGE-023	Edge Cases	<style>{'.foo:hover { }'}</style>	:hover not replaced	✅ Implemented	issue-27-fixes.test.ts:250	CSS pseudo-class
-EDGE-024	Edge Cases	<input type='checkbox'/>	type not replaced	✅ Implemented	issue-27-fixes.test.ts:277	HTML attr name
-EDGE-030	Edge Cases	<svg><path/></svg>	<svg xmlns='http://www.w3.org/2000/svg'>	✅ Implemented	svg-elements.test.ts:18	SVG xmlns
-EDGE-031	Edge Cases	<svg viewBox='0 0 24 24'>	viewBox preserved (camelCase)	✅ Implemented	svg-elements.test.ts:39	SVG viewBox
-EDGE-032	Edge Cases	<path stroke-width='2'/>	stroke-width preserved	✅ Implemented	svg-elements.test.ts:58	SVG stroke
-EDGE-033	Edge Cases	<path fill={color()}/>	clientJs: _0.setAttribute('fill', color())	✅ Implemented	svg-elements.test.ts:83	Dynamic SVG attr
-EDGE-034	Edge Cases	<svg onClick={fn}>	clientJs: _0.onclick = fn	✅ Implemented	svg-elements.test.ts:106	SVG event
-EDGE-035	Edge Cases	<svg><g><g><path/></g></g></svg>	Nested groups rendered	✅ Implemented	svg-elements.test.ts:134	Nested SVG
-EDGE-040	Edge Cases	<input value={text()} onChange={...}/>	Dynamic value binding	✅ Implemented	form-inputs.test.ts:21	Input value
-EDGE-041	Edge Cases	<input type='number' value={num()}/>	type='number' preserved	✅ Implemented	form-inputs.test.ts:86	Number input
-EDGE-042	Edge Cases	<textarea value={text()}/>	Textarea value binding	✅ Implemented	form-inputs.test.ts:108	Textarea
-EDGE-043	Edge Cases	<select value={selected()}><option>...</option></select>	Select value binding	✅ Implemented	form-inputs.test.ts:133	Select
-EDGE-044	Edge Cases	<input type='checkbox' checked={isOn()}/>	checked property	✅ Implemented	form-inputs.test.ts:163	Checkbox
-EDGE-045	Edge Cases	<input type='radio' checked={isA()}/>	checked property	✅ Implemented	form-inputs.test.ts:207	Radio
-EDGE-046	Edge Cases	<input value={a()}/><input value={b()}/>	Both tracked	✅ Implemented	form-inputs.test.ts:231	Multiple inputs
-EDGE-047	Edge Cases	<input placeholder={hint()}/>	setAttribute('placeholder', ...)	✅ Implemented	form-inputs.test.ts:264	Dynamic placeholder
-EDGE-048	Edge Cases	<input disabled={isDisabled()}/>	_0.disabled = isDisabled()	✅ Implemented	form-inputs.test.ts:285	Dynamic disabled
-DIR-001	Directives	import { createSignal } from '@barefootjs/dom' (no directive)	Error: 'use client' required	✅ Implemented	directive.test.ts:54	Directive required
-DIR-002	Directives	<button onClick={...}> (no directive)	Error: 'use client' required	✅ Implemented	directive.test.ts:95	Events need directive
-DIR-003	Directives	const x = 1; 'use client'	Error: directive must be first	✅ Implemented	directive.test.ts:25	Directive position
-DIR-004	Directives	'use client' or 'use client'	Both accepted	✅ Implemented	directive.test.ts:5	Quote style
-DIR-005	Directives	// comment\n'use client'	Comments before allowed	✅ Implemented	directive.test.ts:43	Comments ok
-PATH-001	Element Paths	<div data-bf='0'>	scope.firstChild	✅ Implemented	element-paths.test.ts:11	Direct path
-PATH-002	Element Paths	<div><p><span data-bf='0'>	scope.firstChild.firstChild.firstChild	✅ Implemented	element-paths.test.ts:31	Chained path
-PATH-003	Element Paths	<div>text<span data-bf='0'>	Text nodes skipped in path	✅ Implemented	element-paths.test.ts:80	Text node skip
-PATH-004	Element Paths	<><p data-bf='0'/><span data-bf='1'/></>	Path per fragment child	✅ Implemented	element-paths.test.ts:134	Fragment paths
-PATH-005	Element Paths	<div><Child/><span data-bf='0'/>	null (uses querySelector)	✅ Implemented	element-paths.test.ts:271	After component
-PATH-006	Element Paths	<div>{show() && <X/>}<span data-bf='0'>	Conditional skipped	✅ Implemented	element-paths.test.ts:396	Conditional in path
-OOS-001	Out of Scope	useEffect(() => {...})	Not supported	❌ OOS		Use createEffect
-OOS-002	Out of Scope	useState(0)	Not supported	❌ OOS		Use createSignal
-OOS-003	Out of Scope	<Context.Provider value={...}>	Not supported	❌ OOS		Pass props
-OOS-004	Out of Scope	dangerouslySetInnerHTML={{__html: x}}	Not supported	❌ OOS		Security
-OOS-005	Out of Scope	class C extends Component {...}	Not supported	❌ OOS		Function only
-OOS-006	Out of Scope	forwardRef((props, ref) => ...)	Not supported	❌ OOS		Use ref callbacks
-OOS-007	Out of Scope	<ErrorBoundary>...</ErrorBoundary>	Not supported	❌ OOS		Handle in code
-OOS-008	Out of Scope	<Suspense><lazy(...)></Suspense>	Not supported	❌ OOS		Manual splitting
-OOS-009	Out of Scope	createPortal(<Modal/>, document.body)	Not supported	❌ OOS		Manual DOM
-OOS-010	Out of Scope	var x = 1 (in component)	var not extracted	❌ OOS		Use const/let
-OOS-011	Out of Scope	async function Component() {...}	Not supported	❌ OOS		Use signals
+id	category	input_pattern	expected_output	output_type	status	test_file	notes
+JSX-001	Basic JSX	<div>Hello</div>	<div>Hello</div>	preserve	✅ Implemented	jsx-to-ir.test.ts:31	Text content preserved
+JSX-002	Basic JSX	<div>\n  Hello\n</div>	<div>Hello</div>	markedJsx	✅ Implemented	jsx-to-ir.test.ts:45	Indentation whitespace removed
+JSX-003	Basic JSX	<div>{' '}</div>	<div> </div>	markedJsx	✅ Implemented	jsx-to-ir.test.ts:61	Explicit space preserved
+JSX-004	Basic JSX	<div><p>A</p><span>B</span></div>	<div><p>A</p><span>B</span></div>	preserve	✅ Implemented	jsx-to-ir.test.ts:151	Nested elements preserved
+JSX-005	Basic JSX	<input type='text' />	<input type='text' />	preserve	✅ Implemented	jsx-to-ir.test.ts:189	Self-closing preserved
+JSX-006	Basic JSX	<br />	<br />	preserve	✅ Implemented	jsx-to-ir.test.ts:203	Void element supported
+JSX-007	Basic JSX	<img src='x.png' alt='X' />	<img src='x.png' alt='X' />	preserve	✅ Implemented	jsx-to-ir.test.ts:215	Attrs on void element
+JSX-008	Basic JSX	<></>	<></>	preserve	✅ Implemented	jsx-to-ir.test.ts:230	Empty fragment
+JSX-009	Basic JSX	<><p>A</p><p>B</p></>	<><p>A</p><p>B</p></>	preserve	✅ Implemented	jsx-to-ir.test.ts:242	Fragment with children
+JSX-010	Basic JSX	<><p>{count()}</p></>	<><p data-bf-scope='C' data-bf='0'>{count()}</p></>	both	✅ Implemented	fragment.test.ts:42	First element gets scope marker
+JSX-011	Basic JSX	<><><span>A</span></><div>B</div></>	<><span>A</span><div>B</div></>	markedJsx	✅ Implemented	fragment.test.ts:67	Nested fragments flattened
+JSX-012	Basic JSX	<>Hello<span>World</span>!</>	<>Hello<span>World</span>!</>	preserve	✅ Implemented	fragment.test.ts:120	Mixed text and elements
+JSX-013	Basic JSX	<><div>Only</div></>	<><div data-bf-scope='C'>Only</div></>	markedJsx	✅ Implemented	fragment.test.ts:140	Single child gets scope
+ATTR-001	Attributes	<div id='main'>X</div>	<div id='main'>X</div>	preserve	✅ Implemented	jsx-to-ir.test.ts:79	Static string attr preserved
+ATTR-002	Attributes	<input disabled />	<input disabled />	preserve	✅ Implemented	jsx-to-ir.test.ts:164	Boolean shorthand
+ATTR-003	Attributes	<div class='foo'>X</div>	<div className='foo'>X</div>	markedJsx	✅ Implemented	ir-to-marked-jsx.test.ts:662	class -> className
+ATTR-004	Attributes	<svg>...</svg>	<svg xmlns='http://www.w3.org/2000/svg'>...</svg>	markedJsx	✅ Implemented	svg-elements.test.ts:18	SVG gets xmlns
+ATTR-005	Attributes	<svg viewBox='0 0 24 24'>	<svg viewBox='0 0 24 24'>	preserve	✅ Implemented	svg-elements.test.ts:39	camelCase preserved
+ATTR-010	Attributes	<p class={active ? 'on' : 'off'}>X</p>	clientJs: _0.setAttribute('class', active ? 'on' : 'off')	clientJs	✅ Implemented	attributes.test.ts:40	Dynamic class in effect
+ATTR-011	Attributes	<p style={{ color: isRed() ? 'red' : 'blue' }}>X</p>	clientJs: Object.assign(_0.style, {...})	clientJs	✅ Implemented	attributes.test.ts:58	Style object assignment
+ATTR-012	Attributes	<p style={styleStr}>X</p>	clientJs: _0.style.cssText = styleStr	clientJs	⚠️ Partial	ir-to-client-js.test.ts:188	Indirect test only (no E2E)
+ATTR-013	Attributes	<button disabled={loading()}>Go</button>	clientJs: _0.disabled = loading()	clientJs	✅ Implemented	attributes.test.ts:76	Boolean property
+ATTR-014	Attributes	<input value={text()} />	clientJs: if (__val !== undefined) _0.value = __val	clientJs	✅ Implemented	attributes.test.ts:94	Value with undefined check
+ATTR-015	Attributes	<div hidden={isHidden()}>X</div>	clientJs: _0.hidden = isHidden()	clientJs	✅ Implemented	dynamic-attributes.test.ts:175	Hidden property
+ATTR-016	Attributes	<input checked={isOn()} />	clientJs: _0.checked = isOn()	clientJs	✅ Implemented	dynamic-attributes.test.ts:228	Checked property
+ATTR-017	Attributes	<div data-id={id()}>X</div>	clientJs: _0.setAttribute('data-id', id())	clientJs	⚠️ Partial	ir-to-client-js.test.ts:223	Indirect test only (no E2E)
+ATTR-018	Attributes	<p class={a() ? b() : c()}>X</p>	clientJs: createEffect(() => _0.setAttribute('class', ...))	clientJs	✅ Implemented	dynamic-attributes.test.ts:80	Complex ternary in effect
+ATTR-020	Attributes	<div {...props}>X</div>	<div {...props}>X</div>	preserve	✅ Implemented	jsx-to-ir.test.ts:175	Spread preserved
+ATTR-021	Attributes	<div {...a} {...b}>X</div>	<div {...a} {...b}>X</div>	preserve	✅ Implemented	spread-attributes.test.ts:53	Multiple spreads
+ATTR-022	Attributes	<div id='x' {...props}>X</div>	<div id='x' {...props}>X</div>	preserve	✅ Implemented	spread-attributes.test.ts:35	Static + spread
+ATTR-023	Attributes	<input {...props} />	<input {...props} />	preserve	✅ Implemented	spread-attributes.test.ts:90	Spread on self-closing
+EXPR-001	Expressions	const [count, setCount] = createSignal(0)	clientJs: const [count, setCount] = createSignal(0)	clientJs	✅ Implemented	signal.test.ts:29	Number signal extracted
+EXPR-002	Expressions	const [on, setOn] = createSignal(false)	clientJs: const [on, setOn] = createSignal(false)	clientJs	✅ Implemented	signal.test.ts:45	Boolean signal
+EXPR-003	Expressions	const [text, setText] = createSignal('hi')	clientJs: const [text, setText] = createSignal('hi')	clientJs	✅ Implemented	signal.test.ts:61	String signal
+EXPR-004	Expressions	const [a] = createSignal(0); const [b] = createSignal(1)	clientJs: both signals extracted	clientJs	✅ Implemented	signal.test.ts:77	Multiple signals
+EXPR-005	Expressions	const [user, setUser] = createSignal({name: 'A'})	clientJs: const [user, setUser] = createSignal({name: 'A'})	clientJs	✅ Implemented	signal.test.ts:95	Object signal
+EXPR-006	Expressions	const [items, setItems] = createSignal([])	clientJs: const [items, setItems] = createSignal([])	clientJs	✅ Implemented	signal.test.ts:111	Array signal
+EXPR-010	Expressions	const doubled = createMemo(() => count() * 2)	clientJs: const doubled = createMemo(() => count() * 2)	clientJs	✅ Implemented	compilation-flow.test.ts:306	Memo extracted
+EXPR-011	Expressions	const memo = createMemo(() => { return x })	clientJs: (() => { return x })()	clientJs	⚠️ Partial	ir-to-marked-jsx.test.ts:562	Indirect test only (no E2E)
+EXPR-012	Expressions	const a = createMemo(...); const b = createMemo(() => a())	clientJs: both memos with deps	clientJs	⚠️ Partial	ir-to-marked-jsx.test.ts:603	Indirect test only (no E2E)
+EXPR-020	Expressions	<p>{count()}</p>	clientJs: createEffect(() => { _0.textContent = count() })	both	✅ Implemented	jsx-to-ir.test.ts:272	Signal in text
+EXPR-021	Expressions	<p>{a() + b()}</p>	clientJs: createEffect(() => { _0.textContent = a() + b() })	both	✅ Implemented	dynamic-content.test.ts:53	Multiple deps
+EXPR-022	Expressions	<p>{show() ? 'A' : 'B'}</p>	clientJs: createEffect(() => { _0.textContent = show() ? 'A' : 'B' })	both	✅ Implemented	dynamic-content.test.ts:69	Ternary in text
+EXPR-023	Expressions	<p>Count: {count()}</p>	clientJs: _0.textContent = 'Count: ' + count()	both	✅ Implemented	jsx-to-ir.test.ts:565	Text + dynamic
+EXPR-024	Expressions	<p>{doubled()}</p>	clientJs: createEffect(() => { _0.textContent = doubled() })	both	✅ Implemented	jsx-to-ir.test.ts:287	Memo call
+EXPR-025	Expressions	<p>{value}</p> (value is prop)	clientJs: createEffect(() => { _0.textContent = value() })	both	✅ Implemented	jsx-to-ir.test.ts:299	Prop becomes getter
+EXPR-026	Expressions	<div>{children}</div>	clientJs: always dynamic (lazy children)	both	✅ Implemented	jsx-to-ir.test.ts:311	Children always dynamic
+EXPR-030	Expressions	const X = 5; <p>{X}</p>	clientJs: const X = 5	clientJs	✅ Implemented	constants.test.ts:5	Module const extracted
+EXPR-031	Expressions	function fmt(x) {...}; <p>{fmt(v)}</p>	clientJs: function fmt(x) {...}	clientJs	✅ Implemented	constants.test.ts:56	Module fn extracted
+EXPR-032	Expressions	function C() { const x = 1; return <p>{x}</p> }	clientJs: const x = 1	clientJs	✅ Implemented	local-variables.test.ts:22	Local var included
+EXPR-033	Expressions	function C() { const fn = () => {}; ... }	clientJs: const fn = () => {}	clientJs	✅ Implemented	local-functions.test.ts:37	Local fn included
+EXPR-034	Expressions	const X = 5; <Child value={X} />	clientJs: const X = 5	clientJs	✅ Implemented	constants.test.ts:141	Const in child props
+CTRL-001	Control Flow	{true ? 'A' : 'B'}	'A' (evaluated at compile time)	markedJsx	✅ Implemented	conditional.test.ts:31	Static ternary
+CTRL-002	Control Flow	<p>{show() ? 'Yes' : 'No'}</p>	clientJs: _0.textContent = show() ? 'Yes' : 'No'	both	✅ Implemented	jsx-to-ir.test.ts:326	Dynamic text ternary
+CTRL-003	Control Flow	{show() ? <A/> : <B/>}	markedJsx: <A data-bf-cond='0'/> + <B data-bf-cond='0'/>	both	✅ Implemented	jsx-to-ir.test.ts:342	Element ternary
+CTRL-004	Control Flow	{show() && <A/>}	Same as {show() ? <A/> : null}	both	✅ Implemented	jsx-to-ir.test.ts:357	Logical AND
+CTRL-005	Control Flow	{loading || <A/>}	Inverted: {!loading ? <A/> : null}	both	✅ Implemented	jsx-to-ir.test.ts:373	Logical OR
+CTRL-006	Control Flow	{show() ? <A/> : null}	markedJsx: <A data-bf-cond='0'/> + DOM remove/insert	both	✅ Implemented	conditional.test.ts:318	Null branch
+CTRL-007	Control Flow	{show() ? <><A/><B/></> : <C/>}	markedJsx: <!--bf-cond-start:0--><A/><B/><!--bf-cond-end:0-->	both	✅ Implemented	fragment.test.ts:89	Fragment uses comments
+CTRL-008	Control Flow	{a() ? <A/> : b() ? <B/> : <C/>}	Nested data-bf-cond markers	both	✅ Implemented	conditional.test.ts:84	Nested ternary
+CTRL-009	Control Flow	{true ? <A/> : <B/>}	No data-bf-cond (static)	markedJsx	✅ Implemented	jsx-to-ir.test.ts:387	Static conditional
+CTRL-010	Control Flow	<ul>{items().map(i => <li>{i}</li>)}</ul>	clientJs: _0.innerHTML = items().map(...).join('')	both	✅ Implemented	jsx-to-ir.test.ts:500	Array map
+CTRL-011	Control Flow	items().filter(...).map(...)	Chain preserved in clientJs	clientJs	✅ Implemented	list-rendering.test.ts:67	Filter + map
+CTRL-012	Control Flow	<li key={item.id}>...</li>	<li data-key={item.id}>...</li>	markedJsx	✅ Implemented	jsx-to-ir.test.ts:515	key -> data-key
+CTRL-013	Control Flow	items().map((item, i) => <li key={i}>)	key uses __index	markedJsx	✅ Implemented	jsx-to-ir.test.ts:526	Index key
+CTRL-014	Control Flow	<li key={item.a + item.b}>	Complex key expression preserved	markedJsx	✅ Implemented	key-attribute.test.ts:70	Computed key
+CTRL-015	Control Flow	items().map(i => i.subs.map(s => <X/>))	Nested innerHTML	clientJs	✅ Implemented	nested-map.test.ts:17	Nested map
+CTRL-016	Control Flow	items().map(i => i.done ? <A/> : <B/>)	Ternary in template string	clientJs	✅ Implemented	list-rendering.test.ts:336	Conditional in map
+COMP-001	Components	<Child />	<Child /> (direct render)	preserve	✅ Implemented	components.test.ts:37	Static component
+COMP-002	Components	<Child name='A' />	Props passed to Child	preserve	✅ Implemented	jsx-to-ir.test.ts:389	Static props
+COMP-003	Components	<Child value={count()} />	Props wrapped: { value: () => count() }	clientJs	✅ Implemented	jsx-to-ir.test.ts:406	Dynamic props wrapped
+COMP-004	Components	<Child {...props} />	Spread preserved	preserve	✅ Implemented	jsx-to-ir.test.ts:458	Spread props
+COMP-005	Components	<Card><p>X</p></Card>	Children passed to Card	preserve	✅ Implemented	jsx-to-ir.test.ts:445	Children
+COMP-006	Components	<Toggle active />	active={true}	markedJsx	✅ Implemented	jsx-to-ir.test.ts:432	Boolean shorthand
+COMP-010	Components	function C({ name }: { name: string })	Type info extracted	clientJs	✅ Implemented	props-extraction.test.ts:35	Typed props
+COMP-011	Components	function C({ x = 5 }: Props)	x marked optional	clientJs	✅ Implemented	props-extraction.test.ts:35	Default value
+COMP-012	Components	<Child value={sig()} />	value: () => sig()	clientJs	✅ Implemented	issue-27-fixes.test.ts:143	Dynamic wrapped
+COMP-013	Components	<Child onClick={fn} />	onClick: fn (not wrapped)	clientJs	✅ Implemented	issue-27-fixes.test.ts:169	Callback not wrapped
+COMP-014	Components	function Child({ value }) { return <p>{value()}</p> }	Prop accessed as getter	clientJs	✅ Implemented	issue-27-fixes.test.ts:196	Prop usage
+COMP-015	Components	<Child name='A' />	name: 'A' (not wrapped)	preserve	✅ Implemented	issue-27-fixes.test.ts:299	Static not wrapped
+COMP-020	Components	<Card>{count()}</Card>	children: () => count()	clientJs	✅ Implemented	jsx-to-ir.test.ts:486	Reactive children
+COMP-021	Components	<Card><p>Static</p></Card>	children: <p>Static</p>	preserve	✅ Implemented	components.test.ts:580	Static children
+COMP-022	Components	{children} in component	typeof children === 'function' ? children() : children	clientJs	✅ Implemented	components.test.ts:551	Lazy children
+COMP-030	Components	Component with signals/events	clientJs: function initComponentName(i, scope) {...}	clientJs	✅ Implemented	components.test.ts:145	Init fn generated
+COMP-031	Components	Static component (no signals/events)	No clientJs generated	preserve	✅ Implemented	components.test.ts:198	No init wrapper
+COMP-032	Components	<Parent><Child with signals/></Parent>	Parent clientJs: initChild(i, scope)	clientJs	✅ Implemented	jsx-to-ir.test.ts:471	Parent calls child init
+COMP-033	Components	Auto-hydration	document.querySelectorAll('[data-bf-scope]')	clientJs	✅ Implemented	components.test.ts:477	Auto-hydration
+COMP-034	Components	Component compilation	{ hash: 'abc123', filename: 'Component.bf.js' }	clientJs	✅ Implemented	components.test.ts:427	Hash generated
+COMP-040	Components	<ul>{items().map(i => <Item i={i}/>)}</ul>	Item JSX inlined in template	both	✅ Implemented	inline-components.test.ts:51	Inlined component
+COMP-041	Components	Inlined component with onClick	data-event-id added	both	✅ Implemented	inline-components.test.ts:83	Inlined events
+COMP-042	Components	Inlined component with conditional	Conditional in template	both	✅ Implemented	inline-components.test.ts:130	Inlined conditional
+EVT-001	Events	<button onClick={() => setCount(n => n+1)}>	clientJs: _0.onclick = () => setCount(n => n+1)	both	✅ Implemented	event-handlers.test.ts:49	Click handler
+EVT-002	Events	<button onClick={fn1}/><button onClick={fn2}/>	clientJs: _0.onclick = fn1; _1.onclick = fn2	both	✅ Implemented	event-handlers.test.ts:77	Multiple handlers
+EVT-003	Events	<input onChange={(e) => setText(e.target.value)}/>	clientJs: _0.onchange = (e) => ...	both	✅ Implemented	event-handlers.test.ts:103	Change handler
+EVT-004	Events	<input onInput={(e) => setText(e.target.value)}/>	clientJs: _0.oninput = (e) => ...	both	✅ Implemented	event-handlers.test.ts:127	Input handler
+EVT-005	Events	<form onSubmit={(e) => { e.preventDefault() }}>	clientJs: _0.onsubmit = (e) => ...	both	✅ Implemented	event-handlers.test.ts:149	Submit handler
+EVT-006	Events	<input onKeyDown={(e) => e.key === 'Enter' && fn()}>	clientJs: _0.onkeydown = (e) => ...	both	✅ Implemented	event-handlers.test.ts:176	KeyDown handler
+EVT-007	Events	<input onBlur={() => validate()}/>	clientJs: addEventListener('blur', fn, { capture: true })	both	⚠️ Partial	form-inputs.test.ts:48	No explicit capture verification
+EVT-008	Events	<input onFocus={() => highlight()}/>	clientJs: addEventListener('focus', fn, { capture: true })	both	⚠️ Partial	form-inputs.test.ts:67	No explicit capture verification
+EVT-010	Events	<ul>{items().map(i => <li onClick={...}>)}</ul>	markedJsx: data-event-id='0' data-index={__index}	both	✅ Implemented	list-rendering.test.ts:89	List delegation
+EVT-011	Events	<li onClick={...} onDoubleClick={...}>	Multiple data-event-id attrs	both	✅ Implemented	list-rendering.test.ts:114	Multiple list events
+EVT-012	Events	<li onFocus={...}> in list	addEventListener with capture	both	⚠️ Partial	list-rendering.test.ts:203	No explicit capture verification
+EVT-020	Events	onKeyDown={(e) => e.key === 'Enter' && submit()}	clientJs: if (e.key === 'Enter') { submit() }	clientJs	✅ Implemented	list-rendering.test.ts:224	Conditional handler
+EVT-021	Events	Complex conditional in handler	Multiple if checks in clientJs	clientJs	✅ Implemented	list-rendering.test.ts:245	Complex conditional
+REF-001	Refs	<input ref={(el) => inputRef = el}/>	clientJs: (el) => inputRef = el	both	✅ Implemented	jsx-to-ir.test.ts:139	Ref callback
+REF-002	Refs	<input ref={...}/>	ref not in markedJsx	both	✅ Implemented	ref-attribute.test.ts:41	Ref excluded from server
+REF-003	Refs	<input ref={...} onClick={...}/>	Both work independently	both	✅ Implemented	ref-attribute.test.ts:61	Ref + event
+REF-004	Refs	<input ref={...} value={sig()}/>	Effect + ref both work	both	✅ Implemented	ref-attribute.test.ts:88	Ref + dynamic
+REF-005	Refs	<input ref={ref1}/><input ref={ref2}/>	All refs executed	both	✅ Implemented	ref-attribute.test.ts:109	Multiple refs
+EDGE-001	Edge Cases	<div> <span>X</span></div>	Space before span preserved	preserve	✅ Implemented	edge-cases.test.ts:230	Trailing whitespace
+EDGE-002	Edge Cases	<div></div>X	X preserved after closing	preserve	✅ Implemented	edge-cases.test.ts:247	Leading text
+EDGE-003	Edge Cases	<div>\n  <span>X</span>\n</div>	Indentation removed	markedJsx	✅ Implemented	edge-cases.test.ts:268	Block indentation
+EDGE-004	Edge Cases	<span>{' '}</span>	Space preserved	markedJsx	✅ Implemented	edge-cases.test.ts:287	Explicit space
+EDGE-005	Edge Cases	items().map(i => <li> {i} </li>)	Spaces in template preserved	clientJs	✅ Implemented	edge-cases.test.ts:324	List whitespace
+EDGE-010	Edge Cases	<a><b><c><d><e>X</e></d></c></b></a>	5 levels processed correctly	preserve	✅ Implemented	edge-cases.test.ts:15	Deep nesting
+EDGE-011	Edge Cases	<div><p>{a()}</p><span>{b()}</span></div>	All dynamics tracked	both	✅ Implemented	edge-cases.test.ts:46	Multiple dynamics
+EDGE-012	Edge Cases	<div onClick={f1}><span onClick={f2}>X</span></div>	All events attached	both	✅ Implemented	edge-cases.test.ts:80	Nested events
+EDGE-013	Edge Cases	items().map(i => i.x ? <A/> : <B/>)	Ternary in template	clientJs	✅ Implemented	edge-cases.test.ts:110	Ternary in map
+EDGE-020	Edge Cases	({a, b}) => <p>{a}</p>	Destructured params parsed	clientJs	✅ Implemented	edge-cases.test.ts:138	Object destructuring
+EDGE-021	Edge Cases	{x && y > 0 && <A/>}	Operators escaped correctly	both	✅ Implemented	edge-cases.test.ts:162	Special chars
+EDGE-022	Edge Cases	<p>{a() + b() + c()}</p>	All 3 signals tracked	both	✅ Implemented	edge-cases.test.ts:205	Multiple deps
+EDGE-023	Edge Cases	<style>{'.foo:hover { }'}</style>	:hover not replaced	preserve	✅ Implemented	issue-27-fixes.test.ts:250	CSS pseudo-class
+EDGE-024	Edge Cases	<input type='checkbox'/>	type not replaced	preserve	✅ Implemented	issue-27-fixes.test.ts:277	HTML attr name
+EDGE-030	Edge Cases	<svg><path/></svg>	<svg xmlns='http://www.w3.org/2000/svg'>	markedJsx	✅ Implemented	svg-elements.test.ts:18	SVG xmlns
+EDGE-031	Edge Cases	<svg viewBox='0 0 24 24'>	viewBox preserved (camelCase)	preserve	✅ Implemented	svg-elements.test.ts:39	SVG viewBox
+EDGE-032	Edge Cases	<path stroke-width='2'/>	stroke-width preserved	preserve	✅ Implemented	svg-elements.test.ts:58	SVG stroke
+EDGE-033	Edge Cases	<path fill={color()}/>	clientJs: _0.setAttribute('fill', color())	both	✅ Implemented	svg-elements.test.ts:83	Dynamic SVG attr
+EDGE-034	Edge Cases	<svg onClick={fn}>	clientJs: _0.onclick = fn	both	✅ Implemented	svg-elements.test.ts:106	SVG event
+EDGE-035	Edge Cases	<svg><g><g><path/></g></g></svg>	Nested groups rendered	preserve	✅ Implemented	svg-elements.test.ts:134	Nested SVG
+EDGE-040	Edge Cases	<input value={text()} onChange={...}/>	Dynamic value binding	both	✅ Implemented	form-inputs.test.ts:21	Input value
+EDGE-041	Edge Cases	<input type='number' value={num()}/>	type='number' preserved	both	✅ Implemented	form-inputs.test.ts:86	Number input
+EDGE-042	Edge Cases	<textarea value={text()}/>	Textarea value binding	both	✅ Implemented	form-inputs.test.ts:108	Textarea
+EDGE-043	Edge Cases	<select value={selected()}><option>...</option></select>	Select value binding	both	✅ Implemented	form-inputs.test.ts:133	Select
+EDGE-044	Edge Cases	<input type='checkbox' checked={isOn()}/>	checked property	both	✅ Implemented	form-inputs.test.ts:163	Checkbox
+EDGE-045	Edge Cases	<input type='radio' checked={isA()}/>	checked property	both	✅ Implemented	form-inputs.test.ts:207	Radio
+EDGE-046	Edge Cases	<input value={a()}/><input value={b()}/>	Both tracked	both	✅ Implemented	form-inputs.test.ts:231	Multiple inputs
+EDGE-047	Edge Cases	<input placeholder={hint()}/>	setAttribute('placeholder', ...)	both	✅ Implemented	form-inputs.test.ts:264	Dynamic placeholder
+EDGE-048	Edge Cases	<input disabled={isDisabled()}/>	_0.disabled = isDisabled()	both	✅ Implemented	form-inputs.test.ts:285	Dynamic disabled
+DIR-001	Directives	import { createSignal } from '@barefootjs/dom' (no directive)	Error: 'use client' required	error	✅ Implemented	directive.test.ts:54	Directive required
+DIR-002	Directives	<button onClick={...}> (no directive)	Error: 'use client' required	error	✅ Implemented	directive.test.ts:95	Events need directive
+DIR-003	Directives	const x = 1; 'use client'	Error: directive must be first	error	✅ Implemented	directive.test.ts:25	Directive position
+DIR-004	Directives	'use client' or 'use client'	Both accepted	preserve	✅ Implemented	directive.test.ts:5	Quote style
+DIR-005	Directives	// comment\n'use client'	Comments before allowed	preserve	✅ Implemented	directive.test.ts:43	Comments ok
+PATH-001	Element Paths	<div data-bf='0'>	scope.firstChild	clientJs	✅ Implemented	element-paths.test.ts:11	Direct path
+PATH-002	Element Paths	<div><p><span data-bf='0'>	scope.firstChild.firstChild.firstChild	clientJs	✅ Implemented	element-paths.test.ts:31	Chained path
+PATH-003	Element Paths	<div>text<span data-bf='0'>	Text nodes skipped in path	clientJs	✅ Implemented	element-paths.test.ts:80	Text node skip
+PATH-004	Element Paths	<><p data-bf='0'/><span data-bf='1'/></>	Path per fragment child	clientJs	✅ Implemented	element-paths.test.ts:134	Fragment paths
+PATH-005	Element Paths	<div><Child/><span data-bf='0'/>	null (uses querySelector)	clientJs	✅ Implemented	element-paths.test.ts:271	After component
+PATH-006	Element Paths	<div>{show() && <X/>}<span data-bf='0'>	Conditional skipped	clientJs	✅ Implemented	element-paths.test.ts:396	Conditional in path
+OOS-001	Out of Scope	useEffect(() => {...})	Not supported	n/a	❌ OOS		Use createEffect
+OOS-002	Out of Scope	useState(0)	Not supported	n/a	❌ OOS		Use createSignal
+OOS-003	Out of Scope	<Context.Provider value={...}>	Not supported	n/a	❌ OOS		Pass props
+OOS-004	Out of Scope	dangerouslySetInnerHTML={{__html: x}}	Not supported	n/a	❌ OOS		Security
+OOS-005	Out of Scope	class C extends Component {...}	Not supported	n/a	❌ OOS		Function only
+OOS-006	Out of Scope	forwardRef((props, ref) => ...)	Not supported	n/a	❌ OOS		Use ref callbacks
+OOS-007	Out of Scope	<ErrorBoundary>...</ErrorBoundary>	Not supported	n/a	❌ OOS		Handle in code
+OOS-008	Out of Scope	<Suspense><lazy(...)></Suspense>	Not supported	n/a	❌ OOS		Manual splitting
+OOS-009	Out of Scope	createPortal(<Modal/>, document.body)	Not supported	n/a	❌ OOS		Manual DOM
+OOS-010	Out of Scope	var x = 1 (in component)	var not extracted	n/a	❌ OOS		Use const/let
+OOS-011	Out of Scope	async function Component() {...}	Not supported	n/a	❌ OOS		Use signals

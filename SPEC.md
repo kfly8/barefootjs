@@ -11,6 +11,7 @@ The TSV contains all transformation rules with:
 - **category**: Feature category
 - **input_pattern**: Input JSX pattern
 - **expected_output**: Expected transformation result
+- **output_type**: Type of transformation (see Output Type Legend below)
 - **status**: Implementation status (✅ Implemented, ⚠️ Partial, ❌ OOS)
 - **test_file**: Corresponding test file and line number
 - **notes**: Additional notes
@@ -50,6 +51,17 @@ JSX Source → IR (Intermediate Representation) → Marked JSX + Client JS
    - Uses `createEffect` for reactive updates
    - Event delegation for lists
    - DOM switching for conditionals
+
+## Output Type Legend
+
+| Type | Meaning |
+|------|---------|
+| `preserve` | Input is preserved as-is (input = output) |
+| `markedJsx` | Input is transformed to marked JSX (adds hydration markers) |
+| `clientJs` | Client-side JavaScript is generated |
+| `both` | Both marked JSX and client JS are generated |
+| `error` | Compilation error is expected |
+| `n/a` | Not applicable (Out of Scope items) |
 
 ## Status Legend
 
