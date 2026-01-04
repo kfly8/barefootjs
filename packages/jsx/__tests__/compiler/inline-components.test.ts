@@ -6,7 +6,7 @@
  * into template literals.
  *
  * ## Why inline expansion is needed
- * Components in map are re-rendered with `innerHTML` every time
+ * Components in map are reconciled with `reconcileList` every time
  * the parent array is updated. Therefore, it is necessary to
  * expand components into template strings rather than treat them
  * as individual DOM nodes.
@@ -20,25 +20,25 @@
  * ## Generated code
  * ```typescript
  * // Input
- * {items().map(item => <Item item={item} onDelete={() => remove(item.id)} />)}
+ * {items().map(item => <Item key={item.id} item={item} onDelete={() => remove(item.id)} />)}
  *
  * // Item component
  * function Item({ item, onDelete }) {
  *   return <li><span>{item.text}</span><button onClick={() => onDelete()}>Delete</button></li>
  * }
  *
- * // Output (clientJs) - Item is expanded inline
- * l0.innerHTML = items().map((item, __index) =>
- *   `<li><span>${item.text}</span><button data-index="${__index}" data-event-id="0">Delete</button></li>`
- * ).join('')
+ * // Output (clientJs) - Item is expanded inline with reconcileList
+ * reconcileList(l0, items(), (item, __index) => String(item.id),
+ *   (item, __index) => `<li data-key="${item.id}"><span>${item.text}</span><button data-index="${__index}" data-event-id="0">Delete</button></li>`)
  *
  * l0.addEventListener('click', (e) => {
  *   const target = e.target.closest('[data-event-id="0"]')
  *   if (target && target.dataset.eventId === '0') {
- *     const __index = parseInt(target.dataset.index, 10)
+ *     const __key = target.dataset.key
+ *     const __index = items().findIndex((item) => String(item.id) === __key)
+ *     if (__index === -1) return
  *     const item = items()[__index]
  *     remove(item.id)  // onDelete() is expanded
- *     updateAll()
  *   }
  * })
  * ```
@@ -59,7 +59,7 @@ describe('Inline component expansion in map', () => {
           return (
             <ul>
               {items().map(item => (
-                <Item item={item} />
+                <Item key={item.id} item={item} />
               ))}
             </ul>
           )
@@ -76,8 +76,9 @@ describe('Inline component expansion in map', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const appFile = result.files.find(f => f.componentNames.includes('App'))
 
-    // Item component is expanded inline in HTML (with __index for event delegation support)
-    expect(appFile!.clientJs).toContain('items().map((item, __index) => `<li>${item.text}</li>`).join(\'\')')
+    // Item component is expanded inline with reconcileList
+    expect(appFile!.clientJs).toContain('reconcileList')
+    expect(appFile!.clientJs).toContain('${item.text}')
   })
 
   it('Inline expansion of components with event handlers', async () => {
@@ -92,7 +93,7 @@ describe('Inline component expansion in map', () => {
           return (
             <ul>
               {items().map(item => (
-                <Item item={item} onDelete={() => remove(item.id)} />
+                <Item key={item.id} item={item} onDelete={() => remove(item.id)} />
               ))}
             </ul>
           )
@@ -138,7 +139,7 @@ describe('Inline component expansion in map', () => {
           return (
             <ul>
               {items().map(item => (
-                <Item item={item} />
+                <Item key={item.id} item={item} />
               ))}
             </ul>
           )
@@ -181,6 +182,7 @@ describe('Inline component expansion in map', () => {
             <ul>
               {items().map(item => (
                 <Item
+                  key={item.id}
                   item={item}
                   onToggle={() => toggle(item.id)}
                   onDelete={() => remove(item.id)}

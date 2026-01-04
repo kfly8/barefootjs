@@ -15,3 +15,5 @@ export {
   type Renderable,
   type PortalChildren,
 } from './portal'
+
+export { reconcileList } from './list'

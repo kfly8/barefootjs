@@ -522,9 +522,9 @@ describe('jsxToIR', () => {
   })
 
   describe('list (map) processing', () => {
-    // CTRL-010: Basic map
+    // CTRL-010: Basic map (key is required)
     it('CTRL-010: extracts listInfo from map expression', () => {
-      const source = '<ul>{items().map(item => <li>{item}</li>)}</ul>'
+      const source = '<ul>{items().map(item => <li key={item.id}>{item}</li>)}</ul>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
       const jsx = findJsxElement(sourceFile)!
@@ -534,6 +534,7 @@ describe('jsxToIR', () => {
       expect(result.listInfo).not.toBeNull()
       expect(result.listInfo!.arrayExpression).toBe('items()')
       expect(result.listInfo!.paramName).toBe('item')
+      expect(result.listInfo!.keyExpression).toBe('item.id')
       expect(result.id).not.toBeNull() // Has list, needs ID
     })
 
@@ -561,7 +562,7 @@ describe('jsxToIR', () => {
 
     // CTRL-010: Basic map (item IR generation)
     it('CTRL-010b: generates itemIR for server JSX', () => {
-      const source = '<ul>{items().map(item => <li class="todo">{item.text}</li>)}</ul>'
+      const source = '<ul>{items().map(item => <li key={item.id} class="todo">{item.text}</li>)}</ul>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
       const jsx = findJsxElement(sourceFile)!

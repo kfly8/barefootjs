@@ -89,7 +89,7 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
         </thead>
         <tbody>
           {props.map(prop => (
-            <PropRow {...prop} />
+            <PropRow key={prop.name} {...prop} />
           ))}
         </tbody>
       </table>

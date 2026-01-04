@@ -26,11 +26,11 @@ describe('Nested Map Support', () => {
         return (
           <div>
             {groups().map(group => (
-              <div>
+              <div key={group.name}>
                 <h2>{group.name}</h2>
                 <ul>
-                  {group.items.map(item => (
-                    <li>{item}</li>
+                  {group.items.map((item, idx) => (
+                    <li key={idx}>{item}</li>
                   ))}
                 </ul>
               </div>
@@ -45,8 +45,9 @@ describe('Nested Map Support', () => {
     // Server JSX should have nested maps (signal call replaced with initial value)
     expect(file.markedJsx).toContain('.map((group')
     expect(file.markedJsx).toContain('group.items?.map((item')
-    // Should have two levels of nesting
-    expect(file.markedJsx).toContain('<li>{item}</li>')
+    // Should have two levels of nesting with data-key attributes
+    expect(file.markedJsx).toContain('data-key={group.name}')
+    expect(file.markedJsx).toContain('<li data-key={__index}>{item}</li>')
   })
 
   it('nested map with keys', async () => {

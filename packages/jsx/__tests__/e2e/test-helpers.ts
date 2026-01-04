@@ -86,6 +86,7 @@ export async function setupDOM(result: CompileResult): Promise<{
 
   // Execute clientJs in the context with barefoot imports
   const { createSignal, createEffect, onCleanup } = await import('../../../dom/src/reactive')
+  const { reconcileList } = await import('../../../dom/src/list')
 
   // Remove import statements from clientJs (they're not needed in test context)
   const cleanedClientJs = result.clientJs
@@ -97,11 +98,12 @@ export async function setupDOM(result: CompileResult): Promise<{
     'createSignal',
     'createEffect',
     'onCleanup',
+    'reconcileList',
     'document',
     cleanedClientJs
   )
 
-  executeClientJs(createSignal, createEffect, onCleanup, document)
+  executeClientJs(createSignal, createEffect, onCleanup, reconcileList, document)
 
   return {
     container,

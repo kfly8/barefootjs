@@ -46,7 +46,7 @@ describe('Local functions in components', () => {
         return (
           <ul>
             {items().map(item => (
-              <li>
+              <li key={item.id}>
                 <button onClick={() => handleToggle(item.id)}>Toggle</button>
               </li>
             ))}
@@ -79,7 +79,7 @@ describe('Local functions in components', () => {
             <button onClick={() => handleAdd()}>Add</button>
             <ul>
               {items().map(item => (
-                <li>
+                <li key={item.id}>
                   <button onClick={() => handleDelete(item.id)}>Delete</button>
                 </li>
               ))}
@@ -146,7 +146,7 @@ describe('Local functions in components', () => {
         return (
           <ul>
             {items().map(item => (
-              <li>
+              <li key={item.id}>
                 <button onClick={() => handleToggle(item.id)}>Toggle</button>
               </li>
             ))}

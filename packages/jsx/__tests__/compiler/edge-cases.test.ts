@@ -120,7 +120,7 @@ describe('Complex Expressions', () => {
         return (
           <ul>
             {items().map(item => (
-              <li class={item.type === 'a' ? 'first' : item.type === 'b' ? 'second' : 'third'}>
+              <li key={item.value} class={item.type === 'a' ? 'first' : item.type === 'b' ? 'second' : 'third'}>
                 {item.value}
               </li>
             ))}
@@ -144,7 +144,7 @@ describe('Complex Expressions', () => {
         return (
           <ul>
             {items().map(({ id, name }) => (
-              <li>{name} (ID: {id})</li>
+              <li key={id}>{name} (ID: {id})</li>
             ))}
           </ul>
         )
@@ -333,7 +333,7 @@ describe('Whitespace Handling', () => {
         return (
           <ul>
             {items().map(item => (
-              <li><span>{item.count}</span> items left</li>
+              <li key={item.id}><span>{item.count}</span> items left</li>
             ))}
           </ul>
         )
@@ -357,7 +357,7 @@ describe('Whitespace Handling', () => {
         return (
           <ul>
             {items().map(item => (
-              <li>Item: <span>{item.name}</span></li>
+              <li key={item.id}>Item: <span>{item.name}</span></li>
             ))}
           </ul>
         )

@@ -227,7 +227,7 @@ describe('Components - Props and init function', () => {
           return (
             <div>
               <Form onAdd={handleAdd} />
-              <ul>{items().map(item => <li>{item.text}</li>)}</ul>
+              <ul>{items().map(item => <li key={item.id}>{item.text}</li>)}</ul>
             </div>
           )
         }

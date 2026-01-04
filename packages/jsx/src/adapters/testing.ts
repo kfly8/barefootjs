@@ -132,6 +132,10 @@ export const testHtmlAdapter: MarkedJsxAdapter = {
 type HtmlContext = {
   componentName: string
   signals: SignalDeclaration[]
+  // For list item context - the current item and its parameter name
+  listItem?: { paramName: string; item: any; index: number }
+  // Event ID counter for data-event-id attributes (for list item event delegation)
+  eventIdCounter: { value: number }
 }
 
 function irToHtml(
@@ -139,7 +143,7 @@ function irToHtml(
   componentName: string,
   signals: SignalDeclaration[]
 ): string {
-  const ctx: HtmlContext = { componentName, signals }
+  const ctx: HtmlContext = { componentName, signals, eventIdCounter: { value: 0 } }
   return irToHtmlInternal(node, ctx, true)
 }
 
@@ -149,7 +153,7 @@ function irToHtmlInternal(node: IRNode, ctx: HtmlContext, isRoot: boolean): stri
       return escapeHtml(node.content)
 
     case 'expression':
-      const value = evaluateExpression(node.expression, ctx.signals)
+      const value = evaluateExpression(node.expression, ctx)
       return escapeHtml(String(value))
 
     case 'component':
@@ -158,12 +162,12 @@ function irToHtmlInternal(node: IRNode, ctx: HtmlContext, isRoot: boolean): stri
     case 'conditional':
       // Dynamic conditionals with ID need data-bf-cond marker for hydration
       if (node.id) {
-        const conditionResult = evaluateExpression(node.condition, ctx.signals)
+        const conditionResult = evaluateExpression(node.condition, ctx)
         const branchNode = conditionResult ? node.whenTrue : node.whenFalse
         return injectConditionalMarkerHtml(branchNode, node.id, ctx)
       }
       // Static conditionals just evaluate and render
-      const conditionResult = evaluateExpression(node.condition, ctx.signals)
+      const conditionResult = evaluateExpression(node.condition, ctx)
       if (conditionResult) {
         return irToHtmlInternal(node.whenTrue, ctx, false)
       } else {
@@ -186,7 +190,7 @@ function fragmentToHtml(node: IRFragment, ctx: HtmlContext, isRoot: boolean): st
 }
 
 function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string {
-  const { tagName, id, staticAttrs, dynamicAttrs, children, listInfo } = el
+  const { tagName, id, staticAttrs, dynamicAttrs, children, listInfo, events } = el
 
   const attrParts: string[] = []
 
@@ -196,6 +200,12 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
 
   if (id) {
     attrParts.push(`data-bf="${id}"`)
+  }
+
+  // Add data-event-id for elements with events inside list items (for event delegation)
+  if (ctx.listItem && events && events.length > 0) {
+    const eventId = ctx.eventIdCounter.value++
+    attrParts.push(`data-event-id="${eventId}"`)
   }
 
   if (isSvgRoot(tagName)) {
@@ -211,7 +221,7 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
   }
 
   for (const attr of dynamicAttrs) {
-    const value = evaluateExpression(attr.expression, ctx.signals)
+    const value = evaluateExpression(attr.expression, ctx)
     if (value !== undefined && value !== null && value !== false) {
       if (value === true) {
         attrParts.push(attr.name)
@@ -224,19 +234,18 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
   const attrsStr = attrParts.length > 0 ? ' ' + attrParts.join(' ') : ''
 
   if (listInfo) {
-    const arrayValue = evaluateExpression(listInfo.arrayExpression, ctx.signals)
+    const arrayValue = evaluateExpression(listInfo.arrayExpression, ctx)
     if (Array.isArray(arrayValue) && listInfo.itemIR) {
       const itemsHtml = arrayValue.map((item, index) => {
+        // Reset event ID counter for each list item so all items get consistent event IDs
         const itemCtx: HtmlContext = {
           ...ctx,
-          signals: [
-            ...ctx.signals,
-            { getter: listInfo.paramName, setter: '', initialValue: JSON.stringify(item) },
-          ],
+          listItem: { paramName: listInfo.paramName, item, index },
+          eventIdCounter: { value: 0 },  // Each item starts with eventId 0
         }
         let itemHtml = irToHtmlInternal(listInfo.itemIR!, itemCtx, false)
         if (listInfo.keyExpression) {
-          const keyValue = evaluateExpressionWithItem(listInfo.keyExpression, item, listInfo.paramName)
+          const keyValue = evaluateExpressionWithItem(listInfo.keyExpression, item, listInfo.paramName, index)
           itemHtml = injectDataKeyAttribute(itemHtml, String(keyValue))
         }
         return itemHtml
@@ -255,12 +264,22 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
   return `<${tagName}${attrsStr}>${childrenHtml}</${tagName}>`
 }
 
-function evaluateExpression(expr: string, signals: SignalDeclaration[]): any {
+function evaluateExpression(expr: string, ctx: HtmlContext): any {
   let evalExpr = expr
 
-  for (const signal of signals) {
+  // Replace signal getters with their initial values
+  for (const signal of ctx.signals) {
     const getterPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
     evalExpr = evalExpr.replace(getterPattern, signal.initialValue)
+  }
+
+  // If we're in a list item context, evaluate with the item
+  if (ctx.listItem) {
+    try {
+      return Function(ctx.listItem.paramName, '__index', `"use strict"; return (${evalExpr})`)(ctx.listItem.item, ctx.listItem.index)
+    } catch {
+      return evalExpr
+    }
   }
 
   try {
@@ -270,9 +289,9 @@ function evaluateExpression(expr: string, signals: SignalDeclaration[]): any {
   }
 }
 
-function evaluateExpressionWithItem(expr: string, item: any, paramName: string): any {
+function evaluateExpressionWithItem(expr: string, item: any, paramName: string, index: number = 0): any {
   try {
-    return Function(paramName, `"use strict"; return (${expr})`)(item)
+    return Function(paramName, '__index', `"use strict"; return (${expr})`)(item, index)
   } catch {
     return expr
   }
@@ -326,7 +345,7 @@ function injectConditionalMarkerHtml(node: IRNode, condId: string, ctx: HtmlCont
         // Use empty comment markers for null
         return `<!--bf-cond-start:${condId}--><!--bf-cond-end:${condId}-->`
       }
-      const value = evaluateExpression(node.expression, ctx.signals)
+      const value = evaluateExpression(node.expression, ctx)
       return `<span data-bf-cond="${condId}">${escapeHtml(String(value))}</span>`
     }
 
@@ -337,7 +356,7 @@ function injectConditionalMarkerHtml(node: IRNode, condId: string, ctx: HtmlCont
       return `<div data-bf-cond="${condId}"><!-- ${node.name} --></div>`
 
     case 'conditional': {
-      const conditionResult = evaluateExpression(node.condition, ctx.signals)
+      const conditionResult = evaluateExpression(node.condition, ctx)
       const innerHtml = irToHtmlInternal(conditionResult ? node.whenTrue : node.whenFalse, ctx, false)
       return `<span data-bf-cond="${condId}">${innerHtml}</span>`
     }
