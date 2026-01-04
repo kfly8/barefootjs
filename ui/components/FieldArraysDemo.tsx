@@ -229,9 +229,7 @@ export function DuplicateValidationDemo() {
                 inputValue={field.value}
                 inputPlaceholder={`Email ${index + 1}`}
                 onInput={(e) => handleChange(field.id, e.target.value)}
-                onChange={() => {}}
                 onBlur={() => handleBlur(field.id)}
-                onFocus={() => {}}
               />
               <p class="field-error text-sm text-red-400 min-h-5">{field.error}</p>
             </div>
@@ -314,9 +312,7 @@ export function MinMaxFieldsDemo() {
                 inputValue={field.value}
                 inputPlaceholder={`Email ${index + 1}`}
                 onInput={(e) => handleChange(field.id, e.target.value)}
-                onChange={() => {}}
                 onBlur={() => handleBlur(field.id)}
-                onFocus={() => {}}
               />
               <p class="field-error text-sm text-red-400 min-h-5">{field.error}</p>
             </div>
