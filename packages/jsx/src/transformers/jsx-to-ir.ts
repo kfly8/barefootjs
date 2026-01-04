@@ -606,6 +606,18 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
   // Extract key attribute from the root element
   const keyExpression = extractKeyAttribute(jsxBody, ctx, indexParamName)
 
+  // Key is required for list items to enable efficient DOM reconciliation
+  if (keyExpression === null) {
+    const elementTag = ts.isJsxElement(jsxBody)
+      ? jsxBody.openingElement.tagName.getText(ctx.sourceFile)
+      : jsxBody.tagName.getText(ctx.sourceFile)
+    throw new Error(
+      `Missing required "key" prop in .map() list item <${elementTag}>. ` +
+      `Keys are required for efficient DOM updates. ` +
+      `Example: <${elementTag} key={${paramName}.id}>`
+    )
+  }
+
   // Convert JSX to template string (with component inlining support)
   const { template, events } = jsxToTemplateString(jsxBody, ctx.sourceFile, paramName, ctx.components)
 

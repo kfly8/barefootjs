@@ -482,6 +482,7 @@ function generateDynamicElementEffects(
 
 /**
  * Generate createEffect blocks for list rendering
+ * Uses reconcileList for key-based DOM updates to preserve existing elements
  */
 function generateListElementEffects(
   ctx: ClientJsGeneratorContext,
@@ -491,9 +492,9 @@ function generateListElementEffects(
 
   for (const el of listElements) {
     const v = ctx.varName(el.id)
-    // Always use innerHTML for list updates
-    // Key attribute is still rendered as data-key in server JSX for CSS/testing purposes
-    const effectBody = `${v}.innerHTML = ${el.mapExpression}`
+    // Use reconcileList for key-based DOM updates
+    // This preserves existing elements, preventing conflicts with in-flight events (e.g., blur)
+    const effectBody = `reconcileList(${v}, ${el.arrayExpression}, (${el.paramName}, __index) => String(${el.keyExpression}), (${el.paramName}, __index) => ${el.itemTemplate})`
 
     lines.push(...generateEffectWithPreCheck({ varName: v, effectBody }))
   }
@@ -664,6 +665,7 @@ function generateEventHandlers(
   const lines: string[] = []
 
   // Event delegation for list elements (with existence check)
+  // Uses key-based item lookup for stable references during DOM updates
   for (const el of listElements) {
     if (el.itemEvents.length > 0) {
       const v = ctx.varName(el.id)
@@ -677,7 +679,12 @@ function generateEventHandlers(
         lines.push(`  ${v}.addEventListener('${event.eventName}', (e) => {`)
         lines.push(`    const target = e.target.closest('[data-event-id="${event.eventId}"]')`)
         lines.push(`    if (target && target.dataset.eventId === '${event.eventId}') {`)
-        lines.push(`      const __index = parseInt(target.dataset.index, 10)`)
+        // Use key-based lookup instead of index-based
+        // Find the closest parent element with data-key attribute
+        lines.push(`      const __keyEl = target.closest('[data-key]')`)
+        lines.push(`      const __key = __keyEl?.dataset.key`)
+        lines.push(`      const __index = ${el.arrayExpression}.findIndex((${el.paramName}) => String(${el.keyExpression}) === __key)`)
+        lines.push(`      if (__index === -1) return`)
         lines.push(`      const ${event.paramName} = ${el.arrayExpression}[__index]`)
 
         if (conditionalHandler) {

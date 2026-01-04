@@ -96,6 +96,10 @@ function collectBarefootImports(fileComponents: ComponentData[]): Set<string> {
     if (comp.result.memos.length > 0) {
       barefootImports.add('createMemo')
     }
+    // reconcileList is needed for key-based list rendering
+    if (comp.result.listElements.length > 0) {
+      barefootImports.add('reconcileList')
+    }
   }
 
   return barefootImports

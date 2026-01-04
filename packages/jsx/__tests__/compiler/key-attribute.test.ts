@@ -3,8 +3,9 @@
  *
  * ## Overview
  * Tests for JSX key attribute support in list rendering.
- * Key attribute is converted to data-key for server-side rendering.
- * Client-side uses innerHTML for all lists (no reconcileList).
+ * Key attribute is required for list items and enables key-based DOM reconciliation.
+ * - Server-side: key is converted to data-key attribute
+ * - Client-side: uses reconcileList for efficient DOM updates
  *
  * ## Supported Patterns
  * - key with item id: key={item.id}
@@ -40,9 +41,8 @@ describe('Key Attribute Support', () => {
     // Server JSX should contain data-key attribute
     expect(file.markedJsx).toContain('data-key={item.id}')
 
-    // Client JS uses innerHTML (no reconcileList)
-    expect(file.clientJs).toContain('.innerHTML =')
-    expect(file.clientJs).not.toContain('reconcileList')
+    // Client JS uses reconcileList for key-based DOM updates
+    expect(file.clientJs).toContain('reconcileList')
   })
 
   it('key with index', async () => {
@@ -92,7 +92,7 @@ describe('Key Attribute Support', () => {
     expect(file.markedJsx).toContain('data-key={`${item.type}-${item.id}`}')
   })
 
-  it('list without key uses innerHTML', async () => {
+  it('list without key throws compile error', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -107,12 +107,8 @@ describe('Key Attribute Support', () => {
         )
       }
     `
-    const result = await compile(source)
-    const file = result.files[0]
-
-    // Without key, should use innerHTML
-    expect(file.clientJs).toContain('.innerHTML =')
-    expect(file.clientJs).not.toContain('reconcileList')
+    // Missing key should throw compile error
+    await expect(compile(source)).rejects.toThrow('Missing required "key" prop')
   })
 
   it('key attribute is not output as regular attribute', async () => {
@@ -139,7 +135,7 @@ describe('Key Attribute Support', () => {
     expect(file.markedJsx).not.toMatch(/\skey=/)
   })
 
-  it('list with key uses innerHTML (same as without key)', async () => {
+  it('list with key uses reconcileList for DOM updates', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -157,8 +153,9 @@ describe('Key Attribute Support', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Client JS should use innerHTML (not reconcileList)
-    expect(file.clientJs).toContain('.innerHTML =')
-    expect(file.clientJs).not.toContain('reconcileList')
+    // Client JS should use reconcileList for key-based DOM updates
+    expect(file.clientJs).toContain('reconcileList')
+    // data-key should be in the template
+    expect(file.clientJs).toContain('data-key=')
   })
 })

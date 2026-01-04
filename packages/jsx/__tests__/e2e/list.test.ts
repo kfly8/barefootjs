@@ -33,7 +33,7 @@ describe('List E2E', () => {
         const [items, setItems] = createSignal(['Apple', 'Banana', 'Cherry'])
         return (
           <ul>
-            {items().map(item => <li>{item}</li>)}
+            {items().map((item, index) => <li key={index}>{item}</li>)}
           </ul>
         )
       }
@@ -59,7 +59,7 @@ describe('List E2E', () => {
         return (
           <div>
             <ul>
-              {items().map(item => <li>{item}</li>)}
+              {items().map((item, index) => <li key={index}>{item}</li>)}
             </ul>
             <button onClick={() => setItems([...items(), 'C'])}>Add</button>
           </div>

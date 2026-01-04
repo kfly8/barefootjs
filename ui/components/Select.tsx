@@ -46,7 +46,7 @@ export function Select({
         </option>
       )}
       {options.map((option) => (
-        <option value={option.value} {...(option.disabled && { disabled: true })}>
+        <option key={option.value} value={option.value} {...(option.disabled && { disabled: true })}>
           {option.label}
         </option>
       ))}
