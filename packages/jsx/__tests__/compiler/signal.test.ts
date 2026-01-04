@@ -25,7 +25,8 @@ import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
 describe('Signal declarations', () => {
-  it('Number signal', async () => {
+  // EXPR-001: Number signal
+  it('EXPR-001: Number signal', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -40,7 +41,8 @@ describe('Signal declarations', () => {
     expect(file.clientJs).toContain('const [count, setCount] = createSignal(0)')
   })
 
-  it('Boolean signal', async () => {
+  // EXPR-002: Boolean signal
+  it('EXPR-002: Boolean signal', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -55,7 +57,8 @@ describe('Signal declarations', () => {
     expect(file.clientJs).toContain('const [on, setOn] = createSignal(false)')
   })
 
-  it('String signal', async () => {
+  // EXPR-003: String signal
+  it('EXPR-003: String signal', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -70,7 +73,8 @@ describe('Signal declarations', () => {
     expect(file.clientJs).toContain("const [text, setText] = createSignal('hello')")
   })
 
-  it('Multiple signals', async () => {
+  // EXPR-004: Multiple signals
+  it('EXPR-004: Multiple signals', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -87,7 +91,8 @@ describe('Signal declarations', () => {
     expect(file.clientJs).toContain("const [name, setName] = createSignal('Alice')")
   })
 
-  it('Object signal', async () => {
+  // EXPR-005: Object state
+  it('EXPR-005: Object signal', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -102,7 +107,8 @@ describe('Signal declarations', () => {
     expect(file.clientJs).toContain("const [user, setUser] = createSignal({ name: 'Alice', age: 20 })")
   })
 
-  it('Array signal', async () => {
+  // EXPR-006: Array state
+  it('EXPR-006: Array signal', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
