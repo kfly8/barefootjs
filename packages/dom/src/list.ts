@@ -120,7 +120,11 @@ function updateChildrenSelectively(existing: HTMLElement, newEl: HTMLElement): v
     const existingChild = existingChildren[i]
     const newChild = newChildren[i]
 
-    // If element types differ (e.g., input -> span), replace entirely
+    // Element types can differ when a conditional expression switches branches.
+    // Example: {editing ? <input .../> : <span>...</span>}
+    // When user presses Enter in the input to finish editing, the state changes
+    // from editing=true to editing=false while the input still has focus.
+    // This causes the element to change from <input> to <span>.
     if (existingChild.tagName !== newChild.tagName) {
       existingChild.replaceWith(newChild.cloneNode(true))
       continue
