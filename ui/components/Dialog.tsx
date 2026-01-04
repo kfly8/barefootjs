@@ -62,10 +62,14 @@ export function DialogOverlay({
   open = false,
   onClick,
 }: DialogOverlayProps) {
+  // Use opacity + pointer-events for fade animation (hidden class breaks transitions)
   return (
     <div
-      class={`fixed inset-0 z-50 bg-black/80 ${open ? '' : 'hidden'}`}
+      class={`fixed inset-0 z-50 bg-black/80 transition-opacity duration-150 ${
+        open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
       data-dialog-overlay
+      data-dialog-overlay-open={open ? 'true' : 'false'}
       onClick={onClick}
     />
   )
@@ -95,9 +99,15 @@ export function DialogContent({
     }
   }
 
+  // Use opacity + scale for fade + zoom animation (hidden class breaks transitions)
+  // pointer-events-none prevents interaction when closed
   return (
     <div
-      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-200 bg-white p-6 shadow-lg sm:rounded-lg ${open ? '' : 'hidden'}`}
+      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-200 bg-white p-6 shadow-lg sm:rounded-lg transition-all duration-150 ${
+        open
+          ? 'opacity-100 scale-100'
+          : 'opacity-0 scale-95 pointer-events-none'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={ariaLabelledby}

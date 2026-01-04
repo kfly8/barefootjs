@@ -30,7 +30,17 @@ export function DialogBasicDemo() {
     setTimeout(() => {
       const scope = document.querySelector('[data-bf-scope="DialogBasicDemo"]')
       const dialog = scope?.querySelector('[data-dialog-content]')
-      if (dialog) dialog.focus()
+      if (dialog) (dialog as HTMLElement).focus()
+    }, 10)
+  }
+
+  // Close dialog and return focus to trigger
+  const closeDialog = () => {
+    setOpen(false)
+    setTimeout(() => {
+      const scope = document.querySelector('[data-bf-scope="DialogBasicDemo"]')
+      const trigger = scope?.querySelector('button')
+      if (trigger) trigger.focus()
     }, 10)
   }
 
@@ -39,10 +49,10 @@ export function DialogBasicDemo() {
       <DialogTrigger onClick={openDialog}>
         Open Dialog
       </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+      <DialogOverlay open={open()} onClick={closeDialog} />
       <DialogContent
         open={open()}
-        onClose={() => setOpen(false)}
+        onClose={closeDialog}
         ariaLabelledby="dialog-title"
         ariaDescribedby="dialog-description"
       >
@@ -56,7 +66,7 @@ export function DialogBasicDemo() {
           Dialog content goes here. You can add any content you need.
         </p>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Close</DialogClose>
+          <DialogClose onClick={closeDialog}>Close</DialogClose>
         </DialogFooter>
       </DialogContent>
     </div>
