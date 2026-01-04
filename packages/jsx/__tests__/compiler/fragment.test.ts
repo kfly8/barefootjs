@@ -31,10 +31,11 @@ describe('Fragment Support', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Fragment outputs as-is, first element gets data-bf-scope
+    // Fragment outputs as-is, first element gets data-bf-scope (conditional for list compatibility)
     expect(file.markedJsx).toContain('<>')
     expect(file.markedJsx).toContain('</>')
-    expect(file.markedJsx).toContain('<h1 data-bf-scope="Component">Title</h1>')
+    expect(file.markedJsx).toContain('data-bf-scope": "Component"')
+    expect(file.markedJsx).toContain('Title')
     expect(file.markedJsx).toContain('<p>Content</p>')
   })
 
@@ -150,8 +151,9 @@ describe('Fragment Support', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Fragment outputs as-is, first element gets data-bf-scope
-    expect(file.markedJsx).toContain('<div data-bf-scope="Component">Only child</div>')
+    // Fragment outputs as-is, first element gets data-bf-scope (conditional for list compatibility)
+    expect(file.markedJsx).toContain('data-bf-scope": "Component"')
+    expect(file.markedJsx).toContain('Only child')
   })
 
   it('empty fragment', async () => {

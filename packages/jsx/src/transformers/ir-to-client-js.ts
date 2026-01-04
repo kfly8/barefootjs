@@ -520,15 +520,22 @@ function collectFromElement(
 
   // If element has list info
   if (el.listInfo && el.id) {
+    // Rename user's index param (e.g., 'index') to __index for consistency
+    // Use negative lookbehind to avoid replacing in attribute names (e.g., 'data-index' should stay as is)
+    let itemTemplate = el.listInfo.itemTemplate
+    if (el.listInfo.indexParamName) {
+      const regex = new RegExp(`(?<!-)\\b${el.listInfo.indexParamName}\\b`, 'g')
+      itemTemplate = itemTemplate.replace(regex, '__index')
+    }
     listElements.push({
       id: el.id,
       tagName: el.tagName,
-      mapExpression: `${el.listInfo.arrayExpression}.map((${el.listInfo.paramName}, __index) => ${el.listInfo.itemTemplate}).join('')`,
+      mapExpression: `${el.listInfo.arrayExpression}.map((${el.listInfo.paramName}, __index) => ${itemTemplate}).join('')`,
       itemEvents: el.listInfo.itemEvents,
       arrayExpression: el.listInfo.arrayExpression,
       keyExpression: el.listInfo.keyExpression,
       paramName: el.listInfo.paramName,
-      itemTemplate: el.listInfo.itemTemplate,
+      itemTemplate: itemTemplate,
     })
 
     // List items are rendered as innerHTML template

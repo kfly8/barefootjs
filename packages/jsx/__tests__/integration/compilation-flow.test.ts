@@ -32,10 +32,10 @@ describe('Full Compilation Flow', () => {
       const file = result.files[0]
 
       // Server JSX should contain:
-      // - data-bf-scope marker
+      // - data-bf-scope marker (conditional for list compatibility)
       // - className (converted from class)
       // - initial signal value (0)
-      expect(file.markedJsx).toContain('data-bf-scope="Counter"')
+      expect(file.markedJsx).toContain('data-bf-scope": "Counter"')
       expect(file.markedJsx).toContain('className="counter"')
       expect(file.markedJsx).toContain('{0}')
 
@@ -65,7 +65,7 @@ describe('Full Compilation Flow', () => {
 
       const file = result.files[0]
 
-      expect(file.markedJsx).toContain('data-bf-scope="Header"')
+      expect(file.markedJsx).toContain('data-bf-scope": "Header"')
       expect(file.markedJsx).toContain('<h1>Welcome</h1>')
       // Static component with "use client" but no dynamic content has no client JS
       expect(file.hasClientJs).toBe(false)
@@ -386,7 +386,8 @@ describe('Full Compilation Flow', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      expect(file.markedJsx).toContain('disabled={disabled}')
+      // Boolean attributes are converted to conditional: (value) ? true : undefined
+      expect(file.markedJsx).toContain('disabled={(disabled) ? true : undefined}')
       expect(file.markedJsx).toContain('{label}')
 
       // Check componentProps

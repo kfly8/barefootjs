@@ -24,10 +24,10 @@ export function Input({
   inputValue = '',
   inputDisabled = false,
   inputReadOnly = false,
-  onInput,
-  onChange,
-  onBlur,
-  onFocus,
+  onInput = () => {},
+  onChange = () => {},
+  onBlur = () => {},
+  onFocus = () => {},
 }: InputProps) {
   return (
     <input

@@ -329,8 +329,8 @@ describe('jsxToTemplateString', () => {
       expect(eventNames).toContain('change')
       expect(eventNames).toContain('click')
 
-      // Template should have dynamic content
-      expect(result.template).toContain('checked="${todo.done}"')
+      // Template should have dynamic content (checked is boolean, so conditional output)
+      expect(result.template).toContain("todo.done ? ' checked' : ''")
       expect(result.template).toContain('${todo.done ? "done" : ""}')
       expect(result.template).toContain('${todo.text}')
     })

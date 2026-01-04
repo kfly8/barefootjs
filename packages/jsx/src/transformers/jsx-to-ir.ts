@@ -615,6 +615,7 @@ function extractMapInfo(expr: ts.CallExpression, ctx: JsxToIRContext): IRListInf
   return {
     arrayExpression: arrayExpr,
     paramName,
+    indexParamName: indexParamName,
     itemTemplate: template,
     itemIR,
     itemEvents: events.map(e => ({ ...e, paramName })),

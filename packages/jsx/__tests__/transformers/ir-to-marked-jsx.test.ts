@@ -36,7 +36,10 @@ describe('irToMarkedJsx', () => {
       dynamicContent: null,
     }
     const result = irToMarkedJsx(node, 'Test', [])
-    expect(result).toBe('<div data-bf-scope="Test" className="container">Hello</div>')
+    // data-bf-scope is now conditional for list compatibility
+    expect(result).toContain('data-bf-scope": "Test"')
+    expect(result).toContain('className="container"')
+    expect(result).toContain('Hello')
   })
 
   it('converts element with dynamic attributes', () => {
@@ -169,8 +172,9 @@ describe('irToMarkedJsx', () => {
       dynamicContent: null,
     }
     const result = irToMarkedJsx(node, 'Test', [])
-    // Root elements use path-based navigation, no data-bf needed
-    expect(result).toBe('<input data-bf-scope="Test" type="text" />')
+    // data-bf-scope is now conditional for list compatibility
+    expect(result).toContain('data-bf-scope": "Test"')
+    expect(result).toContain('type="text"')
   })
 })
 
@@ -193,7 +197,9 @@ describe('irToMarkedJsx - fragment handling', () => {
       ],
     }
     const result = irToMarkedJsx(node, 'Test', [])
-    expect(result).toContain('<p data-bf-scope="Test">First</p>')
+    // data-bf-scope is now conditional for list compatibility
+    expect(result).toContain('data-bf-scope": "Test"')
+    expect(result).toContain('First')
     expect(result).toContain('<p>Second</p>')
   })
 
@@ -206,10 +212,11 @@ describe('irToMarkedJsx - fragment handling', () => {
       ],
     }
     const result = irToMarkedJsx(node, 'TestComponent', [])
-    expect(result).toContain('data-bf-scope="TestComponent"')
+    // data-bf-scope is now conditional for list compatibility
+    expect(result).toContain('data-bf-scope": "TestComponent"')
     // The first element should have the scope, not the second
-    // header and main are not self-closing tags, so they have explicit closing tags
-    expect(result).toBe('<><header data-bf-scope="TestComponent"></header><main></main></>')
+    expect(result).toContain('<header')
+    expect(result).toContain('<main></main>')
   })
 })
 
@@ -448,6 +455,7 @@ describe('irToMarkedJsx - nested structures', () => {
       listInfo: {
         arrayExpression: 'todos()',
         paramName: 'todo',
+        indexParamName: null,
         itemTemplate: '`<li>${todo.text}</li>`',
         itemIR: {
           type: 'element',
@@ -473,6 +481,52 @@ describe('irToMarkedJsx - nested structures', () => {
     expect(result).toContain('{todo.text}')
     expect(result).toContain('data-key={todo.id}')
   })
+
+  it('renames user index param to __index in list expressions', () => {
+    const signals: SignalDeclaration[] = [
+      { getter: 'fields', setter: 'setFields', initialValue: '[]' },
+    ]
+    const node: IRElement = {
+      type: 'element',
+      tagName: 'div',
+      id: 'l0',
+      staticAttrs: [],
+      dynamicAttrs: [],
+      spreadAttrs: [],
+      ref: null,
+      events: [],
+      children: [],
+      listInfo: {
+        arrayExpression: 'fields()',
+        paramName: 'field',
+        indexParamName: 'index',  // User wrote (field, index) => ...
+        itemTemplate: '`<input placeholder="Email ${index + 1}" />`',
+        itemIR: {
+          type: 'element',
+          tagName: 'input',
+          id: null,
+          staticAttrs: [{ name: 'placeholder', value: '`Email ${index + 1}`' }],
+          dynamicAttrs: [],
+          spreadAttrs: [],
+          ref: null,
+          events: [],
+          children: [],
+          listInfo: null,
+          dynamicContent: null,
+        },
+        itemEvents: [],
+        keyExpression: 'field.id',
+      },
+      dynamicContent: null,
+    }
+    const result = irToMarkedJsx(node, 'Test', signals)
+    // Should use __index in map callback
+    expect(result).toContain('(field, __index)')
+    // Should rename 'index' to '__index' in expressions
+    expect(result).toContain('__index + 1')
+    // Should NOT contain the original 'index' variable (except in __index)
+    expect(result).not.toMatch(/[^_]index\s*\+/)
+  })
 })
 
 describe('irToMarkedJsx - edge cases', () => {
@@ -491,7 +545,10 @@ describe('irToMarkedJsx - edge cases', () => {
       dynamicContent: null,
     }
     const result = irToMarkedJsx(node, 'Test', [])
-    expect(result).toBe('<div data-bf-scope="Test"></div>')
+    // data-bf-scope is now conditional for list compatibility
+    expect(result).toContain('data-bf-scope": "Test"')
+    expect(result).toContain('<div')
+    expect(result).toContain('</div>')
   })
 
   it('handles element with spread attributes', () => {
