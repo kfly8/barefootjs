@@ -327,8 +327,8 @@ describe('List Rendering - Dynamic Attributes', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Template contains dynamic checked attribute
-    expect(file.clientJs).toContain('checked="${item.checked}"')
+    // Template contains dynamic checked attribute (boolean handling: conditional output)
+    expect(file.clientJs).toContain("item.checked ? ' checked' : ''")
   })
 })
 

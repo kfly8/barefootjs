@@ -35,7 +35,7 @@ export default Toggle
   test('extracts props for ToggleItem', () => {
     const props = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'ToggleItem')
     expect(props.length).toBe(2)
-    expect(props).toContainEqual({ name: 'label', type: 'string', optional: false })
-    expect(props).toContainEqual({ name: 'defaultOn', type: 'boolean', optional: true })
+    expect(props).toContainEqual({ name: 'label', type: 'string', optional: false, defaultValue: undefined })
+    expect(props).toContainEqual({ name: 'defaultOn', type: 'boolean', optional: true, defaultValue: 'false' })
   })
 })

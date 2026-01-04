@@ -26,6 +26,7 @@ import { SelectPage } from './pages/select'
 import { ControlledInputPage } from './pages/forms/controlled-input'
 import { ValidationPage } from './pages/forms/validation'
 import { SubmitPage } from './pages/forms/submit'
+import { FieldArraysPage } from './pages/forms/field-arrays'
 
 const app = new Hono()
 
@@ -211,6 +212,15 @@ app.get('/', (c) => {
             Async submit handling with loading, success, and error states.
           </p>
         </a>
+        <a
+          href="/forms/field-arrays"
+          class="block p-4 border border-zinc-800 rounded-lg hover:border-zinc-600 hover:bg-zinc-900 transition-colors"
+        >
+          <h2 class="font-semibold text-zinc-100">Field Arrays</h2>
+          <p class="text-sm text-zinc-400 mt-1">
+            Dynamic list of form inputs with add/remove and per-item validation.
+          </p>
+        </a>
       </div>
     </div>
   )
@@ -299,6 +309,11 @@ app.get('/forms/validation', (c) => {
 // Form Submit pattern documentation
 app.get('/forms/submit', (c) => {
   return c.render(<SubmitPage />)
+})
+
+// Field Arrays pattern documentation
+app.get('/forms/field-arrays', (c) => {
+  return c.render(<FieldArraysPage />)
 })
 
 export default { port: 3002, fetch: app.fetch }

@@ -19,6 +19,7 @@ export interface ComponentData {
   result: CompileResult
   constantDeclarations: string
   signalDeclarations: string
+  localVariableDeclarations: string
   memoDeclarations: string
   childInits: ChildComponentInit[]
   hasClientJs: boolean
@@ -56,6 +57,9 @@ export function collectComponentData(
       const memoDeclarations = result.memos
         .map(m => `const ${m.getter} = createMemo(${m.computation})`)
         .join('\n')
+      const localVariableDeclarations = result.localVariables
+        .map(lv => lv.code)
+        .join('\n')
 
       // Filter constants to only those used in client code
       const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
@@ -87,6 +91,7 @@ export function collectComponentData(
         result,
         constantDeclarations,
         signalDeclarations,
+        localVariableDeclarations,
         memoDeclarations,
         childInits: result.childInits,
         hasClientJs,

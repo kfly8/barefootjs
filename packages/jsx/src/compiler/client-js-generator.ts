@@ -172,7 +172,7 @@ function generateInitFunction(
   sameFileComponentNames: string[],
   ctx: ClientJsContext
 ): string {
-  const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = comp
+  const { name, result, constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, childInits } = comp
 
   // Generate child init calls (including same-file children)
   const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
@@ -196,7 +196,9 @@ function generateInitFunction(
   ].filter(Boolean).join('\n')
 
   const needsInitFunction = result.props.length > 0 || childInits.length > 0
-  const declarations = joinDeclarations(constantDeclarations, signalDeclarations, memoDeclarations)
+  // Order matters: constants, signals, local variables, then memos
+  // Local variables must come before memos because memos may use them
+  const declarations = joinDeclarations(constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations)
 
   if (needsInitFunction) {
     return generateInitFunctionWithProps(name, result, declarations, bodyCode)

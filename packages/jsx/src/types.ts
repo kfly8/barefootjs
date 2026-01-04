@@ -193,6 +193,7 @@ export type PropWithType = {
   name: string        // showCounter
   type: string        // boolean
   optional: boolean   // true if has ? or default value
+  defaultValue?: string  // 'false', '0', '""' - default value if prop has one
 }
 
 export type CompileResult = {
@@ -454,6 +455,8 @@ export type IRConditional = {
 export type IRListInfo = {
   arrayExpression: string
   paramName: string
+  /** User's index parameter name (e.g., 'index' from (item, index) => ...), null if not used */
+  indexParamName: string | null
   itemTemplate: string
   /** IR nodes for list item (used for server JSX generation) */
   itemIR: IRNode | null

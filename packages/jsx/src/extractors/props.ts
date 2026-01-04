@@ -110,11 +110,16 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
         const propName = element.name.text
         const hasDefault = !!element.initializer
         const typeInfo = typeMembers.get(propName)
+        // Capture the default value if present
+        const defaultValue = element.initializer
+          ? element.initializer.getText(sourceFile)
+          : undefined
 
         props.push({
           name: propName,
           type: typeInfo?.type || 'unknown',
           optional: typeInfo?.optional || hasDefault,
+          defaultValue,
         })
       }
     }

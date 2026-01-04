@@ -36,6 +36,7 @@ import { extractMemos } from './extractors/memos'
 import { extractModuleVariables } from './extractors/constants'
 import { extractComponentPropsWithTypes, extractTypeDefinitions } from './extractors/props'
 import { extractLocalFunctions } from './extractors/local-functions'
+import { extractModuleFunctions } from './extractors/module-functions'
 import { extractLocalVariables } from './extractors/local-variables'
 import { extractImports } from './extractors/imports'
 import { getDefaultExportName } from './extractors/local-components'
@@ -222,6 +223,9 @@ function compileJsxWithComponents(
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
 
+  // Extract module-level helper functions (not inside any component)
+  const moduleFunctions = extractModuleFunctions(source, filePath)
+
   // Extract local variables (for target component only, non-function declarations)
   const localVariables = extractLocalVariables(source, filePath, signals, targetComponentName)
 
@@ -286,7 +290,8 @@ function compileJsxWithComponents(
     refElements,
     conditionalElements,
     ir,
-    childInits
+    childInits,
+    moduleFunctions
   )
 
   return {
@@ -734,7 +739,8 @@ function generateClientJsWithCreateEffect(
   refElements: RefElement[] = [],
   conditionalElements: ConditionalElement[] = [],
   ir: IRNode | null = null,
-  childInits: ChildComponentInit[] = []
+  childInits: ChildComponentInit[] = [],
+  moduleFunctions: LocalFunction[] = []
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
@@ -828,6 +834,14 @@ function generateClientJsWithCreateEffect(
     lines.push('')
   }
 
+  // Output module-level helper functions (if any)
+  for (const fn of moduleFunctions) {
+    lines.push(fn.code)
+  }
+  if (moduleFunctions.length > 0) {
+    lines.push('')
+  }
+
   // Output local functions
   for (const fn of localFunctions) {
     lines.push(fn.code)
@@ -836,13 +850,8 @@ function generateClientJsWithCreateEffect(
     lines.push('')
   }
 
-  // Output local variables
-  for (const lv of localVariables) {
-    lines.push(lv.code)
-  }
-  if (localVariables.length > 0) {
-    lines.push('')
-  }
+  // Note: Local variables are output as declarations (before memos) in client-js-generator.ts
+  // They are not output here because memos may depend on them and declarations come first
 
   // Execute ref callbacks (with existence check)
   for (const ref of refElements) {
