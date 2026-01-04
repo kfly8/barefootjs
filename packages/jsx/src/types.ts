@@ -288,43 +288,17 @@ export type MarkedJsxComponentData = {
   childComponents: string[]
   /** Local variables defined within the component */
   localVariables?: LocalVariable[]
+  /** Whether this component is the default export */
+  isDefaultExport?: boolean
 }
 
 export type MarkedJsxAdapter = {
-  /**
-   * Generate Marked JSX component code (single component)
-   * @param options - Component information
-   * @returns Marked JSX component source code
-   * @deprecated Use generateMarkedJsxFile for file-based output
-   */
-  generateMarkedJsxComponent: (options: {
-    name: string
-    props: PropWithType[]
-    typeDefinitions: string[]
-    jsx: string
-    ir: IRNode | null
-    signals: SignalDeclaration[]
-    memos: MemoDeclaration[]
-    /** Child components used by this component */
-    childComponents: string[]
-    /** Module-level constants (e.g., const GRID_SIZE = 100) */
-    moduleConstants: ModuleConstant[]
-    /** Local variables defined within the component */
-    localVariables?: LocalVariable[]
-    /** Original import statements for child components */
-    originalImports: ComponentImport[]
-    /** Source path relative to root (e.g., 'pages/button.tsx') */
-    sourcePath: string
-    /** Whether this component is the default export */
-    isDefaultExport?: boolean
-  }) => string
-
   /**
    * Generate Marked JSX file code (multiple components in one file)
    * @param options - File and component information
    * @returns Marked JSX file source code with all component exports
    */
-  generateMarkedJsxFile?: (options: {
+  generateMarkedJsxFile: (options: {
     /** Source file path relative to root (e.g., '_shared/docs.tsx') */
     sourcePath: string
     /** All components in this file */
