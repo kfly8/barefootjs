@@ -16,6 +16,34 @@ import type {
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
+ * Boolean HTML attributes that should only be present when truthy.
+ * When value is false, the attribute should be omitted entirely.
+ */
+const BOOLEAN_HTML_ATTRS = new Set([
+  'disabled',
+  'readonly',
+  'checked',
+  'selected',
+  'multiple',
+  'autofocus',
+  'autoplay',
+  'controls',
+  'loop',
+  'muted',
+  'required',
+  'hidden',
+  'open',
+  'novalidate',
+  'formnovalidate',
+  'async',
+  'defer',
+  'ismap',
+  'reversed',
+  'scoped',
+  'itemscope',
+])
+
+/**
  * Converts HTML to JSX format (internal helper)
  *
  * Transforms HTML attributes to their JSX equivalents:
@@ -23,6 +51,26 @@ import { isSvgRoot } from '../utils/svg-helpers'
  */
 function htmlToJsx(html: string): string {
   return html.replace(/\bclass="/g, 'className="')
+}
+
+/**
+ * Renames user's index parameter to __index
+ *
+ * When a user writes .map((item, index) => ...), the compiler uses __index
+ * internally for consistency. This function renames references to the user's
+ * index parameter name (e.g., 'index') to '__index'.
+ *
+ * @param content - JSX or template string content
+ * @param indexParamName - User's index parameter name (e.g., 'index')
+ * @returns Content with index references renamed to __index
+ */
+function renameIndexParam(content: string, indexParamName: string | null): string {
+  if (!indexParamName) return content
+  // Replace standalone identifier references to the index param with __index
+  // Use word boundary to avoid replacing partial matches (e.g., 'indexOf' should not become '__indexOf')
+  // Use negative lookbehind to avoid replacing in attribute names (e.g., 'data-index' should stay as is)
+  const regex = new RegExp(`(?<!-)\\b${indexParamName}\\b`, 'g')
+  return content.replace(regex, '__index')
 }
 
 /**
@@ -256,8 +304,9 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
   const attrParts: string[] = []
 
   // Add data-bf-scope for root element
+  // Skip scope when __listIndex is defined (component is inside a list and will be re-rendered by client)
   if (isRoot && ctx.componentName) {
-    attrParts.push(`data-bf-scope="${ctx.componentName}"`)
+    attrParts.push(`{...(__listIndex === undefined ? { "data-bf-scope": "${ctx.componentName}" } : {})}`)
   }
 
   // Add data-bf for elements that need querySelector fallback
@@ -295,6 +344,9 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
     // Style objects need special handling
     if (attrName === 'style' && expr.trim().startsWith('{')) {
       attrParts.push(`style={${expr}}`)
+    } else if (BOOLEAN_HTML_ATTRS.has(attrName.toLowerCase())) {
+      // Boolean attrs: use undefined when falsy to prevent attribute from being rendered
+      attrParts.push(`${attrName}={(${expr}) ? true : undefined}`)
     } else {
       attrParts.push(`${attrName}={${expr}}`)
     }
@@ -335,6 +387,8 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
         inListContext: true,
       }
       let itemJsx = irToMarkedJsxInternal(listInfo.itemIR, itemCtx, false)
+      // Rename user's index param (e.g., 'index') to __index for consistency
+      itemJsx = renameIndexParam(itemJsx, listInfo.indexParamName)
       // Inject data-key attribute if key expression is present
       if (listInfo.keyExpression) {
         itemJsx = injectDataKeyAttribute(itemJsx, listInfo.keyExpression)
@@ -344,7 +398,9 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
     }
 
     // Fallback to template string (for backwards compatibility)
-    const itemTemplate = htmlToJsx(listInfo.itemTemplate)
+    let itemTemplate = htmlToJsx(listInfo.itemTemplate)
+    // Rename user's index param (e.g., 'index') to __index for consistency
+    itemTemplate = renameIndexParam(itemTemplate, listInfo.indexParamName)
     const mapExpr = `{${arrayExpr}?.map((${listInfo.paramName}, __index) => (${itemTemplate}))}`
     return `<${tagName}${attrsStr}>${mapExpr}</${tagName}>`
   }

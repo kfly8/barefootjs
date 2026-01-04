@@ -12,6 +12,34 @@ import { isPascalCase } from '../utils/helpers'
 import { isArrowFunction, extractArrowParams, extractArrowBody } from '../extractors/expression'
 
 /**
+ * Boolean HTML attributes that should only be present when truthy.
+ * When value is false, the attribute should be omitted entirely.
+ */
+const BOOLEAN_HTML_ATTRS = new Set([
+  'disabled',
+  'readonly',
+  'checked',
+  'selected',
+  'multiple',
+  'autofocus',
+  'autoplay',
+  'controls',
+  'loop',
+  'muted',
+  'required',
+  'hidden',
+  'open',
+  'novalidate',
+  'formnovalidate',
+  'async',
+  'defer',
+  'ismap',
+  'reversed',
+  'scoped',
+  'itemscope',
+])
+
+/**
  * Normalizes JSX text following React-like whitespace rules:
  * 1. Pure indentation (starts with newline) is removed
  * 2. Inline spaces only (spaces/tabs without newlines) are preserved
@@ -116,7 +144,13 @@ export function jsxToTemplateString(
           }
           for (const attr of el.dynamicAttrs) {
             const expr = substituteProps(attr.expression)
-            attrs += ` ${attr.name}="\${${expr}}"`
+            const attrNameLower = attr.name.toLowerCase()
+            if (BOOLEAN_HTML_ATTRS.has(attrNameLower)) {
+              // Boolean attrs should only be present when truthy
+              attrs += `\${${expr} ? ' ${attr.name}' : ''}`
+            } else {
+              attrs += ` ${attr.name}="\${${expr}}"`
+            }
           }
 
           // Handle events - convert to data-index and data-event-id for list item delegation
@@ -280,6 +314,14 @@ export function jsxToTemplateString(
       propsMap.delete('key')  // Don't substitute 'key' as a regular prop
     }
 
+    // Add default values for props that aren't explicitly passed
+    // This ensures that props like `inputDisabled = false` are resolved correctly
+    for (const prop of componentResult.props) {
+      if (!propsMap.has(prop.name) && prop.defaultValue !== undefined) {
+        propsMap.set(prop.name, prop.defaultValue)
+      }
+    }
+
     // Prefer IR when available - it's component-specific and more reliable
     // This is especially important for same-file components where source
     // contains multiple components and parsing would find the wrong one
@@ -412,7 +454,13 @@ export function jsxToTemplateString(
             } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
               const expr = attr.initializer.expression.getText(sf)
               const substituted = substituteProps(expr)
-              attrs += ` ${attrName}="\${${substituted}}"`
+              const attrNameLower = attrName.toLowerCase()
+              if (BOOLEAN_HTML_ATTRS.has(attrNameLower)) {
+                // Boolean attrs should only be present when truthy
+                attrs += `\${${substituted} ? ' ${attrName}' : ''}`
+              } else {
+                attrs += ` ${attrName}="\${${substituted}}"`
+              }
             }
           }
         }
@@ -529,7 +577,14 @@ export function jsxToTemplateString(
             if (ts.isStringLiteral(attr.initializer)) {
               attrs += ` ${attrName}="${attr.initializer.text}"`
             } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-              attrs += ` ${attrName}="\${${attr.initializer.expression.getText(sourceFile)}}"`
+              const expr = attr.initializer.expression.getText(sourceFile)
+              const attrNameLower = attrName.toLowerCase()
+              if (BOOLEAN_HTML_ATTRS.has(attrNameLower)) {
+                // Boolean attrs should only be present when truthy
+                attrs += `\${${expr} ? ' ${attrName}' : ''}`
+              } else {
+                attrs += ` ${attrName}="\${${expr}}"`
+              }
             }
           }
         }
@@ -555,34 +610,38 @@ export function jsxToTemplateString(
     if (ts.isJsxElement(n)) {
       const tagName = n.openingElement.tagName.getText(sourceFile)
 
-      // Detect component tag and inline expand
-      if (isPascalCase(tagName) && components.has(tagName)) {
-        const componentResult = components.get(tagName)!
-        const propsMap = extractComponentProps(n.openingElement.attributes, sourceFile, componentResult.props)
-        return inlineComponent(componentResult, propsMap)
-      }
-
-      const { attrs, eventAttrs } = processAttributes(n.openingElement.attributes)
-
-      // Process children
-      let children = ''
+      // Process children first (needed for both component inlining and regular elements)
+      let childrenContent = ''
       for (const child of n.children) {
         if (ts.isJsxText(child)) {
           // Note: child.text preserves leading/trailing whitespace, unlike getText()
           const text = normalizeJsxText(child.text)
           if (text) {
-            children += text
+            childrenContent += text
           }
         } else if (ts.isJsxExpression(child) && child.expression) {
           // Process JSX within ternary operators
-          children += processExpression(child.expression)
+          childrenContent += processExpression(child.expression)
         } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
           // Process recursively
-          children += processNode(child)
+          childrenContent += processNode(child)
         }
       }
 
-      return `<${tagName}${eventAttrs}${attrs}>${children}</${tagName}>`
+      // Detect component tag and inline expand
+      if (isPascalCase(tagName) && components.has(tagName)) {
+        const componentResult = components.get(tagName)!
+        const propsMap = extractComponentProps(n.openingElement.attributes, sourceFile, componentResult.props)
+        // Pass children as a prop (quoted string for proper template interpolation)
+        if (childrenContent) {
+          propsMap.set('children', `"${childrenContent}"`)
+        }
+        return inlineComponent(componentResult, propsMap)
+      }
+
+      const { attrs, eventAttrs } = processAttributes(n.openingElement.attributes)
+
+      return `<${tagName}${eventAttrs}${attrs}>${childrenContent}</${tagName}>`
     }
 
     return ''
