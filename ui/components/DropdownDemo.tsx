@@ -168,3 +168,62 @@ export function DropdownDisabledDemo() {
     </div>
   )
 }
+
+/**
+ * Dropdown inside CSS transformed parent demo
+ *
+ * Tests that dropdown positioning works correctly when parent has CSS transforms.
+ * CSS transforms create a new containing block for fixed/absolute positioned descendants,
+ * which can affect positioning calculations.
+ */
+export function DropdownWithTransformDemo() {
+  const [open, setOpen] = createSignal(false)
+  const [value, setValue] = createSignal('')
+
+  const displayLabel = createMemo(() =>
+    value() === '' ? 'Select option' :
+    value() === 'option1' ? 'Option 1' :
+    value() === 'option2' ? 'Option 2' :
+    value() === 'option3' ? 'Option 3' : 'Select option'
+  )
+
+  const isOption1Selected = createMemo(() => value() === 'option1')
+  const isOption2Selected = createMemo(() => value() === 'option2')
+  const isOption3Selected = createMemo(() => value() === 'option3')
+
+  const handleSelect = (optionValue: string) => {
+    setValue(optionValue)
+    setOpen(false)
+  }
+
+  return (
+    <div class="relative inline-block">
+      <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
+        {displayLabel()}
+      </DropdownTrigger>
+      <DropdownContent open={open()} onClose={() => setOpen(false)}>
+        <DropdownItem
+          value="option1"
+          selected={isOption1Selected()}
+          onClick={() => handleSelect('option1')}
+        >
+          Option 1
+        </DropdownItem>
+        <DropdownItem
+          value="option2"
+          selected={isOption2Selected()}
+          onClick={() => handleSelect('option2')}
+        >
+          Option 2
+        </DropdownItem>
+        <DropdownItem
+          value="option3"
+          selected={isOption3Selected()}
+          onClick={() => handleSelect('option3')}
+        >
+          Option 3
+        </DropdownItem>
+      </DropdownContent>
+    </div>
+  )
+}

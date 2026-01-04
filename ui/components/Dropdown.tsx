@@ -105,11 +105,15 @@ export function DropdownContent({
     }
   }
 
+  // Animation: scale + fade from trigger with transform-origin at top
+  // Uses CSS transitions for smooth open/close animation
   return (
     <div
       role="listbox"
-      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-zinc-200 bg-white py-1 shadow-lg ${
-        open ? '' : 'hidden'
+      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-zinc-200 bg-white py-1 shadow-lg transform-gpu origin-top transition-all duration-200 ease-out ${
+        open
+          ? 'opacity-100 scale-100'
+          : 'opacity-0 scale-95 pointer-events-none'
       }`}
       tabIndex={-1}
       onKeyDown={handleKeyDown}

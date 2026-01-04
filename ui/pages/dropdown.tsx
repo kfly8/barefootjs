@@ -2,7 +2,7 @@
  * Dropdown Documentation Page
  */
 
-import { DropdownBasicDemo, DropdownWithDefaultDemo, DropdownDisabledDemo } from '@/components/DropdownDemo'
+import { DropdownBasicDemo, DropdownWithDefaultDemo, DropdownDisabledDemo, DropdownWithTransformDemo } from '@/components/DropdownDemo'
 import {
   PageHeader,
   Section,
@@ -129,6 +129,19 @@ const disabledCode = `<Dropdown>
   </DropdownContent>
 </Dropdown>`
 
+const transformCode = `// Dropdown works correctly inside CSS transformed containers
+<div class="transform scale-100 translate-x-0">
+  <Dropdown>
+    <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
+      {selectedLabel() || <DropdownLabel>Select option</DropdownLabel>}
+    </DropdownTrigger>
+    <DropdownContent open={open()} onClose={() => setOpen(false)}>
+      <DropdownItem value="option1">Option 1</DropdownItem>
+      <DropdownItem value="option2">Option 2</DropdownItem>
+    </DropdownContent>
+  </Dropdown>
+</div>`
+
 // Props definitions
 const dropdownTriggerProps: PropDefinition[] = [
   {
@@ -246,6 +259,23 @@ export function DropdownPage() {
 
           <Example title="Disabled" code={disabledCode}>
             <DropdownDisabledDemo />
+          </Example>
+
+          <Example title="With CSS Transform" code={transformCode}>
+            <div class="space-y-4">
+              <p class="text-sm text-zinc-400">Dropdown inside a scaled container:</p>
+              <div class="transform scale-100 bg-zinc-800 p-4 rounded-lg" data-transform-container>
+                <DropdownWithTransformDemo />
+              </div>
+              <p class="text-sm text-zinc-400">Dropdown inside a rotated container:</p>
+              <div class="transform rotate-0 bg-zinc-800 p-4 rounded-lg" data-transform-container-rotate>
+                <DropdownWithTransformDemo />
+              </div>
+              <p class="text-sm text-zinc-400">Dropdown inside a translated container:</p>
+              <div class="transform translate-x-4 bg-zinc-800 p-4 rounded-lg" data-transform-container-translate>
+                <DropdownWithTransformDemo />
+              </div>
+            </div>
           </Example>
         </div>
       </Section>
