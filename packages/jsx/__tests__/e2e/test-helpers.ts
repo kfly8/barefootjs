@@ -85,25 +85,27 @@ export async function setupDOM(result: CompileResult): Promise<{
   document.body.appendChild(container)
 
   // Execute clientJs in the context with barefoot imports
-  const { createSignal, createEffect, onCleanup } = await import('../../../dom/src/reactive')
+  const { createSignal, createEffect, createMemo, onCleanup } = await import('../../../dom/src/reactive')
   const { reconcileList } = await import('../../../dom/src/list')
 
-  // Remove import statements from clientJs (they're not needed in test context)
+  // Remove import/export statements from clientJs (they're not needed in test context)
   const cleanedClientJs = result.clientJs
     .replace(/^import\s+.*$/gm, '')  // Remove import lines
+    .replace(/^export\s+/gm, '')     // Remove export keywords
     .trim()
 
   // Create a function that has access to barefoot primitives
   const executeClientJs = new Function(
     'createSignal',
     'createEffect',
+    'createMemo',
     'onCleanup',
     'reconcileList',
     'document',
     cleanedClientJs
   )
 
-  executeClientJs(createSignal, createEffect, onCleanup, reconcileList, document)
+  executeClientJs(createSignal, createEffect, createMemo, onCleanup, reconcileList, document)
 
   return {
     container,
