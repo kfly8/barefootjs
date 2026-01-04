@@ -4,9 +4,9 @@ This document defines the transformation rules for the BarefootJS JSX compiler.
 
 ## Specification Data
 
-📊 **[View Full Specification (CSV)](spec/spec.csv)**
+📊 **[View Full Specification (TSV)](spec/spec.tsv)**
 
-The CSV contains all transformation rules with:
+The TSV contains all transformation rules with:
 - **id**: Unique specification ID (e.g., JSX-001, ATTR-010)
 - **category**: Feature category
 - **input_pattern**: Input JSX pattern
@@ -71,4 +71,4 @@ JSX Source → IR (Intermediate Representation) → Marked JSX + Client JS
 
 - Document Version: 2.0.0
 - Last Updated: 2026-01-04
-- Format: CSV-based specification
+- Format: TSV-based specification
