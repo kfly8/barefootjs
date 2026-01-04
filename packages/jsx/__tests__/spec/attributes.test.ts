@@ -3,10 +3,6 @@
  *
  * Tests for ATTR-XXX spec items.
  * Each test has 1:1 correspondence with spec/spec.tsv entries.
- *
- * This file focuses on E2E tests for partial status items:
- * - ATTR-012: style string attribute
- * - ATTR-017: data-* attribute
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
@@ -191,11 +187,332 @@ describe('Attributes Specs', () => {
     })
   })
 
-  // Additional attribute specs with existing coverage (references)
-  // ATTR-001 ~ ATTR-005: See jsx-to-ir.test.ts
-  // ATTR-010: See attributes.test.ts:40
-  // ATTR-011: See attributes.test.ts:58
-  // ATTR-013 ~ ATTR-016: See attributes.test.ts, dynamic-attributes.test.ts
-  // ATTR-018: See dynamic-attributes.test.ts:80
-  // ATTR-020 ~ ATTR-023: See spread-attributes.test.ts
+  // ATTR-001: Static string attr preserved
+  it('ATTR-001: preserves static string attribute', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        return <div id="main">Content</div>
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('#main')!.textContent).toBe('Content')
+
+    cleanup()
+  })
+
+  // ATTR-002: Boolean shorthand
+  it('ATTR-002: handles boolean shorthand attribute', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        return <input disabled />
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const input = container.querySelector('input')! as HTMLInputElement
+    expect(input.disabled).toBe(true)
+
+    cleanup()
+  })
+
+  // ATTR-003: class -> className
+  it('ATTR-003: transforms class to className', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        return <div class="foo">Content</div>
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('.foo')!.textContent).toBe('Content')
+
+    cleanup()
+  })
+
+  // ATTR-004: SVG gets xmlns
+  it('ATTR-004: adds xmlns to SVG', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        return <svg><path d="M0 0" /></svg>
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const svg = container.querySelector('svg')!
+    expect(svg.getAttribute('xmlns')).toBe('http://www.w3.org/2000/svg')
+
+    cleanup()
+  })
+
+  // ATTR-005: camelCase preserved
+  it('ATTR-005: preserves camelCase attributes', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        return <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const svg = container.querySelector('svg')!
+    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24')
+
+    cleanup()
+  })
+
+  // ATTR-010: Dynamic class in effect
+  it('ATTR-010: handles dynamic class attribute', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [active, setActive] = createSignal(false)
+        return (
+          <div>
+            <p class={active() ? 'on' : 'off'}>Status</p>
+            <button onClick={() => setActive(true)}>Activate</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const p = container.querySelector('p')!
+    expect(p.className).toBe('off')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(p.className).toBe('on')
+
+    cleanup()
+  })
+
+  // ATTR-011: Style object assignment
+  it('ATTR-011: handles style object', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [isRed, setIsRed] = createSignal(true)
+        return (
+          <div>
+            <p style={{ color: isRed() ? 'red' : 'blue' }}>Styled</p>
+            <button onClick={() => setIsRed(false)}>Blue</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const p = container.querySelector('p')! as HTMLElement
+    expect(p.style.color).toBe('red')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(p.style.color).toBe('blue')
+
+    cleanup()
+  })
+
+  // ATTR-013: Boolean property
+  it('ATTR-013: handles boolean property binding', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [loading, setLoading] = createSignal(true)
+        return (
+          <div>
+            <button disabled={loading()}>Submit</button>
+            <button onClick={() => setLoading(false)}>Done</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const buttons = container.querySelectorAll('button')
+    expect((buttons[0] as HTMLButtonElement).disabled).toBe(true)
+
+    click(buttons[1])
+    await waitForUpdate()
+    expect((buttons[0] as HTMLButtonElement).disabled).toBe(false)
+
+    cleanup()
+  })
+
+  // ATTR-014: Value with undefined check
+  it('ATTR-014: handles input value with undefined check', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [text, setText] = createSignal('hello')
+        return <input value={text()} onInput={(e) => setText(e.target.value)} />
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const input = container.querySelector('input')! as HTMLInputElement
+    expect(input.value).toBe('hello')
+
+    cleanup()
+  })
+
+  // ATTR-015: Hidden property
+  it('ATTR-015: handles hidden property binding', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [isHidden, setIsHidden] = createSignal(true)
+        return (
+          <div>
+            <div hidden={isHidden()}>Hidden Content</div>
+            <button onClick={() => setIsHidden(false)}>Show</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const hiddenDiv = container.querySelectorAll('div')[1] as HTMLDivElement
+    expect(hiddenDiv.hidden).toBe(true)
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(hiddenDiv.hidden).toBe(false)
+
+    cleanup()
+  })
+
+  // ATTR-016: Checked property
+  it('ATTR-016: handles checked property binding', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [isOn, setIsOn] = createSignal(false)
+        return (
+          <div>
+            <input type="checkbox" checked={isOn()} onChange={() => setIsOn(!isOn())} />
+            <button onClick={() => setIsOn(true)}>Check</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const checkbox = container.querySelector('input')! as HTMLInputElement
+    expect(checkbox.checked).toBe(false)
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(checkbox.checked).toBe(true)
+
+    cleanup()
+  })
+
+  // ATTR-018: Complex ternary in effect
+  it('ATTR-018: handles complex ternary in class', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [a, setA] = createSignal(true)
+        const b = () => 'yes'
+        const c = () => 'no'
+        return (
+          <div>
+            <p class={a() ? b() : c()}>Text</p>
+            <button onClick={() => setA(false)}>Toggle</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const p = container.querySelector('p')!
+    expect(p.className).toBe('yes')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(p.className).toBe('no')
+
+    cleanup()
+  })
+
+  // ATTR-020: Spread preserved
+  it('ATTR-020: preserves spread attributes', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        const props = { id: 'test', title: 'Hello' }
+        return <div {...props}>Content</div>
+      }
+    `
+    const result = await compile(source)
+    // Spread compiles successfully
+    expect(result.html).toBeTruthy()
+  })
+
+  // ATTR-021: Multiple spreads
+  it('ATTR-021: handles multiple spreads', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        const a = { id: 'test' }
+        const b = { title: 'Hello' }
+        return <div {...a} {...b}>Content</div>
+      }
+    `
+    const result = await compile(source)
+    // Multiple spreads compile successfully
+    expect(result.html).toBeTruthy()
+  })
+
+  // ATTR-022: Static + spread
+  it('ATTR-022: handles static attr with spread', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        const props = { title: 'Hello' }
+        return <div id="x" {...props}>Content</div>
+      }
+    `
+    const result = await compile(source)
+    // Static attr preserved with spread
+    expect(result.html).toContain('id="x"')
+  })
+
+  // ATTR-023: Spread on self-closing
+  it('ATTR-023: handles spread on self-closing element', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        const props = { type: 'text', placeholder: 'Enter name' }
+        return <input {...props} />
+      }
+    `
+    const result = await compile(source)
+    // Spread on self-closing compiles successfully
+    expect(result.html).toBeTruthy()
+  })
 })

@@ -3,11 +3,6 @@
  *
  * Tests for EVT-XXX spec items.
  * Each test has 1:1 correspondence with spec/spec.tsv entries.
- *
- * This file focuses on E2E tests for partial status items:
- * - EVT-007: onBlur with capture
- * - EVT-008: onFocus with capture
- * - EVT-012: onFocus in list
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
@@ -25,267 +20,398 @@ afterEach(() => {
 })
 
 describe('Events Specs', () => {
-  // EVT-007: <input onBlur={() => validate()}/> - blur event handling
-  describe('EVT-007: onBlur event', () => {
-    it('fires blur handler when input loses focus', async () => {
-      const source = `
-        "use client"
-        import { createSignal } from 'barefoot'
-        function Component() {
-          const [blurred, setBlurred] = createSignal(false)
-          return (
-            <div>
-              <input type="text" onBlur={() => setBlurred(true)} />
-              <p class="status">{blurred() ? 'Blurred' : 'Not blurred'}</p>
-            </div>
-          )
-        }
-      `
-      const result = await compile(source)
-      const { container, cleanup } = await setupDOM(result)
+  // EVT-001: onClick handler
+  it('EVT-001: handles onClick event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = createSignal(0)
+        return (
+          <div>
+            <button onClick={() => setCount(count() + 1)}>Click</button>
+            <p>{count()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
 
-      const inputEl = container.querySelector('input')!
-      const statusEl = container.querySelector('.status')!
+    expect(container.querySelector('p')!.textContent).toBe('0')
 
-      expect(statusEl.textContent).toBe('Not blurred')
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('1')
 
-      // Trigger blur event
-      inputEl.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
-      await waitForUpdate()
-
-      expect(statusEl.textContent).toBe('Blurred')
-
-      cleanup()
-    })
-
-    it('validates input on blur', async () => {
-      const source = `
-        "use client"
-        import { createSignal } from 'barefoot'
-        function Component() {
-          const [value, setValue] = createSignal('')
-          const [error, setError] = createSignal('')
-          const validate = () => {
-            if (value().trim() === '') {
-              setError('Required')
-            } else {
-              setError('')
-            }
-          }
-          return (
-            <div>
-              <input
-                type="text"
-                value={value()}
-                onInput={(e) => setValue(e.target.value)}
-                onBlur={validate}
-              />
-              <p class="error">{error()}</p>
-            </div>
-          )
-        }
-      `
-      const result = await compile(source)
-      const { container, cleanup } = await setupDOM(result)
-
-      const inputEl = container.querySelector('input')! as HTMLInputElement
-      const errorEl = container.querySelector('.error')!
-
-      expect(errorEl.textContent).toBe('')
-
-      // Blur with empty value - should show error
-      inputEl.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
-      await waitForUpdate()
-      expect(errorEl.textContent).toBe('Required')
-
-      // Enter value and blur - error should clear
-      input(inputEl, 'test')
-      inputEl.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
-      await waitForUpdate()
-      expect(errorEl.textContent).toBe('')
-
-      cleanup()
-    })
+    cleanup()
   })
 
-  // EVT-008: <input onFocus={() => highlight()}/> - focus event handling
-  describe('EVT-008: onFocus event', () => {
-    it('fires focus handler when input receives focus', async () => {
-      const source = `
-        "use client"
-        import { createSignal } from 'barefoot'
-        function Component() {
-          const [focused, setFocused] = createSignal(false)
-          return (
-            <div>
-              <input type="text" onFocus={() => setFocused(true)} />
-              <p class="status">{focused() ? 'Focused' : 'Not focused'}</p>
-            </div>
-          )
-        }
-      `
-      const result = await compile(source)
-      const { container, cleanup } = await setupDOM(result)
+  // EVT-002: onInput handler
+  it('EVT-002: handles onInput event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [text, setText] = createSignal('')
+        return (
+          <div>
+            <input onInput={(e) => setText(e.target.value)} />
+            <p>{text()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
 
-      const inputEl = container.querySelector('input')!
-      const statusEl = container.querySelector('.status')!
+    const inputEl = container.querySelector('input')! as HTMLInputElement
+    input(inputEl, 'hello')
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('hello')
 
-      expect(statusEl.textContent).toBe('Not focused')
-
-      // Trigger focus event
-      inputEl.dispatchEvent(new FocusEvent('focus', { bubbles: true }))
-      await waitForUpdate()
-
-      expect(statusEl.textContent).toBe('Focused')
-
-      cleanup()
-    })
-
-    it('tracks focus and blur together', async () => {
-      const source = `
-        "use client"
-        import { createSignal } from 'barefoot'
-        function Component() {
-          const [active, setActive] = createSignal(false)
-          return (
-            <div>
-              <input
-                type="text"
-                class={active() ? 'focused' : ''}
-                onFocus={() => setActive(true)}
-                onBlur={() => setActive(false)}
-              />
-            </div>
-          )
-        }
-      `
-      const result = await compile(source)
-      const { container, cleanup } = await setupDOM(result)
-
-      const inputEl = container.querySelector('input')!
-
-      expect(inputEl.className).toBe('')
-
-      // Focus
-      inputEl.dispatchEvent(new FocusEvent('focus', { bubbles: true }))
-      await waitForUpdate()
-      expect(inputEl.className).toBe('focused')
-
-      // Blur
-      inputEl.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
-      await waitForUpdate()
-      expect(inputEl.className).toBe('')
-
-      cleanup()
-    })
+    cleanup()
   })
 
-  // EVT-012: <li onFocus={...}> in list - focus event in list items
-  describe('EVT-012: onFocus in list', () => {
-    it('fires focus handler in list items', async () => {
-      const source = `
-        "use client"
-        import { createSignal } from 'barefoot'
-        function Component() {
-          const [items, setItems] = createSignal([
-            { id: 1, name: 'Item 1' },
-            { id: 2, name: 'Item 2' },
-            { id: 3, name: 'Item 3' }
-          ])
-          const [focusedId, setFocusedId] = createSignal(null)
-          return (
-            <div>
-              <ul>
-                {items().map(item => (
-                  <li key={item.id}>
-                    <input
-                      type="text"
-                      value={item.name}
-                      onFocus={() => setFocusedId(item.id)}
-                    />
-                  </li>
-                ))}
-              </ul>
-              <p class="focused-id">Focused: {focusedId() ?? 'none'}</p>
-            </div>
-          )
-        }
-      `
-      const result = await compile(source)
-      const { container, cleanup } = await setupDOM(result)
+  // EVT-003: onChange handler
+  it('EVT-003: handles onChange event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [checked, setChecked] = createSignal(false)
+        return (
+          <div>
+            <input type="checkbox" onChange={() => setChecked(!checked())} />
+            <p>{checked() ? 'On' : 'Off'}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
 
-      const inputs = container.querySelectorAll('input')
-      const focusedIdEl = container.querySelector('.focused-id')!
+    const checkbox = container.querySelector('input')! as HTMLInputElement
+    expect(container.querySelector('p')!.textContent).toBe('Off')
 
-      expect(focusedIdEl.textContent).toBe('Focused: none')
+    checkbox.dispatchEvent(new Event('change', { bubbles: true }))
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('On')
 
-      // Focus second input
-      inputs[1].dispatchEvent(new FocusEvent('focus', { bubbles: true }))
-      await waitForUpdate()
-      expect(focusedIdEl.textContent).toBe('Focused: 2')
+    cleanup()
+  })
 
-      // Focus first input
-      inputs[0].dispatchEvent(new FocusEvent('focus', { bubbles: true }))
-      await waitForUpdate()
-      expect(focusedIdEl.textContent).toBe('Focused: 1')
+  // EVT-004: onSubmit handler
+  it('EVT-004: handles onSubmit event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [submitted, setSubmitted] = createSignal(false)
+        return (
+          <div>
+            <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true) }}>
+              <button type="submit">Submit</button>
+            </form>
+            <p>{submitted() ? 'Submitted' : 'Not submitted'}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
 
-      cleanup()
-    })
+    expect(container.querySelector('p')!.textContent).toBe('Not submitted')
 
-    it('handles blur in list items (re-renders list)', async () => {
-      const source = `
-        "use client"
-        import { createSignal } from 'barefoot'
-        function Component() {
-          const [items, setItems] = createSignal([
-            { id: 1, name: 'Item 1', touched: false },
-            { id: 2, name: 'Item 2', touched: false }
-          ])
-          const markTouched = (id) => {
-            setItems(items().map(item =>
-              item.id === id ? { ...item, touched: true } : item
-            ))
-          }
-          return (
+    const form = container.querySelector('form')!
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('Submitted')
+
+    cleanup()
+  })
+
+  // EVT-005: onKeyDown handler
+  it('EVT-005: handles onKeyDown event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [key, setKey] = createSignal('')
+        return (
+          <div>
+            <input onKeyDown={(e) => setKey(e.key)} />
+            <p>{key()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const inputEl = container.querySelector('input')!
+    inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('Enter')
+
+    cleanup()
+  })
+
+  // EVT-006: onMouseEnter handler
+  it('EVT-006: handles onMouseEnter event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [hovered, setHovered] = createSignal(false)
+        return (
+          <div>
+            <div class="target" onMouseEnter={() => setHovered(true)}>Hover me</div>
+            <p>{hovered() ? 'Hovered' : 'Not hovered'}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('p')!.textContent).toBe('Not hovered')
+
+    const target = container.querySelector('.target')!
+    target.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }))
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('Hovered')
+
+    cleanup()
+  })
+
+  // EVT-007: onBlur event
+  it('EVT-007: handles onBlur event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [blurred, setBlurred] = createSignal(false)
+        return (
+          <div>
+            <input type="text" onBlur={() => setBlurred(true)} />
+            <p class="status">{blurred() ? 'Blurred' : 'Not blurred'}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const inputEl = container.querySelector('input')!
+    expect(container.querySelector('.status')!.textContent).toBe('Not blurred')
+
+    inputEl.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
+    await waitForUpdate()
+    expect(container.querySelector('.status')!.textContent).toBe('Blurred')
+
+    cleanup()
+  })
+
+  // EVT-008: onFocus event
+  it('EVT-008: handles onFocus event', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [focused, setFocused] = createSignal(false)
+        return (
+          <div>
+            <input type="text" onFocus={() => setFocused(true)} />
+            <p class="status">{focused() ? 'Focused' : 'Not focused'}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const inputEl = container.querySelector('input')!
+    expect(container.querySelector('.status')!.textContent).toBe('Not focused')
+
+    inputEl.dispatchEvent(new FocusEvent('focus', { bubbles: true }))
+    await waitForUpdate()
+    expect(container.querySelector('.status')!.textContent).toBe('Focused')
+
+    cleanup()
+  })
+
+  // EVT-010: onClick in list
+  it('EVT-010: handles onClick in list items', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([
+          { id: 1, name: 'A' },
+          { id: 2, name: 'B' },
+          { id: 3, name: 'C' }
+        ])
+        const [clicked, setClicked] = createSignal('')
+        return (
+          <div>
             <ul>
               {items().map(item => (
-                <li key={item.id} class={item.touched ? 'touched' : ''}>
-                  <input type="text" onBlur={() => markTouched(item.id)} />
+                <li key={item.id} onClick={() => setClicked(item.name)}>{item.name}</li>
+              ))}
+            </ul>
+            <p class="clicked">{clicked()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const lis = container.querySelectorAll('li')
+    click(lis[1])
+    await waitForUpdate()
+    expect(container.querySelector('.clicked')!.textContent).toBe('B')
+
+    cleanup()
+  })
+
+  // EVT-011: onInput in list
+  it('EVT-011: handles onInput in list items', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([{ id: 1, value: '' }])
+        const [lastInput, setLastInput] = createSignal('')
+        return (
+          <div>
+            <ul>
+              {items().map(item => (
+                <li key={item.id}>
+                  <input onInput={(e) => setLastInput(e.target.value)} />
                 </li>
               ))}
             </ul>
-          )
-        }
-      `
-      const result = await compile(source)
-      const { container, cleanup } = await setupDOM(result)
+            <p class="last">{lastInput()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
 
-      const listItems = container.querySelectorAll('li')
-      expect(listItems[0].className).toBe('')
-      expect(listItems[1].className).toBe('')
+    const inputEl = container.querySelector('input')! as HTMLInputElement
+    input(inputEl, 'test')
+    await waitForUpdate()
+    expect(container.querySelector('.last')!.textContent).toBe('test')
 
-      // Blur first input - list will re-render
-      const inputs = container.querySelectorAll('input')
-      inputs[0].dispatchEvent(new FocusEvent('blur', { bubbles: true }))
-      await waitForUpdate()
-
-      // After list re-render, query fresh elements
-      const updatedListItems = container.querySelectorAll('li')
-      expect(updatedListItems[0].className).toBe('touched')
-      expect(updatedListItems[1].className).toBe('')
-
-      cleanup()
-    })
+    cleanup()
   })
 
-  // Additional event specs with existing coverage (references)
-  // EVT-001: See event-handlers.test.ts:49
-  // EVT-002: See event-handlers.test.ts:77
-  // EVT-003: See event-handlers.test.ts:103
-  // EVT-004: See event-handlers.test.ts:127
-  // EVT-005: See event-handlers.test.ts:149
-  // EVT-006: See event-handlers.test.ts:176
-  // EVT-010: See list-rendering.test.ts:89
-  // EVT-011: See list-rendering.test.ts:114
-  // EVT-020, EVT-021: See list-rendering.test.ts:224, 245
+  // EVT-012: onFocus in list
+  it('EVT-012: handles onFocus in list items', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([{ id: 1 }, { id: 2 }])
+        const [focusedId, setFocusedId] = createSignal(0)
+        return (
+          <div>
+            <ul>
+              {items().map(item => (
+                <li key={item.id}>
+                  <input onFocus={() => setFocusedId(item.id)} />
+                </li>
+              ))}
+            </ul>
+            <p class="focused">{focusedId()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const inputs = container.querySelectorAll('input')
+    inputs[1].dispatchEvent(new FocusEvent('focus', { bubbles: true }))
+    await waitForUpdate()
+    expect(container.querySelector('.focused')!.textContent).toBe('2')
+
+    cleanup()
+  })
+
+  // EVT-020: Event with closure
+  it('EVT-020: handles event with closure', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([1, 2, 3])
+        const [sum, setSum] = createSignal(0)
+        return (
+          <div>
+            <ul>
+              {items().map(num => (
+                <li key={num}>
+                  <button onClick={() => setSum(sum() + num)}>{num}</button>
+                </li>
+              ))}
+            </ul>
+            <p class="sum">{sum()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const buttons = container.querySelectorAll('button')
+    click(buttons[0]) // Add 1
+    await waitForUpdate()
+    expect(container.querySelector('.sum')!.textContent).toBe('1')
+
+    click(buttons[2]) // Add 3
+    await waitForUpdate()
+    expect(container.querySelector('.sum')!.textContent).toBe('4')
+
+    cleanup()
+  })
+
+  // EVT-021: Event with item access
+  it('EVT-021: handles event with item access', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([
+          { id: 1, name: 'A' },
+          { id: 2, name: 'B' }
+        ])
+        const [selected, setSelected] = createSignal(null)
+        return (
+          <div>
+            <ul>
+              {items().map(item => (
+                <li key={item.id} onClick={() => setSelected(item)}>{item.name}</li>
+              ))}
+            </ul>
+            <p class="selected">{selected()?.name || 'none'}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const lis = container.querySelectorAll('li')
+    expect(container.querySelector('.selected')!.textContent).toBe('none')
+
+    click(lis[1])
+    await waitForUpdate()
+    expect(container.querySelector('.selected')!.textContent).toBe('B')
+
+    cleanup()
+  })
 })

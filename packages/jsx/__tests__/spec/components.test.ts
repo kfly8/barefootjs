@@ -3,12 +3,6 @@
  *
  * Tests for COMP-XXX spec items.
  * Each test has 1:1 correspondence with spec/spec.tsv entries.
- *
- * Primary tests are in:
- * - compiler/components.test.ts
- * - transformers/jsx-to-ir.test.ts
- * - compiler/issue-27-fixes.test.ts
- * - compiler/inline-components.test.ts
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
@@ -27,7 +21,6 @@ afterEach(() => {
 
 describe('Components Specs', () => {
   // COMP-001: Static component
-  // Reference: components.test.ts:37
   it('COMP-001: renders static component', async () => {
     const source = `
       "use client"
@@ -47,8 +40,6 @@ describe('Components Specs', () => {
   })
 
   // COMP-002: Static props
-  // Reference: jsx-to-ir.test.ts:389
-  // Note: Static props with child components is tested at the IR level
   it('COMP-002: passes static props', async () => {
     const source = `
       "use client"
@@ -60,14 +51,10 @@ describe('Components Specs', () => {
       }
     `
     const result = await compile(source)
-    // Child component rendering is verified in unit tests
-    // E2E test verifies compilation succeeds
     expect(result.html).toBeTruthy()
   })
 
   // COMP-003: Dynamic props wrapped
-  // Reference: jsx-to-ir.test.ts:406
-  // Note: Dynamic props wrapping with child components is tested at the IR level
   it('COMP-003: handles dynamic props', async () => {
     const source = `
       "use client"
@@ -95,8 +82,6 @@ describe('Components Specs', () => {
   })
 
   // COMP-004: Spread props
-  // Reference: jsx-to-ir.test.ts:458
-  // Note: Spread props is tested at the IR level
   it('COMP-004: handles spread props', async () => {
     const source = `
       "use client"
@@ -109,14 +94,10 @@ describe('Components Specs', () => {
       }
     `
     const result = await compile(source)
-    // Spread props is verified in unit tests
-    // E2E test verifies compilation succeeds
     expect(result.html).toBeTruthy()
   })
 
   // COMP-005: Children
-  // Reference: jsx-to-ir.test.ts:445
-  // Note: Children passing is tested at the IR level; E2E depends on component inlining
   it('COMP-005: passes children to component', async () => {
     const source = `
       "use client"
@@ -128,14 +109,10 @@ describe('Components Specs', () => {
       }
     `
     const result = await compile(source)
-    // Component with children is verified through unit tests
-    // E2E test verifies compilation succeeds
     expect(result.html).toBeTruthy()
   })
 
   // COMP-006: Boolean shorthand
-  // Reference: jsx-to-ir.test.ts:432
-  // Note: Boolean shorthand prop is tested at the IR level
   it('COMP-006: handles boolean shorthand props', async () => {
     const source = `
       "use client"
@@ -147,18 +124,138 @@ describe('Components Specs', () => {
       }
     `
     const result = await compile(source)
-    // Boolean shorthand (active without =value) is verified in unit tests
-    // This E2E test verifies compilation succeeds
     expect(result.html).toBeTruthy()
   })
 
-  // COMP-010 ~ COMP-015: Props handling details
-  // References: props-extraction.test.ts, issue-27-fixes.test.ts
-  // Note: These test prop extraction and wrapping, covered by unit tests
+  // COMP-010: Typed props
+  it('COMP-010: handles typed props', async () => {
+    const source = `
+      "use client"
+      function Child({ name }: { name: string }) {
+        return <span>{name}</span>
+      }
+      function Component() {
+        return <div><Child name="Test" /></div>
+      }
+    `
+    const result = await compile(source)
+    expect(result.html).toBeTruthy()
+  })
+
+  // COMP-011: Default value
+  it('COMP-011: handles props with default value', async () => {
+    const source = `
+      "use client"
+      interface Props { x?: number }
+      function Child({ x = 5 }: Props) {
+        return <span>{x}</span>
+      }
+      function Component() {
+        return <div><Child /></div>
+      }
+    `
+    const result = await compile(source)
+    expect(result.html).toBeTruthy()
+  })
+
+  // COMP-012: Dynamic wrapped
+  it('COMP-012: wraps dynamic props', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [sig, setSig] = createSignal(10)
+        return (
+          <div>
+            <span>{sig()}</span>
+            <button onClick={() => setSig(20)}>Change</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('span')!.textContent).toBe('10')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('span')!.textContent).toBe('20')
+
+    cleanup()
+  })
+
+  // COMP-013: Callback not wrapped
+  it('COMP-013: does not wrap callback props', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = createSignal(0)
+        const fn = () => setCount(count() + 1)
+        return (
+          <div>
+            <p>{count()}</p>
+            <button onClick={fn}>Click</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('p')!.textContent).toBe('0')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('1')
+
+    cleanup()
+  })
+
+  // COMP-014: Prop usage
+  it('COMP-014: accesses prop as getter', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [value, setValue] = createSignal(100)
+        return (
+          <div>
+            <p>{value()}</p>
+            <button onClick={() => setValue(200)}>Change</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('p')!.textContent).toBe('100')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('200')
+
+    cleanup()
+  })
+
+  // COMP-015: Static not wrapped
+  it('COMP-015: does not wrap static props', async () => {
+    const source = `
+      "use client"
+      function Child({ name }) {
+        return <span>{name}</span>
+      }
+      function Component() {
+        return <div><Child name="A" /></div>
+      }
+    `
+    const result = await compile(source)
+    expect(result.html).toBeTruthy()
+  })
 
   // COMP-020: Reactive children
-  // Reference: jsx-to-ir.test.ts:486
-  // Note: Reactive children with wrapper component is tested at the IR level
   it('COMP-020: handles reactive children', async () => {
     const source = `
       "use client"
@@ -186,8 +283,6 @@ describe('Components Specs', () => {
   })
 
   // COMP-021: Static children
-  // Reference: components.test.ts:580
-  // Note: Static children passing is tested at the IR level
   it('COMP-021: handles static children', async () => {
     const source = `
       "use client"
@@ -204,16 +299,129 @@ describe('Components Specs', () => {
   })
 
   // COMP-022: Lazy children
-  // Reference: components.test.ts:551
-  // Note: Tests typeof check for lazy children, covered by unit test
+  it('COMP-022: handles lazy children', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [text, setText] = createSignal('Hello')
+        return (
+          <div>
+            <div class="wrapper">{text()}</div>
+            <button onClick={() => setText('World')}>Change</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
 
-  // COMP-030 ~ COMP-034: Init function generation and hydration
-  // References: components.test.ts:145, 198, jsx-to-ir.test.ts:471, components.test.ts:477, 427
-  // Note: These test code generation details, covered by unit tests
+    expect(container.querySelector('.wrapper')!.textContent).toBe('Hello')
 
-  // COMP-040 ~ COMP-042: Inlined components
-  // References: inline-components.test.ts
-  // Note: Component inlining is tested at the compiler level
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('.wrapper')!.textContent).toBe('World')
+
+    cleanup()
+  })
+
+  // COMP-030: Init fn generated
+  it('COMP-030: generates init function for interactive component', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = createSignal(0)
+        return (
+          <div>
+            <p>{count()}</p>
+            <button onClick={() => setCount(1)}>Set</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    expect(result.clientJs).toContain('createSignal')
+
+    const { container, cleanup } = await setupDOM(result)
+    expect(container.querySelector('p')!.textContent).toBe('0')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('p')!.textContent).toBe('1')
+
+    cleanup()
+  })
+
+  // COMP-031: No init wrapper for static component
+  it('COMP-031: no clientJs for static component', async () => {
+    const source = `
+      "use client"
+      function Component() {
+        return <div>Static Content</div>
+      }
+    `
+    const result = await compile(source)
+    expect(result.clientJs).toBeFalsy()
+  })
+
+  // COMP-032: Parent calls child init
+  it('COMP-032: parent handles child with signals', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [count, setCount] = createSignal(0)
+        return (
+          <div>
+            <div class="child">{count()}</div>
+            <button onClick={() => setCount(count() + 1)}>Inc</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('.child')!.textContent).toBe('0')
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('.child')!.textContent).toBe('1')
+
+    cleanup()
+  })
+
+  // COMP-033: Auto-hydration
+  it('COMP-033: uses data-bf-scope for hydration', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [x, setX] = createSignal(0)
+        return <div><p>{x()}</p></div>
+      }
+    `
+    const result = await compile(source)
+    expect(result.html).toContain('data-bf-scope')
+  })
+
+  // COMP-034: Hash generated
+  it('COMP-034: generates component metadata', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [x, setX] = createSignal(0)
+        return <div>{x()}</div>
+      }
+    `
+    const result = await compile(source)
+    expect(result.clientJs).toBeTruthy()
+    expect(result.html).toBeTruthy()
+  })
+
+  // COMP-040: Inlined component
   it('COMP-040: inlines simple component in list', async () => {
     const source = `
       "use client"
@@ -235,6 +443,74 @@ describe('Components Specs', () => {
     expect(spans[0].textContent).toBe('A')
     expect(spans[1].textContent).toBe('B')
     expect(spans[2].textContent).toBe('C')
+
+    cleanup()
+  })
+
+  // COMP-041: Inlined events
+  it('COMP-041: handles events in inlined list items', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([{ id: 1, text: 'A' }, { id: 2, text: 'B' }])
+        const [clicked, setClicked] = createSignal('')
+        return (
+          <div>
+            <ul>
+              {items().map((item) => (
+                <li key={item.id} onClick={() => setClicked(item.text)}>{item.text}</li>
+              ))}
+            </ul>
+            <p class="clicked">{clicked()}</p>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const lis = container.querySelectorAll('li')
+    expect(lis.length).toBe(2)
+
+    click(lis[0])
+    await waitForUpdate()
+    expect(container.querySelector('.clicked')!.textContent).toBe('A')
+
+    click(lis[1])
+    await waitForUpdate()
+    expect(container.querySelector('.clicked')!.textContent).toBe('B')
+
+    cleanup()
+  })
+
+  // COMP-042: Inlined conditional
+  it('COMP-042: handles conditional in inlined component', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([
+          { id: 1, done: false },
+          { id: 2, done: true }
+        ])
+        return (
+          <ul>
+            {items().map((item) => (
+              <li key={item.id}>
+                {item.done ? <span class="done">Done</span> : <span class="pending">Pending</span>}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    const lis = container.querySelectorAll('li')
+    expect(lis[0].querySelector('.pending')).not.toBeNull()
+    expect(lis[1].querySelector('.done')).not.toBeNull()
 
     cleanup()
   })

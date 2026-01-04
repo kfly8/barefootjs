@@ -3,10 +3,6 @@
  *
  * Tests for REF-XXX spec items.
  * Each test has 1:1 correspondence with spec/spec.tsv entries.
- *
- * Primary tests are in:
- * - transformers/jsx-to-ir.test.ts (REF-001)
- * - compiler/ref-attribute.test.ts (REF-002 ~ REF-005)
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
@@ -25,7 +21,6 @@ afterEach(() => {
 
 describe('Refs Specs', () => {
   // REF-001: Ref callback
-  // Reference: jsx-to-ir.test.ts:139
   it('REF-001: executes ref callback', async () => {
     const source = `
       "use client"
@@ -47,7 +42,6 @@ describe('Refs Specs', () => {
     const result = await compile(source)
     const { container, cleanup } = await setupDOM(result)
 
-    // Ref should be set
     const input = container.querySelector('input')!
     expect(input).not.toBeNull()
 
@@ -55,11 +49,21 @@ describe('Refs Specs', () => {
   })
 
   // REF-002: Ref excluded from server
-  // Reference: ref-attribute.test.ts:41
-  // Note: Tests that ref is not in marked JSX, covered by unit test
+  it('REF-002: excludes ref from server HTML', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        let ref
+        return <div ref={(el) => ref = el}>Content</div>
+      }
+    `
+    const result = await compile(source)
+    // ref should not appear in HTML
+    expect(result.html).not.toContain('ref=')
+  })
 
   // REF-003: Ref + event
-  // Reference: ref-attribute.test.ts:61
   it('REF-003: handles ref with event handler', async () => {
     const source = `
       "use client"
@@ -90,7 +94,6 @@ describe('Refs Specs', () => {
   })
 
   // REF-004: Ref + dynamic attribute
-  // Reference: ref-attribute.test.ts:88
   it('REF-004: handles ref with dynamic attribute', async () => {
     const source = `
       "use client"
@@ -121,7 +124,6 @@ describe('Refs Specs', () => {
   })
 
   // REF-005: Multiple refs
-  // Reference: ref-attribute.test.ts:109
   it('REF-005: handles multiple refs', async () => {
     const source = `
       "use client"
