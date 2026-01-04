@@ -47,11 +47,13 @@ test.describe('Dropdown Documentation Page', () => {
       // Open
       await trigger.click()
       const content = basicDemo.locator('[data-dropdown-content]')
-      await expect(content).toBeVisible()
+      await expect(content).toHaveClass(/opacity-100/)
 
       // Close
       await trigger.click()
-      await expect(content).not.toBeVisible()
+      // Should have closed state (opacity-0, pointer-events-none)
+      await expect(content).toHaveClass(/opacity-0/)
+      await expect(content).toHaveClass(/pointer-events-none/)
     })
 
     test('selects an item when clicked', async ({ page }) => {
@@ -65,8 +67,8 @@ test.describe('Dropdown Documentation Page', () => {
       const content = basicDemo.locator('[data-dropdown-content]')
       await content.locator('text=Banana').click()
 
-      // Dropdown should close and trigger should show selected value
-      await expect(content).not.toBeVisible()
+      // Dropdown should close (opacity-0) and trigger should show selected value
+      await expect(content).toHaveClass(/opacity-0/)
       await expect(trigger).toContainText('Banana')
     })
 
@@ -95,13 +97,14 @@ test.describe('Dropdown Documentation Page', () => {
       await trigger.click()
 
       const content = basicDemo.locator('[data-dropdown-content]')
-      await expect(content).toBeVisible()
+      await expect(content).toHaveClass(/opacity-100/)
 
       // Focus the content and press ESC
       await content.focus()
       await page.keyboard.press('Escape')
 
-      await expect(content).not.toBeVisible()
+      // Should close (opacity-0)
+      await expect(content).toHaveClass(/opacity-0/)
     })
 
     test('has correct accessibility attributes on trigger', async ({ page }) => {
@@ -183,8 +186,8 @@ test.describe('Dropdown Documentation Page', () => {
       // Try to click (should not work)
       await trigger.click({ force: true })
 
-      // Content should remain hidden
-      await expect(content).not.toBeVisible()
+      // Content should remain closed (opacity-0)
+      await expect(content).toHaveClass(/opacity-0/)
     })
   })
 
@@ -223,5 +226,203 @@ test.describe('Home Page - Dropdown Link', () => {
     await page.click('a[href="/components/dropdown"]')
     await expect(page).toHaveURL('/components/dropdown')
     await expect(page.locator('h1')).toContainText('Dropdown')
+  })
+})
+
+test.describe('Dropdown Animation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/dropdown')
+  })
+
+  test('opens with scale and fade animation from trigger', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    // Initially should have opacity-0 and scale-95 classes
+    await expect(content).toHaveClass(/opacity-0/)
+    await expect(content).toHaveClass(/scale-95/)
+
+    // Open dropdown
+    await trigger.click()
+
+    // After opening should have opacity-100 and scale-100 classes
+    await expect(content).toHaveClass(/opacity-100/)
+    await expect(content).toHaveClass(/scale-100/)
+  })
+
+  test('closes with scale and fade animation', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+    await expect(content).toHaveClass(/opacity-100/)
+
+    // Close dropdown
+    await trigger.click()
+
+    // After closing should return to closed state
+    await expect(content).toHaveClass(/opacity-0/)
+    await expect(content).toHaveClass(/scale-95/)
+  })
+
+  test('has transform-origin at top for natural expand direction', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    // Should have origin-top class for transform-origin
+    await expect(content).toHaveClass(/origin-top/)
+  })
+
+  test('no content jump when animation completes', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+
+    // Wait for animation to complete (200ms transition)
+    await page.waitForTimeout(250)
+
+    // Get position after animation
+    const positionAfterAnimation = await content.boundingBox()
+
+    // Wait a bit more to ensure no jump
+    await page.waitForTimeout(100)
+
+    // Get position again
+    const positionStable = await content.boundingBox()
+
+    // Positions should be the same (no jump)
+    expect(positionAfterAnimation?.x).toBe(positionStable?.x)
+    expect(positionAfterAnimation?.y).toBe(positionStable?.y)
+  })
+})
+
+test.describe('Dropdown with CSS Transforms', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/dropdown')
+  })
+
+  test('opens and positions correctly inside scaled container', async ({ page }) => {
+    const container = page.locator('[data-transform-container]')
+    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const trigger = dropdown.locator('[data-dropdown-trigger]')
+    const content = dropdown.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+
+    // Content should be visible
+    await expect(content).toBeVisible()
+    await expect(content).toHaveClass(/opacity-100/)
+
+    // Get positions
+    const triggerBox = await trigger.boundingBox()
+    const contentBox = await content.boundingBox()
+
+    // Content should be positioned below trigger
+    expect(contentBox).not.toBeNull()
+    expect(triggerBox).not.toBeNull()
+    if (contentBox && triggerBox) {
+      // Content top should be near trigger bottom (with small margin)
+      expect(contentBox.y).toBeGreaterThanOrEqual(triggerBox.y + triggerBox.height - 5)
+    }
+  })
+
+  test('opens and positions correctly inside rotated container', async ({ page }) => {
+    const container = page.locator('[data-transform-container-rotate]')
+    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const trigger = dropdown.locator('[data-dropdown-trigger]')
+    const content = dropdown.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+
+    // Content should be visible
+    await expect(content).toBeVisible()
+    await expect(content.locator('text=Option 1')).toBeVisible()
+  })
+
+  test('opens and positions correctly inside translated container', async ({ page }) => {
+    const container = page.locator('[data-transform-container-translate]')
+    // Scroll container into view to ensure dropdown is not covered by other elements
+    await container.scrollIntoViewIfNeeded()
+
+    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const trigger = dropdown.locator('[data-dropdown-trigger]')
+    const content = dropdown.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+
+    // Content should be visible (items are accessible)
+    await expect(content.locator('text=Option 1')).toBeVisible()
+  })
+
+  test('selection works correctly in transformed container', async ({ page }) => {
+    const container = page.locator('[data-transform-container]')
+    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const trigger = dropdown.locator('[data-dropdown-trigger]')
+    const content = dropdown.locator('[data-dropdown-content]')
+
+    // Open and select
+    await trigger.click()
+    await content.locator('[data-value="option1"]').click()
+
+    // Dropdown should close
+    await expect(content).toHaveClass(/opacity-0/)
+
+    // Selected value should be displayed
+    await expect(trigger).toContainText('Option 1')
+
+    // Open again and verify checkmark
+    await trigger.click()
+    const selectedItem = content.locator('[role="option"][aria-selected="true"]')
+    await expect(selectedItem).toContainText('Option 1')
+  })
+
+  test('ESC key works in transformed container', async ({ page }) => {
+    const container = page.locator('[data-transform-container]')
+    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const trigger = dropdown.locator('[data-dropdown-trigger]')
+    const content = dropdown.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+    await expect(content).toHaveClass(/opacity-100/)
+
+    // Press ESC
+    await content.focus()
+    await page.keyboard.press('Escape')
+
+    // Should close
+    await expect(content).toHaveClass(/opacity-0/)
+  })
+})
+
+test.describe('Dropdown Viewport Edge Positioning', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/dropdown')
+  })
+
+  test('dropdown near bottom of viewport still displays correctly', async ({ page }) => {
+    // Scroll to make the CSS transform section visible near bottom
+    const transformSection = page.locator('[data-transform-container-translate]')
+    await transformSection.scrollIntoViewIfNeeded()
+
+    const dropdown = transformSection.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const trigger = dropdown.locator('[data-dropdown-trigger]')
+    const content = dropdown.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+
+    // Content should be visible
+    await expect(content).toBeVisible()
+    await expect(content.locator('text=Option 1')).toBeVisible()
   })
 })
