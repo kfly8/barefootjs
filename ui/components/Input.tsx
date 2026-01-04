@@ -18,19 +18,16 @@ export interface InputProps {
   onFocus?: (e: Event & { target: HTMLInputElement }) => void
 }
 
-// No-op function for optional event handlers
-const noop = () => {}
-
 export function Input({
   inputType = 'text',
   inputPlaceholder = '',
   inputValue = '',
   inputDisabled = false,
   inputReadOnly = false,
-  onInput = noop,
-  onChange = noop,
-  onBlur = noop,
-  onFocus = noop,
+  onInput = () => {},
+  onChange = () => {},
+  onBlur = () => {},
+  onFocus = () => {},
 }: InputProps) {
   return (
     <input
