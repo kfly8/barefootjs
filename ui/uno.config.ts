@@ -9,6 +9,7 @@ export default defineConfig({
       './**/index.tsx',
       './pages/**/*.tsx',
       './_shared/**/*.tsx',
+      './components/**/*.tsx',
       './dist/**/*.tsx',
     ],
   },
