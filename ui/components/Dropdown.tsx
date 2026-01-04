@@ -180,6 +180,13 @@ export function DropdownItem({
   onClick,
   children,
 }: DropdownItemProps) {
+  const handleClick = () => {
+    onClick?.()
+    // Return focus to trigger after selection
+    const trigger = document.querySelector('[data-dropdown-trigger]') as HTMLElement
+    setTimeout(() => trigger?.focus(), 0)
+  }
+
   return (
     <div
       role="option"
@@ -194,7 +201,7 @@ export function DropdownItem({
           ? 'bg-accent text-accent-foreground font-medium'
           : 'text-popover-foreground hover:bg-accent/50'
       }`}
-      onClick={onClick}
+      onClick={handleClick}
       data-dropdown-item
     >
       {selected && (

@@ -31,8 +31,8 @@ export function Counter({
   return (
     <div class="inline-flex items-center gap-2">
       <button
-        class={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-sm font-medium shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 ${
-          disabled ? 'cursor-not-allowed opacity-50' : ''
+        class={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-95 ${
+          disabled ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''
         }`}
         {...(disabled ? { disabled: true } : {})}
         onClick={onDecrement}
@@ -42,12 +42,12 @@ export function Counter({
           <path d="M5 12h14"/>
         </svg>
       </button>
-      <span class="min-w-12 text-center text-lg font-medium tabular-nums">
+      <span class="min-w-12 text-center text-lg font-medium tabular-nums text-foreground">
         {value}
       </span>
       <button
-        class={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-sm font-medium shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 ${
-          disabled ? 'cursor-not-allowed opacity-50' : ''
+        class={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-95 ${
+          disabled ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''
         }`}
         {...(disabled ? { disabled: true } : {})}
         onClick={onIncrement}

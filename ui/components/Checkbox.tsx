@@ -10,20 +10,27 @@
 export interface CheckboxProps {
   checked?: boolean
   disabled?: boolean
+  error?: boolean
   onCheckedChange?: (checked: boolean) => void
 }
 
 export function Checkbox({
   checked = false,
   disabled = false,
+  error = false,
   onCheckedChange,
 }: CheckboxProps) {
   return (
     <button
       role="checkbox"
       aria-checked={checked}
+      aria-invalid={error}
       disabled={disabled}
-      class={`peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+      class={`peer h-4 w-4 shrink-0 rounded-sm border shadow focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 ${
+        error
+          ? 'border-destructive focus-visible:ring-destructive'
+          : 'border-primary focus-visible:ring-ring'
+      } ${
         checked ? 'bg-primary text-primary-foreground' : 'bg-background'
       }`}
       onClick={() => onCheckedChange?.(!checked)}

@@ -98,10 +98,11 @@ export function AccordionTrigger({
     <h3 class="flex">
       <button
         class={`flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline ${
-          disabled ? 'cursor-not-allowed opacity-50' : ''
+          disabled ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''
         }`}
         {...(disabled ? { disabled: true } : {})}
         aria-expanded={open}
+        aria-disabled={disabled}
         onClick={onClick}
         onKeyDown={handleKeyDown}
       >

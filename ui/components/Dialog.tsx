@@ -92,10 +92,47 @@ export function DialogContent({
   ariaLabelledby,
   ariaDescribedby,
 }: DialogContentProps) {
-  // Handle ESC key to close dialog (requires focus on dialog)
+  // Handle keyboard events: ESC to close, Tab for focus trap
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && onClose) {
       onClose()
+      return
+    }
+
+    // Focus trap: Tab/Shift+Tab cycles within dialog
+    if (e.key === 'Tab') {
+      const dialog = e.currentTarget as HTMLElement
+      const focusableElements = dialog.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0] as HTMLElement
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+
+      if (e.shiftKey) {
+        // Shift+Tab: if on first element, go to last
+        if (document.activeElement === firstElement || document.activeElement === dialog) {
+          e.preventDefault()
+          lastElement?.focus()
+        }
+      } else {
+        // Tab: if on last element, go to first
+        if (document.activeElement === lastElement) {
+          e.preventDefault()
+          firstElement?.focus()
+        }
+      }
+    }
+  }
+
+  // Focus first focusable element when dialog opens
+  const handleFocusOnOpen = (el: HTMLElement) => {
+    if (open && el) {
+      const focusableElements = el.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0] as HTMLElement
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => firstElement?.focus(), 0)
     }
   }
 
@@ -116,6 +153,7 @@ export function DialogContent({
       tabIndex={-1}
       onKeyDown={handleKeyDown}
       data-dialog-open={open ? 'true' : 'false'}
+      ref={handleFocusOnOpen}
     >
       {children}
     </div>
