@@ -75,11 +75,3 @@ JSX Source → IR (Intermediate Representation) → Marked JSX + Client JS
 ## Related Documents
 
 - [CLAUDE.md](CLAUDE.md) - Development workflow
-
----
-
-## Version
-
-- Document Version: 2.0.0
-- Last Updated: 2026-01-04
-- Format: TSV-based specification

@@ -71,3 +71,12 @@ bunx playwright test -g "adds a new todo"
 
 **Important**: Unit tests alone are not sufficient. E2E tests verify client-side JavaScript behavior including hydration, event handling, and DOM manipulation in an actual browser.
 
+### Updating Specification
+
+When adding or modifying compiler features:
+
+1. Update `spec/spec.tsv` with the new specification entry
+2. Add spec ID comment to the corresponding test (e.g., `// JSX-001: Plain text preserved`)
+3. Ensure `test_file` column points to the test file and line number
+
+See [SPEC.md](SPEC.md) for specification format details.
