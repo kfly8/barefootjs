@@ -48,6 +48,52 @@ export const renderer = jsxRenderer(
 
             /* Loading styles */
             .loading { color: #666; font-style: italic; }
+
+            /* Animated Todo List styles */
+            .animated-todo-container { margin: 20px 0; }
+            .animated-todo-container h2 { margin-bottom: 10px; }
+            .item-count { font-size: 16px; color: #666; margin-bottom: 16px; }
+            .item-count .count { font-weight: bold; color: #2196f3; }
+            .add-controls { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+            .add-input { flex: 1; min-width: 150px; font-size: 16px; padding: 10px 14px; border: 2px solid #ddd; border-radius: 6px; outline: none; transition: border-color 0.2s; }
+            .add-input:focus { border-color: #2196f3; }
+            .add-multiple-btn { font-size: 14px; padding: 10px 16px; cursor: pointer; background: #9c27b0; color: white; border: none; border-radius: 6px; transition: background 0.2s; }
+            .add-multiple-btn:hover { background: #7b1fa2; }
+            .remove-all-btn { font-size: 14px; padding: 10px 16px; cursor: pointer; background: #f44336; color: white; border: none; border-radius: 6px; transition: background 0.2s; }
+            .remove-all-btn:hover { background: #d32f2f; }
+
+            /* Animated list styles */
+            .animated-list { list-style: none; padding: 0; margin: 0; }
+            .animated-item {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 14px 16px;
+              margin: 6px 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+              transform-origin: top center;
+            }
+            .animated-item.is-new {
+              animation: slideIn 0.3s ease-out forwards;
+            }
+            .animated-item .item-text { flex: 1; font-size: 16px; font-weight: 500; }
+            .remove-btn { font-size: 13px; padding: 6px 14px; cursor: pointer; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; border-radius: 4px; transition: all 0.2s; }
+            .remove-btn:hover { background: rgba(255,255,255,0.2); border-color: white; }
+
+            /* Enter animation: fade-in + slide-down */
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(-20px) scaleY(0.8);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0) scaleY(1);
+              }
+            }
           `}</style>
         </head>
         <body>

@@ -15,6 +15,7 @@ import TodoApp from '@/components/TodoApp'
 import Dashboard from '@/components/Dashboard'
 import Game from '@/components/Game'
 import FizzBuzzCounter from '@/components/FizzBuzzCounter'
+import AnimatedTodoList from '@/components/AnimatedTodoList'
 import { AsyncUserList } from './components/AsyncUserList'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
@@ -53,6 +54,7 @@ app.get('/', (c) => {
           <li><a href="/async">Async User List (Suspense)</a></li>
           <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
           <li><a href="/game">Game (100x100 Grid Benchmark)</a></li>
+          <li><a href="/animated-todos">Animated Todo List (CSS Transitions)</a></li>
         </ul>
       </nav>
     </div>
@@ -167,6 +169,36 @@ app.get('/game', (c) => {
       <p><a href="/">← Back</a></p>
     </div>
   )
+})
+
+// Animated Todo List (CSS Transitions E2E test)
+// In-memory storage for animated todos
+type AnimatedTodo = { id: number; text: string }
+let animatedTodos: AnimatedTodo[] = [
+  { id: 1, text: 'First item' },
+  { id: 2, text: 'Second item' },
+]
+let animatedNextId = 3
+
+app.get('/animated-todos', (c) => {
+  return c.render(
+    <div>
+      <h1>CSS Transitions E2E Test</h1>
+      <p>This page tests list reconciliation with CSS animations.</p>
+      <AnimatedTodoList initialTodos={animatedTodos} />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Reset animated todos (for E2E testing)
+app.post('/api/animated-todos/reset', (c) => {
+  animatedTodos = [
+    { id: 1, text: 'First item' },
+    { id: 2, text: 'Second item' },
+  ]
+  animatedNextId = 3
+  return c.json({ success: true })
 })
 
 // REST API
