@@ -36,7 +36,8 @@ import { compile } from './test-helpers'
 
 
 describe('HTML Attributes - Dynamic class', () => {
-  it('dynamic class attribute', async () => {
+  // ATTR-010: Dynamic class
+  it('ATTR-010: dynamic class attribute', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -54,7 +55,8 @@ describe('HTML Attributes - Dynamic class', () => {
 })
 
 describe('HTML Attributes - Dynamic style', () => {
-  it('dynamic style attribute', async () => {
+  // ATTR-011: Style object
+  it('ATTR-011: dynamic style attribute', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -72,7 +74,8 @@ describe('HTML Attributes - Dynamic style', () => {
 })
 
 describe('HTML Attributes - Boolean attributes', () => {
-  it('dynamic disabled attribute', async () => {
+  // ATTR-013: Boolean attributes
+  it('ATTR-013: dynamic disabled attribute', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -90,7 +93,8 @@ describe('HTML Attributes - Boolean attributes', () => {
 })
 
 describe('HTML Attributes - Form related', () => {
-  it('dynamic value attribute', async () => {
+  // ATTR-014: Value with null check
+  it('ATTR-014: dynamic value attribute', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
