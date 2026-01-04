@@ -76,7 +76,6 @@ bunx playwright test -g "adds a new todo"
 When adding or modifying compiler features:
 
 1. Update `spec/spec.tsv` with the new specification entry
-2. Add spec ID comment to the corresponding test (e.g., `// JSX-001: Plain text preserved`)
-3. Ensure `test_file` column points to the test file and line number
+2. Add E2E test to `packages/jsx/__tests__/spec/` with spec ID comment (e.g., `// JSX-001: Plain text preserved`)
 
 See [SPEC.md](SPEC.md) for specification format details.

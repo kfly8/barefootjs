@@ -3,10 +3,6 @@
  *
  * Tests for JSX-XXX spec items.
  * Each test has 1:1 correspondence with spec/spec.tsv entries.
- *
- * Primary tests are in:
- * - transformers/jsx-to-ir.test.ts (JSX-001 ~ JSX-009)
- * - compiler/fragment.test.ts (JSX-010 ~ JSX-013)
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
@@ -25,7 +21,6 @@ afterEach(() => {
 
 describe('Basic JSX Specs', () => {
   // JSX-001: <div>Hello</div> - Plain text preserved
-  // Reference: jsx-to-ir.test.ts:31
   it('JSX-001: preserves plain text content', async () => {
     const source = `
       "use client"
@@ -42,7 +37,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-002: Indentation whitespace removed
-  // Reference: jsx-to-ir.test.ts:45
   it('JSX-002: removes indentation whitespace', async () => {
     const source = `
       "use client"
@@ -61,7 +55,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-003: Explicit space preserved
-  // Reference: jsx-to-ir.test.ts:61
   it('JSX-003: preserves explicit spaces', async () => {
     const source = `
       "use client"
@@ -79,7 +72,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-004: Nested elements preserved
-  // Reference: jsx-to-ir.test.ts:151
   it('JSX-004: preserves nested elements', async () => {
     const source = `
       "use client"
@@ -98,7 +90,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-005: Self-closing preserved
-  // Reference: jsx-to-ir.test.ts:189
   it('JSX-005: preserves self-closing elements', async () => {
     const source = `
       "use client"
@@ -116,7 +107,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-006: Void element supported
-  // Reference: jsx-to-ir.test.ts:203
   it('JSX-006: supports void elements', async () => {
     const source = `
       "use client"
@@ -133,7 +123,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-007: Attrs on void element
-  // Reference: jsx-to-ir.test.ts:215
   it('JSX-007: supports attributes on void elements', async () => {
     const source = `
       "use client"
@@ -152,7 +141,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-008: Empty fragment
-  // Reference: jsx-to-ir.test.ts:230
   it('JSX-008: supports empty fragments', async () => {
     const source = `
       "use client"
@@ -165,7 +153,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-009: Fragment with children
-  // Reference: jsx-to-ir.test.ts:242
   it('JSX-009: supports fragments with children', async () => {
     const source = `
       "use client"
@@ -185,11 +172,20 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-010: First element gets scope marker
-  // Reference: fragment.test.ts:42
-  // Note: This tests marked JSX output, covered by unit test
+  it('JSX-010: first element gets scope marker in fragment', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [x, setX] = createSignal(0)
+        return <><p>{x()}</p><span>B</span></>
+      }
+    `
+    const result = await compile(source)
+    expect(result.html).toContain('data-bf-scope')
+  })
 
   // JSX-011: Nested fragments flattened
-  // Reference: fragment.test.ts:67
   it('JSX-011: flattens nested fragments', async () => {
     const source = `
       "use client"
@@ -207,7 +203,6 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-012: Mixed text and elements
-  // Reference: fragment.test.ts:120
   it('JSX-012: supports mixed text and elements in fragments', async () => {
     const source = `
       "use client"
@@ -226,6 +221,16 @@ describe('Basic JSX Specs', () => {
   })
 
   // JSX-013: Single child gets scope
-  // Reference: fragment.test.ts:140
-  // Note: This tests marked JSX output, covered by unit test
+  it('JSX-013: single child in fragment gets scope', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [x, setX] = createSignal(0)
+        return <><p>{x()}</p></>
+      }
+    `
+    const result = await compile(source)
+    expect(result.html).toContain('data-bf-scope')
+  })
 })

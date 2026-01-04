@@ -13,8 +13,9 @@ The TSV contains all transformation rules with:
 - **expected_output**: Expected transformation result
 - **output_type**: Type of transformation (see Output Type Legend below)
 - **status**: Implementation status (✅ Implemented, ⚠️ Partial, ❌ OOS)
-- **test_file**: Corresponding test file and line number
 - **notes**: Additional notes
+
+Tests for each spec ID are in `packages/jsx/__tests__/spec/` directory.
 
 ## Categories
 

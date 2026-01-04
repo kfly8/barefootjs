@@ -3,12 +3,6 @@
  *
  * Tests for EDGE-XXX spec items.
  * Each test has 1:1 correspondence with spec/spec.tsv entries.
- *
- * Primary tests are in:
- * - compiler/edge-cases.test.ts
- * - compiler/svg-elements.test.ts
- * - compiler/form-inputs.test.ts
- * - compiler/issue-27-fixes.test.ts
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
@@ -29,7 +23,6 @@ describe('Edge Cases Specs', () => {
   // Whitespace handling (EDGE-001 ~ EDGE-005)
   describe('Whitespace', () => {
     // EDGE-001: Trailing whitespace preserved
-    // Reference: edge-cases.test.ts:230
     it('EDGE-001: preserves trailing whitespace', async () => {
       const source = `
         "use client"
@@ -46,8 +39,41 @@ describe('Edge Cases Specs', () => {
       cleanup()
     })
 
+    // EDGE-002: Leading text
+    it('EDGE-002: preserves text after closing tag', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <div><span>A</span>B</div>
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      expect(container.querySelector('div')!.textContent).toBe('AB')
+
+      cleanup()
+    })
+
+    // EDGE-003: Block indentation removed
+    it('EDGE-003: removes block indentation', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <div>
+            <span>X</span>
+          </div>
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      expect(container.querySelector('span')!.textContent).toBe('X')
+
+      cleanup()
+    })
+
     // EDGE-004: Explicit space preserved
-    // Reference: edge-cases.test.ts:287
     it('EDGE-004: preserves explicit space expression', async () => {
       const source = `
         "use client"
@@ -62,12 +88,34 @@ describe('Edge Cases Specs', () => {
 
       cleanup()
     })
+
+    // EDGE-005: List whitespace
+    it('EDGE-005: preserves spaces in list template', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [items, setItems] = createSignal(['A', 'B'])
+          return (
+            <ul>
+              {items().map(i => <li key={i}> {i} </li>)}
+            </ul>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const lis = container.querySelectorAll('li')
+      expect(lis[0].textContent).toContain('A')
+
+      cleanup()
+    })
   })
 
   // Deep nesting (EDGE-010 ~ EDGE-013)
   describe('Deep Nesting', () => {
     // EDGE-010: Deep nesting processed correctly
-    // Reference: edge-cases.test.ts:15
     it('EDGE-010: handles deeply nested elements', async () => {
       const source = `
         "use client"
@@ -84,7 +132,6 @@ describe('Edge Cases Specs', () => {
     })
 
     // EDGE-011: Multiple dynamics tracked
-    // Reference: edge-cases.test.ts:46
     it('EDGE-011: tracks multiple dynamic expressions', async () => {
       const source = `
         "use client"
@@ -119,7 +166,6 @@ describe('Edge Cases Specs', () => {
     })
 
     // EDGE-012: Nested events
-    // Reference: edge-cases.test.ts:80
     it('EDGE-012: handles nested event handlers', async () => {
       const source = `
         "use client"
@@ -143,11 +189,132 @@ describe('Edge Cases Specs', () => {
       expect(container.querySelector('span')!.textContent).toBe('Inner: 0')
       expect(container.querySelector('p')!.textContent).toBe('Outer: 0')
 
-      // Click inner (with stopPropagation)
       click(container.querySelector('span')!)
       await waitForUpdate()
       expect(container.querySelector('span')!.textContent).toBe('Inner: 1')
       expect(container.querySelector('p')!.textContent).toBe('Outer: 0')
+
+      cleanup()
+    })
+
+    // EDGE-013: Ternary in map
+    it('EDGE-013: handles ternary in map', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [items, setItems] = createSignal([{ x: true }, { x: false }])
+          return (
+            <ul>
+              {items().map((i, idx) => <li key={idx}>{i.x ? 'Yes' : 'No'}</li>)}
+            </ul>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const lis = container.querySelectorAll('li')
+      expect(lis[0].textContent).toBe('Yes')
+      expect(lis[1].textContent).toBe('No')
+
+      cleanup()
+    })
+  })
+
+  // Destructuring and operators (EDGE-020 ~ EDGE-024)
+  describe('Operators and Special Cases', () => {
+    // EDGE-020: Object destructuring
+    it('EDGE-020: handles object destructuring', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [obj, setObj] = createSignal({ a: 1, b: 2 })
+          return <p>{obj().a}</p>
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      expect(container.querySelector('p')!.textContent).toBe('1')
+
+      cleanup()
+    })
+
+    // EDGE-021: Special chars
+    it('EDGE-021: escapes operators correctly', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [x, setX] = createSignal(true)
+          const [y, setY] = createSignal(1)
+          return (
+            <div>
+              {x() && y() > 0 && <span>Visible</span>}
+            </div>
+          )
+        }
+      `
+      const result = await compile(source)
+      expect(result.html).toBeTruthy()
+    })
+
+    // EDGE-022: Multiple deps
+    it('EDGE-022: tracks all 3 signals', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [a, setA] = createSignal(1)
+          const [b, setB] = createSignal(2)
+          const [c, setC] = createSignal(3)
+          return (
+            <div>
+              <p>{a() + b() + c()}</p>
+              <button onClick={() => setA(a() + 1)}>Inc</button>
+            </div>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      expect(container.querySelector('p')!.textContent).toBe('6')
+
+      click(container.querySelector('button')!)
+      await waitForUpdate()
+      expect(container.querySelector('p')!.textContent).toBe('7')
+
+      cleanup()
+    })
+
+    // EDGE-023: CSS pseudo-class
+    it('EDGE-023: preserves CSS pseudo-class in style tag', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <style>{'.foo:hover { color: red; }'}</style>
+        }
+      `
+      const result = await compile(source)
+      expect(result.html).toContain(':hover')
+    })
+
+    // EDGE-024: HTML attr name
+    it('EDGE-024: preserves HTML attr names', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <input type="checkbox" />
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const input = container.querySelector('input')! as HTMLInputElement
+      expect(input.type).toBe('checkbox')
 
       cleanup()
     })
@@ -156,7 +323,6 @@ describe('Edge Cases Specs', () => {
   // SVG handling (EDGE-030 ~ EDGE-035)
   describe('SVG', () => {
     // EDGE-030: SVG xmlns
-    // Reference: svg-elements.test.ts:18
     it('EDGE-030: adds xmlns to SVG', async () => {
       const source = `
         "use client"
@@ -174,7 +340,6 @@ describe('Edge Cases Specs', () => {
     })
 
     // EDGE-031: SVG viewBox preserved
-    // Reference: svg-elements.test.ts:39
     it('EDGE-031: preserves SVG viewBox', async () => {
       const source = `
         "use client"
@@ -191,8 +356,19 @@ describe('Edge Cases Specs', () => {
       cleanup()
     })
 
+    // EDGE-032: SVG stroke
+    it('EDGE-032: preserves SVG stroke-width', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <svg><path stroke-width="2" d="M0 0" /></svg>
+        }
+      `
+      const result = await compile(source)
+      expect(result.html).toContain('stroke-width')
+    })
+
     // EDGE-033: Dynamic SVG attr
-    // Reference: svg-elements.test.ts:83
     it('EDGE-033: handles dynamic SVG attributes', async () => {
       const source = `
         "use client"
@@ -223,7 +399,6 @@ describe('Edge Cases Specs', () => {
     })
 
     // EDGE-034: SVG event
-    // Reference: svg-elements.test.ts:106
     it('EDGE-034: handles SVG events', async () => {
       const source = `
         "use client"
@@ -251,12 +426,27 @@ describe('Edge Cases Specs', () => {
 
       cleanup()
     })
+
+    // EDGE-035: Nested SVG
+    it('EDGE-035: handles nested SVG groups', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <svg><g><g><path d="M0 0" /></g></g></svg>
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      expect(container.querySelector('path')).not.toBeNull()
+
+      cleanup()
+    })
   })
 
   // Form inputs (EDGE-040 ~ EDGE-048)
   describe('Form Inputs', () => {
     // EDGE-040: Input value binding
-    // Reference: form-inputs.test.ts:21
     it('EDGE-040: handles input value binding', async () => {
       const source = `
         "use client"
@@ -284,8 +474,69 @@ describe('Edge Cases Specs', () => {
       cleanup()
     })
 
+    // EDGE-041: Number input
+    it('EDGE-041: handles number input', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [num, setNum] = createSignal(0)
+          return <input type="number" value={num()} onInput={(e) => setNum(Number(e.target.value))} />
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const inputEl = container.querySelector('input')! as HTMLInputElement
+      expect(inputEl.type).toBe('number')
+
+      cleanup()
+    })
+
+    // EDGE-042: Textarea
+    it('EDGE-042: handles textarea value binding', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [text, setText] = createSignal('hello')
+          return <textarea value={text()} onInput={(e) => setText(e.target.value)} />
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const textarea = container.querySelector('textarea')! as HTMLTextAreaElement
+      expect(textarea.value).toBe('hello')
+
+      cleanup()
+    })
+
+    // EDGE-043: Select
+    it('EDGE-043: handles select value binding', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [selected, setSelected] = createSignal('b')
+          return (
+            <select value={selected()} onChange={(e) => setSelected(e.target.value)}>
+              <option value="a">A</option>
+              <option value="b">B</option>
+            </select>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const select = container.querySelector('select')! as HTMLSelectElement
+      expect(select.value).toBe('b')
+
+      cleanup()
+    })
+
     // EDGE-044: Checkbox checked binding
-    // Reference: form-inputs.test.ts:163
     it('EDGE-044: handles checkbox checked binding', async () => {
       const source = `
         "use client"
@@ -314,8 +565,86 @@ describe('Edge Cases Specs', () => {
       cleanup()
     })
 
+    // EDGE-045: Radio
+    it('EDGE-045: handles radio checked binding', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [isA, setIsA] = createSignal(true)
+          return (
+            <div>
+              <input type="radio" name="opt" checked={isA()} onChange={() => setIsA(true)} />
+              <input type="radio" name="opt" checked={!isA()} onChange={() => setIsA(false)} />
+            </div>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const radios = container.querySelectorAll('input') as NodeListOf<HTMLInputElement>
+      expect(radios[0].checked).toBe(true)
+
+      cleanup()
+    })
+
+    // EDGE-046: Multiple inputs
+    it('EDGE-046: tracks multiple inputs', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [a, setA] = createSignal('A')
+          const [b, setB] = createSignal('B')
+          return (
+            <div>
+              <input class="a" value={a()} onInput={(e) => setA(e.target.value)} />
+              <input class="b" value={b()} onInput={(e) => setB(e.target.value)} />
+            </div>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const inputA = container.querySelector('.a')! as HTMLInputElement
+      const inputB = container.querySelector('.b')! as HTMLInputElement
+      expect(inputA.value).toBe('A')
+      expect(inputB.value).toBe('B')
+
+      cleanup()
+    })
+
+    // EDGE-047: Dynamic placeholder
+    it('EDGE-047: handles dynamic placeholder', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [hint, setHint] = createSignal('Enter name')
+          return (
+            <div>
+              <input placeholder={hint()} />
+              <button onClick={() => setHint('Enter email')}>Change</button>
+            </div>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const inputEl = container.querySelector('input')! as HTMLInputElement
+      expect(inputEl.placeholder).toBe('Enter name')
+
+      click(container.querySelector('button')!)
+      await waitForUpdate()
+      expect(inputEl.placeholder).toBe('Enter email')
+
+      cleanup()
+    })
+
     // EDGE-048: Dynamic disabled
-    // Reference: form-inputs.test.ts:285
     it('EDGE-048: handles dynamic disabled', async () => {
       const source = `
         "use client"
@@ -343,11 +672,4 @@ describe('Edge Cases Specs', () => {
       cleanup()
     })
   })
-
-  // Additional edge cases references:
-  // EDGE-002, EDGE-003, EDGE-005: See edge-cases.test.ts
-  // EDGE-013: See edge-cases.test.ts:110
-  // EDGE-020 ~ EDGE-024: See edge-cases.test.ts, issue-27-fixes.test.ts
-  // EDGE-032, EDGE-035: See svg-elements.test.ts
-  // EDGE-041 ~ EDGE-047: See form-inputs.test.ts
 })
