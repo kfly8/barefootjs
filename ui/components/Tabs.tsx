@@ -74,6 +74,42 @@ export function TabsTrigger({
   onClick,
   children,
 }: TabsTriggerProps) {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const target = e.currentTarget as HTMLElement
+    const tabList = target.closest('[role="tablist"]')
+    if (!tabList) return
+
+    const tabs = tabList.querySelectorAll('[role="tab"]:not([disabled])')
+    const currentIndex = Array.from(tabs).indexOf(target)
+
+    let nextIndex: number | null = null
+
+    switch (e.key) {
+      case 'ArrowRight':
+        e.preventDefault()
+        nextIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0
+        break
+      case 'ArrowLeft':
+        e.preventDefault()
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1
+        break
+      case 'Home':
+        e.preventDefault()
+        nextIndex = 0
+        break
+      case 'End':
+        e.preventDefault()
+        nextIndex = tabs.length - 1
+        break
+    }
+
+    if (nextIndex !== null && tabs[nextIndex]) {
+      const nextTab = tabs[nextIndex] as HTMLElement
+      nextTab.focus()
+      nextTab.click()
+    }
+  }
+
   return (
     <button
       role="tab"
@@ -81,6 +117,7 @@ export function TabsTrigger({
       {...(disabled ? { disabled: true } : {})}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
+      tabIndex={selected ? 0 : -1}
       class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
@@ -89,6 +126,7 @@ export function TabsTrigger({
           : 'text-muted-foreground hover:text-foreground'
       }`}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
     >
       {children}
     </button>

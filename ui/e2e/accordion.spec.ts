@@ -225,3 +225,115 @@ test.describe('Home Page - Accordion Link', () => {
     await expect(page.locator('h1')).toContainText('Accordion')
   })
 })
+
+test.describe('Accordion Keyboard Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/accordion')
+  })
+
+  test('ArrowDown navigates to next accordion trigger', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+    const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
+
+    // Focus on first trigger
+    await firstTrigger.focus()
+    await expect(firstTrigger).toBeFocused()
+
+    // Press ArrowDown to go to next trigger
+    await page.keyboard.press('ArrowDown')
+
+    // Second trigger should be focused
+    await expect(secondTrigger).toBeFocused()
+  })
+
+  test('ArrowUp navigates to previous accordion trigger', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+    const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
+
+    // Focus on second trigger
+    await secondTrigger.focus()
+    await expect(secondTrigger).toBeFocused()
+
+    // Press ArrowUp to go to previous trigger
+    await page.keyboard.press('ArrowUp')
+
+    // First trigger should be focused
+    await expect(firstTrigger).toBeFocused()
+  })
+
+  test('ArrowDown wraps from last to first trigger', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+    const thirdTrigger = accordion.locator('button:has-text("Is it animated?")')
+
+    // Focus on last trigger
+    await thirdTrigger.focus()
+    await expect(thirdTrigger).toBeFocused()
+
+    // Press ArrowDown to wrap to first
+    await page.keyboard.press('ArrowDown')
+
+    // First trigger should be focused
+    await expect(firstTrigger).toBeFocused()
+  })
+
+  test('ArrowUp wraps from first to last trigger', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+    const thirdTrigger = accordion.locator('button:has-text("Is it animated?")')
+
+    // Focus on first trigger
+    await firstTrigger.focus()
+    await expect(firstTrigger).toBeFocused()
+
+    // Press ArrowUp to wrap to last
+    await page.keyboard.press('ArrowUp')
+
+    // Last trigger should be focused
+    await expect(thirdTrigger).toBeFocused()
+  })
+
+  test('Home key navigates to first trigger', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+    const thirdTrigger = accordion.locator('button:has-text("Is it animated?")')
+
+    // Focus on last trigger
+    await thirdTrigger.focus()
+
+    // Press Home to go to first
+    await page.keyboard.press('Home')
+
+    // First trigger should be focused
+    await expect(firstTrigger).toBeFocused()
+  })
+
+  test('End key navigates to last trigger', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+    const thirdTrigger = accordion.locator('button:has-text("Is it animated?")')
+
+    // Focus on first trigger
+    await firstTrigger.focus()
+
+    // Press End to go to last
+    await page.keyboard.press('End')
+
+    // Last trigger should be focused
+    await expect(thirdTrigger).toBeFocused()
+  })
+
+  test('Enter/Space toggles accordion content', async ({ page }) => {
+    const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+    const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
+
+    // Focus on second trigger and press Enter
+    await secondTrigger.focus()
+    await page.keyboard.press('Enter')
+
+    // Second content should be visible
+    await expect(accordion.locator('text=Yes. It comes with default styles')).toBeVisible()
+  })
+})

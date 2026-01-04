@@ -60,6 +60,40 @@ export function AccordionTrigger({
   onClick,
   children,
 }: AccordionTriggerProps) {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const target = e.currentTarget as HTMLElement
+    const accordion = target.closest('.w-full')
+    if (!accordion) return
+
+    const triggers = accordion.querySelectorAll('[aria-expanded]:not([disabled])')
+    const currentIndex = Array.from(triggers).indexOf(target)
+
+    let nextIndex: number | null = null
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        nextIndex = currentIndex < triggers.length - 1 ? currentIndex + 1 : 0
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : triggers.length - 1
+        break
+      case 'Home':
+        e.preventDefault()
+        nextIndex = 0
+        break
+      case 'End':
+        e.preventDefault()
+        nextIndex = triggers.length - 1
+        break
+    }
+
+    if (nextIndex !== null && triggers[nextIndex]) {
+      ;(triggers[nextIndex] as HTMLElement).focus()
+    }
+  }
+
   return (
     <h3 class="flex">
       <button
@@ -69,6 +103,7 @@ export function AccordionTrigger({
         {...(disabled ? { disabled: true } : {})}
         aria-expanded={open}
         onClick={onClick}
+        onKeyDown={handleKeyDown}
       >
         {children}
         <svg

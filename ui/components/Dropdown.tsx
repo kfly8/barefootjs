@@ -100,8 +100,47 @@ export function DropdownContent({
   children,
 }: DropdownContentProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && onClose) {
-      onClose()
+    const target = e.currentTarget as HTMLElement
+    const items = target.querySelectorAll('[data-dropdown-item]:not([aria-disabled="true"])')
+    const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
+
+    switch (e.key) {
+      case 'Escape':
+        if (onClose) onClose()
+        break
+      case 'ArrowDown':
+        e.preventDefault()
+        if (items.length > 0) {
+          const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0
+          ;(items[nextIndex] as HTMLElement).focus()
+        }
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        if (items.length > 0) {
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1
+          ;(items[prevIndex] as HTMLElement).focus()
+        }
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (document.activeElement && (document.activeElement as HTMLElement).dataset.dropdownItem !== undefined) {
+          ;(document.activeElement as HTMLElement).click()
+        }
+        break
+      case 'Home':
+        e.preventDefault()
+        if (items.length > 0) {
+          ;(items[0] as HTMLElement).focus()
+        }
+        break
+      case 'End':
+        e.preventDefault()
+        if (items.length > 0) {
+          ;(items[items.length - 1] as HTMLElement).focus()
+        }
+        break
     }
   }
 
@@ -145,8 +184,10 @@ export function DropdownItem({
     <div
       role="option"
       aria-selected={selected}
+      aria-disabled={disabled}
       data-value={value}
-      class={`relative flex cursor-pointer select-none items-center px-3 py-2 text-sm outline-none ${
+      tabIndex={disabled ? -1 : 0}
+      class={`relative flex cursor-pointer select-none items-center px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
         selected
