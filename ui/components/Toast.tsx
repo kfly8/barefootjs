@@ -11,10 +11,17 @@
  * - Multiple toasts can be stacked
  * - Position options: top-right, top-left, bottom-right, bottom-left
  * - Accessibility: role="status", aria-live="polite"
+ * - Slide-in/slide-out animations with fade effect
  *
  * Design Decision: Props-based state management
  * Similar to Dialog, this component uses props for state.
  * The parent component manages the open state with a signal.
+ *
+ * Animation States:
+ * - 'entering': Toast is sliding in from right
+ * - 'visible': Toast is fully visible
+ * - 'exiting': Toast is sliding out to right
+ * - 'hidden': Toast is not rendered (display: none)
  */
 
 import type { Child } from '../types'
@@ -22,6 +29,9 @@ import type { Child } from '../types'
 // --- Toast Variants ---
 
 export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
+
+/** Animation states for the toast */
+export type ToastAnimationState = 'entering' | 'visible' | 'exiting' | 'hidden'
 
 // --- ToastProvider ---
 
@@ -55,7 +65,10 @@ export function ToastProvider({
 
 export interface ToastProps {
   variant?: ToastVariant
+  /** Controls visibility of the toast */
   open?: boolean
+  /** Animation state for enter/exit animations */
+  animationState?: ToastAnimationState
   onOpenChange?: (open: boolean) => void
   children?: Child
 }
@@ -63,11 +76,26 @@ export interface ToastProps {
 export function Toast({
   variant = 'default',
   open = false,
+  animationState,
   children,
 }: ToastProps) {
+  // Note: animationState is passed as a reactive accessor from the parent.
+  // All expressions using animationState must be inline in JSX for reactivity.
+  //
+  // Animation class mapping:
+  // - 'entering': translated right and transparent (for enter animation start)
+  // - 'visible': in position and visible
+  // - 'exiting': translated right and transparent (for exit animation)
+  // - 'hidden': not displayed
+
   return (
     <div
-      class={`${open ? 'flex' : 'hidden'} items-start gap-3 w-80 p-4 rounded-lg border shadow-lg transition-all pointer-events-auto ${
+      class={`${
+        (animationState ?? (open ? 'visible' : 'hidden')) === 'entering' ? 'flex translate-x-full opacity-0' :
+        (animationState ?? (open ? 'visible' : 'hidden')) === 'visible' ? 'flex translate-x-0 opacity-100' :
+        (animationState ?? (open ? 'visible' : 'hidden')) === 'exiting' ? 'flex translate-x-full opacity-0' :
+        'hidden'
+      } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-300 ease-out ${
         variant === 'success' ? 'bg-green-50 border-green-200 text-green-900' :
         variant === 'error' ? 'bg-red-50 border-red-200 text-red-900' :
         variant === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' :
@@ -78,6 +106,7 @@ export function Toast({
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
       data-toast
       data-toast-variant={variant}
+      data-toast-animation-state={animationState ?? (open ? 'visible' : 'hidden')}
     >
       {children}
     </div>
