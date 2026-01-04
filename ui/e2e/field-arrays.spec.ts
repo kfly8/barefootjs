@@ -188,7 +188,9 @@ test.describe('Field Arrays Documentation Page', () => {
       const duplicateWarning = demo.locator('.duplicate-warning')
 
       await inputs.first().fill('same@example.com')
+      await inputs.first().blur()
       await inputs.nth(1).fill('same@example.com')
+      await inputs.nth(1).blur()
 
       await expect(duplicateWarning).toContainText('1 duplicate email(s) detected')
     })

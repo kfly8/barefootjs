@@ -415,7 +415,7 @@ function generateElementQueries(
     lines.push(`const __findInScope = (sel) => {`)
     lines.push(`  if (__scope?.matches?.(sel)) return __scope`)
     lines.push(`  for (const el of __scope?.querySelectorAll(sel) || []) {`)
-    lines.push(`    if (el.parentElement?.closest('[data-bf-scope]') === __scope) return el`)
+    lines.push(`    if (el.closest('[data-bf-scope]') === __scope) return el`)
     lines.push(`  }`)
     lines.push(`  return null`)
     lines.push(`}`)
