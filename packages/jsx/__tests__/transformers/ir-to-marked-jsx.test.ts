@@ -763,18 +763,20 @@ describe('irToMarkedJsx with honoMarkedJsxAdapter integration', () => {
     }
 
     const jsx = irToMarkedJsx(ir, 'Counter', [])
-    const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-      name: 'Counter',
-      props: [],
-      typeDefinitions: [],
-      jsx,
-      ir,
-      signals: [],
-      memos: [],
-      childComponents: [],
+    const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+      sourcePath: 'Counter.tsx',
+      components: [{
+        name: 'Counter',
+        props: [],
+        typeDefinitions: [],
+        jsx,
+        ir,
+        signals: [],
+        memos: [],
+        childComponents: [],
+      }],
       moduleConstants: [],
       originalImports: [],
-      sourcePath: 'Counter.tsx',
     })
 
     expect(result).toContain('import { useRequestContext }')
@@ -819,18 +821,20 @@ describe('irToMarkedJsx with honoMarkedJsxAdapter integration', () => {
     }
 
     const jsx = irToMarkedJsx(ir, 'Counter', signals)
-    const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-      name: 'TodoApp',
-      props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
-      typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],
-      jsx,
-      ir,
-      signals,
-      memos: [],
-      childComponents: [],
+    const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+      sourcePath: 'TodoApp.tsx',
+      components: [{
+        name: 'TodoApp',
+        props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
+        typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],
+        jsx,
+        ir,
+        signals,
+        memos: [],
+        childComponents: [],
+      }],
       moduleConstants: [],
       originalImports: [],
-      sourcePath: 'TodoApp.tsx',
     })
 
     expect(result).toContain('export function TodoApp({ initialTodos, "data-key": __dataKey, __listIndex }')

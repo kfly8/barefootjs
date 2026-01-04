@@ -48,6 +48,7 @@
     "directory": "packages/hono"
   },
   "peerDependencies": {
+    "@barefootjs/jsx": "workspace:*",
     "hono": "^4.0.0"
   },
   "devDependencies": {

@@ -33,29 +33,6 @@ export const testJsxAdapter: MarkedJsxAdapter = {
     helperCode: "const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })",
   },
 
-  generateMarkedJsxComponent: ({ name, props, typeDefinitions: _typeDefinitions, jsx }) => {
-    let propsParam = ''
-    if (props.length > 0) {
-      const propNames = props.map(p => p.name)
-      const propsType = props.map(p => {
-        const optionalMark = p.optional ? '?' : ''
-        return `${p.name}${optionalMark}: ${p.type}`
-      }).join('; ')
-      propsParam = `{ ${propNames.join(', ')} }: { ${propsType} }`
-    }
-
-    // Check if JSX uses __rawHtml (for fragment conditional markers)
-    const needsRawHtml = jsx.includes('__rawHtml(')
-    const rawHtmlHelper = needsRawHtml ? 'const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })\n\n' : ''
-
-    return `${rawHtmlHelper}export function ${name}(${propsParam}) {
-  return (
-    ${jsx}
-  )
-}
-`
-  },
-
   generateMarkedJsxFile: ({ components }) => {
     // For test adapter, only output the first component's JSX
     // This matches the behavior expected by existing tests
@@ -106,13 +83,6 @@ export const testJsxAdapter: MarkedJsxAdapter = {
  * ```
  */
 export const testHtmlAdapter: MarkedJsxAdapter = {
-  generateMarkedJsxComponent: ({ name, ir, signals }) => {
-    if (!ir) {
-      return `<!-- No IR for ${name} -->`
-    }
-    return irToHtml(ir, name, signals)
-  },
-
   generateMarkedJsxFile: ({ components }) => {
     // For test adapter, only output the first component's HTML
     // This matches the behavior expected by existing tests

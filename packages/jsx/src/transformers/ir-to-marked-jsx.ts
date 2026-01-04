@@ -44,16 +44,6 @@ const BOOLEAN_HTML_ATTRS = new Set([
 ])
 
 /**
- * Converts HTML to JSX format (internal helper)
- *
- * Transforms HTML attributes to their JSX equivalents:
- * - class -> className
- */
-function htmlToJsx(html: string): string {
-  return html.replace(/\bclass="/g, 'className="')
-}
-
-/**
  * Renames user's index parameter to __index
  *
  * When a user writes .map((item, index) => ...), the compiler uses __index
@@ -373,35 +363,25 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
   if (listInfo) {
     const arrayExpr = replaceSignalAndMemoCalls(listInfo.arrayExpression, ctx.signals, ctx.memos)
 
-    // Use itemIR for proper JSX generation (avoids escaping issues)
-    if (listInfo.itemIR) {
-      // Create a new context for list item processing
-      // - Reset event ID counter to 0 for each list item (intentional!)
-      //   Each item has the same event-id pattern (0, 1, 2...), distinguished by data-index.
-      //   This enables event delegation: handlers look for specific event-ids,
-      //   and data-index identifies which item was interacted with.
-      // - Set inListContext to true so child components get __listIndex
-      const itemCtx: MarkedJsxContext = {
-        ...ctx,
-        eventIdCounter: ctx.eventIdCounter ? { value: 0 } : null,
-        inListContext: true,
-      }
-      let itemJsx = irToMarkedJsxInternal(listInfo.itemIR, itemCtx, false)
-      // Rename user's index param (e.g., 'index') to __index for consistency
-      itemJsx = renameIndexParam(itemJsx, listInfo.indexParamName)
-      // Inject data-key attribute if key expression is present
-      if (listInfo.keyExpression) {
-        itemJsx = injectDataKeyAttribute(itemJsx, listInfo.keyExpression)
-      }
-      const mapExpr = `{${arrayExpr}?.map((${listInfo.paramName}, __index) => (${itemJsx}))}`
-      return `<${tagName}${attrsStr}>${mapExpr}</${tagName}>`
+    // Create a new context for list item processing
+    // - Reset event ID counter to 0 for each list item (intentional!)
+    //   Each item has the same event-id pattern (0, 1, 2...), distinguished by data-index.
+    //   This enables event delegation: handlers look for specific event-ids,
+    //   and data-index identifies which item was interacted with.
+    // - Set inListContext to true so child components get __listIndex
+    const itemCtx: MarkedJsxContext = {
+      ...ctx,
+      eventIdCounter: ctx.eventIdCounter ? { value: 0 } : null,
+      inListContext: true,
     }
-
-    // Fallback to template string (for backwards compatibility)
-    let itemTemplate = htmlToJsx(listInfo.itemTemplate)
+    let itemJsx = irToMarkedJsxInternal(listInfo.itemIR!, itemCtx, false)
     // Rename user's index param (e.g., 'index') to __index for consistency
-    itemTemplate = renameIndexParam(itemTemplate, listInfo.indexParamName)
-    const mapExpr = `{${arrayExpr}?.map((${listInfo.paramName}, __index) => (${itemTemplate}))}`
+    itemJsx = renameIndexParam(itemJsx, listInfo.indexParamName)
+    // Inject data-key attribute if key expression is present
+    if (listInfo.keyExpression) {
+      itemJsx = injectDataKeyAttribute(itemJsx, listInfo.keyExpression)
+    }
+    const mapExpr = `{${arrayExpr}?.map((${listInfo.paramName}, __index) => (${itemJsx}))}`
     return `<${tagName}${attrsStr}>${mapExpr}</${tagName}>`
   }
 

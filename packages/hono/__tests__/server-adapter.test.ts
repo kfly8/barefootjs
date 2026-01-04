@@ -6,7 +6,7 @@ import { describe, it, expect } from 'bun:test'
 import { honoMarkedJsxAdapter } from '../src'
 
 describe('honoMarkedJsxAdapter', () => {
-  describe('generateMarkedJsxComponent', () => {
+  describe('generateMarkedJsxFile', () => {
     it('generates component without props', () => {
       // IR is not used by the adapter, just passed through
       const ir = {
@@ -21,18 +21,20 @@ describe('honoMarkedJsxAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'Hello',
-        props: [],
-        typeDefinitions: [],
-        jsx: '<div>Hello</div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: [],
+      const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+        sourcePath: 'Hello.tsx',
+        components: [{
+          name: 'Hello',
+          props: [],
+          typeDefinitions: [],
+          jsx: '<div>Hello</div>',
+          ir,
+          signals: [],
+          memos: [],
+          childComponents: [],
+        }],
         moduleConstants: [],
         originalImports: [],
-        sourcePath: 'Hello.tsx',
       })
 
       expect(result).toContain('export function Hello({ "data-key": __dataKey, __listIndex }')
@@ -55,18 +57,20 @@ describe('honoMarkedJsxAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'Counter',
-        props: [{ name: 'initialCount', type: 'number', optional: true }],
-        typeDefinitions: [],
-        jsx: '<div>{initialCount}</div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: [],
+      const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+        sourcePath: 'Counter.tsx',
+        components: [{
+          name: 'Counter',
+          props: [{ name: 'initialCount', type: 'number', optional: true }],
+          typeDefinitions: [],
+          jsx: '<div>{initialCount}</div>',
+          ir,
+          signals: [],
+          memos: [],
+          childComponents: [],
+        }],
         moduleConstants: [],
         originalImports: [],
-        sourcePath: 'Counter.tsx',
       })
 
       expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, __listIndex }')
@@ -89,57 +93,28 @@ describe('honoMarkedJsxAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'Parent',
-        props: [],
-        typeDefinitions: [],
-        jsx: '<div><Child /><SharedButton /></div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: ['Child', 'SharedButton'],
+      const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+        sourcePath: 'Parent.tsx',
+        components: [{
+          name: 'Parent',
+          props: [],
+          typeDefinitions: [],
+          jsx: '<div><Child /><SharedButton /></div>',
+          ir,
+          signals: [],
+          memos: [],
+          childComponents: ['Child', 'SharedButton'],
+        }],
         moduleConstants: [],
         originalImports: [
           { name: 'Child', path: './Child', isDefault: true },
           { name: 'SharedButton', path: '../shared/Button', isDefault: false },
         ],
-        sourcePath: 'Parent.tsx',
       })
 
       // Imports use original paths and respect isDefault flag
       expect(result).toContain("import Child from './Child'")
       expect(result).toContain("import { SharedButton } from '../shared/Button'")
-    })
-
-    it('falls back to named imports when originalImports is empty', () => {
-      const ir = {
-        type: 'element',
-        tagName: 'div',
-        id: null,
-        staticAttrs: [],
-        dynamicAttrs: [],
-        events: [],
-        children: [],
-        listInfo: null,
-        dynamicContent: null,
-      }
-
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'Parent',
-        props: [],
-        typeDefinitions: [],
-        jsx: '<div><Child /></div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: ['Child'],
-        moduleConstants: [],
-        originalImports: [],
-        sourcePath: 'Parent.tsx',
-      })
-
-      // Local components (in childComponents but not originalImports) get ./ComponentName imports
-      expect(result).toContain("import { Child } from './Child'")
     })
 
     it('includes module constants in output', () => {
@@ -155,21 +130,23 @@ describe('honoMarkedJsxAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'Game',
-        props: [],
-        typeDefinitions: [],
-        jsx: '<div className={className}>Game</div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: [],
+      const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+        sourcePath: 'Game.tsx',
+        components: [{
+          name: 'Game',
+          props: [],
+          typeDefinitions: [],
+          jsx: '<div className={className}>Game</div>',
+          ir,
+          signals: [],
+          memos: [],
+          childComponents: [],
+        }],
         moduleConstants: [
           { name: 'GRID_SIZE', value: '100', code: 'const GRID_SIZE = 100' },
           { name: 'MAX_ENEMIES', value: '30', code: 'const MAX_ENEMIES = 30' },
         ],
         originalImports: [],
-        sourcePath: 'Game.tsx',
       })
 
       expect(result).toContain('const GRID_SIZE = 100')
@@ -189,18 +166,20 @@ describe('honoMarkedJsxAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'Counter',
-        props: [],
-        typeDefinitions: [],
-        jsx: '<div>0</div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: [],
+      const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+        sourcePath: 'Counter.tsx',
+        components: [{
+          name: 'Counter',
+          props: [],
+          typeDefinitions: [],
+          jsx: '<div>0</div>',
+          ir,
+          signals: [],
+          memos: [],
+          childComponents: [],
+        }],
         moduleConstants: [],
         originalImports: [],
-        sourcePath: 'Counter.tsx',
       })
 
       // Should use try/catch for useRequestContext to handle Suspense boundaries
@@ -226,18 +205,20 @@ describe('honoMarkedJsxAdapter', () => {
         dynamicContent: null,
       }
 
-      const result = honoMarkedJsxAdapter.generateMarkedJsxComponent({
-        name: 'TodoApp',
-        props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
-        typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],
-        jsx: '<div>{initialTodos}</div>',
-        ir,
-        signals: [],
-        memos: [],
-        childComponents: [],
+      const result = honoMarkedJsxAdapter.generateMarkedJsxFile({
+        sourcePath: 'TodoApp.tsx',
+        components: [{
+          name: 'TodoApp',
+          props: [{ name: 'initialTodos', type: 'Todo[]', optional: false }],
+          typeDefinitions: ['type Todo = { id: number; text: string; done: boolean }'],
+          jsx: '<div>{initialTodos}</div>',
+          ir,
+          signals: [],
+          memos: [],
+          childComponents: [],
+        }],
         moduleConstants: [],
         originalImports: [],
-        sourcePath: 'TodoApp.tsx',
       })
 
       // Should check bfRootComponent context (with try/catch for Suspense boundaries)

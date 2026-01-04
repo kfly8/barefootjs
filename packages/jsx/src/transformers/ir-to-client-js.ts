@@ -8,8 +8,6 @@
 import type {
   IRNode,
   IRElement,
-  SignalDeclaration,
-  MemoDeclaration,
   InteractiveElement,
   DynamicElement,
   ListElement,
@@ -335,115 +333,6 @@ function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContext): string {
       return `\${${node.condition} ? \`${whenTrueHtml}\` : \`${whenFalseHtml}\`}`
     }
   }
-}
-
-/**
- * Converts IR node to HTML string (without conditional marker)
- * Uses static values - kept for backward compatibility
- */
-function irNodeToHtml(node: IRNode, ctx: CollectContext): string {
-  switch (node.type) {
-    case 'text':
-      return escapeHtml(node.content)
-
-    case 'expression': {
-      const exprValue = node.expression.trim()
-      if (exprValue === 'null' || exprValue === 'undefined') {
-        return ''
-      }
-      return replaceSignalsWithValues(node.expression, ctx.signals, ctx.memos)
-    }
-
-    case 'element': {
-      const { tagName, staticAttrs, dynamicAttrs, children } = node
-      const attrParts: string[] = []
-
-      // Add data-bf for elements with dynamic content or events
-      // This allows client JS to find these elements after conditional DOM replacement
-      if (node.id && (node.dynamicContent || node.events.length > 0)) {
-        attrParts.push(`data-bf="${node.id}"`)
-      }
-
-      for (const attr of staticAttrs) {
-        if (attr.value) {
-          attrParts.push(`${attr.name}="${escapeHtml(attr.value)}"`)
-        } else {
-          attrParts.push(attr.name)
-        }
-      }
-
-      for (const attr of dynamicAttrs) {
-        const value = replaceSignalsWithValues(attr.expression, ctx.signals, ctx.memos)
-        attrParts.push(`${attr.name}="${escapeHtml(String(value))}"`)
-      }
-
-      const attrsStr = attrParts.length > 0 ? ' ' + attrParts.join(' ') : ''
-
-      if (children.length === 0 && isSelfClosingHtmlTag(tagName)) {
-        return `<${tagName}${attrsStr} />`
-      }
-
-      const childrenHtml = children.map(child => irNodeToHtml(child, ctx)).join('')
-      return `<${tagName}${attrsStr}>${childrenHtml}</${tagName}>`
-    }
-
-    case 'fragment':
-      return node.children.map(child => irNodeToHtml(child, ctx)).join('')
-
-    case 'component':
-      return `<!-- ${node.name} -->`
-
-    case 'conditional': {
-      // Evaluate condition with initial values
-      const condValue = replaceSignalsWithValues(node.condition, ctx.signals, ctx.memos)
-      // Simple evaluation for boolean conditions
-      const isTrue = condValue === 'true' || (condValue !== 'false' && condValue !== '0' && condValue !== '')
-      return isTrue ? irNodeToHtml(node.whenTrue, ctx) : irNodeToHtml(node.whenFalse, ctx)
-    }
-  }
-}
-
-/**
- * Replaces signal and memo calls with their initial values
- */
-function replaceSignalsWithValues(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[]): string {
-  let result = expr
-
-  // Replace signal getter calls with initial values
-  for (const signal of signals) {
-    const getterPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
-    result = result.replace(getterPattern, signal.initialValue)
-  }
-
-  // Replace memo getter calls with evaluated computation
-  for (const memo of memos) {
-    const getterPattern = new RegExp(`\\b${memo.getter}\\(\\)`, 'g')
-    if (getterPattern.test(result)) {
-      let computationBody = memo.computation
-      const arrowMatch = computationBody.match(/^\s*\(\s*\)\s*=>\s*(.+)$/s)
-      if (arrowMatch) {
-        computationBody = arrowMatch[1].trim()
-      }
-      for (const signal of signals) {
-        const signalPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
-        computationBody = computationBody.replace(signalPattern, signal.initialValue)
-      }
-      result = result.replace(getterPattern, `(${computationBody})`)
-    }
-  }
-
-  return result
-}
-
-/**
- * Escapes HTML special characters
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
 
 /**
