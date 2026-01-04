@@ -1,7 +1,7 @@
 id	category	input_pattern	expected_output	status	test_file	notes
 JSX-001	Basic JSX	Plain text: <div>text</div>	Text preserved in output	✅ Implemented	jsx-to-ir.test.ts:31
 JSX-002	Basic JSX	Indentation whitespace	Removed from output	✅ Implemented	jsx-to-ir.test.ts:45
-JSX-003	Basic JSX	Inline spaces {" "}	Preserved in output	✅ Implemented	jsx-to-ir.test.ts:61
+JSX-003	Basic JSX	Inline spaces {' '}	Preserved in output	✅ Implemented	jsx-to-ir.test.ts:61
 JSX-004	Basic JSX	Nested elements	Preserved in output	✅ Implemented	jsx-to-ir.test.ts:151
 JSX-005	Basic JSX	Self-closing <input />	Preserved	✅ Implemented	jsx-to-ir.test.ts:189
 JSX-006	Basic JSX	Void elements <br />	Supported	✅ Implemented	jsx-to-ir.test.ts:203
@@ -111,7 +111,7 @@ REF-005	Refs	Multiple refs	All executed	✅ Implemented	ref-attribute.test.ts:10
 EDGE-001	Edge Cases	Trailing whitespace before element	Preserved	✅ Implemented	edge-cases.test.ts:230
 EDGE-002	Edge Cases	Leading text after closing	Preserved	✅ Implemented	edge-cases.test.ts:247
 EDGE-003	Edge Cases	Indentation between blocks	Removed	✅ Implemented	edge-cases.test.ts:268
-EDGE-004	Edge Cases	Explicit space {" "}	Preserved	✅ Implemented	edge-cases.test.ts:287
+EDGE-004	Edge Cases	Explicit space {' '}	Preserved	✅ Implemented	edge-cases.test.ts:287
 EDGE-005	Edge Cases	Whitespace in list template	Preserved	✅ Implemented	edge-cases.test.ts:324
 EDGE-010	Edge Cases	5 levels nesting	Correctly processed	✅ Implemented	edge-cases.test.ts:15
 EDGE-011	Edge Cases	Multiple dynamics nested	All tracked	✅ Implemented	edge-cases.test.ts:46
