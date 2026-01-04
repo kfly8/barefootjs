@@ -110,6 +110,7 @@ export function reconcileList<T>(
 /**
  * Selectively update children, preserving input elements that may have focus.
  * Updates text content and attributes of non-input elements.
+ * When element types differ, replaces the element entirely.
  */
 function updateChildrenSelectively(existing: HTMLElement, newEl: HTMLElement): void {
   const existingChildren = Array.from(existing.children) as HTMLElement[]
@@ -118,6 +119,12 @@ function updateChildrenSelectively(existing: HTMLElement, newEl: HTMLElement): v
   for (let i = 0; i < newChildren.length && i < existingChildren.length; i++) {
     const existingChild = existingChildren[i]
     const newChild = newChildren[i]
+
+    // If element types differ (e.g., input -> span), replace entirely
+    if (existingChild.tagName !== newChild.tagName) {
+      existingChild.replaceWith(newChild.cloneNode(true))
+      continue
+    }
 
     // For input/textarea elements, only update non-value attributes
     if (existingChild.tagName === 'INPUT' || existingChild.tagName === 'TEXTAREA') {
@@ -133,6 +140,20 @@ function updateChildrenSelectively(existing: HTMLElement, newEl: HTMLElement): v
         // Recursively update children
         updateChildrenSelectively(existingChild, newChild)
       }
+    }
+  }
+
+  // Handle case where new element has more children
+  if (newChildren.length > existingChildren.length) {
+    for (let i = existingChildren.length; i < newChildren.length; i++) {
+      existing.appendChild(newChildren[i].cloneNode(true))
+    }
+  }
+
+  // Handle case where existing element has more children
+  if (existingChildren.length > newChildren.length) {
+    for (let i = existingChildren.length - 1; i >= newChildren.length; i--) {
+      existingChildren[i].remove()
     }
   }
 }
