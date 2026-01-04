@@ -74,8 +74,10 @@ export const renderer = jsxRenderer(
               color: white;
               border-radius: 8px;
               box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-              animation: slideIn 0.3s ease-out forwards;
               transform-origin: top center;
+            }
+            .animated-item.is-new {
+              animation: slideIn 0.3s ease-out forwards;
             }
             .animated-item .item-text { flex: 1; font-size: 16px; font-weight: 500; }
             .remove-btn { font-size: 13px; padding: 6px 14px; cursor: pointer; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; border-radius: 4px; transition: all 0.2s; }

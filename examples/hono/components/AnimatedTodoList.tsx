@@ -14,6 +14,7 @@ import { createSignal } from '@barefootjs/dom'
 type Todo = {
   id: number
   text: string
+  isNew?: boolean
 }
 
 type Props = {
@@ -31,9 +32,14 @@ function AnimatedTodoList({ initialTodos = [] }: Props) {
 
   const handleAdd = (text: string) => {
     if (!text.trim()) return
-    const newTodo: Todo = { id: nextId(), text: text.trim() }
-    setNextId(nextId() + 1)
+    const newId = nextId()
+    const newTodo: Todo = { id: newId, text: text.trim(), isNew: true }
+    setNextId(newId + 1)
     setTodos([...todos(), newTodo])
+    // Clear isNew flag after animation completes (300ms)
+    setTimeout(() => {
+      setTodos(todos().map(t => t.id === newId ? { ...t, isNew: false } : t))
+    }, 350)
   }
 
   const handleRemove = (id: number) => {
@@ -41,12 +47,20 @@ function AnimatedTodoList({ initialTodos = [] }: Props) {
   }
 
   const handleAddMultiple = () => {
+    const startId = nextId()
     const newTodos: Todo[] = []
+    const newIds: number[] = []
     for (let i = 0; i < 3; i++) {
-      newTodos.push({ id: nextId() + i, text: `Batch item ${nextId() + i}` })
+      const id = startId + i
+      newIds.push(id)
+      newTodos.push({ id, text: `Batch item ${id}`, isNew: true })
     }
-    setNextId(nextId() + 3)
+    setNextId(startId + 3)
     setTodos([...todos(), ...newTodos])
+    // Clear isNew flags after animation completes (300ms)
+    setTimeout(() => {
+      setTodos(todos().map(t => newIds.includes(t.id) ? { ...t, isNew: false } : t))
+    }, 350)
   }
 
   const handleRemoveAll = () => {
@@ -92,7 +106,7 @@ function AnimatedTodoList({ initialTodos = [] }: Props) {
 
       <ul class="animated-list">
         {todos().map(todo => (
-          <li key={todo.id} class="animated-item">
+          <li key={todo.id} class={todo.isNew ? 'animated-item is-new' : 'animated-item'}>
             <span class="item-text">{todo.text}</span>
             <button class="remove-btn" onClick={() => handleRemove(todo.id)}>
               Remove

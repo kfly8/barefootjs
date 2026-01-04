@@ -20,7 +20,7 @@ test.describe.serial('Animated Todo List - CSS Transitions', () => {
     await page.waitForSelector('.animated-item')
   })
 
-  test('displays initial items with animation', async ({ page }) => {
+  test('displays initial items without animation', async ({ page }) => {
     // Check page title
     await expect(page.locator('h1')).toContainText('CSS Transitions E2E Test')
 
@@ -28,6 +28,9 @@ test.describe.serial('Animated Todo List - CSS Transitions', () => {
     await expect(page.locator('.animated-item')).toHaveCount(2)
     await expect(page.locator('.animated-item').first()).toContainText('First item')
     await expect(page.locator('.animated-item').nth(1)).toContainText('Second item')
+
+    // Verify initial items do NOT have is-new class (no animation)
+    await expect(page.locator('.animated-item.is-new')).toHaveCount(0)
 
     // Verify item count display
     await expect(page.locator('.item-count .count')).toHaveText('2')
@@ -46,8 +49,9 @@ test.describe.serial('Animated Todo List - CSS Transitions', () => {
     // Verify new item is at the end with correct text
     await expect(page.locator('.animated-item').last()).toContainText('New animated item')
 
-    // Verify animation class is present (item has the animated-item class)
-    await expect(page.locator('.animated-item').last()).toHaveCSS('animation-name', 'slideIn')
+    // Verify new item has is-new class (animation applied)
+    await expect(page.locator('.animated-item').last()).toHaveClass(/is-new/)
+    await expect(page.locator('.animated-item.is-new')).toHaveCSS('animation-name', 'slideIn')
 
     // Verify count updated
     await expect(page.locator('.item-count .count')).toHaveText(String(initialCount + 1))
@@ -97,8 +101,8 @@ test.describe.serial('Animated Todo List - CSS Transitions', () => {
     // Wait for all 3 new items to appear
     await expect(page.locator('.animated-item')).toHaveCount(initialCount + 3)
 
-    // Verify all new items have animation
-    const newItems = page.locator('.animated-item').filter({ hasText: 'Batch item' })
+    // Verify all new items have is-new class and animation
+    const newItems = page.locator('.animated-item.is-new')
     await expect(newItems).toHaveCount(3)
 
     // Each batch item should have animation
@@ -185,11 +189,11 @@ test.describe.serial('Animated Todo List - CSS Transitions', () => {
     await page.fill('.add-input', 'Animation test item')
     await page.press('.add-input', 'Enter')
 
-    // Wait for item
-    await expect(page.locator('.animated-item').last()).toContainText('Animation test item')
+    // Wait for item with is-new class
+    await expect(page.locator('.animated-item.is-new')).toContainText('Animation test item')
 
-    // Check animation properties
-    const item = page.locator('.animated-item').last()
+    // Check animation properties on the new item
+    const item = page.locator('.animated-item.is-new')
 
     // Verify animation-duration (0.3s = 300ms or similar)
     const animationDuration = await item.evaluate(el =>
@@ -250,9 +254,28 @@ test.describe.serial('Animated Todo List - CSS Transitions', () => {
     await page.fill('.add-input', 'Fresh start item')
     await page.press('.add-input', 'Enter')
 
-    // Verify item appears with animation
+    // Verify item appears with is-new class and animation
     await expect(page.locator('.animated-item')).toHaveCount(1)
     await expect(page.locator('.animated-item').first()).toContainText('Fresh start item')
-    await expect(page.locator('.animated-item').first()).toHaveCSS('animation-name', 'slideIn')
+    await expect(page.locator('.animated-item').first()).toHaveClass(/is-new/)
+    await expect(page.locator('.animated-item.is-new')).toHaveCSS('animation-name', 'slideIn')
+  })
+
+  test('is-new class is removed after animation completes', async ({ page }) => {
+    // Add a new item
+    await page.fill('.add-input', 'Temp animation item')
+    await page.press('.add-input', 'Enter')
+
+    // Verify item has is-new class immediately
+    await expect(page.locator('.animated-item.is-new')).toHaveCount(1)
+
+    // Wait for animation to complete and is-new class to be removed (350ms + buffer)
+    await page.waitForTimeout(400)
+
+    // Verify is-new class is removed
+    await expect(page.locator('.animated-item.is-new')).toHaveCount(0)
+
+    // Item should still exist
+    await expect(page.locator('.animated-item').filter({ hasText: 'Temp animation item' })).toHaveCount(1)
   })
 })
