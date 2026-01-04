@@ -19,12 +19,12 @@ ATTR-004	Attributes	<svg>...</svg>	<svg xmlns='http://www.w3.org/2000/svg'>...</
 ATTR-005	Attributes	<svg viewBox='0 0 24 24'>	<svg viewBox='0 0 24 24'>	✅ Implemented	svg-elements.test.ts:39	camelCase preserved
 ATTR-010	Attributes	<p class={active ? 'on' : 'off'}>X</p>	clientJs: _0.setAttribute('class', active ? 'on' : 'off')	✅ Implemented	attributes.test.ts:40	Dynamic class in effect
 ATTR-011	Attributes	<p style={{ color: isRed() ? 'red' : 'blue' }}>X</p>	clientJs: Object.assign(_0.style, {...})	✅ Implemented	attributes.test.ts:58	Style object assignment
-ATTR-012	Attributes	<p style={styleStr}>X</p>	clientJs: _0.style.cssText = styleStr	✅ Implemented	ir-to-client-js.test.ts:188	Style string assignment
+ATTR-012	Attributes	<p style={styleStr}>X</p>	clientJs: _0.style.cssText = styleStr	⚠️ Partial	ir-to-client-js.test.ts:188	Indirect test only (no E2E)
 ATTR-013	Attributes	<button disabled={loading()}>Go</button>	clientJs: _0.disabled = loading()	✅ Implemented	attributes.test.ts:76	Boolean property
 ATTR-014	Attributes	<input value={text()} />	clientJs: if (__val !== undefined) _0.value = __val	✅ Implemented	attributes.test.ts:94	Value with undefined check
 ATTR-015	Attributes	<div hidden={isHidden()}>X</div>	clientJs: _0.hidden = isHidden()	✅ Implemented	dynamic-attributes.test.ts:175	Hidden property
 ATTR-016	Attributes	<input checked={isOn()} />	clientJs: _0.checked = isOn()	✅ Implemented	dynamic-attributes.test.ts:228	Checked property
-ATTR-017	Attributes	<div data-id={id()}>X</div>	clientJs: _0.setAttribute('data-id', id())	✅ Implemented	ir-to-client-js.test.ts:223	Generic setAttribute
+ATTR-017	Attributes	<div data-id={id()}>X</div>	clientJs: _0.setAttribute('data-id', id())	⚠️ Partial	ir-to-client-js.test.ts:223	Indirect test only (no E2E)
 ATTR-018	Attributes	<p class={a() ? b() : c()}>X</p>	clientJs: createEffect(() => _0.setAttribute('class', ...))	✅ Implemented	dynamic-attributes.test.ts:80	Complex ternary in effect
 ATTR-020	Attributes	<div {...props}>X</div>	<div {...props}>X</div>	✅ Implemented	jsx-to-ir.test.ts:175	Spread preserved
 ATTR-021	Attributes	<div {...a} {...b}>X</div>	<div {...a} {...b}>X</div>	✅ Implemented	spread-attributes.test.ts:53	Multiple spreads
@@ -37,8 +37,8 @@ EXPR-004	Expressions	const [a] = createSignal(0); const [b] = createSignal(1)	cl
 EXPR-005	Expressions	const [user, setUser] = createSignal({name: 'A'})	clientJs: const [user, setUser] = createSignal({name: 'A'})	✅ Implemented	signal.test.ts:95	Object signal
 EXPR-006	Expressions	const [items, setItems] = createSignal([])	clientJs: const [items, setItems] = createSignal([])	✅ Implemented	signal.test.ts:111	Array signal
 EXPR-010	Expressions	const doubled = createMemo(() => count() * 2)	clientJs: const doubled = createMemo(() => count() * 2)	✅ Implemented	compilation-flow.test.ts:306	Memo extracted
-EXPR-011	Expressions	const memo = createMemo(() => { return x })	clientJs: (() => { return x })()	✅ Implemented	ir-to-marked-jsx.test.ts:562	Block body -> IIFE
-EXPR-012	Expressions	const a = createMemo(...); const b = createMemo(() => a())	clientJs: both memos with deps	✅ Implemented	ir-to-marked-jsx.test.ts:603	Memo refs memo
+EXPR-011	Expressions	const memo = createMemo(() => { return x })	clientJs: (() => { return x })()	⚠️ Partial	ir-to-marked-jsx.test.ts:562	Indirect test only (no E2E)
+EXPR-012	Expressions	const a = createMemo(...); const b = createMemo(() => a())	clientJs: both memos with deps	⚠️ Partial	ir-to-marked-jsx.test.ts:603	Indirect test only (no E2E)
 EXPR-020	Expressions	<p>{count()}</p>	clientJs: createEffect(() => { _0.textContent = count() })	✅ Implemented	jsx-to-ir.test.ts:272	Signal in text
 EXPR-021	Expressions	<p>{a() + b()}</p>	clientJs: createEffect(() => { _0.textContent = a() + b() })	✅ Implemented	dynamic-content.test.ts:53	Multiple deps
 EXPR-022	Expressions	<p>{show() ? 'A' : 'B'}</p>	clientJs: createEffect(() => { _0.textContent = show() ? 'A' : 'B' })	✅ Implemented	dynamic-content.test.ts:69	Ternary in text
@@ -96,11 +96,11 @@ EVT-003	Events	<input onChange={(e) => setText(e.target.value)}/>	clientJs: _0.o
 EVT-004	Events	<input onInput={(e) => setText(e.target.value)}/>	clientJs: _0.oninput = (e) => ...	✅ Implemented	event-handlers.test.ts:127	Input handler
 EVT-005	Events	<form onSubmit={(e) => { e.preventDefault() }}>	clientJs: _0.onsubmit = (e) => ...	✅ Implemented	event-handlers.test.ts:149	Submit handler
 EVT-006	Events	<input onKeyDown={(e) => e.key === 'Enter' && fn()}>	clientJs: _0.onkeydown = (e) => ...	✅ Implemented	event-handlers.test.ts:176	KeyDown handler
-EVT-007	Events	<input onBlur={() => validate()}/>	clientJs: addEventListener('blur', fn, { capture: true })	✅ Implemented	form-inputs.test.ts:48	Blur uses capture
-EVT-008	Events	<input onFocus={() => highlight()}/>	clientJs: addEventListener('focus', fn, { capture: true })	✅ Implemented	form-inputs.test.ts:67	Focus uses capture
+EVT-007	Events	<input onBlur={() => validate()}/>	clientJs: addEventListener('blur', fn, { capture: true })	⚠️ Partial	form-inputs.test.ts:48	No explicit capture verification
+EVT-008	Events	<input onFocus={() => highlight()}/>	clientJs: addEventListener('focus', fn, { capture: true })	⚠️ Partial	form-inputs.test.ts:67	No explicit capture verification
 EVT-010	Events	<ul>{items().map(i => <li onClick={...}>)}</ul>	markedJsx: data-event-id='0' data-index={__index}	✅ Implemented	list-rendering.test.ts:89	List delegation
 EVT-011	Events	<li onClick={...} onDoubleClick={...}>	Multiple data-event-id attrs	✅ Implemented	list-rendering.test.ts:114	Multiple list events
-EVT-012	Events	<li onFocus={...}> in list	addEventListener with capture	✅ Implemented	list-rendering.test.ts:203	Capture in list
+EVT-012	Events	<li onFocus={...}> in list	addEventListener with capture	⚠️ Partial	list-rendering.test.ts:203	No explicit capture verification
 EVT-020	Events	onKeyDown={(e) => e.key === 'Enter' && submit()}	clientJs: if (e.key === 'Enter') { submit() }	✅ Implemented	list-rendering.test.ts:224	Conditional handler
 EVT-021	Events	Complex conditional in handler	Multiple if checks in clientJs	✅ Implemented	list-rendering.test.ts:245	Complex conditional
 REF-001	Refs	<input ref={(el) => inputRef = el}/>	clientJs: (el) => inputRef = el	✅ Implemented	jsx-to-ir.test.ts:139	Ref callback

@@ -55,14 +55,13 @@ JSX Source → IR (Intermediate Representation) → Marked JSX + Client JS
 
 | Status | Meaning |
 |--------|---------|
-| ✅ Implemented | Feature is implemented and tested |
-| ⚠️ Partial | Feature is partially implemented |
+| ✅ Implemented | Feature is implemented with direct E2E test |
+| ⚠️ Partial | Feature is implemented but only has indirect/unit test |
 | ❌ OOS | Out of Scope - intentionally not supported |
 | 🚧 Planned | Planned for future implementation |
 
 ## Related Documents
 
-- [Gap Analysis](SPEC-GAPS.md) - Coverage gaps and recommendations
 - [CLAUDE.md](CLAUDE.md) - Development workflow
 
 ---
