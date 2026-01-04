@@ -93,8 +93,8 @@ export function AccordionTrigger({
 }
 
 // AccordionContent - The collapsible content
-// Note: Uses CSS to show/hide instead of conditional rendering
-// because the compiler has limitations with ternary conditional returns.
+// Uses CSS grid-template-rows animation for smooth expand/collapse
+// grid-rows-[0fr] → grid-rows-[1fr] transition with overflow-hidden
 export interface AccordionContentProps {
   open?: boolean
   children?: Child
@@ -105,9 +105,16 @@ export function AccordionContent({
   children,
 }: AccordionContentProps) {
   return (
-    <div class={`overflow-hidden text-sm ${open ? '' : 'hidden'}`}>
-      <div class="pb-4 pt-0">
-        {children}
+    <div
+      class={`grid transition-[grid-template-rows,visibility] duration-200 ease-out ${
+        open ? 'grid-rows-[1fr] visible' : 'grid-rows-[0fr] invisible'
+      }`}
+      data-state={open ? 'open' : 'closed'}
+    >
+      <div class="overflow-hidden">
+        <div class="pb-4 pt-0 text-sm">
+          {children}
+        </div>
       </div>
     </div>
   )

@@ -109,6 +109,106 @@ test.describe('Accordion Documentation Page', () => {
       await expect(page.locator('h3:has-text("AccordionContent")')).toBeVisible()
     })
   })
+
+  test.describe('Expand/Collapse Animations', () => {
+    test('content expands with animation and JS state syncs', async ({ page }) => {
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+      const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
+      const secondContent = accordion.locator('[data-bf-scope="AccordionContent"]').nth(1)
+
+      // Initially closed
+      await expect(secondContent).toHaveAttribute('data-state', 'closed')
+      await expect(secondContent).toHaveClass(/grid-rows-\[0fr\]/)
+
+      // Click to open
+      await secondTrigger.click()
+
+      // JS state should be "open"
+      await expect(secondContent).toHaveAttribute('data-state', 'open')
+      await expect(secondContent).toHaveClass(/grid-rows-\[1fr\]/)
+      await expect(accordion.locator('text=Yes. It comes with default styles')).toBeVisible()
+    })
+
+    test('content collapses with animation and JS state syncs', async ({ page }) => {
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+      const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+      const firstContent = accordion.locator('[data-bf-scope="AccordionContent"]').first()
+
+      // Initially open
+      await expect(firstContent).toHaveAttribute('data-state', 'open')
+      await expect(firstContent).toHaveClass(/grid-rows-\[1fr\]/)
+
+      // Click to close
+      await firstTrigger.click()
+
+      // JS state should be "closed"
+      await expect(firstContent).toHaveAttribute('data-state', 'closed')
+      await expect(firstContent).toHaveClass(/grid-rows-\[0fr\]/)
+      await expect(accordion.locator('text=Yes. It adheres to the WAI-ARIA design pattern.')).not.toBeVisible()
+    })
+
+    test('rapid clicks result in correct final state', async ({ page }) => {
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+      const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+      const firstContent = accordion.locator('[data-bf-scope="AccordionContent"]').first()
+
+      // Initially open
+      await expect(firstContent).toHaveAttribute('data-state', 'open')
+
+      // Rapid clicks (3 clicks = toggle to closed, open, closed)
+      await firstTrigger.click()
+      await firstTrigger.click()
+      await firstTrigger.click()
+
+      // Final state should be closed (odd number of clicks from open)
+      await expect(firstContent).toHaveAttribute('data-state', 'closed')
+      await expect(accordion.locator('text=Yes. It adheres to the WAI-ARIA design pattern.')).not.toBeVisible()
+    })
+
+    test('multiple accordion items animate independently', async ({ page }) => {
+      const accordion = page.locator('[data-bf-scope="AccordionMultipleOpenDemo"]').first()
+      const firstContent = accordion.locator('[data-bf-scope="AccordionContent"]').first()
+      const secondContent = accordion.locator('[data-bf-scope="AccordionContent"]').nth(1)
+      const secondTrigger = accordion.locator('button:has-text("Second Item")')
+
+      // First is open, second is closed
+      await expect(firstContent).toHaveAttribute('data-state', 'open')
+      await expect(secondContent).toHaveAttribute('data-state', 'closed')
+
+      // Open second item
+      await secondTrigger.click()
+
+      // Both should be open now (multiple open mode)
+      await expect(firstContent).toHaveAttribute('data-state', 'open')
+      await expect(secondContent).toHaveAttribute('data-state', 'open')
+
+      // Both contents visible
+      await expect(accordion.locator('text=This accordion allows multiple items to be open')).toBeVisible()
+      await expect(accordion.locator('text=Each item manages its own open/close state')).toBeVisible()
+    })
+
+    test('chevron rotates on expand/collapse', async ({ page }) => {
+      const accordion = page.locator('[data-bf-scope="AccordionSingleOpenDemo"]').first()
+      const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
+      const secondChevron = secondTrigger.locator('svg')
+
+      // Initially closed - no rotation
+      await expect(secondChevron).not.toHaveClass(/rotate-180/)
+
+      // Click to open
+      await secondTrigger.click()
+
+      // Should be rotated
+      await expect(secondChevron).toHaveClass(/rotate-180/)
+
+      // Click another to close second
+      const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
+      await firstTrigger.click()
+
+      // Second chevron should not be rotated anymore
+      await expect(secondChevron).not.toHaveClass(/rotate-180/)
+    })
+  })
 })
 
 test.describe('Home Page - Accordion Link', () => {
