@@ -43,13 +43,13 @@ test.describe('Checkbox Documentation Page', () => {
     })
 
     test('checked checkbox shows checkmark', async ({ page }) => {
-      // Look for checkboxes with bg-zinc-900 (checked state styling)
-      const checkedCheckbox = page.locator('button[role="checkbox"].bg-zinc-900').first()
+      // Look for checkboxes with bg-primary (checked state styling)
+      const checkedCheckbox = page.locator('button[role="checkbox"].bg-primary').first()
       await expect(checkedCheckbox.locator('svg')).toBeVisible()
     })
 
     test('unchecked checkbox has no checkmark', async ({ page }) => {
-      const uncheckedCheckbox = page.locator('button[role="checkbox"].bg-white').first()
+      const uncheckedCheckbox = page.locator('button[role="checkbox"].bg-background').first()
       await expect(uncheckedCheckbox.locator('svg')).not.toBeVisible()
     })
   })

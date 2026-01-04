@@ -7,7 +7,7 @@ test.describe('Form Submit Documentation Page', () => {
 
   test('displays page header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Form Submit')
-    await expect(page.locator('p.text-zinc-400.text-lg')).toContainText('async submit handling')
+    await expect(page.locator('p.text-muted-foreground.text-lg')).toContainText('async submit handling')
   })
 
   test('displays pattern overview section', async ({ page }) => {

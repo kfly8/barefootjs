@@ -128,10 +128,10 @@ export function TooltipContent({
 
   // Arrow CSS classes based on placement
   const arrowClasses: Record<TooltipPlacement, string> = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-t-zinc-900 border-l-transparent border-r-transparent border-b-transparent',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-zinc-900 border-t-transparent border-b-transparent border-l-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-zinc-900 border-l-transparent border-r-transparent border-t-transparent',
-    left: 'left-full top-1/2 -translate-y-1/2 border-l-zinc-900 border-t-transparent border-b-transparent border-r-transparent',
+    top: 'top-full left-1/2 -translate-x-1/2 border-t-primary border-l-transparent border-r-transparent border-b-transparent',
+    right: 'right-full top-1/2 -translate-y-1/2 border-r-primary border-t-transparent border-b-transparent border-l-transparent',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-primary border-l-transparent border-r-transparent border-t-transparent',
+    left: 'left-full top-1/2 -translate-y-1/2 border-l-primary border-t-transparent border-b-transparent border-r-transparent',
   }
 
   const placementClass = placementClasses[placement]
@@ -145,7 +145,7 @@ export function TooltipContent({
       data-tooltip-content
       data-tooltip-open={open ? 'true' : 'false'}
     >
-      <div class="bg-zinc-900 text-zinc-50 text-sm px-3 py-1.5 rounded-md shadow-md whitespace-nowrap">
+      <div class="bg-primary text-primary-foreground text-sm px-3 py-1.5 rounded-md shadow-md whitespace-nowrap">
         {children}
       </div>
       <span

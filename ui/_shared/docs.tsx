@@ -2,14 +2,15 @@
  * Shared Documentation Components (Dark Mode)
  *
  * Reusable components for documentation pages.
+ * Uses CSS variables for theming support.
  */
 
 // Page header with title and description
 export function PageHeader({ title, description }: { title: string; description: string }) {
   return (
     <div class="space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight text-zinc-50">{title}</h1>
-      <p class="text-zinc-400 text-lg">{description}</p>
+      <h1 class="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+      <p class="text-muted-foreground text-lg">{description}</p>
     </div>
   )
 }
@@ -17,7 +18,7 @@ export function PageHeader({ title, description }: { title: string; description:
 // Preview component wrapper
 export function Preview({ children }: { children: any }) {
   return (
-    <div class="flex flex-wrap items-center gap-4 p-6 border border-zinc-800 rounded-lg bg-zinc-900">
+    <div class="flex flex-wrap items-center gap-4 p-6 border border-border rounded-lg bg-card">
       {children}
     </div>
   )
@@ -27,7 +28,7 @@ export function Preview({ children }: { children: any }) {
 export function CodeBlock({ code, lang = 'tsx' }: { code: string; lang?: string }) {
   return (
     <div class="relative">
-      <pre class="p-4 bg-zinc-950 text-zinc-300 rounded-lg overflow-x-auto text-sm font-mono border border-zinc-800">
+      <pre class="p-4 bg-muted text-muted-foreground rounded-lg overflow-x-auto text-sm font-mono border border-border">
         <code>{code}</code>
       </pre>
     </div>
@@ -38,7 +39,7 @@ export function CodeBlock({ code, lang = 'tsx' }: { code: string; lang?: string 
 export function Section({ id, title, children }: { id?: string; title: string; children: any }) {
   return (
     <section id={id} class="space-y-4">
-      <h2 class="text-xl font-semibold tracking-tight text-zinc-50">{title}</h2>
+      <h2 class="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
       {children}
     </section>
   )
@@ -48,7 +49,7 @@ export function Section({ id, title, children }: { id?: string; title: string; c
 export function Subsection({ title, children }: { title: string; children: any }) {
   return (
     <div class="space-y-4">
-      <h3 class="text-lg font-medium text-zinc-100">{title}</h3>
+      <h3 class="text-lg font-medium text-foreground">{title}</h3>
       {children}
     </div>
   )
@@ -65,11 +66,11 @@ export interface PropDefinition {
 // Props table row
 function PropRow({ name, type, defaultValue, description }: PropDefinition) {
   return (
-    <tr class="border-b border-zinc-800 last:border-b-0">
-      <td class="py-3 px-4 font-mono text-sm text-zinc-100">{name}</td>
-      <td class="py-3 px-4 font-mono text-sm text-zinc-400">{type}</td>
-      <td class="py-3 px-4 font-mono text-sm text-zinc-400">{defaultValue || '-'}</td>
-      <td class="py-3 px-4 text-sm text-zinc-300">{description}</td>
+    <tr class="border-b border-border last:border-b-0">
+      <td class="py-3 px-4 font-mono text-sm text-foreground">{name}</td>
+      <td class="py-3 px-4 font-mono text-sm text-muted-foreground">{type}</td>
+      <td class="py-3 px-4 font-mono text-sm text-muted-foreground">{defaultValue || '-'}</td>
+      <td class="py-3 px-4 text-sm text-muted-foreground">{description}</td>
     </tr>
   )
 }
@@ -77,14 +78,14 @@ function PropRow({ name, type, defaultValue, description }: PropDefinition) {
 // Props table component
 export function PropsTable({ props }: { props: PropDefinition[] }) {
   return (
-    <div class="border border-zinc-800 rounded-lg overflow-hidden">
+    <div class="border border-border rounded-lg overflow-hidden">
       <table class="w-full text-left">
-        <thead class="bg-zinc-900">
-          <tr class="border-b border-zinc-800">
-            <th class="py-3 px-4 text-sm font-medium text-zinc-100">Prop</th>
-            <th class="py-3 px-4 text-sm font-medium text-zinc-100">Type</th>
-            <th class="py-3 px-4 text-sm font-medium text-zinc-100">Default</th>
-            <th class="py-3 px-4 text-sm font-medium text-zinc-100">Description</th>
+        <thead class="bg-muted">
+          <tr class="border-b border-border">
+            <th class="py-3 px-4 text-sm font-medium text-foreground">Prop</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground">Type</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground">Default</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground">Description</th>
           </tr>
         </thead>
         <tbody>
@@ -101,7 +102,7 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
 export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
   return (
     <div class="space-y-4">
-      {title && <h3 class="text-lg font-medium text-zinc-100">{title}</h3>}
+      {title && <h3 class="text-lg font-medium text-foreground">{title}</h3>}
       <Preview>{children}</Preview>
       <CodeBlock code={code} />
     </div>

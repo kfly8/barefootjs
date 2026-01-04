@@ -37,7 +37,7 @@ export function AccordionItem({
 }: AccordionItemProps) {
   return (
     <div
-      class="border-b border-zinc-200"
+      class="border-b border-border"
       data-state={open ? 'open' : 'closed'}
       data-value={value}
     >
@@ -81,7 +81,7 @@ export function AccordionTrigger({
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${
+          class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
             open ? 'rotate-180' : ''
           }`}
         >

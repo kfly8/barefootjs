@@ -3,6 +3,7 @@
  *
  * A flexible container component inspired by shadcn/ui.
  * Supports composable sub-components: CardHeader, CardTitle, CardDescription, CardContent, CardFooter.
+ * Uses CSS variables for theming support.
  */
 
 import type { Child } from '../types'
@@ -14,7 +15,7 @@ export interface CardProps {
 
 export function Card({ children, class: className = '' }: CardProps) {
   return (
-    <div class={`rounded-xl border border-zinc-200 bg-white text-zinc-950 shadow ${className}`}>
+    <div class={`rounded-xl border border-border bg-card text-card-foreground shadow ${className}`}>
       {children}
     </div>
   )
@@ -53,7 +54,7 @@ export interface CardDescriptionProps {
 
 export function CardDescription({ children, class: className = '' }: CardDescriptionProps) {
   return (
-    <p class={`text-sm text-zinc-500 ${className}`}>
+    <p class={`text-sm text-muted-foreground ${className}`}>
       {children}
     </p>
   )

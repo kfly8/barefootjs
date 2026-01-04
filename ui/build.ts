@@ -114,6 +114,16 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
+// Copy globals.css to dist
+const STYLES_DIR = resolve(ROOT_DIR, 'styles')
+const globalsSource = resolve(STYLES_DIR, 'globals.css')
+const globalsDest = resolve(DIST_DIR, 'globals.css')
+
+if (await Bun.file(globalsSource).exists()) {
+  await Bun.write(globalsDest, Bun.file(globalsSource))
+  console.log('Copied: dist/globals.css')
+}
+
 // Generate UnoCSS
 console.log('\nGenerating UnoCSS...')
 const unoProc = Bun.spawn(['bunx', 'unocss', './**/*.tsx', './dist/**/*.tsx', '-o', 'dist/uno.css'], {

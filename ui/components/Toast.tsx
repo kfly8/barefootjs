@@ -100,7 +100,7 @@ export function Toast({
         variant === 'error' ? 'bg-red-50 border-red-200 text-red-900' :
         variant === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' :
         variant === 'info' ? 'bg-blue-50 border-blue-200 text-blue-900' :
-        'bg-white border-zinc-200 text-zinc-900'
+        'bg-background border-border text-foreground'
       }`}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
@@ -151,7 +151,7 @@ export function ToastClose({ onClick }: ToastCloseProps) {
   return (
     <button
       type="button"
-      class="ml-auto -mr-1 -mt-1 h-6 w-6 rounded-md inline-flex items-center justify-center opacity-50 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+      class="ml-auto -mr-1 -mt-1 h-6 w-6 rounded-md inline-flex items-center justify-center opacity-50 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label="Close"
       onClick={onClick}
       data-toast-close
@@ -185,7 +185,7 @@ export function ToastAction({ altText, onClick, children }: ToastActionProps) {
   return (
     <button
       type="button"
-      class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border border-current opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+      class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border border-current opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label={altText}
       onClick={onClick}
       data-toast-action

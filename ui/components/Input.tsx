@@ -4,6 +4,7 @@
  *
  * A styled input component inspired by shadcn/ui.
  * Supports value binding and change events.
+ * Uses CSS variables for theming support.
  */
 
 export interface InputProps {
@@ -32,7 +33,7 @@ export function Input({
   return (
     <input
       type={inputType}
-      class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-base text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-zinc-950 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+      class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
       placeholder={inputPlaceholder}
       value={inputValue}
       disabled={inputDisabled}

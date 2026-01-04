@@ -16,7 +16,7 @@ test.describe('Field Arrays Documentation Page', () => {
 
   test('displays page header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Field Arrays')
-    await expect(page.locator('p.text-zinc-400.text-lg')).toContainText('dynamic list of form inputs')
+    await expect(page.locator('p.text-muted-foreground.text-lg')).toContainText('dynamic list of form inputs')
   })
 
   test('displays pattern overview section', async ({ page }) => {

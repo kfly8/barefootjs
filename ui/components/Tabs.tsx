@@ -51,7 +51,7 @@ export function TabsList({
   return (
     <div
       role="tablist"
-      class="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-100 p-1 text-zinc-500"
+      class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
     >
       {children}
     </div>
@@ -81,12 +81,12 @@ export function TabsTrigger({
       {...(disabled ? { disabled: true } : {})}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
-      class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 ${
+      class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
         selected
-          ? 'bg-white text-zinc-950 shadow'
-          : 'text-zinc-500 hover:text-zinc-900'
+          ? 'bg-background text-foreground shadow'
+          : 'text-muted-foreground hover:text-foreground'
       }`}
       onClick={onClick}
     >
@@ -114,7 +114,7 @@ export function TabsContent({
       role="tabpanel"
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
-      class={`mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 ${selected ? '' : 'hidden'}`}
+      class={`mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? '' : 'hidden'}`}
     >
       {children}
     </div>

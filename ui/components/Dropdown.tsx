@@ -58,7 +58,7 @@ export function DropdownTrigger({
       role="combobox"
       aria-expanded={open}
       aria-haspopup="listbox"
-      class={`inline-flex items-center justify-between rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 border border-zinc-200 bg-white hover:bg-zinc-100 h-10 px-4 py-2 min-w-[160px] ${
+      class={`inline-flex items-center justify-between rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent h-10 px-4 py-2 min-w-[160px] ${
         disabled ? 'pointer-events-none opacity-50' : ''
       }`}
       {...(disabled ? { disabled: true } : {})}
@@ -76,7 +76,7 @@ export function DropdownTrigger({
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class={`ml-2 h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${
+        class={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
           open ? 'rotate-180' : ''
         }`}
       >
@@ -110,7 +110,7 @@ export function DropdownContent({
   return (
     <div
       role="listbox"
-      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-zinc-200 bg-white py-1 shadow-lg transform-gpu origin-top transition-all duration-200 ease-out ${
+      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-border bg-popover py-1 shadow-lg transform-gpu origin-top transition-all duration-200 ease-out ${
         open
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'
@@ -150,8 +150,8 @@ export function DropdownItem({
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
         selected
-          ? 'bg-zinc-100 text-zinc-900 font-medium'
-          : 'text-zinc-700 hover:bg-zinc-50'
+          ? 'bg-accent text-accent-foreground font-medium'
+          : 'text-popover-foreground hover:bg-accent/50'
       }`}
       onClick={onClick}
       data-dropdown-item
@@ -185,6 +185,6 @@ export interface DropdownLabelProps {
 
 export function DropdownLabel({ children }: DropdownLabelProps) {
   return (
-    <span class="text-zinc-500">{children}</span>
+    <span class="text-muted-foreground">{children}</span>
   )
 }

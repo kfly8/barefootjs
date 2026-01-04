@@ -40,7 +40,7 @@ export function DialogTrigger({
   return (
     <button
       type="button"
-      class={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 bg-zinc-900 text-zinc-50 hover:bg-zinc-900/90 h-10 px-4 py-2 ${
+      class={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ${
         disabled ? 'pointer-events-none opacity-50' : ''
       }`}
       {...(disabled ? { disabled: true } : {})}
@@ -103,7 +103,7 @@ export function DialogContent({
   // pointer-events-none prevents interaction when closed
   return (
     <div
-      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-200 bg-white p-6 shadow-lg sm:rounded-lg transition-all duration-150 ${
+      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg transition-all duration-150 ${
         open
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'
@@ -165,7 +165,7 @@ export function DialogDescription({ id, children }: DialogDescriptionProps) {
   return (
     <p
       id={id}
-      class="text-sm text-zinc-500"
+      class="text-sm text-muted-foreground"
     >
       {children}
     </p>
@@ -197,7 +197,7 @@ export function DialogClose({ onClick, children }: DialogCloseProps) {
   return (
     <button
       type="button"
-      class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 border border-zinc-200 bg-white hover:bg-zinc-100 hover:text-zinc-900 h-10 px-4 py-2"
+      class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
       onClick={onClick}
     >
       {children}

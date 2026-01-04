@@ -4,6 +4,7 @@
  *
  * A styled checkbox component inspired by shadcn/ui.
  * Supports checked state binding and change events.
+ * Uses CSS variables for theming support.
  */
 
 export interface CheckboxProps {
@@ -22,8 +23,8 @@ export function Checkbox({
       role="checkbox"
       aria-checked={checked}
       disabled={disabled}
-      class={`peer h-4 w-4 shrink-0 rounded-sm border border-zinc-900 shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? 'bg-zinc-900 text-zinc-50' : 'bg-white'
+      class={`peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+        checked ? 'bg-primary text-primary-foreground' : 'bg-background'
       }`}
       onClick={() => onCheckedChange?.(!checked)}
     >
