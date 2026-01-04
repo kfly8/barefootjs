@@ -16,7 +16,8 @@ import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
 describe('Fragment Support', () => {
-  it('basic fragment with multiple children', async () => {
+  // JSX-009: Fragment with children
+  it('JSX-009: basic fragment with multiple children', async () => {
     const source = `
       "use client"
       function Component() {
@@ -38,7 +39,8 @@ describe('Fragment Support', () => {
     expect(file.markedJsx).toContain('<p>Content</p>')
   })
 
-  it('fragment with dynamic content', async () => {
+  // JSX-010: Fragment with dynamic content
+  it('JSX-010: fragment with dynamic content', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -63,7 +65,8 @@ describe('Fragment Support', () => {
     expect(file.clientJs).toContain('_1.onclick')
   })
 
-  it('nested fragments', async () => {
+  // JSX-011: Nested fragments
+  it('JSX-011: nested fragments', async () => {
     const source = `
       "use client"
       function Component() {
@@ -85,7 +88,8 @@ describe('Fragment Support', () => {
     expect(file.markedJsx).toContain('<div>Sibling</div>')
   })
 
-  it('fragment as conditional result', async () => {
+  // CTRL-007: Fragment branch
+  it('CTRL-007: fragment as conditional result', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -116,7 +120,8 @@ describe('Fragment Support', () => {
     expect(file.markedJsx).toContain('<span data-bf-cond="0">Hidden</span>')
   })
 
-  it('fragment with text and elements mixed', async () => {
+  // JSX-012: Mixed text and elements in fragment
+  it('JSX-012: fragment with text and elements mixed', async () => {
     const source = `
       "use client"
       function Component() {
@@ -136,7 +141,8 @@ describe('Fragment Support', () => {
     expect(file.markedJsx).toContain('<span>World</span>')
   })
 
-  it('fragment with single child', async () => {
+  // JSX-013: Single child gets scope marker
+  it('JSX-013: fragment with single child', async () => {
     const source = `
       "use client"
       function Component() {
@@ -154,7 +160,8 @@ describe('Fragment Support', () => {
     expect(file.markedJsx).toContain('<div data-bf-scope="Component">Only child</div>')
   })
 
-  it('empty fragment', async () => {
+  // JSX-008: Empty fragment
+  it('JSX-008: empty fragment', async () => {
     const source = `
       "use client"
       function Component() {

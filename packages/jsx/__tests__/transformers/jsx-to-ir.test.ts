@@ -27,7 +27,8 @@ import {
 
 describe('jsxToIR', () => {
   describe('text node conversion', () => {
-    it('converts plain text to IRText', () => {
+    // JSX-001: Plain text preserved
+    it('JSX-001: converts plain text to IRText', () => {
       const source = '<div>Hello World</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -40,7 +41,8 @@ describe('jsxToIR', () => {
       expect((result.children[0] as IRText).content).toBe('Hello World')
     })
 
-    it('removes whitespace-only text with newlines (indentation)', () => {
+    // JSX-002: Indentation whitespace removed
+    it('JSX-002: removes whitespace-only text with newlines (indentation)', () => {
       const source = `<div>
         Hello
       </div>`
@@ -55,7 +57,8 @@ describe('jsxToIR', () => {
       expect(textChildren[0].content).toBe('Hello')
     })
 
-    it('preserves inline spaces between elements', () => {
+    // JSX-003: Inline spaces preserved
+    it('JSX-003: preserves inline spaces between elements', () => {
       // When JSX is on single line, inline whitespace between elements is preserved
       // But the JSX parser normalizes " " between sibling elements
       // Let's test with explicit text content
@@ -75,7 +78,8 @@ describe('jsxToIR', () => {
   })
 
   describe('element conversion', () => {
-    it('converts simple element with static attributes', () => {
+    // ATTR-001: String literals preserved
+    it('ATTR-001: converts simple element with static attributes', () => {
       const source = '<div class="container" id="main">Content</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -89,7 +93,8 @@ describe('jsxToIR', () => {
       expect(result.id).toBeNull() // No dynamic features, no ID needed
     })
 
-    it('converts element with dynamic attributes', () => {
+    // ATTR-010: Dynamic class
+    it('ATTR-010: converts element with dynamic attributes', () => {
       const source = '<div class={isActive() ? "active" : "inactive"}>Content</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -103,7 +108,8 @@ describe('jsxToIR', () => {
       expect(result.id).not.toBeNull() // Has dynamic attrs, needs ID
     })
 
-    it('converts element with events', () => {
+    // EVT-001: Click handler
+    it('EVT-001: converts element with events', () => {
       const source = '<button onClick={() => setCount(n => n + 1)}>Click me</button>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -119,7 +125,8 @@ describe('jsxToIR', () => {
       expect(result.id).not.toBeNull() // Has events, needs ID
     })
 
-    it('converts element with multiple events', () => {
+    // EVT-002: Multiple same-type handlers
+    it('EVT-002: converts element with multiple events', () => {
       const source = '<input onInput={(e) => setName(e.target.value)} onBlur={() => console.log("blur")} />'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -131,7 +138,8 @@ describe('jsxToIR', () => {
       expect(result.events[1].eventName).toBe('blur')
     })
 
-    it('converts element with ref', () => {
+    // REF-001: Ref callback
+    it('REF-001: converts element with ref', () => {
       const source = '<input ref={(el) => inputRef = el} />'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -142,7 +150,8 @@ describe('jsxToIR', () => {
       expect(result.id).not.toBeNull() // Has ref, needs ID
     })
 
-    it('converts nested elements', () => {
+    // JSX-004: Nested elements preserved
+    it('JSX-004: converts nested elements', () => {
       const source = '<div><p>Paragraph</p><span>Span</span></div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -154,7 +163,8 @@ describe('jsxToIR', () => {
       expect((result.children[1] as IRElement).tagName).toBe('span')
     })
 
-    it('converts element with boolean shorthand attribute', () => {
+    // ATTR-002: Boolean shorthand → true
+    it('ATTR-002: converts element with boolean shorthand attribute', () => {
       const source = '<input disabled />'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -164,7 +174,8 @@ describe('jsxToIR', () => {
       expect(result.staticAttrs).toContainEqual({ name: 'disabled', value: '' })
     })
 
-    it('handles spread attributes', () => {
+    // ATTR-020: Spread preserved
+    it('ATTR-020: handles spread attributes', () => {
       const source = '<div {...props}>Content</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -177,7 +188,8 @@ describe('jsxToIR', () => {
   })
 
   describe('self-closing element conversion', () => {
-    it('converts self-closing element', () => {
+    // JSX-005: Self-closing preserved
+    it('JSX-005: converts self-closing element', () => {
       const source = '<input type="text" />'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -190,7 +202,8 @@ describe('jsxToIR', () => {
       expect(result.staticAttrs).toContainEqual({ name: 'type', value: 'text' })
     })
 
-    it('converts br tag', () => {
+    // JSX-006: Void elements supported
+    it('JSX-006: converts br tag', () => {
       const source = '<br />'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -201,7 +214,8 @@ describe('jsxToIR', () => {
       expect(result.children).toEqual([])
     })
 
-    it('converts img tag with attributes', () => {
+    // JSX-007: Attributes on void elements
+    it('JSX-007: converts img tag with attributes', () => {
       const source = '<img src="test.png" alt="Test" />'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -215,7 +229,8 @@ describe('jsxToIR', () => {
   })
 
   describe('fragment conversion', () => {
-    it('converts empty fragment', () => {
+    // JSX-008: Empty fragment
+    it('JSX-008: converts empty fragment', () => {
       const source = '<></>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -226,7 +241,8 @@ describe('jsxToIR', () => {
       expect(result.children).toEqual([])
     })
 
-    it('converts fragment with children', () => {
+    // JSX-009: Fragment with children
+    it('JSX-009: converts fragment with children', () => {
       const source = '<><p>First</p><p>Second</p></>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -241,6 +257,7 @@ describe('jsxToIR', () => {
   })
 
   describe('expression conversion', () => {
+    // Static expression (not in SPEC as it's basic JS)
     it('converts static expression', () => {
       const source = '<div>{1 + 1}</div>'
       const sourceFile = parseJsx(source)
@@ -254,7 +271,8 @@ describe('jsxToIR', () => {
       expect((result.children[0] as IRExpression).isDynamic).toBe(false)
     })
 
-    it('converts signal call expression as dynamic', () => {
+    // EXPR-020: Signal call
+    it('EXPR-020: converts signal call expression as dynamic', () => {
       const source = '<div>{count()}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -268,7 +286,8 @@ describe('jsxToIR', () => {
       expect(result.id).not.toBeNull() // Has dynamic content
     })
 
-    it('converts memo call expression as dynamic', () => {
+    // EXPR-024: Memo call
+    it('EXPR-024: converts memo call expression as dynamic', () => {
       const source = '<div>{doubled()}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals, memos: testMemos })
@@ -279,7 +298,8 @@ describe('jsxToIR', () => {
       expect((result.children[0] as IRExpression).isDynamic).toBe(true)
     })
 
-    it('converts prop reference as dynamic', () => {
+    // EXPR-025: Prop reference
+    it('EXPR-025: converts prop reference as dynamic', () => {
       const source = '<div>{value}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { valueProps: ['value'] })
@@ -290,7 +310,8 @@ describe('jsxToIR', () => {
       expect((result.children[0] as IRExpression).isDynamic).toBe(true)
     })
 
-    it('treats children as dynamic for lazy children pattern', () => {
+    // EXPR-026: Children always dynamic
+    it('EXPR-026: treats children as dynamic for lazy children pattern', () => {
       const source = '<div>{children}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -304,7 +325,8 @@ describe('jsxToIR', () => {
   })
 
   describe('conditional conversion', () => {
-    it('converts ternary operator to IRConditional', () => {
+    // CTRL-002: Dynamic text ternary
+    it('CTRL-002: converts ternary operator to IRConditional', () => {
       const source = '<div>{isActive() ? "Yes" : "No"}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -319,7 +341,8 @@ describe('jsxToIR', () => {
       expect(cond.whenFalse.type).toBe('expression')
     })
 
-    it('converts ternary with JSX elements', () => {
+    // CTRL-003: Element ternary
+    it('CTRL-003: converts ternary with JSX elements', () => {
       const source = '<div>{isActive() ? <span>Active</span> : <span>Inactive</span>}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -333,7 +356,8 @@ describe('jsxToIR', () => {
       expect(cond.id).not.toBeNull() // Dynamic conditional with JSX branches
     })
 
-    it('converts logical AND with JSX', () => {
+    // CTRL-004: Logical AND
+    it('CTRL-004: converts logical AND with JSX', () => {
       const source = '<div>{isActive() && <span>Active</span>}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -348,7 +372,8 @@ describe('jsxToIR', () => {
       expect((cond.whenFalse as IRExpression).expression).toBe('null')
     })
 
-    it('converts logical OR with JSX', () => {
+    // CTRL-005: Logical OR
+    it('CTRL-005: converts logical OR with JSX', () => {
       const source = '<div>{loading || <span>Content</span>}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile)
@@ -361,7 +386,8 @@ describe('jsxToIR', () => {
       expect(cond.whenTrue.type).toBe('element')
     })
 
-    it('assigns ID only for dynamic conditionals with JSX branches', () => {
+    // CTRL-009: Static conditional
+    it('CTRL-009: assigns ID only for dynamic conditionals with JSX branches', () => {
       // Static condition (no signals)
       const sourceStatic = '<div>{true ? <span>Yes</span> : <span>No</span>}</div>'
       const sourceFileStatic = parseJsx(sourceStatic)
@@ -385,7 +411,8 @@ describe('jsxToIR', () => {
   })
 
   describe('component conversion', () => {
-    it('converts component with static props', () => {
+    // COMP-002: Static props
+    it('COMP-002: converts component with static props', () => {
       const source = '<Counter initial={5} />'
       const sourceFile = parseJsx(source)
       const components = new Map([['Counter', createMockCompileResult('Counter')]])
@@ -401,7 +428,8 @@ describe('jsxToIR', () => {
       expect(result.props[0].isDynamic).toBe(false)
     })
 
-    it('converts component with dynamic props', () => {
+    // COMP-003: Dynamic props (marked reactive)
+    it('COMP-003: converts component with dynamic props', () => {
       const source = '<Counter value={count()} />'
       const sourceFile = parseJsx(source)
       const components = new Map([['Counter', createMockCompileResult('Counter')]])
@@ -412,7 +440,8 @@ describe('jsxToIR', () => {
       expect(result.props[0].isDynamic).toBe(true)
     })
 
-    it('converts component with string props', () => {
+    // COMP-002: Static props (string)
+    it('COMP-002b: converts component with string props', () => {
       const source = '<Button label="Click me" />'
       const sourceFile = parseJsx(source)
       const components = new Map([['Button', createMockCompileResult('Button')]])
@@ -425,7 +454,8 @@ describe('jsxToIR', () => {
       expect(result.props[0].isDynamic).toBe(false)
     })
 
-    it('converts component with boolean shorthand', () => {
+    // COMP-006: Boolean shorthand prop
+    it('COMP-006: converts component with boolean shorthand', () => {
       const source = '<Toggle checked />'
       const sourceFile = parseJsx(source)
       const components = new Map([['Toggle', createMockCompileResult('Toggle')]])
@@ -437,7 +467,8 @@ describe('jsxToIR', () => {
       expect(result.props[0].value).toBe('true')
     })
 
-    it('converts component with children', () => {
+    // COMP-005: Children
+    it('COMP-005: converts component with children', () => {
       const source = '<Card><p>Content</p></Card>'
       const sourceFile = parseJsx(source)
       const components = new Map([['Card', createMockCompileResult('Card')]])
@@ -449,7 +480,8 @@ describe('jsxToIR', () => {
       expect((result.children[0] as IRElement).tagName).toBe('p')
     })
 
-    it('converts component with spread props', () => {
+    // COMP-004: Spread props
+    it('COMP-004: converts component with spread props', () => {
       const source = '<Button {...buttonProps} />'
       const sourceFile = parseJsx(source)
       const components = new Map([['Button', createMockCompileResult('Button')]])
@@ -461,7 +493,8 @@ describe('jsxToIR', () => {
       expect(result.spreadProps[0].expression).toBe('buttonProps')
     })
 
-    it('sets childInits for component needing client init', () => {
+    // COMP-032: Child init calling
+    it('COMP-032: sets childInits for component needing client init', () => {
       const source = '<Counter value={count()} />'
       const sourceFile = parseJsx(source)
       const counterResult = createMockCompileResult('Counter')
@@ -475,7 +508,8 @@ describe('jsxToIR', () => {
       expect(result.childInits!.name).toBe('Counter')
     })
 
-    it('marks reactive children as lazy', () => {
+    // COMP-020: Lazy children (reactive)
+    it('COMP-020: marks reactive children as lazy', () => {
       const source = '<Card>{count()}</Card>'
       const sourceFile = parseJsx(source)
       const components = new Map([['Card', createMockCompileResult('Card')]])
@@ -488,7 +522,8 @@ describe('jsxToIR', () => {
   })
 
   describe('list (map) processing', () => {
-    it('extracts listInfo from map expression', () => {
+    // CTRL-010: Basic map
+    it('CTRL-010: extracts listInfo from map expression', () => {
       const source = '<ul>{items().map(item => <li>{item}</li>)}</ul>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -502,7 +537,8 @@ describe('jsxToIR', () => {
       expect(result.id).not.toBeNull() // Has list, needs ID
     })
 
-    it('extracts key from list item', () => {
+    // CTRL-012: Key attribute
+    it('CTRL-012: extracts key from list item', () => {
       const source = '<ul>{items().map(item => <li key={item.id}>{item.name}</li>)}</ul>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -512,7 +548,8 @@ describe('jsxToIR', () => {
       expect(result.listInfo!.keyExpression).toBe('item.id')
     })
 
-    it('uses __index for index-based key', () => {
+    // CTRL-013: Index key
+    it('CTRL-013: uses __index for index-based key', () => {
       const source = '<ul>{items().map((item, index) => <li key={index}>{item}</li>)}</ul>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -522,7 +559,8 @@ describe('jsxToIR', () => {
       expect(result.listInfo!.keyExpression).toBe('__index')
     })
 
-    it('generates itemIR for server JSX', () => {
+    // CTRL-010: Basic map (item IR generation)
+    it('CTRL-010b: generates itemIR for server JSX', () => {
       const source = '<ul>{items().map(item => <li class="todo">{item.text}</li>)}</ul>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -536,7 +574,8 @@ describe('jsxToIR', () => {
   })
 
   describe('dynamic content detection', () => {
-    it('detects dynamic content and sets dynamicContent', () => {
+    // EXPR-020: Signal call (dynamic content detection)
+    it('EXPR-020b: detects dynamic content and sets dynamicContent', () => {
       const source = '<span>{count()}</span>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })
@@ -548,7 +587,8 @@ describe('jsxToIR', () => {
       expect(result.dynamicContent!.fullContent).toBe('count()')
     })
 
-    it('builds fullContent with multiple parts', () => {
+    // EXPR-023: Text + dynamic
+    it('EXPR-023: builds fullContent with multiple parts', () => {
       const source = '<span>Count: {count()}</span>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { signals: testSignals })

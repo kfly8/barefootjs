@@ -45,7 +45,8 @@ import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
 describe('Event Handlers - Basic', () => {
-  it('onClick', async () => {
+  // EVT-001: Click handler
+  it('EVT-001: onClick', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -73,7 +74,8 @@ describe('Event Handlers - Basic', () => {
     expect(file.clientJs).toContain('if (_1)')
   })
 
-  it('multiple onClick', async () => {
+  // EVT-002: Multiple same-type handlers
+  it('EVT-002: multiple onClick', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -98,7 +100,8 @@ describe('Event Handlers - Basic', () => {
 })
 
 describe('Event Handlers - Form', () => {
-  it('onChange', async () => {
+  // EVT-003: Change handler
+  it('EVT-003: onChange', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -123,7 +126,8 @@ describe('Event Handlers - Form', () => {
     expect(file.clientJs).toContain('createEffect(')
   })
 
-  it('onInput (with event argument)', async () => {
+  // EVT-004: Input handler
+  it('EVT-004: onInput (with event argument)', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -145,7 +149,8 @@ describe('Event Handlers - Form', () => {
     expect(file.clientJs).toContain('setText(e.target.value)')
   })
 
-  it('onSubmit', async () => {
+  // EVT-005: Submit handler
+  it('EVT-005: onSubmit', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -172,7 +177,8 @@ describe('Event Handlers - Form', () => {
 })
 
 describe('Event Handlers - Keyboard', () => {
-  it('onKeyDown', async () => {
+  // EVT-006: KeyDown handler
+  it('EVT-006: onKeyDown', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
