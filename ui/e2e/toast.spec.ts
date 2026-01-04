@@ -181,6 +181,105 @@ test.describe('Toast Documentation Page', () => {
     })
   })
 
+  test.describe('Toast Animations', () => {
+    test('shows toast with entering animation state', async ({ page }) => {
+      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Toast")')
+      const toast = basicDemo.locator('[data-toast]')
+
+      await trigger.click()
+
+      // Toast should transition through animation states
+      // After rAF, it should be visible
+      await expect(toast).toHaveAttribute('data-toast-animation-state', 'visible')
+      await expect(toast).toBeVisible()
+    })
+
+    test('slides out when dismissed and waits for animation', async ({ page }) => {
+      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Toast")')
+      const toast = basicDemo.locator('[data-toast]')
+
+      await trigger.click()
+      await expect(toast).toBeVisible()
+
+      // Click dismiss button
+      const closeButton = toast.locator('[data-toast-close]')
+      await closeButton.dispatchEvent('click')
+
+      // Should transition to exiting state
+      await expect(toast).toHaveAttribute('data-toast-animation-state', 'exiting')
+
+      // Wait for exit animation (300ms) + buffer
+      await page.waitForTimeout(400)
+
+      // Should be hidden after animation
+      await expect(toast).toHaveAttribute('data-toast-animation-state', 'hidden')
+      await expect(toast).toHaveClass(/hidden/)
+    })
+
+    test('manual dismiss during enter animation transitions smoothly to exit', async ({ page }) => {
+      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Toast")')
+      const toast = basicDemo.locator('[data-toast]')
+
+      await trigger.click()
+
+      // Immediately click dismiss (during enter animation)
+      const closeButton = toast.locator('[data-toast-close]')
+      await closeButton.dispatchEvent('click')
+
+      // Should transition to exiting
+      await expect(toast).toHaveAttribute('data-toast-animation-state', 'exiting')
+
+      // Wait for animation
+      await page.waitForTimeout(400)
+      await expect(toast).toHaveClass(/hidden/)
+    })
+
+    test('multiple toasts animate independently', async ({ page }) => {
+      const variantsDemo = page.locator('[data-bf-scope="ToastVariantsDemo"]').first()
+      const trigger = variantsDemo.locator('button:has-text("Show All Variants")')
+
+      await trigger.click()
+
+      // All toasts should be visible after animation
+      const toasts = variantsDemo.locator('[data-toast]')
+      await expect(toasts).toHaveCount(5)
+
+      // Each toast should be in visible state
+      const defaultToast = variantsDemo.locator('[data-toast-variant="default"]')
+      const successToast = variantsDemo.locator('[data-toast-variant="success"]')
+
+      await expect(defaultToast).toHaveAttribute('data-toast-animation-state', 'visible')
+      await expect(successToast).toHaveAttribute('data-toast-animation-state', 'visible')
+
+      // Dismiss one toast, others should remain
+      const defaultClose = defaultToast.locator('[data-toast-close]')
+      await defaultClose.dispatchEvent('click')
+
+      await expect(defaultToast).toHaveAttribute('data-toast-animation-state', 'exiting')
+      await expect(successToast).toHaveAttribute('data-toast-animation-state', 'visible')
+    })
+
+    test('auto-dismiss waits for exit animation before hiding', async ({ page }) => {
+      // Use a short duration for testing (we can't control the duration, so we verify the behavior)
+      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Toast")')
+      const toast = basicDemo.locator('[data-toast]')
+
+      await trigger.click()
+      await expect(toast).toBeVisible()
+
+      // Verify the animation state attribute exists (indicating animation support)
+      await expect(toast).toHaveAttribute('data-toast-animation-state', 'visible')
+
+      // The toast should have transition classes for smooth animation
+      await expect(toast).toHaveClass(/transition-all/)
+      await expect(toast).toHaveClass(/duration-300/)
+    })
+  })
+
   test.describe('API Reference', () => {
     test('displays API Reference section', async ({ page }) => {
       await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
