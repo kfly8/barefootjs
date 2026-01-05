@@ -37,7 +37,7 @@ export function Input({
   return (
     <input
       type={inputType}
-      class={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base text-foreground shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
+      class={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base text-foreground shadow-inner transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
         inputError
           ? 'border-destructive focus-visible:ring-destructive'
           : 'border-input focus-visible:ring-ring'

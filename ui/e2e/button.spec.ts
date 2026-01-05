@@ -38,8 +38,10 @@ test.describe('Button Documentation Page', () => {
     })
 
     test('displays icon button', async ({ page }) => {
-      // Icon button contains SVG (in main content, not header)
-      await expect(page.locator('main button svg')).toBeVisible()
+      // Icon button has data-bf-scope attribute (not a copy button)
+      // It's the Button component with an SVG icon inside
+      const iconButton = page.locator('button[data-bf-scope="Button"]:has(svg)')
+      await expect(iconButton).toBeVisible()
     })
   })
 

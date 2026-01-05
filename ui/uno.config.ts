@@ -56,6 +56,29 @@ export default defineConfig({
       md: 'calc(var(--radius) - 2px)',
       sm: 'calc(var(--radius) - 4px)',
     },
+    // Shadow scale - Use 'shadow-*' utilities
+    boxShadow: {
+      sm: 'var(--shadow-sm)',
+      DEFAULT: 'var(--shadow)',
+      md: 'var(--shadow-md)',
+      lg: 'var(--shadow-lg)',
+      xl: 'var(--shadow-xl)',
+      inner: 'var(--shadow-inner)',
+      none: 'none',
+    },
+    // Typography - Use 'font-*' utilities
+    fontFamily: {
+      sans: 'var(--font-sans)',
+      mono: 'var(--font-mono)',
+    },
+    // Letter spacing - Use 'tracking-*' utilities
+    letterSpacing: {
+      tighter: 'var(--tracking-tighter)',
+      tight: 'var(--tracking-tight)',
+      normal: 'var(--tracking-normal)',
+      wide: 'var(--tracking-wide)',
+      wider: 'var(--tracking-wider)',
+    },
     // Animation tokens - Use 'duration' for duration-* utilities
     duration: {
       fast: 'var(--duration-fast)',

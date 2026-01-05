@@ -118,12 +118,12 @@ export function TabsTrigger({
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
       tabIndex={selected ? 0 : -1}
-      class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+      class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
         selected
-          ? 'bg-background text-foreground shadow'
-          : 'text-muted-foreground hover:text-foreground'
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
       }`}
       onClick={onClick}
       onKeyDown={handleKeyDown}
