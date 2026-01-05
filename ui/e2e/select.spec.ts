@@ -41,16 +41,16 @@ test.describe('Select Documentation Page', () => {
 
   test.describe('Value Binding', () => {
     test('displays binding example section', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="SelectBindingDemo"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope^="SelectBindingDemo_"]')).toBeVisible()
     })
 
     test('shows initial empty state', async ({ page }) => {
-      const status = page.locator('[data-bf-scope="SelectBindingDemo"] .selected-value')
+      const status = page.locator('[data-bf-scope^="SelectBindingDemo_"] .selected-value')
       await expect(status).toContainText('None')
     })
 
     test('changes value on selection', async ({ page }) => {
-      const bindingSection = page.locator('[data-bf-scope="SelectBindingDemo"]')
+      const bindingSection = page.locator('[data-bf-scope^="SelectBindingDemo_"]')
       const select = bindingSection.locator('select')
       const status = bindingSection.locator('.selected-value')
 
@@ -64,7 +64,7 @@ test.describe('Select Documentation Page', () => {
     })
 
     test('syncs display with selection', async ({ page }) => {
-      const bindingSection = page.locator('[data-bf-scope="SelectBindingDemo"]')
+      const bindingSection = page.locator('[data-bf-scope^="SelectBindingDemo_"]')
       const select = bindingSection.locator('select')
       const status = bindingSection.locator('.selected-value')
 
@@ -76,7 +76,7 @@ test.describe('Select Documentation Page', () => {
     })
 
     test('cycles through all options', async ({ page }) => {
-      const bindingSection = page.locator('[data-bf-scope="SelectBindingDemo"]')
+      const bindingSection = page.locator('[data-bf-scope^="SelectBindingDemo_"]')
       const select = bindingSection.locator('select')
       const status = bindingSection.locator('.selected-value')
 
@@ -107,16 +107,16 @@ test.describe('Select Documentation Page', () => {
 
   test.describe('Focus State', () => {
     test('displays focus example section', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="SelectFocusDemo"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope^="SelectFocusDemo_"]')).toBeVisible()
     })
 
     test('shows initial not focused state', async ({ page }) => {
-      const status = page.locator('[data-bf-scope="SelectFocusDemo"] .focus-status')
+      const status = page.locator('[data-bf-scope^="SelectFocusDemo_"] .focus-status')
       await expect(status).toContainText('Not focused')
     })
 
     test('updates status on focus', async ({ page }) => {
-      const focusSection = page.locator('[data-bf-scope="SelectFocusDemo"]')
+      const focusSection = page.locator('[data-bf-scope^="SelectFocusDemo_"]')
       const select = focusSection.locator('select')
       const status = focusSection.locator('.focus-status')
 
@@ -126,7 +126,7 @@ test.describe('Select Documentation Page', () => {
     })
 
     test('updates status on blur', async ({ page }) => {
-      const focusSection = page.locator('[data-bf-scope="SelectFocusDemo"]')
+      const focusSection = page.locator('[data-bf-scope^="SelectFocusDemo_"]')
       const select = focusSection.locator('select')
       const status = focusSection.locator('.focus-status')
 
