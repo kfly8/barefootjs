@@ -28,7 +28,7 @@ export function DialogBasicDemo() {
   const openDialog = () => {
     setOpen(true)
     setTimeout(() => {
-      const scope = document.querySelector('[data-bf-scope="DialogBasicDemo"]')
+      const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
       const dialog = scope?.querySelector('[data-dialog-content]')
       if (dialog) (dialog as HTMLElement).focus()
     }, 10)
@@ -38,7 +38,7 @@ export function DialogBasicDemo() {
   const closeDialog = () => {
     setOpen(false)
     setTimeout(() => {
-      const scope = document.querySelector('[data-bf-scope="DialogBasicDemo"]')
+      const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
       const trigger = scope?.querySelector('button')
       if (trigger) trigger.focus()
     }, 10)
