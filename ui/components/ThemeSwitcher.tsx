@@ -23,8 +23,8 @@ export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
 
   // Initialize theme from localStorage after hydration
   createEffect(() => {
-    const stored = localStorage.getItem('theme')
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+    const stored = localStorage.getItem('theme') as Theme | null
+    if (stored && ['light', 'dark', 'system'].includes(stored)) {
       setTheme(stored)
     }
   })
