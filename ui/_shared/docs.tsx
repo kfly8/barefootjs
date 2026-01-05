@@ -5,6 +5,34 @@
  * Uses CSS variables for theming support.
  */
 
+import { TableOfContents, type TocItem } from '@/components/TableOfContents'
+import { PageNavigation, getNavLinks } from './PageNavigation'
+import { highlight } from './highlighter'
+
+// Re-export TocItem for convenience
+export type { TocItem }
+
+// Documentation page wrapper with TOC sidebar and footer navigation
+export interface DocPageProps {
+  slug: string
+  toc: TocItem[]
+  children: any
+}
+
+export function DocPage({ slug, toc, children }: DocPageProps) {
+  const navLinks = getNavLinks(slug)
+
+  return (
+    <div class="flex gap-10">
+      <div class="flex-1 min-w-0">
+        {children}
+        <PageNavigation {...navLinks} />
+      </div>
+      <TableOfContents items={toc} />
+    </div>
+  )
+}
+
 // Page header with title and description
 export function PageHeader({ title, description }: { title: string; description: string }) {
   return (
@@ -69,12 +97,40 @@ function CopyButton() {
   )
 }
 
-// Code block component with copy button
-export function CodeBlock({ code, lang = 'tsx' }: { code: string; lang?: string }) {
+// Code block component with syntax highlighting, line numbers, and copy button
+export function CodeBlock({
+  code,
+  lang = 'tsx',
+  showLineNumbers = false,
+}: {
+  code: string
+  lang?: string
+  showLineNumbers?: boolean
+}) {
+  const highlightedCode = highlight(code, lang)
+  const lines = highlightedCode.split('\n')
+  // Remove trailing empty line if present
+  if (lines[lines.length - 1] === '') {
+    lines.pop()
+  }
+
   return (
     <div class="relative group">
-      <pre class="p-4 pr-12 bg-muted text-muted-foreground rounded-lg overflow-x-auto text-sm font-mono border border-border">
-        <code data-code-content>{code}</code>
+      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+        <code data-code-content class="block">
+          {showLineNumbers ? (
+            lines.map((line, i) => (
+              <span key={i} class="table-row">
+                <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+                  {i + 1}
+                </span>
+                <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
+              </span>
+            ))
+          ) : (
+            <span dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+          )}
+        </code>
       </pre>
       <CopyButton />
     </div>

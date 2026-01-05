@@ -5,13 +5,23 @@
 import { Input } from '@/components/Input'
 import { InputBindingDemo, InputFocusDemo } from '@/components/InputDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add input`
@@ -95,64 +105,66 @@ const inputProps: PropDefinition[] = [
 
 export function InputPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Input"
-        description="Displays an input field for user text entry."
-      />
+    <DocPage slug="input" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Input"
+          description="Displays an input field for user text entry."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Input inputPlaceholder="Enter text..." />`}>
-        <Input inputPlaceholder="Enter text..." />
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Input inputPlaceholder="Enter text..." />`}>
+          <Input inputPlaceholder="Enter text..." />
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Input Types" code={typesCode}>
-            <div class="flex flex-col gap-2 max-w-sm">
-              <Input inputType="text" inputPlaceholder="Text input" />
-              <Input inputType="email" inputPlaceholder="Email address" />
-              <Input inputType="password" inputPlaceholder="Password" />
-              <Input inputType="number" inputPlaceholder="Number" />
-            </div>
-          </Example>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Input Types" code={typesCode}>
+              <div class="flex flex-col gap-2 max-w-sm">
+                <Input inputType="text" inputPlaceholder="Text input" />
+                <Input inputType="email" inputPlaceholder="Email address" />
+                <Input inputType="password" inputPlaceholder="Password" />
+                <Input inputType="number" inputPlaceholder="Number" />
+              </div>
+            </Example>
 
-          <Example title="Disabled & Read-only" code={disabledCode}>
-            <div class="flex flex-col gap-2 max-w-sm">
-              <Input inputDisabled inputPlaceholder="Disabled input" />
-              <Input inputReadOnly inputValue="Read-only value" />
-            </div>
-          </Example>
+            <Example title="Disabled & Read-only" code={disabledCode}>
+              <div class="flex flex-col gap-2 max-w-sm">
+                <Input inputDisabled inputPlaceholder="Disabled input" />
+                <Input inputReadOnly inputValue="Read-only value" />
+              </div>
+            </Example>
 
-          <Example title="Value Binding" code={bindingCode}>
-            <div class="max-w-sm">
-              <InputBindingDemo />
-            </div>
-          </Example>
+            <Example title="Value Binding" code={bindingCode}>
+              <div class="max-w-sm">
+                <InputBindingDemo />
+              </div>
+            </Example>
 
-          <Example title="Focus State" code={`<Input onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
-            <div class="max-w-sm">
-              <InputFocusDemo />
-            </div>
-          </Example>
-        </div>
-      </Section>
+            <Example title="Focus State" code={`<Input onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
+              <div class="max-w-sm">
+                <InputFocusDemo />
+              </div>
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={inputProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={inputProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }

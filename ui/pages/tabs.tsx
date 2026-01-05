@@ -4,13 +4,24 @@
 
 import { TabsBasicDemo, TabsMultipleDemo, TabsDisabledDemo } from '@/components/TabsDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'accessibility', title: 'Accessibility' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add tabs`
@@ -179,80 +190,82 @@ const tabsContentProps: PropDefinition[] = [
 
 export function TabsPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Tabs"
-        description="A set of layered sections of content—known as tab panels—that are displayed one at a time."
-      />
+    <DocPage slug="tabs" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Tabs"
+          description="A set of layered sections of content—known as tab panels—that are displayed one at a time."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Tabs>...</Tabs>`}>
-        <div class="w-full max-w-md">
-          <TabsBasicDemo />
-        </div>
-      </Example>
-
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
-
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
-
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Basic" code={basicCode}>
-            <div class="w-full max-w-md">
-              <TabsBasicDemo />
-            </div>
-          </Example>
-
-          <Example title="Multiple Tabs" code={multipleTabsCode}>
-            <div class="w-full max-w-lg">
-              <TabsMultipleDemo />
-            </div>
-          </Example>
-
-          <Example title="Disabled Tab" code={disabledCode}>
-            <div class="w-full max-w-md">
-              <TabsDisabledDemo />
-            </div>
-          </Example>
-        </div>
-      </Section>
-
-      {/* Accessibility */}
-      <Section title="Accessibility">
-        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-          <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
-          <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
-          <li><strong class="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
-          <li><strong class="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
-          <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
-        </ul>
-      </Section>
-
-      {/* API Reference */}
-      <Section title="API Reference">
-        <div class="space-y-6">
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">Tabs</h3>
-            <PropsTable props={tabsProps} />
+        {/* Preview */}
+        <Example title="" code={`<Tabs>...</Tabs>`}>
+          <div class="w-full max-w-md">
+            <TabsBasicDemo />
           </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
-            <PropsTable props={tabsTriggerProps} />
+        </Example>
+
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
+
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
+
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Basic" code={basicCode}>
+              <div class="w-full max-w-md">
+                <TabsBasicDemo />
+              </div>
+            </Example>
+
+            <Example title="Multiple Tabs" code={multipleTabsCode}>
+              <div class="w-full max-w-lg">
+                <TabsMultipleDemo />
+              </div>
+            </Example>
+
+            <Example title="Disabled Tab" code={disabledCode}>
+              <div class="w-full max-w-md">
+                <TabsDisabledDemo />
+              </div>
+            </Example>
           </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">TabsContent</h3>
-            <PropsTable props={tabsContentProps} />
+        </Section>
+
+        {/* Accessibility */}
+        <Section id="accessibility" title="Accessibility">
+          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
+            <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
+            <li><strong class="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
+            <li><strong class="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
+            <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
+          </ul>
+        </Section>
+
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">Tabs</h3>
+              <PropsTable props={tabsProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
+              <PropsTable props={tabsTriggerProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">TabsContent</h3>
+              <PropsTable props={tabsContentProps} />
+            </div>
           </div>
-        </div>
-      </Section>
-    </div>
+        </Section>
+      </div>
+    </DocPage>
   )
 }

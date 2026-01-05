@@ -86,8 +86,9 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog).toBeVisible()
 
       // Click overlay (the dark backdrop within this demo)
+      // Use y: 100 to click below the fixed header (h-14 = 56px)
       const overlay = basicDemo.locator('[data-dialog-overlay]')
-      await overlay.click({ position: { x: 10, y: 10 } })
+      await overlay.click({ position: { x: 10, y: 100 } })
 
       // Dialog should be closed (check opacity since we use CSS transitions)
       await expect(dialog).toHaveCSS('opacity', '0')
@@ -182,8 +183,8 @@ test.describe('Dialog Documentation Page', () => {
       await trigger.click()
       await expect(dialog).toBeVisible()
 
-      // Click overlay to close
-      await overlay.click({ position: { x: 10, y: 10 } })
+      // Click overlay to close (use y: 100 to click below the fixed header)
+      await overlay.click({ position: { x: 10, y: 100 } })
 
       // Dialog and overlay should fade out
       await expect(dialog).toHaveCSS('opacity', '0')

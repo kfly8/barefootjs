@@ -5,6 +5,10 @@
  */
 
 import { Hono } from 'hono'
+import { initHighlighter } from './_shared/highlighter'
+
+// Initialize syntax highlighter at startup
+await initHighlighter()
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
 // All pages imported from source

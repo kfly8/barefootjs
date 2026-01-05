@@ -63,9 +63,10 @@ export function DialogOverlay({
   onClick,
 }: DialogOverlayProps) {
   // Use opacity + pointer-events for fade animation (hidden class breaks transitions)
+  // z-dialog ensures dialog is above fixed header (z-50)
   return (
     <div
-      class={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-normal ${
+      class={`fixed inset-0 z-dialog bg-black/80 backdrop-blur-sm transition-opacity duration-normal ${
         open ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
       data-dialog-overlay
@@ -138,9 +139,10 @@ export function DialogContent({
 
   // Use opacity + scale for fade + zoom animation (hidden class breaks transitions)
   // pointer-events-none prevents interaction when closed
+  // z-dialog ensures dialog is above fixed header (z-50)
   return (
     <div
-      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-xl sm:rounded-lg transition-all duration-normal ${
+      class={`fixed left-[50%] top-[50%] z-dialog grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-xl sm:rounded-lg transition-all duration-normal ${
         open
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'

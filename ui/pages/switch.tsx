@@ -5,13 +5,23 @@
 import { Switch } from '@/components/Switch'
 import { SwitchInteractiveDemo, SwitchSettingsPanelDemo } from '@/components/SwitchDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add switch`
@@ -84,51 +94,53 @@ const switchProps: PropDefinition[] = [
 
 export function SwitchPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Switch"
-        description="A control that allows the user to toggle between checked and not checked."
-      />
+    <DocPage slug="switch" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Switch"
+          description="A control that allows the user to toggle between checked and not checked."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Switch />`}>
-        <SwitchInteractiveDemo />
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Switch />`}>
+          <SwitchInteractiveDemo />
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Basic" code={basicCode}>
-            <SwitchInteractiveDemo />
-          </Example>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Basic" code={basicCode}>
+              <SwitchInteractiveDemo />
+            </Example>
 
-          <Example title="Disabled" code={disabledCode}>
-            <div class="flex gap-4">
-              <Switch checked={false} disabled />
-              <Switch checked={true} disabled />
-            </div>
-          </Example>
+            <Example title="Disabled" code={disabledCode}>
+              <div class="flex gap-4">
+                <Switch checked={false} disabled />
+                <Switch checked={true} disabled />
+              </div>
+            </Example>
 
-          <Example title="Multiple Switches" code={multipleCode}>
-            <SwitchSettingsPanelDemo />
-          </Example>
-        </div>
-      </Section>
+            <Example title="Multiple Switches" code={multipleCode}>
+              <SwitchSettingsPanelDemo />
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={switchProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={switchProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }

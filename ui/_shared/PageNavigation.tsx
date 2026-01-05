@@ -19,16 +19,16 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
   if (!prev && !next) return null
 
   return (
-    <nav class="flex items-center justify-between pt-8 mt-8 border-t border-border" aria-label="Page navigation">
+    <nav class="flex items-center justify-between pt-12 mt-12 border-t border-border" aria-label="Page navigation">
       {prev ? (
         <a
           href={prev.href}
-          class="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          class="group flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -40,8 +40,8 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
             <path d="m15 18-6-6 6-6"/>
           </svg>
           <div class="flex flex-col">
-            <span class="text-xs text-muted-foreground">Previous</span>
-            <span class="font-medium text-foreground">{prev.title}</span>
+            <span class="text-sm text-muted-foreground">Previous</span>
+            <span class="text-lg font-medium text-foreground">{prev.title}</span>
           </div>
         </a>
       ) : (
@@ -50,16 +50,16 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
       {next ? (
         <a
           href={next.href}
-          class="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-right"
+          class="group flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors text-right"
         >
           <div class="flex flex-col">
-            <span class="text-xs text-muted-foreground">Next</span>
-            <span class="font-medium text-foreground">{next.title}</span>
+            <span class="text-sm text-muted-foreground">Next</span>
+            <span class="text-lg font-medium text-foreground">{next.title}</span>
           </div>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

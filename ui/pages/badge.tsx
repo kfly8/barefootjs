@@ -4,13 +4,23 @@
 
 import { Badge } from '../components/Badge'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add badge`
@@ -43,43 +53,45 @@ const badgeProps: PropDefinition[] = [
 
 export function BadgePage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Badge"
-        description="Displays a badge or a component that looks like a badge."
-      />
+    <DocPage slug="badge" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Badge"
+          description="Displays a badge or a component that looks like a badge."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Badge>Badge</Badge>`}>
-        <Badge>Badge</Badge>
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Badge>Badge</Badge>`}>
+          <Badge>Badge</Badge>
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Variants" code={variantCode}>
-            <Badge variant="default">Default</Badge>
-            <Badge variant="secondary">Secondary</Badge>
-            <Badge variant="destructive">Destructive</Badge>
-            <Badge variant="outline">Outline</Badge>
-          </Example>
-        </div>
-      </Section>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Variants" code={variantCode}>
+              <Badge variant="default">Default</Badge>
+              <Badge variant="secondary">Secondary</Badge>
+              <Badge variant="destructive">Destructive</Badge>
+              <Badge variant="outline">Outline</Badge>
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={badgeProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={badgeProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }
