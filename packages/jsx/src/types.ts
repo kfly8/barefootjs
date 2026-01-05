@@ -170,6 +170,10 @@ export type MemoDeclaration = {
   computation: string // () => count() * 2
 }
 
+export type EffectDeclaration = {
+  code: string        // createEffect(() => { ... })
+}
+
 export type ModuleConstant = {
   name: string        // GRID_SIZE
   value: string       // 100 (literal value as string)
@@ -203,6 +207,7 @@ export type CompileResult = {
   clientJs: string
   signals: SignalDeclaration[]
   memos: MemoDeclaration[]         // Memoized computed values
+  effects: EffectDeclaration[]     // User-written createEffect blocks
   moduleConstants: ModuleConstant[] // Module-level constants
   localFunctions: LocalFunction[]  // Functions defined within the component
   localVariables: LocalVariable[]  // Local variables defined within the component (non-function)

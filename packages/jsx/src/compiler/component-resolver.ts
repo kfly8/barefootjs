@@ -69,6 +69,7 @@ function createCyclePlaceholder(targetComponentName?: string, hasUseClientDirect
     refElements: [],
     signals: [],
     memos: [],
+    effects: [],
     imports: [],
     props: [],
     typeDefinitions: [],
