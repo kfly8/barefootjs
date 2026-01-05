@@ -6,6 +6,7 @@
  */
 
 import { TableOfContents, type TocItem } from '@/components/TableOfContents'
+import { CopyButton } from '@/components/CopyButton'
 import { PageNavigation, getNavLinks } from './PageNavigation'
 import { highlight } from './highlighter'
 
@@ -55,48 +56,6 @@ export function Preview({ children }: { children: any }) {
   )
 }
 
-// Copy button for code blocks (client-side component)
-function CopyButton() {
-  return (
-    <button
-      type="button"
-      class="absolute top-2 right-2 p-2 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
-      aria-label="Copy code"
-      data-copy-button
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="copy-icon"
-      >
-        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-      </svg>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="check-icon hidden"
-      >
-        <path d="M20 6 9 17l-5-5"/>
-      </svg>
-    </button>
-  )
-}
-
 // Code block component with syntax highlighting, line numbers, and copy button
 export function CodeBlock({
   code,
@@ -117,7 +76,7 @@ export function CodeBlock({
   return (
     <div class="relative group">
       <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-        <code data-code-content class="block">
+        <code class="block">
           {showLineNumbers ? (
             lines.map((line, i) => (
               <span key={i} class="table-row">
@@ -132,7 +91,7 @@ export function CodeBlock({
           )}
         </code>
       </pre>
-      <CopyButton />
+      <CopyButton code={code} />
     </div>
   )
 }
