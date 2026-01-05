@@ -23,14 +23,14 @@ export function RequiredFieldDemo() {
 
   return (
     <div class="space-y-2">
-      <label class="text-sm text-zinc-400">Name *</label>
+      <label class="text-sm text-muted-foreground">Name *</label>
       <Input
         inputValue={name()}
         onInput={(e) => setName(e.target.value)}
         onBlur={() => setTouched(true)}
         inputPlaceholder="Enter your name"
       />
-      <p class="error-message text-sm text-red-400 min-h-5">{error()}</p>
+      <p class="error-message text-sm text-destructive min-h-5">{error()}</p>
     </div>
   )
 }
@@ -51,7 +51,7 @@ export function EmailValidationDemo() {
 
   return (
     <div class="space-y-2">
-      <label class="text-sm text-zinc-400">Email *</label>
+      <label class="text-sm text-muted-foreground">Email *</label>
       <Input
         inputType="email"
         inputValue={email()}
@@ -60,8 +60,8 @@ export function EmailValidationDemo() {
         inputPlaceholder="Enter your email"
       />
       <div class="flex justify-between min-h-5">
-        <p class="error-message text-sm text-red-400">{error()}</p>
-        {isValid() ? <span class="valid-indicator text-sm text-green-400">Valid</span> : null}
+        <p class="error-message text-sm text-destructive">{error()}</p>
+        {isValid() ? <span class="valid-indicator text-sm text-success">Valid</span> : null}
       </div>
     </div>
   )
@@ -98,7 +98,7 @@ export function PasswordConfirmationDemo() {
   return (
     <div class="space-y-4">
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Password *</label>
+        <label class="text-sm text-muted-foreground">Password *</label>
         <Input
           inputType="password"
           inputValue={password()}
@@ -106,10 +106,10 @@ export function PasswordConfirmationDemo() {
           onBlur={() => setPasswordTouched(true)}
           inputPlaceholder="Enter password (min 8 chars)"
         />
-        <p class="password-error text-sm text-red-400 min-h-5">{passwordError()}</p>
+        <p class="password-error text-sm text-destructive min-h-5">{passwordError()}</p>
       </div>
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Confirm Password *</label>
+        <label class="text-sm text-muted-foreground">Confirm Password *</label>
         <Input
           inputType="password"
           inputValue={confirmPassword()}
@@ -117,10 +117,10 @@ export function PasswordConfirmationDemo() {
           onBlur={() => setConfirmTouched(true)}
           inputPlaceholder="Confirm your password"
         />
-        <p class="confirm-error text-sm text-red-400 min-h-5">{confirmError()}</p>
+        <p class="confirm-error text-sm text-destructive min-h-5">{confirmError()}</p>
       </div>
       {isValid() ? (
-        <p class="match-indicator text-sm text-green-400">Passwords match!</p>
+        <p class="match-indicator text-sm text-success">Passwords match!</p>
       ) : null}
     </div>
   )
@@ -196,25 +196,25 @@ export function MultiFieldFormDemo() {
   return (
     <div class="space-y-4">
       {submitted() ? (
-        <div class="success-message p-4 bg-green-900/30 border border-green-700 rounded-lg">
-          <p class="text-green-400 font-medium">Form submitted successfully!</p>
-          <p class="text-sm text-green-300 mt-1">Name: {name()}, Email: {email()}</p>
+        <div class="success-message p-4 bg-success/10 border border-success rounded-lg">
+          <p class="text-success font-medium">Form submitted successfully!</p>
+          <p class="text-sm text-success-foreground mt-1">Name: {name()}, Email: {email()}</p>
         </div>
       ) : (
         <div class="space-y-4">
           <div class="space-y-2">
-            <label class="text-sm text-zinc-400">Name *</label>
+            <label class="text-sm text-muted-foreground">Name *</label>
             <Input
               inputValue={name()}
               onInput={(e) => setName(e.target.value)}
               onBlur={() => setNameTouched(true)}
               inputPlaceholder="Enter your name (min 2 chars)"
             />
-            <p class="name-error text-sm text-red-400 min-h-5">{nameError()}</p>
+            <p class="name-error text-sm text-destructive min-h-5">{nameError()}</p>
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm text-zinc-400">Email *</label>
+            <label class="text-sm text-muted-foreground">Email *</label>
             <Input
               inputType="email"
               inputValue={email()}
@@ -222,11 +222,11 @@ export function MultiFieldFormDemo() {
               onBlur={() => setEmailTouched(true)}
               inputPlaceholder="Enter your email"
             />
-            <p class="email-error text-sm text-red-400 min-h-5">{emailError()}</p>
+            <p class="email-error text-sm text-destructive min-h-5">{emailError()}</p>
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm text-zinc-400">Password *</label>
+            <label class="text-sm text-muted-foreground">Password *</label>
             <Input
               inputType="password"
               inputValue={password()}
@@ -234,11 +234,11 @@ export function MultiFieldFormDemo() {
               onBlur={() => setPasswordTouched(true)}
               inputPlaceholder="Enter password (min 8 chars)"
             />
-            <p class="password-error text-sm text-red-400 min-h-5">{passwordError()}</p>
+            <p class="password-error text-sm text-destructive min-h-5">{passwordError()}</p>
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm text-zinc-400">Confirm Password *</label>
+            <label class="text-sm text-muted-foreground">Confirm Password *</label>
             <Input
               inputType="password"
               inputValue={confirmPassword()}
@@ -246,7 +246,7 @@ export function MultiFieldFormDemo() {
               onBlur={() => setConfirmTouched(true)}
               inputPlaceholder="Confirm your password"
             />
-            <p class="confirm-error text-sm text-red-400 min-h-5">{confirmError()}</p>
+            <p class="confirm-error text-sm text-destructive min-h-5">{confirmError()}</p>
           </div>
 
           <div class="pt-2">
@@ -259,7 +259,7 @@ export function MultiFieldFormDemo() {
           </div>
 
           {submitAttempted() && !isFormValid() ? (
-            <p class="form-error text-sm text-red-400">Please fix the errors above</p>
+            <p class="form-error text-sm text-destructive">Please fix the errors above</p>
           ) : null}
         </div>
       )}

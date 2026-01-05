@@ -96,10 +96,10 @@ export function Toast({
         (animationState ?? (open ? 'visible' : 'hidden')) === 'exiting' ? 'flex translate-x-full opacity-0' :
         'hidden'
       } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-300 ease-out ${
-        variant === 'success' ? 'bg-green-50 border-green-200 text-green-900' :
-        variant === 'error' ? 'bg-red-50 border-red-200 text-red-900' :
-        variant === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' :
-        variant === 'info' ? 'bg-blue-50 border-blue-200 text-blue-900' :
+        variant === 'success' ? 'bg-success/10 border-success text-success-foreground' :
+        variant === 'error' ? 'bg-destructive/10 border-destructive text-destructive-foreground' :
+        variant === 'warning' ? 'bg-warning/10 border-warning text-warning-foreground' :
+        variant === 'info' ? 'bg-info/10 border-info text-info-foreground' :
         'bg-background border-border text-foreground'
       }`}
       role={variant === 'error' ? 'alert' : 'status'}

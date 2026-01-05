@@ -21,7 +21,7 @@ export function InputBindingDemo() {
         onInput={(e) => setValue(e.target.value)}
         inputPlaceholder="Type something..."
       />
-      <p class="text-sm text-zinc-600">You typed: <span class="typed-value font-medium">{value()}</span></p>
+      <p class="text-sm text-muted-foreground">You typed: <span class="typed-value font-medium">{value()}</span></p>
     </div>
   )
 }

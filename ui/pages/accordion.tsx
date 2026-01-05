@@ -185,19 +185,30 @@ export function AccordionPage() {
         </div>
       </Section>
 
+      {/* Accessibility */}
+      <Section title="Accessibility">
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate between triggers, Home/End to jump</li>
+          <li><strong class="text-foreground">Activation</strong> - Enter/Space to toggle accordion item</li>
+          <li><strong class="text-foreground">ARIA</strong> - Triggers use aria-expanded, aria-controls; Content uses aria-labelledby</li>
+          <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled triggers, skipped in keyboard navigation</li>
+          <li><strong class="text-foreground">Screen Readers</strong> - State changes are announced when items are expanded/collapsed</li>
+        </ul>
+      </Section>
+
       {/* API Reference */}
       <Section title="API Reference">
         <div class="space-y-6">
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">AccordionItem</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">AccordionItem</h3>
             <PropsTable props={accordionItemProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">AccordionTrigger</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">AccordionTrigger</h3>
             <PropsTable props={accordionTriggerProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">AccordionContent</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">AccordionContent</h3>
             <PropsTable props={accordionContentProps} />
           </div>
         </div>

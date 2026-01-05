@@ -29,7 +29,7 @@ export function SelectBindingDemo() {
         selectPlaceholder="Select a fruit..."
         onChange={(e) => setValue(e.target.value)}
       />
-      <p class="text-sm text-zinc-600">
+      <p class="text-sm text-muted-foreground">
         Selected: <span class="selected-value font-medium">{value() || 'None'}</span>
       </p>
     </div>

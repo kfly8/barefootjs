@@ -132,7 +132,7 @@ export function ValidationPage() {
       <Example title="" code={requiredFieldCode}>
         <div class="max-w-sm">
           <Input inputPlaceholder="Enter your name" />
-          <p class="text-sm text-zinc-400 mt-2">
+          <p class="text-sm text-muted-foreground mt-2">
             See interactive examples below.
           </p>
         </div>
@@ -141,15 +141,15 @@ export function ValidationPage() {
       {/* Pattern Overview */}
       <Section title="Pattern Overview">
         <div class="prose prose-invert max-w-none">
-          <p class="text-zinc-400">
-            Form validation in BarefootJS uses <code class="text-zinc-200">createSignal</code> for field values and{' '}
-            <code class="text-zinc-200">createMemo</code> for derived error states.
+          <p class="text-muted-foreground">
+            Form validation in BarefootJS uses <code class="text-foreground">createSignal</code> for field values and{' '}
+            <code class="text-foreground">createMemo</code> for derived error states.
             This pattern provides reactive validation that automatically updates when field values change.
           </p>
-          <p class="text-zinc-400 mt-2">
+          <p class="text-muted-foreground mt-2">
             Key concepts:
           </p>
-          <ul class="list-disc list-inside text-zinc-400 space-y-1 mt-2">
+          <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
             <li><strong>Field value signal</strong>: Stores the current input value</li>
             <li><strong>Touched signal</strong>: Tracks if user has interacted with the field</li>
             <li><strong>Error memo</strong>: Computes error message based on value and touched state</li>
@@ -190,35 +190,35 @@ export function ValidationPage() {
       {/* Key Points */}
       <Section title="Key Points">
         <div class="space-y-4">
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Error State Management</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
-              <li>Use <code class="text-zinc-200">createSignal</code> for field values and touched states</li>
-              <li>Use <code class="text-zinc-200">createMemo</code> for computed error messages</li>
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Error State Management</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Use <code class="text-foreground">createSignal</code> for field values and touched states</li>
+              <li>Use <code class="text-foreground">createMemo</code> for computed error messages</li>
               <li>Only show errors after field is touched (better UX)</li>
               <li>Return empty string for valid state, error message for invalid</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Validation Timing</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Validation Timing</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
               <li><strong>On blur</strong>: Show errors when user leaves field (recommended)</li>
               <li><strong>On submit</strong>: Validate all fields before form submission</li>
               <li><strong>Real-time</strong>: For instant feedback (e.g., password strength)</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Field Dependencies</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Field Dependencies</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
               <li>Access other field signals within a memo for cross-field validation</li>
-              <li>Example: <code class="text-zinc-200">{'password() !== confirmPassword()'}</code></li>
+              <li>Example: <code class="text-foreground">{'password() !== confirmPassword()'}</code></li>
               <li>The memo automatically re-evaluates when either signal changes</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Form-Level Validity</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
-              <li>Combine field validations in a single <code class="text-zinc-200">createMemo</code></li>
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Form-Level Validity</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Combine field validations in a single <code class="text-foreground">createMemo</code></li>
               <li>Use for enabling/disabling submit button</li>
               <li>No need for a separate form library - signals are sufficient</li>
             </ul>

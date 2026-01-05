@@ -20,7 +20,7 @@ export function CheckboxBindingDemo() {
         checked={checked()}
         onCheckedChange={setChecked}
       />
-      <p class="text-sm text-zinc-600">
+      <p class="text-sm text-muted-foreground">
         Status: <span class="checked-status font-medium">{checked() ? 'Checked' : 'Unchecked'}</span>
       </p>
     </div>
@@ -38,7 +38,7 @@ export function CheckboxWithLabelDemo() {
         <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
         <span class="text-sm">Accept terms and conditions</span>
       </label>
-      <p class="text-sm text-zinc-600">
+      <p class="text-sm text-muted-foreground">
         Terms: <span class="terms-status font-medium">{accepted() ? 'Accepted' : 'Not accepted'}</span>
       </p>
     </div>

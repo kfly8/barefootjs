@@ -38,6 +38,18 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
 
+  /* Success */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 98%;
+
+  /* Warning */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 9%;
+
+  /* Info */
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 98%;
+
   /* Border/Input/Ring */
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
@@ -79,6 +91,18 @@
   /* Destructive */
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
+
+  /* Success */
+  --success: 142 69% 58%;
+  --success-foreground: 0 0% 9%;
+
+  /* Warning */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 9%;
+
+  /* Info */
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 98%;
 
   /* Border/Input/Ring */
   --border: 240 3.7% 15.9%;

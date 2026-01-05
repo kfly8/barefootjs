@@ -62,7 +62,7 @@ export function DialogBasicDemo() {
             This is a basic dialog example. Press ESC or click outside to close.
           </DialogDescription>
         </DialogHeader>
-        <p class="text-sm text-zinc-600 py-4">
+        <p class="text-sm text-muted-foreground py-4">
           Dialog content goes here. You can add any content you need.
         </p>
         <DialogFooter>
@@ -106,7 +106,7 @@ export function DialogFormDemo() {
               id="name"
               type="text"
               placeholder="Enter your name"
-              class="col-span-3 flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2"
+              class="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
           <div class="grid grid-cols-4 items-center gap-4">
@@ -117,7 +117,7 @@ export function DialogFormDemo() {
               id="email"
               type="email"
               placeholder="Enter your email"
-              class="col-span-3 flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2"
+              class="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
         </div>

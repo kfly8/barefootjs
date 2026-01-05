@@ -21,8 +21,8 @@ export function BasicControlledDemo() {
         onInput={(e) => setText(e.target.value)}
         inputPlaceholder="Type something..."
       />
-      <p class="text-sm text-zinc-400">
-        Current value: <span class="current-value font-medium text-zinc-200">{text()}</span>
+      <p class="text-sm text-muted-foreground">
+        Current value: <span class="current-value font-medium text-foreground">{text()}</span>
       </p>
     </div>
   )
@@ -44,10 +44,10 @@ export function CharacterCountDemo() {
         inputPlaceholder="Type to see character count..."
       />
       <div class="flex justify-between text-sm">
-        <span class="text-zinc-400">
-          Characters: <span class="char-count font-medium text-zinc-200">{charCount()}</span>
+        <span class="text-muted-foreground">
+          Characters: <span class="char-count font-medium text-foreground">{charCount()}</span>
         </span>
-        <span class="text-zinc-400">
+        <span class="text-muted-foreground">
           <span class="remaining-count font-medium">{remaining()}</span> remaining
         </span>
       </div>
@@ -70,12 +70,12 @@ export function LivePreviewDemo() {
         onInput={(e) => setText(e.target.value)}
         inputPlaceholder="Type to see live preview..."
       />
-      <div class="p-3 bg-zinc-800 rounded-md space-y-2">
-        <p class="text-sm text-zinc-400">
-          Uppercase: <span class="uppercase-preview font-medium text-zinc-200">{uppercase()}</span>
+      <div class="p-3 bg-muted rounded-md space-y-2">
+        <p class="text-sm text-muted-foreground">
+          Uppercase: <span class="uppercase-preview font-medium text-foreground">{uppercase()}</span>
         </p>
-        <p class="text-sm text-zinc-400">
-          Word count: <span class="word-count font-medium text-zinc-200">{wordCount()}</span>
+        <p class="text-sm text-muted-foreground">
+          Word count: <span class="word-count font-medium text-foreground">{wordCount()}</span>
         </p>
       </div>
     </div>
@@ -91,7 +91,7 @@ export function MultiInputSyncDemo() {
   return (
     <div class="space-y-4">
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Input A</label>
+        <label class="text-sm text-muted-foreground">Input A</label>
         <Input
           inputValue={text()}
           onInput={(e) => setText(e.target.value)}
@@ -99,15 +99,15 @@ export function MultiInputSyncDemo() {
         />
       </div>
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Input B (synced)</label>
+        <label class="text-sm text-muted-foreground">Input B (synced)</label>
         <Input
           inputValue={text()}
           onInput={(e) => setText(e.target.value)}
           inputPlaceholder="Or type here..."
         />
       </div>
-      <p class="text-sm text-zinc-400">
-        Shared value: <span class="shared-value font-medium text-zinc-200">{text()}</span>
+      <p class="text-sm text-muted-foreground">
+        Shared value: <span class="shared-value font-medium text-foreground">{text()}</span>
       </p>
     </div>
   )

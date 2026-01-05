@@ -81,7 +81,7 @@ export function ControlledInputPage() {
       <Example title="" code={basicCode}>
         <div class="max-w-sm">
           <Input inputPlaceholder="Type something..." />
-          <p class="text-sm text-zinc-400 mt-2">
+          <p class="text-sm text-muted-foreground mt-2">
             See interactive examples below.
           </p>
         </div>
@@ -90,9 +90,9 @@ export function ControlledInputPage() {
       {/* Pattern Overview */}
       <Section title="Pattern Overview">
         <div class="prose prose-invert max-w-none">
-          <p class="text-zinc-400">
-            The controlled input pattern uses <code class="text-zinc-200">value={'{signal()}'}</code> combined with{' '}
-            <code class="text-zinc-200">onInput</code> to create two-way binding between a signal and an input element.
+          <p class="text-muted-foreground">
+            The controlled input pattern uses <code class="text-foreground">value={'{signal()}'}</code> combined with{' '}
+            <code class="text-foreground">onInput</code> to create two-way binding between a signal and an input element.
             This pattern enables real-time synchronization and derived computations.
           </p>
         </div>
@@ -131,17 +131,17 @@ export function ControlledInputPage() {
       {/* Key Points */}
       <Section title="Key Points">
         <div class="space-y-4">
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Pattern Structure</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
-              <li><code class="text-zinc-200">inputValue={'{signal()}'}</code> - Binds signal value to input</li>
-              <li><code class="text-zinc-200">{'onInput={(e) => setSignal(e.target.value)}'}</code> - Updates signal on input</li>
-              <li>Use <code class="text-zinc-200">createMemo</code> for derived values (character count, transformations)</li>
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Pattern Structure</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li><code class="text-foreground">inputValue={'{signal()}'}</code> - Binds signal value to input</li>
+              <li><code class="text-foreground">{'onInput={(e) => setSignal(e.target.value)}'}</code> - Updates signal on input</li>
+              <li>Use <code class="text-foreground">createMemo</code> for derived values (character count, transformations)</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Use Cases</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Use Cases</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
               <li>Form validation with real-time feedback</li>
               <li>Character/word counters</li>
               <li>Live search/filter</li>
