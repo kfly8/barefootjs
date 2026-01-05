@@ -33,6 +33,7 @@ import type {
 } from './types'
 import { extractSignals } from './extractors/signals'
 import { extractMemos } from './extractors/memos'
+import { extractEffects } from './extractors/effects'
 import { extractModuleVariables } from './extractors/constants'
 import { extractComponentPropsWithTypes, extractTypeDefinitions } from './extractors/props'
 import { extractLocalFunctions } from './extractors/local-functions'
@@ -210,6 +211,9 @@ function compileJsxWithComponents(
   // Extract memo declarations (for target component only)
   const memos = extractMemos(source, filePath, targetComponentName)
 
+  // Extract user-written createEffect blocks (for target component only)
+  const effects = extractEffects(source, filePath, targetComponentName)
+
   // Extract module-level constants (shared across all components in file)
   const moduleConstants = extractModuleVariables(source, filePath)
 
@@ -299,6 +303,7 @@ function compileJsxWithComponents(
     clientJs,
     signals,
     memos,
+    effects,
     moduleConstants,
     localFunctions,
     localVariables,
