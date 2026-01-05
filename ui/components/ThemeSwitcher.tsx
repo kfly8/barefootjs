@@ -21,50 +21,41 @@ export interface ThemeSwitcherProps {
 export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
   const [theme, setTheme] = createSignal<Theme>(defaultTheme)
 
-  // Initialize from localStorage and define cycleTheme
-  // Using IIFE pattern to ensure localStorage reading is included in compiled output
-  // (The compiler preserves this because cycleTheme is used as an onClick handler)
-  const cycleTheme = (() => {
-    // Immediately read localStorage on hydration
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme') as Theme | null
-      if (stored && ['light', 'dark', 'system'].includes(stored)) {
-        setTheme(stored)
-        // Also apply the theme to document immediately
-        const root = document.documentElement
-        if (stored === 'system') {
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-          root.classList.toggle('dark', prefersDark)
-        } else {
-          root.classList.toggle('dark', stored === 'dark')
-        }
-      }
+  // Initialize theme from localStorage after hydration
+  createEffect(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      setTheme(stored)
+    }
+  })
+
+  // Apply theme to document when theme changes
+  createEffect(() => {
+    const currentTheme = theme()
+    const root = document.documentElement
+
+    if (currentTheme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      root.classList.toggle('dark', prefersDark)
+    } else {
+      root.classList.toggle('dark', currentTheme === 'dark')
     }
 
-    // Return the actual cycle function
-    return () => {
-      const current = theme()
-      let next: Theme
-      if (current === 'light') {
-        next = 'dark'
-      } else if (current === 'dark') {
-        next = 'system'
-      } else {
-        next = 'light'
-      }
-      setTheme(next)
+    localStorage.setItem('theme', currentTheme)
+  })
 
-      // Apply theme to document
-      const root = document.documentElement
-      if (next === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        root.classList.toggle('dark', prefersDark)
-      } else {
-        root.classList.toggle('dark', next === 'dark')
-      }
-      localStorage.setItem('theme', next)
+  const cycleTheme = () => {
+    const current = theme()
+    let next: Theme
+    if (current === 'light') {
+      next = 'dark'
+    } else if (current === 'dark') {
+      next = 'system'
+    } else {
+      next = 'light'
     }
-  })()
+    setTheme(next)
+  }
 
   // Use createMemo for derived state
   const label = createMemo(() => {
