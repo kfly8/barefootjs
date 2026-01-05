@@ -156,8 +156,9 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
 ${contextHelper}${localVarDefs}
 
   // Serialize props for client hydration
+  // Skip functions and JSX elements (they can't be JSON serialized)
   const __hydrateProps: Record<string, unknown> = {}
-  ${propNames.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
+  ${propNames.map(p => `if (typeof ${p} !== 'function' && !(typeof ${p} === 'object' && ${p} !== null && 'isEscaped' in ${p})) __hydrateProps['${p}'] = ${p}`).join('\n  ')}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 
   // Generate unique instance ID for this component instance
