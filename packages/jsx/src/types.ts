@@ -64,6 +64,8 @@ export interface MarkedJsxContext extends BaseTransformContext {
   eventIdCounter: { value: number } | null
   /** Whether we're inside a list context (for passing __listIndex to child components) */
   inListContext: boolean
+  /** Props with default values for SSR/client consistency */
+  propsWithDefaults: Map<string, string>
 }
 
 /**

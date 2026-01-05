@@ -55,19 +55,30 @@ function calculateRootElementPaths(root: IRElement, paths: ElementPath[]): void 
  * Calculate paths for Fragment root
  * The scope marker (data-bf-scope) is on the first element child.
  * Sibling elements are accessed via nextElementSibling from the scope.
+ *
+ * When a conditional sibling is encountered at fragment level, subsequent elements
+ * get null paths because conditionals render as comments at runtime.
  */
 function calculateFragmentPaths(fragment: IRFragment, paths: ElementPath[]): void {
   let siblingIndex = 0
+  let hasConditionalBefore = false
 
   for (const child of fragment.children) {
     if (child.type === 'element') {
-      if (siblingIndex === 0) {
-        // First element: scope is on this element, path is empty
+      if (siblingIndex === 0 && !hasConditionalBefore) {
+        // First element (and no conditional before): scope is on this element, path is empty
         if (child.id) {
           paths.push({ id: child.id, path: '' })
         }
         // Process its children
         processChildren(child.children, '', paths)
+      } else if (hasConditionalBefore) {
+        // Elements after conditionals need querySelector fallback
+        if (child.id) {
+          paths.push({ id: child.id, path: null })
+        }
+        // Process its children - use buildSiblingPath for context even though path is null
+        processChildren(child.children, buildSiblingPath(siblingIndex), paths)
       } else {
         // Subsequent siblings: accessed via nextElementSibling chain from scope
         const siblingPath = buildSiblingPath(siblingIndex)
@@ -80,6 +91,8 @@ function calculateFragmentPaths(fragment: IRFragment, paths: ElementPath[]): voi
       siblingIndex++
     } else if (child.type === 'conditional') {
       // Conditional at fragment level
+      // Mark that a conditional was encountered - subsequent siblings need null paths
+      hasConditionalBefore = true
       // Don't increment siblingIndex - conditionals render as comments, not elements
       processConditional(child, siblingIndex === 0 ? '' : buildSiblingPath(siblingIndex), paths)
     }
@@ -99,14 +112,20 @@ function buildSiblingPath(count: number): string {
  *
  * When a component sibling is encountered, subsequent elements get null paths
  * because components may output additional DOM elements (scripts) that shift positions.
+ *
+ * When a conditional sibling is encountered, subsequent elements get null paths
+ * because conditionals render as comments at runtime, making path-based navigation unreliable.
  */
 function processChildren(children: IRNode[], basePath: string, paths: ElementPath[]): void {
   let elementIndex = 0
   let hasComponentBefore = false
+  let hasConditionalBefore = false
 
   for (const child of children) {
     if (child.type === 'element') {
-      const childPath = hasComponentBefore ? null : buildChildPath(basePath, elementIndex)
+      // Elements after conditionals need querySelector fallback because
+      // conditionals render as comments, making path-based navigation unreliable
+      const childPath = (hasComponentBefore || hasConditionalBefore) ? null : buildChildPath(basePath, elementIndex)
       if (child.id) {
         paths.push({ id: child.id, path: childPath })
       }
@@ -114,6 +133,8 @@ function processChildren(children: IRNode[], basePath: string, paths: ElementPat
       processChildren(child.children, childPath ?? buildChildPath(basePath, elementIndex), paths)
       elementIndex++
     } else if (child.type === 'conditional') {
+      // Mark that a conditional was encountered - subsequent siblings need null paths
+      hasConditionalBefore = true
       // Don't increment elementIndex - conditionals render as comments, not elements
       const childPath = hasComponentBefore ? null : buildChildPath(basePath, elementIndex)
       processConditional(child, childPath, paths, hasComponentBefore)

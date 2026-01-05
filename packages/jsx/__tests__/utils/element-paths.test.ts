@@ -393,9 +393,9 @@ describe('generatePathExpression', () => {
 })
 
 describe('conditionals between siblings', () => {
-  it('does not count conditionals as elements in fragment', () => {
-    // Issue #82: Conditionals render as comments, not elements
-    // They should not affect sibling indices
+  it('elements after conditionals get null paths in fragment (Issue #115)', () => {
+    // Issue #115: Elements after conditionals need querySelector fallback
+    // because conditionals render as comments, making path-based navigation unreliable
     const ir: IRFragment = {
       type: 'fragment',
       children: [
@@ -449,12 +449,12 @@ describe('conditionals between siblings', () => {
     expect(paths).toEqual([
       { id: '0', path: '' },  // First element is scope
       { id: 'cond-0', path: null },  // Element inside conditional gets null path
-      { id: '1', path: 'nextElementSibling' },  // NOT 'nextElementSibling.nextElementSibling'
+      { id: '1', path: null },  // Element after conditional gets null path (querySelector fallback)
     ])
   })
 
-  it('does not count conditionals as elements in children', () => {
-    // Issue #82: Conditionals between child elements should not affect indices
+  it('elements after conditionals get null paths in children (Issue #115)', () => {
+    // Issue #115: Elements after conditionals need querySelector fallback
     const ir: IRElement = {
       type: 'element',
       tagName: 'div',
@@ -515,14 +515,14 @@ describe('conditionals between siblings', () => {
 
     const paths = calculateElementPaths(ir)
     expect(paths).toEqual([
-      { id: '0', path: 'firstElementChild' },
+      { id: '0', path: 'firstElementChild' },  // Before conditional - valid path
       { id: 'cond-0', path: null },  // Element inside conditional
-      { id: '1', path: 'firstElementChild.nextElementSibling' },  // NOT .nextElementSibling.nextElementSibling
+      { id: '1', path: null },  // After conditional - null path (querySelector fallback)
     ])
   })
 
-  it('handles multiple conditionals between elements', () => {
-    // Issue #82: Multiple conditionals should not affect sibling indices
+  it('elements before conditionals keep valid paths', () => {
+    // Elements before conditionals should still have valid paths
     const ir: IRElement = {
       type: 'element',
       tagName: 'div',
@@ -589,10 +589,9 @@ describe('conditionals between siblings', () => {
 
     const paths = calculateElementPaths(ir)
     expect(paths).toEqual([
-      { id: '0', path: 'firstElementChild' },
-      { id: '1', path: 'firstElementChild.nextElementSibling' },
-      // Two conditionals don't add to the index
-      { id: '2', path: 'firstElementChild.nextElementSibling.nextElementSibling' },
+      { id: '0', path: 'firstElementChild' },  // Before conditionals
+      { id: '1', path: 'firstElementChild.nextElementSibling' },  // Before conditionals
+      { id: '2', path: null },  // After conditionals - null path
     ])
   })
 })

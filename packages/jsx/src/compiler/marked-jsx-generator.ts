@@ -38,7 +38,7 @@ export function generateFileMarkedJsx(
         c.name,
         c.result.signals,
         needsDataBfIds,
-        { outputEventAttrs: true, memos: c.result.memos }
+        { outputEventAttrs: true, memos: c.result.memos, props: c.result.props }
       )
       const childComponents = collectAllChildComponentNames(c.result.ir!)
 
