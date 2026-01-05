@@ -49,9 +49,7 @@ test.describe('Select Documentation Page', () => {
       await expect(status).toContainText('None')
     })
 
-    // Skipped: Static Select examples on page trigger auto-hydration with empty props,
-    // causing reconcileList to fail. Needs fix in compiler or page structure.
-    test.skip('changes value on selection', async ({ page }) => {
+    test('changes value on selection', async ({ page }) => {
       const bindingSection = page.locator('[data-bf-scope="SelectBindingDemo"]')
       const select = bindingSection.locator('select')
       const status = bindingSection.locator('.selected-value')
@@ -65,8 +63,7 @@ test.describe('Select Documentation Page', () => {
       await expect(status).toContainText('apple')
     })
 
-    // Skipped: Same auto-hydration issue as above
-    test.skip('syncs display with selection', async ({ page }) => {
+    test('syncs display with selection', async ({ page }) => {
       const bindingSection = page.locator('[data-bf-scope="SelectBindingDemo"]')
       const select = bindingSection.locator('select')
       const status = bindingSection.locator('.selected-value')
@@ -78,8 +75,7 @@ test.describe('Select Documentation Page', () => {
       await expect(status).toContainText('orange')
     })
 
-    // Skipped: Same auto-hydration issue as above
-    test.skip('cycles through all options', async ({ page }) => {
+    test('cycles through all options', async ({ page }) => {
       const bindingSection = page.locator('[data-bf-scope="SelectBindingDemo"]')
       const select = bindingSection.locator('select')
       const status = bindingSection.locator('.selected-value')
@@ -119,8 +115,7 @@ test.describe('Select Documentation Page', () => {
       await expect(status).toContainText('Not focused')
     })
 
-    // Skipped: Same auto-hydration issue as Value Binding tests
-    test.skip('updates status on focus', async ({ page }) => {
+    test('updates status on focus', async ({ page }) => {
       const focusSection = page.locator('[data-bf-scope="SelectFocusDemo"]')
       const select = focusSection.locator('select')
       const status = focusSection.locator('.focus-status')
@@ -130,8 +125,7 @@ test.describe('Select Documentation Page', () => {
       await expect(status).toContainText('Focused')
     })
 
-    // Skipped: Same auto-hydration issue as Value Binding tests
-    test.skip('updates status on blur', async ({ page }) => {
+    test('updates status on blur', async ({ page }) => {
       const focusSection = page.locator('[data-bf-scope="SelectFocusDemo"]')
       const select = focusSection.locator('select')
       const status = focusSection.locator('.focus-status')
