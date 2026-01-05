@@ -160,19 +160,25 @@ ${contextHelper}${localVarDefs}
   ${propNames.map(p => `if (typeof ${p} !== 'function') __hydrateProps['${p}'] = ${p}`).join('\n  ')}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 
-  // Check if this is the root BarefootJS component
+  // Generate unique instance ID for this component instance
+  // This enables multiple instances of the same component on a page
+  let __instanceId = '${name}'
   let __isRoot = false
   try {
     const c = useRequestContext()
+    // Get ID generator from context or use default random ID generator
+    const __idGen = c.get('bfInstanceIdGenerator') as ((name: string) => string) | undefined
+    __instanceId = __idGen ? __idGen('${name}') : '${name}_' + Math.random().toString(36).slice(2, 8)
+
     __isRoot = !c.get('bfRootComponent')
     if (__isRoot) {
       c.set('bfRootComponent', '${name}')
-      // Collect props script for deferred rendering
-      if (__hasHydrateProps) {
-        const __propsScripts: { name: string; props: Record<string, unknown> }[] = c.get('bfCollectedPropsScripts') || []
-        __propsScripts.push({ name: '${name}', props: __hydrateProps })
-        c.set('bfCollectedPropsScripts', __propsScripts)
-      }
+    }
+    // Collect props script for deferred rendering (for ALL components, not just root)
+    if (__hasHydrateProps) {
+      const __propsScripts: { name: string; instanceId: string; props: Record<string, unknown> }[] = c.get('bfCollectedPropsScripts') || []
+      __propsScripts.push({ name: '${name}', instanceId: __instanceId, props: __hydrateProps })
+      c.set('bfCollectedPropsScripts', __propsScripts)
     }
   } catch {
     // Inside Suspense boundary - treat as root, output inline
@@ -182,10 +188,10 @@ ${contextHelper}${localVarDefs}
     <>
       ${jsxWithDataKey}
       ${suspenseFallbackScripts}
-      {__inSuspense && __isRoot && __hasHydrateProps && (
+      {__inSuspense && __hasHydrateProps && (
         <script
           type="application/json"
-          data-bf-props="${name}"
+          data-bf-props={__instanceId}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}
         />
       )}
@@ -195,6 +201,17 @@ ${contextHelper}${localVarDefs}
       } else {
         return `${exportKeyword} ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
 ${contextHelper}${localVarDefs}
+
+  // Generate unique instance ID for this component instance
+  let __instanceId = '${name}'
+  try {
+    const c = useRequestContext()
+    const __idGen = c.get('bfInstanceIdGenerator') as ((name: string) => string) | undefined
+    __instanceId = __idGen ? __idGen('${name}') : '${name}_' + Math.random().toString(36).slice(2, 8)
+  } catch {
+    // Inside Suspense boundary - use simple random ID
+    __instanceId = '${name}_' + Math.random().toString(36).slice(2, 8)
+  }
 
   return (
     <>

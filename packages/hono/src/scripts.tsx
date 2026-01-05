@@ -29,6 +29,7 @@ export type CollectedScript = {
 
 export type CollectedPropsScript = {
   name: string
+  instanceId: string
   props: Record<string, unknown>
 }
 
@@ -47,10 +48,10 @@ export function BfScripts() {
         {scripts.map(({ src }) => (
           <script type="module" src={src} />
         ))}
-        {propsScripts.map(({ name, props }) => (
+        {propsScripts.map(({ instanceId, props }) => (
           <script
             type="application/json"
-            data-bf-props={name}
+            data-bf-props={instanceId}
             dangerouslySetInnerHTML={{ __html: JSON.stringify(props) }}
           />
         ))}

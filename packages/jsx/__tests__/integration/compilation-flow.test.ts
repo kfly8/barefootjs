@@ -32,10 +32,10 @@ describe('Full Compilation Flow', () => {
       const file = result.files[0]
 
       // Server JSX should contain:
-      // - data-bf-scope marker (conditional for list compatibility)
+      // - data-bf-scope marker with __instanceId (for unique instance identification)
       // - className (converted from class)
       // - initial signal value (0)
-      expect(file.markedJsx).toContain('data-bf-scope": "Counter"')
+      expect(file.markedJsx).toContain('data-bf-scope": __instanceId')
       expect(file.markedJsx).toContain('className="counter"')
       expect(file.markedJsx).toContain('{0}')
 
@@ -65,7 +65,7 @@ describe('Full Compilation Flow', () => {
 
       const file = result.files[0]
 
-      expect(file.markedJsx).toContain('data-bf-scope": "Header"')
+      expect(file.markedJsx).toContain('data-bf-scope": __instanceId')
       expect(file.markedJsx).toContain('<h1>Welcome</h1>')
       // Static component with "use client" but no dynamic content has no client JS
       expect(file.hasClientJs).toBe(false)

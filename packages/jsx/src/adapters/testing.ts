@@ -165,7 +165,8 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
   const attrParts: string[] = []
 
   if (isRoot && ctx.componentName) {
-    attrParts.push(`data-bf-scope="${ctx.componentName}"`)
+    // Use suffix format to match client JS prefix matching (ComponentName_xxx)
+    attrParts.push(`data-bf-scope="${ctx.componentName}_test"`)
   }
 
   if (id) {

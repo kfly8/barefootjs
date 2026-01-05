@@ -322,6 +322,7 @@ function replacePropsWithGetterCalls(
 
 /**
  * Generate auto-hydration code for root components
+ * Supports multiple instances of the same component using unique instance IDs
  */
 function generateAutoHydrationCode(fileComponents: ComponentData[]): string {
   const rootComponents = fileComponents.filter(c => {
@@ -329,11 +330,17 @@ function generateAutoHydrationCode(fileComponents: ComponentData[]): string {
   })
 
   return rootComponents.map(c => `
-// Auto-hydration: initialize ${c.name} when scope element exists (root components only)
-const __scopeEl_${c.name} = document.querySelector('[data-bf-scope="${c.name}"]')
-if (__scopeEl_${c.name} && !__scopeEl_${c.name}.parentElement?.closest('[data-bf-scope]')) {
-  const __propsEl = document.querySelector('script[data-bf-props="${c.name}"]')
+// Auto-hydration: initialize all ${c.name} instances (root components only)
+// Uses prefix matching to find all instances with unique IDs (e.g., ${c.name}_abc123)
+const __scopeEls_${c.name} = document.querySelectorAll('[data-bf-scope^="${c.name}_"]')
+for (const __scopeEl of __scopeEls_${c.name}) {
+  // Skip nested instances (inside another component's scope)
+  if (__scopeEl.parentElement?.closest('[data-bf-scope]')) continue
+  // Get unique instance ID from scope element
+  const __instanceId = __scopeEl.dataset.bfScope
+  // Find corresponding props script by instance ID
+  const __propsEl = document.querySelector(\`script[data-bf-props="\${__instanceId}"]\`)
   const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
-  init${c.name}(__props)
+  init${c.name}(__props, 0, __scopeEl)
 }`).join('\n')
 }

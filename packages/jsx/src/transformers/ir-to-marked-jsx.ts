@@ -187,7 +187,7 @@ function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: bool
       // Wrap in scope div if needed
       // Use div instead of span because components often contain block elements
       if (needsScopeWrapper) {
-        return `<div data-bf-scope="${ctx.componentName}">${componentOutput}</div>`
+        return `<div data-bf-scope={__instanceId}>${componentOutput}</div>`
       }
       return componentOutput
     }
@@ -312,8 +312,9 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
 
   // Add data-bf-scope for root element
   // Skip scope when __listIndex is defined (component is inside a list and will be re-rendered by client)
+  // Uses __instanceId for unique identification of multiple component instances
   if (isRoot && ctx.componentName) {
-    attrParts.push(`{...(__listIndex === undefined ? { "data-bf-scope": "${ctx.componentName}" } : {})}`)
+    attrParts.push(`{...(__listIndex === undefined ? { "data-bf-scope": __instanceId } : {})}`)
   }
 
   // Add data-bf for elements that need querySelector fallback
