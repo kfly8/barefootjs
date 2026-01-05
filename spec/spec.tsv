@@ -52,6 +52,11 @@ EXPR-032	Expressions	function C() { const x = 1; return <p>{x}</p> }	clientJs: c
 EXPR-033	Expressions	function C() { const fn = () => {}; ... }	clientJs: const fn = () => {}	clientJs	✅ Implemented	Local fn included
 EXPR-034	Expressions	const X = 5; <Child value={X} />	clientJs: const X = 5	clientJs	✅ Implemented	Const in child props
 EXPR-040	Expressions	const [x] = createSignal(propWithDefault)	markedJsx: (propWithDefault ?? 'default')	markedJsx	✅ Implemented	Prop default fallback for SSR
+EXPR-050	Expressions	createEffect(() => { localStorage.setItem(...) })	clientJs: createEffect(() => { localStorage.setItem(...) })	clientJs	✅ Implemented	User-written effect preserved
+EXPR-051	Expressions	createEffect(() => { const v = localStorage.getItem(...); setX(v) })	clientJs: effect preserved	clientJs	✅ Implemented	Effect reads localStorage
+EXPR-052	Expressions	createEffect(() => { document.body.setAttribute(...) })	clientJs: effect preserved	clientJs	✅ Implemented	Effect updates external DOM
+EXPR-053	Expressions	createEffect(...); createEffect(...)	clientJs: both effects preserved	clientJs	✅ Implemented	Multiple effects
+EXPR-054	Expressions	Only createEffect + static JSX	clientJs: effect in output	clientJs	✅ Implemented	Effect-only component
 CTRL-001	Control Flow	{true ? 'A' : 'B'}	'A' (evaluated at compile time)	markedJsx	✅ Implemented	Static ternary
 CTRL-002	Control Flow	<p>{show() ? 'Yes' : 'No'}</p>	clientJs: _0.textContent = show() ? 'Yes' : 'No'	both	✅ Implemented	Dynamic text ternary
 CTRL-003	Control Flow	{show() ? <A/> : <B/>}	markedJsx: <A data-bf-cond='0'/> + <B data-bf-cond='0'/>	both	✅ Implemented	Element ternary

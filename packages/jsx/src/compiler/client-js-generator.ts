@@ -93,6 +93,10 @@ function collectBarefootImports(fileComponents: ComponentData[]): Set<string> {
       barefootImports.add('createSignal')
       barefootImports.add('createEffect')
     }
+    // User-written createEffect blocks also need createEffect import
+    if (comp.result.effects.length > 0) {
+      barefootImports.add('createEffect')
+    }
     if (comp.result.memos.length > 0) {
       barefootImports.add('createMemo')
     }
@@ -176,7 +180,7 @@ function generateInitFunction(
   sameFileComponentNames: string[],
   ctx: ClientJsContext
 ): string {
-  const { name, result, constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, childInits } = comp
+  const { name, result, constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations, childInits } = comp
 
   // Generate child init calls (including same-file children)
   const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
@@ -200,9 +204,10 @@ function generateInitFunction(
   ].filter(Boolean).join('\n')
 
   const needsInitFunction = result.props.length > 0 || childInits.length > 0
-  // Order matters: constants, signals, local variables, then memos
+  // Order matters: constants, signals, local variables, memos, then user-written effects
   // Local variables must come before memos because memos may use them
-  const declarations = joinDeclarations(constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations)
+  // Effects come last because they may depend on signals and memos
+  const declarations = joinDeclarations(constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations)
 
   if (needsInitFunction) {
     return generateInitFunctionWithProps(name, result, declarations, bodyCode)

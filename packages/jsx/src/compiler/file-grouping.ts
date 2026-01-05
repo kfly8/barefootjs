@@ -21,6 +21,7 @@ export interface ComponentData {
   signalDeclarations: string
   localVariableDeclarations: string
   memoDeclarations: string
+  effectDeclarations: string
   childInits: ChildComponentInit[]
   hasClientJs: boolean
   hasUseClientDirective: boolean
@@ -57,6 +58,9 @@ export function collectComponentData(
       const memoDeclarations = result.memos
         .map(m => `const ${m.getter} = createMemo(${m.computation})`)
         .join('\n')
+      const effectDeclarations = result.effects
+        .map(e => e.code)
+        .join('\n')
       const localVariableDeclarations = result.localVariables
         .map(lv => lv.code)
         .join('\n')
@@ -77,10 +81,12 @@ export function collectComponentData(
       // A component needs client JS if it has "use client" directive AND:
       // - Raw client JS code
       // - Signals (reactive state)
+      // - User-written createEffect blocks
       // - Child component inits (needs to initialize children)
       const hasClientJs = hasUseClientDirective && (
         result.clientJs.length > 0 ||
         result.signals.length > 0 ||
+        result.effects.length > 0 ||
         result.childInits.length > 0
       )
 
@@ -93,6 +99,7 @@ export function collectComponentData(
         signalDeclarations,
         localVariableDeclarations,
         memoDeclarations,
+        effectDeclarations,
         childInits: result.childInits,
         hasClientJs,
         hasUseClientDirective,
@@ -144,9 +151,9 @@ export function calculateFileMappings(
     // Calculate file-level hash
     const fileContentForHash = fileComponents
       .map(c => {
-        const { constantDeclarations, signalDeclarations, memoDeclarations, result, childInits } = c
+        const { constantDeclarations, signalDeclarations, memoDeclarations, effectDeclarations, result, childInits } = c
         const childInitsStr = childInits.map(ci => `${ci.name}:${ci.propsExpr}`).join(',')
-        return constantDeclarations + signalDeclarations + memoDeclarations + result.clientJs + childInitsStr
+        return constantDeclarations + signalDeclarations + memoDeclarations + effectDeclarations + result.clientJs + childInitsStr
       })
       .join('|')
     const fileHash = generateContentHash(fileContentForHash)
@@ -174,11 +181,11 @@ export function calculateComponentHashes(
   const componentHashes: Map<string, string> = new Map()
 
   for (const data of componentData) {
-    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, childInits } = data
+    const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, effectDeclarations, childInits } = data
     const bodyCode = result.clientJs
     // Include childInits in hash to invalidate cache when child components change
     const childInitsStr = childInits.map(c => `${c.name}:${c.propsExpr}`).join(',')
-    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + bodyCode + childInitsStr
+    const contentForHash = constantDeclarations + signalDeclarations + memoDeclarations + effectDeclarations + bodyCode + childInitsStr
     const hash = generateContentHash(contentForHash)
     componentHashes.set(name, hash)
   }
