@@ -141,4 +141,41 @@ describe('extractEffects', () => {
     expect(effects[0].code).toContain("localStorage.getItem('theme')")
     expect(effects[0].code).toContain('setTheme(stored)')
   })
+
+  it('strips TypeScript type assertions', () => {
+    const source = `
+      function ThemeSwitcher() {
+        const [theme, setTheme] = createSignal('system')
+        createEffect(() => {
+          const stored = localStorage.getItem('theme') as string | null
+          if (stored) {
+            setTheme(stored)
+          }
+        })
+        return <button>{theme()}</button>
+      }
+    `
+    const effects = extractEffects(source, '/test.tsx')
+    expect(effects).toHaveLength(1)
+    expect(effects[0].code).toContain('localStorage.getItem')
+    expect(effects[0].code).not.toContain('as string')  // TypeScript stripped
+    expect(effects[0].code).not.toContain('as string | null')
+  })
+
+  it('strips generic type parameters from createEffect', () => {
+    const source = `
+      function Component() {
+        createEffect(() => {
+          const data = JSON.parse('{}') as { name: string }
+          console.log(data.name)
+        })
+        return <div>Hello</div>
+      }
+    `
+    const effects = extractEffects(source, '/test.tsx')
+    expect(effects).toHaveLength(1)
+    expect(effects[0].code).toContain('JSON.parse')
+    expect(effects[0].code).not.toContain('as {')
+    expect(effects[0].code).not.toContain(': string')
+  })
 })

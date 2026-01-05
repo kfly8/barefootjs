@@ -7,7 +7,7 @@
 
 import ts from 'typescript'
 import type { EffectDeclaration } from '../types'
-import { createSourceFile } from '../utils/helpers'
+import { createSourceFile, stripTypeAnnotations } from '../utils/helpers'
 import { isComponentFunction } from './common'
 
 /**
@@ -41,9 +41,11 @@ export function extractEffects(
           parent = parent.parent
         }
 
-        const code = ts.isExpressionStatement(parent)
+        const tsCode = ts.isExpressionStatement(parent)
           ? parent.getText(sourceFile)
           : node.getText(sourceFile)
+        // Strip TypeScript type annotations to produce valid JavaScript
+        const code = stripTypeAnnotations(tsCode)
 
         effects.push({ code })
       }
