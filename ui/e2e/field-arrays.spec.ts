@@ -33,23 +33,23 @@ test.describe('Field Arrays Documentation Page', () => {
 
   test.describe('Basic Field Array Demo', () => {
     test('displays basic field array demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="BasicFieldArrayDemo"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')).toBeVisible()
     })
 
     test('shows one field initially', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const inputs = demo.locator('input')
       await expect(inputs).toHaveCount(1)
     })
 
     test('shows field count', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const fieldCount = demo.locator('.field-count')
       await expect(fieldCount).toContainText('1 email(s) added')
     })
 
     test('adds new field when add button clicked', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const inputs = demo.locator('input')
 
@@ -61,7 +61,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('updates field count when adding fields', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const fieldCount = demo.locator('.field-count')
 
@@ -70,7 +70,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('removes field when remove button clicked', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const inputs = demo.locator('input')
       const removeButtons = demo.locator('.field-item button')
@@ -85,7 +85,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('cannot remove last field', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const removeButton = demo.locator('.field-item button').first()
 
       // Only one field, remove button should be disabled
@@ -93,7 +93,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('shows validation error on blur when empty', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const input = demo.locator('input').first()
       const error = demo.locator('.field-error').first()
 
@@ -103,7 +103,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('shows format error for invalid email', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const input = demo.locator('input').first()
       const error = demo.locator('.field-error').first()
 
@@ -113,7 +113,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('clears error for valid email', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const input = demo.locator('input').first()
       const error = demo.locator('.field-error').first()
 
@@ -126,7 +126,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('submits successfully with valid data', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const input = demo.locator('input').first()
       const submitButton = demo.locator('button:has-text("Submit")')
       const successMessage = demo.locator('.success-message')
@@ -140,7 +140,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('shows all errors on submit with invalid data', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="BasicFieldArrayDemo"]')
+      const demo = page.locator('[data-bf-scope^="BasicFieldArrayDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const submitButton = demo.locator('button:has-text("Submit")')
       const errors = demo.locator('.field-error')
@@ -159,17 +159,17 @@ test.describe('Field Arrays Documentation Page', () => {
 
   test.describe('Duplicate Validation Demo', () => {
     test('displays duplicate validation demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="DuplicateValidationDemo"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope^="DuplicateValidationDemo_"]')).toBeVisible()
     })
 
     test('shows two fields initially', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="DuplicateValidationDemo"]')
+      const demo = page.locator('[data-bf-scope^="DuplicateValidationDemo_"]')
       const inputs = demo.locator('input')
       await expect(inputs).toHaveCount(2)
     })
 
     test('shows duplicate error when emails match', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="DuplicateValidationDemo"]')
+      const demo = page.locator('[data-bf-scope^="DuplicateValidationDemo_"]')
       const inputs = demo.locator('input')
       const errors = demo.locator('.field-error')
 
@@ -183,7 +183,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('shows duplicate warning count', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="DuplicateValidationDemo"]')
+      const demo = page.locator('[data-bf-scope^="DuplicateValidationDemo_"]')
       const inputs = demo.locator('input')
       const duplicateWarning = demo.locator('.duplicate-warning')
 
@@ -196,7 +196,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('clears duplicate error when email changed', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="DuplicateValidationDemo"]')
+      const demo = page.locator('[data-bf-scope^="DuplicateValidationDemo_"]')
       const inputs = demo.locator('input')
       const errors = demo.locator('.field-error')
 
@@ -215,23 +215,23 @@ test.describe('Field Arrays Documentation Page', () => {
 
   test.describe('Min/Max Fields Demo', () => {
     test('displays min/max fields demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="MinMaxFieldsDemo"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')).toBeVisible()
     })
 
     test('shows one field initially', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="MinMaxFieldsDemo"]')
+      const demo = page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')
       const inputs = demo.locator('input')
       await expect(inputs).toHaveCount(1)
     })
 
     test('shows field count with max', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="MinMaxFieldsDemo"]')
+      const demo = page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')
       const fieldCount = demo.locator('.field-count')
       await expect(fieldCount).toContainText('1 / 5 emails')
     })
 
     test('can add up to max fields', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="MinMaxFieldsDemo"]')
+      const demo = page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const inputs = demo.locator('input')
       const fieldCount = demo.locator('.field-count')
@@ -245,7 +245,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('add button disabled at max', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="MinMaxFieldsDemo"]')
+      const demo = page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const maxWarning = demo.locator('.max-warning')
 
@@ -259,7 +259,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('remove button disabled at min', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="MinMaxFieldsDemo"]')
+      const demo = page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')
       const removeButton = demo.locator('.field-item button').first()
 
       // Only one field, remove button should be disabled
@@ -267,7 +267,7 @@ test.describe('Field Arrays Documentation Page', () => {
     })
 
     test('can remove fields when above min', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope="MinMaxFieldsDemo"]')
+      const demo = page.locator('[data-bf-scope^="MinMaxFieldsDemo_"]')
       const addButton = demo.locator('button:has-text("+ Add Email")')
       const removeButtons = demo.locator('.field-item button')
       const inputs = demo.locator('input')

@@ -21,13 +21,13 @@ test.describe('Input Documentation Page', () => {
 
   test.describe('Input Rendering', () => {
     test('displays input elements', async ({ page }) => {
-      // The Input component renders with data-bf-scope="Input"
-      const inputs = page.locator('[data-bf-scope="Input"]')
+      // The Input component renders with data-bf-scope^="Input_"
+      const inputs = page.locator('[data-bf-scope^="Input_"]')
       await expect(inputs.first()).toBeVisible()
     })
 
     test('has multiple input examples', async ({ page }) => {
-      const inputs = page.locator('[data-bf-scope="Input"]')
+      const inputs = page.locator('[data-bf-scope^="Input_"]')
       // Should have at least 5 inputs on the page (preview + types + disabled examples)
       await expect(inputs).toHaveCount(await inputs.count())
       expect(await inputs.count()).toBeGreaterThan(4)
@@ -36,7 +36,7 @@ test.describe('Input Documentation Page', () => {
 
   test.describe('Value Binding', () => {
     test('displays value binding section', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope="InputBindingDemo"]')).toBeVisible()
+      await expect(page.locator('[data-bf-scope^="InputBindingDemo_"]')).toBeVisible()
     })
 
     // Note: Value binding interaction tests are skipped due to a compiler bug
@@ -50,7 +50,7 @@ test.describe('Input Documentation Page', () => {
     })
 
     test('shows focused state on focus', async ({ page }) => {
-      const focusSection = page.locator('[data-bf-scope="InputFocusDemo"]')
+      const focusSection = page.locator('[data-bf-scope^="InputFocusDemo_"]')
       const input = focusSection.locator('input')
       const status = page.locator('.focus-status')
 
@@ -61,7 +61,7 @@ test.describe('Input Documentation Page', () => {
     })
 
     test('shows not focused state on blur', async ({ page }) => {
-      const focusSection = page.locator('[data-bf-scope="InputFocusDemo"]')
+      const focusSection = page.locator('[data-bf-scope^="InputFocusDemo_"]')
       const input = focusSection.locator('input')
       const status = page.locator('.focus-status')
 

@@ -107,16 +107,59 @@ export async function compileJSX(
   const fileGroups = groupComponentsByFile(componentData)
   const mappings = calculateFileMappings(fileGroups, rootDir)
 
-  // 3. Generate output for each file (only client components)
+  // 3. Collect files that should be included in output
+  // Include files that either:
+  //   a) Have "use client" directive
+  //   b) Are imported by files with "use client" directive (for import resolution)
+  const clientFiles = new Set<string>()
+  const importedByClientFiles = new Set<string>()
+
+  // First pass: identify "use client" files and their imports
+  for (const [sourceFile, fileComponents] of fileGroups) {
+    const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
+    if (hasUseClientDirective) {
+      clientFiles.add(sourceFile)
+      // Collect all imports from this file
+      for (const comp of fileComponents) {
+        for (const imp of comp.result.imports) {
+          // Resolve the import path to find the actual file
+          const sourceDir = sourceFile.substring(0, sourceFile.lastIndexOf('/'))
+          // Find the file that contains this imported component
+          for (const [otherFile] of fileGroups) {
+            if (otherFile !== sourceFile && otherFile.includes(imp.path.replace('./', '').replace('../', ''))) {
+              importedByClientFiles.add(otherFile)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Also check component-to-file mapping for imported components
+  for (const [compName, sourceFile] of mappings.componentToFile) {
+    // Check if this component is imported by any client file component
+    for (const [clientFile, fileComponents] of fileGroups) {
+      if (!clientFiles.has(clientFile)) continue
+      for (const comp of fileComponents) {
+        for (const imp of comp.result.imports) {
+          if (imp.name === compName) {
+            importedByClientFiles.add(sourceFile)
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Generate output for each file
   const files: FileOutput[] = []
 
   for (const [sourceFile, fileComponents] of fileGroups) {
     // Get directive status from first component (all components in same file share directive)
     const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
 
-    // Skip server components (files without "use client")
-    // They are compiled for dependency resolution but not included in output
-    if (!hasUseClientDirective) {
+    // Include files that are either "use client" or imported by "use client" files
+    const isImportedByClient = importedByClientFiles.has(sourceFile)
+    if (!hasUseClientDirective && !isImportedByClient) {
       continue
     }
 
@@ -388,15 +431,23 @@ function generateElementQueries(
                       childInits.length > 0
 
   // Find the component's scope element first
-  // Use querySelectorAll with __instanceIndex to support multiple instances of the same component
-  // __parentScope allows searching within a parent component's scope (for nested components)
+  // Supports unique instance IDs (e.g., ComponentName_abc123)
+  // __parentScope can be:
+  //   1. The scope element itself (passed from auto-hydration)
+  //   2. A parent element to search within (for nested components)
   // Child components are initialized first, so they mark their scopes with data-bf-init
   // Parent components filter out already-initialized scopes and select from remaining ones
-  // This ensures correct indexing even when child components have already initialized some scopes
   if (hasElements) {
-    lines.push(`const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope="${ctx.componentName}"]'))`)
-    lines.push(`const __uninitializedScopes = __allScopes.filter(s => !s.hasAttribute('data-bf-init'))`)
-    lines.push(`const __scope = __uninitializedScopes[__instanceIndex]`)
+    // Check if __parentScope is the scope element itself (has matching data-bf-scope prefix)
+    lines.push(`let __scope = null`)
+    lines.push(`if (__parentScope?.dataset?.bfScope?.startsWith('${ctx.componentName}_')) {`)
+    lines.push(`  __scope = __parentScope`)
+    lines.push(`} else {`)
+    // Search for scope elements with prefix matching (ComponentName_xxx)
+    lines.push(`  const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope^="${ctx.componentName}_"]'))`)
+    lines.push(`  const __uninitializedScopes = __allScopes.filter(s => !s.hasAttribute('data-bf-init'))`)
+    lines.push(`  __scope = __uninitializedScopes[__instanceIndex]`)
+    lines.push(`}`)
     lines.push(`if (!__scope) return`)
     lines.push(`__scope.setAttribute('data-bf-init', 'true')`)
   }

@@ -29,7 +29,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Basic Toast', () => {
     test('opens toast when button is clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
 
       await trigger.click()
@@ -41,7 +41,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('closes toast when close button is clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
 
       await trigger.click()
@@ -59,7 +59,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('has correct accessibility attributes', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
 
       await trigger.click()
@@ -73,7 +73,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Success Toast', () => {
     test('displays success variant', async ({ page }) => {
-      const successDemo = page.locator('[data-bf-scope="ToastSuccessDemo"]').first()
+      const successDemo = page.locator('[data-bf-scope^="ToastSuccessDemo_"]').first()
       const trigger = successDemo.locator('button:has-text("Show Success")')
 
       await trigger.click()
@@ -87,7 +87,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Error Toast', () => {
     test('displays error variant with assertive aria-live', async ({ page }) => {
-      const errorDemo = page.locator('[data-bf-scope="ToastErrorDemo"]').first()
+      const errorDemo = page.locator('[data-bf-scope^="ToastErrorDemo_"]').first()
       const trigger = errorDemo.locator('button:has-text("Show Error")')
 
       await trigger.click()
@@ -102,7 +102,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Warning Toast', () => {
     test('displays warning variant', async ({ page }) => {
-      const warningDemo = page.locator('[data-bf-scope="ToastWarningDemo"]').first()
+      const warningDemo = page.locator('[data-bf-scope^="ToastWarningDemo_"]').first()
       const trigger = warningDemo.locator('button:has-text("Show Warning")')
 
       await trigger.click()
@@ -116,7 +116,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Info Toast', () => {
     test('displays info variant', async ({ page }) => {
-      const infoDemo = page.locator('[data-bf-scope="ToastInfoDemo"]').first()
+      const infoDemo = page.locator('[data-bf-scope^="ToastInfoDemo_"]').first()
       const trigger = infoDemo.locator('button:has-text("Show Info")')
 
       await trigger.click()
@@ -130,7 +130,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Toast with Action', () => {
     test('displays action button', async ({ page }) => {
-      const actionDemo = page.locator('[data-bf-scope="ToastWithActionDemo"]').first()
+      const actionDemo = page.locator('[data-bf-scope^="ToastWithActionDemo_"]').first()
       const trigger = actionDemo.locator('button:has-text("Show Toast with Action")')
 
       await trigger.click()
@@ -144,7 +144,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('action button closes toast when clicked', async ({ page }) => {
-      const actionDemo = page.locator('[data-bf-scope="ToastWithActionDemo"]').first()
+      const actionDemo = page.locator('[data-bf-scope^="ToastWithActionDemo_"]').first()
       const trigger = actionDemo.locator('button:has-text("Show Toast with Action")')
 
       await trigger.click()
@@ -163,7 +163,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('All Variants Demo', () => {
     test('displays multiple toasts when button is clicked', async ({ page }) => {
-      const variantsDemo = page.locator('[data-bf-scope="ToastVariantsDemo"]').first()
+      const variantsDemo = page.locator('[data-bf-scope^="ToastVariantsDemo_"]').first()
       const trigger = variantsDemo.locator('button:has-text("Show All Variants")')
 
       await trigger.click()
@@ -183,7 +183,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Toast Animations', () => {
     test('shows toast with entering animation state', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
       const toast = basicDemo.locator('[data-toast]')
 
@@ -196,7 +196,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('slides out when dismissed and waits for animation', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
       const toast = basicDemo.locator('[data-toast]')
 
@@ -219,7 +219,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('manual dismiss during enter animation transitions smoothly to exit', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
       const toast = basicDemo.locator('[data-toast]')
 
@@ -238,7 +238,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('multiple toasts animate independently', async ({ page }) => {
-      const variantsDemo = page.locator('[data-bf-scope="ToastVariantsDemo"]').first()
+      const variantsDemo = page.locator('[data-bf-scope^="ToastVariantsDemo_"]').first()
       const trigger = variantsDemo.locator('button:has-text("Show All Variants")')
 
       await trigger.click()
@@ -264,7 +264,7 @@ test.describe('Toast Documentation Page', () => {
 
     test('auto-dismiss waits for exit animation before hiding', async ({ page }) => {
       // Use a short duration for testing (we can't control the duration, so we verify the behavior)
-      const basicDemo = page.locator('[data-bf-scope="ToastBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="ToastBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Toast")')
       const toast = basicDemo.locator('[data-toast]')
 

@@ -29,7 +29,7 @@ test.describe('Dialog Documentation Page', () => {
 
   test.describe('Basic Dialog', () => {
     test('opens dialog when trigger is clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
 
       await trigger.click()
@@ -41,7 +41,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('closes dialog when close button is clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
 
       await trigger.click()
@@ -58,7 +58,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('closes dialog when ESC key is pressed', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
 
       await trigger.click()
@@ -77,7 +77,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('closes dialog when overlay is clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
 
       await trigger.click()
@@ -94,7 +94,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('has correct accessibility attributes', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
 
       await trigger.click()
@@ -107,7 +107,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('traps focus within dialog', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
 
       await trigger.click()
@@ -129,7 +129,7 @@ test.describe('Dialog Documentation Page', () => {
 
   test.describe('Dialog Animations', () => {
     test('open animation plays and focus moves to dialog', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
       const overlay = basicDemo.locator('[data-dialog-overlay]')
@@ -155,7 +155,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('close via ESC - animation plays and focus returns to trigger', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
 
@@ -174,7 +174,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('close via overlay click - animation plays and focus returns to trigger', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
       const overlay = basicDemo.locator('[data-dialog-overlay]')
@@ -194,7 +194,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('Tab cycling during animation - focus stays trapped', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
       const closeButton = dialog.locator('button:has-text("Close")')
@@ -217,7 +217,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('rapid open/close - no visual glitches', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
       const closeButton = dialog.locator('button:has-text("Close")')
@@ -245,7 +245,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('ESC key works during opening animation', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DialogBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
 
@@ -261,7 +261,7 @@ test.describe('Dialog Documentation Page', () => {
 
   test.describe('Dialog with Form', () => {
     test('opens form dialog when trigger is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope="DialogFormDemo"]').first()
+      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
       const trigger = formDemo.locator('button:has-text("Edit Profile")')
 
       await trigger.click()
@@ -272,7 +272,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('form inputs are focusable', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope="DialogFormDemo"]').first()
+      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
       const trigger = formDemo.locator('button:has-text("Edit Profile")')
 
       await trigger.click()
@@ -293,7 +293,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('closes form dialog when Cancel is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope="DialogFormDemo"]').first()
+      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
       const trigger = formDemo.locator('button:has-text("Edit Profile")')
 
       await trigger.click()
@@ -309,7 +309,7 @@ test.describe('Dialog Documentation Page', () => {
     })
 
     test('closes form dialog when Save is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope="DialogFormDemo"]').first()
+      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
       const trigger = formDemo.locator('button:has-text("Edit Profile")')
 
       await trigger.click()

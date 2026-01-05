@@ -33,29 +33,29 @@ test.describe('Tabs Documentation Page', () => {
 
   test.describe('Basic Tabs', () => {
     test('displays basic tabs example', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
       await expect(tabs).toBeVisible()
     })
 
     test('shows Account and Password tabs', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
       await expect(tabs.locator('button[role="tab"]:has-text("Account")')).toBeVisible()
       await expect(tabs.locator('button[role="tab"]:has-text("Password")')).toBeVisible()
     })
 
     test('Account tab is selected by default', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
       const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
       await expect(accountTab).toHaveAttribute('aria-selected', 'true')
     })
 
     test('shows Account content by default', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
       await expect(tabs.locator('text=Account Settings')).toBeVisible()
     })
 
     test('switches to Password tab on click', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
       const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
 
       await passwordTab.click()
@@ -73,12 +73,12 @@ test.describe('Tabs Documentation Page', () => {
 
   test.describe('Multiple Tabs', () => {
     test('displays multiple tabs example', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsMultipleDemo_"]').first()
       await expect(tabs).toBeVisible()
     })
 
     test('shows all four tabs', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsMultipleDemo_"]').first()
       await expect(tabs.locator('button[role="tab"]:has-text("Overview")')).toBeVisible()
       await expect(tabs.locator('button[role="tab"]:has-text("Analytics")')).toBeVisible()
       await expect(tabs.locator('button[role="tab"]:has-text("Reports")')).toBeVisible()
@@ -86,7 +86,7 @@ test.describe('Tabs Documentation Page', () => {
     })
 
     test('switches between multiple tabs', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsMultipleDemo_"]').first()
 
       // Click Analytics
       await tabs.locator('button[role="tab"]:has-text("Analytics")').click()
@@ -104,12 +104,12 @@ test.describe('Tabs Documentation Page', () => {
 
   test.describe('Disabled Tab', () => {
     test('displays disabled tabs example', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsDisabledDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsDisabledDemo_"]').first()
       await expect(tabs).toBeVisible()
     })
 
     test('shows disabled tab', async ({ page }) => {
-      const tabs = page.locator('[data-bf-scope="TabsDisabledDemo"]').first()
+      const tabs = page.locator('[data-bf-scope^="TabsDisabledDemo_"]').first()
       const disabledTab = tabs.locator('button[role="tab"]:has-text("Disabled")')
       await expect(disabledTab).toBeDisabled()
     })
@@ -155,7 +155,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('ArrowRight navigates to next tab', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
     const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
     const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
 
@@ -172,7 +172,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('ArrowLeft navigates to previous tab', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
     const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
     const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
 
@@ -190,7 +190,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('ArrowRight wraps from last to first tab', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
     const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
     const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
 
@@ -206,7 +206,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('ArrowLeft wraps from first to last tab', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsBasicDemo_"]').first()
     const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
     const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
 
@@ -221,7 +221,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('Home key navigates to first tab', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsMultipleDemo_"]').first()
     const notificationsTab = tabs.locator('button[role="tab"]:has-text("Notifications")')
     const overviewTab = tabs.locator('button[role="tab"]:has-text("Overview")')
 
@@ -237,7 +237,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('End key navigates to last tab', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsMultipleDemo_"]').first()
     const notificationsTab = tabs.locator('button[role="tab"]:has-text("Notifications")')
     const overviewTab = tabs.locator('button[role="tab"]:has-text("Overview")')
 
@@ -252,7 +252,7 @@ test.describe('Tabs Keyboard Navigation', () => {
   })
 
   test('keyboard navigation skips disabled tabs', async ({ page }) => {
-    const tabs = page.locator('[data-bf-scope="TabsDisabledDemo"]').first()
+    const tabs = page.locator('[data-bf-scope^="TabsDisabledDemo_"]').first()
     const activeTab = tabs.locator('button[role="tab"]:has-text("Active")')
     const anotherTab = tabs.locator('button[role="tab"]:has-text("Another")')
 

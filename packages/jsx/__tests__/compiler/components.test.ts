@@ -494,11 +494,11 @@ describe('Components - Auto-hydration', () => {
     const result = await compileWithFiles('/test/Counter.tsx', files)
     const counter = result.files.find(f => f.componentNames.includes('Counter'))
 
-    // Client JS should include auto-hydration code
+    // Client JS should include auto-hydration code with unique instance ID support
     expect(counter!.clientJs).toContain('// Auto-hydration')
-    expect(counter!.clientJs).toContain('document.querySelector(\'script[data-bf-props="Counter"]\')')
+    expect(counter!.clientJs).toContain('document.querySelector(`script[data-bf-props="${__instanceId}"]`)')
     expect(counter!.clientJs).toContain('JSON.parse(__propsEl.textContent')
-    expect(counter!.clientJs).toContain('initCounter(__props)')
+    expect(counter!.clientJs).toContain('initCounter(__props, 0, __scopeEl)')
   })
 
   it('Components without props do not have auto-hydration code', async () => {

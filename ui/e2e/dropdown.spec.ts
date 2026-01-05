@@ -29,7 +29,7 @@ test.describe('Dropdown Documentation Page', () => {
 
   test.describe('Basic Dropdown', () => {
     test('opens dropdown when trigger is clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       await trigger.click()
@@ -41,7 +41,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('closes dropdown when trigger is clicked again', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       // Open
@@ -57,7 +57,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('selects an item when clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       // Open dropdown
@@ -73,7 +73,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('shows checkmark on selected item', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       // Select an item first
@@ -91,7 +91,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('closes dropdown when ESC key is pressed', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       await trigger.click()
@@ -108,7 +108,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('has correct accessibility attributes on trigger', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       // Initially closed
@@ -122,7 +122,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('has correct accessibility attributes on content', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       await trigger.click()
@@ -132,7 +132,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('has correct accessibility attributes on items', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+      const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-dropdown-trigger]')
 
       await trigger.click()
@@ -150,7 +150,7 @@ test.describe('Dropdown Documentation Page', () => {
 
   test.describe('Dropdown with Default Value', () => {
     test('displays default selected value', async ({ page }) => {
-      const defaultDemo = page.locator('[data-bf-scope="DropdownWithDefaultDemo"]').first()
+      const defaultDemo = page.locator('[data-bf-scope^="DropdownWithDefaultDemo_"]').first()
       const trigger = defaultDemo.locator('[data-dropdown-trigger]')
 
       // Should show "Medium" as default
@@ -158,7 +158,7 @@ test.describe('Dropdown Documentation Page', () => {
     })
 
     test('can change selection from default', async ({ page }) => {
-      const defaultDemo = page.locator('[data-bf-scope="DropdownWithDefaultDemo"]').first()
+      const defaultDemo = page.locator('[data-bf-scope^="DropdownWithDefaultDemo_"]').first()
       const trigger = defaultDemo.locator('[data-dropdown-trigger]')
 
       await trigger.click()
@@ -172,14 +172,14 @@ test.describe('Dropdown Documentation Page', () => {
 
   test.describe('Disabled Dropdown', () => {
     test('displays disabled dropdown', async ({ page }) => {
-      const disabledDemo = page.locator('[data-bf-scope="DropdownDisabledDemo"]').first()
+      const disabledDemo = page.locator('[data-bf-scope^="DropdownDisabledDemo_"]').first()
       const trigger = disabledDemo.locator('[data-dropdown-trigger]')
 
       await expect(trigger).toBeDisabled()
     })
 
     test('does not open when clicked', async ({ page }) => {
-      const disabledDemo = page.locator('[data-bf-scope="DropdownDisabledDemo"]').first()
+      const disabledDemo = page.locator('[data-bf-scope^="DropdownDisabledDemo_"]').first()
       const trigger = disabledDemo.locator('[data-dropdown-trigger]')
       const content = disabledDemo.locator('[data-dropdown-content]')
 
@@ -235,7 +235,7 @@ test.describe('Dropdown Animation', () => {
   })
 
   test('opens with scale and fade animation from trigger', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -252,7 +252,7 @@ test.describe('Dropdown Animation', () => {
   })
 
   test('closes with scale and fade animation', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -269,7 +269,7 @@ test.describe('Dropdown Animation', () => {
   })
 
   test('has transform-origin at top for natural expand direction', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const content = basicDemo.locator('[data-dropdown-content]')
 
     // Should have origin-top class for transform-origin
@@ -277,7 +277,7 @@ test.describe('Dropdown Animation', () => {
   })
 
   test('no content jump when animation completes', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -309,7 +309,7 @@ test.describe('Dropdown with CSS Transforms', () => {
 
   test('opens and positions correctly inside scaled container', async ({ page }) => {
     const container = page.locator('[data-transform-container]')
-    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const dropdown = container.locator('[data-bf-scope^="DropdownWithTransformDemo_"]').first()
     const trigger = dropdown.locator('[data-dropdown-trigger]')
     const content = dropdown.locator('[data-dropdown-content]')
 
@@ -335,7 +335,7 @@ test.describe('Dropdown with CSS Transforms', () => {
 
   test('opens and positions correctly inside rotated container', async ({ page }) => {
     const container = page.locator('[data-transform-container-rotate]')
-    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const dropdown = container.locator('[data-bf-scope^="DropdownWithTransformDemo_"]').first()
     const trigger = dropdown.locator('[data-dropdown-trigger]')
     const content = dropdown.locator('[data-dropdown-content]')
 
@@ -352,7 +352,7 @@ test.describe('Dropdown with CSS Transforms', () => {
     // Scroll container into view to ensure dropdown is not covered by other elements
     await container.scrollIntoViewIfNeeded()
 
-    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const dropdown = container.locator('[data-bf-scope^="DropdownWithTransformDemo_"]').first()
     const trigger = dropdown.locator('[data-dropdown-trigger]')
     const content = dropdown.locator('[data-dropdown-content]')
 
@@ -365,7 +365,7 @@ test.describe('Dropdown with CSS Transforms', () => {
 
   test('selection works correctly in transformed container', async ({ page }) => {
     const container = page.locator('[data-transform-container]')
-    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const dropdown = container.locator('[data-bf-scope^="DropdownWithTransformDemo_"]').first()
     const trigger = dropdown.locator('[data-dropdown-trigger]')
     const content = dropdown.locator('[data-dropdown-content]')
 
@@ -387,7 +387,7 @@ test.describe('Dropdown with CSS Transforms', () => {
 
   test('ESC key works in transformed container', async ({ page }) => {
     const container = page.locator('[data-transform-container]')
-    const dropdown = container.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const dropdown = container.locator('[data-bf-scope^="DropdownWithTransformDemo_"]').first()
     const trigger = dropdown.locator('[data-dropdown-trigger]')
     const content = dropdown.locator('[data-dropdown-content]')
 
@@ -414,7 +414,7 @@ test.describe('Dropdown Viewport Edge Positioning', () => {
     const transformSection = page.locator('[data-transform-container-translate]')
     await transformSection.scrollIntoViewIfNeeded()
 
-    const dropdown = transformSection.locator('[data-bf-scope="DropdownWithTransformDemo"]').first()
+    const dropdown = transformSection.locator('[data-bf-scope^="DropdownWithTransformDemo_"]').first()
     const trigger = dropdown.locator('[data-dropdown-trigger]')
     const content = dropdown.locator('[data-dropdown-content]')
 
@@ -433,7 +433,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('ArrowDown navigates to next item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -451,7 +451,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('ArrowDown cycles through items', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -473,7 +473,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('ArrowUp navigates to previous item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -487,7 +487,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('ArrowDown wraps from last to first item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -508,7 +508,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('Enter selects focused item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -528,7 +528,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('Space selects focused item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -549,7 +549,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('Home key navigates to first item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 
@@ -569,7 +569,7 @@ test.describe('Dropdown Keyboard Navigation', () => {
   })
 
   test('End key navigates to last item', async ({ page }) => {
-    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const basicDemo = page.locator('[data-bf-scope^="DropdownBasicDemo_"]').first()
     const trigger = basicDemo.locator('[data-dropdown-trigger]')
     const content = basicDemo.locator('[data-dropdown-content]')
 

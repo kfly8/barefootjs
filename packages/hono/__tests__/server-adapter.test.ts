@@ -76,7 +76,8 @@ describe('honoMarkedJsxAdapter', () => {
       expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, __listIndex }')
       expect(result).toContain('__isRoot')
       expect(result).toContain('bfRootComponent')
-      expect(result).toContain('data-bf-props="Counter"')
+      // data-bf-props uses unique instance ID variable
+      expect(result).toContain('data-bf-props={__instanceId}')
       expect(result).toContain('__hydrateProps')
     })
 
@@ -225,10 +226,10 @@ describe('honoMarkedJsxAdapter', () => {
       expect(result).toContain("let __isRoot = false")
       expect(result).toContain("__isRoot = !c.get('bfRootComponent')")
       expect(result).toContain("c.set('bfRootComponent', 'TodoApp')")
-      // Props scripts are collected for deferred rendering
+      // Props scripts are collected for deferred rendering (for ALL components, not just root)
       expect(result).toContain("bfCollectedPropsScripts")
-      // data-bf-props should only render inline when __inSuspense is true
-      expect(result).toContain('{__inSuspense && __isRoot && __hasHydrateProps && (')
+      // data-bf-props should render inline for ALL components when __inSuspense is true
+      expect(result).toContain('{__inSuspense && __hasHydrateProps && (')
     })
   })
 })

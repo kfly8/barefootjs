@@ -139,11 +139,11 @@ describe('Hono Adapter Integration', () => {
       const result = await compile(source)
       const file = result.files[0]
 
-      // Should include props in function signature
+      // Should include props in function signature and unique instance ID
       expect(file.markedJsx).toContain('initialTodos')
-      expect(file.markedJsx).toContain('__isRoot')
+      expect(file.markedJsx).toContain('__instanceId')
       expect(file.markedJsx).toContain('__hydrateProps')
-      expect(file.markedJsx).toContain('data-bf-props="Component"')
+      expect(file.markedJsx).toContain('data-bf-props={__instanceId}')
 
       // Client JS should have auto-hydration
       expect(file.clientJs).toContain('initComponent')
