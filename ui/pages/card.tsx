@@ -235,27 +235,27 @@ export function CardPage() {
       <Section title="API Reference">
         <div class="space-y-8">
           <div>
-            <h3 class="text-lg font-semibold text-zinc-100 mb-4">Card</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-4">Card</h3>
             <PropsTable props={cardProps} />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-zinc-100 mb-4">CardHeader</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-4">CardHeader</h3>
             <PropsTable props={cardHeaderProps} />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-zinc-100 mb-4">CardTitle</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-4">CardTitle</h3>
             <PropsTable props={cardTitleProps} />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-zinc-100 mb-4">CardDescription</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-4">CardDescription</h3>
             <PropsTable props={cardDescriptionProps} />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-zinc-100 mb-4">CardContent</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-4">CardContent</h3>
             <PropsTable props={cardContentProps} />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-zinc-100 mb-4">CardFooter</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-4">CardFooter</h3>
             <PropsTable props={cardFooterProps} />
           </div>
         </div>

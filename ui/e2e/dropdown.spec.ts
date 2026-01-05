@@ -426,3 +426,160 @@ test.describe('Dropdown Viewport Edge Positioning', () => {
     await expect(content.locator('text=Option 1')).toBeVisible()
   })
 })
+
+test.describe('Dropdown Keyboard Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/dropdown')
+  })
+
+  test('ArrowDown navigates to next item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    // Open dropdown
+    await trigger.click()
+    await expect(content).toHaveClass(/opacity-100/)
+
+    // Focus the content and press ArrowDown
+    await content.focus()
+    await page.keyboard.press('ArrowDown')
+
+    // First item should be focused
+    const items = content.locator('[data-dropdown-item]')
+    await expect(items.first()).toBeFocused()
+  })
+
+  test('ArrowDown cycles through items', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    // Navigate to first item
+    await page.keyboard.press('ArrowDown')
+    const items = content.locator('[data-dropdown-item]')
+    await expect(items.nth(0)).toBeFocused()
+
+    // Navigate to second item
+    await page.keyboard.press('ArrowDown')
+    await expect(items.nth(1)).toBeFocused()
+
+    // Navigate to third item
+    await page.keyboard.press('ArrowDown')
+    await expect(items.nth(2)).toBeFocused()
+  })
+
+  test('ArrowUp navigates to previous item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    // ArrowUp from no focus should go to last item
+    await page.keyboard.press('ArrowUp')
+    const items = content.locator('[data-dropdown-item]')
+    await expect(items.last()).toBeFocused()
+  })
+
+  test('ArrowDown wraps from last to first item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    const items = content.locator('[data-dropdown-item]')
+    const itemCount = await items.count()
+
+    // Navigate to last item
+    for (let i = 0; i < itemCount; i++) {
+      await page.keyboard.press('ArrowDown')
+    }
+
+    // Press ArrowDown again should wrap to first
+    await page.keyboard.press('ArrowDown')
+    await expect(items.first()).toBeFocused()
+  })
+
+  test('Enter selects focused item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    // Navigate to second item (Banana)
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+
+    // Press Enter to select
+    await page.keyboard.press('Enter')
+
+    // Dropdown should close and show selected value
+    await expect(content).toHaveClass(/opacity-0/)
+    await expect(trigger).toContainText('Banana')
+  })
+
+  test('Space selects focused item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    // Navigate to third item (Cherry)
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+
+    // Press Space to select
+    await page.keyboard.press(' ')
+
+    // Dropdown should close and show selected value
+    await expect(content).toHaveClass(/opacity-0/)
+    await expect(trigger).toContainText('Cherry')
+  })
+
+  test('Home key navigates to first item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    // Navigate down a few times
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+
+    // Press Home to go to first
+    await page.keyboard.press('Home')
+
+    const items = content.locator('[data-dropdown-item]')
+    await expect(items.first()).toBeFocused()
+  })
+
+  test('End key navigates to last item', async ({ page }) => {
+    const basicDemo = page.locator('[data-bf-scope="DropdownBasicDemo"]').first()
+    const trigger = basicDemo.locator('[data-dropdown-trigger]')
+    const content = basicDemo.locator('[data-dropdown-content]')
+
+    await trigger.click()
+    await content.focus()
+
+    // Press End to go to last
+    await page.keyboard.press('End')
+
+    const items = content.locator('[data-dropdown-item]')
+    await expect(items.last()).toBeFocused()
+  })
+})

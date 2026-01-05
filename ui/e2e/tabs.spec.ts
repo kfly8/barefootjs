@@ -148,3 +148,121 @@ test.describe('Home Page - Tabs Link', () => {
     await expect(page.locator('h1')).toContainText('Tabs')
   })
 })
+
+test.describe('Tabs Keyboard Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/components/tabs')
+  })
+
+  test('ArrowRight navigates to next tab', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
+    const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
+
+    // Focus on first tab
+    await accountTab.focus()
+    await expect(accountTab).toBeFocused()
+
+    // Press ArrowRight to go to next tab
+    await page.keyboard.press('ArrowRight')
+
+    // Password tab should be focused and selected
+    await expect(passwordTab).toBeFocused()
+    await expect(passwordTab).toHaveAttribute('aria-selected', 'true')
+  })
+
+  test('ArrowLeft navigates to previous tab', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
+    const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
+
+    // First switch to Password tab
+    await passwordTab.click()
+    await passwordTab.focus()
+    await expect(passwordTab).toBeFocused()
+
+    // Press ArrowLeft to go back to Account tab
+    await page.keyboard.press('ArrowLeft')
+
+    // Account tab should be focused and selected
+    await expect(accountTab).toBeFocused()
+    await expect(accountTab).toHaveAttribute('aria-selected', 'true')
+  })
+
+  test('ArrowRight wraps from last to first tab', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
+    const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
+
+    // Focus on last tab (Password)
+    await passwordTab.click()
+    await passwordTab.focus()
+
+    // Press ArrowRight to wrap to first tab
+    await page.keyboard.press('ArrowRight')
+
+    // Account tab should be focused
+    await expect(accountTab).toBeFocused()
+  })
+
+  test('ArrowLeft wraps from first to last tab', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsBasicDemo"]').first()
+    const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
+    const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
+
+    // Focus on first tab (Account)
+    await accountTab.focus()
+
+    // Press ArrowLeft to wrap to last tab
+    await page.keyboard.press('ArrowLeft')
+
+    // Password tab should be focused
+    await expect(passwordTab).toBeFocused()
+  })
+
+  test('Home key navigates to first tab', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+    const notificationsTab = tabs.locator('button[role="tab"]:has-text("Notifications")')
+    const overviewTab = tabs.locator('button[role="tab"]:has-text("Overview")')
+
+    // Switch to last tab and focus
+    await notificationsTab.click()
+    await notificationsTab.focus()
+
+    // Press Home to go to first tab
+    await page.keyboard.press('Home')
+
+    // Overview tab should be focused
+    await expect(overviewTab).toBeFocused()
+  })
+
+  test('End key navigates to last tab', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsMultipleDemo"]').first()
+    const notificationsTab = tabs.locator('button[role="tab"]:has-text("Notifications")')
+    const overviewTab = tabs.locator('button[role="tab"]:has-text("Overview")')
+
+    // Focus on first tab
+    await overviewTab.focus()
+
+    // Press End to go to last tab
+    await page.keyboard.press('End')
+
+    // Notifications tab should be focused
+    await expect(notificationsTab).toBeFocused()
+  })
+
+  test('keyboard navigation skips disabled tabs', async ({ page }) => {
+    const tabs = page.locator('[data-bf-scope="TabsDisabledDemo"]').first()
+    const activeTab = tabs.locator('button[role="tab"]:has-text("Active")')
+    const anotherTab = tabs.locator('button[role="tab"]:has-text("Another")')
+
+    // Focus on Active tab
+    await activeTab.click()
+    await activeTab.focus()
+
+    // Press ArrowRight - should skip Disabled and go to Another
+    await page.keyboard.press('ArrowRight')
+
+    await expect(anotherTab).toBeFocused()
+  })
+})

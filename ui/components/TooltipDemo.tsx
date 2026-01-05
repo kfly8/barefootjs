@@ -50,7 +50,7 @@ export function TooltipButtonDemo() {
       >
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 bg-zinc-900 text-zinc-50 hover:bg-zinc-900/90 h-10 px-4 py-2"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
         >
           Hover or Focus
         </button>
@@ -77,7 +77,7 @@ export function TooltipTopDemo() {
       >
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 h-10 px-4 py-2"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-10 px-4 py-2"
         >
           Top
         </button>
@@ -104,7 +104,7 @@ export function TooltipRightDemo() {
       >
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 h-10 px-4 py-2"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-10 px-4 py-2"
         >
           Right
         </button>
@@ -131,7 +131,7 @@ export function TooltipBottomDemo() {
       >
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 h-10 px-4 py-2"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-10 px-4 py-2"
         >
           Bottom
         </button>
@@ -158,7 +158,7 @@ export function TooltipLeftDemo() {
       >
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 h-10 px-4 py-2"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-10 px-4 py-2"
         >
           Left
         </button>

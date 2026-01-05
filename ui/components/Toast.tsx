@@ -95,12 +95,12 @@ export function Toast({
         (animationState ?? (open ? 'visible' : 'hidden')) === 'visible' ? 'flex translate-x-0 opacity-100' :
         (animationState ?? (open ? 'visible' : 'hidden')) === 'exiting' ? 'flex translate-x-full opacity-0' :
         'hidden'
-      } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-300 ease-out ${
-        variant === 'success' ? 'bg-green-50 border-green-200 text-green-900' :
-        variant === 'error' ? 'bg-red-50 border-red-200 text-red-900' :
-        variant === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' :
-        variant === 'info' ? 'bg-blue-50 border-blue-200 text-blue-900' :
-        'bg-white border-zinc-200 text-zinc-900'
+      } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-slow ease-out ${
+        variant === 'success' ? 'bg-success/10 border-success text-foreground' :
+        variant === 'error' ? 'bg-destructive/10 border-destructive text-foreground' :
+        variant === 'warning' ? 'bg-warning/10 border-warning text-foreground' :
+        variant === 'info' ? 'bg-info/10 border-info text-foreground' :
+        'bg-background border-border text-foreground'
       }`}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
@@ -151,7 +151,7 @@ export function ToastClose({ onClick }: ToastCloseProps) {
   return (
     <button
       type="button"
-      class="ml-auto -mr-1 -mt-1 h-6 w-6 rounded-md inline-flex items-center justify-center opacity-50 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+      class="ml-auto -mr-1 -mt-1 h-6 w-6 rounded-md inline-flex items-center justify-center opacity-50 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label="Close"
       onClick={onClick}
       data-toast-close
@@ -185,7 +185,7 @@ export function ToastAction({ altText, onClick, children }: ToastActionProps) {
   return (
     <button
       type="button"
-      class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border border-current opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+      class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border border-current opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label={altText}
       onClick={onClick}
       data-toast-action

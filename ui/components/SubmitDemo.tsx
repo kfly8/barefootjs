@@ -56,7 +56,7 @@ export function BasicSubmitDemo() {
   return (
     <div class="space-y-4">
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Email *</label>
+        <label class="text-sm text-muted-foreground">Email *</label>
         <Input
           inputType="email"
           inputValue={email()}
@@ -65,7 +65,7 @@ export function BasicSubmitDemo() {
           inputPlaceholder="Enter your email"
           inputDisabled={loading()}
         />
-        <p class="error-message text-sm text-red-400 min-h-5">{error()}</p>
+        <p class="error-message text-sm text-destructive min-h-5">{error()}</p>
       </div>
 
       <Button
@@ -139,7 +139,7 @@ export function NetworkErrorDemo() {
   return (
     <div class="space-y-4">
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Message *</label>
+        <label class="text-sm text-muted-foreground">Message *</label>
         <Input
           inputValue={message()}
           onInput={(e) => setMessage(e.target.value)}
@@ -147,7 +147,7 @@ export function NetworkErrorDemo() {
           inputPlaceholder="Enter your message"
           inputDisabled={loading()}
         />
-        <p class="validation-error text-sm text-red-400 min-h-5">{validationError()}</p>
+        <p class="validation-error text-sm text-destructive min-h-5">{validationError()}</p>
       </div>
 
       <Button
@@ -226,7 +226,7 @@ export function ServerValidationDemo() {
   return (
     <div class="space-y-4">
       <div class="space-y-2">
-        <label class="text-sm text-zinc-400">Email *</label>
+        <label class="text-sm text-muted-foreground">Email *</label>
         <Input
           inputType="email"
           inputValue={email()}
@@ -238,13 +238,13 @@ export function ServerValidationDemo() {
           inputPlaceholder="Enter your email"
           inputDisabled={loading()}
         />
-        <p class="client-error text-sm text-red-400 min-h-5">{clientError()}</p>
+        <p class="client-error text-sm text-destructive min-h-5">{clientError()}</p>
         {serverError() !== '' ? (
-          <p class="server-error text-sm text-red-400">{serverError()}</p>
+          <p class="server-error text-sm text-destructive">{serverError()}</p>
         ) : null}
       </div>
 
-      <p class="text-xs text-zinc-500">
+      <p class="text-xs text-muted-foreground">
         Try "taken@example.com" to see server validation error
       </p>
 

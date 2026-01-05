@@ -7,7 +7,7 @@ test.describe('Form Validation Documentation Page', () => {
 
   test('displays page header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Form Validation')
-    await expect(page.locator('p.text-zinc-400.text-lg')).toContainText('error state management')
+    await expect(page.locator('p.text-muted-foreground.text-lg')).toContainText('error state management')
   })
 
   test('displays pattern overview section', async ({ page }) => {

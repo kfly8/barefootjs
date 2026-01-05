@@ -29,17 +29,17 @@ test.describe('Badge Documentation Page', () => {
 
     test('default badge has correct styling', async ({ page }) => {
       const defaultBadge = page.locator('span:has-text("Default")').first()
-      await expect(defaultBadge).toHaveClass(/bg-zinc-900/)
+      await expect(defaultBadge).toHaveClass(/bg-primary/)
     })
 
     test('secondary badge has correct styling', async ({ page }) => {
       const secondaryBadge = page.locator('span:has-text("Secondary")')
-      await expect(secondaryBadge).toHaveClass(/bg-zinc-100/)
+      await expect(secondaryBadge).toHaveClass(/bg-secondary/)
     })
 
     test('destructive badge has correct styling', async ({ page }) => {
       const destructiveBadge = page.locator('span:has-text("Destructive")')
-      await expect(destructiveBadge).toHaveClass(/bg-red-500/)
+      await expect(destructiveBadge).toHaveClass(/bg-destructive/)
     })
 
     test('outline badge has correct styling', async ({ page }) => {

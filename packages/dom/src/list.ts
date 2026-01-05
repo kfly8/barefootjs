@@ -28,6 +28,12 @@ export function reconcileList<T>(
   getKey: (item: T, index: number) => string,
   renderItem: (item: T, index: number) => string
 ): void {
+  // Handle undefined/null items gracefully (e.g., when auto-hydration
+  // runs on static components without required props)
+  if (!items) {
+    return
+  }
+
   // Save focus state before DOM manipulation
   const activeElement = document.activeElement as HTMLElement | null
   const focusedKey = activeElement?.closest('[data-key]')?.getAttribute('data-key')

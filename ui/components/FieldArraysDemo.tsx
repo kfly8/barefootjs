@@ -92,9 +92,9 @@ export function BasicFieldArrayDemo() {
   return (
     <div class="space-y-4">
       {submitted() ? (
-        <div class="success-message p-4 bg-green-900/30 border border-green-700 rounded-lg">
-          <p class="text-green-400 font-medium">Emails submitted successfully!</p>
-          <p class="text-sm text-green-300 mt-2">{fields().map(f => f.value).join(', ')}</p>
+        <div class="success-message p-4 bg-success/10 border border-success rounded-lg">
+          <p class="text-success font-medium">Emails submitted successfully!</p>
+          <p class="text-sm text-muted-foreground mt-2">{fields().map(f => f.value).join(', ')}</p>
         </div>
       ) : (
         <div class="space-y-4">
@@ -109,7 +109,7 @@ export function BasicFieldArrayDemo() {
                     onInput={(e) => handleChange(field.id, e.target.value)}
                     onBlur={() => handleBlur(field.id)}
                   />
-                  <p class="field-error text-sm text-red-400 min-h-5">{field.error}</p>
+                  <p class="field-error text-sm text-destructive min-h-5">{field.error}</p>
                 </div>
                 <Button
                   variant="destructive"
@@ -132,7 +132,7 @@ export function BasicFieldArrayDemo() {
             </Button>
           </div>
 
-          <p class="field-count text-sm text-zinc-400">
+          <p class="field-count text-sm text-muted-foreground">
             {fields().length} email(s) added
           </p>
         </div>
@@ -227,7 +227,7 @@ export function DuplicateValidationDemo() {
                 onInput={(e) => handleChange(field.id, e.target.value)}
                 onBlur={() => handleBlur(field.id)}
               />
-              <p class="field-error text-sm text-red-400 min-h-5">{field.error}</p>
+              <p class="field-error text-sm text-destructive min-h-5">{field.error}</p>
             </div>
             <Button
               variant="destructive"
@@ -246,7 +246,7 @@ export function DuplicateValidationDemo() {
       </Button>
 
       {duplicateCount() > 0 ? (
-        <p class="duplicate-warning text-sm text-amber-400">
+        <p class="duplicate-warning text-sm text-warning">
           {duplicateCount()} duplicate email(s) detected
         </p>
       ) : null}
@@ -310,7 +310,7 @@ export function MinMaxFieldsDemo() {
                 onInput={(e) => handleChange(field.id, e.target.value)}
                 onBlur={() => handleBlur(field.id)}
               />
-              <p class="field-error text-sm text-red-400 min-h-5">{field.error}</p>
+              <p class="field-error text-sm text-destructive min-h-5">{field.error}</p>
             </div>
             <Button
               variant="destructive"
@@ -328,13 +328,13 @@ export function MinMaxFieldsDemo() {
         <Button variant="outline" onClick={handleAdd} disabled={!canAdd()}>
           + Add Email
         </Button>
-        <p class="field-count text-sm text-zinc-400">
+        <p class="field-count text-sm text-muted-foreground">
           {fields().length} / {MAX_FIELDS} emails
         </p>
       </div>
 
       {!canAdd() ? (
-        <p class="max-warning text-sm text-amber-400">
+        <p class="max-warning text-sm text-warning">
           Maximum {MAX_FIELDS} emails allowed
         </p>
       ) : null}

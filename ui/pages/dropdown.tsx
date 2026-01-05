@@ -237,12 +237,12 @@ export function DropdownPage() {
 
       {/* Features */}
       <Section title="Features">
-        <ul class="list-disc list-inside space-y-2 text-zinc-400">
-          <li><strong class="text-zinc-200">Props-based state</strong> - Parent controls open/selected state with signals</li>
-          <li><strong class="text-zinc-200">ESC key to close</strong> - Press Escape to close the dropdown</li>
-          <li><strong class="text-zinc-200">Click to select</strong> - Click an item to select it</li>
-          <li><strong class="text-zinc-200">Accessibility</strong> - role="combobox", role="listbox", role="option", aria-expanded, aria-selected</li>
-          <li><strong class="text-zinc-200">Visual feedback</strong> - Selected item shows checkmark</li>
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Props-based state</strong> - Parent controls open/selected state with signals</li>
+          <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dropdown</li>
+          <li><strong class="text-foreground">Click to select</strong> - Click an item to select it</li>
+          <li><strong class="text-foreground">Accessibility</strong> - role="combobox", role="listbox", role="option", aria-expanded, aria-selected</li>
+          <li><strong class="text-foreground">Visual feedback</strong> - Selected item shows checkmark</li>
         </ul>
       </Section>
 
@@ -263,16 +263,16 @@ export function DropdownPage() {
 
           <Example title="With CSS Transform" code={transformCode}>
             <div class="space-y-4">
-              <p class="text-sm text-zinc-400">Dropdown inside a scaled container:</p>
-              <div class="transform scale-100 bg-zinc-800 p-4 rounded-lg" data-transform-container>
+              <p class="text-sm text-muted-foreground">Dropdown inside a scaled container:</p>
+              <div class="transform scale-100 bg-muted p-4 rounded-lg" data-transform-container>
                 <DropdownWithTransformDemo />
               </div>
-              <p class="text-sm text-zinc-400">Dropdown inside a rotated container:</p>
-              <div class="transform rotate-0 bg-zinc-800 p-4 rounded-lg" data-transform-container-rotate>
+              <p class="text-sm text-muted-foreground">Dropdown inside a rotated container:</p>
+              <div class="transform rotate-0 bg-muted p-4 rounded-lg" data-transform-container-rotate>
                 <DropdownWithTransformDemo />
               </div>
-              <p class="text-sm text-zinc-400">Dropdown inside a translated container:</p>
-              <div class="transform translate-x-4 bg-zinc-800 p-4 rounded-lg" data-transform-container-translate>
+              <p class="text-sm text-muted-foreground">Dropdown inside a translated container:</p>
+              <div class="transform translate-x-4 bg-muted p-4 rounded-lg" data-transform-container-translate>
                 <DropdownWithTransformDemo />
               </div>
             </div>
@@ -280,23 +280,34 @@ export function DropdownPage() {
         </div>
       </Section>
 
+      {/* Accessibility */}
+      <Section title="Accessibility">
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate, Home/End to jump, Enter/Space to select</li>
+          <li><strong class="text-foreground">Focus Return</strong> - Focus returns to trigger after selection</li>
+          <li><strong class="text-foreground">ESC to Close</strong> - Press Escape to close the dropdown</li>
+          <li><strong class="text-foreground">ARIA</strong> - role="combobox" on trigger, role="listbox" on content, role="option" on items</li>
+          <li><strong class="text-foreground">State Attributes</strong> - aria-expanded, aria-haspopup, aria-selected, aria-disabled</li>
+        </ul>
+      </Section>
+
       {/* API Reference */}
       <Section title="API Reference">
         <div class="space-y-6">
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DropdownTrigger</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DropdownTrigger</h3>
             <PropsTable props={dropdownTriggerProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DropdownContent</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DropdownContent</h3>
             <PropsTable props={dropdownContentProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DropdownItem</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DropdownItem</h3>
             <PropsTable props={dropdownItemProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DropdownLabel</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DropdownLabel</h3>
             <PropsTable props={dropdownLabelProps} />
           </div>
         </div>

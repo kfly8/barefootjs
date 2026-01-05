@@ -276,7 +276,7 @@ test.describe('Toast Documentation Page', () => {
 
       // The toast should have transition classes for smooth animation
       await expect(toast).toHaveClass(/transition-all/)
-      await expect(toast).toHaveClass(/duration-300/)
+      await expect(toast).toHaveClass(/duration-slow/)
     })
   })
 

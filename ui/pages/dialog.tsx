@@ -216,13 +216,13 @@ export function DialogPage() {
 
       {/* Features */}
       <Section title="Features">
-        <ul class="list-disc list-inside space-y-2 text-zinc-400">
-          <li><strong class="text-zinc-200">ESC key to close</strong> - Press Escape to close the dialog</li>
-          <li><strong class="text-zinc-200">Click outside to close</strong> - Click the overlay to close</li>
-          <li><strong class="text-zinc-200">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
-          <li><strong class="text-zinc-200">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
-          <li><strong class="text-zinc-200">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-          <li><strong class="text-zinc-200">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
+          <li><strong class="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
+          <li><strong class="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
+          <li><strong class="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
+          <li><strong class="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+          <li><strong class="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
         </ul>
       </Section>
 
@@ -239,31 +239,42 @@ export function DialogPage() {
         </div>
       </Section>
 
+      {/* Accessibility */}
+      <Section title="Accessibility">
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
+          <li><strong class="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
+          <li><strong class="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
+          <li><strong class="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+          <li><strong class="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
+        </ul>
+      </Section>
+
       {/* API Reference */}
       <Section title="API Reference">
         <div class="space-y-6">
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DialogTrigger</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
             <PropsTable props={dialogTriggerProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DialogOverlay</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
             <PropsTable props={dialogOverlayProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DialogContent</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DialogContent</h3>
             <PropsTable props={dialogContentProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DialogTitle</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
             <PropsTable props={dialogTitleProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DialogDescription</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
             <PropsTable props={dialogDescriptionProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">DialogClose</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">DialogClose</h3>
             <PropsTable props={dialogCloseProps} />
           </div>
         </div>

@@ -21,7 +21,7 @@ export function SwitchInteractiveDemo() {
         disabled={false}
         onCheckedChange={setChecked}
       />
-      <span class="text-zinc-100">{checked() ? 'On' : 'Off'}</span>
+      <span class="text-foreground">{checked() ? 'On' : 'Off'}</span>
     </div>
   )
 }
@@ -37,15 +37,15 @@ export function SwitchSettingsPanelDemo() {
   return (
     <div class="w-64 space-y-4">
       <div class="flex items-center justify-between">
-        <span class="text-zinc-100">Wi-Fi</span>
+        <span class="text-foreground">Wi-Fi</span>
         <Switch checked={wifi()} disabled={false} onCheckedChange={setWifi} />
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-zinc-100">Bluetooth</span>
+        <span class="text-foreground">Bluetooth</span>
         <Switch checked={bluetooth()} disabled={false} onCheckedChange={setBluetooth} />
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-zinc-100">Notifications</span>
+        <span class="text-foreground">Notifications</span>
         <Switch checked={notifications()} disabled={false} onCheckedChange={setNotifications} />
       </div>
     </div>

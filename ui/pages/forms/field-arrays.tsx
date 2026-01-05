@@ -130,7 +130,7 @@ export function FieldArraysPage() {
             <Input inputPlaceholder="Email 1" />
             <Input inputPlaceholder="Email 2" />
           </div>
-          <p class="text-sm text-zinc-400 mt-2">
+          <p class="text-sm text-muted-foreground mt-2">
             See interactive examples below.
           </p>
         </div>
@@ -139,14 +139,14 @@ export function FieldArraysPage() {
       {/* Pattern Overview */}
       <Section title="Pattern Overview">
         <div class="prose prose-invert max-w-none">
-          <p class="text-zinc-400">
-            Field arrays in BarefootJS use a <code class="text-zinc-200">createSignal</code> containing an array of field objects.
+          <p class="text-muted-foreground">
+            Field arrays in BarefootJS use a <code class="text-foreground">createSignal</code> containing an array of field objects.
             Each field has a unique ID for proper list reconciliation, and its own value and touched state.
           </p>
-          <p class="text-zinc-400 mt-2">
+          <p class="text-muted-foreground mt-2">
             Key concepts:
           </p>
-          <ul class="list-disc list-inside text-zinc-400 space-y-1 mt-2">
+          <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
             <li><strong>Field object</strong>: Contains id, value, and touched state</li>
             <li><strong>Unique ID</strong>: Each field has a unique ID for stable key management</li>
             <li><strong>Per-field validation</strong>: Validate each field independently</li>
@@ -182,48 +182,48 @@ export function FieldArraysPage() {
       {/* Key Points */}
       <Section title="Key Points">
         <div class="space-y-4">
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Array State Management</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
-              <li>Store field array in a single signal: <code class="text-zinc-200">{'createSignal<Field[]>([])'}</code></li>
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Array State Management</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Store field array in a single signal: <code class="text-foreground">{'createSignal<Field[]>([])'}</code></li>
               <li>Each field object contains: id, value, touched (and any other state)</li>
-              <li>Use immutable operations: <code class="text-zinc-200">map()</code>, <code class="text-zinc-200">filter()</code>, spread operator</li>
+              <li>Use immutable operations: <code class="text-foreground">map()</code>, <code class="text-foreground">filter()</code>, spread operator</li>
               <li>Maintain a separate counter signal for generating unique IDs</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Key Management</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
-              <li>Always use <code class="text-zinc-200">key={'{field.id}'}</code> for list items</li>
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Key Management</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Always use <code class="text-foreground">key={'{field.id}'}</code> for list items</li>
               <li>Never use array index as key (causes issues on reorder/delete)</li>
-              <li>Generate unique IDs with incrementing counter: <code class="text-zinc-200">nextId()</code></li>
+              <li>Generate unique IDs with incrementing counter: <code class="text-foreground">nextId()</code></li>
               <li>Unique keys ensure proper DOM reconciliation</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Per-Item Validation</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Per-Item Validation</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
               <li>Create a validation function that takes the field value</li>
               <li>Check touched state before showing errors</li>
-              <li>Update touched state on blur: <code class="text-zinc-200">{'onBlur={() => handleBlur(field.id)}'}</code></li>
+              <li>Update touched state on blur: <code class="text-foreground">{'onBlur={() => handleBlur(field.id)}'}</code></li>
               <li>Each field error is computed independently</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Cross-Field Validation</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
-              <li>Access entire array in validation: <code class="text-zinc-200">fields().some()</code></li>
-              <li>Use <code class="text-zinc-200">createMemo</code> for derived validations (e.g., duplicate count)</li>
-              <li>Exclude current field when checking duplicates: <code class="text-zinc-200">f.id !== id</code></li>
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Cross-Field Validation</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Access entire array in validation: <code class="text-foreground">fields().some()</code></li>
+              <li>Use <code class="text-foreground">createMemo</code> for derived validations (e.g., duplicate count)</li>
+              <li>Exclude current field when checking duplicates: <code class="text-foreground">f.id !== id</code></li>
               <li>Show summary warnings for array-level issues</li>
             </ul>
           </div>
-          <div class="p-4 bg-zinc-800 rounded-lg">
-            <h3 class="font-semibold text-zinc-100 mb-2">Add/Remove Operations</h3>
-            <ul class="list-disc list-inside text-sm text-zinc-400 space-y-1">
+          <div class="p-4 bg-muted rounded-lg">
+            <h3 class="font-semibold text-foreground mb-2">Add/Remove Operations</h3>
+            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
               <li><strong>Add</strong>: Spread existing array and append new field</li>
               <li><strong>Remove</strong>: Filter out field by ID</li>
-              <li>Enforce min/max constraints with <code class="text-zinc-200">createMemo</code> for canAdd/canRemove</li>
+              <li>Enforce min/max constraints with <code class="text-foreground">createMemo</code> for canAdd/canRemove</li>
               <li>Disable buttons when constraints are reached</li>
             </ul>
           </div>

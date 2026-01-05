@@ -225,19 +225,30 @@ export function TabsPage() {
         </div>
       </Section>
 
+      {/* Accessibility */}
+      <Section title="Accessibility">
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
+          <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
+          <li><strong class="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
+          <li><strong class="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
+          <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
+        </ul>
+      </Section>
+
       {/* API Reference */}
       <Section title="API Reference">
         <div class="space-y-6">
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">Tabs</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">Tabs</h3>
             <PropsTable props={tabsProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">TabsTrigger</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
             <PropsTable props={tabsTriggerProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">TabsContent</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">TabsContent</h3>
             <PropsTable props={tabsContentProps} />
           </div>
         </div>

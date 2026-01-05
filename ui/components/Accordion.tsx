@@ -37,7 +37,7 @@ export function AccordionItem({
 }: AccordionItemProps) {
   return (
     <div
-      class="border-b border-zinc-200"
+      class="border-b border-border"
       data-state={open ? 'open' : 'closed'}
       data-value={value}
     >
@@ -60,15 +60,51 @@ export function AccordionTrigger({
   onClick,
   children,
 }: AccordionTriggerProps) {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const target = e.currentTarget as HTMLElement
+    const accordion = target.closest('.w-full')
+    if (!accordion) return
+
+    const triggers = accordion.querySelectorAll('[aria-expanded]:not([disabled])')
+    const currentIndex = Array.from(triggers).indexOf(target)
+
+    let nextIndex: number | null = null
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        nextIndex = currentIndex < triggers.length - 1 ? currentIndex + 1 : 0
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : triggers.length - 1
+        break
+      case 'Home':
+        e.preventDefault()
+        nextIndex = 0
+        break
+      case 'End':
+        e.preventDefault()
+        nextIndex = triggers.length - 1
+        break
+    }
+
+    if (nextIndex !== null && triggers[nextIndex]) {
+      ;(triggers[nextIndex] as HTMLElement).focus()
+    }
+  }
+
   return (
     <h3 class="flex">
       <button
         class={`flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline ${
-          disabled ? 'cursor-not-allowed opacity-50' : ''
+          disabled ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''
         }`}
         {...(disabled ? { disabled: true } : {})}
         aria-expanded={open}
+        aria-disabled={disabled}
         onClick={onClick}
+        onKeyDown={handleKeyDown}
       >
         {children}
         <svg
@@ -81,7 +117,7 @@ export function AccordionTrigger({
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${
+          class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-normal ${
             open ? 'rotate-180' : ''
           }`}
         >
@@ -106,7 +142,8 @@ export function AccordionContent({
 }: AccordionContentProps) {
   return (
     <div
-      class={`grid transition-[grid-template-rows,visibility] duration-200 ease-out ${
+      role="region"
+      class={`grid transition-[grid-template-rows,visibility] duration-normal ease-out ${
         open ? 'grid-rows-[1fr] visible' : 'grid-rows-[0fr] invisible'
       }`}
       data-state={open ? 'open' : 'closed'}

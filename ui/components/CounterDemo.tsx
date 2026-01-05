@@ -40,8 +40,8 @@ export function CounterDerivedDemo() {
         onIncrement={() => setCount(n => n + 1)}
         onDecrement={() => setCount(n => n - 1)}
       />
-      <p class="text-zinc-100">Doubled: <span class="font-mono">{doubled()}</span></p>
-      <p class="text-zinc-100">Is even: <span class="font-mono">{isEven() ? 'Yes' : 'No'}</span></p>
+      <p class="text-foreground">Doubled: <span class="font-mono">{doubled()}</span></p>
+      <p class="text-foreground">Is even: <span class="font-mono">{isEven() ? 'Yes' : 'No'}</span></p>
     </div>
   )
 }

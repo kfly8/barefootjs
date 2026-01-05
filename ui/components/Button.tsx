@@ -4,6 +4,7 @@
  *
  * A modern button component inspired by shadcn/ui.
  * Supports multiple variants and sizes.
+ * Uses CSS variables for theming support.
  */
 
 import { createSignal } from '@barefootjs/dom'
@@ -29,13 +30,13 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      class={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 ${
-        variant === 'destructive' ? 'bg-red-500 text-zinc-50 shadow-sm hover:bg-red-500/90' :
-        variant === 'outline' ? 'border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 hover:text-zinc-900' :
-        variant === 'secondary' ? 'bg-zinc-100 text-zinc-900 shadow-sm hover:bg-zinc-100/80' :
-        variant === 'ghost' ? 'hover:bg-zinc-100 hover:text-zinc-900' :
-        variant === 'link' ? 'text-zinc-900 underline-offset-4 hover:underline' :
-        'bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90'
+      class={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] ${
+        variant === 'destructive' ? 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90' :
+        variant === 'outline' ? 'border border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground' :
+        variant === 'secondary' ? 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80' :
+        variant === 'ghost' ? 'hover:bg-accent hover:text-accent-foreground' :
+        variant === 'link' ? 'text-primary underline-offset-4 hover:underline focus-visible:underline' :
+        'bg-primary text-primary-foreground shadow hover:bg-primary/90'
       } ${
         size === 'sm' ? 'h-8 rounded-md px-3 text-xs' :
         size === 'lg' ? 'h-10 rounded-md px-8' :

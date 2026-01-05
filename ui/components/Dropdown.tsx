@@ -58,7 +58,7 @@ export function DropdownTrigger({
       role="combobox"
       aria-expanded={open}
       aria-haspopup="listbox"
-      class={`inline-flex items-center justify-between rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 border border-zinc-200 bg-white hover:bg-zinc-100 h-10 px-4 py-2 min-w-[160px] ${
+      class={`inline-flex items-center justify-between rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent h-10 px-4 py-2 min-w-[160px] ${
         disabled ? 'pointer-events-none opacity-50' : ''
       }`}
       {...(disabled ? { disabled: true } : {})}
@@ -76,7 +76,7 @@ export function DropdownTrigger({
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class={`ml-2 h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${
+        class={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-normal ${
           open ? 'rotate-180' : ''
         }`}
       >
@@ -100,8 +100,47 @@ export function DropdownContent({
   children,
 }: DropdownContentProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && onClose) {
-      onClose()
+    const target = e.currentTarget as HTMLElement
+    const items = target.querySelectorAll('[data-dropdown-item]:not([aria-disabled="true"])')
+    const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
+
+    switch (e.key) {
+      case 'Escape':
+        if (onClose) onClose()
+        break
+      case 'ArrowDown':
+        e.preventDefault()
+        if (items.length > 0) {
+          const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0
+          ;(items[nextIndex] as HTMLElement).focus()
+        }
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        if (items.length > 0) {
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1
+          ;(items[prevIndex] as HTMLElement).focus()
+        }
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (document.activeElement && (document.activeElement as HTMLElement).dataset.dropdownItem !== undefined) {
+          ;(document.activeElement as HTMLElement).click()
+        }
+        break
+      case 'Home':
+        e.preventDefault()
+        if (items.length > 0) {
+          ;(items[0] as HTMLElement).focus()
+        }
+        break
+      case 'End':
+        e.preventDefault()
+        if (items.length > 0) {
+          ;(items[items.length - 1] as HTMLElement).focus()
+        }
+        break
     }
   }
 
@@ -110,7 +149,7 @@ export function DropdownContent({
   return (
     <div
       role="listbox"
-      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-zinc-200 bg-white py-1 shadow-lg transform-gpu origin-top transition-all duration-200 ease-out ${
+      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-border bg-popover py-1 shadow-lg transform-gpu origin-top transition-all duration-normal ease-out ${
         open
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'
@@ -141,19 +180,28 @@ export function DropdownItem({
   onClick,
   children,
 }: DropdownItemProps) {
+  const handleClick = () => {
+    onClick?.()
+    // Return focus to trigger after selection
+    const trigger = document.querySelector('[data-dropdown-trigger]') as HTMLElement
+    setTimeout(() => trigger?.focus(), 0)
+  }
+
   return (
     <div
       role="option"
       aria-selected={selected}
+      aria-disabled={disabled}
       data-value={value}
-      class={`relative flex cursor-pointer select-none items-center px-3 py-2 text-sm outline-none ${
+      tabIndex={disabled ? -1 : 0}
+      class={`relative flex cursor-pointer select-none items-center px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
         selected
-          ? 'bg-zinc-100 text-zinc-900 font-medium'
-          : 'text-zinc-700 hover:bg-zinc-50'
+          ? 'bg-accent text-accent-foreground font-medium'
+          : 'text-popover-foreground hover:bg-accent/50'
       }`}
-      onClick={onClick}
+      onClick={handleClick}
       data-dropdown-item
     >
       {selected && (
@@ -185,6 +233,6 @@ export interface DropdownLabelProps {
 
 export function DropdownLabel({ children }: DropdownLabelProps) {
   return (
-    <span class="text-zinc-500">{children}</span>
+    <span class="text-muted-foreground">{children}</span>
   )
 }

@@ -202,12 +202,12 @@ export function TooltipPage() {
 
       {/* Features */}
       <Section title="Features">
-        <ul class="list-disc list-inside space-y-2 text-zinc-400">
-          <li><strong class="text-zinc-200">Hover trigger</strong> - Shows tooltip on mouse enter, hides on mouse leave</li>
-          <li><strong class="text-zinc-200">Focus trigger</strong> - Shows tooltip on focus for keyboard accessibility</li>
-          <li><strong class="text-zinc-200">Placement options</strong> - Top, right, bottom, or left positioning</li>
-          <li><strong class="text-zinc-200">Arrow indicator</strong> - Visual arrow pointing to the trigger</li>
-          <li><strong class="text-zinc-200">Accessibility</strong> - role="tooltip", aria-describedby for screen readers</li>
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Hover trigger</strong> - Shows tooltip on mouse enter, hides on mouse leave</li>
+          <li><strong class="text-foreground">Focus trigger</strong> - Shows tooltip on focus for keyboard accessibility</li>
+          <li><strong class="text-foreground">Placement options</strong> - Top, right, bottom, or left positioning</li>
+          <li><strong class="text-foreground">Arrow indicator</strong> - Visual arrow pointing to the trigger</li>
+          <li><strong class="text-foreground">Accessibility</strong> - role="tooltip", aria-describedby for screen readers</li>
         </ul>
       </Section>
 
@@ -240,16 +240,27 @@ export function TooltipPage() {
         </div>
       </Section>
 
+      {/* Accessibility */}
+      <Section title="Accessibility">
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+          <li><strong class="text-foreground">Keyboard Support</strong> - Tooltip shows on focus for keyboard users</li>
+          <li><strong class="text-foreground">ARIA</strong> - role="tooltip" on content, aria-describedby on trigger links to tooltip</li>
+          <li><strong class="text-foreground">Screen Readers</strong> - Tooltip content is announced when trigger receives focus</li>
+          <li><strong class="text-foreground">Delay</strong> - Configurable delay prevents tooltips from appearing during quick mouse movements</li>
+          <li><strong class="text-foreground">Visual Indicator</strong> - Arrow points to the trigger element for clear association</li>
+        </ul>
+      </Section>
+
       {/* API Reference */}
       <Section title="API Reference">
         <div class="space-y-6">
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">TooltipTrigger</h3>
+            <h3 class="text-lg font-medium text-foreground mb-4">TooltipTrigger</h3>
             <PropsTable props={tooltipTriggerProps} />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-zinc-100 mb-4">TooltipContent</h3>
-            <p class="text-zinc-400 text-sm mb-4">
+            <h3 class="text-lg font-medium text-foreground mb-4">TooltipContent</h3>
+            <p class="text-muted-foreground text-sm mb-4">
               The tooltip popup. Use the placement prop to control positioning.
             </p>
             <PropsTable props={tooltipContentProps} />

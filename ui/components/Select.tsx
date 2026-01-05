@@ -4,6 +4,7 @@
  *
  * A styled select component inspired by shadcn/ui.
  * Supports value binding and change events.
+ * Uses CSS variables for theming support.
  */
 
 export interface SelectOption {
@@ -17,6 +18,8 @@ export interface SelectProps {
   selectValue?: string
   selectPlaceholder?: string
   selectDisabled?: boolean
+  selectError?: boolean
+  selectDescribedBy?: string
   onChange?: (e: Event & { target: HTMLSelectElement }) => void
   onFocus?: (e: Event & { target: HTMLSelectElement }) => void
   onBlur?: (e: Event & { target: HTMLSelectElement }) => void
@@ -27,15 +30,23 @@ export function Select({
   selectValue = '',
   selectPlaceholder,
   selectDisabled = false,
+  selectError = false,
+  selectDescribedBy,
   onChange,
   onFocus,
   onBlur,
 }: SelectProps) {
   return (
     <select
-      class="flex h-9 w-full items-center justify-between rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm text-zinc-50 shadow-sm ring-offset-zinc-950 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
+      class={`flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50 ${
+        selectError
+          ? 'border-destructive focus:ring-destructive'
+          : 'border-input focus:ring-ring'
+      }`}
       value={selectValue}
       disabled={selectDisabled}
+      aria-invalid={selectError || undefined}
+      {...(selectDescribedBy ? { 'aria-describedby': selectDescribedBy } : {})}
       onChange={onChange}
       onFocus={onFocus}
       onBlur={onBlur}

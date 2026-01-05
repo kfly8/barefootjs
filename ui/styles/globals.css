@@ -1,0 +1,157 @@
+/**
+ * BarefootJS Design System - CSS Variables
+ *
+ * Based on shadcn/ui color system.
+ * Uses HSL values for CSS custom properties.
+ *
+ * Color Contrast (WCAG 2.1 AA):
+ * - foreground on background: ~20:1 (exceeds 4.5:1)
+ * - muted-foreground on background: ~5:1 (meets 4.5:1)
+ * - primary-foreground on primary: ~18:1 (exceeds 4.5:1)
+ *
+ * Note: *-foreground colors are designed for solid backgrounds.
+ * When using transparent backgrounds (e.g., bg-success/10),
+ * use text-foreground or text-muted-foreground for proper contrast.
+ */
+
+:root {
+  /* Background/Foreground */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+
+  /* Card */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+
+  /* Popover */
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+
+  /* Primary */
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+
+  /* Secondary */
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+
+  /* Muted */
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+
+  /* Accent */
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+
+  /* Destructive */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Success */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 98%;
+
+  /* Warning */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 9%;
+
+  /* Info */
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 98%;
+
+  /* Border/Input/Ring */
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Animation Durations */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Animation Easings */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+  /* Background/Foreground */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+
+  /* Card */
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+
+  /* Popover */
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+
+  /* Primary */
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 5.9% 10%;
+
+  /* Secondary */
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+
+  /* Muted */
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+
+  /* Accent */
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+
+  /* Destructive */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Success */
+  --success: 142 69% 58%;
+  --success-foreground: 0 0% 9%;
+
+  /* Warning */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 9%;
+
+  /* Info */
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 98%;
+
+  /* Border/Input/Ring */
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  border-color: hsl(var(--border));
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
