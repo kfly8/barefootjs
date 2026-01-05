@@ -3,6 +3,15 @@
  *
  * Based on shadcn/ui color system.
  * Uses HSL values for CSS custom properties.
+ *
+ * Color Contrast (WCAG 2.1 AA):
+ * - foreground on background: ~20:1 (exceeds 4.5:1)
+ * - muted-foreground on background: ~5:1 (meets 4.5:1)
+ * - primary-foreground on primary: ~18:1 (exceeds 4.5:1)
+ *
+ * Note: *-foreground colors are designed for solid backgrounds.
+ * When using transparent backgrounds (e.g., bg-success/10),
+ * use text-foreground or text-muted-foreground for proper contrast.
  */
 
 :root {
@@ -57,6 +66,17 @@
 
   /* Radius */
   --radius: 0.5rem;
+
+  /* Animation Durations */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Animation Easings */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {

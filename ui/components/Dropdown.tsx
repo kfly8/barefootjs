@@ -76,7 +76,7 @@ export function DropdownTrigger({
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+        class={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-normal ${
           open ? 'rotate-180' : ''
         }`}
       >
@@ -149,7 +149,7 @@ export function DropdownContent({
   return (
     <div
       role="listbox"
-      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-border bg-popover py-1 shadow-lg transform-gpu origin-top transition-all duration-200 ease-out ${
+      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-border bg-popover py-1 shadow-lg transform-gpu origin-top transition-all duration-normal ease-out ${
         open
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'

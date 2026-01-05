@@ -117,7 +117,7 @@ export function AccordionTrigger({
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+          class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-normal ${
             open ? 'rotate-180' : ''
           }`}
         >
@@ -142,7 +142,8 @@ export function AccordionContent({
 }: AccordionContentProps) {
   return (
     <div
-      class={`grid transition-[grid-template-rows,visibility] duration-200 ease-out ${
+      role="region"
+      class={`grid transition-[grid-template-rows,visibility] duration-normal ease-out ${
         open ? 'grid-rows-[1fr] visible' : 'grid-rows-[0fr] invisible'
       }`}
       data-state={open ? 'open' : 'closed'}

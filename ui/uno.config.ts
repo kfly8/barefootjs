@@ -56,6 +56,19 @@ export default defineConfig({
       md: 'calc(var(--radius) - 2px)',
       sm: 'calc(var(--radius) - 4px)',
     },
+    // Animation tokens - Use 'duration' for duration-* utilities
+    duration: {
+      fast: 'var(--duration-fast)',
+      normal: 'var(--duration-normal)',
+      slow: 'var(--duration-slow)',
+    },
+    // Use 'easing' for ease-* utilities
+    easing: {
+      DEFAULT: 'var(--ease-default)',
+      in: 'var(--ease-in)',
+      out: 'var(--ease-out)',
+      'in-out': 'var(--ease-in-out)',
+    },
   },
   // Scan component files for class names
   content: {

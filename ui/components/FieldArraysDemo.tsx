@@ -94,7 +94,7 @@ export function BasicFieldArrayDemo() {
       {submitted() ? (
         <div class="success-message p-4 bg-success/10 border border-success rounded-lg">
           <p class="text-success font-medium">Emails submitted successfully!</p>
-          <p class="text-sm text-success-foreground mt-2">{fields().map(f => f.value).join(', ')}</p>
+          <p class="text-sm text-muted-foreground mt-2">{fields().map(f => f.value).join(', ')}</p>
         </div>
       ) : (
         <div class="space-y-4">

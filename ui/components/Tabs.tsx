@@ -150,6 +150,7 @@ export function TabsContent({
   return (
     <div
       role="tabpanel"
+      tabIndex={0}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
       class={`mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? '' : 'hidden'}`}

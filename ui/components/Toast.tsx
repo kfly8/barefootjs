@@ -95,11 +95,11 @@ export function Toast({
         (animationState ?? (open ? 'visible' : 'hidden')) === 'visible' ? 'flex translate-x-0 opacity-100' :
         (animationState ?? (open ? 'visible' : 'hidden')) === 'exiting' ? 'flex translate-x-full opacity-0' :
         'hidden'
-      } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-300 ease-out ${
-        variant === 'success' ? 'bg-success/10 border-success text-success-foreground' :
-        variant === 'error' ? 'bg-destructive/10 border-destructive text-destructive-foreground' :
-        variant === 'warning' ? 'bg-warning/10 border-warning text-warning-foreground' :
-        variant === 'info' ? 'bg-info/10 border-info text-info-foreground' :
+      } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-slow ease-out ${
+        variant === 'success' ? 'bg-success/10 border-success text-foreground' :
+        variant === 'error' ? 'bg-destructive/10 border-destructive text-foreground' :
+        variant === 'warning' ? 'bg-warning/10 border-warning text-foreground' :
+        variant === 'info' ? 'bg-info/10 border-info text-foreground' :
         'bg-background border-border text-foreground'
       }`}
       role={variant === 'error' ? 'alert' : 'status'}

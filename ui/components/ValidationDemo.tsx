@@ -198,7 +198,7 @@ export function MultiFieldFormDemo() {
       {submitted() ? (
         <div class="success-message p-4 bg-success/10 border border-success rounded-lg">
           <p class="text-success font-medium">Form submitted successfully!</p>
-          <p class="text-sm text-success-foreground mt-1">Name: {name()}, Email: {email()}</p>
+          <p class="text-sm text-muted-foreground mt-1">Name: {name()}, Email: {email()}</p>
         </div>
       ) : (
         <div class="space-y-4">

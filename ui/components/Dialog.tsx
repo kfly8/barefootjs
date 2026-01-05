@@ -65,7 +65,7 @@ export function DialogOverlay({
   // Use opacity + pointer-events for fade animation (hidden class breaks transitions)
   return (
     <div
-      class={`fixed inset-0 z-50 bg-black/80 transition-opacity duration-150 ${
+      class={`fixed inset-0 z-50 bg-black/80 transition-opacity duration-fast ${
         open ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
       data-dialog-overlay
@@ -140,7 +140,7 @@ export function DialogContent({
   // pointer-events-none prevents interaction when closed
   return (
     <div
-      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg transition-all duration-150 ${
+      class={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg transition-all duration-fast ${
         open
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'

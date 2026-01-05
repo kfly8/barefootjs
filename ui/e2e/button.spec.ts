@@ -38,8 +38,8 @@ test.describe('Button Documentation Page', () => {
     })
 
     test('displays icon button', async ({ page }) => {
-      // Icon button contains SVG
-      await expect(page.locator('button svg')).toBeVisible()
+      // Icon button contains SVG (in main content, not header)
+      await expect(page.locator('main button svg')).toBeVisible()
     })
   })
 
