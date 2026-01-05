@@ -12,6 +12,7 @@ import type {
   SignalDeclaration,
   MemoDeclaration,
   MarkedJsxContext,
+  PropWithType,
 } from '../types'
 import { isSvgRoot } from '../utils/svg-helpers'
 
@@ -73,6 +74,10 @@ function renameIndexParam(content: string, indexParamName: string | null): strin
  * @param componentName - Name of the component (for data-bf-scope)
  * @param signals - Signal declarations for prop mapping
  * @param needsDataBfIds - Set of element IDs that need data-bf attribute (for querySelector fallback)
+ * @param options - Additional options
+ * @param options.outputEventAttrs - Whether to output event attributes
+ * @param options.memos - Memo declarations
+ * @param options.props - Props with type information (for SSR/client consistency)
  * @returns JSX string
  */
 export function irToMarkedJsx(
@@ -80,8 +85,19 @@ export function irToMarkedJsx(
   componentName: string,
   signals: SignalDeclaration[],
   needsDataBfIds: Set<string> = new Set(),
-  options: { outputEventAttrs?: boolean; memos?: MemoDeclaration[] } = {}
+  options: { outputEventAttrs?: boolean; memos?: MemoDeclaration[]; props?: PropWithType[] } = {}
 ): string {
+  // Build map of props with default values for SSR/client consistency
+  // When a signal's initial value is a prop reference, we need to use the prop's default
+  const propsWithDefaults = new Map<string, string>()
+  if (options.props) {
+    for (const prop of options.props) {
+      if (prop.defaultValue !== undefined) {
+        propsWithDefaults.set(prop.name, prop.defaultValue)
+      }
+    }
+  }
+
   const ctx: MarkedJsxContext = {
     componentName,
     signals,
@@ -90,6 +106,7 @@ export function irToMarkedJsx(
     // Initialize event ID counter if outputEventAttrs is enabled
     eventIdCounter: options.outputEventAttrs ? { value: 0 } : null,
     inListContext: false,
+    propsWithDefaults,
   }
   return irToMarkedJsxInternal(node, ctx, true)
 }
@@ -104,7 +121,7 @@ function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: bool
 
     case 'expression':
       // Preserve expression as JSX (replace signal calls with prop references)
-      const expr = replaceSignalAndMemoCalls(node.expression, ctx.signals, ctx.memos)
+      const expr = replaceSignalAndMemoCalls(node.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
       // Handle children prop - it might be a function (lazy children pattern)
       if (expr === 'children') {
         return `{typeof children === 'function' ? children() : children}`
@@ -121,14 +138,14 @@ function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: bool
 
       // Spread props first ({...prop})
       for (const spread of node.spreadProps || []) {
-        const expr = replaceSignalAndMemoCalls(spread.expression, ctx.signals, ctx.memos)
+        const expr = replaceSignalAndMemoCalls(spread.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
         compPropParts.push(`{...${expr}}`)
       }
 
       // Named props (skip event handlers which reference undefined functions in server context)
       for (const p of node.props) {
         if (p.name.startsWith('on')) continue  // Skip event handlers like onToggle, onClick
-        const value = replaceSignalAndMemoCalls(p.value, ctx.signals, ctx.memos)
+        const value = replaceSignalAndMemoCalls(p.value, ctx.signals, ctx.memos, ctx.propsWithDefaults)
         // String literals keep quotes, expressions use braces
         // Check for complete string literal pattern, not just starting quote
         // This prevents expressions like `'' !== ''` from being misidentified as string literals
@@ -177,7 +194,7 @@ function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: bool
 
     case 'conditional':
       // Generate ternary expression
-      const condition = replaceSignalAndMemoCalls(node.condition, ctx.signals, ctx.memos)
+      const condition = replaceSignalAndMemoCalls(node.condition, ctx.signals, ctx.memos, ctx.propsWithDefaults)
 
       // For dynamic conditionals with ID, inject data-bf-cond attribute
       if (node.id) {
@@ -236,7 +253,7 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext): 
 
     case 'expression':
       // Expression inside expression context: just the expression, no braces
-      return replaceSignalAndMemoCalls(node.expression, ctx.signals, ctx.memos)
+      return replaceSignalAndMemoCalls(node.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
 
     case 'element':
       // Element is valid JSX, use as-is
@@ -244,7 +261,7 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext): 
 
     case 'conditional':
       // Nested conditional - recursively process
-      const cond = replaceSignalAndMemoCalls(node.condition, ctx.signals, ctx.memos)
+      const cond = replaceSignalAndMemoCalls(node.condition, ctx.signals, ctx.memos, ctx.propsWithDefaults)
       const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
       const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
       return `(${cond} ? ${whenTrue} : ${whenFalse})`
@@ -255,14 +272,14 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext): 
 
       // Spread props first ({...prop})
       for (const spread of node.spreadProps || []) {
-        const spreadExpr = replaceSignalAndMemoCalls(spread.expression, ctx.signals, ctx.memos)
+        const spreadExpr = replaceSignalAndMemoCalls(spread.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
         compPropPartsExpr.push(`{...${spreadExpr}}`)
       }
 
       // Named props (skip event handlers)
       for (const p of node.props) {
         if (p.name.startsWith('on')) continue  // Skip event handlers
-        const value = replaceSignalAndMemoCalls(p.value, ctx.signals, ctx.memos)
+        const value = replaceSignalAndMemoCalls(p.value, ctx.signals, ctx.memos, ctx.propsWithDefaults)
         if (value.startsWith('"') || value.startsWith("'")) {
           compPropPartsExpr.push(`${p.name}=${value}`)
         } else {
@@ -312,7 +329,7 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
 
   // Spread attributes (preserve expressions)
   for (const spread of spreadAttrs) {
-    const expr = replaceSignalAndMemoCalls(spread.expression, ctx.signals, ctx.memos)
+    const expr = replaceSignalAndMemoCalls(spread.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
     attrParts.push(`{...${expr}}`)
   }
 
@@ -329,7 +346,7 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
   // Dynamic attributes (preserve expressions)
   for (const attr of dynamicAttrs) {
     const attrName = attr.name === 'class' ? 'className' : attr.name
-    const expr = replaceSignalAndMemoCalls(attr.expression, ctx.signals, ctx.memos)
+    const expr = replaceSignalAndMemoCalls(attr.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
 
     // Style objects need special handling
     if (attrName === 'style' && expr.trim().startsWith('{')) {
@@ -361,7 +378,7 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
 
   // List element - generate .map() expression
   if (listInfo) {
-    const arrayExpr = replaceSignalAndMemoCalls(listInfo.arrayExpression, ctx.signals, ctx.memos)
+    const arrayExpr = replaceSignalAndMemoCalls(listInfo.arrayExpression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
 
     // Create a new context for list item processing
     // - Reset event ID counter to 0 for each list item (intentional!)
@@ -404,12 +421,22 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
  * e.g., count() -> 0 (if signal 'count' has initialValue '0')
  * e.g., doubled() -> 0 * 2 (if memo 'doubled' computes count() * 2)
  *
+ * When a signal's initialValue is a prop reference (e.g., 'defaultTheme') and that
+ * prop has a default value, we use the nullish coalescing operator to ensure
+ * SSR/client consistency: (propName ?? defaultValue)
+ *
  * @param expr - Expression string
  * @param signals - Signal declarations
  * @param memos - Memo declarations
+ * @param propsWithDefaults - Map of prop names to their default values
  * @returns Expression with signal/memo calls replaced
  */
-function replaceSignalAndMemoCalls(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[]): string {
+function replaceSignalAndMemoCalls(
+  expr: string,
+  signals: SignalDeclaration[],
+  memos: MemoDeclaration[],
+  propsWithDefaults: Map<string, string> = new Map()
+): string {
   // Internal function to handle recursive memo replacement
   // processedMemos tracks already processed memos to prevent infinite loops from circular references
   function replaceInternal(expr: string, processedMemos: Set<string>): string {
@@ -418,7 +445,18 @@ function replaceSignalAndMemoCalls(expr: string, signals: SignalDeclaration[], m
     // First, replace signal getter calls with their initial values
     for (const signal of signals) {
       const getterPattern = new RegExp(`\\b${signal.getter}\\(\\)`, 'g')
-      result = result.replace(getterPattern, signal.initialValue)
+
+      // Check if initialValue is a simple identifier that matches a prop with default
+      // e.g., createSignal(defaultTheme) where defaultTheme = 'system'
+      let replacement = signal.initialValue
+      if (propsWithDefaults.has(signal.initialValue)) {
+        // Use nullish coalescing to handle undefined props
+        // This ensures SSR and client use the same value when prop is not passed
+        const defaultValue = propsWithDefaults.get(signal.initialValue)!
+        replacement = `(${signal.initialValue} ?? ${defaultValue})`
+      }
+
+      result = result.replace(getterPattern, replacement)
     }
 
     // Then, replace memo getter calls with their evaluated computation
@@ -519,7 +557,7 @@ function injectConditionalMarker(node: IRNode, condId: string, ctx: MarkedJsxCon
         return `<>{__rawHtml("<!--bf-cond-start:${condId}-->")}{__rawHtml("<!--bf-cond-end:${condId}-->")}</>`
       }
       // Other expressions - evaluate and wrap if needed
-      const expr = replaceSignalAndMemoCalls(node.expression, ctx.signals, ctx.memos)
+      const expr = replaceSignalAndMemoCalls(node.expression, ctx.signals, ctx.memos, ctx.propsWithDefaults)
       // Wrap in span with marker
       return `<span data-bf-cond="${condId}">{${expr}}</span>`
     }
@@ -539,7 +577,7 @@ function injectConditionalMarker(node: IRNode, condId: string, ctx: MarkedJsxCon
 
     case 'conditional': {
       // Nested conditional - wrap in span with marker
-      const innerCond = replaceSignalAndMemoCalls(node.condition, ctx.signals, ctx.memos)
+      const innerCond = replaceSignalAndMemoCalls(node.condition, ctx.signals, ctx.memos, ctx.propsWithDefaults)
       const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
       const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
       return `<span data-bf-cond="${condId}">{${innerCond} ? ${whenTrue} : ${whenFalse}}</span>`
