@@ -16,8 +16,7 @@ test.describe('ThemeSwitcher', () => {
     await expect(page.locator('header button:has-text("System")')).toBeVisible()
   })
 
-  // Skipped: Blocked by compiler issue #115 (conditional JSX and text update bugs)
-  test.skip('cycles through themes on click', async ({ page }) => {
+  test('cycles through themes on click', async ({ page }) => {
     const themeSwitcher = page.locator('header button[aria-label*="theme"]')
 
     // Initially System
@@ -38,8 +37,7 @@ test.describe('ThemeSwitcher', () => {
     await expect(themeSwitcher).toContainText('System')
   })
 
-  // Skipped: Blocked by compiler issue #115 (conditional JSX and text update bugs)
-  test.skip('persists theme preference in localStorage', async ({ page }) => {
+  test('persists theme preference in localStorage', async ({ page }) => {
     const themeSwitcher = page.locator('header button[aria-label*="theme"]')
 
     // Set to Dark

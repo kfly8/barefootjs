@@ -7,7 +7,7 @@
 
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { BfScripts } from '../packages/hono/src/scripts'
-import { ThemeSwitcher } from './components/ThemeSwitcher'
+import { ThemeSwitcher } from './dist/components/ThemeSwitcher'
 
 // Theme initialization script - runs before page render to prevent FOUC
 const themeInitScript = `
@@ -44,7 +44,7 @@ export const renderer = jsxRenderer(
             <a href="/" class="text-lg font-semibold text-foreground hover:text-primary transition-colors">
               BarefootJS
             </a>
-            <ThemeSwitcher />
+            <ThemeSwitcher defaultTheme="system" />
           </header>
           <main>
             {children}

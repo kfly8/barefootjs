@@ -19,16 +19,15 @@ export interface ThemeSwitcherProps {
 }
 
 export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
-  const [theme, setTheme] = createSignal<Theme>(defaultTheme)
-
-  // Initialize theme from localStorage after mount
-  createEffect(() => {
-    if (typeof window === 'undefined') return
-    const stored = localStorage.getItem('theme') as Theme | null
-    if (stored && ['light', 'dark', 'system'].includes(stored)) {
-      setTheme(stored)
+  // Initialize with IIFE to ensure proper execution order after compilation
+  const [theme, setTheme] = createSignal<Theme>((() => {
+    if (typeof window === 'undefined') return defaultTheme
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      return stored
     }
-  })
+    return defaultTheme
+  })())
 
   // Apply theme to document
   createEffect(() => {
@@ -48,13 +47,25 @@ export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
 
   const cycleTheme = () => {
     const current = theme()
+    let next: Theme
     if (current === 'light') {
-      setTheme('dark')
+      next = 'dark'
     } else if (current === 'dark') {
-      setTheme('system')
+      next = 'system'
     } else {
-      setTheme('light')
+      next = 'light'
     }
+    setTheme(next)
+
+    // Apply theme to document
+    const root = document.documentElement
+    if (next === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      root.classList.toggle('dark', prefersDark)
+    } else {
+      root.classList.toggle('dark', next === 'dark')
+    }
+    localStorage.setItem('theme', next)
   }
 
   // Use createMemo for derived state
