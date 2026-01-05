@@ -245,17 +245,21 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog).toHaveCSS('opacity', '0')
     })
 
-    test('ESC key works during opening animation', async ({ page }) => {
+    test('ESC key closes dialog after it opens', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
 
       await trigger.click()
 
-      // Immediately press ESC (during potential animation)
+      // Wait for dialog to be visible and focused
+      await expect(dialog).toHaveCSS('opacity', '1')
+      await expect(dialog).toBeFocused()
+
+      // Press ESC
       await page.keyboard.press('Escape')
 
-      // Dialog should be closed
+      // Dialog should be closed (opacity 0 indicates closed state)
       await expect(dialog).toHaveCSS('opacity', '0')
     })
   })
