@@ -15,6 +15,16 @@ import { isArrowFunction, extractArrowParams, extractArrowBody } from '../extrac
  * Boolean HTML attributes that should only be present when truthy.
  * When value is false, the attribute should be omitted entirely.
  */
+/**
+ * Escapes backticks for nesting inside another template literal.
+ * When embedding a template literal result inside another template literal,
+ * only backticks need to be escaped. ${...} expressions should remain
+ * uneescaped so they are evaluated within the nested template.
+ */
+function escapeForNestedTemplate(str: string): string {
+  return str.replace(/`/g, '\\`')
+}
+
 const BOOLEAN_HTML_ATTRS = new Set([
   'disabled',
   'readonly',
@@ -197,7 +207,10 @@ export function jsxToTemplateString(
           const condition = substituteProps(cond.condition)
           const whenTrue = processIRNode(cond.whenTrue, false)
           const whenFalse = cond.whenFalse ? processIRNode(cond.whenFalse, false) : ''
-          return `\${${condition} ? \`${whenTrue}\` : \`${whenFalse}\`}`
+          // Escape inner template literal characters to prevent syntax errors in nested templates
+          const escapedTrue = escapeForNestedTemplate(whenTrue)
+          const escapedFalse = escapeForNestedTemplate(whenFalse)
+          return `\${${condition} ? \`${escapedTrue}\` : \`${escapedFalse}\`}`
         }
 
         case 'fragment': {

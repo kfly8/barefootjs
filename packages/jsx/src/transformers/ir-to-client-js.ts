@@ -222,7 +222,10 @@ function irToHtmlTemplate(node: IRNode, condId: string, ctx: CollectContext): st
       // Nested conditional - use ternary in template literal
       const whenTrueHtml = irNodeToHtmlDynamic(node.whenTrue, ctx)
       const whenFalseHtml = irNodeToHtmlDynamic(node.whenFalse, ctx)
-      return `<span data-bf-cond="${condId}">\${${node.condition} ? \`${whenTrueHtml}\` : \`${whenFalseHtml}\`}</span>`
+      // Escape inner template literal characters to prevent syntax errors in nested templates
+      const escapedTrue = escapeForNestedTemplate(whenTrueHtml)
+      const escapedFalse = escapeForNestedTemplate(whenFalseHtml)
+      return `<span data-bf-cond="${condId}">\${${node.condition} ? \`${escapedTrue}\` : \`${escapedFalse}\`}</span>`
     }
   }
 }
@@ -330,9 +333,22 @@ function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContext): string {
       // Nested conditional - use ternary in template literal
       const whenTrueHtml = irNodeToHtmlDynamic(node.whenTrue, ctx)
       const whenFalseHtml = irNodeToHtmlDynamic(node.whenFalse, ctx)
-      return `\${${node.condition} ? \`${whenTrueHtml}\` : \`${whenFalseHtml}\`}`
+      // Escape inner template literal characters to prevent syntax errors in nested templates
+      const escapedTrue = escapeForNestedTemplate(whenTrueHtml)
+      const escapedFalse = escapeForNestedTemplate(whenFalseHtml)
+      return `\${${node.condition} ? \`${escapedTrue}\` : \`${escapedFalse}\`}`
     }
   }
+}
+
+/**
+ * Escapes backticks for nesting inside another template literal.
+ * When embedding a template literal result inside another template literal,
+ * only backticks need to be escaped. ${...} expressions should remain
+ * uneescaped so they are evaluated within the nested template.
+ */
+function escapeForNestedTemplate(str: string): string {
+  return str.replace(/`/g, '\\`')
 }
 
 /**
