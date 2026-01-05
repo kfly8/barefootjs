@@ -15,6 +15,15 @@
  */
 
 :root {
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+
   /* Background/Foreground */
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
@@ -27,9 +36,9 @@
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
 
-  /* Primary */
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
+  /* Primary - light background in light mode */
+  --primary: 240 4.8% 95.9%;
+  --primary-foreground: 240 5.9% 10%;
 
   /* Secondary */
   --secondary: 240 4.8% 95.9%;
@@ -67,6 +76,14 @@
   /* Radius */
   --radius: 0.5rem;
 
+  /* Shadow Scale (Tailwind compatible) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
   /* Animation Durations */
   --duration-fast: 150ms;
   --duration-normal: 200ms;
@@ -92,9 +109,9 @@
   --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
 
-  /* Primary */
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
+  /* Primary - dark background in dark mode */
+  --primary: 240 3.7% 15.9%;
+  --primary-foreground: 0 0% 98%;
 
   /* Secondary */
   --secondary: 240 3.7% 15.9%;
@@ -149,9 +166,36 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace code elements */
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Shiki syntax highlighting - dual theme support */
+/* Light mode: use --shiki-light color */
+:root span[style*="--shiki-light"] {
+  color: var(--shiki-light);
+}
+
+/* Dark mode: use --shiki-dark color */
+.dark span[style*="--shiki-dark"] {
+  color: var(--shiki-dark);
+}
+
+/* Dialog z-index - higher than fixed header (z-50) */
+.z-dialog {
+  z-index: 9999;
 }

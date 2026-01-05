@@ -57,20 +57,20 @@ export const renderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
             <style>{`
               body {
-                max-width: 720px;
-                margin: 0 auto;
-                padding: 3rem 1.5rem;
+                padding: 5rem 1.5rem 3rem;
               }
             `}</style>
           </head>
           <body>
-            <header class="flex justify-between items-center mb-8 pb-4 border-b border-border">
-              <a href="/" class="text-lg font-semibold text-foreground hover:text-primary transition-colors">
-                BarefootJS
-              </a>
-              <ThemeSwitcher defaultTheme="system" />
+            <header class="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+              <div class="px-6 h-14 flex justify-between items-center">
+                <a href="/" class="text-lg font-semibold text-foreground hover:text-primary transition-colors">
+                  BarefootJS
+                </a>
+                <ThemeSwitcher defaultTheme="system" />
+              </div>
             </header>
-            <main>
+            <main class="max-w-[800px] mx-auto">
               {children}
             </main>
             <BfScripts />

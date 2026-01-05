@@ -4,13 +4,25 @@
 
 import { DialogBasicDemo, DialogFormDemo } from '@/components/DialogDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'features', title: 'Features' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'accessibility', title: 'Accessibility' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add dialog`
@@ -191,94 +203,96 @@ const dialogCloseProps: PropDefinition[] = [
 
 export function DialogPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Dialog"
-        description="A modal dialog that displays content in a layer above the page. Supports ESC key, overlay click, focus trap, and scroll lock."
-      />
+    <DocPage slug="dialog" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Dialog"
+          description="A modal dialog that displays content in a layer above the page. Supports ESC key, overlay click, focus trap, and scroll lock."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<DialogContent open={open()} onClose={() => setOpen(false)}>...</DialogContent>`}>
-        <div class="flex gap-4">
-          <DialogBasicDemo />
-        </div>
-      </Example>
-
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
-
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
-
-      {/* Features */}
-      <Section title="Features">
-        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-          <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
-          <li><strong class="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
-          <li><strong class="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
-          <li><strong class="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
-          <li><strong class="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-          <li><strong class="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
-        </ul>
-      </Section>
-
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Basic Dialog" code={basicCode}>
+        {/* Preview */}
+        <Example title="" code={`<DialogContent open={open()} onClose={() => setOpen(false)}>...</DialogContent>`}>
+          <div class="flex gap-4">
             <DialogBasicDemo />
-          </Example>
+          </div>
+        </Example>
 
-          <Example title="Dialog with Form" code={formCode}>
-            <DialogFormDemo />
-          </Example>
-        </div>
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Accessibility */}
-      <Section title="Accessibility">
-        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-          <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
-          <li><strong class="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
-          <li><strong class="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
-          <li><strong class="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-          <li><strong class="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
-        </ul>
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <div class="space-y-6">
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
-            <PropsTable props={dialogTriggerProps} />
+        {/* Features */}
+        <Section id="features" title="Features">
+          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
+            <li><strong class="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
+            <li><strong class="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
+            <li><strong class="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
+            <li><strong class="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+            <li><strong class="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
+          </ul>
+        </Section>
+
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Basic Dialog" code={basicCode}>
+              <DialogBasicDemo />
+            </Example>
+
+            <Example title="Dialog with Form" code={formCode}>
+              <DialogFormDemo />
+            </Example>
           </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
-            <PropsTable props={dialogOverlayProps} />
+        </Section>
+
+        {/* Accessibility */}
+        <Section id="accessibility" title="Accessibility">
+          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
+            <li><strong class="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
+            <li><strong class="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
+            <li><strong class="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+            <li><strong class="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
+          </ul>
+        </Section>
+
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
+              <PropsTable props={dialogTriggerProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
+              <PropsTable props={dialogOverlayProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">DialogContent</h3>
+              <PropsTable props={dialogContentProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
+              <PropsTable props={dialogTitleProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
+              <PropsTable props={dialogDescriptionProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-foreground mb-4">DialogClose</h3>
+              <PropsTable props={dialogCloseProps} />
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">DialogContent</h3>
-            <PropsTable props={dialogContentProps} />
-          </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
-            <PropsTable props={dialogTitleProps} />
-          </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
-            <PropsTable props={dialogDescriptionProps} />
-          </div>
-          <div>
-            <h3 class="text-lg font-medium text-foreground mb-4">DialogClose</h3>
-            <PropsTable props={dialogCloseProps} />
-          </div>
-        </div>
-      </Section>
-    </div>
+        </Section>
+      </div>
+    </DocPage>
   )
 }

@@ -5,13 +5,23 @@
 import { Select } from '@/components/Select'
 import { SelectBindingDemo, SelectFocusDemo } from '@/components/SelectDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add select`
@@ -101,61 +111,63 @@ const selectProps: PropDefinition[] = [
 
 export function SelectPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Select"
-        description="Displays a select dropdown for choosing from a list of options."
-      />
+    <DocPage slug="select" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Select"
+          description="Displays a select dropdown for choosing from a list of options."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Select options={options} selectPlaceholder="Select an option..." />`}>
-        <Select options={basicOptions} selectPlaceholder="Select an option..." />
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Select options={options} selectPlaceholder="Select an option..." />`}>
+          <Select options={basicOptions} selectPlaceholder="Select an option..." />
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Basic Select" code={`<Select options={options} selectPlaceholder="Select an option..." />`}>
-            <div class="max-w-sm">
-              <Select options={basicOptions} selectPlaceholder="Select an option..." />
-            </div>
-          </Example>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Basic Select" code={`<Select options={options} selectPlaceholder="Select an option..." />`}>
+              <div class="max-w-sm">
+                <Select options={basicOptions} selectPlaceholder="Select an option..." />
+              </div>
+            </Example>
 
-          <Example title="Disabled" code={disabledCode}>
-            <div class="flex flex-col gap-2 max-w-sm">
-              <Select selectDisabled options={basicOptions} selectPlaceholder="Disabled select" />
-              <Select options={disabledOptionsExample} selectPlaceholder="With disabled option" />
-            </div>
-          </Example>
+            <Example title="Disabled" code={disabledCode}>
+              <div class="flex flex-col gap-2 max-w-sm">
+                <Select selectDisabled options={basicOptions} selectPlaceholder="Disabled select" />
+                <Select options={disabledOptionsExample} selectPlaceholder="With disabled option" />
+              </div>
+            </Example>
 
-          <Example title="Value Binding" code={bindingCode}>
-            <div class="max-w-sm">
-              <SelectBindingDemo />
-            </div>
-          </Example>
+            <Example title="Value Binding" code={bindingCode}>
+              <div class="max-w-sm">
+                <SelectBindingDemo />
+              </div>
+            </Example>
 
-          <Example title="Focus State" code={`<Select onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
-            <div class="max-w-sm">
-              <SelectFocusDemo />
-            </div>
-          </Example>
-        </div>
-      </Section>
+            <Example title="Focus State" code={`<Select onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
+              <div class="max-w-sm">
+                <SelectFocusDemo />
+              </div>
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={selectProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={selectProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }

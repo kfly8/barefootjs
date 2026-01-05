@@ -5,13 +5,23 @@
 import { Checkbox } from '@/components/Checkbox'
 import { CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/CheckboxDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add checkbox`
@@ -66,58 +76,60 @@ const checkboxProps: PropDefinition[] = [
 
 export function CheckboxPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Checkbox"
-        description="A control that allows the user to toggle between checked and unchecked states."
-      />
+    <DocPage slug="checkbox" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Checkbox"
+          description="A control that allows the user to toggle between checked and unchecked states."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Checkbox />`}>
-        <Checkbox />
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Checkbox />`}>
+          <Checkbox />
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Checked State" code={checkedCode}>
-            <div class="flex gap-4">
-              <Checkbox />
-              <Checkbox checked={true} />
-            </div>
-          </Example>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Checked State" code={checkedCode}>
+              <div class="flex gap-4">
+                <Checkbox />
+                <Checkbox checked={true} />
+              </div>
+            </Example>
 
-          <Example title="Disabled" code={disabledCode}>
-            <div class="flex gap-4">
-              <Checkbox disabled={true} />
-              <Checkbox checked={true} disabled={true} />
-            </div>
-          </Example>
+            <Example title="Disabled" code={disabledCode}>
+              <div class="flex gap-4">
+                <Checkbox disabled={true} />
+                <Checkbox checked={true} disabled={true} />
+              </div>
+            </Example>
 
-          <Example title="State Binding" code={bindingCode}>
-            <CheckboxBindingDemo />
-          </Example>
+            <Example title="State Binding" code={bindingCode}>
+              <CheckboxBindingDemo />
+            </Example>
 
-          <Example title="With Label" code={withLabelCode}>
-            <CheckboxWithLabelDemo />
-          </Example>
-        </div>
-      </Section>
+            <Example title="With Label" code={withLabelCode}>
+              <CheckboxWithLabelDemo />
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={checkboxProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={checkboxProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }

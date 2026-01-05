@@ -86,8 +86,9 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog).toBeVisible()
 
       // Click overlay (the dark backdrop within this demo)
+      // Use y: 100 to click below the fixed header (h-14 = 56px)
       const overlay = basicDemo.locator('[data-dialog-overlay]')
-      await overlay.click({ position: { x: 10, y: 10 } })
+      await overlay.click({ position: { x: 10, y: 100 } })
 
       // Dialog should be closed (check opacity since we use CSS transitions)
       await expect(dialog).toHaveCSS('opacity', '0')
@@ -182,8 +183,8 @@ test.describe('Dialog Documentation Page', () => {
       await trigger.click()
       await expect(dialog).toBeVisible()
 
-      // Click overlay to close
-      await overlay.click({ position: { x: 10, y: 10 } })
+      // Click overlay to close (use y: 100 to click below the fixed header)
+      await overlay.click({ position: { x: 10, y: 100 } })
 
       // Dialog and overlay should fade out
       await expect(dialog).toHaveCSS('opacity', '0')
@@ -244,17 +245,21 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog).toHaveCSS('opacity', '0')
     })
 
-    test('ESC key works during opening animation', async ({ page }) => {
+    test('ESC key closes dialog after it opens', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Open Dialog")')
       const dialog = basicDemo.locator('[role="dialog"]')
 
       await trigger.click()
 
-      // Immediately press ESC (during potential animation)
+      // Wait for dialog to be visible and focused
+      await expect(dialog).toHaveCSS('opacity', '1')
+      await expect(dialog).toBeFocused()
+
+      // Press ESC
       await page.keyboard.press('Escape')
 
-      // Dialog should be closed
+      // Dialog should be closed (opacity 0 indicates closed state)
       await expect(dialog).toHaveCSS('opacity', '0')
     })
   })

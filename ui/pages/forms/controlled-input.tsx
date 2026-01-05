@@ -16,7 +16,16 @@ import {
   Section,
   Example,
   CodeBlock,
+  type TocItem,
 } from '../../_shared/docs'
+import { TableOfContents } from '@/components/TableOfContents'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'pattern-overview', title: 'Pattern Overview' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'key-points', title: 'Key Points' },
+]
 
 // Code examples
 const basicCode = `import { createSignal } from '@barefootjs/dom'
@@ -71,85 +80,88 @@ const [text, setText] = createSignal('')
 
 export function ControlledInputPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Controlled Input"
-        description="Demonstrates Signal ↔ input value synchronization patterns for two-way data binding."
-      />
+    <div class="flex gap-10">
+      <div class="flex-1 min-w-0 space-y-12">
+        <PageHeader
+          title="Controlled Input"
+          description="Demonstrates Signal ↔ input value synchronization patterns for two-way data binding."
+        />
 
-      {/* Preview - Static example (interactive demos are in Examples section) */}
-      <Example title="" code={basicCode}>
-        <div class="max-w-sm">
-          <Input inputPlaceholder="Type something..." />
-          <p class="text-sm text-muted-foreground mt-2">
-            See interactive examples below.
-          </p>
-        </div>
-      </Example>
-
-      {/* Pattern Overview */}
-      <Section title="Pattern Overview">
-        <div class="prose prose-invert max-w-none">
-          <p class="text-muted-foreground">
-            The controlled input pattern uses <code class="text-foreground">value={'{signal()}'}</code> combined with{' '}
-            <code class="text-foreground">onInput</code> to create two-way binding between a signal and an input element.
-            This pattern enables real-time synchronization and derived computations.
-          </p>
-        </div>
-        <CodeBlock code={basicCode} />
-      </Section>
-
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Basic Two-Way Binding" code={basicCode}>
-            <div class="max-w-sm">
-              <BasicControlledDemo />
-            </div>
-          </Example>
-
-          <Example title="Character Count" code={characterCountCode}>
-            <div class="max-w-sm">
-              <CharacterCountDemo />
-            </div>
-          </Example>
-
-          <Example title="Live Preview" code={livePreviewCode}>
-            <div class="max-w-sm">
-              <LivePreviewDemo />
-            </div>
-          </Example>
-
-          <Example title="Multi-Input Sync" code={multiInputCode}>
-            <div class="max-w-sm">
-              <MultiInputSyncDemo />
-            </div>
-          </Example>
-        </div>
-      </Section>
-
-      {/* Key Points */}
-      <Section title="Key Points">
-        <div class="space-y-4">
-          <div class="p-4 bg-muted rounded-lg">
-            <h3 class="font-semibold text-foreground mb-2">Pattern Structure</h3>
-            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-              <li><code class="text-foreground">inputValue={'{signal()}'}</code> - Binds signal value to input</li>
-              <li><code class="text-foreground">{'onInput={(e) => setSignal(e.target.value)}'}</code> - Updates signal on input</li>
-              <li>Use <code class="text-foreground">createMemo</code> for derived values (character count, transformations)</li>
-            </ul>
+        {/* Preview - Static example (interactive demos are in Examples section) */}
+        <Example title="" code={basicCode}>
+          <div class="max-w-sm">
+            <Input inputPlaceholder="Type something..." />
+            <p class="text-sm text-muted-foreground mt-2">
+              See interactive examples below.
+            </p>
           </div>
-          <div class="p-4 bg-muted rounded-lg">
-            <h3 class="font-semibold text-foreground mb-2">Use Cases</h3>
-            <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-              <li>Form validation with real-time feedback</li>
-              <li>Character/word counters</li>
-              <li>Live search/filter</li>
-              <li>Synced inputs (e.g., mirrored text fields)</li>
-            </ul>
+        </Example>
+
+        {/* Pattern Overview */}
+        <Section id="pattern-overview" title="Pattern Overview">
+          <div class="prose prose-invert max-w-none">
+            <p class="text-muted-foreground">
+              The controlled input pattern uses <code class="text-foreground">value={'{signal()}'}</code> combined with{' '}
+              <code class="text-foreground">onInput</code> to create two-way binding between a signal and an input element.
+              This pattern enables real-time synchronization and derived computations.
+            </p>
           </div>
-        </div>
-      </Section>
+          <CodeBlock code={basicCode} />
+        </Section>
+
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Basic Two-Way Binding" code={basicCode}>
+              <div class="max-w-sm">
+                <BasicControlledDemo />
+              </div>
+            </Example>
+
+            <Example title="Character Count" code={characterCountCode}>
+              <div class="max-w-sm">
+                <CharacterCountDemo />
+              </div>
+            </Example>
+
+            <Example title="Live Preview" code={livePreviewCode}>
+              <div class="max-w-sm">
+                <LivePreviewDemo />
+              </div>
+            </Example>
+
+            <Example title="Multi-Input Sync" code={multiInputCode}>
+              <div class="max-w-sm">
+                <MultiInputSyncDemo />
+              </div>
+            </Example>
+          </div>
+        </Section>
+
+        {/* Key Points */}
+        <Section id="key-points" title="Key Points">
+          <div class="space-y-4">
+            <div class="p-4 bg-muted rounded-lg">
+              <h3 class="font-semibold text-foreground mb-2">Pattern Structure</h3>
+              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li><code class="text-foreground">inputValue={'{signal()}'}</code> - Binds signal value to input</li>
+                <li><code class="text-foreground">{'onInput={(e) => setSignal(e.target.value)}'}</code> - Updates signal on input</li>
+                <li>Use <code class="text-foreground">createMemo</code> for derived values (character count, transformations)</li>
+              </ul>
+            </div>
+            <div class="p-4 bg-muted rounded-lg">
+              <h3 class="font-semibold text-foreground mb-2">Use Cases</h3>
+              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Form validation with real-time feedback</li>
+                <li>Character/word counters</li>
+                <li>Live search/filter</li>
+                <li>Synced inputs (e.g., mirrored text fields)</li>
+              </ul>
+            </div>
+          </div>
+        </Section>
+      </div>
+      <TableOfContents items={tocItems} />
     </div>
   )
 }

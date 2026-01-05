@@ -5,40 +5,101 @@
  * Uses CSS variables for theming support.
  */
 
+import { TableOfContents, type TocItem } from '@/components/TableOfContents'
+import { CopyButton } from '@/components/CopyButton'
+import { PageNavigation, getNavLinks } from './PageNavigation'
+import { highlight } from './highlighter'
+
+// Re-export TocItem for convenience
+export type { TocItem }
+
+// Documentation page wrapper with TOC sidebar and footer navigation
+export interface DocPageProps {
+  slug: string
+  toc: TocItem[]
+  children: any
+}
+
+export function DocPage({ slug, toc, children }: DocPageProps) {
+  const navLinks = getNavLinks(slug)
+
+  return (
+    <div class="flex gap-10">
+      <div class="flex-1 min-w-0">
+        {children}
+        <PageNavigation {...navLinks} />
+      </div>
+      <TableOfContents items={toc} />
+    </div>
+  )
+}
+
 // Page header with title and description
 export function PageHeader({ title, description }: { title: string; description: string }) {
   return (
     <div class="space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-      <p class="text-muted-foreground text-lg">{description}</p>
+      <h1 class="text-3xl font-bold tracking-tighter text-foreground">{title}</h1>
+      <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
     </div>
   )
 }
 
-// Preview component wrapper
+// Preview component wrapper with subtle dot pattern background
 export function Preview({ children }: { children: any }) {
   return (
-    <div class="flex flex-wrap items-center gap-4 p-6 border border-border rounded-lg bg-card">
-      {children}
+    <div class="flex flex-wrap items-center justify-center gap-4 p-8 border border-border rounded-lg bg-card relative overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
+      <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
+        {children}
+      </div>
     </div>
   )
 }
 
-// Code block component
-export function CodeBlock({ code, lang = 'tsx' }: { code: string; lang?: string }) {
+// Code block component with syntax highlighting, line numbers, and copy button
+export function CodeBlock({
+  code,
+  lang = 'tsx',
+  showLineNumbers = false,
+}: {
+  code: string
+  lang?: string
+  showLineNumbers?: boolean
+}) {
+  const highlightedCode = highlight(code, lang)
+  const lines = highlightedCode.split('\n')
+  // Remove trailing empty line if present
+  if (lines[lines.length - 1] === '') {
+    lines.pop()
+  }
+
   return (
-    <div class="relative">
-      <pre class="p-4 bg-muted text-muted-foreground rounded-lg overflow-x-auto text-sm font-mono border border-border">
-        <code>{code}</code>
+    <div class="relative group">
+      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+        <code class="block">
+          {showLineNumbers ? (
+            lines.map((line, i) => (
+              <span key={i} class="table-row">
+                <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+                  {i + 1}
+                </span>
+                <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
+              </span>
+            ))
+          ) : (
+            <span dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+          )}
+        </code>
       </pre>
+      <CopyButton code={code} />
     </div>
   )
 }
 
-// Section component
+// Section component with scroll margin for anchor links
 export function Section({ id, title, children }: { id?: string; title: string; children: any }) {
   return (
-    <section id={id} class="space-y-4">
+    <section id={id} class="space-y-4 scroll-mt-16">
       <h2 class="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
       {children}
     </section>

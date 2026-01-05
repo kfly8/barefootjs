@@ -20,30 +20,33 @@ test.describe('Badge Documentation Page', () => {
   })
 
   test.describe('Badge Variants', () => {
+    // Use class selector to target actual Badge components (not syntax-highlighted code spans)
+    const badgeSelector = 'span.inline-flex.items-center.rounded-md'
+
     test('displays all variant badges', async ({ page }) => {
-      await expect(page.locator('span:has-text("Default")').first()).toBeVisible()
-      await expect(page.locator('span:has-text("Secondary")')).toBeVisible()
-      await expect(page.locator('span:has-text("Destructive")')).toBeVisible()
-      await expect(page.locator('span:has-text("Outline")')).toBeVisible()
+      await expect(page.locator(`${badgeSelector}:has-text("Default")`).first()).toBeVisible()
+      await expect(page.locator(`${badgeSelector}:has-text("Secondary")`)).toBeVisible()
+      await expect(page.locator(`${badgeSelector}:has-text("Destructive")`)).toBeVisible()
+      await expect(page.locator(`${badgeSelector}:has-text("Outline")`)).toBeVisible()
     })
 
     test('default badge has correct styling', async ({ page }) => {
-      const defaultBadge = page.locator('span:has-text("Default")').first()
+      const defaultBadge = page.locator(`${badgeSelector}:has-text("Default")`).first()
       await expect(defaultBadge).toHaveClass(/bg-primary/)
     })
 
     test('secondary badge has correct styling', async ({ page }) => {
-      const secondaryBadge = page.locator('span:has-text("Secondary")')
+      const secondaryBadge = page.locator(`${badgeSelector}:has-text("Secondary")`)
       await expect(secondaryBadge).toHaveClass(/bg-secondary/)
     })
 
     test('destructive badge has correct styling', async ({ page }) => {
-      const destructiveBadge = page.locator('span:has-text("Destructive")')
+      const destructiveBadge = page.locator(`${badgeSelector}:has-text("Destructive")`)
       await expect(destructiveBadge).toHaveClass(/bg-destructive/)
     })
 
     test('outline badge has correct styling', async ({ page }) => {
-      const outlineBadge = page.locator('span:has-text("Outline")')
+      const outlineBadge = page.locator(`${badgeSelector}:has-text("Outline")`)
       await expect(outlineBadge).toHaveClass(/border/)
     })
   })

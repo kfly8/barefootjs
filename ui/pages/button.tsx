@@ -5,13 +5,23 @@
 import { Button } from '@/components/Button'
 import { ButtonDemo } from '@/components/ButtonDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add button`
@@ -91,63 +101,65 @@ function PlusIcon() {
 
 export function ButtonPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Button"
-        description="Displays a button or a component that looks like a button."
-      />
+    <DocPage slug="button" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Button"
+          description="Displays a button or a component that looks like a button."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Button>Button</Button>`}>
-        <Button>Button</Button>
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Button>Button</Button>`}>
+          <Button>Button</Button>
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Variants" code={variantCode}>
-            <Button variant="default">Default</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="destructive">Destructive</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="link">Link</Button>
-          </Example>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Variants" code={variantCode}>
+              <Button variant="default">Default</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="destructive">Destructive</Button>
+              <Button variant="outline">Outline</Button>
+              <Button variant="ghost">Ghost</Button>
+              <Button variant="link">Link</Button>
+            </Example>
 
-          <Example title="Sizes" code={sizeCode}>
-            <Button size="sm">Small</Button>
-            <Button size="default">Default</Button>
-            <Button size="lg">Large</Button>
-            <Button size="icon">
-              <PlusIcon />
-            </Button>
-          </Example>
+            <Example title="Sizes" code={sizeCode}>
+              <Button size="sm">Small</Button>
+              <Button size="default">Default</Button>
+              <Button size="lg">Large</Button>
+              <Button size="icon">
+                <PlusIcon />
+              </Button>
+            </Example>
 
-          <Example title="Disabled" code={disabledCode}>
-            <Button disabled>Disabled</Button>
-            <Button variant="outline" disabled>Disabled</Button>
-          </Example>
+            <Example title="Disabled" code={disabledCode}>
+              <Button disabled>Disabled</Button>
+              <Button variant="outline" disabled>Disabled</Button>
+            </Example>
 
-          <Example title="Interactive" code={interactiveCode}>
-            <ButtonDemo />
-          </Example>
-        </div>
-      </Section>
+            <Example title="Interactive" code={interactiveCode}>
+              <ButtonDemo />
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={buttonProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={buttonProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }

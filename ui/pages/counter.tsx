@@ -5,13 +5,23 @@
 import { Counter } from '@/components/Counter'
 import { CounterInteractiveDemo, CounterDerivedDemo } from '@/components/CounterDemo'
 import {
+  DocPage,
   PageHeader,
   Section,
   Example,
   CodeBlock,
   PropsTable,
   type PropDefinition,
+  type TocItem,
 } from '../_shared/docs'
+
+// Table of contents items
+const tocItems: TocItem[] = [
+  { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'api-reference', title: 'API Reference' },
+]
 
 // Code examples
 const installCode = `bunx barefoot add counter`
@@ -82,48 +92,50 @@ const counterProps: PropDefinition[] = [
 
 export function CounterPage() {
   return (
-    <div class="space-y-12">
-      <PageHeader
-        title="Counter"
-        description="A numeric input with increment and decrement buttons."
-      />
+    <DocPage slug="counter" toc={tocItems}>
+      <div class="space-y-12">
+        <PageHeader
+          title="Counter"
+          description="A numeric input with increment and decrement buttons."
+        />
 
-      {/* Preview */}
-      <Example title="" code={`<Counter />`}>
-        <CounterInteractiveDemo />
-      </Example>
+        {/* Preview */}
+        <Example title="" code={`<Counter />`}>
+          <CounterInteractiveDemo />
+        </Example>
 
-      {/* Installation */}
-      <Section title="Installation">
-        <CodeBlock code={installCode} lang="bash" />
-      </Section>
+        {/* Installation */}
+        <Section id="installation" title="Installation">
+          <CodeBlock code={installCode} lang="bash" />
+        </Section>
 
-      {/* Usage */}
-      <Section title="Usage">
-        <CodeBlock code={usageCode} />
-      </Section>
+        {/* Usage */}
+        <Section id="usage" title="Usage">
+          <CodeBlock code={usageCode} />
+        </Section>
 
-      {/* Examples */}
-      <Section title="Examples">
-        <div class="space-y-8">
-          <Example title="Basic" code={basicCode}>
-            <CounterInteractiveDemo />
-          </Example>
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div class="space-y-8">
+            <Example title="Basic" code={basicCode}>
+              <CounterInteractiveDemo />
+            </Example>
 
-          <Example title="Derived State (Memo)" code={derivedCode}>
-            <CounterDerivedDemo />
-          </Example>
+            <Example title="Derived State (Memo)" code={derivedCode}>
+              <CounterDerivedDemo />
+            </Example>
 
-          <Example title="Disabled" code={disabledCode}>
-            <Counter value={5} disabled />
-          </Example>
-        </div>
-      </Section>
+            <Example title="Disabled" code={disabledCode}>
+              <Counter value={5} disabled />
+            </Example>
+          </div>
+        </Section>
 
-      {/* API Reference */}
-      <Section title="API Reference">
-        <PropsTable props={counterProps} />
-      </Section>
-    </div>
+        {/* API Reference */}
+        <Section id="api-reference" title="API Reference">
+          <PropsTable props={counterProps} />
+        </Section>
+      </div>
+    </DocPage>
   )
 }
