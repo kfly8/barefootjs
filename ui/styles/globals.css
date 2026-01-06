@@ -1,17 +1,8 @@
 /**
  * BarefootJS Design System - CSS Variables
  *
- * Based on shadcn/ui color system.
- * Uses HSL values for CSS custom properties.
- *
- * Color Contrast (WCAG 2.1 AA):
- * - foreground on background: ~20:1 (exceeds 4.5:1)
- * - muted-foreground on background: ~5:1 (meets 4.5:1)
- * - primary-foreground on primary: ~18:1 (exceeds 4.5:1)
- *
- * Note: *-foreground colors are designed for solid backgrounds.
- * When using transparent backgrounds (e.g., bg-success/10),
- * use text-foreground or text-muted-foreground for proper contrast.
+ * Based on shadcn/ui v4 color system (neutral theme).
+ * Uses OKLCH values for CSS custom properties.
  */
 
 :root {
@@ -24,57 +15,57 @@
   --tracking-wide: 0.025em;
   --tracking-wider: 0.05em;
 
-  /* Background/Foreground */
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  /* Radius */
+  --radius: 0.625rem;
+
+  /* Background/Foreground - neutral theme (OKLCH) */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 
   /* Card */
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
 
   /* Popover */
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
 
-  /* Primary - light background in light mode */
-  --primary: 240 4.8% 95.9%;
-  --primary-foreground: 240 5.9% 10%;
+  /* Primary */
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
 
   /* Secondary */
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
 
   /* Muted */
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
 
   /* Accent */
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
 
   /* Destructive */
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
 
   /* Success */
-  --success: 142 76% 36%;
-  --success-foreground: 0 0% 98%;
+  --success: oklch(0.527 0.154 150.069);
+  --success-foreground: oklch(0.985 0 0);
 
   /* Warning */
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 9%;
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.145 0 0);
 
   /* Info */
-  --info: 199 89% 48%;
-  --info-foreground: 0 0% 98%;
+  --info: oklch(0.623 0.214 259.815);
+  --info-foreground: oklch(0.985 0 0);
 
   /* Border/Input/Ring */
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-
-  /* Radius */
-  --radius: 0.5rem;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
 
   /* Shadow Scale (Tailwind compatible) */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -97,54 +88,54 @@
 }
 
 .dark {
-  /* Background/Foreground */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  /* Background/Foreground - neutral theme (OKLCH) */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
 
   /* Card */
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
 
   /* Popover */
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
 
-  /* Primary - dark background in dark mode */
-  --primary: 240 3.7% 15.9%;
-  --primary-foreground: 0 0% 98%;
+  /* Primary */
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
 
   /* Secondary */
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
 
   /* Muted */
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
 
   /* Accent */
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
 
   /* Destructive */
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
 
   /* Success */
-  --success: 142 69% 58%;
-  --success-foreground: 0 0% 9%;
+  --success: oklch(0.696 0.17 162.48);
+  --success-foreground: oklch(0.145 0 0);
 
   /* Warning */
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 9%;
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.145 0 0);
 
   /* Info */
-  --info: 199 89% 48%;
-  --info-foreground: 0 0% 98%;
+  --info: oklch(0.623 0.214 259.815);
+  --info-foreground: oklch(0.985 0 0);
 
   /* Border/Input/Ring */
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
 }
 
 /* Reduced motion support */
@@ -162,16 +153,23 @@
 /* Base styles */
 * {
   box-sizing: border-box;
-  border-color: hsl(var(--border));
+  border-color: var(--border);
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--background);
+  color: var(--foreground);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reset button browser defaults */
+button {
+  border-width: 0;
+  border-style: solid;
+  background-color: transparent;
 }
 
 /* Monospace code elements */

@@ -59,10 +59,12 @@ export function Button({
   const buttonClass = cn(buttonVariants({ variant, size, className }))
 
   if (asChild) {
-    return <Slot class={buttonClass} {...props}>{children}</Slot>
+    // Type assertion for Hono JSX compatibility (onSubmit: SubmitEvent vs Event)
+    return <Slot class={buttonClass} {...(props as any)}>{children}</Slot>
   }
 
-  return <button class={buttonClass} {...props}>{children}</button>
+  // Type assertion for Hono JSX compatibility (onSubmit: SubmitEvent vs Event)
+  return <button class={buttonClass} {...(props as any)}>{children}</button>
 }
 
 export { buttonVariants }

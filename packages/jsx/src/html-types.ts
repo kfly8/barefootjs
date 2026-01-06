@@ -149,9 +149,8 @@ export interface ButtonHTMLAttributes extends HTMLBaseAttributes {
   onClick?: (event: MouseEvent) => void
   onBlur?: (event: FocusEvent) => void
   onFocus?: (event: FocusEvent) => void
-  // Override onSubmit from BaseEventAttributes for Hono JSX compatibility
-  // Hono expects Event, not SubmitEvent
-  onSubmit?: (event: Event) => void
+  // Note: onSubmit inherits SubmitEvent from BaseEventAttributes
+  // When spreading props to Hono JSX, use type assertion: {...(props as any)}
 }
 
 // ============================================================================
