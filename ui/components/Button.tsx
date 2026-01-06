@@ -48,7 +48,7 @@ interface ButtonProps extends
   asChild?: boolean
 }
 
-export function Button({
+function Button({
   class: className,
   variant = 'default',
   size = 'default',
@@ -58,13 +58,10 @@ export function Button({
 }: ButtonProps) {
   const buttonClass = cn(buttonVariants({ variant, size, className }))
 
-  if (asChild) {
-    // Type assertion for Hono JSX compatibility (onSubmit: SubmitEvent vs Event)
-    return <Slot class={buttonClass} {...(props as any)}>{children}</Slot>
-  }
+  const Comp = asChild ? Slot : 'button'
 
   // Type assertion for Hono JSX compatibility (onSubmit: SubmitEvent vs Event)
-  return <button class={buttonClass} {...(props as any)}>{children}</button>
+  return <Comp class={buttonClass} {...(props as any)}>{children}</Comp>
 }
 
-export { buttonVariants }
+export { Button, buttonVariants }
