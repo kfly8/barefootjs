@@ -7,7 +7,7 @@
 
 import type { ComponentData } from './file-grouping'
 import { filterChildrenWithClientJs, joinDeclarations } from './client-js-helpers'
-import { replacePropsWithGetterCallsAST } from '../extractors/expression'
+import { replacePropsWithGetterCallsAST, replaceGettersWithCallsAST } from '../extractors/expression'
 
 /**
  * Context for client JS generation
@@ -218,22 +218,6 @@ function generateInitFunction(
   }
 }
 
-/**
- * Replace CVA getter names with function calls in code.
- * e.g., `buttonClass` -> `buttonClass()`
- */
-function replaceCvaGettersWithCalls(code: string, cvaGetterNames: string[]): string {
-  if (cvaGetterNames.length === 0) return code
-
-  let result = code
-  for (const name of cvaGetterNames) {
-    // Match the getter name as a word boundary, but not already followed by (
-    // This regex matches: buttonClass but not buttonClass()
-    const pattern = new RegExp(`\\b${name}\\b(?!\\s*\\()`, 'g')
-    result = result.replace(pattern, `${name}()`)
-  }
-  return result
-}
 
 /**
  * Generate init function with prop handling
@@ -294,8 +278,8 @@ function generateInitFunctionWithProps(
   const propNames = valueProps.map(p => p.name)
   const processedDeclarations = replacePropsWithGetterCallsAST(declarations, propNames)
   const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-  // Also replace CVA getter names with function calls in body code
-  const processedBodyCode = replaceCvaGettersWithCalls(
+  // Also replace CVA getter names with function calls in body code using AST
+  const processedBodyCode = replaceGettersWithCallsAST(
     replacePropsWithGetterCallsAST(bodyCode, propNames),
     cvaGetterNames
   )
@@ -334,8 +318,8 @@ function generateModuleLevelCode(
   // because `return` is invalid at module top-level in ES modules
   const hasReturnStatement = bodyCode.includes('return')
 
-  // Apply CVA getter replacement to body code
-  const processedBodyCode = replaceCvaGettersWithCalls(bodyCode, cvaGetterNames)
+  // Apply CVA getter replacement to body code using AST
+  const processedBodyCode = replaceGettersWithCallsAST(bodyCode, cvaGetterNames)
 
   if (hasReturnStatement) {
     return `// ${name} (wrapped in IIFE for return statement)
