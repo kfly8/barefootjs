@@ -33,6 +33,8 @@ const buttonVariants = cva(
         sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
         lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
         icon: 'size-9',
+        "icon-sm": "size-8",
+        "icon-lg": "size-10",
       },
     },
     defaultVariants: {
@@ -56,12 +58,12 @@ function Button({
   children,
   ...props
 }: ButtonProps) {
-  const buttonClass = cn(buttonVariants({ variant, size, className }))
-
   const Comp = asChild ? Slot : 'button'
 
-  // Type assertion for Hono JSX compatibility (onSubmit: SubmitEvent vs Event)
-  return <Comp class={buttonClass} {...(props as any)}>{children}</Comp>
+  return <Comp
+    class={cn(buttonVariants({ variant, size, className }))}
+    {...props}
+  >{children}</Comp>
 }
 
 export { Button, buttonVariants }

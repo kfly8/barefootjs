@@ -131,11 +131,12 @@ export function ToastTitle({ children }: ToastTitleProps) {
 
 export interface ToastDescriptionProps {
   children?: Child
+  class?: string
 }
 
-export function ToastDescription({ children }: ToastDescriptionProps) {
+export function ToastDescription({ children, class: className }: ToastDescriptionProps) {
   return (
-    <div class="text-sm opacity-90" data-toast-description>
+    <div class={`text-sm opacity-90 ${className || ''}`} data-toast-description>
       {children}
     </div>
   )

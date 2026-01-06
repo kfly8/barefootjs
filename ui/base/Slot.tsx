@@ -2,40 +2,17 @@
  * Slot Component
  *
  * A polymorphic component that merges its props with its child element.
- * Inspired by @radix-ui/react-slot but framework-agnostic through dependency injection.
+ * Inspired by @radix-ui/react-slot.
+ *
+ * Uses JSX syntax directly instead of cloneElement to avoid hono/jsx dependency.
+ * The JSX compiler (via tsconfig jsxImportSource) handles element creation.
  *
  * Usage:
- * 1. Configure with your JSX runtime's cloneElement:
- *    import { cloneElement, isValidElement } from 'hono/jsx'
- *    configureSlot({ cloneElement, isValidElement })
- *
- * 2. Use in components:
- *    <Slot class="btn">{children}</Slot>
+ *   <Slot class="btn">{children}</Slot>
  */
 
 import type { Child } from '../types'
 import { cn } from '../lib/utils'
-
-// Type definitions for JSX runtime functions
-type CloneElementFn = <T>(element: T, props: Record<string, unknown>, ...children: Child[]) => T
-type IsValidElementFn = (element: unknown) => boolean
-
-// Configuration storage
-let config: {
-  cloneElement: CloneElementFn
-  isValidElement: IsValidElementFn
-} | null = null
-
-/**
- * Configure Slot with JSX runtime functions.
- * Must be called before using Slot with asChild.
- */
-export function configureSlot(c: {
-  cloneElement: CloneElementFn
-  isValidElement: IsValidElementFn
-}) {
-  config = c
-}
 
 export interface SlotProps {
   children?: Child
@@ -44,38 +21,29 @@ export interface SlotProps {
 }
 
 /**
- * Slot component that renders its child with merged props.
- * If child is a valid JSX element, merges props and renders the child.
- * Otherwise, renders children wrapped in a span.
+ * Check if a value is a valid JSX element.
+ * Hono's JSX elements have `tag` and `props` properties.
  */
-export function Slot({ children, class: className, ...props }: SlotProps) {
-  // Check if we can use cloneElement and children is a valid element
-  if (config && isSlottable(children)) {
-    const child = children as { props?: { class?: string } }
-    const childClass = child.props?.class
-
-    return config.cloneElement(children, {
-      ...props,
-      class: cn(className, childClass),
-    })
-  }
-
-  // Fallback: wrap in span
-  return (
-    <span class={className} {...props}>
-      {children}
-    </span>
-  )
+function isValidElement(element: unknown): element is { tag: unknown; props: Record<string, unknown> } {
+  return !!(element && typeof element === 'object' && 'tag' in element && 'props' in element)
 }
 
 /**
- * Check if children is a single valid JSX element that can be slotted.
+ * Slot component that renders its child with merged props.
+ * If child is a valid JSX element, merges props and renders the child.
+ * Otherwise, renders children as-is using Fragment.
  */
-function isSlottable(children: Child): boolean {
-  if (!config) return false
-  if (children === null || children === undefined) return false
-  if (typeof children !== 'object') return false
-  if (Array.isArray(children)) return false
+export function Slot({ children, class: className, ...props }: SlotProps) {
+  if (children && isValidElement(children)) {
+    const Tag = children.tag as any
+    const childProps = children.props || {}
+    const childClass = (childProps.class as string) || ''
+    const childChildren = childProps.children
 
-  return config.isValidElement(children)
+    // Use JSX syntax - compiler will call jsx() from jsxImportSource
+    return <Tag {...childProps} {...props} class={cn(className, childClass)}>{childChildren}</Tag>
+  }
+
+  // Fallback: use Fragment to avoid DOM structure change
+  return <>{children}</>
 }

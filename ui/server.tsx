@@ -5,15 +5,10 @@
  */
 
 import { Hono } from 'hono'
-import { cloneElement, isValidElement } from 'hono/jsx'
 import { initHighlighter } from './_shared/highlighter'
-import { configureSlot } from './base/Slot'
 
 // Initialize syntax highlighter at startup
 await initHighlighter()
-
-// Configure Slot with Hono's JSX runtime functions
-configureSlot({ cloneElement, isValidElement })
 import { serveStatic } from 'hono/bun'
 import { renderer } from './renderer'
 // All pages imported from source
