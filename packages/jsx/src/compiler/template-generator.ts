@@ -312,13 +312,22 @@ export function jsxToTemplateString(
       }
     }
 
+    // Build set of explicit prop names for checking if an event-like prop is a callback
+    const explicitPropNames = new Set(componentExpectedProps?.map(p => p.name) || [])
+
     // Then process regular attributes (which override spread values)
     attributes.properties.forEach((attr) => {
       if (ts.isJsxAttribute(attr) && attr.name) {
         const propName = attr.name.getText(sf)
         if (attr.initializer) {
-          if (propName.startsWith('on') && propName.length > 2) {
-            // Event handler - extract for event delegation
+          // Check if this looks like an event handler AND is NOT an explicit prop
+          // - onClick on <Button> → not explicit, extract as event for delegation
+          // - onToggle on <TodoItem> → explicit callback prop, treat as regular prop
+          const isEventLike = propName.startsWith('on') && propName.length > 2
+          const isExplicitProp = explicitPropNames.has(propName)
+
+          if (isEventLike && !isExplicitProp) {
+            // Event handler for spread - extract for event delegation
             if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
               const eventName = propName.slice(2).toLowerCase()
               const handler = attr.initializer.expression.getText(sf)
