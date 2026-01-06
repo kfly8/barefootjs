@@ -284,16 +284,36 @@ function generateInitFunctionWithProps(
     cvaGetterNames
   )
 
-  // Generate rest props event listener attachment code
-  // When restPropsName is set, attach any on* props as event listeners to the root element
+  // Generate rest props handling code
+  // When restPropsName is set, attach event listeners and handle reactive props
   const restPropsEventCode = result.restPropsName
     ? `
-  // Attach event listeners from rest props to root element
+  // Attach event listeners and reactive props from rest props to root element
   if (${result.restPropsName} && _0) {
+    const __booleanProps = ['disabled', 'checked', 'hidden', 'readOnly', 'required', 'multiple', 'autofocus', 'autoplay', 'controls', 'loop', 'muted', 'selected', 'open']
     for (const [key, value] of Object.entries(${result.restPropsName})) {
       if (key.startsWith('on') && key.length > 2 && typeof value === 'function') {
+        // Event listener
         const eventName = key[2].toLowerCase() + key.slice(3)
         _0.addEventListener(eventName, value)
+      } else if (typeof value === 'function') {
+        // Reactive prop - create effect to update attribute
+        if (__booleanProps.includes(key)) {
+          createEffect(() => { _0[key] = !!value() })
+        } else {
+          createEffect(() => {
+            const v = value()
+            if (v != null) _0.setAttribute(key, String(v))
+            else _0.removeAttribute(key)
+          })
+        }
+      } else {
+        // Static prop - just set once (server already rendered this, but ensure consistency)
+        if (__booleanProps.includes(key)) {
+          _0[key] = !!value
+        } else if (value != null) {
+          _0.setAttribute(key, String(value))
+        }
       }
     }
   }`

@@ -49,7 +49,7 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
   /**
    * Generate Marked JSX file code (multiple components in one file)
    */
-  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, originalImports, externalImports }) => {
+  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, originalImports, externalImports = [] }) => {
     // Calculate relative path to manifest.json based on source path depth
     const sourceDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
     const dirDepth = sourceDir ? sourceDir.split('/').length : 0

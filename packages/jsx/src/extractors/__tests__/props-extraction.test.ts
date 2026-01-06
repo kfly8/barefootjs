@@ -149,8 +149,5 @@ function Button({ variant }: ButtonProps) { return <button /> }
     const typeDefs = extractTypeDefinitions(source, 'Button.tsx', ['ButtonProps'])
     expect(typeDefs.length).toBe(1)
     expect(typeDefs[0]).toContain('extends HTMLAttributes<HTMLButtonElement>')
-=======
-    expect(result.restPropsName).toBeNull()
->>>>>>> ef101ff (WIP: CVA lookup map implementation for Button reactive variant/size)
   })
 })
