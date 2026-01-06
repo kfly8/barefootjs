@@ -219,6 +219,7 @@ export type CompileResult = {
   refElements: RefElement[]        // Elements with ref callbacks
   conditionalElements: ConditionalElement[]  // Conditional rendering elements
   props: PropWithType[]            // Props with type information
+  propsTypeRefName: string | null  // Original type reference name (e.g., "ButtonProps") or null for inline types
   typeDefinitions: string[]        // Type definitions used by props
   source: string   // Component source code (for inline expansion in map)
   ir: IRNode | null  // Intermediate Representation for Marked JSX generation
@@ -286,6 +287,8 @@ export type OutputFormat = 'html' | 'jsx'
 export type MarkedJsxComponentData = {
   name: string
   props: PropWithType[]
+  /** Original type reference name (e.g., "ButtonProps") or null for inline types */
+  propsTypeRefName: string | null
   typeDefinitions: string[]
   jsx: string
   ir: IRNode | null

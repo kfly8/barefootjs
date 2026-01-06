@@ -158,6 +158,17 @@ PATH-005	Element Paths	<div><Child/><span data-bf='0'/>	null (uses querySelector
 PATH-006	Element Paths	<div>{show() && <X/>}<span data-bf='0'>	Conditional skipped	clientJs	✅ Implemented	Conditional in path
 PATH-007	Element Paths	{cond ? <X/> : null}<span data-bf='0'>{text()}</span>	path: null (querySelector fallback)	clientJs	✅ Implemented	Elements after conditionals use querySelector
 PATH-008	Element Paths	{c1 && <X/>}{c2 && <Y/>}<span data-bf='0'>	path: null (querySelector fallback)	clientJs	✅ Implemented	Multiple conditionals before element
+TYPE-001	Type Preservation	interface Props { x: string }	interface Props { x: string } in output	markedJsx	✅ Implemented	Interface definition preserved
+TYPE-002	Type Preservation	interface ChildProps extends ParentProps { x: number }	Both interfaces extracted	markedJsx	✅ Implemented	Interface inheritance (local)
+TYPE-003	Type Preservation	type Props = { x: string }	type Props = { x: string } in output	markedJsx	✅ Implemented	Type alias preserved
+TYPE-004	Type Preservation	type Props = BaseProps & { x: string }	Intersection type preserved	markedJsx	✅ Implemented	Intersection type resolved
+TYPE-005	Type Preservation	function C({ x }: Props)	C({ x }: Props & { "data-key"?: ... })	markedJsx	✅ Implemented	Uses intersection for hydration props
+TYPE-006	Type Preservation	interface Props extends HTMLAttributes<...>	Interface preserved, external type referenced	markedJsx	✅ Implemented	External types not extracted
+TYPE-010	Type Preservation	interface Props<T> { items: T[] }	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Generic interfaces
+TYPE-011	Type Preservation	type Props = Pick<T, K>	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Utility types (Pick, Omit, etc.)
+TYPE-012	Type Preservation	type Props = T extends U ? X : Y	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Conditional types
+TYPE-013	Type Preservation	type Props = { [K in Keys]: V }	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Mapped types
+TYPE-014	Type Preservation	function C({ x }: Props & { extra: string })	Inline intersection not preserved	markedJsx	❌ Not Supported	Inline intersection type annotation
 OOS-001	Out of Scope	useEffect(() => {...})	Not supported	n/a	❌ OOS	Use createEffect
 OOS-002	Out of Scope	useState(0)	Not supported	n/a	❌ OOS	Use createSignal
 OOS-003	Out of Scope	<Context.Provider value={...}>	Not supported	n/a	❌ OOS	Pass props
