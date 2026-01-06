@@ -12,7 +12,6 @@
  */
 
 import type { Child } from '../types'
-import { cn } from '../lib/utils'
 
 export interface SlotProps {
   children?: Child
@@ -41,7 +40,8 @@ export function Slot({ children, class: className, ...props }: SlotProps) {
     const childChildren = childProps.children
 
     // Use JSX syntax - compiler will call jsx() from jsxImportSource
-    return <Tag {...childProps} {...props} class={cn(className, childClass)}>{childChildren}</Tag>
+    const mergedClass = [className, childClass].filter(Boolean).join(' ')
+    return <Tag {...childProps} {...props} class={mergedClass || undefined}>{childChildren}</Tag>
   }
 
   // Fallback: use Fragment to avoid DOM structure change

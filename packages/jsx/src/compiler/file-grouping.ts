@@ -76,6 +76,43 @@ function transformCvaLocalVariable(
 }
 
 /**
+ * Transforms a CVA pattern call in an expression into lookup code.
+ * Used for dynamic attributes like class={buttonVariants({ variant, size, className })}
+ *
+ * @example
+ * Input: 'buttonVariants({ variant, size, className })'
+ * Output: '(() => { const __variant = variant() ?? ...; return (__cva_buttonVariants.base + ...).trim() })()'
+ */
+export function transformCvaInExpression(
+  expression: string,
+  cvaPatterns: CvaPatternInfo[]
+): { transformed: boolean; expression: string; cvaName?: string } {
+  for (const pattern of cvaPatterns) {
+    const cvaCallPattern = new RegExp(`\\b${pattern.name}\\s*\\(`)
+    if (cvaCallPattern.test(expression)) {
+      const variantKeys = Object.keys(pattern.variantDefs)
+
+      const lookupCode = variantKeys.map(key => {
+        return `const __${key} = ${key}() ?? __cva_${pattern.name}.defaults.${key}`
+      }).join('; ')
+
+      const variantLookups = variantKeys.map(key => {
+        return `__cva_${pattern.name}.variants.${key}[__${key}]`
+      }).join(' + " " + ')
+
+      const hasClassName = /className/.test(expression)
+      const classNamePart = hasClassName ? ' + " " + (className() || "")' : ''
+
+      // IIFE for immediate execution
+      const transformedExpr = `(() => { ${lookupCode}; return (__cva_${pattern.name}.base + " " + ${variantLookups}${classNamePart}).trim() })()`
+
+      return { transformed: true, expression: transformedExpr, cvaName: pattern.name }
+    }
+  }
+  return { transformed: false, expression }
+}
+
+/**
  * Component data with pre-calculated declarations
  */
 export interface ComponentData {
@@ -146,6 +183,18 @@ export function collectComponentData(
         return transformed.code
       })
       const localVariableDeclarations = transformedLocalVars.join('\n')
+
+      // Also check dynamic attributes for CVA pattern calls
+      for (const da of result.dynamicAttributes) {
+        for (const pattern of result.cvaPatterns) {
+          const cvaCallPattern = new RegExp(`\\b${pattern.name}\\s*\\(`)
+          if (cvaCallPattern.test(da.expression)) {
+            if (!usedCvaPatterns.includes(pattern)) {
+              usedCvaPatterns.push(pattern)
+            }
+          }
+        }
+      }
 
       // Generate CVA lookup map constants for used patterns
       const cvaLookupDeclarations = usedCvaPatterns.map(p => generateCvaLookupMap(p)).join('\n')

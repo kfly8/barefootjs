@@ -9,7 +9,6 @@
 
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
-import { cn } from '../lib/utils'
 import { Slot } from '../base/Slot'
 
 const buttonVariants = cva(
@@ -61,7 +60,7 @@ function Button({
   const Comp = asChild ? Slot : 'button'
 
   return <Comp
-    class={cn(buttonVariants({ variant, size, className }))}
+    class={buttonVariants({ variant, size, className })}
     {...props}
   >{children}</Comp>
 }
