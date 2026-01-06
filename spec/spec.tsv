@@ -180,3 +180,4 @@ OOS-008	Out of Scope	<Suspense><lazy(...)></Suspense>	Not supported	n/a	❌ OOS	
 OOS-009	Out of Scope	createPortal(<Modal/>, document.body)	Not supported	n/a	❌ OOS	Manual DOM
 OOS-010	Out of Scope	var x = 1 (in component)	var not extracted	n/a	❌ OOS	Use const/let
 OOS-011	Out of Scope	async function Component() {...}	Not supported	n/a	❌ OOS	Use signals
+OOS-012	Out of Scope	const Comp = cond ? A : 'button'; <Comp>	Not supported	n/a	❌ OOS	Polymorphic rendering - use conditional JSX
