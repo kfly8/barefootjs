@@ -81,12 +81,14 @@ export function extractTypeDefinitions(source: string, filePath: string, propTyp
 }
 
 /**
- * Result of props extraction including the type reference name.
+ * Result of props extraction including the type reference name and rest props.
  */
 export type PropsExtractionResult = {
   props: PropWithType[]
   /** Original type reference name (e.g., "ButtonProps") or null for inline types */
   typeRefName: string | null
+  /** Name of rest spread props (e.g., 'props' from ...props) */
+  restPropsName: string | null
 }
 
 /**
@@ -103,10 +105,11 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
 
   const props: PropWithType[] = []
   let typeRefName: string | null = null
+  let restPropsName: string | null = null
 
   const component = findComponentFunction(sourceFile, targetComponentName)
   if (!component) {
-    return { props, typeRefName }
+    return { props, typeRefName, restPropsName }
   }
 
   const param = component.parameters[0]
@@ -138,26 +141,42 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
 
     // Extract binding elements
     for (const element of param.name.elements) {
-      if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
-        const propName = element.name.text
-        const hasDefault = !!element.initializer
-        const typeInfo = typeMembers.get(propName)
-        // Capture the default value if present
-        const defaultValue = element.initializer
-          ? element.initializer.getText(sourceFile)
-          : undefined
+      if (ts.isBindingElement(element)) {
+        // Check for rest spread: ...props
+        if (element.dotDotDotToken && ts.isIdentifier(element.name)) {
+          restPropsName = element.name.text
+          continue
+        }
 
-        props.push({
-          name: propName,
-          type: typeInfo?.type || 'unknown',
-          optional: typeInfo?.optional || hasDefault,
-          defaultValue,
-        })
+        if (ts.isIdentifier(element.name)) {
+          // For renamed props like { class: className }, propertyName is 'class' and name is 'className'
+          // For regular props like { variant }, propertyName is undefined and name is 'variant'
+          const localName = element.name.text
+          const propName = element.propertyName
+            ? ts.isIdentifier(element.propertyName)
+              ? element.propertyName.text
+              : element.propertyName.getText(sourceFile)
+            : localName
+          const hasDefault = !!element.initializer
+          const typeInfo = typeMembers.get(propName)
+          // Capture the default value if present
+          const defaultValue = element.initializer
+            ? element.initializer.getText(sourceFile)
+            : undefined
+
+          props.push({
+            name: propName,
+            localName: propName !== localName ? localName : undefined,
+            type: typeInfo?.type || 'unknown',
+            optional: typeInfo?.optional || hasDefault,
+            defaultValue,
+          })
+        }
       }
     }
   }
 
-  return { props, typeRefName }
+  return { props, typeRefName, restPropsName }
 }
 
 /**

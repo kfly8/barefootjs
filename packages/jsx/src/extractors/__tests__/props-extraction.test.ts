@@ -31,6 +31,7 @@ export default Toggle
     const result = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'Toggle')
     expect(result.props).toEqual([])
     expect(result.typeRefName).toBeNull()
+    expect(result.restPropsName).toBeNull()
   })
 
   test('extracts props for ToggleItem', () => {
@@ -39,6 +40,7 @@ export default Toggle
     expect(result.props).toContainEqual({ name: 'label', type: 'string', optional: false, defaultValue: undefined })
     expect(result.props).toContainEqual({ name: 'defaultOn', type: 'boolean', optional: true, defaultValue: 'false' })
     expect(result.typeRefName).toBeNull() // inline type literal
+    expect(result.restPropsName).toBeNull()
   })
 })
 
@@ -147,5 +149,8 @@ function Button({ variant }: ButtonProps) { return <button /> }
     const typeDefs = extractTypeDefinitions(source, 'Button.tsx', ['ButtonProps'])
     expect(typeDefs.length).toBe(1)
     expect(typeDefs[0]).toContain('extends HTMLAttributes<HTMLButtonElement>')
+=======
+    expect(result.restPropsName).toBeNull()
+>>>>>>> ef101ff (WIP: CVA lookup map implementation for Button reactive variant/size)
   })
 })

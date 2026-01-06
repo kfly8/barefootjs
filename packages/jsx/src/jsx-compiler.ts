@@ -35,11 +35,12 @@ import { extractSignals } from './extractors/signals'
 import { extractMemos } from './extractors/memos'
 import { extractEffects } from './extractors/effects'
 import { extractModuleVariables } from './extractors/constants'
+import { extractCvaPatterns } from './extractors/cva-patterns'
 import { extractComponentPropsWithTypes, extractTypeDefinitions } from './extractors/props'
 import { extractLocalFunctions } from './extractors/local-functions'
 import { extractModuleFunctions } from './extractors/module-functions'
 import { extractLocalVariables } from './extractors/local-variables'
-import { extractImports } from './extractors/imports'
+import { extractImports, extractExternalImports } from './extractors/imports'
 import { getDefaultExportName } from './extractors/local-components'
 import { extractArrowBody, extractArrowParams, parseConditionalHandler } from './extractors/expression'
 import { IdGenerator } from './utils/id-generator'
@@ -260,10 +261,14 @@ function compileJsxWithComponents(
   // Extract module-level constants (shared across all components in file)
   const moduleConstants = extractModuleVariables(source, filePath)
 
+  // Extract CVA patterns for lookup map generation
+  const cvaPatterns = extractCvaPatterns(source, filePath)
+
   // Extract component props with types (for target component only)
   const propsResult = extractComponentPropsWithTypes(source, filePath, targetComponentName)
   const props = propsResult.props
   const propsTypeRefName = propsResult.typeRefName
+  const restPropsName = propsResult.restPropsName
 
   // Extract type definitions used by props
   const propTypes = props.map(p => p.type)
@@ -282,6 +287,9 @@ function compileJsxWithComponents(
 
   // Extract imports (for Marked JSX generation)
   const imports = extractImports(source, filePath)
+
+  // Extract external package imports (npm packages like 'class-variance-authority')
+  const externalImports = extractExternalImports(source, filePath)
 
   // Extract component name from target or file path
   const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
@@ -352,6 +360,7 @@ function compileJsxWithComponents(
     memos,
     effects,
     moduleConstants,
+    cvaPatterns,
     localFunctions,
     localVariables,
     childInits,
@@ -363,10 +372,12 @@ function compileJsxWithComponents(
     conditionalElements,
     props,
     propsTypeRefName,
+    restPropsName,
     typeDefinitions,
     source,
     ir,
     imports,
+    externalImports,
     isDefaultExport,
     hasUseClientDirective,
   }
