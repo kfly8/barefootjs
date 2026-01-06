@@ -56,9 +56,9 @@ export function Select({
       disabled={selectDisabled}
       aria-invalid={selectError || undefined}
       {...(selectDescribedBy ? { 'aria-describedby': selectDescribedBy } : {})}
-      onChange={onChange as ((e: Event) => void) | undefined}
-      onFocus={onFocus as ((e: FocusEvent) => void) | undefined}
-      onBlur={onBlur as ((e: FocusEvent) => void) | undefined}
+      onChange={onChange}
+      onFocus={onFocus}
+      onBlur={onBlur}
     >
       {selectPlaceholder && (
         <option value="" disabled>

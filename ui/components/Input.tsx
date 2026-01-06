@@ -58,10 +58,10 @@ export function Input({
       readOnly={inputReadOnly}
       aria-invalid={inputError || undefined}
       {...(inputDescribedBy ? { 'aria-describedby': inputDescribedBy } : {})}
-      onInput={onInput as (e: InputEvent) => void}
-      onChange={onChange as (e: Event) => void}
-      onBlur={onBlur as (e: FocusEvent) => void}
-      onFocus={onFocus as (e: FocusEvent) => void}
+      onInput={onInput}
+      onChange={onChange}
+      onBlur={onBlur}
+      onFocus={onFocus}
     />
   )
 }
