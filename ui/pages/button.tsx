@@ -11,6 +11,7 @@ import {
   Example,
   CodeBlock,
   PropsTable,
+  PackageManagerTabs,
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
@@ -24,8 +25,6 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const installCode = `bunx barefoot add button`
-
 const usageCode = `import { Button } from '@/components/button'
 
 export default function Page() {
@@ -109,13 +108,27 @@ export function ButtonPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<Button>Button</Button>`}>
-          <Button>Button</Button>
+        <Example title="" code={`
+import { Button } from "@/components/ui/button"
+
+<div class="flex flex-wrap items-center gap-2 md:flex-row">
+  <Button variant="outline">Button</Button>
+  <Button variant="outline" size="icon" aria-label="Submit">
+      <PlusIcon />
+  </Button>
+</div>
+          `}>
+          <div class="flex flex-wrap items-center gap-2 md:flex-row">
+            <Button variant="outline">Button</Button>
+            <Button variant="outline" size="icon" aria-label="Submit">
+                <PlusIcon />
+            </Button>
+          </div>
         </Example>
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
+          <PackageManagerTabs command="barefoot add button" />
         </Section>
 
         {/* Usage */}

@@ -12,7 +12,8 @@ test.describe('Button Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add button')).toBeVisible()
+    // Default tab is 'bun', command includes --bun flag
+    await expect(page.locator('text=bunx --bun barefoot add button')).toBeVisible()
   })
 
   test('displays usage section', async ({ page }) => {
@@ -41,7 +42,8 @@ test.describe('Button Documentation Page', () => {
       // Icon button has data-bf-scope attribute (not a copy button)
       // It's the Button component with an SVG icon inside
       // Note: data-bf-scope uses unique IDs like "Button_0", so we use prefix matching
-      const iconButton = page.locator('button[data-bf-scope^="Button"]:has(svg)')
+      // Multiple icon buttons may exist, so use first()
+      const iconButton = page.locator('button[data-bf-scope^="Button"]:has(svg)').first()
       await expect(iconButton).toBeVisible()
     })
   })

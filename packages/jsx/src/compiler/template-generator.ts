@@ -211,8 +211,41 @@ export function jsxToTemplateString(
         }
 
         case 'component': {
-          // Nested components - for now return empty (would need recursive inline)
-          return ''
+          const comp = node as IRComponent
+          const componentResult = components.get(comp.name)
+
+          if (!componentResult) {
+            // Component not available for inlining, return placeholder comment
+            return `<!-- ${comp.name} not found -->`
+          }
+
+          // Build propsMap from component props
+          const nestedPropsMap = new Map<string, string>()
+          for (const prop of comp.props) {
+            // Substitute parent props in the value
+            nestedPropsMap.set(prop.name, substituteProps(prop.value))
+          }
+
+          // Process children if any and set as children prop
+          if (comp.children && comp.children.length > 0) {
+            const childrenContent = comp.children.map(c => processIRNode(c, false)).join('')
+            if (childrenContent) {
+              // Store raw content (not quoted) for proper template substitution
+              nestedPropsMap.set('children', childrenContent)
+            }
+          }
+
+          // Extract event handlers from props (props starting with 'on')
+          const componentEvents: Array<{ name: string; handler: string }> = []
+          for (const prop of comp.props) {
+            if (prop.name.startsWith('on') && prop.name.length > 2) {
+              const eventName = prop.name.slice(2).toLowerCase()
+              componentEvents.push({ name: eventName, handler: substituteProps(prop.value) })
+            }
+          }
+
+          // Inline the component
+          return inlineComponent(componentResult, nestedPropsMap, componentEvents)
         }
 
         case 'conditional': {

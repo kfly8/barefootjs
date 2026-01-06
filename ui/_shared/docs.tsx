@@ -7,6 +7,8 @@
 
 import { TableOfContents, type TocItem } from '@/components/TableOfContents'
 import { CopyButton } from '@/components/CopyButton'
+// Re-export PackageManagerTabs from compiled component
+export { PackageManagerTabs } from '@/components/PackageManagerTabs'
 import { PageNavigation, getNavLinks } from './PageNavigation'
 import { highlight } from './highlighter'
 
@@ -169,3 +171,4 @@ export function Example({ title, code, children }: { title?: string; code: strin
     </div>
   )
 }
+
