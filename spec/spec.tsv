@@ -94,6 +94,7 @@ COMP-031	Components	Static component (no signals/events)	No clientJs generated	p
 COMP-032	Components	<Parent><Child with signals/></Parent>	Parent clientJs: initChild(i, scope)	clientJs	✅ Implemented	Parent calls child init
 COMP-033	Components	Auto-hydration	document.querySelectorAll('[data-bf-scope]')	clientJs	✅ Implemented	Auto-hydration
 COMP-034	Components	Component compilation	{ hash: 'abc123', filename: 'Component.bf.js' }	clientJs	✅ Implemented	Hash generated
+COMP-035	Components	fn({ variant, size }) with prop getters	{ variant: variant(), size: size() }	clientJs	✅ Implemented	Shorthand property expansion
 COMP-040	Components	<ul>{items().map(i => <Item i={i}/>)}</ul>	Item JSX inlined in template	both	✅ Implemented	Inlined component
 COMP-041	Components	Inlined component with onClick	data-event-id added	both	✅ Implemented	Inlined events
 COMP-042	Components	Inlined component with conditional	Conditional in template	both	✅ Implemented	Inlined conditional

@@ -290,6 +290,30 @@ ${bodyCode}`
 }
 
 /**
+ * Expand shorthand property syntax to explicit key-value form
+ *
+ * Transforms: { propName } -> { propName: propName }
+ * Transforms: { propName, other } -> { propName: propName, other }
+ * Transforms: { other, propName } -> { other, propName: propName }
+ *
+ * This ensures that when we later add () to getter calls,
+ * we get { propName: propName() } instead of { propName() } (method syntax)
+ */
+function expandShorthandProperty(code: string, propName: string): string {
+  // Match propName in shorthand object property position:
+  // - Preceded by { or , (with optional whitespace)
+  // - Followed by , or } (with optional whitespace)
+  // - NOT followed by : (which would make it explicit key-value syntax)
+  return code.replace(
+    new RegExp(
+      `([{,]\\s*)(\\b${propName}\\b)(?=\\s*[,}])(?!\\s*:)`,
+      'g'
+    ),
+    (match, prefix, name) => `${prefix}${name}: ${name}`
+  )
+}
+
+/**
  * Replace value prop usages with getter calls
  */
 function replacePropsWithGetterCalls(
@@ -298,7 +322,12 @@ function replacePropsWithGetterCalls(
 ): string {
   let result = code
   for (const prop of valueProps) {
-    // Replace standalone prop usage with getter call
+    // Pass 1: Expand shorthand property syntax for this prop
+    // This converts { propName } to { propName: propName }
+    // so that Pass 2 can safely add () without creating method syntax
+    result = expandShorthandProperty(result, prop.name)
+
+    // Pass 2: Replace standalone prop usage with getter call
     // Match: propName not followed by ( or : and not preceded by:
     // - . (object property access)
     // - __raw_ (our raw prop prefix)
