@@ -48,6 +48,34 @@ cd examples/hono && bun run build
 
 **Why?** Each package exports from `dist/` (built files), not `src/`. Without rebuilding, examples will use stale code.
 
+### UI Development with Incremental Build
+
+The `ui/` directory supports incremental builds and watch mode for faster development:
+
+```bash
+cd ui
+
+# Incremental build (default) - only rebuilds changed files
+bun run build
+
+# Force full rebuild
+bun run build --force
+
+# Watch mode - auto-rebuild on file changes
+bun run build --watch
+
+# Build specific component(s) by name
+bun run build Button
+bun run build --force Counter Input
+```
+
+**How it works:**
+- Build cache is stored in `dist/.buildcache.json`
+- Tracks file modification times and content hashes
+- Detects dependencies between components (via imports)
+- Changed files and their dependents are automatically rebuilt
+- In watch mode, UnoCSS also runs in parallel watch mode
+
 ### Testing
 
 1. **Unit tests**: Run `bun test packages/jsx` to verify compiler changes
