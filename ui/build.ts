@@ -531,9 +531,11 @@ async function build(changedFiles?: string[]): Promise<void> {
 let rebuildTimer: ReturnType<typeof setTimeout> | null = null
 let pendingFiles = new Set<string>()
 let isBuilding = false
+let shouldRunUnoOnRebuild = false
 
-function scheduleRebuild(changedFile: string): void {
+function scheduleRebuild(changedFile: string, triggerUnoCSS: boolean = false): void {
   pendingFiles.add(changedFile)
+  if (triggerUnoCSS) shouldRunUnoOnRebuild = true
 
   if (rebuildTimer) {
     clearTimeout(rebuildTimer)
@@ -542,12 +544,14 @@ function scheduleRebuild(changedFile: string): void {
   rebuildTimer = setTimeout(async () => {
     if (isBuilding) {
       // If a build is in progress, reschedule
-      rebuildTimer = setTimeout(() => scheduleRebuild(changedFile), 100)
+      rebuildTimer = setTimeout(() => scheduleRebuild(changedFile, triggerUnoCSS), 100)
       return
     }
 
     const files = [...pendingFiles]
+    const needsUno = shouldRunUnoOnRebuild
     pendingFiles.clear()
+    shouldRunUnoOnRebuild = false
     rebuildTimer = null
 
     const time = new Date().toLocaleTimeString()
@@ -556,6 +560,9 @@ function scheduleRebuild(changedFile: string): void {
     isBuilding = true
     try {
       await build(files)
+      if (needsUno) {
+        await runUnoCSS()
+      }
       console.log(`[${new Date().toLocaleTimeString()}] Rebuild complete. Watching for changes...`)
     } catch (error) {
       console.error('Build failed:', error instanceof Error ? error.message : error)
@@ -569,19 +576,42 @@ function scheduleRebuild(changedFile: string): void {
 async function startWatchMode(): Promise<void> {
   console.log('Starting watch mode...\n')
 
-  // Initial build
+  // Initial build (includes UnoCSS)
   await build()
+  // Run UnoCSS for initial build since build() skips it in watch mode
+  await runUnoCSS()
   console.log('\nInitial build complete. Watching for changes...')
 
-  // Start UnoCSS in watch mode
-  const unoWatcher = Bun.spawn(
-    ['bunx', 'unocss', './**/*.tsx', './dist/**/*.tsx', '-o', 'dist/uno.css', '--watch'],
-    {
-      cwd: ROOT_DIR,
-      stdout: 'inherit',
-      stderr: 'inherit',
-    }
-  )
+  // Try to start UnoCSS in watch mode (may fail on some systems)
+  let unoWatcher: ReturnType<typeof Bun.spawn> | null = null
+  try {
+    unoWatcher = Bun.spawn(
+      ['bunx', 'unocss', './**/*.tsx', './dist/**/*.tsx', '-o', 'dist/uno.css', '--watch'],
+      {
+        cwd: ROOT_DIR,
+        stdout: 'pipe',
+        stderr: 'pipe',
+      }
+    )
+    // Check if it started successfully
+    const checkTimer = setTimeout(() => {
+      if (unoWatcher) {
+        console.log('UnoCSS watch mode started')
+      }
+    }, 1000)
+
+    // Handle UnoCSS process exit
+    unoWatcher.exited.then((code) => {
+      clearTimeout(checkTimer)
+      if (code !== 0 && code !== null) {
+        console.log('UnoCSS watch mode not available, will run UnoCSS on each rebuild')
+        unoWatcher = null
+      }
+    })
+  } catch {
+    console.log('UnoCSS watch mode not available, will run UnoCSS on each rebuild')
+    unoWatcher = null
+  }
 
   // Watch components directory
   const watcher: FSWatcher = watch(
@@ -590,7 +620,7 @@ async function startWatchMode(): Promise<void> {
     (event, filename) => {
       if (filename && filename.endsWith('.tsx')) {
         const fullPath = resolve(COMPONENTS_DIR, filename)
-        scheduleRebuild(fullPath)
+        scheduleRebuild(fullPath, unoWatcher === null)
       }
     }
   )
@@ -599,7 +629,7 @@ async function startWatchMode(): Promise<void> {
   const cleanup = () => {
     console.log('\nShutting down...')
     watcher.close()
-    unoWatcher.kill()
+    unoWatcher?.kill()
     process.exit(0)
   }
 
