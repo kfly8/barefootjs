@@ -168,7 +168,9 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
             name: propName,
             localName: propName !== localName ? localName : undefined,
             type: typeInfo?.type || 'unknown',
-            optional: typeInfo?.optional || hasDefault,
+            // When type info is not available (typeInfo is undefined), default to optional
+            // This handles cases like interface extension where we can't resolve all members
+            optional: typeInfo ? typeInfo.optional : true,
             defaultValue,
           })
         }
