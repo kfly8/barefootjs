@@ -9,7 +9,7 @@
 import ts from 'typescript'
 import type { CompileResult, TemplateStringResult, IRNode, IRElement, IRText, IRExpression, IRComponent, IRConditional, IRFragment } from '../types'
 import { isPascalCase } from '../utils/helpers'
-import { isArrowFunction, extractArrowParams, extractArrowBody } from '../extractors/expression'
+import { substitutePropCallsAST, substituteIdentifiersAST } from '../extractors/expression'
 
 /**
  * Boolean HTML attributes that should only be present when truthy.
@@ -105,35 +105,14 @@ export function jsxToTemplateString(
     isRoot: boolean = true
   ): string {
     /**
-     * Substitutes prop references in expression
+     * Substitutes prop references in expression using AST transformation.
+     * Handles both prop function calls and simple identifier references.
      */
     function substituteProps(expr: string): string {
-      let result = expr
-      for (const [propName, propValue] of propsMap) {
-        // Replace prop() calls
-        const callRegex = new RegExp(`\\b${propName}\\s*\\(([^)]*)\\)`, 'g')
-        result = result.replace(callRegex, (match, args) => {
-          if (isArrowFunction(propValue)) {
-            const arrowParamsWithParen = extractArrowParams(propValue)
-            const arrowParams = arrowParamsWithParen.slice(1, -1)
-            let body = extractArrowBody(propValue)
-            if (args && arrowParams) {
-              const paramNames = arrowParams.split(',').map(p => p.trim())
-              const argValues = args.split(',').map((a: string) => a.trim())
-              for (let i = 0; i < paramNames.length && i < argValues.length; i++) {
-                if (paramNames[i]) {
-                  body = body.replace(new RegExp(`\\b${paramNames[i]}\\b`, 'g'), argValues[i])
-                }
-              }
-            }
-            return body
-          }
-          return `(${propValue})(${args})`
-        })
-        // Replace simple references
-        const refRegex = new RegExp(`\\b${propName}\\b(?!\\s*\\()`, 'g')
-        result = result.replace(refRegex, propValue)
-      }
+      // First, handle prop function calls (e.g., onToggle() → expanded body)
+      let result = substitutePropCallsAST(expr, propsMap)
+      // Then, handle simple identifier references (e.g., item → todo)
+      result = substituteIdentifiersAST(result, propsMap)
       return result
     }
 
@@ -398,43 +377,14 @@ export function jsxToTemplateString(
     keyAttr?: string
   ): string {
     /**
-     * Substitutes prop references in expression
+     * Substitutes prop references in expression using AST transformation.
+     * Handles both prop function calls and simple identifier references.
      */
     function substituteProps(expr: string): string {
-      let result = expr
-      for (const [propName, propValue] of propsMap) {
-        // Replace prop() calls (event handler calls)
-        // e.g., onToggle() → (() => handleToggle(todo.id))()
-        // However, for () => onToggle() pattern, replace onToggle with propValue
-        const callRegex = new RegExp(`\\b${propName}\\s*\\(([^)]*)\\)`, 'g')
-        result = result.replace(callRegex, (match, args) => {
-          // If propValue is an arrow function, call it
-          // Convert (args) => body to body(args)
-          if (isArrowFunction(propValue)) {
-            // extractArrowParams returns "(param1, param2)", remove parentheses
-            const arrowParamsWithParen = extractArrowParams(propValue)
-            const arrowParams = arrowParamsWithParen.slice(1, -1)
-            let body = extractArrowBody(propValue)
-            // If argument substitution is needed
-            if (args && arrowParams) {
-              // Simple argument substitution
-              const paramNames = arrowParams.split(',').map(p => p.trim())
-              const argValues = args.split(',').map((a: string) => a.trim())
-              for (let i = 0; i < paramNames.length && i < argValues.length; i++) {
-                if (paramNames[i]) {
-                  body = body.replace(new RegExp(`\\b${paramNames[i]}\\b`, 'g'), argValues[i])
-                }
-              }
-            }
-            return body
-          }
-          return `(${propValue})(${args})`
-        })
-        // Replace simple references (e.g., todo.done → todo.done)
-        // Only prop name (not function calls)
-        const refRegex = new RegExp(`\\b${propName}\\b(?!\\s*\\()`, 'g')
-        result = result.replace(refRegex, propValue)
-      }
+      // First, handle prop function calls (e.g., onToggle() → expanded body)
+      let result = substitutePropCallsAST(expr, propsMap)
+      // Then, handle simple identifier references (e.g., item → todo)
+      result = substituteIdentifiersAST(result, propsMap)
       return result
     }
 

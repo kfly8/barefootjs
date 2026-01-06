@@ -336,3 +336,206 @@ export function replacePropsWithGetterCallsAST(
 
   return result
 }
+
+/**
+ * Substitutes identifiers with provided values using AST transformation.
+ *
+ * Context-aware: skips identifiers in positions where replacement would be incorrect:
+ * - Property access right side: obj.name
+ * - Property definition key: { name: value }
+ * - Already a function call: name()
+ * - Parameter definition: (name) => ...
+ * - Variable declaration: const name = ...
+ * - Binding element: const { name } = obj
+ * - Function/method declaration name
+ */
+export function substituteIdentifiersAST(
+  code: string,
+  substitutions: Map<string, string>
+): string {
+  if (substitutions.size === 0 || code.trim() === '') {
+    return code
+  }
+
+  const sourceFile = ts.createSourceFile(
+    'temp.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true
+  )
+
+  const replacements: Array<{ start: number; end: number; value: string }> = []
+
+  function shouldSkipIdentifier(node: ts.Identifier): boolean {
+    const parent = node.parent
+
+    // Property access right side: obj.name
+    if (ts.isPropertyAccessExpression(parent) && parent.name === node) {
+      return true
+    }
+
+    // Property definition key: { name: value }
+    if (ts.isPropertyAssignment(parent) && parent.name === node) {
+      return true
+    }
+
+    // Already a function call: name() - skip callee position
+    if (ts.isCallExpression(parent) && parent.expression === node) {
+      return true
+    }
+
+    // Parameter definition: (name) => ...
+    if (ts.isParameter(parent)) {
+      return true
+    }
+
+    // Variable declaration left side: const name = ...
+    if (ts.isVariableDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    // Binding element (destructuring): const { name } = obj
+    if (ts.isBindingElement(parent)) {
+      return true
+    }
+
+    // Function declaration name: function name() {}
+    if (ts.isFunctionDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    // Method name: { name() {} }
+    if (ts.isMethodDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    return false
+  }
+
+  function visit(node: ts.Node) {
+    // Shorthand property: { name } → { name: substitutedValue }
+    if (ts.isShorthandPropertyAssignment(node)) {
+      const name = node.name.text
+      if (substitutions.has(name)) {
+        replacements.push({
+          start: node.getStart(),
+          end: node.getEnd(),
+          value: `${name}: ${substitutions.get(name)}`
+        })
+        return // Don't visit children
+      }
+    }
+
+    // Regular identifier: name → substitutedValue
+    if (ts.isIdentifier(node) && substitutions.has(node.text)) {
+      if (!shouldSkipIdentifier(node)) {
+        replacements.push({
+          start: node.getStart(),
+          end: node.getEnd(),
+          value: substitutions.get(node.text)!
+        })
+      }
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+
+  // Replace from end to preserve positions
+  replacements.sort((a, b) => b.start - a.start)
+  let result = code
+  for (const r of replacements) {
+    result = result.slice(0, r.start) + r.value + result.slice(r.end)
+  }
+
+  return result
+}
+
+/**
+ * Substitutes prop function calls with inlined values using AST transformation.
+ *
+ * Handles two cases:
+ * 1. If propValue is an arrow function: propName(args) → body with args substituted
+ * 2. Otherwise: propName(args) → (propValue)(args)
+ *
+ * Uses AST to correctly parse nested parentheses in arguments.
+ */
+export function substitutePropCallsAST(
+  code: string,
+  propsMap: Map<string, string>
+): string {
+  if (propsMap.size === 0 || code.trim() === '') {
+    return code
+  }
+
+  const sourceFile = ts.createSourceFile(
+    'temp.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true
+  )
+
+  const replacements: Array<{ start: number; end: number; value: string }> = []
+  const propNames = new Set(propsMap.keys())
+
+  function visit(node: ts.Node) {
+    // Look for function calls where callee is a prop name
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression
+      if (ts.isIdentifier(callee) && propNames.has(callee.text)) {
+        const propName = callee.text
+        const propValue = propsMap.get(propName)!
+
+        // Get argument values as strings
+        const argValues = node.arguments.map(arg => arg.getText())
+
+        let replacementValue: string
+        if (isArrowFunction(propValue)) {
+          // Extract arrow function params and body
+          const arrowParamsWithParen = extractArrowParams(propValue)
+          const arrowParams = arrowParamsWithParen.slice(1, -1) // Remove ( and )
+          let body = extractArrowBody(propValue)
+
+          // Substitute parameters with argument values using AST
+          if (argValues.length > 0 && arrowParams) {
+            const paramNames = arrowParams.split(',').map(p => p.trim()).filter(p => p)
+            const paramSubstitutions = new Map<string, string>()
+            for (let i = 0; i < paramNames.length && i < argValues.length; i++) {
+              if (paramNames[i]) {
+                paramSubstitutions.set(paramNames[i], argValues[i])
+              }
+            }
+            if (paramSubstitutions.size > 0) {
+              body = substituteIdentifiersAST(body, paramSubstitutions)
+            }
+          }
+          replacementValue = body
+        } else {
+          // Wrap non-arrow function and call with args
+          replacementValue = `(${propValue})(${argValues.join(', ')})`
+        }
+
+        replacements.push({
+          start: node.getStart(),
+          end: node.getEnd(),
+          value: replacementValue
+        })
+        return // Don't visit children of this call
+      }
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+
+  // Replace from end to preserve positions
+  replacements.sort((a, b) => b.start - a.start)
+  let result = code
+  for (const r of replacements) {
+    result = result.slice(0, r.start) + r.value + result.slice(r.end)
+  }
+
+  return result
+}
