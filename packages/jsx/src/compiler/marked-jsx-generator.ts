@@ -45,6 +45,7 @@ export function generateFileMarkedJsx(
       return {
         name: c.name,
         props: c.result.props,
+        propsTypeRefName: c.result.propsTypeRefName,
         typeDefinitions: c.result.typeDefinitions,
         jsx,
         ir: c.result.ir,

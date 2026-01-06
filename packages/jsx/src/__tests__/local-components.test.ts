@@ -94,15 +94,15 @@ export default Parent
 
   describe('extractComponentPropsWithTypes with targetComponentName', () => {
     test('extracts props from ToggleItem only', () => {
-      const props = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'ToggleItem')
-      expect(props.length).toBe(2)
-      expect(props).toContainEqual({ name: 'label', type: 'string', optional: false, defaultValue: undefined })
-      expect(props).toContainEqual({ name: 'defaultOn', type: 'boolean', optional: true, defaultValue: 'false' })
+      const result = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'ToggleItem')
+      expect(result.props.length).toBe(2)
+      expect(result.props).toContainEqual({ name: 'label', type: 'string', optional: false, defaultValue: undefined })
+      expect(result.props).toContainEqual({ name: 'defaultOn', type: 'boolean', optional: true, defaultValue: 'false' })
     })
 
     test('extracts no props from Toggle (has none)', () => {
-      const props = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'Toggle')
-      expect(props.length).toBe(0)
+      const result = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'Toggle')
+      expect(result.props.length).toBe(0)
     })
   })
 

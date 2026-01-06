@@ -9,12 +9,28 @@ import { findComponentFunction } from './common'
 
 /**
  * Extracts type definitions used in props from the source file.
- * Returns type alias declarations that are referenced in prop types.
+ * Returns type alias and interface declarations that are referenced in prop types.
  */
 export function extractTypeDefinitions(source: string, filePath: string, propTypes: string[]): string[] {
   const sourceFile = createSourceFile(source, filePath)
   const typeDefinitions: string[] = []
   const collectedTypes = new Set<string>()
+
+  // Helper: extract nested type references from member types
+  function collectMemberTypeReferences(members: ts.NodeArray<ts.TypeElement>) {
+    for (const member of members) {
+      if (ts.isPropertySignature(member) && member.type) {
+        const memberTypeText = member.type.getText(sourceFile)
+        // Look for PascalCase type names
+        const typeRefs = memberTypeText.match(/\b[A-Z][a-zA-Z0-9]*\b/g)
+        if (typeRefs) {
+          for (const ref of typeRefs) {
+            collectTypeReferences(ref)
+          }
+        }
+      }
+    }
+  }
 
   // Recursively collect all referenced type names from a type
   function collectTypeReferences(typeName: string) {
@@ -22,26 +38,31 @@ export function extractTypeDefinitions(source: string, filePath: string, propTyp
     collectedTypes.add(typeName)
 
     ts.forEachChild(sourceFile, (node) => {
+      // Type alias: type Props = { ... }
       if (ts.isTypeAliasDeclaration(node) && node.name.text === typeName) {
-        // Get the full text of the type definition
         typeDefinitions.push(node.getText(sourceFile))
 
-        // If it's a type literal, check for nested type references
         if (ts.isTypeLiteralNode(node.type)) {
-          for (const member of node.type.members) {
-            if (ts.isPropertySignature(member) && member.type) {
-              // Check if the member type references another type
-              const memberTypeText = member.type.getText(sourceFile)
-              // Look for PascalCase type names
-              const typeRefs = memberTypeText.match(/\b[A-Z][a-zA-Z0-9]*\b/g)
-              if (typeRefs) {
-                for (const ref of typeRefs) {
-                  collectTypeReferences(ref)
-                }
-              }
+          collectMemberTypeReferences(node.type.members)
+        }
+      }
+      // Interface: interface Props { ... }
+      else if (ts.isInterfaceDeclaration(node) && node.name.text === typeName) {
+        typeDefinitions.push(node.getText(sourceFile))
+
+        // Handle heritage clauses (extends)
+        if (node.heritageClauses) {
+          for (const clause of node.heritageClauses) {
+            for (const typeRef of clause.types) {
+              const parentTypeName = typeRef.expression.getText(sourceFile)
+              // Only collect if it's a local type (will be skipped if not found)
+              collectTypeReferences(parentTypeName)
             }
           }
         }
+
+        // Collect member type references
+        collectMemberTypeReferences(node.members)
       }
     })
   }
@@ -60,22 +81,32 @@ export function extractTypeDefinitions(source: string, filePath: string, propTyp
 }
 
 /**
+ * Result of props extraction including the type reference name.
+ */
+export type PropsExtractionResult = {
+  props: PropWithType[]
+  /** Original type reference name (e.g., "ButtonProps") or null for inline types */
+  typeRefName: string | null
+}
+
+/**
  * Extracts component function parameters (props) with their types.
- * function Counter({ initial = 0 }: { initial?: number }) → [{ name: 'initial', type: 'number', optional: true }]
- * function Counter({ initial = 0 }: Props) → [{ name: 'initial', type: 'unknown', optional: true }] (type alias not resolved)
+ * function Counter({ initial = 0 }: { initial?: number }) → { props: [...], typeRefName: null }
+ * function Counter({ initial = 0 }: Props) → { props: [...], typeRefName: 'Props' }
  *
  * @param source - Source code
  * @param filePath - File path
  * @param targetComponentName - Optional: specific component to extract props from
  */
-export function extractComponentPropsWithTypes(source: string, filePath: string, targetComponentName?: string): PropWithType[] {
+export function extractComponentPropsWithTypes(source: string, filePath: string, targetComponentName?: string): PropsExtractionResult {
   const sourceFile = createSourceFile(source, filePath)
 
   const props: PropWithType[] = []
+  let typeRefName: string | null = null
 
   const component = findComponentFunction(sourceFile, targetComponentName)
   if (!component) {
-    return props
+    return { props, typeRefName }
   }
 
   const param = component.parameters[0]
@@ -96,9 +127,10 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
       }
     } else if (typeAnnotation && ts.isTypeReferenceNode(typeAnnotation)) {
       // Type reference: Props
-      // Try to find and resolve the type alias
-      const typeName = typeAnnotation.typeName.getText(sourceFile)
-      const resolvedType = resolveTypeAlias(sourceFile, typeName)
+      // Store the original type reference name
+      typeRefName = typeAnnotation.typeName.getText(sourceFile)
+      // Try to find and resolve the type alias or interface
+      const resolvedType = resolveTypeAlias(sourceFile, typeRefName)
       if (resolvedType) {
         typeMembers = resolvedType
       }
@@ -125,27 +157,86 @@ export function extractComponentPropsWithTypes(source: string, filePath: string,
     }
   }
 
-  return props
+  return { props, typeRefName }
 }
 
 /**
- * Resolves a type alias to its members.
+ * Helper: extract members from a type literal node into a Map.
+ */
+function extractMembersFromTypeLiteral(
+  typeLiteral: ts.TypeLiteralNode,
+  sourceFile: ts.SourceFile
+): Map<string, { type: string; optional: boolean }> {
+  const result = new Map<string, { type: string; optional: boolean }>()
+  for (const member of typeLiteral.members) {
+    if (ts.isPropertySignature(member) && member.name) {
+      const propName = member.name.getText(sourceFile)
+      const propType = member.type ? member.type.getText(sourceFile) : 'unknown'
+      const isOptional = !!member.questionToken
+      result.set(propName, { type: propType, optional: isOptional })
+    }
+  }
+  return result
+}
+
+/**
+ * Resolves a type alias or interface to its members.
  * type Props = { a: string; b?: number } → Map { 'a' => { type: 'string', optional: false }, ... }
+ * interface Props { a: string; b?: number } → Map { 'a' => { type: 'string', optional: false }, ... }
+ * interface ChildProps extends ParentProps { x: number } → Merges parent and child members
  */
 function resolveTypeAlias(sourceFile: ts.SourceFile, typeName: string): Map<string, { type: string; optional: boolean }> | null {
   let result: Map<string, { type: string; optional: boolean }> | null = null
 
   ts.forEachChild(sourceFile, (node) => {
+    // Type alias: type Props = { ... }
     if (ts.isTypeAliasDeclaration(node) && node.name.text === typeName) {
       if (ts.isTypeLiteralNode(node.type)) {
+        result = extractMembersFromTypeLiteral(node.type, sourceFile)
+      }
+      // Handle intersection type: type Props = BaseProps & { extra: string }
+      else if (ts.isIntersectionTypeNode(node.type)) {
         result = new Map()
-        for (const member of node.type.members) {
-          if (ts.isPropertySignature(member) && member.name) {
-            const propName = member.name.getText(sourceFile)
-            const propType = member.type ? member.type.getText(sourceFile) : 'unknown'
-            const isOptional = !!member.questionToken
-            result.set(propName, { type: propType, optional: isOptional })
+        for (const typeNode of node.type.types) {
+          if (ts.isTypeLiteralNode(typeNode)) {
+            const members = extractMembersFromTypeLiteral(typeNode, sourceFile)
+            for (const [k, v] of members) result.set(k, v)
+          } else if (ts.isTypeReferenceNode(typeNode)) {
+            const refName = typeNode.typeName.getText(sourceFile)
+            const resolved = resolveTypeAlias(sourceFile, refName)
+            if (resolved) {
+              for (const [k, v] of resolved) result.set(k, v)
+            }
           }
+        }
+      }
+    }
+    // Interface: interface Props { ... }
+    else if (ts.isInterfaceDeclaration(node) && node.name.text === typeName) {
+      result = new Map()
+
+      // Collect from heritage clauses first (parent interfaces)
+      if (node.heritageClauses) {
+        for (const clause of node.heritageClauses) {
+          if (clause.token === ts.SyntaxKind.ExtendsKeyword) {
+            for (const typeRef of clause.types) {
+              const parentName = typeRef.expression.getText(sourceFile)
+              const parentMembers = resolveTypeAlias(sourceFile, parentName)
+              if (parentMembers) {
+                for (const [k, v] of parentMembers) result.set(k, v)
+              }
+            }
+          }
+        }
+      }
+
+      // Then collect own members (may override parent members)
+      for (const member of node.members) {
+        if (ts.isPropertySignature(member) && member.name) {
+          const propName = member.name.getText(sourceFile)
+          const propType = member.type ? member.type.getText(sourceFile) : 'unknown'
+          const isOptional = !!member.questionToken
+          result.set(propName, { type: propType, optional: isOptional })
         }
       }
     }

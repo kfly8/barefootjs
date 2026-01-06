@@ -261,11 +261,15 @@ function compileJsxWithComponents(
   const moduleConstants = extractModuleVariables(source, filePath)
 
   // Extract component props with types (for target component only)
-  const props = extractComponentPropsWithTypes(source, filePath, targetComponentName)
+  const propsResult = extractComponentPropsWithTypes(source, filePath, targetComponentName)
+  const props = propsResult.props
+  const propsTypeRefName = propsResult.typeRefName
 
   // Extract type definitions used by props
   const propTypes = props.map(p => p.type)
-  const typeDefinitions = extractTypeDefinitions(source, filePath, propTypes)
+  // Also include the type reference name if present
+  const allPropTypes = propsTypeRefName ? [...propTypes, propsTypeRefName] : propTypes
+  const typeDefinitions = extractTypeDefinitions(source, filePath, allPropTypes)
 
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
@@ -358,6 +362,7 @@ function compileJsxWithComponents(
     refElements,
     conditionalElements,
     props,
+    propsTypeRefName,
     typeDefinitions,
     source,
     ir,

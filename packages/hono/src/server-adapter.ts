@@ -92,19 +92,31 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
 
     // Generate each component function
     const componentFunctions = components.map(comp => {
-      const { name, props, jsx, isDefaultExport, localVariables } = comp
+      const { name, props, propsTypeRefName, jsx, isDefaultExport, localVariables } = comp
 
       // Extract prop names for destructuring
       const propNames = props.map(p => p.name)
       const allProps = [...propNames, '"data-key": __dataKey', '__listIndex']
       const propsParam = `{ ${allProps.join(', ')} }`
 
+      // Hydration props that are always added
+      const hydrationProps = `{ "data-key"?: string | number; __listIndex?: number }`
+
       // Build propsType with actual type annotations
-      const basePropsType = props.map(p => {
-        const optionalMark = p.optional ? '?' : ''
-        return `${p.name}${optionalMark}: ${p.type}`
-      }).join('; ')
-      const propsType = `: { ${basePropsType}${basePropsType ? '; ' : ''}"data-key"?: string | number; __listIndex?: number }`
+      let propsType: string
+      if (propsTypeRefName) {
+        // Use intersection: ButtonProps & { "data-key"?: ... }
+        propsType = `: ${propsTypeRefName} & ${hydrationProps}`
+      } else if (props.length > 0) {
+        // Inline type (existing behavior)
+        const basePropsType = props.map(p => {
+          const optionalMark = p.optional ? '?' : ''
+          return `${p.name}${optionalMark}: ${p.type}`
+        }).join('; ')
+        propsType = `: { ${basePropsType}; "data-key"?: string | number; __listIndex?: number }`
+      } else {
+        propsType = `: ${hydrationProps}`
+      }
 
       // Inject conditional data-key attribute
       const jsxWithDataKey = injectDataKeyProp(jsx)
