@@ -113,10 +113,10 @@ The compiler should generate correct code. If it doesn't, that's a bug to fix, n
 
 ```typescript
 // ❌ WRONG - workaround for compiler bug
-const buttonClass = typeof cn === 'function'
-  ? cn(buttonVariants({ variant, size, className }))
+const buttonClass = typeof buttonVariants === 'function'
+  ? buttonVariants({ variant, size, className })
   : ''  // Workaround!
 
 // ✅ CORRECT - trust the compiler, fix bugs in compiler
-const buttonClass = cn(buttonVariants({ variant, size, className }))
+const buttonClass = buttonVariants({ variant, size, className })
 ```

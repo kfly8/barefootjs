@@ -62,11 +62,11 @@ export function extractImports(source: string, filePath: string): ComponentImpor
 
 /**
  * Extracts external package imports (non-local imports)
- * These are imports from npm packages like 'class-variance-authority', 'clsx', etc.
+ * These are imports from npm packages like 'class-variance-authority', etc.
  *
  * @example
  * import { cva, type VariantProps } from 'class-variance-authority'
- * import { cn } from '../lib/utils'  // <- NOT extracted (local)
+ * import { myUtil } from '../lib/utils'  // <- NOT extracted (local)
  */
 export function extractExternalImports(source: string, filePath: string): ExternalImport[] {
   const sourceFile = createSourceFile(source, filePath)

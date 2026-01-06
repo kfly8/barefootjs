@@ -34,7 +34,7 @@ function generateCvaLookupMap(pattern: CvaPatternInfo): string {
  * Checks if a local variable uses a cva pattern and transforms it to a getter function.
  *
  * @example
- * Input: { name: 'buttonClass', code: 'const buttonClass = cn(buttonVariants({ variant, size, className }))' }
+ * Input: { name: 'buttonClass', code: 'const buttonClass = buttonVariants({ variant, size, className })' }
  * Output: { transformed: true, code: 'const buttonClass = () => { ... lookup code ... }' }
  */
 function transformCvaLocalVariable(
@@ -43,7 +43,7 @@ function transformCvaLocalVariable(
 ): { transformed: boolean; code: string; cvaName?: string } {
   // Check if the code uses any cva pattern
   for (const pattern of cvaPatterns) {
-    // Match patterns like: cn(buttonVariants({...})) or buttonVariants({...})
+    // Match patterns like: buttonVariants({...})
     const cvaCallPattern = new RegExp(`\\b${pattern.name}\\s*\\(`)
     if (cvaCallPattern.test(lv.code)) {
       // Extract variant keys from the cva pattern
@@ -58,7 +58,7 @@ function transformCvaLocalVariable(
         return `__cva_${pattern.name}.variants.${key}[__${key}]`
       }).join(' + " " + ')
 
-      // Handle className prop (usually the last arg to cn())
+      // Handle className prop
       // Check if className is in the pattern call
       const hasClassName = /className/.test(lv.code)
       const classNamePart = hasClassName ? ' + " " + (className() || "")' : ''

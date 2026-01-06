@@ -372,7 +372,7 @@ export function jsxToTemplateString(
     }
 
     // Handle localVariables that use CVA patterns
-    // For CVA-based local variables like `const buttonClass = cn(buttonVariants({ variant, size, className }))`
+    // For CVA-based local variables like `const buttonClass = buttonVariants({ variant, size, className })`
     // we need to inline the computed class value directly (without quotes, as it will be used in template expressions)
     if (componentResult.localVariables && componentResult.cvaPatterns) {
       for (const localVar of componentResult.localVariables) {

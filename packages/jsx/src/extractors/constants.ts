@@ -65,7 +65,7 @@ function isModuleLevelValue(node: ts.Expression): boolean {
     return isModuleLevelValue(node.expression)
   }
 
-  // Call expressions (e.g., cva(...), cn(...))
+  // Call expressions (e.g., cva(...))
   // Allow function calls with static arguments for patterns like:
   // const buttonVariants = cva('...', { variants: {...} })
   if (ts.isCallExpression(node)) {
