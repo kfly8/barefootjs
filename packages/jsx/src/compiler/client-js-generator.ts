@@ -7,6 +7,7 @@
 
 import type { ComponentData } from './file-grouping'
 import { filterChildrenWithClientJs, joinDeclarations } from './client-js-helpers'
+import { replacePropsWithGetterCallsAST } from '../extractors/expression'
 
 /**
  * Context for client JS generation
@@ -249,9 +250,11 @@ function generateInitFunctionWithProps(
     : ''
 
   // Apply prop getter replacement to both declarations (for signal initial values) and body code
-  const processedDeclarations = replacePropsWithGetterCalls(declarations, valueProps)
+  // Using AST-based transformation for accurate handling of all contexts
+  const propNames = valueProps.map(p => p.name)
+  const processedDeclarations = replacePropsWithGetterCallsAST(declarations, propNames)
   const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-  const processedBodyCode = replacePropsWithGetterCalls(bodyCode, valueProps)
+  const processedBodyCode = replacePropsWithGetterCallsAST(bodyCode, propNames)
 
   return `export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
 ${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
@@ -287,66 +290,6 @@ ${instanceVarsLine}${declarations}
 
 ${bodyCode}`
   }
-}
-
-/**
- * Expand shorthand property syntax to explicit key-value form
- *
- * Transforms: { propName } -> { propName: propName }
- * Transforms: { propName, other } -> { propName: propName, other }
- * Transforms: { other, propName } -> { other, propName: propName }
- *
- * This ensures that when we later add () to getter calls,
- * we get { propName: propName() } instead of { propName() } (method syntax)
- */
-function expandShorthandProperty(code: string, propName: string): string {
-  // Match propName in shorthand object property position:
-  // - Preceded by { or , (with optional whitespace)
-  // - Followed by , or } (with optional whitespace)
-  // - NOT followed by : (which would make it explicit key-value syntax)
-  return code.replace(
-    new RegExp(
-      `([{,]\\s*)(\\b${propName}\\b)(?=\\s*[,}])(?!\\s*:)`,
-      'g'
-    ),
-    (match, prefix, name) => `${prefix}${name}: ${name}`
-  )
-}
-
-/**
- * Replace value prop usages with getter calls
- */
-function replacePropsWithGetterCalls(
-  code: string,
-  valueProps: ComponentData['result']['props']
-): string {
-  let result = code
-  for (const prop of valueProps) {
-    // Pass 1: Expand shorthand property syntax for this prop
-    // This converts { propName } to { propName: propName }
-    // so that Pass 2 can safely add () without creating method syntax
-    result = expandShorthandProperty(result, prop.name)
-
-    // Pass 2: Replace standalone prop usage with getter call
-    // Match: propName not followed by ( or : and not preceded by:
-    // - . (object property access)
-    // - __raw_ (our raw prop prefix)
-    // - - (hyphen, part of HTML attribute like aria-checked)
-    // Also skip if inside simple quotes (single/double quote string literals)
-    // Note: We preserve template literals for replacement since ${...} contains JS expressions
-    // Note: We exclude : suffix to preserve CSS pseudo-classes like disabled:cursor-not-allowed
-    result = result.replace(
-      new RegExp(`(["'](?:[^"'\\\\]|\\\\.)*["'])|((?<![-.]|__raw_)\\b${prop.name}\\b(?!\\s*[:(]))`, 'g'),
-      (match, stringLiteral, identifier) => {
-        // If it's a string literal, keep it unchanged
-        if (stringLiteral) return stringLiteral
-        // If it's the identifier, replace with getter call
-        if (identifier) return `${prop.name}()`
-        return match
-      }
-    )
-  }
-  return result
 }
 
 /**
