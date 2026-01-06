@@ -98,11 +98,13 @@ export default Parent
       expect(result.props.length).toBe(2)
       expect(result.props).toContainEqual({ name: 'label', type: 'string', optional: false, defaultValue: undefined })
       expect(result.props).toContainEqual({ name: 'defaultOn', type: 'boolean', optional: true, defaultValue: 'false' })
+      expect(result.restPropsName).toBeNull()
     })
 
     test('extracts no props from Toggle (has none)', () => {
       const result = extractComponentPropsWithTypes(source, 'Toggle.tsx', 'Toggle')
       expect(result.props.length).toBe(0)
+      expect(result.restPropsName).toBeNull()
     })
   })
 

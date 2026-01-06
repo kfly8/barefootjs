@@ -8,7 +8,7 @@ import { createSourceFile } from '../utils/helpers'
 
 /**
  * Checks if an initializer is a module-level value (can be included in generated code).
- * Includes literals, template literals, arrays, objects, functions, and type assertions.
+ * Includes literals, template literals, arrays, objects, functions, call expressions, and type assertions.
  */
 function isModuleLevelValue(node: ts.Expression): boolean {
   // Simple literals
@@ -63,6 +63,27 @@ function isModuleLevelValue(node: ts.Expression): boolean {
   // Parenthesized expressions
   if (ts.isParenthesizedExpression(node)) {
     return isModuleLevelValue(node.expression)
+  }
+
+  // Call expressions (e.g., cva(...))
+  // Allow function calls with static arguments for patterns like:
+  // const buttonVariants = cva('...', { variants: {...} })
+  if (ts.isCallExpression(node)) {
+    // Check if all arguments are static values
+    return node.arguments.every(arg => isModuleLevelValue(arg as ts.Expression))
+  }
+
+  // Identifiers (references to other variables/imports)
+  // Allow these for patterns like: const Comp = asChild ? Slot : 'button'
+  if (ts.isIdentifier(node)) {
+    return true
+  }
+
+  // Conditional (ternary) expressions
+  if (ts.isConditionalExpression(node)) {
+    return isModuleLevelValue(node.condition) &&
+           isModuleLevelValue(node.whenTrue) &&
+           isModuleLevelValue(node.whenFalse)
   }
 
   return false

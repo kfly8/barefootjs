@@ -97,12 +97,22 @@ export function jsxToTemplateString(
   /**
    * Converts IR to HTML template string.
    * Defined inside jsxToTemplateString to access events array and eventIdCounter.
+   *
+   * @param rootEventAttrs - Pre-built event attributes string (e.g., ' data-index="${__index}" data-event-id="0"')
+   *                        for injecting into the root element. Used when inlining components that have
+   *                        event handlers passed from parent (e.g., <Button onClick={...}>).
+   *                        The events are registered separately in the events array by the caller.
+   * @param restPropsToExpand - Map of rest props to expand when encountering spreadAttrs.
+   *                           Key is the prop name, value is the expression. Used when inlining
+   *                           components that use {...props} spread (e.g., Button passing disabled to <button>).
    */
   function irToHtmlTemplate(
     ir: IRNode,
     propsMap: Map<string, string>,
     keyAttr?: string,
-    isRoot: boolean = true
+    isRoot: boolean = true,
+    rootEventAttrs: string = '',
+    restPropsToExpand: Map<string, string> = new Map()
   ): string {
     /**
      * Substitutes prop references in expression using AST transformation.
@@ -122,6 +132,11 @@ export function jsxToTemplateString(
           const el = node as IRElement
           const dataKeyAttr = injectDataKey && keyAttr ? ` data-key="\${${keyAttr}}"` : ''
 
+          // Inject event attributes from parent component (e.g., onClick passed to <Button>).
+          // These are pre-built by inlineComponent and passed down to be added to the root element.
+          // This enables event delegation for inlined components in list templates.
+          const injectedEventAttrs = injectDataKey ? rootEventAttrs : ''
+
           // Build attributes
           let attrs = ''
           let eventAttrs = ''
@@ -137,8 +152,27 @@ export function jsxToTemplateString(
             if (BOOLEAN_HTML_ATTRS.has(attrNameLower)) {
               // Boolean attrs should only be present when truthy
               attrs += `\${${expr} ? ' ${attr.name}' : ''}`
+            } else if (expr.startsWith('__STATIC_CLASS__')) {
+              // Static class value from CVA pattern - output directly without template expression
+              const staticValue = expr.slice('__STATIC_CLASS__'.length)
+              attrs += ` ${attr.name}="${staticValue}"`
             } else {
               attrs += ` ${attr.name}="\${${expr}}"`
+            }
+          }
+
+          // Expand spread attributes ({...props}) with actual prop values.
+          // When inlining a component that uses {...props} spread, we need to expand
+          // the rest props from the parent component into individual attributes.
+          if (el.spreadAttrs && el.spreadAttrs.length > 0 && restPropsToExpand.size > 0) {
+            for (const [propName, propExpr] of restPropsToExpand) {
+              const propNameLower = propName.toLowerCase()
+              if (BOOLEAN_HTML_ATTRS.has(propNameLower)) {
+                // Boolean attrs should only be present when truthy
+                attrs += `\${${propExpr} ? ' ${propName}' : ''}`
+              } else {
+                attrs += ` ${propName}="\${${propExpr}}"`
+              }
             }
           }
 
@@ -160,9 +194,9 @@ export function jsxToTemplateString(
           }
 
           if (el.children.length === 0 && !children) {
-            return `<${el.tagName}${dataKeyAttr}${eventAttrs}${attrs} />`
+            return `<${el.tagName}${dataKeyAttr}${injectedEventAttrs}${eventAttrs}${attrs} />`
           }
-          return `<${el.tagName}${dataKeyAttr}${eventAttrs}${attrs}>${children}</${el.tagName}>`
+          return `<${el.tagName}${dataKeyAttr}${injectedEventAttrs}${eventAttrs}${attrs}>${children}</${el.tagName}>`
         }
 
         case 'text': {
@@ -245,17 +279,20 @@ export function jsxToTemplateString(
   }
 
   /**
-   * Extracts props from component's JSX attributes.
+   * Extracts props and events from component's JSX attributes.
    * Handles both regular props and spread attributes.
    * For spread attributes, generates mappings like `name` → `spreadExpr.name`
    * based on the component's expected props.
+   *
+   * Returns both props (for substitution) and events (for event delegation).
    */
-  function extractComponentProps(
+  function extractComponentPropsAndEvents(
     attributes: ts.JsxAttributes,
     sf: ts.SourceFile,
     componentExpectedProps?: Array<{ name: string }>
-  ): Map<string, string> {
+  ): { props: Map<string, string>; componentEvents: Array<{ name: string; handler: string }> } {
     const props = new Map<string, string>()
+    const componentEvents: Array<{ name: string; handler: string }> = []
 
     // First, collect spread expressions
     const spreadExprs: string[] = []
@@ -275,12 +312,28 @@ export function jsxToTemplateString(
       }
     }
 
+    // Build set of explicit prop names for checking if an event-like prop is a callback
+    const explicitPropNames = new Set(componentExpectedProps?.map(p => p.name) || [])
+
     // Then process regular attributes (which override spread values)
     attributes.properties.forEach((attr) => {
       if (ts.isJsxAttribute(attr) && attr.name) {
         const propName = attr.name.getText(sf)
         if (attr.initializer) {
-          if (ts.isStringLiteral(attr.initializer)) {
+          // Check if this looks like an event handler AND is NOT an explicit prop
+          // - onClick on <Button> → not explicit, extract as event for delegation
+          // - onToggle on <TodoItem> → explicit callback prop, treat as regular prop
+          const isEventLike = propName.startsWith('on') && propName.length > 2
+          const isExplicitProp = explicitPropNames.has(propName)
+
+          if (isEventLike && !isExplicitProp) {
+            // Event handler for spread - extract for event delegation
+            if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+              const eventName = propName.slice(2).toLowerCase()
+              const handler = attr.initializer.expression.getText(sf)
+              componentEvents.push({ name: eventName, handler })
+            }
+          } else if (ts.isStringLiteral(attr.initializer)) {
             props.set(propName, `"${attr.initializer.text}"`)
           } else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
             props.set(propName, attr.initializer.expression.getText(sf))
@@ -288,17 +341,21 @@ export function jsxToTemplateString(
         }
       }
     })
-    return props
+    return { props, componentEvents }
   }
 
   /**
    * Inlines a component.
    * Uses IR to generate template when available (more reliable for same-file components).
    * Falls back to source parsing if IR is not available.
+   *
+   * @param componentEvents - Events passed from parent to this component (e.g., onClick handlers)
+   *                         These need to be attached to the root element of the inlined component.
    */
   function inlineComponent(
     componentResult: CompileResult,
-    propsMap: Map<string, string>
+    propsMap: Map<string, string>,
+    componentEvents: Array<{ name: string; handler: string }> = []
   ): string {
     // Extract key prop for data-key attribute on root element
     const keyAttr = propsMap.get('key')
@@ -314,11 +371,75 @@ export function jsxToTemplateString(
       }
     }
 
+    // Handle localVariables that use CVA patterns
+    // For CVA-based local variables like `const buttonClass = buttonVariants({ variant, size, className })`
+    // we need to inline the computed class value directly (without quotes, as it will be used in template expressions)
+    if (componentResult.localVariables && componentResult.cvaPatterns) {
+      for (const localVar of componentResult.localVariables) {
+        // Check if this local variable's code contains a CVA pattern call
+        const cvaPattern = componentResult.cvaPatterns.find(p => localVar.code.includes(p.name + '('))
+        if (cvaPattern) {
+          // Compute the class from CVA lookup map
+          const variantValue = propsMap.get('variant') || `"${cvaPattern.defaultVariants?.variant || 'default'}"`
+          const sizeValue = propsMap.get('size') || `"${cvaPattern.defaultVariants?.size || 'default'}"`
+          // Get variant and size keys by stripping quotes
+          const variantKey = variantValue.replace(/^["']|["']$/g, '')
+          const sizeKey = sizeValue.replace(/^["']|["']$/g, '')
+          // Build the class by combining base, variant class, and size class
+          const baseClass = cvaPattern.baseClass
+          const variantClass = cvaPattern.variantDefs?.variant?.[variantKey] || ''
+          const sizeClass = cvaPattern.variantDefs?.size?.[sizeKey] || ''
+          const classNameValue = propsMap.get('className') || propsMap.get('class') || ''
+          const cleanClassName = classNameValue.replace(/^["']|["']$/g, '')
+          const computedClass = [baseClass, variantClass, sizeClass, cleanClassName].filter(Boolean).join(' ').trim()
+          // Mark as static string value (for template generation, it will be used directly without template expression)
+          propsMap.set(localVar.name, `__STATIC_CLASS__${computedClass}`)
+        }
+      }
+    }
+
+    // Build event delegation attributes for the inlined component's root element.
+    // When a component like <Button onClick={handler}> is used in a list template,
+    // the onClick is extracted as a componentEvent. We register it in the events array
+    // and create data-index/data-event-id attributes so the client-side event delegation
+    // can find and invoke the correct handler.
+    let componentEventAttrs = ''
+    if (componentEvents.length > 0) {
+      const eventId = eventIdCounter++
+      componentEventAttrs = ` data-index="\${__index}" data-event-id="${eventId}"`
+      for (const event of componentEvents) {
+        events.push({ eventId, eventName: event.name, handler: event.handler })
+      }
+    }
+
+    // Calculate rest props to expand when the component uses {...props} spread.
+    // Rest props are props passed from parent that are NOT explicit props of the component.
+    // For example, when <Button disabled={...}> is used, 'disabled' is a rest prop
+    // because Button destructures {class, variant, size, asChild, children, ...props}.
+    const restPropsToExpand = new Map<string, string>()
+    if (componentResult.restPropsName) {
+      const explicitPropNames = new Set(componentResult.props.map(p => p.name))
+      // Also consider common prop aliases
+      if (explicitPropNames.has('class')) explicitPropNames.add('className')
+      if (explicitPropNames.has('className')) explicitPropNames.add('class')
+
+      for (const [propName, propExpr] of propsMap) {
+        // Skip explicit props (they're substituted via propsMap)
+        if (explicitPropNames.has(propName)) continue
+        // Skip internal props used by the compiler
+        if (propName === 'key' || propName === 'children') continue
+        // Skip local variables (like buttonClass from CVA)
+        if (propExpr.startsWith('__STATIC_CLASS__')) continue
+        // This is a rest prop - should be expanded in {...props} spread
+        restPropsToExpand.set(propName, propExpr)
+      }
+    }
+
     // Prefer IR when available - it's component-specific and more reliable
     // This is especially important for same-file components where source
     // contains multiple components and parsing would find the wrong one
     if (componentResult.ir) {
-      return irToHtmlTemplate(componentResult.ir, propsMap, keyAttr, true)
+      return irToHtmlTemplate(componentResult.ir, propsMap, keyAttr, true, componentEventAttrs, restPropsToExpand)
     }
 
     // Fall back to parsing source if no IR
@@ -562,8 +683,8 @@ export function jsxToTemplateString(
       // Detect component tag and inline expand
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
-        const propsMap = extractComponentProps(n.attributes, sourceFile, componentResult.props)
-        return inlineComponent(componentResult, propsMap)
+        const { props: propsMap, componentEvents } = extractComponentPropsAndEvents(n.attributes, sourceFile, componentResult.props)
+        return inlineComponent(componentResult, propsMap, componentEvents)
       }
 
       const { attrs, eventAttrs } = processAttributes(n.attributes)
@@ -594,12 +715,12 @@ export function jsxToTemplateString(
       // Detect component tag and inline expand
       if (isPascalCase(tagName) && components.has(tagName)) {
         const componentResult = components.get(tagName)!
-        const propsMap = extractComponentProps(n.openingElement.attributes, sourceFile, componentResult.props)
+        const { props: propsMap, componentEvents } = extractComponentPropsAndEvents(n.openingElement.attributes, sourceFile, componentResult.props)
         // Pass children as a prop (quoted string for proper template interpolation)
         if (childrenContent) {
           propsMap.set('children', `"${childrenContent}"`)
         }
-        return inlineComponent(componentResult, propsMap)
+        return inlineComponent(componentResult, propsMap, componentEvents)
       }
 
       const { attrs, eventAttrs } = processAttributes(n.openingElement.attributes)

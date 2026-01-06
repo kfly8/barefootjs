@@ -7,7 +7,7 @@
 
 import type { ComponentData } from './file-grouping'
 import { filterChildrenWithClientJs, joinDeclarations } from './client-js-helpers'
-import { replacePropsWithGetterCallsAST } from '../extractors/expression'
+import { replacePropsWithGetterCallsAST, replaceGettersWithCallsAST } from '../extractors/expression'
 
 /**
  * Context for client JS generation
@@ -181,7 +181,7 @@ function generateInitFunction(
   sameFileComponentNames: string[],
   ctx: ClientJsContext
 ): string {
-  const { name, result, constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations, childInits } = comp
+  const { name, result, constantDeclarations, cvaLookupDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations, childInits, cvaGetterNames } = comp
 
   // Generate child init calls (including same-file children)
   const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
@@ -204,18 +204,20 @@ function generateInitFunction(
     childInitCalls ? `\n  // Initialize child components\n${childInitCalls}` : '',
   ].filter(Boolean).join('\n')
 
-  const needsInitFunction = result.props.length > 0 || childInits.length > 0
-  // Order matters: constants, signals, local variables, memos, then user-written effects
+  const needsInitFunction = result.props.length > 0 || result.restPropsName || childInits.length > 0
+  // Order matters: CVA lookups, constants, signals, local variables, memos, then user-written effects
+  // CVA lookups must come first because local variables (getter functions) reference them
   // Local variables must come before memos because memos may use them
   // Effects come last because they may depend on signals and memos
-  const declarations = joinDeclarations(constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations)
+  const declarations = joinDeclarations(cvaLookupDeclarations, constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations)
 
   if (needsInitFunction) {
-    return generateInitFunctionWithProps(name, result, declarations, bodyCode)
+    return generateInitFunctionWithProps(name, result, declarations, bodyCode, cvaGetterNames)
   } else {
-    return generateModuleLevelCode(name, result, declarations, bodyCode)
+    return generateModuleLevelCode(name, result, declarations, bodyCode, cvaGetterNames)
   }
 }
+
 
 /**
  * Generate init function with prop handling
@@ -224,7 +226,8 @@ function generateInitFunctionWithProps(
   name: string,
   result: ComponentData['result'],
   declarations: string,
-  bodyCode: string
+  bodyCode: string,
+  cvaGetterNames: string[] = []
 ): string {
   // Separate callback props (on*) from value props
   const isCallbackProp = (propName: string) => /^on[A-Z]/.test(propName)
@@ -232,21 +235,42 @@ function generateInitFunctionWithProps(
   const valueProps = result.props.filter(p => !isCallbackProp(p.name))
 
   // Destructure props:
-  // - Callback props are used directly
-  // - Value props get aliases for getter unwrapping
+  // - Callback props are used directly (with localName support)
+  // - Value props get aliases for getter unwrapping (with localName support)
+  // - Rest props are captured if restPropsName is set
   const propsParamParts = [
-    ...callbackProps.map(p => p.name),
-    ...valueProps.map(p => `${p.name}: __raw_${p.name}`)
+    ...callbackProps.map(p => {
+      const localName = p.localName || p.name
+      // If prop name differs from local name (e.g., class -> className), use rename syntax
+      if (p.localName) {
+        return `${p.name}: ${localName}`
+      }
+      return localName
+    }),
+    ...valueProps.map(p => {
+      const localName = p.localName || p.name
+      // Value props use __raw_ prefix for getter unwrapping
+      if (p.localName) {
+        return `${p.name}: __raw_${localName}`
+      }
+      return `${p.name}: __raw_${p.name}`
+    })
   ]
+  // Add rest props if present
+  if (result.restPropsName) {
+    propsParamParts.push(`...${result.restPropsName}`)
+  }
   const propsParam = propsParamParts.length > 0
     ? `{ ${propsParamParts.join(', ')} }`
     : '{}'
 
   // Generate getter unwrapping code for value props only
+  // Use localName when available for proper variable naming
   const propUnwrapCode = valueProps.length > 0
-    ? valueProps.map(p =>
-        `const ${p.name} = typeof __raw_${p.name} === 'function' ? __raw_${p.name} : () => __raw_${p.name}`
-      ).join('\n')
+    ? valueProps.map(p => {
+        const localName = p.localName || p.name
+        return `const ${localName} = typeof __raw_${localName} === 'function' ? __raw_${localName} : () => __raw_${localName}`
+      }).join('\n')
     : ''
 
   // Apply prop getter replacement to both declarations (for signal initial values) and body code
@@ -254,10 +278,49 @@ function generateInitFunctionWithProps(
   const propNames = valueProps.map(p => p.name)
   const processedDeclarations = replacePropsWithGetterCallsAST(declarations, propNames)
   const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-  const processedBodyCode = replacePropsWithGetterCallsAST(bodyCode, propNames)
+  // Also replace CVA getter names with function calls in body code using AST
+  const processedBodyCode = replaceGettersWithCallsAST(
+    replacePropsWithGetterCallsAST(bodyCode, propNames),
+    cvaGetterNames
+  )
+
+  // Generate rest props handling code
+  // When restPropsName is set, attach event listeners and handle reactive props
+  const restPropsEventCode = result.restPropsName
+    ? `
+  // Attach event listeners and reactive props from rest props to root element
+  if (${result.restPropsName} && _0) {
+    const __booleanProps = ['disabled', 'checked', 'hidden', 'readOnly', 'required', 'multiple', 'autofocus', 'autoplay', 'controls', 'loop', 'muted', 'selected', 'open']
+    for (const [key, value] of Object.entries(${result.restPropsName})) {
+      if (key.startsWith('on') && key.length > 2 && typeof value === 'function') {
+        // Event listener
+        const eventName = key[2].toLowerCase() + key.slice(3)
+        _0.addEventListener(eventName, value)
+      } else if (typeof value === 'function') {
+        // Reactive prop - create effect to update attribute
+        if (__booleanProps.includes(key)) {
+          createEffect(() => { _0[key] = !!value() })
+        } else {
+          createEffect(() => {
+            const v = value()
+            if (v != null) _0.setAttribute(key, String(v))
+            else _0.removeAttribute(key)
+          })
+        }
+      } else {
+        // Static prop - just set once (server already rendered this, but ensure consistency)
+        if (__booleanProps.includes(key)) {
+          _0[key] = !!value
+        } else if (value != null) {
+          _0.setAttribute(key, String(value))
+        }
+      }
+    }
+  }`
+    : ''
 
   return `export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
-${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}
+${allDeclarations ? allDeclarations.split('\n').map(l => '  ' + l).join('\n') + '\n' : ''}${processedBodyCode.split('\n').map(l => '  ' + l).join('\n')}${restPropsEventCode}
 }`
 }
 
@@ -268,11 +331,15 @@ function generateModuleLevelCode(
   name: string,
   result: ComponentData['result'],
   declarations: string,
-  bodyCode: string
+  bodyCode: string,
+  cvaGetterNames: string[] = []
 ): string {
   // Module-level code that contains `return` statements needs to be wrapped in an IIFE
   // because `return` is invalid at module top-level in ES modules
   const hasReturnStatement = bodyCode.includes('return')
+
+  // Apply CVA getter replacement to body code using AST
+  const processedBodyCode = replaceGettersWithCallsAST(bodyCode, cvaGetterNames)
 
   if (hasReturnStatement) {
     return `// ${name} (wrapped in IIFE for return statement)
@@ -281,14 +348,14 @@ const __instanceIndex = 0
 const __parentScope = null
 ${declarations}
 
-${bodyCode}
+${processedBodyCode}
 })()`
   } else {
     const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
     return `// ${name} (no init function needed)
 ${instanceVarsLine}${declarations}
 
-${bodyCode}`
+${processedBodyCode}`
   }
 }
 

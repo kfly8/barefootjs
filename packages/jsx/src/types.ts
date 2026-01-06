@@ -180,6 +180,22 @@ export type ModuleConstant = {
   code: string        // const GRID_SIZE = 100
 }
 
+/**
+ * CVA (class-variance-authority) Pattern Information
+ *
+ * Used to generate lookup maps in client JS for reactive variant/size updates.
+ */
+export type CvaPatternInfo = {
+  /** Variable name (e.g., 'buttonVariants') */
+  name: string
+  /** Base class from cva first argument */
+  baseClass: string
+  /** Variant definitions: { variant: { default: '...', destructive: '...' }, size: {...} } */
+  variantDefs: Record<string, Record<string, string>>
+  /** Default variants: { variant: 'default', size: 'default' } */
+  defaultVariants: Record<string, string>
+}
+
 export type LocalFunction = {
   name: string        // handleToggle
   code: string        // const handleToggle = (id) => { ... }
@@ -196,7 +212,8 @@ export type ChildComponentInit = {
 }
 
 export type PropWithType = {
-  name: string        // showCounter
+  name: string        // class (the prop name passed to the component)
+  localName?: string  // className (the local variable name, if different from name)
   type: string        // boolean
   optional: boolean   // true if has ? or default value
   defaultValue?: string  // 'false', '0', '""' - default value if prop has one
@@ -209,6 +226,7 @@ export type CompileResult = {
   memos: MemoDeclaration[]         // Memoized computed values
   effects: EffectDeclaration[]     // User-written createEffect blocks
   moduleConstants: ModuleConstant[] // Module-level constants
+  cvaPatterns: CvaPatternInfo[]    // CVA pattern definitions for lookup map generation
   localFunctions: LocalFunction[]  // Functions defined within the component
   localVariables: LocalVariable[]  // Local variables defined within the component (non-function)
   childInits: ChildComponentInit[] // Child components that need initialization
@@ -220,10 +238,12 @@ export type CompileResult = {
   conditionalElements: ConditionalElement[]  // Conditional rendering elements
   props: PropWithType[]            // Props with type information
   propsTypeRefName: string | null  // Original type reference name (e.g., "ButtonProps") or null for inline types
+  restPropsName: string | null     // Name of rest spread props (e.g., 'props' from ...props)
   typeDefinitions: string[]        // Type definitions used by props
   source: string   // Component source code (for inline expansion in map)
   ir: IRNode | null  // Intermediate Representation for Marked JSX generation
-  imports: ComponentImport[]       // Import statements from source file
+  imports: ComponentImport[]       // Import statements from source file (local only)
+  externalImports: ExternalImport[] // External package imports (npm packages)
   isDefaultExport?: boolean        // Whether this component is the default export
   hasUseClientDirective: boolean   // Whether file has "use client" directive
 }
@@ -232,6 +252,12 @@ export type ComponentImport = {
   name: string      // Counter
   path: string      // ./Counter
   isDefault: boolean // true for default import, false for named import
+}
+
+export type ExternalImport = {
+  code: string      // Full import statement code
+  path: string      // Module path (e.g., 'class-variance-authority')
+  names: string[]   // Imported names (for dependency tracking)
 }
 
 export type ComponentOutput = {
@@ -289,6 +315,8 @@ export type MarkedJsxComponentData = {
   props: PropWithType[]
   /** Original type reference name (e.g., "ButtonProps") or null for inline types */
   propsTypeRefName: string | null
+  /** Name of rest spread props (e.g., 'props' from ...props) */
+  restPropsName: string | null
   typeDefinitions: string[]
   jsx: string
   ir: IRNode | null
@@ -317,6 +345,8 @@ export type MarkedJsxAdapter = {
     moduleConstants: ModuleConstant[]
     /** Original import statements for child components */
     originalImports: ComponentImport[]
+    /** External package imports (npm packages like 'class-variance-authority') */
+    externalImports: ExternalImport[]
   }) => string
 
   /**

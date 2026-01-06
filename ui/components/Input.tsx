@@ -7,6 +7,12 @@
  * Uses CSS variables for theming support.
  */
 
+/**
+ * Event with typed target for input elements.
+ * Provides convenient access to e.target.value without manual casting.
+ */
+export type InputTargetEvent<T extends Event = Event> = T & { target: HTMLInputElement }
+
 export interface InputProps {
   inputType?: string
   inputPlaceholder?: string
@@ -15,10 +21,14 @@ export interface InputProps {
   inputReadOnly?: boolean
   inputError?: boolean
   inputDescribedBy?: string
-  onInput?: (e: Event & { target: HTMLInputElement }) => void
-  onChange?: (e: Event & { target: HTMLInputElement }) => void
-  onBlur?: (e: Event & { target: HTMLInputElement }) => void
-  onFocus?: (e: Event & { target: HTMLInputElement }) => void
+  /** Handler with typed target for convenient access to e.target.value */
+  onInput?: (e: InputTargetEvent<InputEvent>) => void
+  /** Handler with typed target for convenient access to e.target.value */
+  onChange?: (e: InputTargetEvent) => void
+  /** Handler with typed target for convenient access to e.target.value */
+  onBlur?: (e: InputTargetEvent<FocusEvent>) => void
+  /** Handler with typed target for convenient access to e.target.value */
+  onFocus?: (e: InputTargetEvent<FocusEvent>) => void
 }
 
 export function Input({

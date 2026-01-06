@@ -46,6 +46,7 @@ export function generateFileMarkedJsx(
         name: c.name,
         props: c.result.props,
         propsTypeRefName: c.result.propsTypeRefName,
+        restPropsName: c.result.restPropsName,
         typeDefinitions: c.result.typeDefinitions,
         jsx,
         ir: c.result.ir,
@@ -69,10 +70,17 @@ export function generateFileMarkedJsx(
     arr.findIndex(x => x.name === imp.name && x.path === imp.path) === i
   )
 
+  // Collect all external imports (deduplicated by path)
+  const allExternalImports = fileComponents.flatMap(c => c.result.externalImports)
+  const uniqueExternalImports = allExternalImports.filter((imp, i, arr) =>
+    arr.findIndex(x => x.path === imp.path) === i
+  )
+
   return options.markedJsxAdapter.generateMarkedJsxFile({
     sourcePath,
     components: markedJsxComponents,
     moduleConstants: uniqueModuleConstants,
     originalImports: uniqueImports,
+    externalImports: uniqueExternalImports,
   })
 }

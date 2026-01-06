@@ -11,250 +11,19 @@
 
 export { jsx, jsxs, Fragment } from 'hono/jsx/jsx-runtime'
 
-// Targeted event types with proper target typing
-type TargetedEvent<Target extends EventTarget, E extends Event = Event> = Omit<E, 'target'> & {
-  readonly target: Target
-}
-
-type TargetedInputEvent<Target extends EventTarget> = TargetedEvent<Target, InputEvent>
-type TargetedFocusEvent<Target extends EventTarget> = TargetedEvent<Target, FocusEvent>
-type TargetedKeyboardEvent<Target extends EventTarget> = TargetedEvent<Target, KeyboardEvent>
-type TargetedMouseEvent<Target extends EventTarget> = TargetedEvent<Target, MouseEvent>
-
-// Event handler types
-type InputEventHandler<T extends EventTarget = HTMLInputElement> = (event: TargetedInputEvent<T>) => void
-type FocusEventHandler<T extends EventTarget = HTMLElement> = (event: TargetedFocusEvent<T>) => void
-type KeyboardEventHandler<T extends EventTarget = HTMLElement> = (event: TargetedKeyboardEvent<T>) => void
-type MouseEventHandler<T extends EventTarget = HTMLElement> = (event: TargetedMouseEvent<T>) => void
-type ChangeEventHandler<T extends EventTarget = HTMLElement> = (event: TargetedEvent<T>) => void
-
-// Base event attributes (from Hono, but with weaker types for non-input elements)
-interface BaseEventAttributes {
-  onScroll?: (event: Event) => void
-  onWheel?: (event: WheelEvent) => void
-  onAnimationStart?: (event: AnimationEvent) => void
-  onAnimationEnd?: (event: AnimationEvent) => void
-  onAnimationIteration?: (event: AnimationEvent) => void
-  onTransitionEnd?: (event: TransitionEvent) => void
-  onCopy?: (event: ClipboardEvent) => void
-  onCut?: (event: ClipboardEvent) => void
-  onPaste?: (event: ClipboardEvent) => void
-  onCompositionStart?: (event: CompositionEvent) => void
-  onCompositionEnd?: (event: CompositionEvent) => void
-  onCompositionUpdate?: (event: CompositionEvent) => void
-  onDrag?: (event: DragEvent) => void
-  onDragEnd?: (event: DragEvent) => void
-  onDragEnter?: (event: DragEvent) => void
-  onDragExit?: (event: DragEvent) => void
-  onDragLeave?: (event: DragEvent) => void
-  onDragOver?: (event: DragEvent) => void
-  onDragStart?: (event: DragEvent) => void
-  onDrop?: (event: DragEvent) => void
-  onSubmit?: (event: SubmitEvent) => void
-  onReset?: (event: Event) => void
-  onLoad?: (event: Event) => void
-  onError?: (event: Event) => void
-}
-
-// HTML attributes base
-interface HTMLBaseAttributes extends BaseEventAttributes {
-  // Core attributes
-  id?: string
-  class?: string | Promise<string>
-  style?: string | Record<string, string | number>
-  title?: string
-  tabindex?: number | string
-  hidden?: boolean
-  draggable?: boolean | 'true' | 'false'
-  contenteditable?: boolean | 'true' | 'false' | 'inherit' | 'plaintext-only'
-  spellcheck?: boolean | 'true' | 'false'
-  accesskey?: string
-  dir?: 'ltr' | 'rtl' | 'auto'
-  lang?: string
-  slot?: string
-
-  // Data attributes
-  [key: `data-${string}`]: string | number | boolean | undefined
-
-  // ARIA attributes
-  role?: string
-  [key: `aria-${string}`]: string | number | boolean | undefined
-
-  // JSX special
-  dangerouslySetInnerHTML?: { __html: string }
-  children?: any
-  key?: string | number | bigint | null
-
-  // Allow any other attributes
-  [key: string]: any
-}
-
-// Input element specific attributes with proper event typing
-interface InputHTMLAttributes extends HTMLBaseAttributes {
-  // Input specific attributes
-  accept?: string
-  alt?: string
-  autocomplete?: string
-  autofocus?: boolean
-  capture?: boolean | 'user' | 'environment'
-  checked?: boolean
-  disabled?: boolean
-  form?: string
-  formaction?: string
-  formenctype?: string
-  formmethod?: string
-  formnovalidate?: boolean
-  formtarget?: string
-  height?: number | string
-  list?: string
-  max?: number | string
-  maxlength?: number
-  min?: number | string
-  minlength?: number
-  multiple?: boolean
-  name?: string
-  pattern?: string
-  placeholder?: string
-  readonly?: boolean
-  required?: boolean
-  size?: number
-  src?: string
-  step?: number | string
-  type?: string
-  value?: string | ReadonlyArray<string> | number
-  width?: number | string
-
-  // Properly typed event handlers for input
-  onInput?: InputEventHandler<HTMLInputElement>
-  onChange?: ChangeEventHandler<HTMLInputElement>
-  onBlur?: FocusEventHandler<HTMLInputElement>
-  onFocus?: FocusEventHandler<HTMLInputElement>
-  onKeyDown?: KeyboardEventHandler<HTMLInputElement>
-  onKeyUp?: KeyboardEventHandler<HTMLInputElement>
-  onKeyPress?: KeyboardEventHandler<HTMLInputElement>
-}
-
-// Textarea element specific attributes
-interface TextareaHTMLAttributes extends HTMLBaseAttributes {
-  autocomplete?: string
-  autofocus?: boolean
-  cols?: number
-  disabled?: boolean
-  form?: string
-  maxlength?: number
-  minlength?: number
-  name?: string
-  placeholder?: string
-  readonly?: boolean
-  required?: boolean
-  rows?: number
-  value?: string
-  wrap?: 'hard' | 'soft' | 'off'
-
-  // Properly typed event handlers for textarea
-  onInput?: InputEventHandler<HTMLTextAreaElement>
-  onChange?: ChangeEventHandler<HTMLTextAreaElement>
-  onBlur?: FocusEventHandler<HTMLTextAreaElement>
-  onFocus?: FocusEventHandler<HTMLTextAreaElement>
-  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>
-  onKeyUp?: KeyboardEventHandler<HTMLTextAreaElement>
-  onKeyPress?: KeyboardEventHandler<HTMLTextAreaElement>
-}
-
-// Select element specific attributes
-interface SelectHTMLAttributes extends HTMLBaseAttributes {
-  autocomplete?: string
-  autofocus?: boolean
-  disabled?: boolean
-  form?: string
-  multiple?: boolean
-  name?: string
-  required?: boolean
-  size?: number
-  value?: string | ReadonlyArray<string>
-
-  // Properly typed event handlers for select
-  onChange?: ChangeEventHandler<HTMLSelectElement>
-  onBlur?: FocusEventHandler<HTMLSelectElement>
-  onFocus?: FocusEventHandler<HTMLSelectElement>
-}
-
-// Button element specific attributes
-interface ButtonHTMLAttributes extends HTMLBaseAttributes {
-  autofocus?: boolean
-  disabled?: boolean
-  form?: string
-  formaction?: string
-  formenctype?: string
-  formmethod?: string
-  formnovalidate?: boolean
-  formtarget?: string
-  name?: string
-  type?: 'submit' | 'reset' | 'button'
-  value?: string
-
-  // Properly typed event handlers for button
-  onClick?: MouseEventHandler<HTMLButtonElement>
-  onBlur?: FocusEventHandler<HTMLButtonElement>
-  onFocus?: FocusEventHandler<HTMLButtonElement>
-}
-
-// Form element attributes
-interface FormHTMLAttributes extends HTMLBaseAttributes {
-  acceptCharset?: string
-  action?: string | Function
-  autocomplete?: 'on' | 'off'
-  encoding?: string
-  enctype?: string
-  method?: 'get' | 'post' | 'dialog'
-  name?: string
-  novalidate?: boolean
-  target?: string
-}
-
-// Anchor element attributes
-interface AnchorHTMLAttributes extends HTMLBaseAttributes {
-  download?: string | boolean
-  href?: string
-  hreflang?: string
-  media?: string
-  ping?: string
-  rel?: string
-  target?: '_self' | '_blank' | '_parent' | '_top' | string
-  type?: string
-  referrerpolicy?: string
-
-  onClick?: MouseEventHandler<HTMLAnchorElement>
-}
-
-// Image element attributes
-interface ImgHTMLAttributes extends HTMLBaseAttributes {
-  alt?: string
-  crossorigin?: 'anonymous' | 'use-credentials' | ''
-  decoding?: 'async' | 'auto' | 'sync'
-  height?: number | string
-  loading?: 'eager' | 'lazy'
-  referrerpolicy?: string
-  sizes?: string
-  src?: string
-  srcset?: string
-  usemap?: string
-  width?: number | string
-}
-
-// Label element attributes
-interface LabelHTMLAttributes extends HTMLBaseAttributes {
-  for?: string
-  form?: string
-}
-
-// Option element attributes
-interface OptionHTMLAttributes extends HTMLBaseAttributes {
-  disabled?: boolean
-  label?: string
-  selected?: boolean
-  value?: string | ReadonlyArray<string> | number
-}
+// Import types for use in JSX namespace
+import type {
+  HTMLBaseAttributes,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  TextareaHTMLAttributes,
+  SelectHTMLAttributes,
+  FormHTMLAttributes,
+  AnchorHTMLAttributes,
+  ImgHTMLAttributes,
+  LabelHTMLAttributes,
+  OptionHTMLAttributes,
+} from '@barefootjs/jsx'
 
 // Re-export JSX namespace with proper types
 export declare namespace JSX {
@@ -407,7 +176,7 @@ export declare namespace JSX {
 
     // SVG (basic support)
     svg: HTMLBaseAttributes & { viewBox?: string; xmlns?: string; width?: number | string; height?: number | string; fill?: string; stroke?: string }
-    path: HTMLBaseAttributes & { d?: string; fill?: string; stroke?: string; 'stroke-width'?: number | string }
+    path: HTMLBaseAttributes & { d?: string; fill?: string; stroke?: string; 'stroke-width'?: number | string; 'stroke-linecap'?: string; 'stroke-linejoin'?: string }
     circle: HTMLBaseAttributes & { cx?: number | string; cy?: number | string; r?: number | string; fill?: string; stroke?: string }
     rect: HTMLBaseAttributes & { x?: number | string; y?: number | string; width?: number | string; height?: number | string; rx?: number | string; ry?: number | string; fill?: string; stroke?: string }
     line: HTMLBaseAttributes & { x1?: number | string; y1?: number | string; x2?: number | string; y2?: number | string; stroke?: string; 'stroke-width'?: number | string }

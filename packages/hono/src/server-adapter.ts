@@ -49,7 +49,7 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
   /**
    * Generate Marked JSX file code (multiple components in one file)
    */
-  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, originalImports }) => {
+  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, originalImports, externalImports = [] }) => {
     // Calculate relative path to manifest.json based on source path depth
     const sourceDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
     const dirDepth = sourceDir ? sourceDir.split('/').length : 0
@@ -69,11 +69,17 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       })
       .join('\n')
 
+    // External package imports (npm packages like 'class-variance-authority', 'clsx')
+    const externalImportLines = externalImports
+      .map(imp => imp.code)
+      .join('\n')
+
     // Shared imports
     const allImports = [
       `import { useRequestContext } from 'hono/jsx-renderer'`,
       `import manifest from '${manifestPath}'`,
       needsRawHtml ? `import { raw } from 'hono/html'` : '',
+      externalImportLines,
       childImports,
     ].filter(Boolean).join('\n')
 
@@ -92,11 +98,23 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
 
     // Generate each component function
     const componentFunctions = components.map(comp => {
-      const { name, props, propsTypeRefName, jsx, isDefaultExport, localVariables } = comp
+      const { name, props, propsTypeRefName, restPropsName, jsx, isDefaultExport, localVariables } = comp
 
-      // Extract prop names for destructuring
-      const propNames = props.map(p => p.name)
-      const allProps = [...propNames, '"data-key": __dataKey', '__listIndex']
+      // Extract prop names for destructuring (handle renamed props like { class: className })
+      const propDestructure = props.map(p => {
+        if (p.localName) {
+          // Prop is renamed: { class: className }
+          return `${p.name}: ${p.localName}`
+        }
+        return p.name
+      })
+      // Get local variable names for use in function body
+      const propLocalNames = props.map(p => p.localName || p.name)
+      const allProps = [...propDestructure, '"data-key": __dataKey', '__listIndex']
+      // Add rest spread at the end if present
+      if (restPropsName) {
+        allProps.push(`...${restPropsName}`)
+      }
       const propsParam = `{ ${allProps.join(', ')} }`
 
       // Hydration props that are always added
@@ -113,9 +131,11 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
           const optionalMark = p.optional ? '?' : ''
           return `${p.name}${optionalMark}: ${p.type}`
         }).join('; ')
-        propsType = `: { ${basePropsType}; "data-key"?: string | number; __listIndex?: number }`
+        const restPropsType = restPropsName ? `[key: string]: unknown; ` : ''
+        propsType = `: { ${basePropsType}; ${restPropsType}"data-key"?: string | number; __listIndex?: number }`
       } else {
-        propsType = `: ${hydrationProps}`
+        const restPropsType = restPropsName ? `[key: string]: unknown; ` : ''
+        propsType = `: { ${restPropsType}"data-key"?: string | number; __listIndex?: number }`
       }
 
       // Inject conditional data-key attribute
@@ -163,14 +183,21 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       // Use 'export default function' for default exports, 'export function' for named exports
       const exportKeyword = isDefaultExport ? 'export default function' : 'export function'
 
-      if (props.length > 0) {
+      if (props.length > 0 || restPropsName) {
+        // Generate hydration serialization: use local variable name for access, prop name for key
+        const hydratePropsCode = props.map(p => {
+          const localVar = p.localName || p.name
+          const propKey = p.name
+          return `if (typeof ${localVar} !== 'function' && !(typeof ${localVar} === 'object' && ${localVar} !== null && 'isEscaped' in ${localVar})) __hydrateProps['${propKey}'] = ${localVar}`
+        }).join('\n  ')
+
         return `${exportKeyword} ${name}(${propsParam}${propsType}) {
 ${contextHelper}${localVarDefs}
 
   // Serialize props for client hydration
   // Skip functions and JSX elements (they can't be JSON serialized)
   const __hydrateProps: Record<string, unknown> = {}
-  ${propNames.map(p => `if (typeof ${p} !== 'function' && !(typeof ${p} === 'object' && ${p} !== null && 'isEscaped' in ${p})) __hydrateProps['${p}'] = ${p}`).join('\n  ')}
+  ${hydratePropsCode}
   const __hasHydrateProps = Object.keys(__hydrateProps).length > 0
 
   // Generate unique instance ID for this component instance

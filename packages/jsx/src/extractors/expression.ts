@@ -453,6 +453,107 @@ export function substituteIdentifiersAST(
 }
 
 /**
+ * Replace getter names with function calls using AST transformation.
+ *
+ * e.g., `buttonClass` → `buttonClass()`
+ *
+ * Handles:
+ * - Regular identifier: buttonClass → buttonClass()
+ * - Skips: property access (.buttonClass), already called (buttonClass()),
+ *          declarations (const buttonClass = ...), etc.
+ */
+export function replaceGettersWithCallsAST(
+  code: string,
+  getterNames: string[]
+): string {
+  if (getterNames.length === 0 || code.trim() === '') {
+    return code
+  }
+
+  const sourceFile = ts.createSourceFile(
+    'temp.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true
+  )
+
+  const replacements: Array<{ start: number; end: number; value: string }> = []
+  const getterSet = new Set(getterNames)
+
+  function shouldSkipIdentifier(node: ts.Identifier): boolean {
+    const parent = node.parent
+
+    // Property access right side: obj.buttonClass
+    if (ts.isPropertyAccessExpression(parent) && parent.name === node) {
+      return true
+    }
+
+    // Property definition key: { buttonClass: value }
+    if (ts.isPropertyAssignment(parent) && parent.name === node) {
+      return true
+    }
+
+    // Already a function call: buttonClass()
+    if (ts.isCallExpression(parent) && parent.expression === node) {
+      return true
+    }
+
+    // Parameter definition: (buttonClass) => ...
+    if (ts.isParameter(parent)) {
+      return true
+    }
+
+    // Variable declaration left side: const buttonClass = ...
+    if (ts.isVariableDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    // Binding element (destructuring): const { buttonClass } = obj
+    if (ts.isBindingElement(parent)) {
+      return true
+    }
+
+    // Function declaration name: function buttonClass() {}
+    if (ts.isFunctionDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    // Method name: { buttonClass() {} }
+    if (ts.isMethodDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    return false
+  }
+
+  function visit(node: ts.Node) {
+    // Regular identifier: buttonClass → buttonClass()
+    if (ts.isIdentifier(node) && getterSet.has(node.text)) {
+      if (!shouldSkipIdentifier(node)) {
+        replacements.push({
+          start: node.getStart(),
+          end: node.getEnd(),
+          value: `${node.text}()`
+        })
+      }
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+
+  // Replace from end to preserve positions
+  replacements.sort((a, b) => b.start - a.start)
+  let result = code
+  for (const r of replacements) {
+    result = result.slice(0, r.start) + r.value + result.slice(r.end)
+  }
+
+  return result
+}
+
+/**
  * Substitutes prop function calls with inlined values using AST transformation.
  *
  * Handles two cases:

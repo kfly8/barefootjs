@@ -10,6 +10,7 @@
   "dependencies": {
     "@barefootjs/dom": "workspace:*",
     "@barefootjs/hono": "workspace:*",
+    "class-variance-authority": "^0.7.1",
     "hono": "^4",
     "lucide-static": "^0.562.0",
     "shiki": "^3.20.0"

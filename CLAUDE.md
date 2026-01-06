@@ -79,3 +79,44 @@ When adding or modifying compiler features:
 2. Add E2E test to `packages/jsx/__tests__/spec/` with spec ID comment (e.g., `// JSX-001: Plain text preserved`)
 
 See [SPEC.md](SPEC.md) for specification format details.
+
+## Important Guidelines
+
+### UI Components Must NOT Depend on Hono
+
+**CRITICAL**: Components in `ui/components/` must be framework-agnostic.
+
+- ❌ **NEVER** import from `@barefootjs/hono` or `hono/*` in UI components
+- ✅ Import types from `@barefootjs/jsx`
+- ✅ Import runtime from `@barefootjs/dom`
+
+```typescript
+// ❌ WRONG - creates Hono dependency
+import type { ButtonHTMLAttributes } from '@barefootjs/hono/jsx/jsx-runtime'
+
+// ✅ CORRECT - framework-agnostic
+import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
+```
+
+The `ui/` components are meant to be reusable across different frameworks. Hono integration belongs only in `packages/hono/`.
+
+### Trust the Compiler - No Workarounds
+
+When encountering compiler issues:
+
+1. **Do NOT add workarounds** in component code (e.g., `typeof fn === 'function'` checks)
+2. **Investigate the root cause** in `packages/jsx/src/compiler/`
+3. **Fix the compiler** or create an issue if the fix is complex
+4. **Write a test** to prevent regression
+
+The compiler should generate correct code. If it doesn't, that's a bug to fix, not work around.
+
+```typescript
+// ❌ WRONG - workaround for compiler bug
+const buttonClass = typeof buttonVariants === 'function'
+  ? buttonVariants({ variant, size, className })
+  : ''  // Workaround!
+
+// ✅ CORRECT - trust the compiler, fix bugs in compiler
+const buttonClass = buttonVariants({ variant, size, className })
+```

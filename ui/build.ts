@@ -124,6 +124,32 @@ if (await Bun.file(globalsSource).exists()) {
   console.log('Copied: dist/globals.css')
 }
 
+// Copy lib/ and base/ directories to dist/components/
+// These are runtime utilities needed by compiled components
+const LIB_DIR = resolve(ROOT_DIR, 'lib')
+const BASE_DIR = resolve(ROOT_DIR, 'base')
+const DIST_LIB_DIR = resolve(DIST_COMPONENTS_DIR, '../lib')
+const DIST_BASE_DIR = resolve(DIST_COMPONENTS_DIR, '../base')
+
+await mkdir(DIST_LIB_DIR, { recursive: true })
+await mkdir(DIST_BASE_DIR, { recursive: true })
+
+// Copy lib/*.tsx files
+for (const file of await readdir(LIB_DIR).catch(() => [])) {
+  if (file.endsWith('.tsx') || file.endsWith('.ts')) {
+    await Bun.write(resolve(DIST_LIB_DIR, file), Bun.file(resolve(LIB_DIR, file)))
+    console.log(`Copied: dist/lib/${file}`)
+  }
+}
+
+// Copy base/*.tsx files
+for (const file of await readdir(BASE_DIR).catch(() => [])) {
+  if (file.endsWith('.tsx') || file.endsWith('.ts')) {
+    await Bun.write(resolve(DIST_BASE_DIR, file), Bun.file(resolve(BASE_DIR, file)))
+    console.log(`Copied: dist/base/${file}`)
+  }
+}
+
 // Generate UnoCSS
 console.log('\nGenerating UnoCSS...')
 const unoProc = Bun.spawn(['bunx', 'unocss', './**/*.tsx', './dist/**/*.tsx', '-o', 'dist/uno.css'], {

@@ -35,11 +35,13 @@ import { extractSignals } from './extractors/signals'
 import { extractMemos } from './extractors/memos'
 import { extractEffects } from './extractors/effects'
 import { extractModuleVariables } from './extractors/constants'
+import { extractCvaPatterns } from './extractors/cva-patterns'
+import { transformCvaInExpression } from './compiler/file-grouping'
 import { extractComponentPropsWithTypes, extractTypeDefinitions } from './extractors/props'
 import { extractLocalFunctions } from './extractors/local-functions'
 import { extractModuleFunctions } from './extractors/module-functions'
 import { extractLocalVariables } from './extractors/local-variables'
-import { extractImports } from './extractors/imports'
+import { extractImports, extractExternalImports } from './extractors/imports'
 import { getDefaultExportName } from './extractors/local-components'
 import { extractArrowBody, extractArrowParams, parseConditionalHandler } from './extractors/expression'
 import { IdGenerator } from './utils/id-generator'
@@ -260,10 +262,14 @@ function compileJsxWithComponents(
   // Extract module-level constants (shared across all components in file)
   const moduleConstants = extractModuleVariables(source, filePath)
 
+  // Extract CVA patterns for lookup map generation
+  const cvaPatterns = extractCvaPatterns(source, filePath)
+
   // Extract component props with types (for target component only)
   const propsResult = extractComponentPropsWithTypes(source, filePath, targetComponentName)
   const props = propsResult.props
   const propsTypeRefName = propsResult.typeRefName
+  const restPropsName = propsResult.restPropsName
 
   // Extract type definitions used by props
   const propTypes = props.map(p => p.type)
@@ -282,6 +288,9 @@ function compileJsxWithComponents(
 
   // Extract imports (for Marked JSX generation)
   const imports = extractImports(source, filePath)
+
+  // Extract external package imports (npm packages like 'class-variance-authority')
+  const externalImports = extractExternalImports(source, filePath)
 
   // Extract component name from target or file path
   const componentName = targetComponentName || filePath.split('/').pop()!.replace('.tsx', '')
@@ -342,7 +351,8 @@ function compileJsxWithComponents(
     conditionalElements,
     ir,
     childInits,
-    moduleFunctions
+    moduleFunctions,
+    cvaPatterns
   )
 
   return {
@@ -352,6 +362,7 @@ function compileJsxWithComponents(
     memos,
     effects,
     moduleConstants,
+    cvaPatterns,
     localFunctions,
     localVariables,
     childInits,
@@ -363,10 +374,12 @@ function compileJsxWithComponents(
     conditionalElements,
     props,
     propsTypeRefName,
+    restPropsName,
     typeDefinitions,
     source,
     ir,
     imports,
+    externalImports,
     isDefaultExport,
     hasUseClientDirective,
   }
@@ -568,13 +581,17 @@ function generateListElementEffects(
  */
 function generateAttributeEffects(
   ctx: ClientJsGeneratorContext,
-  dynamicAttributes: DynamicAttribute[]
+  dynamicAttributes: DynamicAttribute[],
+  cvaPatterns: { name: string; baseClass: string; variantDefs: Record<string, Record<string, string>>; defaultVariants: Record<string, string> }[] = []
 ): string[] {
   const lines: string[] = []
 
   for (const da of dynamicAttributes) {
     const v = ctx.varName(da.id)
-    const effectBody = generateAttributeUpdateWithVar(da, v)
+    // Transform CVA pattern calls in expression
+    const transformed = transformCvaInExpression(da.expression, cvaPatterns)
+    const transformedDa = transformed.transformed ? { ...da, expression: transformed.expression } : da
+    const effectBody = generateAttributeUpdateWithVar(transformedDa, v)
     lines.push(...generateEffectWithPreCheck({ varName: v, effectBody }))
   }
 
@@ -808,7 +825,8 @@ function generateClientJsWithCreateEffect(
   conditionalElements: ConditionalElement[] = [],
   ir: IRNode | null = null,
   childInits: ChildComponentInit[] = [],
-  moduleFunctions: LocalFunction[] = []
+  moduleFunctions: LocalFunction[] = [],
+  cvaPatterns: { name: string; baseClass: string; variantDefs: Record<string, Record<string, string>>; defaultVariants: Record<string, string> }[] = []
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
@@ -935,7 +953,7 @@ function generateClientJsWithCreateEffect(
   // Generate createEffect blocks for each type
   lines.push(...generateDynamicElementEffects(ctx, dynamicElements))
   lines.push(...generateListElementEffects(ctx, listElements))
-  lines.push(...generateAttributeEffects(ctx, dynamicAttributes))
+  lines.push(...generateAttributeEffects(ctx, dynamicAttributes, cvaPatterns))
   lines.push(...generateConditionalEffects(conditionalElements))
 
   if (hasDynamicContent) {
