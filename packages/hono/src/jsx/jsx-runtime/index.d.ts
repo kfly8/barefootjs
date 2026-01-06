@@ -11,38 +11,6 @@
 
 export { jsx, jsxs, Fragment } from 'hono/jsx/jsx-runtime'
 
-// Re-export HTML types from @barefootjs/jsx for backward compatibility
-export type {
-  // Event types
-  TargetedEvent,
-  TargetedInputEvent,
-  TargetedFocusEvent,
-  TargetedKeyboardEvent,
-  TargetedMouseEvent,
-
-  // Event handlers
-  InputEventHandler,
-  FocusEventHandler,
-  KeyboardEventHandler,
-  MouseEventHandler,
-  ChangeEventHandler,
-
-  // Base attributes
-  BaseEventAttributes,
-  HTMLBaseAttributes,
-
-  // Element-specific attributes
-  ButtonHTMLAttributes,
-  InputHTMLAttributes,
-  TextareaHTMLAttributes,
-  SelectHTMLAttributes,
-  FormHTMLAttributes,
-  AnchorHTMLAttributes,
-  ImgHTMLAttributes,
-  LabelHTMLAttributes,
-  OptionHTMLAttributes,
-} from '@barefootjs/jsx'
-
 // Import types for use in JSX namespace
 import type {
   HTMLBaseAttributes,
