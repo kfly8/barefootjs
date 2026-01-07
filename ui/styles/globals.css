@@ -198,46 +198,9 @@ html {
   z-index: 9999;
 }
 
-/* Code tooltip for component type info */
+/* Code tooltip for component type info - hover styling only */
+/* Actual tooltip is rendered by JavaScript (CodeTooltip component) */
 .code-tooltip {
-  position: relative;
   cursor: help;
   border-bottom: 1px dotted currentColor;
-}
-
-.code-tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.5rem 0.75rem;
-  background-color: var(--popover);
-  color: var(--popover-foreground);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  white-space: pre-line;
-  border-radius: 0.375rem;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--duration-fast) var(--ease-out),
-              visibility var(--duration-fast) var(--ease-out);
-  z-index: 50;
-  pointer-events: none;
-  min-width: 200px;
-  max-width: 300px;
-  margin-top: 0.5rem;
-}
-
-.code-tooltip:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Dark mode tooltip adjustment */
-.dark .code-tooltip::after {
-  background-color: var(--popover);
-  border-color: var(--border);
 }

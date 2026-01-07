@@ -187,8 +187,16 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
   )
 }
 
-// Example component with preview and code in a unified container (with component tooltips)
+// Example component with preview and code in a unified container (with component tooltips and line numbers)
 export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
+  // Highlight code and split into lines for line number display
+  const highlightedCode = highlightWithTooltips(code, 'tsx')
+  const lines = highlightedCode.split('\n')
+  // Remove trailing empty line if present
+  if (lines[lines.length - 1] === '') {
+    lines.pop()
+  }
+
   return (
     <div class="space-y-4">
       {title && <h3 class="text-lg font-medium text-foreground">{title}</h3>}
@@ -200,11 +208,18 @@ export function Example({ title, code, children }: { title?: string; code: strin
             {children}
           </div>
         </div>
-        {/* Code section with component tooltips */}
+        {/* Code section with line numbers and component tooltips */}
         <div class="relative group">
           <pre class="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
             <code class="block">
-              <span dangerouslySetInnerHTML={{ __html: highlightWithTooltips(code, 'tsx') }} />
+              {lines.map((line, i) => (
+                <span key={i} class="table-row">
+                  <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+                    {i + 1}
+                  </span>
+                  <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
+                </span>
+              ))}
             </code>
           </pre>
           <CopyButton code={code} />

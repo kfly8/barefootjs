@@ -4,6 +4,7 @@
 
 import { Button } from '@/components/ui/button'
 import { ButtonDemo } from '@/components/docs/button-demo'
+import { CodeTooltip } from '@/components/docs/code-tooltip'
 import {
   DocPage,
   PageHeader,
@@ -17,8 +18,9 @@ import {
   type TocItem,
 } from '../_shared/docs'
 
-// Pre-generate highlighted installation commands (server-side)
-const installCommands = getHighlightedCommands('barefoot add button')
+// Button variant and size types (for documentation)
+type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+type ButtonSize = 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -64,13 +66,13 @@ const [count, setCount] = createSignal(0)
 const buttonProps: PropDefinition[] = [
   {
     name: 'variant',
-    type: "'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'",
+    type: "ButtonVariant",
     defaultValue: "'default'",
     description: 'The visual style of the button.',
   },
   {
     name: 'size',
-    type: "'default' | 'sm' | 'lg' | 'icon'",
+    type: "ButtonSize",
     defaultValue: "'default'",
     description: 'The size of the button.',
   },
@@ -93,6 +95,9 @@ function PlusIcon() {
 }
 
 export function ButtonPage() {
+  // Generate highlighted commands inside component (after Shiki is initialized)
+  const installCommands = getHighlightedCommands('barefoot add button')
+
   return (
     <DocPage slug="button" toc={tocItems}>
       <div class="space-y-12">
@@ -113,7 +118,7 @@ import { Button } from "@/components/ui/button"
 </div>
           `}>
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
-            <Button variant="hello">Button</Button>
+            <Button variant="outline">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
                 <PlusIcon />
             </Button>
@@ -167,6 +172,7 @@ import { Button } from "@/components/ui/button"
           <PropsTable props={buttonProps} />
         </Section>
       </div>
+      <CodeTooltip />
     </DocPage>
   )
 }
