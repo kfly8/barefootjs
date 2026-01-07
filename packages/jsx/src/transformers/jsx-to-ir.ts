@@ -232,10 +232,15 @@ function componentToIR(
   const allPropsForInit = [...props]
 
   // Add children as a lazy function if it has reactive expressions
+  // BUT only for pure text/expression children - complex JSX nodes are already server-rendered
   if (hasReactiveChildren && children.length > 0) {
-    // Generate children expression as a function for lazy evaluation
-    const childrenExpr = generateChildrenExpression(children, ctx)
-    allPropsForInit.push({ name: 'children', value: `() => ${childrenExpr}`, isDynamic: true })
+    // Skip children prop for complex JSX nodes (element, fragment, component, conditional)
+    // These are already server-rendered and passing them would destroy SSR DOM
+    if (!childrenContainComplexNodes(children)) {
+      // Generate children expression as a function for lazy evaluation
+      const childrenExpr = generateChildrenExpression(children, ctx)
+      allPropsForInit.push({ name: 'children', value: `() => ${childrenExpr}`, isDynamic: true })
+    }
   }
 
   // Always set childInits for components that need client-side initialization
@@ -730,10 +735,12 @@ function generateChildrenExpression(children: IRNode[], ctx: JsxToIRContext): st
       case 'fragment':
       case 'component':
       case 'conditional':
-        // Complex nodes - for now, we'll handle simple cases
-        // More complex cases would need runtime JSX rendering
-        parts.push(`"[${child.type}]"`)
-        break
+        // Complex nodes should be filtered out before calling this function
+        // via childrenContainComplexNodes() check in componentToIR()
+        throw new Error(
+          `Internal compiler error: generateChildrenExpression() received complex node type '${child.type}'. ` +
+          `Complex children should be filtered out before generating children expression.`
+        )
     }
   }
 
@@ -746,6 +753,26 @@ function generateChildrenExpression(children: IRNode[], ctx: JsxToIRContext): st
     // Join parts for textContent rendering
     return `[${parts.join(', ')}].join('')`
   }
+}
+
+/**
+ * Checks if children array contains complex IR nodes that cannot be serialized as text.
+ * Complex nodes (element, fragment, component, conditional) are already server-rendered
+ * and should not be passed as a children prop to avoid destroying SSR DOM.
+ */
+function childrenContainComplexNodes(children: IRNode[]): boolean {
+  return children.some(child => {
+    switch (child.type) {
+      case 'element':
+      case 'fragment':
+      case 'component':
+      case 'conditional':
+        return true
+      case 'text':
+      case 'expression':
+        return false
+    }
+  })
 }
 
 /**
