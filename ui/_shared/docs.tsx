@@ -10,7 +10,7 @@ import { CopyButton } from '@/components/docs/copy-button'
 // Re-export PackageManagerTabs from compiled component
 export { PackageManagerTabs } from '@/components/docs/package-manager-tabs'
 import { PageNavigation, getNavLinks } from './PageNavigation'
-import { highlight, highlightWithTooltips } from './highlighter'
+import { highlight } from './highlighter'
 
 // Re-export TocItem for convenience
 export type { TocItem }
@@ -79,22 +79,17 @@ export function Preview({ children }: { children: any }) {
   )
 }
 
-// Code block component with syntax highlighting, line numbers, copy button, and component tooltips
+// Code block component with syntax highlighting, line numbers, and copy button
 export function CodeBlock({
   code,
   lang = 'tsx',
   showLineNumbers = true,
-  showTooltips = true,
 }: {
   code: string
   lang?: string
   showLineNumbers?: boolean
-  showTooltips?: boolean
 }) {
-  // Use tooltips for TSX/JSX code when enabled
-  const highlightedCode = (showTooltips && (lang === 'tsx' || lang === 'jsx'))
-    ? highlightWithTooltips(code, lang)
-    : highlight(code, lang)
+  const highlightedCode = highlight(code, lang)
   const lines = highlightedCode.split('\n')
   // Remove trailing empty line if present
   if (lines[lines.length - 1] === '') {
@@ -187,10 +182,10 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
   )
 }
 
-// Example component with preview and code in a unified container (with component tooltips and line numbers)
+// Example component with preview and code in a unified container
 export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
   // Highlight code and split into lines for line number display
-  const highlightedCode = highlightWithTooltips(code, 'tsx')
+  const highlightedCode = highlight(code, 'tsx')
   const lines = highlightedCode.split('\n')
   // Remove trailing empty line if present
   if (lines[lines.length - 1] === '') {
@@ -208,7 +203,7 @@ export function Example({ title, code, children }: { title?: string; code: strin
             {children}
           </div>
         </div>
-        {/* Code section with line numbers and component tooltips */}
+        {/* Code section with line numbers */}
         <div class="relative group">
           <pre class="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
             <code class="block">

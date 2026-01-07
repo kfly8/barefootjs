@@ -4,7 +4,6 @@
 
 import { Button } from '@/components/ui/button'
 import { ButtonDemo } from '@/components/docs/button-demo'
-import { CodeTooltip } from '@/components/docs/code-tooltip'
 import {
   DocPage,
   PageHeader,
@@ -172,7 +171,6 @@ import { Button } from "@/components/ui/button"
           <PropsTable props={buttonProps} />
         </Section>
       </div>
-      <CodeTooltip />
     </DocPage>
   )
 }

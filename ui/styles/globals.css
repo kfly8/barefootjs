@@ -197,10 +197,3 @@ html {
 .z-dialog {
   z-index: 9999;
 }
-
-/* Code tooltip for component type info - hover styling only */
-/* Actual tooltip is rendered by JavaScript (CodeTooltip component) */
-.code-tooltip {
-  cursor: help;
-  border-bottom: 1px dotted currentColor;
-}
