@@ -3,13 +3,11 @@
  */
 
 import { Button } from '@/components/ui/button'
-import { ButtonDemo } from '@/components/docs/button-demo'
 import {
   DocPage,
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
   PackageManagerTabs,
   getHighlightedCommands,
@@ -17,24 +15,12 @@ import {
   type TocItem,
 } from '../_shared/docs'
 
-// Button variant and size types (for documentation)
-type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
-type ButtonSize = 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg'
-
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
   { id: 'api-reference', title: 'API Reference' },
 ]
-
-// Code examples
-const usageCode = `import { Button } from '@/components/ui/button'
-
-export default function Page() {
-  return <Button>Click me</Button>
-}`
 
 const variantCode = `<Button variant="default">Default</Button>
 <Button variant="secondary">Secondary</Button>
@@ -53,25 +39,17 @@ const sizeCode = `<Button size="sm">Small</Button>
 const disabledCode = `<Button disabled>Disabled</Button>
 <Button variant="outline" disabled>Disabled</Button>`
 
-const interactiveCode = `import { createSignal } from '@barefootjs/dom'
-
-const [count, setCount] = createSignal(0)
-
-<Button onClick={() => setCount(n => n + 1)}>
-  Clicked {count()} times
-</Button>`
-
 // Props definition
 const buttonProps: PropDefinition[] = [
   {
     name: 'variant',
-    type: "ButtonVariant",
+    type: "default | destructive | outline | secondary | ghost | link",
     defaultValue: "'default'",
     description: 'The visual style of the button.',
   },
   {
     name: 'size',
-    type: "ButtonSize",
+    type: "default | sm | lg | icon | icon-sm | icon-lg",
     defaultValue: "'default'",
     description: 'The size of the button.',
   },
@@ -79,7 +57,7 @@ const buttonProps: PropDefinition[] = [
     name: 'asChild',
     type: 'boolean',
     defaultValue: 'false',
-    description: 'TODO',
+    description: 'Render child element instead of button',
   },
 ]
 
@@ -109,12 +87,16 @@ export function ButtonPage() {
         <Example title="" code={`
 import { Button } from "@/components/ui/button"
 
-<div class="flex flex-wrap items-center gap-2 md:flex-row">
-  <Button variant="outline">Button</Button>
-  <Button variant="outline" size="icon" aria-label="Submit">
-      <PlusIcon />
-  </Button>
-</div>
+function ButtonExample() {
+  return (
+    <div class="flex flex-wrap items-center gap-2 md:flex-row">
+      <Button variant="outline">Button</Button>
+      <Button variant="outline" size="icon" aria-label="Submit">
+          <PlusIcon />
+      </Button>
+    </div>
+  )
+}
           `}>
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
             <Button variant="outline">Button</Button>
@@ -129,15 +111,17 @@ import { Button } from "@/components/ui/button"
           <PackageManagerTabs command="barefoot add button" highlightedCommands={installCommands} />
         </Section>
 
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
-        </Section>
-
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div class="space-y-8">
-            <Example title="Variants" code={variantCode}>
+            <Example title="Variants" code={`
+<Button variant="default">Default</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="destructive">Destructive</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+`}>
               <Button variant="default">Default</Button>
               <Button variant="secondary">Secondary</Button>
               <Button variant="destructive">Destructive</Button>
@@ -158,10 +142,6 @@ import { Button } from "@/components/ui/button"
             <Example title="Disabled" code={disabledCode}>
               <Button disabled>Disabled</Button>
               <Button variant="outline" disabled>Disabled</Button>
-            </Example>
-
-            <Example title="Interactive" code={interactiveCode}>
-              <ButtonDemo />
             </Example>
           </div>
         </Section>
