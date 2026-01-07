@@ -89,6 +89,10 @@ COMP-015	Components	<Child name='A' />	name: 'A' (not wrapped)	preserve	✅ Impl
 COMP-020	Components	<Card>{count()}</Card>	children: () => count()	clientJs	✅ Implemented	Reactive children
 COMP-021	Components	<Card><p>Static</p></Card>	children: <p>Static</p>	preserve	✅ Implemented	Static children
 COMP-022	Components	{children} in component	typeof children === 'function' ? children() : children	clientJs	✅ Implemented	Lazy children
+COMP-023	Components	<Card>{show() ? <A/> : <B/>}</Card>	No children prop (SSR DOM preserved)	preserve	✅ Implemented	Complex children preserved via SSR
+COMP-024	Components	<Card><p/>{show() && <X/>}</Card>	No children prop (SSR DOM preserved)	preserve	✅ Implemented	Mixed JSX children preserved
+COMP-025	Components	<Label>{count()}</Label>	children: () => count()	clientJs	✅ Implemented	Pure text reactive children
+COMP-026	Components	<Card>{text()}{show() ? <A/> : <B/>}</Card>	No children prop (text not reactive)	preserve	⚠️ Limitation	Mixed text+JSX children - text part not reactive
 COMP-030	Components	Component with signals/events	clientJs: function initComponentName(i, scope) {...}	clientJs	✅ Implemented	Init fn generated
 COMP-031	Components	Static component (no signals/events)	No clientJs generated	preserve	✅ Implemented	No init wrapper
 COMP-032	Components	<Parent><Child with signals/></Parent>	Parent clientJs: initChild(i, scope)	clientJs	✅ Implemented	Parent calls child init
