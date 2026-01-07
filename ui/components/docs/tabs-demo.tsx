@@ -12,7 +12,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from './Tabs'
+} from '../ui/tabs'
 
 /**
  * Basic tabs example

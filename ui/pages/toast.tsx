@@ -10,7 +10,7 @@ import {
   ToastInfoDemo,
   ToastWithActionDemo,
   ToastVariantsDemo,
-} from '@/components/ToastDemo'
+} from '@/components/docs/toast-demo'
 import {
   DocPage,
   PageHeader,
@@ -42,7 +42,7 @@ import {
   ToastTitle,
   ToastDescription,
   ToastClose,
-} from '@/components/toast'
+} from '@/components/ui/toast'
 
 export default function Page() {
   const [open, setOpen] = createSignal(false)

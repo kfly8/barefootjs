@@ -2,7 +2,7 @@
  * Tabs Documentation Page
  */
 
-import { TabsBasicDemo, TabsMultipleDemo, TabsDisabledDemo } from '@/components/TabsDemo'
+import { TabsBasicDemo, TabsMultipleDemo, TabsDisabledDemo } from '@/components/docs/tabs-demo'
 import {
   DocPage,
   PageHeader,
@@ -32,7 +32,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from '@/components/tabs'
+} from '@/components/ui/tabs'
 
 export default function Page() {
   const [activeTab, setActiveTab] = createSignal('account')

@@ -2,15 +2,35 @@
 /**
  * Button Component
  *
- * A modern button component inspired by shadcn/ui.
- * Supports multiple variants, sizes, and polymorphic rendering via asChild.
- * Uses CSS variables for theming support.
+ * A versatile button component with multiple visual variants and sizes.
+ * Inspired by shadcn/ui with CSS variable theming support.
+ *
+ * @example Basic usage
+ * ```tsx
+ * <Button>Click me</Button>
+ * ```
+ *
+ * @example With variant and size
+ * ```tsx
+ * <Button variant="destructive" size="lg">Delete</Button>
+ * ```
+ *
+ * @example As a link (polymorphic rendering)
+ * ```tsx
+ * <Button asChild>
+ *   <a href="/home">Go Home</a>
+ * </Button>
+ * ```
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
-import { Slot } from '../base/Slot'
+import { Slot } from '../../base/slot'
 
+/**
+ * CVA variants for button styling.
+ * Export this to use button styles on custom elements.
+ */
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
   {
@@ -43,12 +63,39 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Props for the Button component.
+ */
 interface ButtonProps extends
   ButtonHTMLAttributes,
   VariantProps<typeof buttonVariants> {
+  /**
+   * When true, renders child element with button styling instead of `<button>`.
+   * Useful for creating button-styled links or custom elements.
+   * @default false
+   */
   asChild?: boolean
 }
 
+/**
+ * Button component with variants and sizes.
+ *
+ * @param props.variant - Visual style of the button
+ *   - `'default'` - Primary action, solid background
+ *   - `'destructive'` - Dangerous action (red)
+ *   - `'outline'` - Bordered with transparent background
+ *   - `'secondary'` - Muted styling for secondary actions
+ *   - `'ghost'` - Minimal, visible only on hover
+ *   - `'link'` - Text link appearance with underline on hover
+ * @param props.size - Size of the button
+ *   - `'default'` - Standard size (h-9)
+ *   - `'sm'` - Small size (h-8)
+ *   - `'lg'` - Large size (h-10)
+ *   - `'icon'` - Square icon button (size-9)
+ *   - `'icon-sm'` - Small icon button (size-8)
+ *   - `'icon-lg'` - Large icon button (size-10)
+ * @param props.asChild - Render child element instead of button
+ */
 function Button({
   class: className,
   variant = 'default',

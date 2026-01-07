@@ -20,7 +20,7 @@
  * custom createEffect logic.
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 // --- TooltipTrigger ---
 

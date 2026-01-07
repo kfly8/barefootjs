@@ -5,12 +5,12 @@
  * Uses CSS variables for theming support.
  */
 
-import { TableOfContents, type TocItem } from '@/components/TableOfContents'
-import { CopyButton } from '@/components/CopyButton'
+import { TableOfContents, type TocItem } from '@/components/docs/table-of-contents'
+import { CopyButton } from '@/components/docs/copy-button'
 // Re-export PackageManagerTabs from compiled component
-export { PackageManagerTabs } from '@/components/PackageManagerTabs'
+export { PackageManagerTabs } from '@/components/docs/package-manager-tabs'
 import { PageNavigation, getNavLinks } from './PageNavigation'
-import { highlight } from './highlighter'
+import { highlight, highlightWithTooltips } from './highlighter'
 
 // Re-export TocItem for convenience
 export type { TocItem }
@@ -58,17 +58,22 @@ export function Preview({ children }: { children: any }) {
   )
 }
 
-// Code block component with syntax highlighting, line numbers, and copy button
+// Code block component with syntax highlighting, line numbers, copy button, and component tooltips
 export function CodeBlock({
   code,
   lang = 'tsx',
-  showLineNumbers = false,
+  showLineNumbers = true,
+  showTooltips = true,
 }: {
   code: string
   lang?: string
   showLineNumbers?: boolean
+  showTooltips?: boolean
 }) {
-  const highlightedCode = highlight(code, lang)
+  // Use tooltips for TSX/JSX code when enabled
+  const highlightedCode = (showTooltips && (lang === 'tsx' || lang === 'jsx'))
+    ? highlightWithTooltips(code, lang)
+    : highlight(code, lang)
   const lines = highlightedCode.split('\n')
   // Remove trailing empty line if present
   if (lines[lines.length - 1] === '') {
@@ -77,7 +82,7 @@ export function CodeBlock({
 
   return (
     <div class="relative group">
-      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono">
         <code class="block">
           {showLineNumbers ? (
             lines.map((line, i) => (
@@ -161,13 +166,29 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
   )
 }
 
-// Example component with preview and code
+// Example component with preview and code in a unified container (with component tooltips)
 export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
   return (
     <div class="space-y-4">
       {title && <h3 class="text-lg font-medium text-foreground">{title}</h3>}
-      <Preview>{children}</Preview>
-      <CodeBlock code={code} />
+      <div class="border border-solid border-border rounded-lg overflow-hidden">
+        {/* Preview section */}
+        <div class="flex flex-wrap items-center justify-center gap-4 p-8 bg-card relative overflow-hidden">
+          <div class="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
+          <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
+            {children}
+          </div>
+        </div>
+        {/* Code section with component tooltips */}
+        <div class="relative group">
+          <pre class="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
+            <code class="block">
+              <span dangerouslySetInnerHTML={{ __html: highlightWithTooltips(code, 'tsx') }} />
+            </code>
+          </pre>
+          <CopyButton code={code} />
+        </div>
+      </div>
     </div>
   )
 }

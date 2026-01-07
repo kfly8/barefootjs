@@ -7,7 +7,7 @@
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { BfScripts } from '../packages/hono/src/scripts'
-import { ThemeSwitcher } from './dist/components/ThemeSwitcher'
+import { ThemeSwitcher } from './dist/components/docs/theme-switcher'
 
 /**
  * Predictable instance ID generator for E2E testing.

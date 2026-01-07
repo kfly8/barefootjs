@@ -7,7 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Switch } from './Switch'
+import { Switch } from '../ui/switch'
 
 /**
  * Basic interactive switch

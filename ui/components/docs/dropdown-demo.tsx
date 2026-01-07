@@ -16,7 +16,7 @@ import {
   DropdownContent,
   DropdownItem,
   DropdownLabel,
-} from './Dropdown'
+} from '../ui/dropdown'
 
 /**
  * Basic dropdown demo

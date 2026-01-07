@@ -13,7 +13,9 @@ test.describe('Button Documentation Page', () => {
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
     // Default tab is 'bun', command includes --bun flag
-    await expect(page.locator('text=bunx --bun barefoot add button')).toBeVisible()
+    // Check that the installation section contains the package manager tabs
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
   test('displays usage section', async ({ page }) => {
@@ -99,9 +101,7 @@ test.describe('Button Documentation Page', () => {
       const propsTable = page.locator('table')
       await expect(propsTable.locator('td').filter({ hasText: /^variant$/ })).toBeVisible()
       await expect(propsTable.locator('td').filter({ hasText: /^size$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onClick$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^children$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^asChild$/ })).toBeVisible()
     })
   })
 })

@@ -7,7 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { TooltipTrigger, TooltipContent } from './Tooltip'
+import { TooltipTrigger, TooltipContent } from '../ui/tooltip'
 
 /**
  * Basic tooltip demo

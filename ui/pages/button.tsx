@@ -2,8 +2,8 @@
  * Button Documentation Page
  */
 
-import { Button } from '@/components/Button'
-import { ButtonDemo } from '@/components/ButtonDemo'
+import { Button } from '@/components/ui/button'
+import { ButtonDemo } from '@/components/docs/button-demo'
 import {
   DocPage,
   PageHeader,
@@ -25,7 +25,7 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const usageCode = `import { Button } from '@/components/button'
+const usageCode = `import { Button } from '@/components/ui/button'
 
 export default function Page() {
   return <Button>Click me</Button>
@@ -71,20 +71,10 @@ const buttonProps: PropDefinition[] = [
     description: 'The size of the button.',
   },
   {
-    name: 'disabled',
+    name: 'asChild',
     type: 'boolean',
     defaultValue: 'false',
-    description: 'Whether the button is disabled.',
-  },
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the button is clicked.',
-  },
-  {
-    name: 'children',
-    type: 'ReactNode',
-    description: 'The content of the button.',
+    description: 'TODO',
   },
 ]
 
@@ -119,7 +109,7 @@ import { Button } from "@/components/ui/button"
 </div>
           `}>
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
-            <Button variant="outline">Button</Button>
+            <Button variant="hello">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
                 <PlusIcon />
             </Button>

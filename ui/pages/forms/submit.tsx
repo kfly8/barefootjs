@@ -4,19 +4,19 @@
  * Demonstrates async submit handling with loading, success, and error states.
  */
 
-import { Input } from '@/components/Input'
+import { Input } from '@/components/ui/input'
 import {
   BasicSubmitDemo,
   NetworkErrorDemo,
   ServerValidationDemo,
-} from '@/components/SubmitDemo'
+} from '@/components/docs/submit-demo'
 import {
   PageHeader,
   Section,
   Example,
   type TocItem,
 } from '../../_shared/docs'
-import { TableOfContents } from '@/components/TableOfContents'
+import { TableOfContents } from '@/components/docs/table-of-contents'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -27,9 +27,9 @@ const tocItems: TocItem[] = [
 
 // Code examples
 const basicSubmitCode = `import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from '@/components/Input'
-import { Button } from '@/components/Button'
-import { Toast, ToastProvider, ToastTitle, ToastDescription } from '@/components/Toast'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Toast, ToastProvider, ToastTitle, ToastDescription } from '@/components/ui/toast'
 
 const [email, setEmail] = createSignal('')
 const [loading, setLoading] = createSignal(false)

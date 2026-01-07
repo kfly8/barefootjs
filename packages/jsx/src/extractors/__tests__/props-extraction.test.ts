@@ -151,3 +151,58 @@ function Button({ variant }: ButtonProps) { return <button /> }
     expect(typeDefs[0]).toContain('extends HTMLAttributes<HTMLButtonElement>')
   })
 })
+
+describe('extractTypeDefinitions with VariantProps expansion', () => {
+  test('expands VariantProps<typeof cvaName> using CVA patterns', () => {
+    const source = `
+import { cva, type VariantProps } from 'class-variance-authority'
+
+const buttonVariants = cva('btn', {
+  variants: {
+    variant: { default: 'btn-default', outline: 'btn-outline' },
+    size: { sm: 'btn-sm', lg: 'btn-lg' }
+  }
+})
+
+interface ButtonProps extends VariantProps<typeof buttonVariants> {
+  label: string
+}
+
+function Button({ label, variant, size }: ButtonProps) {
+  return <button className={buttonVariants({ variant, size })}>{label}</button>
+}
+`
+    const cvaPatterns = [{
+      name: 'buttonVariants',
+      baseClass: 'btn',
+      variantDefs: {
+        variant: { default: 'btn-default', outline: 'btn-outline' },
+        size: { sm: 'btn-sm', lg: 'btn-lg' }
+      },
+      defaultVariants: {}
+    }]
+    const typeDefs = extractTypeDefinitions(source, 'Button.tsx', ['ButtonProps'], cvaPatterns)
+    expect(typeDefs.length).toBe(1)
+    // Should expand VariantProps<typeof buttonVariants> to literal union types
+    expect(typeDefs[0]).toContain("variant?: 'default' | 'outline'")
+    expect(typeDefs[0]).toContain("size?: 'sm' | 'lg'")
+    // Should NOT contain the original VariantProps
+    expect(typeDefs[0]).not.toContain('VariantProps<typeof buttonVariants>')
+  })
+
+  test('preserves VariantProps when CVA pattern not found', () => {
+    const source = `
+interface ButtonProps extends VariantProps<typeof unknownVariants> {
+  label: string
+}
+
+function Button({ label }: ButtonProps) {
+  return <button>{label}</button>
+}
+`
+    const typeDefs = extractTypeDefinitions(source, 'Button.tsx', ['ButtonProps'], [])
+    expect(typeDefs.length).toBe(1)
+    // Should preserve original when no CVA pattern found
+    expect(typeDefs[0]).toContain('VariantProps<typeof unknownVariants>')
+  })
+})

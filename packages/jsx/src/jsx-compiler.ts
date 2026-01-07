@@ -275,7 +275,8 @@ function compileJsxWithComponents(
   const propTypes = props.map(p => p.type)
   // Also include the type reference name if present
   const allPropTypes = propsTypeRefName ? [...propTypes, propsTypeRefName] : propTypes
-  const typeDefinitions = extractTypeDefinitions(source, filePath, allPropTypes)
+  // Pass CVA patterns to expand VariantProps<typeof X> types
+  const typeDefinitions = extractTypeDefinitions(source, filePath, allPropTypes, cvaPatterns)
 
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)

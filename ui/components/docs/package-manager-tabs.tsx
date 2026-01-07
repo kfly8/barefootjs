@@ -15,8 +15,8 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from './Tabs'
-import { CopyButton } from './CopyButton'
+} from '../ui/tabs'
+import { CopyButton } from './copy-button'
 
 interface PackageManagerTabsProps {
   command: string

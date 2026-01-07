@@ -7,7 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Checkbox } from './Checkbox'
+import { Checkbox } from '../ui/checkbox'
 
 /**
  * Binding example showing state synchronization

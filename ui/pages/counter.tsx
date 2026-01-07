@@ -2,8 +2,8 @@
  * Counter Documentation Page
  */
 
-import { Counter } from '@/components/Counter'
-import { CounterInteractiveDemo, CounterDerivedDemo } from '@/components/CounterDemo'
+import { Counter } from '@/components/ui/counter'
+import { CounterInteractiveDemo, CounterDerivedDemo } from '@/components/docs/counter-demo'
 import {
   DocPage,
   PageHeader,
@@ -27,7 +27,7 @@ const tocItems: TocItem[] = [
 const installCode = `bunx barefoot add counter`
 
 const usageCode = `import { createSignal } from '@barefootjs/dom'
-import { Counter } from '@/components/counter'
+import { Counter } from '@/components/ui/counter'
 
 export default function Page() {
   const [count, setCount] = createSignal(0)

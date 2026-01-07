@@ -7,8 +7,8 @@
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from './Input'
-import { Button } from './Button'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
 
 type EmailField = {
   id: number

@@ -4,14 +4,62 @@
 
 import ts from 'typescript'
 import { createSourceFile } from '../utils/helpers'
-import type { PropWithType } from '../types'
+import type { PropWithType, CvaPatternInfo } from '../types'
 import { findComponentFunction } from './common'
+
+/**
+ * Expands VariantProps<typeof X> in a type definition using CVA pattern info.
+ *
+ * Replaces:
+ *   VariantProps<typeof buttonVariants>
+ * With:
+ *   { variant?: 'default' | 'destructive' | ...; size?: 'default' | 'sm' | ... }
+ */
+function expandVariantPropsInDefinition(
+  typeDef: string,
+  cvaPatterns: CvaPatternInfo[]
+): string {
+  // Match VariantProps<typeof X> pattern
+  const variantPropsRegex = /VariantProps<typeof\s+(\w+)>/g
+
+  return typeDef.replace(variantPropsRegex, (match, cvaName) => {
+    // Find the CVA pattern by name
+    const pattern = cvaPatterns.find(p => p.name === cvaName)
+    if (!pattern) {
+      // If not found, keep original (might be external)
+      return match
+    }
+
+    // Generate expanded type object with variant properties
+    const variantProps: string[] = []
+    for (const [variantKey, variantOptions] of Object.entries(pattern.variantDefs)) {
+      const optionKeys = Object.keys(variantOptions)
+      if (optionKeys.length > 0) {
+        const unionType = optionKeys.map(k => `'${k}'`).join(' | ')
+        variantProps.push(`${variantKey}?: ${unionType} | null | undefined`)
+      }
+    }
+
+    if (variantProps.length === 0) {
+      return '{}'
+    }
+
+    return `{ ${variantProps.join('; ')} }`
+  })
+}
 
 /**
  * Extracts type definitions used in props from the source file.
  * Returns type alias and interface declarations that are referenced in prop types.
+ *
+ * @param cvaPatterns - Optional CVA patterns for expanding VariantProps<typeof X>
  */
-export function extractTypeDefinitions(source: string, filePath: string, propTypes: string[]): string[] {
+export function extractTypeDefinitions(
+  source: string,
+  filePath: string,
+  propTypes: string[],
+  cvaPatterns: CvaPatternInfo[] = []
+): string[] {
   const sourceFile = createSourceFile(source, filePath)
   const typeDefinitions: string[] = []
   const collectedTypes = new Set<string>()
@@ -40,7 +88,9 @@ export function extractTypeDefinitions(source: string, filePath: string, propTyp
     ts.forEachChild(sourceFile, (node) => {
       // Type alias: type Props = { ... }
       if (ts.isTypeAliasDeclaration(node) && node.name.text === typeName) {
-        typeDefinitions.push(node.getText(sourceFile))
+        // Expand VariantProps<typeof X> patterns using CVA info
+        const rawDef = node.getText(sourceFile)
+        typeDefinitions.push(expandVariantPropsInDefinition(rawDef, cvaPatterns))
 
         if (ts.isTypeLiteralNode(node.type)) {
           collectMemberTypeReferences(node.type.members)
@@ -48,7 +98,9 @@ export function extractTypeDefinitions(source: string, filePath: string, propTyp
       }
       // Interface: interface Props { ... }
       else if (ts.isInterfaceDeclaration(node) && node.name.text === typeName) {
-        typeDefinitions.push(node.getText(sourceFile))
+        // Expand VariantProps<typeof X> patterns using CVA info
+        const rawDef = node.getText(sourceFile)
+        typeDefinitions.push(expandVariantPropsInDefinition(rawDef, cvaPatterns))
 
         // Handle heritage clauses (extends)
         if (node.heritageClauses) {

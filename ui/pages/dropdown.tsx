@@ -2,7 +2,7 @@
  * Dropdown Documentation Page
  */
 
-import { DropdownBasicDemo, DropdownWithDefaultDemo, DropdownDisabledDemo, DropdownWithTransformDemo } from '@/components/DropdownDemo'
+import { DropdownBasicDemo, DropdownWithDefaultDemo, DropdownDisabledDemo, DropdownWithTransformDemo } from '@/components/docs/dropdown-demo'
 import {
   DocPage,
   PageHeader,
@@ -34,7 +34,7 @@ import {
   DropdownContent,
   DropdownItem,
   DropdownLabel,
-} from '@/components/dropdown'
+} from '@/components/ui/dropdown'
 
 export default function Page() {
   const [open, setOpen] = createSignal(false)

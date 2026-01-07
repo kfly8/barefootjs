@@ -19,7 +19,7 @@
  * custom createEffect logic with conditional JSX returns.
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 // --- Dropdown ---
 // Note: This is a simple positioning wrapper with no client-side behavior.

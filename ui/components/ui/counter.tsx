@@ -12,7 +12,7 @@
  * so we inline all expressions directly in the JSX.
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 export interface CounterProps {
   value?: number

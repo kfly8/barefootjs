@@ -7,7 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Button } from './Button'
+import { Button } from '../ui/button'
 
 export function ButtonDemo() {
   const [count, setCount] = createSignal(0)

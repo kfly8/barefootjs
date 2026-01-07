@@ -4,19 +4,19 @@
  * Demonstrates dynamic list of form inputs pattern.
  */
 
-import { Input } from '@/components/Input'
+import { Input } from '@/components/ui/input'
 import {
   BasicFieldArrayDemo,
   DuplicateValidationDemo,
   MinMaxFieldsDemo,
-} from '@/components/FieldArraysDemo'
+} from '@/components/docs/field-arrays-demo'
 import {
   PageHeader,
   Section,
   Example,
   type TocItem,
 } from '../../_shared/docs'
-import { TableOfContents } from '@/components/TableOfContents'
+import { TableOfContents } from '@/components/docs/table-of-contents'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -27,8 +27,8 @@ const tocItems: TocItem[] = [
 
 // Code examples
 const basicFieldArrayCode = `import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from '@/components/Input'
-import { Button } from '@/components/Button'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 type EmailField = {
   id: number

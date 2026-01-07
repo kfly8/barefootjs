@@ -2,7 +2,7 @@
  * Badge Documentation Page
  */
 
-import { Badge } from '../components/Badge'
+import { Badge } from '@/components/ui/badge'
 import {
   DocPage,
   PageHeader,
@@ -25,7 +25,7 @@ const tocItems: TocItem[] = [
 // Code examples
 const installCode = `bunx barefoot add badge`
 
-const usageCode = `import { Badge } from '@/components/badge'
+const usageCode = `import { Badge } from '@/components/ui/badge'
 
 export default function Page() {
   return <Badge>Badge</Badge>

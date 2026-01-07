@@ -12,7 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from './Accordion'
+} from '../ui/accordion'
 
 /**
  * Single open accordion (only one item can be open at a time)
