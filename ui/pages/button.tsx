@@ -12,9 +12,13 @@ import {
   CodeBlock,
   PropsTable,
   PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+
+// Pre-generate highlighted installation commands (server-side)
+const installCommands = getHighlightedCommands('barefoot add button')
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -118,7 +122,7 @@ import { Button } from "@/components/ui/button"
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add button" />
+          <PackageManagerTabs command="barefoot add button" highlightedCommands={installCommands} />
         </Section>
 
         {/* Usage */}

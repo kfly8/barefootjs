@@ -18,11 +18,20 @@ import {
 } from '../ui/tabs'
 import { CopyButton } from './copy-button'
 
-interface PackageManagerTabsProps {
-  command: string
+interface HighlightedCommands {
+  pnpm: string
+  npm: string
+  yarn: string
+  bun: string
 }
 
-export function PackageManagerTabs({ command }: PackageManagerTabsProps) {
+interface PackageManagerTabsProps {
+  command: string
+  /** Pre-highlighted HTML for each package manager command (server-side rendered) */
+  highlightedCommands?: HighlightedCommands
+}
+
+export function PackageManagerTabs({ command, highlightedCommands }: PackageManagerTabsProps) {
   const [selected, setSelected] = createSignal('bun')
 
   const isPnpmSelected = createMemo(() => selected() === 'pnpm')
@@ -70,7 +79,11 @@ export function PackageManagerTabs({ command }: PackageManagerTabsProps) {
       <TabsContent value="pnpm" selected={isPnpmSelected()}>
         <div class="relative group">
           <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            <code>{pnpmCommand}</code>
+            {highlightedCommands ? (
+              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.pnpm }} />
+            ) : (
+              <code>{pnpmCommand}</code>
+            )}
           </pre>
           <CopyButton code={pnpmCommand} />
         </div>
@@ -78,7 +91,11 @@ export function PackageManagerTabs({ command }: PackageManagerTabsProps) {
       <TabsContent value="npm" selected={isNpmSelected()}>
         <div class="relative group">
           <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            <code>{npmCommand}</code>
+            {highlightedCommands ? (
+              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.npm }} />
+            ) : (
+              <code>{npmCommand}</code>
+            )}
           </pre>
           <CopyButton code={npmCommand} />
         </div>
@@ -86,7 +103,11 @@ export function PackageManagerTabs({ command }: PackageManagerTabsProps) {
       <TabsContent value="yarn" selected={isYarnSelected()}>
         <div class="relative group">
           <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            <code>{yarnCommand}</code>
+            {highlightedCommands ? (
+              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.yarn }} />
+            ) : (
+              <code>{yarnCommand}</code>
+            )}
           </pre>
           <CopyButton code={yarnCommand} />
         </div>
@@ -94,7 +115,11 @@ export function PackageManagerTabs({ command }: PackageManagerTabsProps) {
       <TabsContent value="bun" selected={isBunSelected()}>
         <div class="relative group">
           <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            <code>{bunCommand}</code>
+            {highlightedCommands ? (
+              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.bun }} />
+            ) : (
+              <code>{bunCommand}</code>
+            )}
           </pre>
           <CopyButton code={bunCommand} />
         </div>
