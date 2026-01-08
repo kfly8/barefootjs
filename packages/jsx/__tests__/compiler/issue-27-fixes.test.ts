@@ -90,7 +90,11 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
 })
 
 describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
-  it('variable in type attribute is dynamic, not literal string', async () => {
+  // NOTE: Local variables are SSR-only (Discussion #148)
+  // Attributes using only local variables don't need createEffect
+  // For reactive attributes, use signals or createMemo
+
+  it('local variable attributes are evaluated at SSR time', async () => {
     const source = `
       "use client"
       function Component() {
@@ -101,12 +105,14 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // type={inputType} should be dynamic, not literal "inputType"
-    expect(file.clientJs).toContain('inputType')
-    expect(file.clientJs).not.toContain('type="inputType"')
+    // type={inputType} should be evaluated at SSR time
+    // Local variables are SSR-only, so no createEffect call for this attribute
+    expect(file.clientJs).not.toContain('inputType')
+    // Note: createEffect may be imported but not called
+    expect(file.clientJs).not.toContain('createEffect(() =>')
   })
 
-  it('expression in placeholder attribute is dynamic', async () => {
+  it('local variable placeholder attribute is SSR-only', async () => {
     const source = `
       "use client"
       function Component() {
@@ -117,11 +123,12 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // placeholder={placeholder} should reference the variable
-    expect(file.clientJs).toContain('placeholder')
+    // placeholder={placeholder} uses local variable, evaluated at SSR
+    // No createEffect needed for SSR-only attributes
+    expect(file.clientJs).not.toContain('placeholder')
   })
 
-  it('all JSX expression attributes are treated as dynamic', async () => {
+  it('attributes with local variables do not generate createEffect', async () => {
     const source = `
       "use client"
       function Component() {
@@ -134,8 +141,26 @@ describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // All should be dynamic, not literal strings
+    // Local variable attributes are SSR-only
+    // No createEffect call needed (may be imported but not called)
+    expect(file.clientJs).not.toContain('createEffect(() =>')
+  })
+
+  it('signal-based attributes still generate createEffect', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [inputType, setInputType] = createSignal('password')
+        return <input type={inputType()} />
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Signal-based attribute should generate createEffect for reactivity
     expect(file.clientJs).toContain('createEffect')
+    expect(file.clientJs).toContain('inputType()')
   })
 })
 

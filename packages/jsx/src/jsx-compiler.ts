@@ -585,10 +585,29 @@ function generateAttributeEffects(
   const localVarSet = new Set(localVariableNames)
 
   for (const da of dynamicAttributes) {
-    // Skip attributes that are just local variable references
-    // These are SSR-only and don't need reactive updates
+    // Skip attributes that reference local variables (SSR-only)
+    // These don't need reactive updates since localVariables are evaluated at SSR time
     const expr = da.expression.trim()
+
+    // Check if expression is just a local variable reference
     if (localVarSet.has(expr)) {
+      continue
+    }
+
+    // Check if expression contains any local variable references
+    // Local variables are SSR-only, so attributes using them don't need createEffect
+    let containsLocalVar = false
+    for (const varName of localVarSet) {
+      // Use word boundary to avoid false positives (e.g., "count" in "accountId")
+      const regex = new RegExp(`\\b${varName}\\b`)
+      if (regex.test(expr)) {
+        containsLocalVar = true
+        break
+      }
+    }
+
+    if (containsLocalVar) {
+      // Skip this attribute - it uses SSR-only local variables
       continue
     }
 

@@ -183,7 +183,7 @@ function generateInitFunction(
   sameFileComponentNames: string[],
   ctx: ClientJsContext
 ): string {
-  const { name, result, signalDeclarations, memoDeclarations, effectDeclarations, childInits } = comp
+  const { name, result, constantDeclarations, signalDeclarations, memoDeclarations, effectDeclarations, childInits } = comp
 
   // Generate child init calls (including same-file children)
   const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
@@ -207,10 +207,10 @@ function generateInitFunction(
   ].filter(Boolean).join('\n')
 
   const needsInitFunction = result.props.length > 0 || result.restPropsName || childInits.length > 0
-  // Order matters: signals, memos, then user-written effects
+  // Order matters: constants, signals, memos, then user-written effects
   // Effects come last because they may depend on signals and memos
-  // Note: localVariables are SSR-only and not included in Client JS
-  const declarations = joinDeclarations(signalDeclarations, memoDeclarations, effectDeclarations)
+  // Note: localVariables are SSR-only and not included in Client JS (only module constants are included)
+  const declarations = joinDeclarations(constantDeclarations, signalDeclarations, memoDeclarations, effectDeclarations)
 
   if (needsInitFunction) {
     return generateInitFunctionWithProps(name, result, declarations, bodyCode)
