@@ -13,13 +13,27 @@ import { substitutePropCallsAST, substituteIdentifiersAST } from '../extractors/
 
 /**
  * Extracts the expression part from a local variable declaration.
- * e.g., "const classes = `...`" → "`...`"
+ * e.g., "const classes = `...`" → "..." (inside the template literal)
+ *
+ * For template literals, returns the inner content (without backticks)
+ * so it can be directly used in attribute values without double-templating.
  */
 function extractLocalVarExpression(code: string): string | null {
   // Match patterns like: const name = expression
-  const match = code.match(/^(?:const|let|var)\s+\w+\s*=\s*(.+)$/)
+  // Use [\s\S] to match any character including newlines (for multiline templates)
+  const match = code.match(/^(?:const|let|var)\s+\w+\s*=\s*([\s\S]+)$/)
   if (match) {
-    return match[1]
+    let expr = match[1].trim()
+    // Remove trailing semicolon if present
+    if (expr.endsWith(';')) {
+      expr = expr.slice(0, -1).trim()
+    }
+    // If it's a template literal, extract the inner content
+    // This prevents double-templating when embedding in another template
+    if (expr.startsWith('`') && expr.endsWith('`')) {
+      expr = expr.slice(1, -1)
+    }
+    return expr
   }
   return null
 }
@@ -194,16 +208,23 @@ export function jsxToTemplateString(
 
     /**
      * Substitutes module constant references in an expression.
-     * Handles both simple references (baseClasses) and object lookups (variantClasses["destructive"]).
+     * Handles both simple references (${baseClasses}) and object lookups (${variantClasses["destructive"]}).
+     *
+     * IMPORTANT: This function replaces the entire ${constName} or ${constName["key"]} pattern
+     * with the raw value (no quotes). This prevents nested ${...} in generated templates.
+     *
+     * Example:
+     *   Input:  `${baseClasses} ${variantClasses["destructive"]}`
+     *   Output: `inline-flex... bg-destructive...`
      */
     function substituteModuleConstantLookups(expr: string, constMap: Map<string, string>): string {
       let result = expr
 
       for (const [constName, constValue] of constMap) {
-        // First, handle object property access: constName["key"] or constName['key']
-        const literalPattern = new RegExp(`\\b${constName}\\s*\\[\\s*["']([^"']+)["']\\s*\\]`, 'g')
+        // First, handle object property access within ${...}: ${constName["key"]} or ${constName['key']}
+        // Replace the entire ${...} with the extracted value (no quotes)
+        const literalPattern = new RegExp(`\\$\\{${constName}\\s*\\[\\s*["']([^"']+)["']\\s*\\]\\}`, 'g')
         result = result.replace(literalPattern, (match, key) => {
-          // Try to evaluate the object lookup
           try {
             // Parse the constant value as JSON-like object
             const objMatch = constValue.match(/^\{[\s\S]*\}$/)
@@ -213,7 +234,7 @@ export function jsxToTemplateString(
               const keyPattern = new RegExp(`['"]?${key}['"]?\\s*:\\s*['"]([^'"]+)['"]`)
               const valueMatch = constValue.match(keyPattern)
               if (valueMatch) {
-                return `"${valueMatch[1]}"`
+                return valueMatch[1]  // Return raw value without quotes
               }
             }
           } catch {
@@ -222,15 +243,15 @@ export function jsxToTemplateString(
           return match
         })
 
-        // Then, handle simple variable references (not followed by [ for object access)
+        // Then, handle simple variable references within ${...}: ${constName}
         // Only substitute if the value is a simple string literal
         const isSimpleString = constValue.match(/^['"].*['"]$/)
         if (isSimpleString) {
           // Extract the string content (remove quotes)
           const stringValue = constValue.slice(1, -1)
-          // Replace standalone identifier references (not part of object access)
-          const simplePattern = new RegExp(`\\b${constName}\\b(?!\\s*\\[)`, 'g')
-          result = result.replace(simplePattern, `"${stringValue}"`)
+          // Replace the entire ${constName} pattern with raw value
+          const simplePattern = new RegExp(`\\$\\{${constName}\\}`, 'g')
+          result = result.replace(simplePattern, stringValue)  // Return raw value without quotes
         }
       }
 
@@ -258,13 +279,22 @@ export function jsxToTemplateString(
             attrs += ` ${attrName}="${attr.value}"`
           }
           for (const attr of el.dynamicAttrs) {
-            const expr = substituteProps(attr.expression)
+            const origExpr = attr.expression.trim()
+            const expr = substituteProps(origExpr)
             const attrNameLower = attr.name.toLowerCase()
             if (BOOLEAN_HTML_ATTRS.has(attrNameLower)) {
               // Boolean attrs should only be present when truthy
               attrs += `\${${expr} ? ' ${attr.name}' : ''}`
             } else {
-              attrs += ` ${attr.name}="\${${expr}}"`
+              // Check if the original expression was a local variable that got expanded
+              // to template literal content (contains ${...} interpolations)
+              const wasLocalVarExpanded = localVarMap.has(origExpr) && expr !== origExpr
+              if (wasLocalVarExpanded) {
+                // Local variable was expanded, use the content directly without extra ${...}
+                attrs += ` ${attr.name}="${expr}"`
+              } else {
+                attrs += ` ${attr.name}="\${${expr}}"`
+              }
             }
           }
 
