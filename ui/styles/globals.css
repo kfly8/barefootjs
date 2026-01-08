@@ -197,3 +197,21 @@ html {
 .z-dialog {
   z-index: 9999;
 }
+
+/* Tooltip visibility - controlled by data attribute */
+[data-tooltip-content] {
+  display: none;
+}
+[data-tooltip-content][data-tooltip-open="true"] {
+  display: block;
+}
+
+/* Toast visibility - controlled by animation state */
+[data-toast][data-toast-animation-state="hidden"] {
+  display: none !important;
+}
+[data-toast][data-toast-animation-state="entering"],
+[data-toast][data-toast-animation-state="visible"],
+[data-toast][data-toast-animation-state="exiting"] {
+  display: flex !important;
+}

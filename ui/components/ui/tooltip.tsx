@@ -5,94 +5,153 @@
  * A popup that displays contextual information on hover or focus.
  *
  * Features:
- * - Open/close state management via props
+ * - Internal open/close state management
  * - Shows on hover (mouseenter/mouseleave)
  * - Shows on focus (for keyboard accessibility)
  * - Configurable placement (top, right, bottom, left)
  * - Accessibility (role="tooltip", aria-describedby)
+ * - Configurable delay
  *
- * Design Decision: Props-based state management
- * Similar to Dialog/Accordion, this component uses props for state.
- * The parent component manages the open state with a signal.
- *
- * Note: Uses CSS-based visibility (hidden class) due to BarefootJS compiler
- * constraints. The compiler processes JSX structure but does not preserve
- * custom createEffect logic.
+ * Design Decision: Single component with internal state
+ * The component manages its own open state internally via createSignal.
+ * This simplifies usage and ensures correct client-side hydration.
  */
 
+import { createSignal } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
-// --- TooltipTrigger ---
+export type TooltipPlacement = 'top' | 'right' | 'bottom' | 'left'
 
-export interface TooltipTriggerProps {
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onFocus?: () => void
-  onBlur?: () => void
-  ariaDescribedby?: string
+export interface TooltipProps {
+  /** Tooltip content text */
+  content: string
+  /** Trigger element */
   children?: Child
-  /** Delay in ms before showing tooltip on hover (default: 700) */
+  /** Placement of tooltip relative to trigger */
+  placement?: TooltipPlacement
+  /** Delay in ms before showing tooltip on hover (default: 0) */
   delayDuration?: number
   /** Delay in ms before hiding tooltip after mouse leave (default: 0) */
   closeDelay?: number
+  /** ID for accessibility */
+  id?: string
 }
 
-export function TooltipTrigger({
-  onMouseEnter,
-  onMouseLeave,
-  onFocus,
-  onBlur,
-  ariaDescribedby,
+export function Tooltip({
+  content,
   children,
-  delayDuration = 700,
+  placement = 'top',
+  delayDuration = 0,
   closeDelay = 0,
-}: TooltipTriggerProps) {
+  id,
+}: TooltipProps) {
+  const [open, setOpen] = createSignal(false)
   let openTimerId: number | undefined = undefined
   let closeTimerId: number | undefined = undefined
 
   const handleMouseEnter = () => {
-    // Clear any pending close timer
     if (closeTimerId !== undefined) {
       clearTimeout(closeTimerId)
       closeTimerId = undefined
     }
 
-    // Set open timer with delay
     if (delayDuration > 0) {
       openTimerId = setTimeout(() => {
-        onMouseEnter?.()
+        setOpen(true)
         openTimerId = undefined
       }, delayDuration) as unknown as number
     } else {
-      onMouseEnter?.()
+      setOpen(true)
     }
   }
 
   const handleMouseLeave = () => {
-    // Clear any pending open timer
     if (openTimerId !== undefined) {
       clearTimeout(openTimerId)
       openTimerId = undefined
     }
 
-    // Set close timer with delay
     if (closeDelay > 0) {
       closeTimerId = setTimeout(() => {
-        onMouseLeave?.()
+        setOpen(false)
         closeTimerId = undefined
       }, closeDelay) as unknown as number
     } else {
-      onMouseLeave?.()
+      setOpen(false)
     }
   }
 
+  const handleFocus = () => setOpen(true)
+  const handleBlur = () => setOpen(false)
+
+  // Placement CSS classes
+  const placementClasses: Record<TooltipPlacement, string> = {
+    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+  }
+
+  // Arrow CSS classes
+  const arrowClasses: Record<TooltipPlacement, string> = {
+    top: 'top-full left-1/2 -translate-x-1/2 border-t-primary border-l-transparent border-r-transparent border-b-transparent',
+    right: 'right-full top-1/2 -translate-y-1/2 border-r-primary border-t-transparent border-b-transparent border-l-transparent',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-primary border-l-transparent border-r-transparent border-t-transparent',
+    left: 'left-full top-1/2 -translate-y-1/2 border-l-primary border-t-transparent border-b-transparent border-r-transparent',
+  }
+
+  const placementClass = placementClasses[placement]
+  const arrowClass = arrowClasses[placement]
+
+  return (
+    <span
+      class="relative inline-block"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      aria-describedby={id}
+      data-tooltip-trigger
+    >
+      <span>{children}</span>
+      <div
+        class={`absolute z-50 ${placementClass}`}
+        role="tooltip"
+        id={id}
+        data-tooltip-content
+        data-tooltip-open={open()}
+      >
+        <div class="bg-primary text-primary-foreground text-sm px-3 py-1.5 rounded-md shadow-md whitespace-nowrap">
+          {content}
+        </div>
+        <span
+          class={`absolute w-0 h-0 border-4 ${arrowClass}`}
+          aria-hidden="true"
+        />
+      </div>
+    </span>
+  )
+}
+
+// Keep old exports for backwards compatibility (deprecated)
+export interface TooltipTriggerProps {
+  ariaDescribedby?: string
+  children?: Child
+  delayDuration?: number
+  closeDelay?: number
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
+  onFocus?: () => void
+  onBlur?: () => void
+}
+
+export function TooltipTrigger({
+  ariaDescribedby,
+  children,
+}: TooltipTriggerProps) {
   return (
     <span
       class="inline-block"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onFocus={onFocus}
-      onBlur={onBlur}
       aria-describedby={ariaDescribedby}
       data-tooltip-trigger
     >
@@ -100,10 +159,6 @@ export function TooltipTrigger({
     </span>
   )
 }
-
-// --- TooltipContent ---
-
-export type TooltipPlacement = 'top' | 'right' | 'bottom' | 'left'
 
 export interface TooltipContentProps {
   placement?: TooltipPlacement
@@ -118,7 +173,6 @@ export function TooltipContent({
   id,
   children,
 }: TooltipContentProps) {
-  // Placement CSS classes for tooltip container position
   const placementClasses: Record<TooltipPlacement, string> = {
     top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
     right: 'left-full top-1/2 -translate-y-1/2 ml-2',
@@ -126,7 +180,6 @@ export function TooltipContent({
     left: 'right-full top-1/2 -translate-y-1/2 mr-2',
   }
 
-  // Arrow CSS classes based on placement
   const arrowClasses: Record<TooltipPlacement, string> = {
     top: 'top-full left-1/2 -translate-x-1/2 border-t-primary border-l-transparent border-r-transparent border-b-transparent',
     right: 'right-full top-1/2 -translate-y-1/2 border-r-primary border-t-transparent border-b-transparent border-l-transparent',
@@ -139,7 +192,7 @@ export function TooltipContent({
 
   return (
     <div
-      class={`absolute z-50 ${placementClass} ${open ? '' : 'hidden'}`}
+      class={`absolute z-50 ${placementClass}`}
       role="tooltip"
       id={id}
       data-tooltip-content
