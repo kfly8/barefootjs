@@ -17,7 +17,7 @@
  * the component composable and flexible.
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 // AccordionItem - Individual collapsible section
 export interface AccordionItemProps {

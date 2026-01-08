@@ -2,8 +2,8 @@
  * Checkbox Documentation Page
  */
 
-import { Checkbox } from '@/components/Checkbox'
-import { CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/CheckboxDemo'
+import { Checkbox } from '@/components/ui/checkbox'
+import { CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/docs/checkbox-demo'
 import {
   DocPage,
   PageHeader,
@@ -26,7 +26,7 @@ const tocItems: TocItem[] = [
 // Code examples
 const installCode = `bunx barefoot add checkbox`
 
-const usageCode = `import { Checkbox } from '@/components/checkbox'
+const usageCode = `import { Checkbox } from '@/components/ui/checkbox'
 
 export default function Page() {
   return <Checkbox />

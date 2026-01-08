@@ -24,7 +24,7 @@
  * - 'hidden': Toast is not rendered (display: none)
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 // --- Toast Variants ---
 

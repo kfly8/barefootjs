@@ -7,7 +7,7 @@
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from './Input'
+import { Input } from '../ui/input'
 
 /**
  * Basic controlled input - simple two-way binding

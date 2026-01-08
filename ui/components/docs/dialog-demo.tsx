@@ -16,7 +16,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from './Dialog'
+} from '../ui/dialog'
 
 /**
  * Basic dialog demo

@@ -7,7 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Input } from './Input'
+import { Input } from '../ui/input'
 
 /**
  * Value binding example

@@ -2,7 +2,7 @@
  * Accordion Documentation Page
  */
 
-import { AccordionSingleOpenDemo, AccordionMultipleOpenDemo } from '@/components/AccordionDemo'
+import { AccordionSingleOpenDemo, AccordionMultipleOpenDemo } from '@/components/docs/accordion-demo'
 import {
   DocPage,
   PageHeader,
@@ -32,7 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '@/components/accordion'
+} from '@/components/ui/accordion'
 
 export default function Page() {
   const [openItem, setOpenItem] = createSignal<string | null>(null)

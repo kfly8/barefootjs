@@ -221,4 +221,61 @@ describe('Inline component expansion in map', () => {
     expect(appFile!.clientJs).toContain('data-event-id="0"')
     expect(appFile!.clientJs).toContain('data-event-id="1"')
   })
+
+  it('Nested components in map with dynamic selected prop', async () => {
+    const files: Record<string, string> = {
+      '/test/App.tsx': `
+        "use client"
+        import { createSignal } from 'barefoot'
+        import { TabsTrigger } from './TabsTrigger'
+        function App() {
+          const [selected, setSelected] = createSignal('a')
+          const items = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]
+          return (
+            <div>
+              {items.map(item => (
+                <TabsTrigger
+                  key={item.id}
+                  value={item.id}
+                  selected={selected() === item.id}
+                  onClick={() => setSelected(item.id)}
+                >
+                  {item.label}
+                </TabsTrigger>
+              ))}
+            </div>
+          )
+        }
+      `,
+      '/test/TabsTrigger.tsx': `
+        "use client"
+        type Props = {
+          value: string
+          selected?: boolean
+          onClick?: () => void
+          children?: any
+        }
+        function TabsTrigger({ value, selected = false, onClick, children }: Props) {
+          return (
+            <button data-value={value} data-state={selected ? 'active' : 'inactive'} onClick={onClick}>
+              {children}
+            </button>
+          )
+        }
+        export { TabsTrigger }
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const appFile = result.files.find(f => f.componentNames.includes('App'))
+
+    // Component should be inlined in template
+    expect(appFile!.clientJs).toContain('data-value="${item.id}"')
+    // data-state should use the dynamic selected expression
+    expect(appFile!.clientJs).toContain('data-state')
+    // Children should be substituted
+    expect(appFile!.clientJs).toContain('${item.label}')
+    // Event handler should be converted to delegation
+    expect(appFile!.clientJs).toContain('data-event-id')
+    expect(appFile!.clientJs).toContain('setSelected(item.id)')
+  })
 })

@@ -2,7 +2,7 @@
  * Card Documentation Page
  */
 
-import { Button } from '@/components/Button'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardHeader,
@@ -10,7 +10,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '../components/Card'
+} from '@/components/ui/card'
 import {
   DocPage,
   PageHeader,
@@ -40,7 +40,7 @@ const usageCode = `import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '@/components/card'
+} from '@/components/ui/card'
 
 export default function Page() {
   return (

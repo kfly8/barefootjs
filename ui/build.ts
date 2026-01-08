@@ -17,7 +17,7 @@
 import { compileJSX, type PropWithType } from '@barefootjs/jsx'
 import { honoMarkedJsxAdapter } from '@barefootjs/hono'
 import { mkdir, readdir } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
@@ -25,11 +25,24 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../packages/dom')
 
+// Recursively discover all component files in ui/ and docs/ subdirectories
+async function discoverComponentFiles(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true })
+  const files: string[] = []
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name)
+    if (entry.isDirectory()) {
+      files.push(...await discoverComponentFiles(fullPath))
+    } else if (entry.name.endsWith('.tsx')) {
+      files.push(fullPath)
+    }
+  }
+  return files
+}
+
 // Discover all component files
 // The compiler handles "use client" filtering
-const componentFiles = (await readdir(COMPONENTS_DIR))
-  .filter(f => f.endsWith('.tsx'))
-  .map(f => resolve(COMPONENTS_DIR, f))
+const componentFiles = await discoverComponentFiles(COMPONENTS_DIR)
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
@@ -58,24 +71,39 @@ const manifest: Record<string, { clientJs?: string; markedJsx: string; props: Pr
 for (const entryPath of componentFiles) {
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { markedJsxAdapter: honoMarkedJsxAdapter })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter, rootDir: COMPONENTS_DIR })
 
   for (const file of result.files) {
-    // Marked JSX file - output to dist/components/
-    const baseFileName = file.sourcePath.split('/').pop()!
-    await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), file.markedJsx)
-    console.log(`Generated: dist/components/${baseFileName}`)
+    // Preserve subdirectory structure (ui/, docs/)
+    // file.sourcePath is like "ui/Button.tsx" or "docs/CopyButton.tsx"
+    const relativePath = file.sourcePath
+    const dirPath = dirname(relativePath)
+    const baseFileName = relativePath.split('/').pop()!
+    const baseNameNoExt = baseFileName.replace('.tsx', '')
 
-    // Client JS - colocate with Marked JSX
+    // Create subdirectory if needed
+    const outputDir = resolve(DIST_COMPONENTS_DIR, dirPath)
+    await mkdir(outputDir, { recursive: true })
+
+    // Marked JSX file - output to dist/components/{subdir}/
+    await Bun.write(resolve(outputDir, baseFileName), file.markedJsx)
+    console.log(`Generated: dist/components/${relativePath}`)
+
+    // Client JS filename includes directory (e.g., "ui/Button-abc123.js")
+    const clientJsRelativePath = file.hasClientJs
+      ? `${dirPath}/${baseNameNoExt}-${file.hash}.js`
+      : ''
+
+    // Client JS - colocate with Marked JSX in same subdirectory
     if (file.hasClientJs) {
-      await Bun.write(resolve(DIST_COMPONENTS_DIR, file.clientJsFilename), file.clientJs)
-      console.log(`Generated: dist/components/${file.clientJsFilename}`)
+      await Bun.write(resolve(outputDir, file.clientJsFilename), file.clientJs)
+      console.log(`Generated: dist/components/${clientJsRelativePath}`)
     }
 
     // Manifest entries
     const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
-    const markedJsxPath = `components/${baseFileName}`
-    const clientJsPath = file.hasClientJs ? `components/${file.clientJsFilename}` : undefined
+    const markedJsxPath = `components/${relativePath}`
+    const clientJsPath = file.hasClientJs ? `components/${clientJsRelativePath}` : undefined
     manifest[fileKey] = {
       markedJsx: markedJsxPath,
       clientJs: clientJsPath,
@@ -97,18 +125,27 @@ for (const entryPath of componentFiles) {
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/components/manifest.json')
 
-// Generate index.ts for re-exporting all components
-const componentExports: string[] = []
-for (const file of await readdir(DIST_COMPONENTS_DIR)) {
-  if (file.endsWith('.tsx')) {
-    const baseName = file.replace('.tsx', '')
-    const content = await Bun.file(resolve(DIST_COMPONENTS_DIR, file)).text()
-    const exportMatches = content.matchAll(/export\s+(?:function|const)\s+(\w+)/g)
-    for (const match of exportMatches) {
-      componentExports.push(`export { ${match[1]} } from './${baseName}'`)
+// Generate index.ts for re-exporting all components (handles subdirectories)
+async function collectExports(dir: string, prefix: string = ''): Promise<string[]> {
+  const exports: string[] = []
+  const entries = await readdir(dir, { withFileTypes: true })
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name)
+    if (entry.isDirectory()) {
+      exports.push(...await collectExports(fullPath, `${prefix}${entry.name}/`))
+    } else if (entry.name.endsWith('.tsx')) {
+      const baseName = entry.name.replace('.tsx', '')
+      const content = await Bun.file(fullPath).text()
+      const exportMatches = content.matchAll(/export\s+(?:function|const)\s+(\w+)/g)
+      for (const match of exportMatches) {
+        exports.push(`export { ${match[1]} } from './${prefix}${baseName}'`)
+      }
     }
   }
+  return exports
 }
+
+const componentExports = await collectExports(DIST_COMPONENTS_DIR)
 if (componentExports.length > 0) {
   await Bun.write(resolve(DIST_COMPONENTS_DIR, 'index.ts'), componentExports.join('\n') + '\n')
   console.log('Generated: dist/components/index.ts')
@@ -141,6 +178,33 @@ for (const file of await readdir(LIB_DIR).catch(() => [])) {
     console.log(`Copied: dist/lib/${file}`)
   }
 }
+
+// Copy server components (without "use client") to dist
+// These are components that don't need compilation but are still imported from @/components/
+async function copyServerComponents(srcDir: string, destDir: string, prefix: string = '') {
+  const entries = await readdir(srcDir, { withFileTypes: true })
+  for (const entry of entries) {
+    const srcPath = join(srcDir, entry.name)
+    const destPath = join(destDir, entry.name)
+    if (entry.isDirectory()) {
+      await mkdir(destPath, { recursive: true })
+      await copyServerComponents(srcPath, destPath, `${prefix}${entry.name}/`)
+    } else if (entry.name.endsWith('.tsx')) {
+      const content = await Bun.file(srcPath).text()
+      // Skip files that have "use client" (already compiled)
+      if (!content.includes('"use client"') && !content.includes("'use client'")) {
+        // Check if file wasn't already output by compiler
+        const distFile = resolve(DIST_COMPONENTS_DIR, prefix, entry.name)
+        if (!await Bun.file(distFile).exists()) {
+          await mkdir(dirname(distFile), { recursive: true })
+          await Bun.write(distFile, content)
+          console.log(`Copied (server component): dist/components/${prefix}${entry.name}`)
+        }
+      }
+    }
+  }
+}
+await copyServerComponents(COMPONENTS_DIR, DIST_COMPONENTS_DIR)
 
 // Copy base/*.tsx files
 for (const file of await readdir(BASE_DIR).catch(() => [])) {

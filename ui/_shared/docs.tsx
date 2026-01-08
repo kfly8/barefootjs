@@ -5,13 +5,36 @@
  * Uses CSS variables for theming support.
  */
 
-import { TableOfContents, type TocItem } from '@/components/TableOfContents'
-import { CopyButton } from '@/components/CopyButton'
+import { TableOfContents, type TocItem } from '@/components/docs/table-of-contents'
+import { CopyButton } from '@/components/docs/copy-button'
+// Re-export PackageManagerTabs from compiled component
+export { PackageManagerTabs } from '@/components/docs/package-manager-tabs'
 import { PageNavigation, getNavLinks } from './PageNavigation'
 import { highlight } from './highlighter'
 
 // Re-export TocItem for convenience
 export type { TocItem }
+
+// Type for pre-highlighted commands (matches PackageManagerTabs prop)
+export interface HighlightedCommands {
+  pnpm: string
+  npm: string
+  yarn: string
+  bun: string
+}
+
+/**
+ * Generate pre-highlighted HTML for package manager commands.
+ * Use this on server-side pages to pass to PackageManagerTabs.
+ */
+export function getHighlightedCommands(command: string): HighlightedCommands {
+  return {
+    pnpm: highlight(`pnpm dlx ${command}`, 'bash'),
+    npm: highlight(`npx ${command}`, 'bash'),
+    yarn: highlight(`npx ${command}`, 'bash'),
+    bun: highlight(`bunx --bun ${command}`, 'bash'),
+  }
+}
 
 // Documentation page wrapper with TOC sidebar and footer navigation
 export interface DocPageProps {
@@ -60,7 +83,7 @@ export function Preview({ children }: { children: any }) {
 export function CodeBlock({
   code,
   lang = 'tsx',
-  showLineNumbers = false,
+  showLineNumbers = true,
 }: {
   code: string
   lang?: string
@@ -75,7 +98,7 @@ export function CodeBlock({
 
   return (
     <div class="relative group">
-      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono">
         <code class="block">
           {showLineNumbers ? (
             lines.map((line, i) => (
@@ -159,13 +182,45 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
   )
 }
 
-// Example component with preview and code
+// Example component with preview and code in a unified container
 export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
+  // Highlight code and split into lines for line number display
+  const highlightedCode = highlight(code, 'tsx')
+  const lines = highlightedCode.split('\n')
+  // Remove trailing empty line if present
+  if (lines[lines.length - 1] === '') {
+    lines.pop()
+  }
+
   return (
     <div class="space-y-4">
       {title && <h3 class="text-lg font-medium text-foreground">{title}</h3>}
-      <Preview>{children}</Preview>
-      <CodeBlock code={code} />
+      <div class="border border-solid border-border rounded-lg overflow-hidden">
+        {/* Preview section */}
+        <div class="flex flex-wrap items-center justify-center gap-4 p-8 bg-card relative overflow-hidden">
+          <div class="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
+          <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
+            {children}
+          </div>
+        </div>
+        {/* Code section with line numbers */}
+        <div class="relative group">
+          <pre class="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
+            <code class="block">
+              {lines.map((line, i) => (
+                <span key={i} class="table-row">
+                  <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+                    {i + 1}
+                  </span>
+                  <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
+                </span>
+              ))}
+            </code>
+          </pre>
+          <CopyButton code={code} />
+        </div>
+      </div>
     </div>
   )
 }
+

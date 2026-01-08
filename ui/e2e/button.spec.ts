@@ -12,11 +12,14 @@ test.describe('Button Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add button')).toBeVisible()
+    // Default tab is 'bun', command includes --bun flag
+    // Check that the installation section contains the package manager tabs
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
+  test('displays examples section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
   })
 
   test.describe('Button Variants', () => {
@@ -41,7 +44,8 @@ test.describe('Button Documentation Page', () => {
       // Icon button has data-bf-scope attribute (not a copy button)
       // It's the Button component with an SVG icon inside
       // Note: data-bf-scope uses unique IDs like "Button_0", so we use prefix matching
-      const iconButton = page.locator('button[data-bf-scope^="Button"]:has(svg)')
+      // Multiple icon buttons may exist, so use first()
+      const iconButton = page.locator('button[data-bf-scope^="Button"]:has(svg)').first()
       await expect(iconButton).toBeVisible()
     })
   })
@@ -97,9 +101,7 @@ test.describe('Button Documentation Page', () => {
       const propsTable = page.locator('table')
       await expect(propsTable.locator('td').filter({ hasText: /^variant$/ })).toBeVisible()
       await expect(propsTable.locator('td').filter({ hasText: /^size$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onClick$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^children$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^asChild$/ })).toBeVisible()
     })
   })
 })

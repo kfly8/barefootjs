@@ -2,15 +2,16 @@
  * Button Documentation Page
  */
 
-import { Button } from '@/components/Button'
-import { ButtonDemo } from '@/components/ButtonDemo'
+import { Button } from '@/components/ui/button'
+import { ButtonDemo } from '@/components/docs/button-demo'
 import {
   DocPage,
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
@@ -18,19 +19,9 @@ import {
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
   { id: 'api-reference', title: 'API Reference' },
 ]
-
-// Code examples
-const installCode = `bunx barefoot add button`
-
-const usageCode = `import { Button } from '@/components/button'
-
-export default function Page() {
-  return <Button>Click me</Button>
-}`
 
 const variantCode = `<Button variant="default">Default</Button>
 <Button variant="secondary">Secondary</Button>
@@ -49,10 +40,7 @@ const sizeCode = `<Button size="sm">Small</Button>
 const disabledCode = `<Button disabled>Disabled</Button>
 <Button variant="outline" disabled>Disabled</Button>`
 
-const interactiveCode = `import { createSignal } from '@barefootjs/dom'
-
-const [count, setCount] = createSignal(0)
-
+const interactiveCode = `const [count, setCount] = createSignal(0)
 <Button onClick={() => setCount(n => n + 1)}>
   Clicked {count()} times
 </Button>`
@@ -61,31 +49,21 @@ const [count, setCount] = createSignal(0)
 const buttonProps: PropDefinition[] = [
   {
     name: 'variant',
-    type: "'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'",
+    type: "default | destructive | outline | secondary | ghost | link",
     defaultValue: "'default'",
     description: 'The visual style of the button.',
   },
   {
     name: 'size',
-    type: "'default' | 'sm' | 'lg' | 'icon'",
+    type: "default | sm | lg | icon | icon-sm | icon-lg",
     defaultValue: "'default'",
     description: 'The size of the button.',
   },
   {
-    name: 'disabled',
+    name: 'asChild',
     type: 'boolean',
     defaultValue: 'false',
-    description: 'Whether the button is disabled.',
-  },
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the button is clicked.',
-  },
-  {
-    name: 'children',
-    type: 'ReactNode',
-    description: 'The content of the button.',
+    description: 'Render child element instead of button',
   },
 ]
 
@@ -100,6 +78,9 @@ function PlusIcon() {
 }
 
 export function ButtonPage() {
+  // Generate highlighted commands inside component (after Shiki is initialized)
+  const installCommands = getHighlightedCommands('barefoot add button')
+
   return (
     <DocPage slug="button" toc={tocItems}>
       <div class="space-y-12">
@@ -109,24 +90,44 @@ export function ButtonPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<Button>Button</Button>`}>
-          <Button>Button</Button>
+        <Example title="" code={`
+import { Button } from "@/components/ui/button"
+
+function ButtonExample() {
+  return (
+    <div class="flex flex-wrap items-center gap-2 md:flex-row">
+      <Button variant="outline">Button</Button>
+      <Button variant="outline" size="icon" aria-label="Submit">
+          <PlusIcon />
+      </Button>
+    </div>
+  )
+}
+          `}>
+          <div class="flex flex-wrap items-center gap-2 md:flex-row">
+            <Button variant="outline">Button</Button>
+            <Button variant="outline" size="icon" aria-label="Submit">
+                <PlusIcon />
+            </Button>
+          </div>
         </Example>
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add button" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div class="space-y-8">
-            <Example title="Variants" code={variantCode}>
+            <Example title="Variants" code={`
+<Button variant="default">Default</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="destructive">Destructive</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+`}>
               <Button variant="default">Default</Button>
               <Button variant="secondary">Secondary</Button>
               <Button variant="destructive">Destructive</Button>

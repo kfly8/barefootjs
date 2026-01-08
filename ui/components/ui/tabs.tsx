@@ -17,7 +17,7 @@
  * complexity while maintaining full control over tab state.
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 // Tabs - Container component
 export interface TabsProps {

@@ -103,9 +103,6 @@ export interface HTMLBaseAttributes extends BaseEventAttributes {
   dangerouslySetInnerHTML?: { __html: string }
   children?: unknown
   key?: string | number | bigint | null
-
-  // Allow any other attributes
-  [key: string]: unknown
 }
 
 // ============================================================================

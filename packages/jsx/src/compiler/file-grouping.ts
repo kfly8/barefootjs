@@ -5,112 +5,9 @@
  * file-level hashes and component-to-file mappings.
  */
 
-import type { CompileResult, ChildComponentInit, CvaPatternInfo, LocalVariable } from '../types'
+import type { CompileResult, ChildComponentInit } from '../types'
 import { generateContentHash } from './utils'
 import { isConstantUsedInClientCode } from '../extractors/constants'
-
-/**
- * Generates CVA lookup map constant code from a pattern.
- *
- * @example
- * Input: { name: 'buttonVariants', baseClass: 'flex', variantDefs: {...}, defaultVariants: {...} }
- * Output: `const __cva_buttonVariants = { base: 'flex', variants: {...}, defaults: {...} }`
- */
-function generateCvaLookupMap(pattern: CvaPatternInfo): string {
-  const variantsObj = JSON.stringify(pattern.variantDefs, null, 2)
-    .split('\n')
-    .map((line, i) => i === 0 ? line : '  ' + line)
-    .join('\n')
-  const defaultsObj = JSON.stringify(pattern.defaultVariants)
-
-  return `const __cva_${pattern.name} = {
-  base: ${JSON.stringify(pattern.baseClass)},
-  variants: ${variantsObj},
-  defaults: ${defaultsObj}
-}`
-}
-
-/**
- * Checks if a local variable uses a cva pattern and transforms it to a getter function.
- *
- * @example
- * Input: { name: 'buttonClass', code: 'const buttonClass = buttonVariants({ variant, size, className })' }
- * Output: { transformed: true, code: 'const buttonClass = () => { ... lookup code ... }' }
- */
-function transformCvaLocalVariable(
-  lv: LocalVariable,
-  cvaPatterns: CvaPatternInfo[]
-): { transformed: boolean; code: string; cvaName?: string } {
-  // Check if the code uses any cva pattern
-  for (const pattern of cvaPatterns) {
-    // Match patterns like: buttonVariants({...})
-    const cvaCallPattern = new RegExp(`\\b${pattern.name}\\s*\\(`)
-    if (cvaCallPattern.test(lv.code)) {
-      // Extract variant keys from the cva pattern
-      const variantKeys = Object.keys(pattern.variantDefs)
-
-      // Generate lookup getter function
-      const lookupCode = variantKeys.map(key => {
-        return `const __${key} = ${key}() ?? __cva_${pattern.name}.defaults.${key}`
-      }).join('\n  ')
-
-      const variantLookups = variantKeys.map(key => {
-        return `__cva_${pattern.name}.variants.${key}[__${key}]`
-      }).join(' + " " + ')
-
-      // Handle className prop
-      // Check if className is in the pattern call
-      const hasClassName = /className/.test(lv.code)
-      const classNamePart = hasClassName ? ' + " " + (className() || "")' : ''
-
-      const getterCode = `const ${lv.name} = () => {
-  ${lookupCode}
-  return (__cva_${pattern.name}.base + " " + ${variantLookups}${classNamePart}).trim()
-}`
-
-      return { transformed: true, code: getterCode, cvaName: pattern.name }
-    }
-  }
-
-  return { transformed: false, code: lv.code }
-}
-
-/**
- * Transforms a CVA pattern call in an expression into lookup code.
- * Used for dynamic attributes like class={buttonVariants({ variant, size, className })}
- *
- * @example
- * Input: 'buttonVariants({ variant, size, className })'
- * Output: '(() => { const __variant = variant() ?? ...; return (__cva_buttonVariants.base + ...).trim() })()'
- */
-export function transformCvaInExpression(
-  expression: string,
-  cvaPatterns: CvaPatternInfo[]
-): { transformed: boolean; expression: string; cvaName?: string } {
-  for (const pattern of cvaPatterns) {
-    const cvaCallPattern = new RegExp(`\\b${pattern.name}\\s*\\(`)
-    if (cvaCallPattern.test(expression)) {
-      const variantKeys = Object.keys(pattern.variantDefs)
-
-      const lookupCode = variantKeys.map(key => {
-        return `const __${key} = ${key}() ?? __cva_${pattern.name}.defaults.${key}`
-      }).join('; ')
-
-      const variantLookups = variantKeys.map(key => {
-        return `__cva_${pattern.name}.variants.${key}[__${key}]`
-      }).join(' + " " + ')
-
-      const hasClassName = /className/.test(expression)
-      const classNamePart = hasClassName ? ' + " " + (className() || "")' : ''
-
-      // IIFE for immediate execution
-      const transformedExpr = `(() => { ${lookupCode}; return (__cva_${pattern.name}.base + " " + ${variantLookups}${classNamePart}).trim() })()`
-
-      return { transformed: true, expression: transformedExpr, cvaName: pattern.name }
-    }
-  }
-  return { transformed: false, expression }
-}
 
 /**
  * Component data with pre-calculated declarations
@@ -121,7 +18,6 @@ export interface ComponentData {
   fullPath: string
   result: CompileResult
   constantDeclarations: string
-  cvaLookupDeclarations: string    // CVA lookup map constants
   signalDeclarations: string
   localVariableDeclarations: string
   memoDeclarations: string
@@ -129,7 +25,6 @@ export interface ComponentData {
   childInits: ChildComponentInit[]
   hasClientJs: boolean
   hasUseClientDirective: boolean
-  cvaGetterNames: string[]          // Local variable names that are CVA getters (need () call)
 }
 
 /**
@@ -167,49 +62,50 @@ export function collectComponentData(
         .map(e => e.code)
         .join('\n')
 
-      // Transform local variables that use CVA patterns to getter functions
-      const cvaGetterNames: string[] = []
-      const usedCvaPatterns: CvaPatternInfo[] = []
-      const transformedLocalVars = result.localVariables.map(lv => {
-        const transformed = transformCvaLocalVariable(lv, result.cvaPatterns)
-        if (transformed.transformed && transformed.cvaName) {
-          cvaGetterNames.push(lv.name)
-          // Track which CVA patterns are used
-          const pattern = result.cvaPatterns.find(p => p.name === transformed.cvaName)
-          if (pattern && !usedCvaPatterns.includes(pattern)) {
-            usedCvaPatterns.push(pattern)
-          }
-        }
-        return transformed.code
-      })
-      const localVariableDeclarations = transformedLocalVars.join('\n')
-
-      // Also check dynamic attributes for CVA pattern calls
-      for (const da of result.dynamicAttributes) {
-        for (const pattern of result.cvaPatterns) {
-          const cvaCallPattern = new RegExp(`\\b${pattern.name}\\s*\\(`)
-          if (cvaCallPattern.test(da.expression)) {
-            if (!usedCvaPatterns.includes(pattern)) {
-              usedCvaPatterns.push(pattern)
-            }
-          }
-        }
-      }
-
-      // Generate CVA lookup map constants for used patterns
-      const cvaLookupDeclarations = usedCvaPatterns.map(p => generateCvaLookupMap(p)).join('\n')
+      const localVariableDeclarations = result.localVariables.map(lv => lv.code).join('\n')
 
       // Filter constants to only those used in client code
-      // Exclude CVA pattern constants (they're replaced with lookup maps)
-      const cvaPatternNames = new Set(result.cvaPatterns.map(p => p.name))
       const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
       const refCallbacks = result.refElements.map(r => r.callback)
       const childPropsExpressions = result.childInits.map(c => c.propsExpr)
-      const usedConstants = result.moduleConstants.filter(c =>
-        !cvaPatternNames.has(c.name) &&  // Exclude CVA patterns
-        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks, childPropsExpressions)
+      const memoComputations = result.memos.map(m => m.computation)
+      const signalInitializers = result.signals.map(s => s.initialValue)
+      const effectBodies = result.effects.map(e => e.code)
+
+      // Check module-level constants
+      const usedModuleConstants = result.moduleConstants.filter(c =>
+        isConstantUsedInClientCode(
+          c.name,
+          result.localFunctions,
+          eventHandlers,
+          refCallbacks,
+          childPropsExpressions,
+          memoComputations,
+          signalInitializers,
+          effectBodies
+        )
       )
-      const constantDeclarations = usedConstants.map(c => c.code).join('\n')
+
+      // Also check local variables used in reactive code (memo/signal/effect)
+      // These are normally SSR-only, but if referenced in reactive computations,
+      // they must be included in Client JS
+      const usedLocalVars = result.localVariables.filter(lv =>
+        isConstantUsedInClientCode(
+          lv.name,
+          result.localFunctions,
+          eventHandlers,
+          refCallbacks,
+          childPropsExpressions,
+          memoComputations,
+          signalInitializers,
+          effectBodies
+        )
+      )
+
+      const constantDeclarations = [
+        ...usedModuleConstants.map(c => c.code),
+        ...usedLocalVars.map(lv => lv.code)
+      ].join('\n')
 
       // Get directive status from compile result
       const hasUseClientDirective = result.hasUseClientDirective
@@ -233,7 +129,6 @@ export function collectComponentData(
         fullPath,
         result,
         constantDeclarations,
-        cvaLookupDeclarations,
         signalDeclarations,
         localVariableDeclarations,
         memoDeclarations,
@@ -241,7 +136,6 @@ export function collectComponentData(
         childInits: result.childInits,
         hasClientJs,
         hasUseClientDirective,
-        cvaGetterNames,
       })
     }
   }

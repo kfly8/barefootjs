@@ -7,7 +7,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import { Select, type SelectOption } from './Select'
+import { Select, type SelectOption } from '../ui/select'
 
 const fruitOptions: SelectOption[] = [
   { value: 'apple', label: 'Apple' },

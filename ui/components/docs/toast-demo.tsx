@@ -11,7 +11,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
-import type { ToastAnimationState } from './Toast'
+import type { ToastAnimationState } from '../ui/toast'
 import {
   ToastProvider,
   Toast,
@@ -19,8 +19,8 @@ import {
   ToastDescription,
   ToastClose,
   ToastAction,
-} from './Toast'
-import { Button } from './Button'
+} from '../ui/toast'
+import { Button } from '../ui/button'
 
 // Animation duration in ms (must match CSS transition-duration)
 const ANIMATION_DURATION = 300

@@ -4,13 +4,13 @@
  * Demonstrates error state management and multi-field validation patterns.
  */
 
-import { Input } from '@/components/Input'
+import { Input } from '@/components/ui/input'
 import {
   RequiredFieldDemo,
   EmailValidationDemo,
   PasswordConfirmationDemo,
   MultiFieldFormDemo,
-} from '@/components/ValidationDemo'
+} from '@/components/docs/validation-demo'
 import {
   PageHeader,
   Section,
@@ -18,7 +18,7 @@ import {
   CodeBlock,
   type TocItem,
 } from '../../_shared/docs'
-import { TableOfContents } from '@/components/TableOfContents'
+import { TableOfContents } from '@/components/docs/table-of-contents'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -29,7 +29,7 @@ const tocItems: TocItem[] = [
 
 // Code examples
 const requiredFieldCode = `import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from '@/components/Input'
+import { Input } from '@/components/ui/input'
 
 const [name, setName] = createSignal('')
 const [touched, setTouched] = createSignal(false)

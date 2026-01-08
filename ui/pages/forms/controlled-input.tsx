@@ -4,13 +4,13 @@
  * Demonstrates Signal ↔ input value synchronization patterns.
  */
 
-import { Input } from '@/components/Input'
+import { Input } from '@/components/ui/input'
 import {
   BasicControlledDemo,
   CharacterCountDemo,
   LivePreviewDemo,
   MultiInputSyncDemo,
-} from '@/components/ControlledInputDemo'
+} from '@/components/docs/controlled-input-demo'
 import {
   PageHeader,
   Section,
@@ -18,7 +18,7 @@ import {
   CodeBlock,
   type TocItem,
 } from '../../_shared/docs'
-import { TableOfContents } from '@/components/TableOfContents'
+import { TableOfContents } from '@/components/docs/table-of-contents'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -29,7 +29,7 @@ const tocItems: TocItem[] = [
 
 // Code examples
 const basicCode = `import { createSignal } from '@barefootjs/dom'
-import { Input } from '@/components/input'
+import { Input } from '@/components/ui/input'
 
 const [text, setText] = createSignal('')
 

@@ -2,8 +2,8 @@
  * Select Documentation Page
  */
 
-import { Select } from '@/components/Select'
-import { SelectBindingDemo, SelectFocusDemo } from '@/components/SelectDemo'
+import { Select } from '@/components/ui/select'
+import { SelectBindingDemo, SelectFocusDemo } from '@/components/docs/select-demo'
 import {
   DocPage,
   PageHeader,
@@ -26,7 +26,7 @@ const tocItems: TocItem[] = [
 // Code examples
 const installCode = `bunx barefoot add select`
 
-const usageCode = `import { Select } from '@/components/select'
+const usageCode = `import { Select } from '@/components/ui/select'
 
 const options = [
   { value: 'apple', label: 'Apple' },

@@ -2,24 +2,25 @@
  * Tests for local variables in JSX attribute expressions
  *
  * ## Overview
- * Verifies that local variable declarations within component functions
- * are correctly extracted and included in both Marked JSX and Client JS.
+ * Local variables are SSR-only - they are evaluated once at server render time
+ * and are NOT included in Client JS. For reactive computations, developers
+ * should use createSignal/createMemo.
  *
- * ## Supported patterns
- * - Object property access: `const placementClass = styles[placement]`
- * - Function call results: `const formatted = formatValue(value)`
- * - Template literals with local variables: `class={\`container ${typeClass}\`}`
- * - Multiple local variables in expressions
+ * ## Design Decision (Discussion #148)
+ * - localVariables are SSR-only, NOT included in Client JS
+ * - Attributes that only reference local variables don't need createEffect
+ * - For reactive updates, use createSignal/createMemo
  *
  * ## Related
  * - Issue #69: Support local variables and function calls in JSX attribute expressions
+ * - Discussion #148: Two-Value Classification design
  */
 
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('Local variables in dynamic attributes', () => {
-  it('extracts local variable used in class attribute', async () => {
+describe('Local variables are SSR-only', () => {
+  it('local variables are NOT included in client JS', async () => {
     const source = `
       "use client"
       const placementStyles = {
@@ -34,12 +35,13 @@ describe('Local variables in dynamic attributes', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Local variable declaration should be in client JS
-    // Note: props are converted to function calls (placement -> placement())
-    expect(file.clientJs).toContain('const placementClass = placementStyles[placement()]')
+    // Local variable declaration should NOT be in client JS (SSR-only)
+    expect(file.clientJs).not.toContain('const placementClass')
+    // Attributes using local variables should NOT have createEffect
+    expect(file.clientJs).not.toContain('placementClass')
   })
 
-  it('extracts multiple local variables', async () => {
+  it('attributes using local variables do not generate createEffect', async () => {
     const source = `
       "use client"
       const placementStyles = { top: 'top-class', bottom: 'bottom-class' }
@@ -53,13 +55,15 @@ describe('Local variables in dynamic attributes', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Both local variables should be in client JS
-    // Note: props are converted to function calls
-    expect(file.clientJs).toContain('const placementClass = placementStyles[placement()]')
-    expect(file.clientJs).toContain('const sizeClass = sizeStyles[size()]')
+    // Local variables should NOT be in client JS (SSR-only)
+    expect(file.clientJs).not.toContain('const placementClass')
+    expect(file.clientJs).not.toContain('const sizeClass')
+    // No createEffect call for class attribute that uses local variables
+    // Note: createEffect may be imported but not called
+    expect(file.clientJs).not.toContain('createEffect(() =>')
   })
 
-  it('extracts local variable from function call', async () => {
+  it('local variables in Marked JSX are preserved for SSR', async () => {
     const source = `
       "use client"
       function getPlacementClass(placement) {
@@ -73,12 +77,13 @@ describe('Local variables in dynamic attributes', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Local variable from function call should be in client JS
-    // Note: props are converted to function calls
-    expect(file.clientJs).toContain('const placementClass = getPlacementClass(placement())')
+    // Local variable should be in Marked JSX for SSR evaluation
+    expect(file.markedJsx).toContain('const placementClass = getPlacementClass(placement)')
+    // But NOT in client JS
+    expect(file.clientJs).not.toContain('const placementClass')
   })
 
-  it('does not extract signal declarations as local variables', async () => {
+  it('signal declarations are still included in client JS', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -91,14 +96,14 @@ describe('Local variables in dynamic attributes', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Signal declaration should not be in local variables section
-    // (it's handled separately by signal extraction)
+    // Signal declaration should be in client JS (reactive)
     expect(file.clientJs).toContain('const [count, setCount] = createSignal(0)')
-    // But derived value should be extracted as local variable
-    expect(file.clientJs).toContain('const doubled = count() * 2')
+    // But derived value (local variable) should NOT be in client JS
+    // For reactive derived values, use createMemo instead
+    expect(file.clientJs).not.toContain('const doubled = count() * 2')
   })
 
-  it('does not extract arrow function as local variable', async () => {
+  it('arrow functions used in event handlers are included in client JS', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -117,11 +122,10 @@ describe('Local variables in dynamic attributes', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Arrow function should be in local functions, not local variables
-    // (local functions are handled separately)
+    // Arrow function used in event handler should be in client JS
     expect(file.clientJs).toContain('const increment = () =>')
-    // Derived value should be in local variables
-    expect(file.clientJs).toContain('const doubled = count() * 2')
+    // But derived value (local variable) should NOT be in client JS
+    expect(file.clientJs).not.toContain('const doubled = count() * 2')
   })
 })
 

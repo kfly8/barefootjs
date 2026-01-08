@@ -11,7 +11,7 @@ import {
   TooltipLeftDemo,
   TooltipDelayDemo,
   TooltipNoDelayDemo,
-} from '@/components/TooltipDemo'
+} from '@/components/docs/tooltip-demo'
 import {
   DocPage,
   PageHeader,
@@ -37,7 +37,7 @@ const tocItems: TocItem[] = [
 const installCode = `bunx barefoot add tooltip`
 
 const usageCode = `import { createSignal } from '@barefootjs/dom'
-import { TooltipTrigger, TooltipContent } from '@/components/tooltip'
+import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 export default function Page() {
   const [open, setOpen] = createSignal(false)
@@ -94,7 +94,7 @@ const buttonCode = `const [open, setOpen] = createSignal(false)
   </TooltipContent>
 </div>`
 
-const placementCode = `import { TooltipContent } from '@/components/tooltip'
+const placementCode = `import { TooltipContent } from '@/components/ui/tooltip'
 
 // Top placement (default)
 <TooltipContent open={open()}>...</TooltipContent>

@@ -2,8 +2,8 @@
  * Input Documentation Page
  */
 
-import { Input } from '@/components/Input'
-import { InputBindingDemo, InputFocusDemo } from '@/components/InputDemo'
+import { Input } from '@/components/ui/input'
+import { InputBindingDemo, InputFocusDemo } from '@/components/docs/input-demo'
 import {
   DocPage,
   PageHeader,
@@ -26,7 +26,7 @@ const tocItems: TocItem[] = [
 // Code examples
 const installCode = `bunx barefoot add input`
 
-const usageCode = `import { Input } from '@/components/input'
+const usageCode = `import { Input } from '@/components/ui/input'
 
 export default function Page() {
   return <Input placeholder="Enter text..." />

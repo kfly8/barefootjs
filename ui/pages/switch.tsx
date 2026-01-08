@@ -2,8 +2,8 @@
  * Switch Documentation Page
  */
 
-import { Switch } from '@/components/Switch'
-import { SwitchInteractiveDemo, SwitchSettingsPanelDemo } from '@/components/SwitchDemo'
+import { Switch } from '@/components/ui/switch'
+import { SwitchInteractiveDemo, SwitchSettingsPanelDemo } from '@/components/docs/switch-demo'
 import {
   DocPage,
   PageHeader,
@@ -27,7 +27,7 @@ const tocItems: TocItem[] = [
 const installCode = `bunx barefoot add switch`
 
 const usageCode = `import { createSignal } from '@barefootjs/dom'
-import { Switch } from '@/components/switch'
+import { Switch } from '@/components/ui/switch'
 
 export default function Page() {
   const [checked, setChecked] = createSignal(false)

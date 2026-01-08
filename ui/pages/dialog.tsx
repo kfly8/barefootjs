@@ -2,7 +2,7 @@
  * Dialog Documentation Page
  */
 
-import { DialogBasicDemo, DialogFormDemo } from '@/components/DialogDemo'
+import { DialogBasicDemo, DialogFormDemo } from '@/components/docs/dialog-demo'
 import {
   DocPage,
   PageHeader,
@@ -37,7 +37,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from '@/components/dialog'
+} from '@/components/ui/dialog'
 
 export default function Page() {
   const [open, setOpen] = createSignal(false)

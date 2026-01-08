@@ -7,7 +7,7 @@
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import { Counter } from './Counter'
+import { Counter } from '../ui/counter'
 
 /**
  * Basic interactive counter

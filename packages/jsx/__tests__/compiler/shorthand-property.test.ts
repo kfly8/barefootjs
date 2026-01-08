@@ -5,6 +5,12 @@
  * valid JavaScript. The compiler should convert { propName } to { propName: propName() }
  * not { propName() } (which is method definition syntax and causes SyntaxError).
  *
+ * NOTE: Local variables are SSR-only (Discussion #148), so these tests verify
+ * the shorthand expansion in contexts where it's used in Client JS:
+ * - Event handlers
+ * - Child component props
+ * - Dynamic text content
+ *
  * @see https://github.com/kfly8/barefootjs/issues/138
  */
 
@@ -12,19 +18,18 @@ import { describe, it, expect } from 'bun:test'
 import { compileWithFiles } from './test-helpers'
 import { replacePropsWithGetterCallsAST } from '../../src/extractors/expression'
 
-describe('Issue #138: Shorthand property syntax in prop replacement', () => {
-  it('expands shorthand property in function call', async () => {
+describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
+  it('expands shorthand property in event handler function call', async () => {
     const files = {
       '/test/Button.tsx': `
         "use client"
 
-        function buttonVariants({ variant, size }) {
-          return \`btn-\${variant}-\${size}\`
+        function logAction({ variant, size }) {
+          console.log(\`Action: \${variant} \${size}\`)
         }
 
         function Button({ variant, size }) {
-          const buttonClass = buttonVariants({ variant, size })
-          return <button class={buttonClass}>Click</button>
+          return <button onClick={() => logAction({ variant, size })}>Click</button>
         }
         export default Button
       `,
@@ -37,21 +42,20 @@ describe('Issue #138: Shorthand property syntax in prop replacement', () => {
     expect(button!.clientJs).not.toContain('{ variant()')
     expect(button!.clientJs).not.toContain(', size() }')
 
-    // Should generate { variant: variant(), size: size() }
+    // Should generate { variant: variant(), size: size() } in event handler
     expect(button!.clientJs).toContain('variant: variant()')
     expect(button!.clientJs).toContain('size: size()')
   })
 
-  it('handles single shorthand property', async () => {
+  it('handles single shorthand property in event handler', async () => {
     const files = {
       '/test/Component.tsx': `
         "use client"
         function helperFn({ value }) {
-          return value * 2
+          console.log(value * 2)
         }
         function Component({ value }) {
-          const result = helperFn({ value })
-          return <div data-result={result}>{result}</div>
+          return <button onClick={() => helperFn({ value })}>Click</button>
         }
         export default Component
       `,
@@ -63,16 +67,15 @@ describe('Issue #138: Shorthand property syntax in prop replacement', () => {
     expect(comp!.clientJs).not.toContain('{ value() }')
   })
 
-  it('handles multiple shorthand properties', async () => {
+  it('handles multiple shorthand properties in event handler', async () => {
     const files = {
       '/test/Component.tsx': `
         "use client"
         function helperFn({ a, b, c }) {
-          return a + b + c
+          console.log(a + b + c)
         }
         function Component({ a, b, c }) {
-          const result = helperFn({ a, b, c })
-          return <div data-result={result}>{result}</div>
+          return <button onClick={() => helperFn({ a, b, c })}>Click</button>
         }
         export default Component
       `,
@@ -84,8 +87,10 @@ describe('Issue #138: Shorthand property syntax in prop replacement', () => {
     expect(comp!.clientJs).toContain('b: b()')
     expect(comp!.clientJs).toContain('c: c()')
   })
+})
 
-  it('handles mixed explicit and shorthand properties', async () => {
+describe('Local variables are SSR-only - shorthand not in Client JS', () => {
+  it('local variables with shorthand are NOT included in client JS', async () => {
     const files = {
       '/test/Component.tsx': `
         "use client"
@@ -102,12 +107,11 @@ describe('Issue #138: Shorthand property syntax in prop replacement', () => {
     const result = await compileWithFiles('/test/Component.tsx', files)
     const comp = result.files.find(f => f.componentNames.includes('Component'))
 
-    expect(comp!.clientJs).toContain('variant: variant()')
-    expect(comp!.clientJs).toContain('size: size()')
-    expect(comp!.clientJs).toContain('explicit: "value"')
+    // Local variable should NOT be in client JS (SSR-only)
+    expect(comp!.clientJs).not.toContain('const result = helperFn')
   })
 
-  it('preserves already explicit property syntax', async () => {
+  it('attributes using local variables do not need shorthand expansion', async () => {
     const files = {
       '/test/Component.tsx': `
         "use client"
@@ -124,108 +128,8 @@ describe('Issue #138: Shorthand property syntax in prop replacement', () => {
     const result = await compileWithFiles('/test/Component.tsx', files)
     const comp = result.files.find(f => f.componentNames.includes('Component'))
 
-    // Should be value: value(), not value: value: value()
-    expect(comp!.clientJs).toContain('value: value()')
-    expect(comp!.clientJs).not.toContain('value: value: value()')
-  })
-
-  it('handles nested objects with shorthand', async () => {
-    const files = {
-      '/test/Component.tsx': `
-        "use client"
-        function helperFn(options) {
-          return JSON.stringify(options)
-        }
-        function Component({ variant }) {
-          const result = helperFn({ outer: { variant } })
-          return <div data-result={result}>{result}</div>
-        }
-        export default Component
-      `,
-    }
-    const result = await compileWithFiles('/test/Component.tsx', files)
-    const comp = result.files.find(f => f.componentNames.includes('Component'))
-
-    expect(comp!.clientJs).toContain('variant: variant()')
-  })
-
-  it('does not affect non-object-literal usage', async () => {
-    const files = {
-      '/test/Component.tsx': `
-        "use client"
-        function Component({ value }) {
-          const result = value + 1
-          return <div data-result={result}>{result}</div>
-        }
-        export default Component
-      `,
-    }
-    const result = await compileWithFiles('/test/Component.tsx', files)
-    const comp = result.files.find(f => f.componentNames.includes('Component'))
-
-    // value should become value() in expression
-    expect(comp!.clientJs).toContain('value() + 1')
-  })
-
-  it('handles shorthand at start of object', async () => {
-    const files = {
-      '/test/Component.tsx': `
-        "use client"
-        function helperFn(options) {
-          return JSON.stringify(options)
-        }
-        function Component({ first }) {
-          const result = helperFn({ first, other: 123 })
-          return <div data-result={result}>{result}</div>
-        }
-        export default Component
-      `,
-    }
-    const result = await compileWithFiles('/test/Component.tsx', files)
-    const comp = result.files.find(f => f.componentNames.includes('Component'))
-
-    expect(comp!.clientJs).toContain('first: first()')
-  })
-
-  it('handles shorthand at end of object', async () => {
-    const files = {
-      '/test/Component.tsx': `
-        "use client"
-        function helperFn(options) {
-          return JSON.stringify(options)
-        }
-        function Component({ last }) {
-          const result = helperFn({ other: 123, last })
-          return <div data-result={result}>{result}</div>
-        }
-        export default Component
-      `,
-    }
-    const result = await compileWithFiles('/test/Component.tsx', files)
-    const comp = result.files.find(f => f.componentNames.includes('Component'))
-
-    expect(comp!.clientJs).toContain('last: last()')
-  })
-
-  it('handles shorthand with spread operator', async () => {
-    const files = {
-      '/test/Component.tsx': `
-        "use client"
-        function helperFn(options) {
-          return JSON.stringify(options)
-        }
-        function Component({ variant }) {
-          const base = { a: 1 }
-          const result = helperFn({ ...base, variant })
-          return <div data-result={result}>{result}</div>
-        }
-        export default Component
-      `,
-    }
-    const result = await compileWithFiles('/test/Component.tsx', files)
-    const comp = result.files.find(f => f.componentNames.includes('Component'))
-
-    expect(comp!.clientJs).toContain('variant: variant()')
+    // Local variable should NOT be in client JS (SSR-only)
+    expect(comp!.clientJs).not.toContain('const result = helperFn')
   })
 })
 

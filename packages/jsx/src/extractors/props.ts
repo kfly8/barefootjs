@@ -11,7 +11,11 @@ import { findComponentFunction } from './common'
  * Extracts type definitions used in props from the source file.
  * Returns type alias and interface declarations that are referenced in prop types.
  */
-export function extractTypeDefinitions(source: string, filePath: string, propTypes: string[]): string[] {
+export function extractTypeDefinitions(
+  source: string,
+  filePath: string,
+  propTypes: string[]
+): string[] {
   const sourceFile = createSourceFile(source, filePath)
   const typeDefinitions: string[] = []
   const collectedTypes = new Set<string>()

@@ -6,7 +6,7 @@
  * Uses CSS variables for theming support.
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 export interface CardProps {
   children?: Child

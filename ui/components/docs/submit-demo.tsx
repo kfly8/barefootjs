@@ -7,8 +7,8 @@
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from './Input'
-import { Button } from './Button'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
 import {
   ToastProvider,
   Toast,
@@ -16,7 +16,7 @@ import {
   ToastDescription,
   ToastClose,
   ToastAction,
-} from './Toast'
+} from '../ui/toast'
 
 /**
  * Basic submit demo - shows loading state and success feedback
