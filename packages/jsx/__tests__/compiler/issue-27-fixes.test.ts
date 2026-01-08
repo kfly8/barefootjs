@@ -90,9 +90,10 @@ describe('Issue #27 Fix 1: JSX Boolean Shorthand', () => {
 })
 
 describe('Issue #27 Fix 2: HTML Attribute JSX Expressions', () => {
-  // NOTE: Local variables are SSR-only (Discussion #148)
+  // NOTE: Local variables used only in HTML attributes are SSR-only (Discussion #148)
+  // However, if referenced in reactive code (createMemo/createSignal/createEffect),
+  // they ARE included in Client JS.
   // Attributes using only local variables don't need createEffect
-  // For reactive attributes, use signals or createMemo
 
   it('local variable attributes are evaluated at SSR time', async () => {
     const source = `
