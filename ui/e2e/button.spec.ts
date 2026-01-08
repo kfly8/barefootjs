@@ -18,8 +18,8 @@ test.describe('Button Documentation Page', () => {
     await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
+  test('displays examples section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
   })
 
   test.describe('Button Variants', () => {

@@ -3,6 +3,7 @@
  */
 
 import { Button } from '@/components/ui/button'
+import { ButtonDemo } from '@/components/docs/button-demo'
 import {
   DocPage,
   PageHeader,
@@ -38,6 +39,11 @@ const sizeCode = `<Button size="sm">Small</Button>
 
 const disabledCode = `<Button disabled>Disabled</Button>
 <Button variant="outline" disabled>Disabled</Button>`
+
+const interactiveCode = `const [count, setCount] = createSignal(0)
+<Button onClick={() => setCount(n => n + 1)}>
+  Clicked {count()} times
+</Button>`
 
 // Props definition
 const buttonProps: PropDefinition[] = [
@@ -142,6 +148,10 @@ function ButtonExample() {
             <Example title="Disabled" code={disabledCode}>
               <Button disabled>Disabled</Button>
               <Button variant="outline" disabled>Disabled</Button>
+            </Example>
+
+            <Example title="Interactive" code={interactiveCode}>
+              <ButtonDemo />
             </Example>
           </div>
         </Section>
