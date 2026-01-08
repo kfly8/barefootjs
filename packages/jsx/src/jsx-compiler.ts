@@ -35,8 +35,6 @@ import { extractSignals } from './extractors/signals'
 import { extractMemos } from './extractors/memos'
 import { extractEffects } from './extractors/effects'
 import { extractModuleVariables } from './extractors/constants'
-import { extractCvaPatterns } from './extractors/cva-patterns'
-import { transformCvaInExpression } from './compiler/file-grouping'
 import { extractComponentPropsWithTypes, extractTypeDefinitions } from './extractors/props'
 import { extractLocalFunctions } from './extractors/local-functions'
 import { extractModuleFunctions } from './extractors/module-functions'
@@ -262,9 +260,6 @@ function compileJsxWithComponents(
   // Extract module-level constants (shared across all components in file)
   const moduleConstants = extractModuleVariables(source, filePath)
 
-  // Extract CVA patterns for lookup map generation
-  const cvaPatterns = extractCvaPatterns(source, filePath)
-
   // Extract component props with types (for target component only)
   const propsResult = extractComponentPropsWithTypes(source, filePath, targetComponentName)
   const props = propsResult.props
@@ -275,8 +270,7 @@ function compileJsxWithComponents(
   const propTypes = props.map(p => p.type)
   // Also include the type reference name if present
   const allPropTypes = propsTypeRefName ? [...propTypes, propsTypeRefName] : propTypes
-  // Pass CVA patterns to expand VariantProps<typeof X> types
-  const typeDefinitions = extractTypeDefinitions(source, filePath, allPropTypes, cvaPatterns)
+  const typeDefinitions = extractTypeDefinitions(source, filePath, allPropTypes)
 
   // Extract local functions (for target component only)
   const localFunctions = extractLocalFunctions(source, filePath, signals, targetComponentName)
@@ -352,8 +346,7 @@ function compileJsxWithComponents(
     conditionalElements,
     ir,
     childInits,
-    moduleFunctions,
-    cvaPatterns
+    moduleFunctions
   )
 
   return {
@@ -363,7 +356,6 @@ function compileJsxWithComponents(
     memos,
     effects,
     moduleConstants,
-    cvaPatterns,
     localFunctions,
     localVariables,
     childInits,
@@ -579,20 +571,29 @@ function generateListElementEffects(
 
 /**
  * Generate createEffect blocks for dynamic attributes
+ *
+ * Filters out attributes that only reference local variables (SSR-only).
+ * Local variables are computed once at SSR time and don't change on the client,
+ * so they don't need reactive updates.
  */
 function generateAttributeEffects(
   ctx: ClientJsGeneratorContext,
   dynamicAttributes: DynamicAttribute[],
-  cvaPatterns: { name: string; baseClass: string; variantDefs: Record<string, Record<string, string>>; defaultVariants: Record<string, string> }[] = []
+  localVariableNames: string[] = []
 ): string[] {
   const lines: string[] = []
+  const localVarSet = new Set(localVariableNames)
 
   for (const da of dynamicAttributes) {
+    // Skip attributes that are just local variable references
+    // These are SSR-only and don't need reactive updates
+    const expr = da.expression.trim()
+    if (localVarSet.has(expr)) {
+      continue
+    }
+
     const v = ctx.varName(da.id)
-    // Transform CVA pattern calls in expression
-    const transformed = transformCvaInExpression(da.expression, cvaPatterns)
-    const transformedDa = transformed.transformed ? { ...da, expression: transformed.expression } : da
-    const effectBody = generateAttributeUpdateWithVar(transformedDa, v)
+    const effectBody = generateAttributeUpdateWithVar(da, v)
     lines.push(...generateEffectWithPreCheck({ varName: v, effectBody }))
   }
 
@@ -826,8 +827,7 @@ function generateClientJsWithCreateEffect(
   conditionalElements: ConditionalElement[] = [],
   ir: IRNode | null = null,
   childInits: ChildComponentInit[] = [],
-  moduleFunctions: LocalFunction[] = [],
-  cvaPatterns: { name: string; baseClass: string; variantDefs: Record<string, Record<string, string>>; defaultVariants: Record<string, string> }[] = []
+  moduleFunctions: LocalFunction[] = []
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
@@ -954,7 +954,9 @@ function generateClientJsWithCreateEffect(
   // Generate createEffect blocks for each type
   lines.push(...generateDynamicElementEffects(ctx, dynamicElements))
   lines.push(...generateListElementEffects(ctx, listElements))
-  lines.push(...generateAttributeEffects(ctx, dynamicAttributes, cvaPatterns))
+  // Pass local variable names to filter out SSR-only attributes
+  const localVarNames = localVariables.map(lv => lv.name)
+  lines.push(...generateAttributeEffects(ctx, dynamicAttributes, localVarNames))
   lines.push(...generateConditionalEffects(conditionalElements))
 
   if (hasDynamicContent) {

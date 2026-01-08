@@ -79,7 +79,6 @@ function createCyclePlaceholder(targetComponentName?: string, hasUseClientDirect
     localFunctions: [],
     localVariables: [],
     moduleConstants: [],
-    cvaPatterns: [],
     childInits: [],
     source: '',
     isDefaultExport: false,

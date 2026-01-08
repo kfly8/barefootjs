@@ -7,7 +7,7 @@
 
 import type { ComponentData } from './file-grouping'
 import { filterChildrenWithClientJs, joinDeclarations } from './client-js-helpers'
-import { replacePropsWithGetterCallsAST, replaceGettersWithCallsAST } from '../extractors/expression'
+import { replacePropsWithGetterCallsAST } from '../extractors/expression'
 
 /**
  * Context for client JS generation
@@ -63,6 +63,8 @@ export function generateFileClientJs(
   }
 
   // Generate init functions for each component
+  // Note: Module-level constants are included via declarations in init functions
+  // only if they are used in reactive code (signals, effects, event handlers)
   for (const comp of fileComponents) {
     if (!comp.hasClientJs) continue
 
@@ -181,7 +183,7 @@ function generateInitFunction(
   sameFileComponentNames: string[],
   ctx: ClientJsContext
 ): string {
-  const { name, result, constantDeclarations, cvaLookupDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations, childInits, cvaGetterNames } = comp
+  const { name, result, signalDeclarations, memoDeclarations, effectDeclarations, childInits } = comp
 
   // Generate child init calls (including same-file children)
   const uniqueChildNames = [...new Set(childInits.map(child => child.name))]
@@ -205,16 +207,15 @@ function generateInitFunction(
   ].filter(Boolean).join('\n')
 
   const needsInitFunction = result.props.length > 0 || result.restPropsName || childInits.length > 0
-  // Order matters: CVA lookups, constants, signals, local variables, memos, then user-written effects
-  // CVA lookups must come first because local variables (getter functions) reference them
-  // Local variables must come before memos because memos may use them
+  // Order matters: signals, memos, then user-written effects
   // Effects come last because they may depend on signals and memos
-  const declarations = joinDeclarations(cvaLookupDeclarations, constantDeclarations, signalDeclarations, localVariableDeclarations, memoDeclarations, effectDeclarations)
+  // Note: localVariables are SSR-only and not included in Client JS
+  const declarations = joinDeclarations(signalDeclarations, memoDeclarations, effectDeclarations)
 
   if (needsInitFunction) {
-    return generateInitFunctionWithProps(name, result, declarations, bodyCode, cvaGetterNames)
+    return generateInitFunctionWithProps(name, result, declarations, bodyCode)
   } else {
-    return generateModuleLevelCode(name, result, declarations, bodyCode, cvaGetterNames)
+    return generateModuleLevelCode(name, result, declarations, bodyCode)
   }
 }
 
@@ -226,8 +227,7 @@ function generateInitFunctionWithProps(
   name: string,
   result: ComponentData['result'],
   declarations: string,
-  bodyCode: string,
-  cvaGetterNames: string[] = []
+  bodyCode: string
 ): string {
   // Separate callback props (on*) from value props
   const isCallbackProp = (propName: string) => /^on[A-Z]/.test(propName)
@@ -278,11 +278,7 @@ function generateInitFunctionWithProps(
   const propNames = valueProps.map(p => p.name)
   const processedDeclarations = replacePropsWithGetterCallsAST(declarations, propNames)
   const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-  // Also replace CVA getter names with function calls in body code using AST
-  const processedBodyCode = replaceGettersWithCallsAST(
-    replacePropsWithGetterCallsAST(bodyCode, propNames),
-    cvaGetterNames
-  )
+  const processedBodyCode = replacePropsWithGetterCallsAST(bodyCode, propNames)
 
   // Generate rest props handling code
   // When restPropsName is set, attach event listeners and handle reactive props
@@ -331,15 +327,11 @@ function generateModuleLevelCode(
   name: string,
   result: ComponentData['result'],
   declarations: string,
-  bodyCode: string,
-  cvaGetterNames: string[] = []
+  bodyCode: string
 ): string {
   // Module-level code that contains `return` statements needs to be wrapped in an IIFE
   // because `return` is invalid at module top-level in ES modules
   const hasReturnStatement = bodyCode.includes('return')
-
-  // Apply CVA getter replacement to body code using AST
-  const processedBodyCode = replaceGettersWithCallsAST(bodyCode, cvaGetterNames)
 
   if (hasReturnStatement) {
     return `// ${name} (wrapped in IIFE for return statement)
@@ -348,14 +340,14 @@ const __instanceIndex = 0
 const __parentScope = null
 ${declarations}
 
-${processedBodyCode}
+${bodyCode}
 })()`
   } else {
     const instanceVarsLine = result.clientJs ? 'const __instanceIndex = 0\nconst __parentScope = null\n' : ''
     return `// ${name} (no init function needed)
 ${instanceVarsLine}${declarations}
 
-${processedBodyCode}`
+${bodyCode}`
   }
 }
 

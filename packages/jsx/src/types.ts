@@ -180,22 +180,6 @@ export type ModuleConstant = {
   code: string        // const GRID_SIZE = 100
 }
 
-/**
- * CVA (class-variance-authority) Pattern Information
- *
- * Used to generate lookup maps in client JS for reactive variant/size updates.
- */
-export type CvaPatternInfo = {
-  /** Variable name (e.g., 'buttonVariants') */
-  name: string
-  /** Base class from cva first argument */
-  baseClass: string
-  /** Variant definitions: { variant: { default: '...', destructive: '...' }, size: {...} } */
-  variantDefs: Record<string, Record<string, string>>
-  /** Default variants: { variant: 'default', size: 'default' } */
-  defaultVariants: Record<string, string>
-}
-
 export type LocalFunction = {
   name: string        // handleToggle
   code: string        // const handleToggle = (id) => { ... }
@@ -226,7 +210,6 @@ export type CompileResult = {
   memos: MemoDeclaration[]         // Memoized computed values
   effects: EffectDeclaration[]     // User-written createEffect blocks
   moduleConstants: ModuleConstant[] // Module-level constants
-  cvaPatterns: CvaPatternInfo[]    // CVA pattern definitions for lookup map generation
   localFunctions: LocalFunction[]  // Functions defined within the component
   localVariables: LocalVariable[]  // Local variables defined within the component (non-function)
   childInits: ChildComponentInit[] // Child components that need initialization

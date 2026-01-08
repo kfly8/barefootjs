@@ -65,11 +65,8 @@ function isModuleLevelValue(node: ts.Expression): boolean {
     return isModuleLevelValue(node.expression)
   }
 
-  // Call expressions (e.g., cva(...))
-  // Allow function calls with static arguments for patterns like:
-  // const buttonVariants = cva('...', { variants: {...} })
+  // Call expressions with static arguments
   if (ts.isCallExpression(node)) {
-    // Check if all arguments are static values
     return node.arguments.every(arg => isModuleLevelValue(arg as ts.Expression))
   }
 
@@ -148,6 +145,9 @@ export function extractModuleVariables(source: string, filePath: string): Module
  * - Event handlers
  * - Ref callbacks
  * - Child component props expressions
+ *
+ * Note: localVariables are SSR-only and not checked here.
+ * For reactive computations, developers should use createSignal/createMemo.
  */
 export function isConstantUsedInClientCode(
   constantName: string,

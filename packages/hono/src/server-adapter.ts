@@ -100,13 +100,15 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
     const componentFunctions = components.map(comp => {
       const { name, props, propsTypeRefName, restPropsName, jsx, isDefaultExport, localVariables } = comp
 
-      // Extract prop names for destructuring (handle renamed props like { class: className })
+      // Extract prop names for destructuring (handle renamed props like { class: className } and default values)
       const propDestructure = props.map(p => {
+        const localName = p.localName || p.name
+        const defaultSuffix = p.defaultValue !== undefined ? ` = ${p.defaultValue}` : ''
         if (p.localName) {
-          // Prop is renamed: { class: className }
-          return `${p.name}: ${p.localName}`
+          // Prop is renamed: { class: className = '' }
+          return `${p.name}: ${localName}${defaultSuffix}`
         }
-        return p.name
+        return `${p.name}${defaultSuffix}`
       })
       // Get local variable names for use in function body
       const propLocalNames = props.map(p => p.localName || p.name)

@@ -7,9 +7,35 @@
  */
 
 import ts from 'typescript'
-import type { CompileResult, TemplateStringResult, IRNode, IRElement, IRText, IRExpression, IRComponent, IRConditional, IRFragment } from '../types'
+import type { CompileResult, TemplateStringResult, IRNode, IRElement, IRText, IRExpression, IRComponent, IRConditional, IRFragment, LocalVariable, ModuleConstant } from '../types'
 import { isPascalCase } from '../utils/helpers'
 import { substitutePropCallsAST, substituteIdentifiersAST } from '../extractors/expression'
+
+/**
+ * Extracts the expression part from a local variable declaration.
+ * e.g., "const classes = `...`" → "`...`"
+ */
+function extractLocalVarExpression(code: string): string | null {
+  // Match patterns like: const name = expression
+  const match = code.match(/^(?:const|let|var)\s+\w+\s*=\s*(.+)$/)
+  if (match) {
+    return match[1]
+  }
+  return null
+}
+
+/**
+ * Extracts the value from a module constant declaration.
+ * Handles simple string literals and template literals.
+ */
+function extractModuleConstantValue(code: string): string | null {
+  // Match patterns like: const name = "value" or const name = `value`
+  const match = code.match(/^(?:const|let|var)\s+\w+\s*=\s*(.+)$/)
+  if (match) {
+    return match[1]
+  }
+  return null
+}
 
 /**
  * Boolean HTML attributes that should only be present when truthy.
@@ -105,6 +131,8 @@ export function jsxToTemplateString(
    * @param restPropsToExpand - Map of rest props to expand when encountering spreadAttrs.
    *                           Key is the prop name, value is the expression. Used when inlining
    *                           components that use {...props} spread (e.g., Button passing disabled to <button>).
+   * @param localVariables - Local variables from the inlined component (for expansion).
+   * @param moduleConstants - Module constants from the inlined component (for expansion).
    */
   function irToHtmlTemplate(
     ir: IRNode,
@@ -112,17 +140,100 @@ export function jsxToTemplateString(
     keyAttr?: string,
     isRoot: boolean = true,
     rootEventAttrs: string = '',
-    restPropsToExpand: Map<string, string> = new Map()
+    restPropsToExpand: Map<string, string> = new Map(),
+    localVariables: LocalVariable[] = [],
+    moduleConstants: ModuleConstant[] = []
   ): string {
+    // Build lookup maps for local variables and module constants
+    const localVarMap = new Map<string, string>()
+    for (const lv of localVariables) {
+      const expr = extractLocalVarExpression(lv.code)
+      if (expr) {
+        localVarMap.set(lv.name, expr)
+      }
+    }
+
+    const moduleConstMap = new Map<string, string>()
+    for (const mc of moduleConstants) {
+      // Use the value field directly if available, otherwise extract from code
+      if (mc.value) {
+        moduleConstMap.set(mc.name, mc.value)
+      } else {
+        const value = extractModuleConstantValue(mc.code)
+        if (value) {
+          moduleConstMap.set(mc.name, value)
+        }
+      }
+    }
+
     /**
      * Substitutes prop references in expression using AST transformation.
-     * Handles both prop function calls and simple identifier references.
+     * Also handles local variable expansion for inlined components.
      */
     function substituteProps(expr: string): string {
       // First, handle prop function calls (e.g., onToggle() → expanded body)
       let result = substitutePropCallsAST(expr, propsMap)
       // Then, handle simple identifier references (e.g., item → todo)
       result = substituteIdentifiersAST(result, propsMap)
+
+      // Check if the expression is a simple local variable reference
+      // If so, expand it to the local variable's expression (with props substituted)
+      const trimmed = result.trim()
+      if (localVarMap.has(trimmed)) {
+        let localExpr = localVarMap.get(trimmed)!
+        // Substitute props in the local variable's expression
+        localExpr = substitutePropCallsAST(localExpr, propsMap)
+        localExpr = substituteIdentifiersAST(localExpr, propsMap)
+        // Substitute module constant lookups (e.g., variantClasses["destructive"])
+        localExpr = substituteModuleConstantLookups(localExpr, moduleConstMap)
+        result = localExpr
+      }
+
+      return result
+    }
+
+    /**
+     * Substitutes module constant references in an expression.
+     * Handles both simple references (baseClasses) and object lookups (variantClasses["destructive"]).
+     */
+    function substituteModuleConstantLookups(expr: string, constMap: Map<string, string>): string {
+      let result = expr
+
+      for (const [constName, constValue] of constMap) {
+        // First, handle object property access: constName["key"] or constName['key']
+        const literalPattern = new RegExp(`\\b${constName}\\s*\\[\\s*["']([^"']+)["']\\s*\\]`, 'g')
+        result = result.replace(literalPattern, (match, key) => {
+          // Try to evaluate the object lookup
+          try {
+            // Parse the constant value as JSON-like object
+            const objMatch = constValue.match(/^\{[\s\S]*\}$/)
+            if (objMatch) {
+              // Simple extraction: look for the key in the object literal
+              // Handle both quoted and unquoted keys, and single/double quote values
+              const keyPattern = new RegExp(`['"]?${key}['"]?\\s*:\\s*['"]([^'"]+)['"]`)
+              const valueMatch = constValue.match(keyPattern)
+              if (valueMatch) {
+                return `"${valueMatch[1]}"`
+              }
+            }
+          } catch {
+            // If evaluation fails, leave the expression as-is
+          }
+          return match
+        })
+
+        // Then, handle simple variable references (not followed by [ for object access)
+        // Only substitute if the value is a simple string literal
+        const isSimpleString = constValue.match(/^['"].*['"]$/)
+        if (isSimpleString) {
+          // Extract the string content (remove quotes)
+          const stringValue = constValue.slice(1, -1)
+          // Replace standalone identifier references (not part of object access)
+          const simplePattern = new RegExp(`\\b${constName}\\b(?!\\s*\\[)`, 'g')
+          result = result.replace(simplePattern, `"${stringValue}"`)
+        }
+      }
+
       return result
     }
 
@@ -152,10 +263,6 @@ export function jsxToTemplateString(
             if (BOOLEAN_HTML_ATTRS.has(attrNameLower)) {
               // Boolean attrs should only be present when truthy
               attrs += `\${${expr} ? ' ${attr.name}' : ''}`
-            } else if (expr.startsWith('__STATIC_CLASS__')) {
-              // Static class value from CVA pattern - output directly without template expression
-              const staticValue = expr.slice('__STATIC_CLASS__'.length)
-              attrs += ` ${attr.name}="${staticValue}"`
             } else {
               attrs += ` ${attr.name}="\${${expr}}"`
             }
@@ -398,35 +505,19 @@ export function jsxToTemplateString(
 
     // Add default values for props that aren't explicitly passed
     // This ensures that props like `inputDisabled = false` are resolved correctly
+    // Also add aliased names (e.g., class → className) for local variable expansion
     for (const prop of componentResult.props) {
       if (!propsMap.has(prop.name) && prop.defaultValue !== undefined) {
         propsMap.set(prop.name, prop.defaultValue)
       }
-    }
-
-    // Handle localVariables that use CVA patterns
-    // For CVA-based local variables like `const buttonClass = buttonVariants({ variant, size, className })`
-    // we need to inline the computed class value directly (without quotes, as it will be used in template expressions)
-    if (componentResult.localVariables && componentResult.cvaPatterns) {
-      for (const localVar of componentResult.localVariables) {
-        // Check if this local variable's code contains a CVA pattern call
-        const cvaPattern = componentResult.cvaPatterns.find(p => localVar.code.includes(p.name + '('))
-        if (cvaPattern) {
-          // Compute the class from CVA lookup map
-          const variantValue = propsMap.get('variant') || `"${cvaPattern.defaultVariants?.variant || 'default'}"`
-          const sizeValue = propsMap.get('size') || `"${cvaPattern.defaultVariants?.size || 'default'}"`
-          // Get variant and size keys by stripping quotes
-          const variantKey = variantValue.replace(/^["']|["']$/g, '')
-          const sizeKey = sizeValue.replace(/^["']|["']$/g, '')
-          // Build the class by combining base, variant class, and size class
-          const baseClass = cvaPattern.baseClass
-          const variantClass = cvaPattern.variantDefs?.variant?.[variantKey] || ''
-          const sizeClass = cvaPattern.variantDefs?.size?.[sizeKey] || ''
-          const classNameValue = propsMap.get('className') || propsMap.get('class') || ''
-          const cleanClassName = classNameValue.replace(/^["']|["']$/g, '')
-          const computedClass = [baseClass, variantClass, sizeClass, cleanClassName].filter(Boolean).join(' ').trim()
-          // Mark as static string value (for template generation, it will be used directly without template expression)
-          propsMap.set(localVar.name, `__STATIC_CLASS__${computedClass}`)
+      // If prop has an alias (localName), also add it to the map
+      // This allows local variable expressions like `${className}` to be substituted
+      if (prop.localName && prop.localName !== prop.name) {
+        const value = propsMap.get(prop.name)
+        if (value !== undefined && !propsMap.has(prop.localName)) {
+          propsMap.set(prop.localName, value)
+        } else if (prop.defaultValue !== undefined && !propsMap.has(prop.localName)) {
+          propsMap.set(prop.localName, prop.defaultValue)
         }
       }
     }
@@ -461,8 +552,6 @@ export function jsxToTemplateString(
         if (explicitPropNames.has(propName)) continue
         // Skip internal props used by the compiler
         if (propName === 'key' || propName === 'children') continue
-        // Skip local variables (like buttonClass from CVA)
-        if (propExpr.startsWith('__STATIC_CLASS__')) continue
         // This is a rest prop - should be expanded in {...props} spread
         restPropsToExpand.set(propName, propExpr)
       }
@@ -472,7 +561,16 @@ export function jsxToTemplateString(
     // This is especially important for same-file components where source
     // contains multiple components and parsing would find the wrong one
     if (componentResult.ir) {
-      return irToHtmlTemplate(componentResult.ir, propsMap, keyAttr, true, componentEventAttrs, restPropsToExpand)
+      return irToHtmlTemplate(
+        componentResult.ir,
+        propsMap,
+        keyAttr,
+        true,
+        componentEventAttrs,
+        restPropsToExpand,
+        componentResult.localVariables,
+        componentResult.moduleConstants
+      )
     }
 
     // Fall back to parsing source if no IR

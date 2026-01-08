@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Button Component
  *
@@ -29,7 +31,7 @@ import { Slot } from '../../base/slot'
 type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
 type ButtonSize = 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg'
 
-// Base classes applied to all buttons
+// Base classes shared by all buttons
 const baseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
 
 // Variant-specific classes
@@ -94,19 +96,19 @@ interface ButtonProps extends ButtonHTMLAttributes {
  * @param props.asChild - Render child element instead of button
  */
 function Button({
-  class: className,
+  class: className = '',
   variant = 'default',
   size = 'default',
   asChild = false,
   children,
   ...props
 }: ButtonProps) {
-  const buttonClass = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]}${className ? ` ${className}` : ''}`
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`
 
   if (asChild) {
-    return <Slot class={buttonClass} {...props}>{children}</Slot>
+    return <Slot class={classes} {...props}>{children}</Slot>
   }
-  return <button class={buttonClass} {...props}>{children}</button>
+  return <button class={classes} {...props}>{children}</button>
 }
 
 export { Button }
