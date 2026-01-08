@@ -145,16 +145,21 @@ export function extractModuleVariables(source: string, filePath: string): Module
  * - Event handlers
  * - Ref callbacks
  * - Child component props expressions
+ * - Memo computations (createMemo)
+ * - Signal initializers (createSignal)
+ * - Effect bodies (createEffect)
  *
  * Note: localVariables are SSR-only and not checked here.
- * For reactive computations, developers should use createSignal/createMemo.
  */
 export function isConstantUsedInClientCode(
   constantName: string,
   localFunctions: Array<{ code: string }>,
   eventHandlers: string[],
   refCallbacks: string[],
-  childPropsExpressions: string[] = []
+  childPropsExpressions: string[] = [],
+  memoComputations: string[] = [],
+  signalInitializers: string[] = [],
+  effectBodies: string[] = []
 ): boolean {
   const pattern = new RegExp(`\\b${constantName}\\b`)
 
@@ -176,6 +181,21 @@ export function isConstantUsedInClientCode(
   // Check child component props expressions
   for (const propsExpr of childPropsExpressions) {
     if (pattern.test(propsExpr)) return true
+  }
+
+  // Check memo computations
+  for (const computation of memoComputations) {
+    if (pattern.test(computation)) return true
+  }
+
+  // Check signal initializers
+  for (const initializer of signalInitializers) {
+    if (pattern.test(initializer)) return true
+  }
+
+  // Check effect bodies
+  for (const body of effectBodies) {
+    if (pattern.test(body)) return true
   }
 
   return false

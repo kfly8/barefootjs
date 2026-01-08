@@ -65,14 +65,47 @@ export function collectComponentData(
       const localVariableDeclarations = result.localVariables.map(lv => lv.code).join('\n')
 
       // Filter constants to only those used in client code
-      // Note: localVariables are SSR-only and not checked here
       const eventHandlers = result.interactiveElements.flatMap(e => e.events.map(ev => ev.handler))
       const refCallbacks = result.refElements.map(r => r.callback)
       const childPropsExpressions = result.childInits.map(c => c.propsExpr)
-      const usedConstants = result.moduleConstants.filter(c =>
-        isConstantUsedInClientCode(c.name, result.localFunctions, eventHandlers, refCallbacks, childPropsExpressions)
+      const memoComputations = result.memos.map(m => m.computation)
+      const signalInitializers = result.signals.map(s => s.initialValue)
+      const effectBodies = result.effects.map(e => e.code)
+
+      // Check module-level constants
+      const usedModuleConstants = result.moduleConstants.filter(c =>
+        isConstantUsedInClientCode(
+          c.name,
+          result.localFunctions,
+          eventHandlers,
+          refCallbacks,
+          childPropsExpressions,
+          memoComputations,
+          signalInitializers,
+          effectBodies
+        )
       )
-      const constantDeclarations = usedConstants.map(c => c.code).join('\n')
+
+      // Also check local variables used in reactive code (memo/signal/effect)
+      // These are normally SSR-only, but if referenced in reactive computations,
+      // they must be included in Client JS
+      const usedLocalVars = result.localVariables.filter(lv =>
+        isConstantUsedInClientCode(
+          lv.name,
+          result.localFunctions,
+          eventHandlers,
+          refCallbacks,
+          childPropsExpressions,
+          memoComputations,
+          signalInitializers,
+          effectBodies
+        )
+      )
+
+      const constantDeclarations = [
+        ...usedModuleConstants.map(c => c.code),
+        ...usedLocalVars.map(lv => lv.code)
+      ].join('\n')
 
       // Get directive status from compile result
       const hasUseClientDirective = result.hasUseClientDirective
