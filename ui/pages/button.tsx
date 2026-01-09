@@ -16,10 +16,14 @@ import {
   type TocItem,
 } from '../_shared/docs'
 
-// Table of contents items
+// Table of contents items with tree branch indicators
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
+  { id: 'variants', title: 'Variants', branch: 'start' },
+  { id: 'sizes', title: 'Sizes', branch: 'child' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'interactive', title: 'Interactive', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 

@@ -182,6 +182,11 @@ export function PropsTable({ props }: { props: PropDefinition[] }) {
   )
 }
 
+// Convert title to kebab-case id
+function toKebabCase(str: string): string {
+  return str.toLowerCase().replace(/\s+/g, '-')
+}
+
 // Example component with preview and code in a unified container
 export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
   // Highlight code and split into lines for line number display
@@ -192,9 +197,11 @@ export function Example({ title, code, children }: { title?: string; code: strin
     lines.pop()
   }
 
+  const id = title ? toKebabCase(title) : undefined
+
   return (
     <div class="space-y-4">
-      {title && <h3 class="text-lg font-medium text-foreground">{title}</h3>}
+      {title && <h3 id={id} class="text-lg font-medium text-foreground scroll-mt-20">{title}</h3>}
       <div class="border border-solid border-border rounded-lg overflow-hidden">
         {/* Preview section */}
         <div class="flex flex-wrap items-center justify-center gap-4 px-8 py-32 bg-card relative overflow-hidden">
