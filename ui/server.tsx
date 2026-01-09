@@ -237,7 +237,10 @@ app.get('/components/badge', (c) => {
 
 // Button documentation
 app.get('/components/button', (c) => {
-  return c.render(<ButtonPage />)
+  return c.render(<ButtonPage />, {
+    title: 'Button - barefootjs/ui',
+    description: 'Displays a button or a component that looks like a button.',
+  })
 })
 
 // Card documentation

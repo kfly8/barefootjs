@@ -6,6 +6,18 @@
  */
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
+
+declare module 'hono' {
+  interface ContextRenderer {
+    (
+      content: string | Promise<string>,
+      props?: {
+        title?: string
+        description?: string
+      }
+    ): Response | Promise<Response>
+  }
+}
 import { BfScripts } from '../packages/hono/src/scripts'
 import { ThemeSwitcher } from './dist/components/docs/theme-switcher'
 
@@ -44,14 +56,19 @@ const themeInitScript = `
 `
 
 export const renderer = jsxRenderer(
-  ({ children }) => {
+  ({ children, title, description }) => {
+    const pageTitle = title || 'BarefootJS Components'
     return (
       <WithPredictableIds>
         <html lang="en">
           <head>
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>BarefootJS Components</title>
+            <title>{pageTitle}</title>
+            {description && <meta name="description" content={description} />}
+            <link rel="author" href="https://kobaken.co" />
+            <meta name="author" content="kobaken a.k.a @kfly8" />
+            <meta name="creator" content="kobaken a.k.a @kfly8" />
             <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
             <link rel="stylesheet" href="/static/globals.css" />
             <link rel="stylesheet" href="/static/uno.css" />
