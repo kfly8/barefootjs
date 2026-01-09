@@ -62,22 +62,6 @@ export function generateFileClientJs(
     allImports.add(imp)
   }
 
-  // Collect and deduplicate module-level helper functions across all components in this file
-  const allModuleFunctions: Set<string> = new Set()
-  for (const comp of fileComponents) {
-    if (!comp.hasClientJs) continue
-    if (comp.moduleFunctionDeclarations) {
-      // Split by function declarations to deduplicate (same function may be used by multiple components)
-      const functions = comp.moduleFunctionDeclarations.split(/(?=function\s+\w+|const\s+\w+\s*=)/).filter(f => f.trim())
-      for (const fn of functions) {
-        allModuleFunctions.add(fn.trim())
-      }
-    }
-  }
-  const moduleFunctionsCode = allModuleFunctions.size > 0
-    ? '\n' + Array.from(allModuleFunctions).join('\n') + '\n'
-    : ''
-
   // Generate init functions for each component
   // Note: Module-level constants are included via declarations in init functions
   // only if they are used in reactive code (signals, effects, event handlers)
@@ -92,7 +76,7 @@ export function generateFileClientJs(
   const autoHydrateCodes = generateAutoHydrationCode(fileComponents)
 
   return `${Array.from(allImports).join('\n')}
-${moduleFunctionsCode}
+
 ${allInitFunctions.join('\n\n')}
 ${autoHydrateCodes}
 `
