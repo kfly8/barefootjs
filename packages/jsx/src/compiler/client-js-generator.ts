@@ -68,7 +68,7 @@ export function generateFileClientJs(
     if (!comp.hasClientJs) continue
     if (comp.moduleFunctionDeclarations) {
       // Split by function declarations to deduplicate (same function may be used by multiple components)
-      const functions = comp.moduleFunctionDeclarations.split(/(?=function\s+\w+|const\s+\w+\s*=)/).filter(f => f.trim())
+      const functions = comp.moduleFunctionDeclarations.split(/(?=function\s+\w+|const\s+\w+\s*=)/).filter((f: string) => f.trim())
       for (const fn of functions) {
         allModuleFunctions.add(fn.trim())
       }
