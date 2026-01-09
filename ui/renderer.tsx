@@ -87,7 +87,7 @@ export const renderer = jsxRenderer(
                 <ThemeSwitcher defaultTheme="system" />
               </div>
             </header>
-            <main class="max-w-[800px] mx-auto">
+            <main class="max-w-[700px] mx-auto">
               {children}
             </main>
             <BfScripts />

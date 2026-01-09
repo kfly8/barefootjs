@@ -96,7 +96,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
 
   // Show on xl screens (1280px+) - positioned relative to centered main content
   return (
-    <nav class="hidden xl:block fixed top-20 w-56 max-h-[calc(100vh-6rem)] overflow-y-auto" style="left: calc(50% + 416px);" aria-label="Table of contents">
+    <nav class="hidden xl:block fixed top-[94px] w-56 max-h-[calc(100vh-6rem)] overflow-y-auto" style="left: calc(50% + 450px);" aria-label="Table of contents">
       <div class="space-y-2">
         <p class="text-sm font-medium text-foreground">On This Page</p>
         <div class="relative">
