@@ -357,6 +357,7 @@ function compileJsxWithComponents(
     effects,
     moduleConstants,
     localFunctions,
+    moduleFunctions,
     localVariables,
     childInits,
     interactiveElements,
