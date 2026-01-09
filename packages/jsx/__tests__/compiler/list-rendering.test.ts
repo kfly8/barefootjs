@@ -368,3 +368,100 @@ describe('List Rendering - Conditionals', () => {
   })
 
 })
+
+describe('List Rendering - Fragments', () => {
+  // Issue #150: JSX Fragments inside map callbacks
+  it('fragment inside map callback with conditional', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([
+          { id: 1, branch: 'start', title: 'A' },
+          { id: 2, branch: null, title: 'B' }
+        ])
+        return (
+          <ul>{items().map(item => (
+            <li key={item.id}>
+              {item.branch ? (
+                <>
+                  <span class="line-vertical" />
+                  {item.branch === 'start' && <span class="line-horizontal" />}
+                </>
+              ) : null}
+              {item.title}
+            </li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Should NOT contain raw JSX fragment syntax
+    expect(file.clientJs).not.toContain('<>')
+    expect(file.clientJs).not.toContain('</>')
+
+    // Should contain compiled HTML elements
+    expect(file.clientJs).toContain('<span class="line-vertical"')
+  })
+
+  it('nested fragment inside map callback', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([{ id: 1, name: 'Test' }])
+        return (
+          <ul>{items().map(item => (
+            <li key={item.id}>
+              <>
+                <span>{item.name}</span>
+                <span>!</span>
+              </>
+            </li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Should NOT contain raw JSX fragment syntax
+    expect(file.clientJs).not.toContain('<>')
+    expect(file.clientJs).not.toContain('</>')
+
+    // Should contain both span elements
+    expect(file.clientJs).toContain('<span>')
+  })
+
+  it('fragment with text and elements mixed inside map callback', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [items, setItems] = createSignal([{ id: 1, name: 'Hello' }])
+        return (
+          <ul>{items().map(item => (
+            <li key={item.id}>
+              <>
+                {item.name}
+                <span>World</span>
+              </>
+            </li>
+          ))}</ul>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Should NOT contain raw JSX fragment syntax
+    expect(file.clientJs).not.toContain('<>')
+    expect(file.clientJs).not.toContain('</>')
+
+    // Should contain the span element and expression
+    expect(file.clientJs).toContain('<span>World</span>')
+    expect(file.clientJs).toContain('${item.name}')
+  })
+})

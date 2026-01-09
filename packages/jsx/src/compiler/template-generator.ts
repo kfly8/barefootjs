@@ -431,12 +431,38 @@ export function jsxToTemplateString(
   }
 
   /**
+   * Processes fragment children for template string generation.
+   * Fragments have no wrapper element, so we just concatenate children.
+   */
+  function processFragmentChildren(fragment: ts.JsxFragment): string {
+    let result = ''
+    for (const child of fragment.children) {
+      if (ts.isJsxText(child)) {
+        const text = normalizeJsxText(child.text)
+        if (text) result += text
+      } else if (ts.isJsxExpression(child) && child.expression) {
+        result += processExpression(child.expression)
+      } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
+        result += processNode(child)
+      } else if (ts.isJsxFragment(child)) {
+        result += processFragmentChildren(child)
+      }
+    }
+    return result
+  }
+
+  /**
    * Processes expression or JSX
    */
   function processExpressionOrJsx(node: ts.Expression): string {
     // Convert JSX elements to template string
     if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
       return `\`${processNode(node)}\``
+    }
+
+    // Convert JSX fragments to template string
+    if (ts.isJsxFragment(node)) {
+      return `\`${processFragmentChildren(node)}\``
     }
 
     // Parenthesized expression case
@@ -762,6 +788,8 @@ export function jsxToTemplateString(
             }
           } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
             children += processJsxNode(child)
+          } else if (ts.isJsxFragment(child)) {
+            children += processFragmentChildrenInIR(child)
           }
         }
 
@@ -771,9 +799,41 @@ export function jsxToTemplateString(
       return ''
     }
 
+    /**
+     * Processes fragment children for IR-based template string generation.
+     * Fragments have no wrapper element, so we just concatenate children.
+     */
+    function processFragmentChildrenInIR(fragment: ts.JsxFragment): string {
+      let result = ''
+      for (const child of fragment.children) {
+        if (ts.isJsxText(child)) {
+          const text = normalizeJsxText(child.text)
+          if (text) result += text
+        } else if (ts.isJsxExpression(child) && child.expression) {
+          if (ts.isConditionalExpression(child.expression)) {
+            const condition = substituteProps(child.expression.condition.getText(sf))
+            const whenTrue = processJsxOrExpr(child.expression.whenTrue, sf)
+            const whenFalse = processJsxOrExpr(child.expression.whenFalse, sf)
+            result += `\${${condition} ? ${whenTrue} : ${whenFalse}}`
+          } else {
+            const expr = substituteProps(child.expression.getText(sf))
+            result += `\${${expr}}`
+          }
+        } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
+          result += processJsxNode(child)
+        } else if (ts.isJsxFragment(child)) {
+          result += processFragmentChildrenInIR(child)
+        }
+      }
+      return result
+    }
+
     function processJsxOrExpr(expr: ts.Expression, sf: ts.SourceFile): string {
       if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr)) {
         return `\`${processJsxNode(expr)}\``
+      }
+      if (ts.isJsxFragment(expr)) {
+        return `\`${processFragmentChildrenInIR(expr)}\``
       }
       if (ts.isParenthesizedExpression(expr)) {
         return processJsxOrExpr(expr.expression, sf)
@@ -870,6 +930,9 @@ export function jsxToTemplateString(
         } else if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
           // Process recursively
           childrenContent += processNode(child)
+        } else if (ts.isJsxFragment(child)) {
+          // Process fragment children
+          childrenContent += processFragmentChildren(child)
         }
       }
 
