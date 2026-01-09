@@ -18,6 +18,7 @@ export interface ComponentData {
   fullPath: string
   result: CompileResult
   constantDeclarations: string
+  moduleFunctionDeclarations: string
   signalDeclarations: string
   localVariableDeclarations: string
   memoDeclarations: string
@@ -71,6 +72,8 @@ export function collectComponentData(
       const memoComputations = result.memos.map(m => m.computation)
       const signalInitializers = result.signals.map(s => s.initialValue)
       const effectBodies = result.effects.map(e => e.code)
+      // Dynamic elements are rendered on client side, so their expressions need client code
+      const dynamicExpressions = result.dynamicElements.map(d => d.expression)
 
       // Check module-level constants
       const usedModuleConstants = result.moduleConstants.filter(c =>
@@ -82,7 +85,8 @@ export function collectComponentData(
           childPropsExpressions,
           memoComputations,
           signalInitializers,
-          effectBodies
+          effectBodies,
+          dynamicExpressions
         )
       )
 
@@ -98,7 +102,8 @@ export function collectComponentData(
           childPropsExpressions,
           memoComputations,
           signalInitializers,
-          effectBodies
+          effectBodies,
+          dynamicExpressions
         )
       )
 
@@ -106,6 +111,22 @@ export function collectComponentData(
         ...usedModuleConstants.map(c => c.code),
         ...usedLocalVars.map(lv => lv.code)
       ].join('\n')
+
+      // Filter module-level helper functions to only those used in client code
+      const usedModuleFunctions = result.moduleFunctions.filter(fn =>
+        isConstantUsedInClientCode(
+          fn.name,
+          result.localFunctions,
+          eventHandlers,
+          refCallbacks,
+          childPropsExpressions,
+          memoComputations,
+          signalInitializers,
+          effectBodies,
+          dynamicExpressions
+        )
+      )
+      const moduleFunctionDeclarations = usedModuleFunctions.map(fn => fn.code).join('\n')
 
       // Get directive status from compile result
       const hasUseClientDirective = result.hasUseClientDirective
@@ -129,6 +150,7 @@ export function collectComponentData(
         fullPath,
         result,
         constantDeclarations,
+        moduleFunctionDeclarations,
         signalDeclarations,
         localVariableDeclarations,
         memoDeclarations,

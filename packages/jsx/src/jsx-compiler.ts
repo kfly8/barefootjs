@@ -41,7 +41,7 @@ import { extractModuleFunctions } from './extractors/module-functions'
 import { extractLocalVariables } from './extractors/local-variables'
 import { extractImports, extractExternalImports } from './extractors/imports'
 import { getDefaultExportName } from './extractors/local-components'
-import { extractArrowBody, extractArrowParams, parseConditionalHandler } from './extractors/expression'
+import { extractArrowBody, extractArrowParams, parseConditionalHandler, isArrowFunction, isSimpleIdentifier } from './extractors/expression'
 import { IdGenerator } from './utils/id-generator'
 import { needsCapturePhase, collectClientJsInfo } from './transformers/ir-to-client-js'
 import { findAndConvertJsxReturn } from './transformers/jsx-to-ir'
@@ -345,8 +345,7 @@ function compileJsxWithComponents(
     refElements,
     conditionalElements,
     ir,
-    childInits,
-    moduleFunctions
+    childInits
   )
 
   return {
@@ -357,6 +356,7 @@ function compileJsxWithComponents(
     effects,
     moduleConstants,
     localFunctions,
+    moduleFunctions,
     localVariables,
     childInits,
     interactiveElements,
@@ -818,6 +818,9 @@ function generateEventHandlers(
         lines.push(`      ${conditionalHandler.action}`)
         lines.push(`    }`)
         lines.push(`  }`)
+      } else if (!isArrowFunction(event.handler) && isSimpleIdentifier(event.handler)) {
+        // Simple identifier (e.g., `toggle`): wrap to call the function
+        lines.push(`  ${v}.on${event.eventName} = () => ${event.handler}()`)
       } else {
         lines.push(`  ${v}.on${event.eventName} = ${event.handler}`)
       }
@@ -845,8 +848,7 @@ function generateClientJsWithCreateEffect(
   refElements: RefElement[] = [],
   conditionalElements: ConditionalElement[] = [],
   ir: IRNode | null = null,
-  childInits: ChildComponentInit[] = [],
-  moduleFunctions: LocalFunction[] = []
+  childInits: ChildComponentInit[] = []
 ): string {
   const lines: string[] = []
   const hasDynamicContent = dynamicElements.length > 0 || listElements.length > 0 || dynamicAttributes.length > 0 || conditionalElements.length > 0
@@ -940,13 +942,8 @@ function generateClientJsWithCreateEffect(
     lines.push('')
   }
 
-  // Output module-level helper functions (if any)
-  for (const fn of moduleFunctions) {
-    lines.push(fn.code)
-  }
-  if (moduleFunctions.length > 0) {
-    lines.push('')
-  }
+  // Note: Module-level helper functions are now filtered and output by file-grouping.ts
+  // to ensure only functions actually used in client code are included
 
   // Output local functions
   for (const fn of localFunctions) {

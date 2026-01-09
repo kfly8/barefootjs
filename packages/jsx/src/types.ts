@@ -211,6 +211,7 @@ export type CompileResult = {
   effects: EffectDeclaration[]     // User-written createEffect blocks
   moduleConstants: ModuleConstant[] // Module-level constants
   localFunctions: LocalFunction[]  // Functions defined within the component
+  moduleFunctions: LocalFunction[] // Module-level helper functions (outside components)
   localVariables: LocalVariable[]  // Local variables defined within the component (non-function)
   childInits: ChildComponentInit[] // Child components that need initialization
   interactiveElements: InteractiveElement[]
