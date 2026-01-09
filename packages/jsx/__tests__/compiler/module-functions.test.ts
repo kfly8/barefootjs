@@ -3,26 +3,18 @@
  *
  * ## Overview
  * Verifies that module-level helper functions (defined outside components)
- * are correctly filtered and included in client JS only when needed.
+ * are correctly included in client JS for "use client" components.
  *
- * ## Issue #152: Helper functions not properly filtered
- * - Functions used only in SSR should NOT be included in client JS
- * - Functions used in event handlers SHOULD be included
- * - Functions used in dynamic expressions SHOULD be included
- *
- * ## Filtering Logic
- * Module functions are included if referenced in:
- * - Event handlers
- * - Dynamic expressions (client-side rendered text)
- * - Memo computations
- * - Signal initializers
- * - Effect bodies
+ * ## Issue #152: Helper functions not included
+ * Module functions defined outside components should be included in client JS,
+ * similar to how local variables are handled. This ensures they are available
+ * at runtime regardless of where they are used in the component.
  */
 
 import { describe, it, expect } from 'bun:test'
 import { compile } from './test-helpers'
 
-describe('Module Functions - Filtering', () => {
+describe('Module Functions - Inclusion', () => {
   it('includes module functions used in event handlers', async () => {
     const source = `
       "use client"
@@ -46,7 +38,7 @@ describe('Module Functions - Filtering', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Module function SHOULD be included since it's used in event handler
+    // Module function should be included
     expect(file.clientJs).toContain('function validateInput(value)')
   })
 
@@ -72,11 +64,11 @@ describe('Module Functions - Filtering', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Module function SHOULD be included since it's used in dynamic expression
+    // Module function should be included
     expect(file.clientJs).toContain('function formatValue(x)')
   })
 
-  it('excludes module functions only used in SSR attributes', async () => {
+  it('includes module functions used in SSR attributes', async () => {
     const source = `
       "use client"
 
@@ -91,11 +83,12 @@ describe('Module Functions - Filtering', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Module function should NOT be included since it's only used in SSR
-    expect(file.clientJs).not.toContain('function getDefaultValue')
+    // Module function should be included even if only used in SSR
+    // This matches behavior of local variables
+    expect(file.clientJs).toContain('function getDefaultValue()')
   })
 
-  it('excludes module functions only used in static JSX attributes', async () => {
+  it('includes module functions used in static JSX attributes', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -112,11 +105,11 @@ describe('Module Functions - Filtering', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // hasActiveItem is only used for SSR attribute, not client code
-    expect(file.clientJs).not.toContain('function hasActiveItem')
+    // Module function should be included
+    expect(file.clientJs).toContain('function hasActiveItem(items, currentPath)')
   })
 
-  it('excludes module functions used only in local variable initialization', async () => {
+  it('includes module functions used in local variable initialization', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -139,13 +132,13 @@ describe('Module Functions - Filtering', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // computeInitialValue is only used in SSR (local variable init)
-    expect(file.clientJs).not.toContain('function computeInitialValue')
+    // Module function should be included
+    expect(file.clientJs).toContain('function computeInitialValue()')
   })
 })
 
 describe('Module Functions - Arrow Functions', () => {
-  it('includes arrow function module helpers used in client code', async () => {
+  it('includes arrow function module helpers', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'

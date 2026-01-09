@@ -112,21 +112,9 @@ export function collectComponentData(
         ...usedLocalVars.map(lv => lv.code)
       ].join('\n')
 
-      // Filter module-level helper functions to only those used in client code
-      const usedModuleFunctions = result.moduleFunctions.filter(fn =>
-        isConstantUsedInClientCode(
-          fn.name,
-          result.localFunctions,
-          eventHandlers,
-          refCallbacks,
-          childPropsExpressions,
-          memoComputations,
-          signalInitializers,
-          effectBodies,
-          dynamicExpressions
-        )
-      )
-      const moduleFunctionDeclarations = usedModuleFunctions.map(fn => fn.code).join('\n')
+      // Include all module-level helper functions in client JS
+      // Like local variables, module functions should be available in "use client" components
+      const moduleFunctionDeclarations = result.moduleFunctions.map(fn => fn.code).join('\n')
 
       // Get directive status from compile result
       const hasUseClientDirective = result.hasUseClientDirective
