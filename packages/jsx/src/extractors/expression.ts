@@ -42,26 +42,6 @@ export function isArrowFunction(code: string): boolean {
 }
 
 /**
- * Checks if expression is a simple identifier (e.g., `toggle`, `handleClick`)
- *
- * Returns true for:
- * - `toggle`
- * - `handleClick`
- * - `_privateFunc`
- * - `$helper`
- *
- * Returns false for:
- * - `toggle()` (function call)
- * - `() => toggle()` (arrow function)
- * - `obj.method` (property access)
- */
-export function isSimpleIdentifier(code: string): boolean {
-  const trimmed = code.trim()
-  // Match valid JS identifiers: start with letter/underscore/$, followed by alphanumeric/underscore/$
-  return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmed)
-}
-
-/**
  * Extracts arrow function body
  */
 export function extractArrowBody(handler: string): string {
