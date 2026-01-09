@@ -197,7 +197,7 @@ export function Example({ title, code, children }: { title?: string; code: strin
       {title && <h3 class="text-lg font-medium text-foreground">{title}</h3>}
       <div class="border border-solid border-border rounded-lg overflow-hidden">
         {/* Preview section */}
-        <div class="flex flex-wrap items-center justify-center gap-4 p-8 bg-card relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-center gap-4 px-8 py-32 bg-card relative overflow-hidden">
           <div class="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
           <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
             {children}
