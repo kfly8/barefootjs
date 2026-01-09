@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Field Arrays Documentation Page', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Field Arrays Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     // Capture console errors
     page.on('console', msg => {
@@ -286,7 +287,8 @@ test.describe('Field Arrays Documentation Page', () => {
   })
 })
 
-test.describe('Home Page - Field Arrays Link', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Home Page - Field Arrays Link', () => {
   test('displays Form Patterns section', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()

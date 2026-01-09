@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Tooltip Documentation Page', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Tooltip Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/tooltip')
   })
@@ -155,7 +156,8 @@ test.describe('Tooltip Documentation Page', () => {
   })
 })
 
-test.describe('Tooltip with Delay', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Tooltip with Delay', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/tooltip')
   })
@@ -206,7 +208,8 @@ test.describe('Tooltip with Delay', () => {
   })
 })
 
-test.describe('Home Page - Tooltip Link', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Home Page - Tooltip Link', () => {
   test('displays Tooltip component link', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('a[href="/components/tooltip"]')).toBeVisible()

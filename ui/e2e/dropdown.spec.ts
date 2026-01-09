@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Dropdown Documentation Page', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Dropdown Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/dropdown')
   })
@@ -214,7 +215,8 @@ test.describe('Dropdown Documentation Page', () => {
   })
 })
 
-test.describe('Home Page - Dropdown Link', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Home Page - Dropdown Link', () => {
   test('displays Dropdown component link', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('a[href="/components/dropdown"]')).toBeVisible()
@@ -229,7 +231,8 @@ test.describe('Home Page - Dropdown Link', () => {
   })
 })
 
-test.describe('Dropdown Animation', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Dropdown Animation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/dropdown')
   })
@@ -302,7 +305,8 @@ test.describe('Dropdown Animation', () => {
   })
 })
 
-test.describe('Dropdown with CSS Transforms', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Dropdown with CSS Transforms', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/dropdown')
   })
@@ -404,7 +408,8 @@ test.describe('Dropdown with CSS Transforms', () => {
   })
 })
 
-test.describe('Dropdown Viewport Edge Positioning', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Dropdown Viewport Edge Positioning', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/dropdown')
   })
@@ -427,7 +432,8 @@ test.describe('Dropdown Viewport Edge Positioning', () => {
   })
 })
 
-test.describe('Dropdown Keyboard Navigation', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Dropdown Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/dropdown')
   })

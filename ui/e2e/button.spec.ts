@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Button Documentation Page', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Button Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/button')
   })

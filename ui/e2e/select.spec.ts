@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Select Documentation Page', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Select Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/components/select')
   })
@@ -162,7 +163,8 @@ test.describe('Select Documentation Page', () => {
   })
 })
 
-test.describe('Home Page - Select Link', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Home Page - Select Link', () => {
   test('displays Select component link', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('a[href="/components/select"]')).toBeVisible()

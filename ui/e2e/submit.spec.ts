@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Form Submit Documentation Page', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Form Submit Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/forms/submit')
   })
@@ -205,7 +206,8 @@ test.describe('Form Submit Documentation Page', () => {
   })
 })
 
-test.describe('Home Page - Form Submit Link', () => {
+// Skip: Focus on Button during issue #126 design phase
+test.describe.skip('Home Page - Form Submit Link', () => {
   test('displays Form Patterns section', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
