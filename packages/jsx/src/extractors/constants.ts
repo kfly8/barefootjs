@@ -148,6 +148,7 @@ export function extractModuleVariables(source: string, filePath: string): Module
  * - Memo computations (createMemo)
  * - Signal initializers (createSignal)
  * - Effect bodies (createEffect)
+ * - Dynamic expressions (rendered on client)
  *
  * Note: localVariables are SSR-only and not checked here.
  */
@@ -159,7 +160,8 @@ export function isConstantUsedInClientCode(
   childPropsExpressions: string[] = [],
   memoComputations: string[] = [],
   signalInitializers: string[] = [],
-  effectBodies: string[] = []
+  effectBodies: string[] = [],
+  dynamicExpressions: string[] = []
 ): boolean {
   const pattern = new RegExp(`\\b${constantName}\\b`)
 
@@ -196,6 +198,11 @@ export function isConstantUsedInClientCode(
   // Check effect bodies
   for (const body of effectBodies) {
     if (pattern.test(body)) return true
+  }
+
+  // Check dynamic expressions (client-side rendered)
+  for (const expr of dynamicExpressions) {
+    if (pattern.test(expr)) return true
   }
 
   return false
