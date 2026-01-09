@@ -123,7 +123,18 @@ export function CodeBlock({
 export function Section({ id, title, children }: { id?: string; title: string; children: any }) {
   return (
     <section id={id} class="space-y-4 scroll-mt-16">
-      <h2 class="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+      <h2 class="text-xl font-semibold tracking-tight text-foreground group relative">
+        {id && (
+          <a
+            href={`#${id}`}
+            class="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+            aria-label={`Link to ${title}`}
+          >
+            #
+          </a>
+        )}
+        {title}
+      </h2>
       {children}
     </section>
   )
@@ -201,7 +212,20 @@ export function Example({ title, code, children }: { title?: string; code: strin
 
   return (
     <div class="space-y-4">
-      {title && <h3 id={id} class="text-lg font-medium text-foreground scroll-mt-20">{title}</h3>}
+      {title && (
+        <h3 id={id} class="text-lg font-medium text-foreground scroll-mt-20 group relative">
+          {id && (
+            <a
+              href={`#${id}`}
+              class="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+              aria-label={`Link to ${title}`}
+            >
+              #
+            </a>
+          )}
+          {title}
+        </h3>
+      )}
       <div class="border border-solid border-border rounded-lg overflow-hidden">
         {/* Preview section */}
         <div class="flex flex-wrap items-center justify-center gap-4 px-8 py-32 bg-card relative overflow-hidden">
