@@ -107,59 +107,18 @@ export async function compileJSX(
   const fileGroups = groupComponentsByFile(componentData)
   const mappings = calculateFileMappings(fileGroups, rootDir)
 
-  // 3. Collect files that should be included in output
-  // Include files that either:
-  //   a) Have "use client" directive
-  //   b) Are imported by files with "use client" directive (for import resolution)
-  const clientFiles = new Set<string>()
-  const importedByClientFiles = new Set<string>()
-
-  // First pass: identify "use client" files and their imports
-  for (const [sourceFile, fileComponents] of fileGroups) {
-    const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
-    if (hasUseClientDirective) {
-      clientFiles.add(sourceFile)
-      // Collect all imports from this file
-      for (const comp of fileComponents) {
-        for (const imp of comp.result.imports) {
-          // Resolve the import path to find the actual file
-          const sourceDir = sourceFile.substring(0, sourceFile.lastIndexOf('/'))
-          // Find the file that contains this imported component
-          for (const [otherFile] of fileGroups) {
-            if (otherFile !== sourceFile && otherFile.includes(imp.path.replace('./', '').replace('../', ''))) {
-              importedByClientFiles.add(otherFile)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Also check component-to-file mapping for imported components
-  for (const [compName, sourceFile] of mappings.componentToFile) {
-    // Check if this component is imported by any client file component
-    for (const [clientFile, fileComponents] of fileGroups) {
-      if (!clientFiles.has(clientFile)) continue
-      for (const comp of fileComponents) {
-        for (const imp of comp.result.imports) {
-          if (imp.name === compName) {
-            importedByClientFiles.add(sourceFile)
-          }
-        }
-      }
-    }
-  }
-
-  // 4. Generate output for each file
+  // 3. Generate output for each file
+  // Only include files with "use client" directive
+  // Note: Client→Server imports are disallowed (validated in component-resolver.ts),
+  // so we don't need to track files imported by client files.
   const files: FileOutput[] = []
 
   for (const [sourceFile, fileComponents] of fileGroups) {
     // Get directive status from first component (all components in same file share directive)
     const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
 
-    // Include files that are either "use client" or imported by "use client" files
-    const isImportedByClient = importedByClientFiles.has(sourceFile)
-    if (!hasUseClientDirective && !isImportedByClient) {
+    // Only process files with "use client" directive
+    if (!hasUseClientDirective) {
       continue
     }
 
