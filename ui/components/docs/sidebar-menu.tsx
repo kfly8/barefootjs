@@ -1,5 +1,3 @@
-'use client'
-
 /**
  * Sidebar Menu Component
  *
@@ -15,8 +13,6 @@
  * but implementation is pending compiler improvements.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
-
 // Menu data types
 interface MenuItem {
   title: string
@@ -28,6 +24,9 @@ interface MenuCategory {
   items: MenuItem[]
   defaultOpen?: boolean
 }
+
+// Map of component hrefs that have preview available
+const previewHrefs = new Set(['/components/button', '/components/badge'])
 
 // Menu configuration
 const menuData: MenuCategory[] = [
@@ -92,7 +91,7 @@ function ChevronIcon() {
   )
 }
 
-// Sidebar item component
+// Sidebar item component (server-side only)
 interface SidebarItemProps {
   title: string
   href: string
@@ -103,18 +102,24 @@ export function SidebarItem({ title, href, isActive = false }: SidebarItemProps)
   const baseClass = 'block py-1.5 px-3 text-sm rounded-md transition-colors no-underline'
   const activeClass = 'bg-accent text-foreground font-medium'
   const inactiveClass = 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+  const hasPreview = previewHrefs.has(href)
 
   return (
-    <a
-      href={href}
-      class={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
+    <span
+      class="block"
+      data-preview-href={hasPreview ? href : undefined}
     >
-      {title}
-    </a>
+      <a
+        href={href}
+        class={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
+      >
+        {title}
+      </a>
+    </span>
   )
 }
 
-// Sidebar category component
+// Sidebar category component (server-side only)
 interface SidebarCategoryProps {
   title: string
   items: MenuItem[]
@@ -150,13 +155,12 @@ export function SidebarCategory({
   )
 }
 
-// Main sidebar menu component
+// Main sidebar menu component (server-side only - no 'use client')
 interface SidebarMenuProps {
   currentPath?: string
 }
 
 export function SidebarMenu({ currentPath = '' }: SidebarMenuProps) {
-  // Check if any item matches current path
   const hasActiveItemAnywhere = menuData.some(category =>
     category.items.some(item => item.href === currentPath)
   )
@@ -165,6 +169,7 @@ export function SidebarMenu({ currentPath = '' }: SidebarMenuProps) {
     <nav
       class="hidden xl:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
       aria-label="Main navigation"
+      data-sidebar-menu
     >
       <div class="space-y-1">
         {menuData.map(category => {

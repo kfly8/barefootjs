@@ -20,7 +20,8 @@ declare module 'hono' {
 }
 import { BfScripts } from '../packages/hono/src/scripts'
 import { ThemeSwitcher } from './dist/components/docs/theme-switcher'
-import { SidebarMenu } from './dist/components/docs/sidebar-menu'
+import { SidebarMenu } from './components/docs/sidebar-menu'
+import { SidebarPreview } from './dist/components/docs/sidebar-preview'
 
 /**
  * Predictable instance ID generator for E2E testing.
@@ -91,6 +92,7 @@ export const renderer = jsxRenderer(
               </div>
             </header>
             <SidebarMenu currentPath={currentPath} />
+            <SidebarPreview />
             <div class="xl:pl-56">
               <main class="max-w-[1000px] mx-auto px-4">
                 {children}
