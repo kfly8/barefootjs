@@ -57,11 +57,53 @@ export function DocPage({ slug, toc, children }: DocPageProps) {
   )
 }
 
-// Page header with title and description
-export function PageHeader({ title, description }: { title: string; description: string }) {
+// Page header with title, description, and optional navigation
+export interface PageHeaderProps {
+  title: string
+  description: string
+  prev?: { href: string; title: string }
+  next?: { href: string; title: string }
+}
+
+export function PageHeader({ title, description, prev, next }: PageHeaderProps) {
   return (
     <div class="space-y-2">
-      <h1 class="text-3xl font-bold tracking-tighter text-foreground">{title}</h1>
+      <div class="flex items-center justify-between gap-4">
+        <h1 class="text-3xl font-bold tracking-tighter text-foreground">{title}</h1>
+        {(prev || next) && (
+          <nav class="hidden sm:flex items-center gap-1 text-sm" aria-label="Quick navigation">
+            {prev ? (
+              <a
+                href={prev.href}
+                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                title={`Previous: ${prev.title}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+                <span class="max-w-24 truncate">{prev.title}</span>
+              </a>
+            ) : (
+              <div class="w-20" />
+            )}
+            <span class="text-border">|</span>
+            {next ? (
+              <a
+                href={next.href}
+                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                title={`Next: ${next.title}`}
+              >
+                <span class="max-w-24 truncate">{next.title}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </a>
+            ) : (
+              <div class="w-20" />
+            )}
+          </nav>
+        )}
+      </div>
       <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
     </div>
   )

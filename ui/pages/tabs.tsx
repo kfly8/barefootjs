@@ -13,6 +13,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -195,6 +196,7 @@ export function TabsPage() {
         <PageHeader
           title="Tabs"
           description="A set of layered sections of content—known as tab panels—that are displayed one at a time."
+          {...getNavLinks('tabs')}
         />
 
         {/* Preview */}

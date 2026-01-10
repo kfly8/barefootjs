@@ -13,6 +13,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -208,6 +209,7 @@ export function DialogPage() {
         <PageHeader
           title="Dialog"
           description="A modal dialog that displays content in a layer above the page. Supports ESC key, overlay click, focus trap, and scroll lock."
+          {...getNavLinks('dialog')}
         />
 
         {/* Preview */}

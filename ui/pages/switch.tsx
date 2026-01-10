@@ -14,6 +14,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -99,6 +100,7 @@ export function SwitchPage() {
         <PageHeader
           title="Switch"
           description="A control that allows the user to toggle between checked and not checked."
+          {...getNavLinks('switch')}
         />
 
         {/* Preview */}

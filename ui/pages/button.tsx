@@ -15,6 +15,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items with tree branch indicators
 const tocItems: TocItem[] = [
@@ -91,6 +92,7 @@ export function ButtonPage() {
         <PageHeader
           title="Button"
           description="Displays a button or a component that looks like a button."
+          {...getNavLinks('button')}
         />
 
         {/* Preview */}

@@ -21,6 +21,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -174,6 +175,7 @@ export function CardPage() {
         <PageHeader
           title="Card"
           description="Displays a card with header, content, and footer."
+          {...getNavLinks('card')}
         />
 
         {/* Preview */}

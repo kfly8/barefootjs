@@ -22,6 +22,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -194,6 +195,7 @@ export function TooltipPage() {
         <PageHeader
           title="Tooltip"
           description="A popup that displays contextual information on hover or focus."
+          {...getNavLinks('tooltip')}
         />
 
         {/* Preview */}

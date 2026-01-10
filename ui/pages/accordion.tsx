@@ -13,6 +13,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -161,6 +162,7 @@ export function AccordionPage() {
         <PageHeader
           title="Accordion"
           description="A vertically stacked set of interactive headings that each reveal an associated section of content."
+          {...getNavLinks('accordion')}
         />
 
         {/* Preview */}

@@ -78,22 +78,22 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
   )
 }
 
-// Component order for navigation
+// Component order for navigation (alphabetical)
 export const componentOrder = [
-  { slug: 'button', title: 'Button' },
-  { slug: 'input', title: 'Input' },
-  { slug: 'checkbox', title: 'Checkbox' },
-  { slug: 'switch', title: 'Switch' },
-  { slug: 'select', title: 'Select' },
-  { slug: 'badge', title: 'Badge' },
-  { slug: 'card', title: 'Card' },
   { slug: 'accordion', title: 'Accordion' },
-  { slug: 'tabs', title: 'Tabs' },
+  { slug: 'badge', title: 'Badge' },
+  { slug: 'button', title: 'Button' },
+  { slug: 'card', title: 'Card' },
+  { slug: 'checkbox', title: 'Checkbox' },
+  { slug: 'counter', title: 'Counter' },
   { slug: 'dialog', title: 'Dialog' },
   { slug: 'dropdown', title: 'Dropdown' },
+  { slug: 'input', title: 'Input' },
+  { slug: 'select', title: 'Select' },
+  { slug: 'switch', title: 'Switch' },
+  { slug: 'tabs', title: 'Tabs' },
   { slug: 'toast', title: 'Toast' },
   { slug: 'tooltip', title: 'Tooltip' },
-  { slug: 'counter', title: 'Counter' },
 ]
 
 // Get prev/next links for a component

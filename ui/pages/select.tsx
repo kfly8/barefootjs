@@ -14,6 +14,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -116,6 +117,7 @@ export function SelectPage() {
         <PageHeader
           title="Select"
           description="Displays a select dropdown for choosing from a list of options."
+          {...getNavLinks('select')}
         />
 
         {/* Preview */}

@@ -13,6 +13,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -58,6 +59,7 @@ export function BadgePage() {
         <PageHeader
           title="Badge"
           description="Displays a badge or a component that looks like a badge."
+          {...getNavLinks('badge')}
         />
 
         {/* Preview */}

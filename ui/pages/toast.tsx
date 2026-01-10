@@ -21,6 +21,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -189,6 +190,7 @@ export function ToastPage() {
         <PageHeader
           title="Toast"
           description="A non-blocking notification that displays brief messages to users. Supports auto-dismiss, multiple variants, and action buttons."
+          {...getNavLinks('toast')}
         />
 
         {/* Preview */}

@@ -14,6 +14,7 @@ import {
   type PropDefinition,
   type TocItem,
 } from '../_shared/docs'
+import { getNavLinks } from '../_shared/PageNavigation'
 
 // Table of contents items
 const tocItems: TocItem[] = [
@@ -97,6 +98,7 @@ export function CounterPage() {
         <PageHeader
           title="Counter"
           description="A numeric input with increment and decrement buttons."
+          {...getNavLinks('counter')}
         />
 
         {/* Preview */}
