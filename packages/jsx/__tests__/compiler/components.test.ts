@@ -663,3 +663,56 @@ describe('Components - Reactive Children (No Warning)', () => {
     expect(app!.markedJsx).not.toContain('children(() =>')
   })
 })
+
+// Issue #160: __findInScope not generated for elements inside component children
+describe('Components - Issue #160 Regression', () => {
+  it('generates __findInScope for dynamic elements inside component children', async () => {
+    // This test reproduces the bug where elements inside component children
+    // are collected to dynamicAttributes but not added to elementPaths,
+    // causing __findInScope to not be generated.
+    //
+    // The element with dynamic class (signal-based) is inside a component's children,
+    // so calculateElementPaths won't add it to elementPaths (component children are skipped),
+    // but collectClientJsInfo will add it to dynamicAttributes.
+    const files = {
+      '/test/App.tsx': `
+        "use client"
+        import { createSignal } from '@barefootjs/dom'
+        import { Wrapper } from './Wrapper'
+
+        export function App() {
+          const [active, setActive] = createSignal(false)
+
+          return (
+            <Wrapper>
+              <div>
+                <span class={active() ? 'active' : 'inactive'}>Status</span>
+                <button onClick={() => setActive(!active())}>Toggle</button>
+              </div>
+            </Wrapper>
+          )
+        }
+      `,
+      '/test/Wrapper.tsx': `
+        "use client"
+        import type { Child } from '@barefootjs/jsx'
+
+        interface WrapperProps {
+          children?: Child
+        }
+
+        export function Wrapper({ children }: WrapperProps) {
+          return <div class="wrapper">{children}</div>
+        }
+      `,
+    }
+    const result = await compileWithFiles('/test/App.tsx', files)
+    const app = result.files.find(f => f.componentNames.includes('App'))
+
+    // __findInScope must be generated since the element is inside component children
+    // and its path cannot be calculated by calculateElementPaths.
+    // Before the fix, elementPaths.values() was checked but the element wasn't in the map,
+    // so needsScopedFinder was false even though __findInScope was used in getElementAccessCode.
+    expect(app!.clientJs).toContain('__findInScope')
+  })
+})
