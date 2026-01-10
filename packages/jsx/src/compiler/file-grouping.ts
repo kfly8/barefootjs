@@ -22,6 +22,7 @@ export interface ComponentData {
   localVariableDeclarations: string
   memoDeclarations: string
   effectDeclarations: string
+  moduleFunctionDeclarations: string
   childInits: ChildComponentInit[]
   hasClientJs: boolean
   hasUseClientDirective: boolean
@@ -107,6 +108,11 @@ export function collectComponentData(
         ...usedLocalVars.map(lv => lv.code)
       ].join('\n')
 
+      // Include all module-level helper functions in client JS
+      // Like local variables, module functions should be available in "use client" components
+      const moduleFunctionDeclarations = result.moduleFunctions.map(fn => fn.code).join('\n')
+
+
       // Get directive status from compile result
       const hasUseClientDirective = result.hasUseClientDirective
 
@@ -133,6 +139,7 @@ export function collectComponentData(
         localVariableDeclarations,
         memoDeclarations,
         effectDeclarations,
+        moduleFunctionDeclarations,
         childInits: result.childInits,
         hasClientJs,
         hasUseClientDirective,
