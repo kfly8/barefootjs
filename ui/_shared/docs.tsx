@@ -75,7 +75,7 @@ export function PageHeader({ title, description, prev, next }: PageHeaderProps) 
             {prev ? (
               <a
                 href={prev.href}
-                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
                 title={`Previous: ${prev.title}`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -90,7 +90,7 @@ export function PageHeader({ title, description, prev, next }: PageHeaderProps) 
             {next ? (
               <a
                 href={next.href}
-                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
                 title={`Next: ${next.title}`}
               >
                 <span class="max-w-24 truncate">{next.title}</span>
