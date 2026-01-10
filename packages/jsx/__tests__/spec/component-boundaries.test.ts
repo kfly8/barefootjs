@@ -199,5 +199,48 @@ describe('Component Boundaries Specs', () => {
         })
       ).rejects.toThrow('Client Component cannot import Server Component')
     })
+
+    it('allows Client Component to use type-only imports from Server files', async () => {
+      // Type-only imports should not trigger boundary validation
+      const result = await compileWithFiles('/test/ClientComponent.tsx', {
+        '/test/ClientComponent.tsx': `
+          "use client"
+          import type { MyType } from './types'
+          import { createSignal } from '@barefootjs/dom'
+
+          export default function ClientComponent() {
+            const [count, setCount] = createSignal(0)
+            return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+          }
+        `,
+        '/test/types.tsx': `
+          export type MyType = { id: number; name: string }
+        `,
+      })
+
+      expect(result.files.length).toBeGreaterThan(0)
+    })
+
+    it('allows Client Component to use inline type-only imports from Server files', async () => {
+      // import { type Foo } syntax should also be skipped
+      const result = await compileWithFiles('/test/ClientComponent.tsx', {
+        '/test/ClientComponent.tsx': `
+          "use client"
+          import { type MyType, type OtherType } from './types'
+          import { createSignal } from '@barefootjs/dom'
+
+          export default function ClientComponent() {
+            const [count, setCount] = createSignal(0)
+            return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+          }
+        `,
+        '/test/types.tsx': `
+          export type MyType = { id: number; name: string }
+          export type OtherType = string
+        `,
+      })
+
+      expect(result.files.length).toBeGreaterThan(0)
+    })
   })
 })
