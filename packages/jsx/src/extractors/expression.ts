@@ -640,3 +640,113 @@ export function substitutePropCallsAST(
 
   return result
 }
+
+/**
+ * Replace prop identifiers with object property access using AST transformation.
+ *
+ * e.g., `variant` → `__props.variant` (SolidJS-style props access)
+ *
+ * Handles:
+ * - Regular identifier: variant → __props.variant
+ * - Shorthand property: { variant } → { variant: __props.variant }
+ * - Skips: property access (.variant), declarations (const variant = ...), etc.
+ */
+export function replacePropsWithObjectAccess(
+  code: string,
+  propNames: string[],
+  propsObjectName: string = '__props'
+): string {
+  if (propNames.length === 0 || code.trim() === '') {
+    return code
+  }
+
+  const sourceFile = ts.createSourceFile(
+    'temp.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true
+  )
+
+  const replacements: Array<{ start: number; end: number; value: string }> = []
+  const propSet = new Set(propNames)
+
+  function shouldSkipIdentifier(node: ts.Identifier): boolean {
+    const parent = node.parent
+
+    // Property access right side: obj.variant
+    if (ts.isPropertyAccessExpression(parent) && parent.name === node) {
+      return true
+    }
+
+    // Property definition key: { variant: value }
+    if (ts.isPropertyAssignment(parent) && parent.name === node) {
+      return true
+    }
+
+    // Parameter definition: (variant) => ...
+    if (ts.isParameter(parent)) {
+      return true
+    }
+
+    // Variable declaration left side: const variant = ...
+    if (ts.isVariableDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    // Binding element (destructuring): const { variant } = obj
+    if (ts.isBindingElement(parent)) {
+      return true
+    }
+
+    // Function declaration name: function variant() {}
+    if (ts.isFunctionDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    // Method name: { variant() {} }
+    if (ts.isMethodDeclaration(parent) && parent.name === node) {
+      return true
+    }
+
+    return false
+  }
+
+  function visit(node: ts.Node) {
+    // Shorthand property: { variant } → { variant: __props.variant }
+    if (ts.isShorthandPropertyAssignment(node)) {
+      const name = node.name.text
+      if (propSet.has(name)) {
+        replacements.push({
+          start: node.getStart(),
+          end: node.getEnd(),
+          value: `${name}: ${propsObjectName}.${name}`
+        })
+        return // Don't visit children
+      }
+    }
+
+    // Regular identifier: variant → __props.variant
+    if (ts.isIdentifier(node) && propSet.has(node.text)) {
+      if (!shouldSkipIdentifier(node)) {
+        replacements.push({
+          start: node.getStart(),
+          end: node.getEnd(),
+          value: `${propsObjectName}.${node.text}`
+        })
+      }
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+
+  // Replace from end to preserve positions
+  replacements.sort((a, b) => b.start - a.start)
+  let result = code
+  for (const r of replacements) {
+    result = result.slice(0, r.start) + r.value + result.slice(r.end)
+  }
+
+  return result
+}
