@@ -137,7 +137,7 @@ export function SidebarCategory({
 
   return (
     <details class="mb-2 group" open={hasActiveItem || defaultOpen}>
-      <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+      <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
         <span>{title}</span>
         <ChevronIcon />
       </summary>

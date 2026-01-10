@@ -254,7 +254,7 @@ export function MobileMenu() {
             <div class="space-y-1">
               {/* Get Started */}
               <details data-category="get-started" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Get Started</span>
                   <ChevronIcon />
                 </summary>
@@ -267,7 +267,7 @@ export function MobileMenu() {
 
               {/* Components */}
               <details data-category="components" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Components</span>
                   <ChevronIcon />
                 </summary>
@@ -291,7 +291,7 @@ export function MobileMenu() {
 
               {/* Forms */}
               <details data-category="forms" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Forms</span>
                   <ChevronIcon />
                 </summary>
@@ -305,7 +305,7 @@ export function MobileMenu() {
 
               {/* Blocks */}
               <details data-category="blocks" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Blocks</span>
                   <ChevronIcon />
                 </summary>
@@ -316,7 +316,7 @@ export function MobileMenu() {
 
               {/* Charts */}
               <details data-category="charts" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Charts</span>
                   <ChevronIcon />
                 </summary>
