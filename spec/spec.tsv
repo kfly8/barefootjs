@@ -154,6 +154,7 @@ DIR-002	Directives	<button onClick={...}> (no directive)	Error: 'use client' req
 DIR-003	Directives	const x = 1; 'use client'	Error: directive must be first	error	✅ Implemented	Directive position
 DIR-004	Directives	'use client' or 'use client'	Both accepted	preserve	✅ Implemented	Quote style
 DIR-005	Directives	// comment\n'use client'	Comments before allowed	preserve	✅ Implemented	Comments ok
+DIR-006	Directives	Client Component imports Server Component	Error: Cannot import Server Component from Client Component	error	✅ Implemented	Client/Server boundary enforcement
 PATH-001	Element Paths	<div data-bf='0'>	scope.firstChild	clientJs	✅ Implemented	Direct path
 PATH-002	Element Paths	<div><p><span data-bf='0'>	scope.firstChild.firstChild.firstChild	clientJs	✅ Implemented	Chained path
 PATH-003	Element Paths	<div>text<span data-bf='0'>	Text nodes skipped in path	clientJs	✅ Implemented	Text node skip

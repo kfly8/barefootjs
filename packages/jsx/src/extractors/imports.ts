@@ -20,6 +20,9 @@ export interface ExternalImport {
 
 /**
  * Extracts import statements from file (local imports only - for component resolution)
+ *
+ * Note: Type-only imports (import type { ... }) are skipped because they don't
+ * represent actual component dependencies and shouldn't affect Server/Client boundaries.
  */
 export function extractImports(source: string, filePath: string): ComponentImport[] {
   const sourceFile = createSourceFile(source, filePath)
@@ -34,6 +37,12 @@ export function extractImports(source: string, filePath: string): ComponentImpor
         // Only local imports (starting with ./)
         if (path.startsWith('./') || path.startsWith('../')) {
           const importClause = node.importClause
+
+          // Skip type-only imports: import type { ... } from '...'
+          if (importClause?.isTypeOnly) {
+            return
+          }
+
           if (importClause?.name) {
             // default import: import Counter from './Counter'
             imports.push({
@@ -45,6 +54,10 @@ export function extractImports(source: string, filePath: string): ComponentImpor
           // named imports: import { Counter } from './Counter'
           if (importClause?.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
             for (const element of importClause.namedBindings.elements) {
+              // Skip individual type-only imports: import { type Foo } from '...'
+              if (element.isTypeOnly) {
+                continue
+              }
               imports.push({
                 name: element.name.getText(sourceFile),
                 path,
