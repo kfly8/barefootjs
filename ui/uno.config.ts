@@ -2,6 +2,10 @@ import { defineConfig, presetWind } from 'unocss'
 
 export default defineConfig({
   presets: [presetWind()],
+  // Safelist responsive classes used in dynamic contexts
+  safelist: [
+    'hidden', 'sm:block', 'sm:hidden', 'lg:block', 'sm:pl-56',
+  ],
   // Theme configuration with CSS variable references (OKLCH colors)
   theme: {
     colors: {

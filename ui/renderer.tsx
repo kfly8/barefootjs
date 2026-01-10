@@ -20,6 +20,9 @@ declare module 'hono' {
 }
 import { BfScripts } from '../packages/hono/src/scripts'
 import { ThemeSwitcher } from './dist/components/docs/theme-switcher'
+import { SidebarMenu } from './components/docs/sidebar-menu'
+import { SidebarPreview } from './dist/components/docs/sidebar-preview'
+import { MobileMenu } from './dist/components/docs/mobile-menu'
 
 /**
  * Predictable instance ID generator for E2E testing.
@@ -57,6 +60,8 @@ const themeInitScript = `
 
 export const renderer = jsxRenderer(
   ({ children, title, description }) => {
+    const c = useRequestContext()
+    const currentPath = c.req.path
     const pageTitle = title || 'BarefootJS Components'
     return (
       <WithPredictableIds>
@@ -87,9 +92,14 @@ export const renderer = jsxRenderer(
                 <ThemeSwitcher defaultTheme="system" />
               </div>
             </header>
-            <main class="max-w-[700px] mx-auto">
-              {children}
-            </main>
+            <MobileMenu />
+            <SidebarMenu currentPath={currentPath} />
+            <SidebarPreview />
+            <div class="sm:pl-56">
+              <main class="max-w-[1000px] mx-auto px-4">
+                {children}
+              </main>
+            </div>
             <BfScripts />
           </body>
         </html>

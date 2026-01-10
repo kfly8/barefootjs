@@ -47,7 +47,7 @@ export function DocPage({ slug, toc, children }: DocPageProps) {
   const navLinks = getNavLinks(slug)
 
   return (
-    <div class="flex gap-10">
+    <div class="flex gap-16">
       <div class="flex-1 min-w-0">
         {children}
         <PageNavigation {...navLinks} />

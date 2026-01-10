@@ -334,14 +334,8 @@ function generateInitFunctionWithProps(
             else _0.removeAttribute(key)
           })
         }
-      } else {
-        // Static prop - just set once (server already rendered this, but ensure consistency)
-        if (__booleanProps.includes(key)) {
-          _0[key] = !!value
-        } else if (value != null) {
-          _0.setAttribute(key, String(value))
-        }
       }
+      // Static props are already correctly rendered server-side, no need to re-apply
     }
   }`
     : ''
