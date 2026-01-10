@@ -683,12 +683,12 @@ function generateSlotId(ctx: JsxToIRContext): string {
 }
 
 /**
- * Checks if expression contains signal, memo calls, or prop references
+ * Checks if expression contains signal or memo calls
  *
- * Props passed from parent components may be reactive (wrapped in getter functions),
- * so expressions containing prop references should be treated as potentially reactive.
+ * Props are now accessed via getter (props.propName), so they don't need
+ * to be tracked here. The reactivity is handled by the getter access pattern.
  */
-function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[], valueProps: string[] = []): boolean {
+function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos: MemoDeclaration[], _valueProps: string[] = []): boolean {
   const hasSignalCall = signals.some(s => {
     const regex = new RegExp(`\\b${s.getter}\\s*\\(`)
     return regex.test(expr)
@@ -699,16 +699,7 @@ function containsReactiveCall(expr: string, signals: SignalDeclaration[], memos:
     const regex = new RegExp(`\\b${m.getter}\\s*\\(`)
     return regex.test(expr)
   })
-  if (hasMemoCall) return true
-
-  // Check for prop references (value props may be reactive when passed from parent)
-  const hasPropReference = valueProps.some(propName => {
-    // Match standalone prop name (not followed by ( to avoid false positives with function calls)
-    // Also avoid matching as part of other identifiers
-    const regex = new RegExp(`\\b${propName}\\b(?!\\s*\\()`)
-    return regex.test(expr)
-  })
-  return hasPropReference
+  return hasMemoCall
 }
 
 /**

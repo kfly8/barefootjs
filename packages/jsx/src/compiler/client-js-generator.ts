@@ -7,7 +7,7 @@
 
 import type { ComponentData } from './file-grouping'
 import { filterChildrenWithClientJs, joinDeclarations } from './client-js-helpers'
-import { replacePropsWithGetterCallsAST } from '../extractors/expression'
+import { replacePropsWithObjectAccess } from '../extractors/expression'
 
 /**
  * Context for client JS generation
@@ -238,6 +238,10 @@ function generateInitFunction(
 
 /**
  * Generate init function with prop handling
+ *
+ * Uses SolidJS-style props access pattern where props are received as an object
+ * and accessed via props.propName. This allows lazy evaluation and proper reactivity
+ * when props are passed as getters from parent components.
  */
 function generateInitFunctionWithProps(
   name: string,
@@ -250,51 +254,62 @@ function generateInitFunctionWithProps(
   const callbackProps = result.props.filter(p => isCallbackProp(p.name))
   const valueProps = result.props.filter(p => !isCallbackProp(p.name))
 
-  // Destructure props:
-  // - Callback props are used directly (with localName support)
-  // - Value props get aliases for getter unwrapping (with localName support)
-  // - Rest props are captured if restPropsName is set
-  const propsParamParts = [
-    ...callbackProps.map(p => {
+  // Build props parameter based on what we need
+  // If we have rest props, we need to destructure callback props from __props
+  // Otherwise, we can use the simple __props pattern
+  const hasCallbackProps = callbackProps.length > 0
+  const hasValueProps = valueProps.length > 0
+  const hasRestProps = !!result.restPropsName
+
+  let propsParam: string
+  let callbackDestructure = ''
+
+  if (hasRestProps) {
+    // With rest props, we need to destructure callbacks and rest from __props
+    const callbackDestructureParts = callbackProps.map(p => {
       const localName = p.localName || p.name
-      // If prop name differs from local name (e.g., class -> className), use rename syntax
       if (p.localName) {
         return `${p.name}: ${localName}`
       }
       return localName
-    }),
-    ...valueProps.map(p => {
-      const localName = p.localName || p.name
-      // Value props use __raw_ prefix for getter unwrapping
-      if (p.localName) {
-        return `${p.name}: __raw_${localName}`
-      }
-      return `${p.name}: __raw_${p.name}`
     })
-  ]
-  // Add rest props if present
-  if (result.restPropsName) {
-    propsParamParts.push(`...${result.restPropsName}`)
-  }
-  const propsParam = propsParamParts.length > 0
-    ? `{ ${propsParamParts.join(', ')} }`
-    : '{}'
-
-  // Generate getter unwrapping code for value props only
-  // Use localName when available for proper variable naming
-  const propUnwrapCode = valueProps.length > 0
-    ? valueProps.map(p => {
+    propsParam = '__props'
+    if (callbackDestructureParts.length > 0 || hasRestProps) {
+      callbackDestructure = `const { ${[...callbackDestructureParts, `...${result.restPropsName}`].join(', ')} } = __props`
+    }
+  } else if (hasCallbackProps && !hasValueProps) {
+    // Only callback props - can destructure directly
+    const callbackParts = callbackProps.map(p => {
+      const localName = p.localName || p.name
+      if (p.localName) {
+        return `${p.name}: ${localName}`
+      }
+      return localName
+    })
+    propsParam = `{ ${callbackParts.join(', ')} }`
+  } else {
+    // Has value props or mixed - use __props and access via __props.propName
+    propsParam = '__props'
+    if (hasCallbackProps) {
+      const callbackParts = callbackProps.map(p => {
         const localName = p.localName || p.name
-        return `const ${localName} = typeof __raw_${localName} === 'function' ? __raw_${localName} : () => __raw_${localName}`
-      }).join('\n')
-    : ''
+        if (p.localName) {
+          return `${p.name}: ${localName}`
+        }
+        return localName
+      })
+      callbackDestructure = `const { ${callbackParts.join(', ')} } = __props`
+    }
+  }
 
-  // Apply prop getter replacement to both declarations (for signal initial values) and body code
-  // Using AST-based transformation for accurate handling of all contexts
-  const propNames = valueProps.map(p => p.name)
-  const processedDeclarations = replacePropsWithGetterCallsAST(declarations, propNames)
-  const allDeclarations = [propUnwrapCode, processedDeclarations].filter(Boolean).join('\n')
-  const processedBodyCode = replacePropsWithGetterCallsAST(bodyCode, propNames)
+  // No getter unwrapping needed - props are accessed directly via __props.propName
+  // This is the SolidJS pattern where reactivity comes from getter access
+
+  // Apply prop replacement to convert propName -> __props.propName
+  const propNames = valueProps.map(p => p.localName || p.name)
+  const processedDeclarations = replacePropsWithObjectAccess(declarations, propNames, '__props')
+  const allDeclarations = [callbackDestructure, processedDeclarations].filter(Boolean).join('\n')
+  const processedBodyCode = replacePropsWithObjectAccess(bodyCode, propNames, '__props')
 
   // Generate rest props handling code
   // When restPropsName is set, attach event listeners and handle reactive props

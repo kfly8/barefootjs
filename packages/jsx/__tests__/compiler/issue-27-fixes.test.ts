@@ -219,7 +219,7 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
     expect(app!.clientJs).not.toContain('onCheckedChange: () =>')
   })
 
-  it('child component unwraps getter props', async () => {
+  it('child component receives props via __props object (SolidJS style)', async () => {
     const files = {
       '/test/Checkbox.tsx': `
         "use client"
@@ -240,14 +240,14 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
     const result = await compileWithFiles('/test/Checkbox.tsx', files)
     const checkbox = result.files.find(f => f.componentNames.includes('Checkbox'))
 
-    // Props should be unwrapped to getters
-    expect(checkbox!.clientJs).toContain('checked: __raw_checked')
-    expect(checkbox!.clientJs).toContain('disabled: __raw_disabled')
-    expect(checkbox!.clientJs).toContain("typeof __raw_checked === 'function' ? __raw_checked : () => __raw_checked")
-    expect(checkbox!.clientJs).toContain("typeof __raw_disabled === 'function' ? __raw_disabled : () => __raw_disabled")
+    // Props should be received via __props object (SolidJS style)
+    expect(checkbox!.clientJs).toContain('initCheckbox(__props')
+    // Props should be accessed via __props.propName pattern
+    expect(checkbox!.clientJs).toContain('__props.checked')
+    expect(checkbox!.clientJs).toContain('__props.disabled')
   })
 
-  it('prop usages are replaced with getter calls', async () => {
+  it('prop usages are replaced with __props.propName access', async () => {
     const files = {
       '/test/Checkbox.tsx': `
         "use client"
@@ -268,9 +268,12 @@ describe('Issue #27 Fix 3: Child Component Reactive Props', () => {
     const result = await compileWithFiles('/test/Checkbox.tsx', files)
     const checkbox = result.files.find(f => f.componentNames.includes('Checkbox'))
 
-    // Prop usages should be replaced with getter calls
-    expect(checkbox!.clientJs).toContain('checked()')
-    expect(checkbox!.clientJs).toContain('disabled()')
+    // Prop usages should be replaced with __props.propName access
+    expect(checkbox!.clientJs).toContain('__props.checked')
+    expect(checkbox!.clientJs).toContain('__props.disabled')
+    // Should NOT contain old getter pattern
+    expect(checkbox!.clientJs).not.toContain('__raw_checked')
+    expect(checkbox!.clientJs).not.toContain('checked()')
   })
 
   it('CSS pseudo-classes are not affected by prop replacement', async () => {

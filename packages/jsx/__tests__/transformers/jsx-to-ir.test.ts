@@ -298,8 +298,9 @@ describe('jsxToIR', () => {
       expect((result.children[0] as IRExpression).isDynamic).toBe(true)
     })
 
-    // EXPR-025: Prop reference
-    it('EXPR-025: converts prop reference as dynamic', () => {
+    // EXPR-025: Prop reference is static (accessed via props.propName in SolidJS style)
+    // Props are now accessed via getter pattern, so standalone prop names are not reactive
+    it('EXPR-025: prop reference alone is not reactive (use props.propName pattern)', () => {
       const source = '<div>{value}</div>'
       const sourceFile = parseJsx(source)
       const ctx = createContext(sourceFile, { valueProps: ['value'] })
@@ -307,7 +308,8 @@ describe('jsxToIR', () => {
 
       const result = jsxToIR(jsx, ctx) as IRElement
       expect(result.children[0].type).toBe('expression')
-      expect((result.children[0] as IRExpression).isDynamic).toBe(true)
+      // Props accessed via props.propName pattern - standalone prop name is not reactive
+      expect((result.children[0] as IRExpression).isDynamic).toBe(false)
     })
 
     // EXPR-026: Children always dynamic

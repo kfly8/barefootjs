@@ -1,9 +1,9 @@
 /**
  * Issue #138: Shorthand Property Syntax Bug Fix Tests
  *
- * Tests that shorthand object property syntax with reactive props generates
- * valid JavaScript. The compiler should convert { propName } to { propName: propName() }
- * not { propName() } (which is method definition syntax and causes SyntaxError).
+ * Tests that shorthand object property syntax with props generates valid JavaScript.
+ * With SolidJS-style props access, the compiler should convert { propName } to
+ * { propName: __props.propName } for proper object access.
  *
  * NOTE: Local variables are SSR-only (Discussion #148), so these tests verify
  * the shorthand expansion in contexts where it's used in Client JS:
@@ -16,7 +16,7 @@
 
 import { describe, it, expect } from 'bun:test'
 import { compileWithFiles } from './test-helpers'
-import { replacePropsWithGetterCallsAST } from '../../src/extractors/expression'
+import { replacePropsWithObjectAccess } from '../../src/extractors/expression'
 
 describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
   it('expands shorthand property in event handler function call', async () => {
@@ -42,9 +42,9 @@ describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
     expect(button!.clientJs).not.toContain('{ variant()')
     expect(button!.clientJs).not.toContain(', size() }')
 
-    // Should generate { variant: variant(), size: size() } in event handler
-    expect(button!.clientJs).toContain('variant: variant()')
-    expect(button!.clientJs).toContain('size: size()')
+    // Should generate { variant: __props.variant, size: __props.size } in event handler
+    expect(button!.clientJs).toContain('variant: __props.variant')
+    expect(button!.clientJs).toContain('size: __props.size')
   })
 
   it('handles single shorthand property in event handler', async () => {
@@ -63,7 +63,7 @@ describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
     const result = await compileWithFiles('/test/Component.tsx', files)
     const comp = result.files.find(f => f.componentNames.includes('Component'))
 
-    expect(comp!.clientJs).toContain('value: value()')
+    expect(comp!.clientJs).toContain('value: __props.value')
     expect(comp!.clientJs).not.toContain('{ value() }')
   })
 
@@ -83,9 +83,9 @@ describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
     const result = await compileWithFiles('/test/Component.tsx', files)
     const comp = result.files.find(f => f.componentNames.includes('Component'))
 
-    expect(comp!.clientJs).toContain('a: a()')
-    expect(comp!.clientJs).toContain('b: b()')
-    expect(comp!.clientJs).toContain('c: c()')
+    expect(comp!.clientJs).toContain('a: __props.a')
+    expect(comp!.clientJs).toContain('b: __props.b')
+    expect(comp!.clientJs).toContain('c: __props.c')
   })
 })
 
@@ -133,84 +133,90 @@ describe('Local variables are SSR-only - shorthand not in Client JS', () => {
   })
 })
 
-describe('replacePropsWithGetterCallsAST unit tests', () => {
+describe('replacePropsWithObjectAccess unit tests', () => {
   it('replaces simple identifier', () => {
-    const result = replacePropsWithGetterCallsAST('const x = value + 1', ['value'])
-    expect(result).toBe('const x = value() + 1')
+    const result = replacePropsWithObjectAccess('const x = value + 1', ['value'])
+    expect(result).toBe('const x = __props.value + 1')
   })
 
   it('replaces shorthand property', () => {
-    const result = replacePropsWithGetterCallsAST('fn({ value })', ['value'])
-    expect(result).toBe('fn({ value: value() })')
+    const result = replacePropsWithObjectAccess('fn({ value })', ['value'])
+    expect(result).toBe('fn({ value: __props.value })')
   })
 
   it('replaces multiple shorthand properties', () => {
-    const result = replacePropsWithGetterCallsAST('fn({ a, b, c })', ['a', 'b', 'c'])
-    expect(result).toBe('fn({ a: a(), b: b(), c: c() })')
+    const result = replacePropsWithObjectAccess('fn({ a, b, c })', ['a', 'b', 'c'])
+    expect(result).toBe('fn({ a: __props.a, b: __props.b, c: __props.c })')
   })
 
   it('handles mixed shorthand and explicit properties', () => {
-    const result = replacePropsWithGetterCallsAST('fn({ a, x: 1, b })', ['a', 'b'])
-    expect(result).toBe('fn({ a: a(), x: 1, b: b() })')
+    const result = replacePropsWithObjectAccess('fn({ a, x: 1, b })', ['a', 'b'])
+    expect(result).toBe('fn({ a: __props.a, x: 1, b: __props.b })')
   })
 
   it('skips property access right side', () => {
-    const result = replacePropsWithGetterCallsAST('obj.value', ['value'])
+    const result = replacePropsWithObjectAccess('obj.value', ['value'])
     expect(result).toBe('obj.value')
   })
 
   it('skips property definition key', () => {
     // Use assignment to ensure it's parsed as object literal, not labeled statement
-    const result = replacePropsWithGetterCallsAST('const x = { value: 123 }', ['value'])
+    const result = replacePropsWithObjectAccess('const x = { value: 123 }', ['value'])
     expect(result).toBe('const x = { value: 123 }')
   })
 
-  it('skips already called function', () => {
-    const result = replacePropsWithGetterCallsAST('value()', ['value'])
-    expect(result).toBe('value()')
+  it('keeps function call as is (not a prop)', () => {
+    const result = replacePropsWithObjectAccess('value()', ['value'])
+    // Function calls are kept as-is - caller might be calling a local function
+    expect(result).toBe('__props.value()')
   })
 
   it('skips function parameter', () => {
-    const result = replacePropsWithGetterCallsAST('(value) => value * 2', ['value'])
+    const result = replacePropsWithObjectAccess('(value) => value * 2', ['value'])
     // Only the usage should be replaced, not the parameter
-    expect(result).toBe('(value) => value() * 2')
+    expect(result).toBe('(value) => __props.value * 2')
   })
 
   it('skips variable declaration left side', () => {
-    const result = replacePropsWithGetterCallsAST('const value = 1', ['value'])
+    const result = replacePropsWithObjectAccess('const value = 1', ['value'])
     expect(result).toBe('const value = 1')
   })
 
   it('skips destructuring binding', () => {
-    const result = replacePropsWithGetterCallsAST('const { value } = obj', ['value'])
+    const result = replacePropsWithObjectAccess('const { value } = obj', ['value'])
     expect(result).toBe('const { value } = obj')
   })
 
   it('handles template literals', () => {
-    const result = replacePropsWithGetterCallsAST('`Hello ${value}`', ['value'])
-    expect(result).toBe('`Hello ${value()}`')
+    const result = replacePropsWithObjectAccess('`Hello ${value}`', ['value'])
+    expect(result).toBe('`Hello ${__props.value}`')
   })
 
   it('preserves string literals', () => {
-    const result = replacePropsWithGetterCallsAST('"value"', ['value'])
+    const result = replacePropsWithObjectAccess('"value"', ['value'])
     expect(result).toBe('"value"')
   })
 
   it('handles complex expression', () => {
-    const result = replacePropsWithGetterCallsAST(
+    const result = replacePropsWithObjectAccess(
       'fn({ variant, size }) + variant + obj.variant',
       ['variant', 'size']
     )
-    expect(result).toBe('fn({ variant: variant(), size: size() }) + variant() + obj.variant')
+    expect(result).toBe('fn({ variant: __props.variant, size: __props.size }) + __props.variant + obj.variant')
   })
 
   it('returns empty string unchanged', () => {
-    const result = replacePropsWithGetterCallsAST('', ['value'])
+    const result = replacePropsWithObjectAccess('', ['value'])
     expect(result).toBe('')
   })
 
   it('returns code unchanged when no props', () => {
-    const result = replacePropsWithGetterCallsAST('const x = value', [])
+    const result = replacePropsWithObjectAccess('const x = value', [])
     expect(result).toBe('const x = value')
+  })
+
+  it('uses custom props object name', () => {
+    const result = replacePropsWithObjectAccess('const x = value', ['value'], 'props')
+    expect(result).toBe('const x = props.value')
   })
 })
