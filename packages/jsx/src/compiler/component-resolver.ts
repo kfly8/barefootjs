@@ -154,16 +154,28 @@ function determineMainComponentName(
 }
 
 /**
+ * Information about the parent component's directive status
+ */
+export interface ParentDirectiveInfo {
+  /** Whether the parent component has "use client" directive */
+  isClient: boolean
+  /** Path to the parent component file */
+  parentPath: string
+}
+
+/**
  * Resolve a component and its dependencies recursively
  *
  * @param componentPath - Path to component file
  * @param ctx - Resolve context
  * @param targetComponentName - Optional: specific component name to compile from the file
+ * @param parentDirectiveInfo - Optional: parent component's directive info for boundary validation
  */
 export async function resolveComponent(
   componentPath: string,
   ctx: ResolveContext,
-  targetComponentName?: string
+  targetComponentName?: string,
+  parentDirectiveInfo?: ParentDirectiveInfo
 ): Promise<CompileResult> {
   // Create cache key that includes target component name for local components
   const cacheKey = targetComponentName ? `${componentPath}#${targetComponentName}` : componentPath
@@ -191,6 +203,19 @@ export async function resolveComponent(
     validateEventHandlers(source, fullPath, hasUseClientDirective)
   }
 
+  // Validate Server/Client Component boundaries
+  // Client Component cannot import Server Component
+  if (parentDirectiveInfo?.isClient && !hasUseClientDirective) {
+    throw new Error(
+      `Build error: Client Component cannot import Server Component\n\n` +
+      `  Client Component: ${parentDirectiveInfo.parentPath}\n` +
+      `  Server Component: ${fullPath}\n\n` +
+      `To fix this, either:\n` +
+      `  1. Add "use client" to the top of ${fullPath}\n` +
+      `  2. Move the import to a Server Component\n`
+    )
+  }
+
   // Detect cycles - if we're already compiling this component, return a placeholder
   if (ctx.compilingComponents.has(cacheKey)) {
     return createCyclePlaceholder(targetComponentName, hasUseClientDirective)
@@ -209,7 +234,12 @@ export async function resolveComponent(
   const componentResults: Map<string, CompileResult> = new Map()
   for (const imp of imports) {
     const depPath = resolvePath(componentDir, imp.path)
-    const result = await resolveComponent(depPath, ctx)
+    const result = await resolveComponent(
+      depPath,
+      ctx,
+      undefined,
+      { isClient: hasUseClientDirective, parentPath: fullPath }
+    )
     componentResults.set(imp.name, result)
   }
 
@@ -243,13 +273,15 @@ export async function resolveComponent(
     // Compile local (non-exported) components FIRST
     // This ensures they're available when exported components (which may use them) are compiled
     for (const localComp of localComponents) {
-      const result = await resolveComponent(componentPath, ctx, localComp.name)
+      // Local components in the same file inherit the parent's directive info
+      const result = await resolveComponent(componentPath, ctx, localComp.name, parentDirectiveInfo)
       componentResults.set(localComp.name, result)
     }
     // Then compile other exported components (not the main one)
     for (const exportedName of exportedComponentNames) {
       if (exportedName !== mainComponentName) {
-        const result = await resolveComponent(componentPath, ctx, exportedName)
+        // Sibling exported components in the same file inherit the parent's directive info
+        const result = await resolveComponent(componentPath, ctx, exportedName, parentDirectiveInfo)
         componentResults.set(exportedName, result)
       }
     }

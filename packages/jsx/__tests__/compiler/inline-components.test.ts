@@ -66,6 +66,7 @@ describe('Inline component expansion in map', () => {
         }
       `,
       '/test/Item.tsx': `
+        "use client"
         type Props = { item: { id: number; text: string } }
         function Item({ item }: Props) {
           return <li>{item.text}</li>
@@ -146,6 +147,7 @@ describe('Inline component expansion in map', () => {
         }
       `,
       '/test/Item.tsx': `
+        "use client"
         type Props = { item: { id: number; text: string; editing: boolean } }
         function Item({ item }: Props) {
           return (
