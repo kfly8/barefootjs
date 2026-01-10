@@ -73,8 +73,19 @@ export function MobileMenu() {
 
     if (!toggleBtn || !overlay || !drawer) return
 
-    // Open current category based on URL
+    // Open current category based on URL and highlight active item
     const currentPath = window.location.pathname
+    const activeClass = 'bg-accent text-foreground font-medium'
+
+    // Find and highlight active menu item
+    const allLinks = drawer.querySelectorAll('nav a[href]') as NodeListOf<HTMLAnchorElement>
+    allLinks.forEach(link => {
+      if (link.getAttribute('href') === currentPath) {
+        link.className = `block py-1.5 px-3 text-sm rounded-md no-underline ${activeClass}`
+      }
+    })
+
+    // Open the category containing the current page
     if (currentPath === '/') {
       const details = drawer.querySelector('[data-category="get-started"]') as HTMLDetailsElement
       if (details) details.open = true
@@ -105,27 +116,26 @@ export function MobileMenu() {
       document.body.style.overflow = ''
     }
 
-    // Drag handling
+    // Drag handling (supports both touch and mouse events)
     let startY = 0
     let startHeight = 0
     let isDragging = false
 
-    const handleTouchStart = (e: TouchEvent) => {
+    const handleDragStart = (clientY: number) => {
       isDragging = true
-      startY = e.touches[0].clientY
+      startY = clientY
       startHeight = drawer.offsetHeight
       drawer.style.transition = 'none'
     }
 
-    const handleTouchMove = (e: TouchEvent) => {
+    const handleDragMove = (clientY: number) => {
       if (!isDragging) return
-      const currentY = e.touches[0].clientY
-      const deltaY = startY - currentY
+      const deltaY = startY - clientY
       const newHeight = Math.min(Math.max(startHeight + deltaY, window.innerHeight * 0.3), window.innerHeight * 0.85)
       drawer.style.height = `${newHeight}px`
     }
 
-    const handleTouchEnd = () => {
+    const handleDragEnd = () => {
       if (!isDragging) return
       isDragging = false
       drawer.style.transition = ''
@@ -144,6 +154,19 @@ export function MobileMenu() {
       }
     }
 
+    // Touch events
+    const handleTouchStart = (e: TouchEvent) => handleDragStart(e.touches[0].clientY)
+    const handleTouchMove = (e: TouchEvent) => handleDragMove(e.touches[0].clientY)
+    const handleTouchEnd = () => handleDragEnd()
+
+    // Mouse events (for PC)
+    const handleMouseDown = (e: MouseEvent) => {
+      e.preventDefault()
+      handleDragStart(e.clientY)
+    }
+    const handleMouseMove = (e: MouseEvent) => handleDragMove(e.clientY)
+    const handleMouseUp = () => handleDragEnd()
+
     const handleToggleClick = () => openMenu()
     const handleCloseClick = () => closeMenu()
     const handleOverlayClick = (e: Event) => {
@@ -158,18 +181,28 @@ export function MobileMenu() {
     closeBtn?.addEventListener('click', handleCloseClick)
     overlay.addEventListener('click', handleOverlayClick)
     drawer.addEventListener('click', handleNavClick)
+    // Touch events
     dragHandle?.addEventListener('touchstart', handleTouchStart)
     document.addEventListener('touchmove', handleTouchMove)
     document.addEventListener('touchend', handleTouchEnd)
+    // Mouse events (for PC)
+    dragHandle?.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
 
     return () => {
       toggleBtn.removeEventListener('click', handleToggleClick)
       closeBtn?.removeEventListener('click', handleCloseClick)
       overlay.removeEventListener('click', handleOverlayClick)
       drawer.removeEventListener('click', handleNavClick)
+      // Touch events
       dragHandle?.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
+      // Mouse events
+      dragHandle?.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
     }
   })
 
