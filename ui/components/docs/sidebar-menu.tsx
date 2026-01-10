@@ -167,7 +167,7 @@ export function SidebarMenu({ currentPath = '' }: SidebarMenuProps) {
 
   return (
     <nav
-      class="hidden xl:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
+      class="hidden sm:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
       aria-label="Main navigation"
       data-sidebar-menu
     >

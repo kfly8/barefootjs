@@ -95,7 +95,7 @@ export const renderer = jsxRenderer(
             <MobileMenu />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
-            <div class="xl:pl-56">
+            <div class="sm:pl-56">
               <main class="max-w-[1000px] mx-auto px-4">
                 {children}
               </main>

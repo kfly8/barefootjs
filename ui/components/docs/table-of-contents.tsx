@@ -94,9 +94,9 @@ export function TableOfContents({ items }: TableOfContentsProps) {
     }
   })
 
-  // Show on xl screens (1280px+) - sticky positioning within flex layout
+  // Show on lg screens (1024px+) - sticky positioning within flex layout
   return (
-    <nav class="hidden xl:block sticky top-[94px] w-56 h-fit max-h-[calc(100vh-6rem)] overflow-y-auto shrink-0" aria-label="Table of contents">
+    <nav class="hidden lg:block sticky top-[94px] w-56 h-fit max-h-[calc(100vh-6rem)] overflow-y-auto shrink-0" aria-label="Table of contents">
       <div class="space-y-2">
         <p class="text-sm font-medium text-foreground">On This Page</p>
         <div class="relative">

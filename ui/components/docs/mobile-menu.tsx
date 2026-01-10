@@ -178,7 +178,7 @@ export function MobileMenu() {
       {/* Menu button - fixed at bottom right, visible on mobile only */}
       <button
         data-mobile-menu-toggle
-        class="xl:hidden fixed bottom-6 right-6 z-[10000] w-14 h-14 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+        class="sm:hidden fixed bottom-6 right-6 z-[10000] w-14 h-14 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
         aria-label="Open menu"
       >
         <DotsVerticalIcon />
@@ -188,7 +188,7 @@ export function MobileMenu() {
       <div
         data-mobile-menu-overlay
         data-state={open() ? 'open' : 'closed'}
-        class="fixed inset-0 z-[10001] bg-black/50 xl:hidden transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=closed]:pointer-events-none"
+        class="fixed inset-0 z-[10001] bg-black/50 sm:hidden transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=closed]:pointer-events-none"
       >
         {/* Bottom Sheet */}
         <div
