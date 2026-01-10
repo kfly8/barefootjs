@@ -464,9 +464,6 @@ function generateElementQueries(
     lines.push(`__scope.setAttribute('data-bf-init', 'true')`)
   }
 
-  // Check if we need a scoped element finder (for elements with null paths)
-  const needsScopedFinder = [...ctx.elementPaths.values()].some(p => p === null || p === undefined)
-
   // Collect all element IDs that need to be queried, sorted by path length
   // This ensures shorter paths are declared first for optimal chaining
   const allElementIds = new Set<string>()
@@ -476,6 +473,13 @@ function generateElementQueries(
   for (const el of interactiveElements) allElementIds.add(el.id)
   for (const el of refElements) allElementIds.add(el.id)
   // Note: conditional elements are found by data-bf-cond attribute, not by ID/path
+
+  // Check if we need a scoped element finder
+  // True if any element we need to query has a null/undefined path or is not in elementPaths
+  const needsScopedFinder = [...allElementIds].some(id => {
+    const path = ctx.elementPaths.get(id)
+    return path === null || path === undefined
+  })
 
   // Add scoped element finder helper if needed (for elements with null paths)
   // This finder excludes elements that are inside nested data-bf-scope components
