@@ -22,6 +22,7 @@ import { BfScripts } from '../packages/hono/src/scripts'
 import { ThemeSwitcher } from './dist/components/docs/theme-switcher'
 import { SidebarMenu } from './components/docs/sidebar-menu'
 import { SidebarPreview } from './dist/components/docs/sidebar-preview'
+import { MobileMenu } from './dist/components/docs/mobile-menu'
 
 /**
  * Predictable instance ID generator for E2E testing.
@@ -91,6 +92,7 @@ export const renderer = jsxRenderer(
                 <ThemeSwitcher defaultTheme="system" />
               </div>
             </header>
+            <MobileMenu />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
             <div class="xl:pl-56">
