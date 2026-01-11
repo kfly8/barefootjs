@@ -73,7 +73,7 @@ export function GitHubStars({ repo = 'kfly8/barefootjs' }: GitHubStarsProps) {
         {loading() ? (
           <span class="inline-block w-6 h-4 bg-muted rounded animate-pulse" />
         ) : stars() !== null ? (
-          formatStars(stars()!)
+          formatStars(stars() || 0)
         ) : null}
       </span>
     </a>
