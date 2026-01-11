@@ -147,35 +147,55 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       const fileId = `__file_${sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
 
       // Context helper with file-level script collection
+      // Uses bfScriptsRendered flag to detect if BfScripts has already rendered.
+      // If true, outputs scripts inline (for Suspense boundaries that resolve after BfScripts).
+      // If false, collects scripts for BfScripts to output later.
       const contextHelper = `
   // Collect scripts for deferred rendering (via BfScripts component)
   const __barefootSrc = (manifest as any)['__barefoot__']?.clientJs
   const __thisSrc = (manifest as any)['${fileId}']?.clientJs
-  let __inSuspense = false
+  let __shouldOutputInline = false
+  let __shouldOutputBarefoot = false
+  let __shouldOutputThis = false
   try {
     const c = useRequestContext()
     const __outputScripts: Set<string> = c.get('bfOutputScripts') || new Set<string>()
-    const __collectedScripts: { src: string }[] = c.get('bfCollectedScripts') || []
+    const __scriptsRendered = c.get('bfScriptsRendered') ?? false
 
-    if (__barefootSrc && !__outputScripts.has('__barefoot__')) {
-      __outputScripts.add('__barefoot__')
-      __collectedScripts.push({ src: \`/static/\${__barefootSrc}\` })
-    }
-    if (__thisSrc && !__outputScripts.has('${fileId}')) {
-      __outputScripts.add('${fileId}')
-      __collectedScripts.push({ src: \`/static/\${__thisSrc}\` })
-    }
+    // Check if we need to output each script (not already output)
+    __shouldOutputBarefoot = __barefootSrc && !__outputScripts.has('__barefoot__')
+    __shouldOutputThis = __thisSrc && !__outputScripts.has('${fileId}')
 
+    if (__scriptsRendered) {
+      // BfScripts already rendered (e.g., inside Suspense boundary)
+      // Output scripts inline and mark as output
+      __shouldOutputInline = true
+      if (__shouldOutputBarefoot) __outputScripts.add('__barefoot__')
+      if (__shouldOutputThis) __outputScripts.add('${fileId}')
+    } else {
+      // BfScripts not yet rendered - collect for deferred rendering
+      const __collectedScripts: { src: string }[] = c.get('bfCollectedScripts') || []
+      if (__shouldOutputBarefoot) {
+        __outputScripts.add('__barefoot__')
+        __collectedScripts.push({ src: \`/static/\${__barefootSrc}\` })
+      }
+      if (__shouldOutputThis) {
+        __outputScripts.add('${fileId}')
+        __collectedScripts.push({ src: \`/static/\${__thisSrc}\` })
+      }
+      c.set('bfCollectedScripts', __collectedScripts)
+    }
     c.set('bfOutputScripts', __outputScripts)
-    c.set('bfCollectedScripts', __collectedScripts)
   } catch {
-    // Inside Suspense boundary - will output inline scripts
-    __inSuspense = true
+    // Context unavailable - output inline as fallback
+    __shouldOutputInline = true
+    __shouldOutputBarefoot = !!__barefootSrc
+    __shouldOutputThis = !!__thisSrc
   }`
 
-      // Fallback inline script tags for Suspense boundaries
-      const suspenseFallbackScripts = `{__inSuspense && __barefootSrc && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
-      {__inSuspense && __thisSrc && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
+      // Inline script tags (for Suspense boundaries or context unavailable)
+      const suspenseFallbackScripts = `{__shouldOutputInline && __shouldOutputBarefoot && <script type="module" src={\`/static/\${__barefootSrc}\`} />}
+      {__shouldOutputInline && __shouldOutputThis && <script type="module" src={\`/static/\${__thisSrc}\`} />}`
 
       // Local variable declarations (computed from props)
       const localVarDefs = localVariables && localVariables.length > 0
@@ -230,7 +250,7 @@ ${contextHelper}${localVarDefs}
     <>
       ${jsxWithDataKey}
       ${suspenseFallbackScripts}
-      {__inSuspense && __hasHydrateProps && (
+      {__shouldOutputInline && __hasHydrateProps && (
         <script
           type="application/json"
           data-bf-props={__instanceId}
