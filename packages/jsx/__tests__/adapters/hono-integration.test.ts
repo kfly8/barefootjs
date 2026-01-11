@@ -145,9 +145,9 @@ describe('Hono Adapter Integration', () => {
       expect(file.markedJsx).toContain('__hydrateProps')
       expect(file.markedJsx).toContain('data-bf-props={__instanceId}')
 
-      // Client JS should have auto-hydration
+      // Client JS should have auto-hydration using hydrate() helper
       expect(file.clientJs).toContain('initComponent')
-      expect(file.clientJs).toContain('data-bf-props')
+      expect(file.clientJs).toContain("hydrate('Component', initComponent)")
     })
   })
 

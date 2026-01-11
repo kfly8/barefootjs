@@ -87,6 +87,7 @@ export async function setupDOM(result: CompileResult): Promise<{
   // Execute clientJs in the context with barefoot imports
   const { createSignal, createEffect, createMemo, onCleanup } = await import('../../../dom/src/reactive')
   const { reconcileList } = await import('../../../dom/src/list')
+  const { findScope, find, cond, bind, hydrate } = await import('../../../dom/src/runtime')
 
   // Remove import/export statements from clientJs (they're not needed in test context)
   const cleanedClientJs = result.clientJs
@@ -101,11 +102,16 @@ export async function setupDOM(result: CompileResult): Promise<{
     'createMemo',
     'onCleanup',
     'reconcileList',
+    'findScope',
+    'find',
+    'cond',
+    'bind',
+    'hydrate',
     'document',
     cleanedClientJs
   )
 
-  executeClientJs(createSignal, createEffect, createMemo, onCleanup, reconcileList, document)
+  executeClientJs(createSignal, createEffect, createMemo, onCleanup, reconcileList, findScope, find, cond, bind, hydrate, document)
 
   return {
     container,

@@ -494,11 +494,8 @@ describe('Components - Auto-hydration', () => {
     const result = await compileWithFiles('/test/Counter.tsx', files)
     const counter = result.files.find(f => f.componentNames.includes('Counter'))
 
-    // Client JS should include auto-hydration code with unique instance ID support
-    expect(counter!.clientJs).toContain('// Auto-hydration')
-    expect(counter!.clientJs).toContain('document.querySelector(`script[data-bf-props="${__instanceId}"]`)')
-    expect(counter!.clientJs).toContain('JSON.parse(__propsEl.textContent')
-    expect(counter!.clientJs).toContain('initCounter(__props, 0, __scopeEl)')
+    // Client JS should include auto-hydration code using hydrate() helper
+    expect(counter!.clientJs).toContain("hydrate('Counter', initCounter)")
   })
 
   it('Components without props do not have auto-hydration code', async () => {
@@ -709,10 +706,10 @@ describe('Components - Issue #160 Regression', () => {
     const result = await compileWithFiles('/test/App.tsx', files)
     const app = result.files.find(f => f.componentNames.includes('App'))
 
-    // __findInScope must be generated since the element is inside component children
+    // find(__scope, ...) must be generated since the element is inside component children
     // and its path cannot be calculated by calculateElementPaths.
     // Before the fix, elementPaths.values() was checked but the element wasn't in the map,
-    // so needsScopedFinder was false even though __findInScope was used in getElementAccessCode.
-    expect(app!.clientJs).toContain('__findInScope')
+    // so needsScopedFinder was false even though find() was used in getElementAccessCode.
+    expect(app!.clientJs).toContain('find(__scope,')
   })
 })
