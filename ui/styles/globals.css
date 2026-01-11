@@ -215,3 +215,8 @@ html {
 [data-toast][data-toast-animation-state="exiting"] {
   display: flex !important;
 }
+
+/* Ensure hidden attribute works with flexbox items */
+[hidden] {
+  display: none !important;
+}

@@ -73,6 +73,16 @@ export function collectComponentData(
       const signalInitializers = result.signals.map(s => s.initialValue)
       const effectBodies = result.effects.map(e => e.code)
 
+      // Extract expressions from dynamic content (JSX template interpolations)
+      const dynamicElementExpressions = result.dynamicElements.map(e => e.expression)
+      const listElementExpressions = result.listElements.flatMap(l => [
+        l.arrayExpression,
+        l.itemTemplate
+      ])
+      const attributeExpressions = result.dynamicAttributes.map(da => da.expression)
+      // Local variable code may reference module constants (e.g., const classes = `${baseClasses}...`)
+      const localVariableCodes = result.localVariables.map(lv => lv.code)
+
       // Check module-level constants
       const usedModuleConstants = result.moduleConstants.filter(c =>
         isConstantUsedInClientCode(
@@ -83,7 +93,11 @@ export function collectComponentData(
           childPropsExpressions,
           memoComputations,
           signalInitializers,
-          effectBodies
+          effectBodies,
+          dynamicElementExpressions,
+          listElementExpressions,
+          attributeExpressions,
+          localVariableCodes
         )
       )
 
@@ -99,7 +113,11 @@ export function collectComponentData(
           childPropsExpressions,
           memoComputations,
           signalInitializers,
-          effectBodies
+          effectBodies,
+          dynamicElementExpressions,
+          listElementExpressions,
+          attributeExpressions,
+          localVariableCodes
         )
       )
 

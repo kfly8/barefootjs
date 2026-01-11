@@ -19,10 +19,11 @@ declare module 'hono' {
   }
 }
 import { BfScripts } from '../packages/hono/src/scripts'
-import { ThemeSwitcher } from './dist/components/docs/theme-switcher'
 import { SidebarMenu } from './components/docs/sidebar-menu'
 import { SidebarPreview } from './dist/components/docs/sidebar-preview'
-import { MobileMenu } from './dist/components/docs/mobile-menu'
+import { Header } from './dist/components/docs/header'
+import { MobileHeader } from './dist/components/docs/mobile-header'
+import { CommandPalette } from './dist/components/docs/command-palette'
 
 /**
  * Predictable instance ID generator for E2E testing.
@@ -84,15 +85,12 @@ export const renderer = jsxRenderer(
             `}</style>
           </head>
           <body>
-            <header class="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-              <div class="px-6 h-14 flex justify-between items-center">
-                <a href="/" class="text-lg font-semibold text-foreground hover:text-primary transition-colors">
-                  BarefootJS
-                </a>
-                <ThemeSwitcher defaultTheme="system" />
-              </div>
-            </header>
-            <MobileMenu />
+            {/* Desktop Header */}
+            <Header currentPath={currentPath} />
+            {/* Mobile Header with hamburger menu */}
+            <MobileHeader currentPath={currentPath} />
+            {/* Command Palette (global) */}
+            <CommandPalette />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
             <div class="sm:pl-56">
