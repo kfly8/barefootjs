@@ -36,10 +36,21 @@ export type CollectedPropsScript = {
 /**
  * Renders all collected BarefootJS script tags.
  * Place this component at the end of your <body> element.
+ *
+ * After rendering, sets 'bfScriptsRendered' flag to true.
+ * Components rendered after BfScripts (e.g., inside Suspense boundaries)
+ * will check this flag and output their scripts inline instead of
+ * collecting them here.
  */
 export function BfScripts() {
   try {
     const c = useRequestContext()
+
+    // Mark that BfScripts has been rendered.
+    // Components rendered after this point (e.g., inside Suspense)
+    // should output their scripts inline.
+    c.set('bfScriptsRendered', true)
+
     const scripts: CollectedScript[] = c.get('bfCollectedScripts') || []
     const propsScripts: CollectedPropsScript[] = c.get('bfCollectedPropsScripts') || []
 

@@ -248,8 +248,9 @@ describe('Hono Adapter Integration', () => {
       expect(file.markedJsx).toContain('bfOutputScripts')
       expect(file.markedJsx).toContain('bfCollectedScripts')
       expect(file.markedJsx).toContain('__barefootSrc')
-      // Should have fallback for Suspense boundaries
-      expect(file.markedJsx).toContain('__inSuspense')
+      // Should check bfScriptsRendered flag for Suspense boundaries
+      expect(file.markedJsx).toContain('bfScriptsRendered')
+      expect(file.markedJsx).toContain('__shouldOutputInline')
     })
   })
 })
