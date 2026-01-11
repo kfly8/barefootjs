@@ -60,7 +60,6 @@ import {
 import { generateFileClientJs } from './compiler/client-js-generator'
 import { generateFileMarkedJsx } from './compiler/marked-jsx-generator'
 import {
-  generateScopedElementFinder,
   generateEffectWithPreCheck,
   generateEffectWithInnerFinder,
 } from './compiler/effect-helpers'
@@ -401,26 +400,11 @@ function generateElementQueries(
                       refElements.length > 0 || conditionalElements.length > 0 ||
                       childInits.length > 0
 
-  // Find the component's scope element first
+  // Find the component's scope element using findScope() helper
   // Supports unique instance IDs (e.g., ComponentName_abc123)
-  // __parentScope can be:
-  //   1. The scope element itself (passed from auto-hydration)
-  //   2. A parent element to search within (for nested components)
-  // Child components are initialized first, so they mark their scopes with data-bf-init
-  // Parent components filter out already-initialized scopes and select from remaining ones
   if (hasElements) {
-    // Check if __parentScope is the scope element itself (has matching data-bf-scope prefix)
-    lines.push(`let __scope = null`)
-    lines.push(`if (__parentScope?.dataset?.bfScope?.startsWith('${ctx.componentName}_')) {`)
-    lines.push(`  __scope = __parentScope`)
-    lines.push(`} else {`)
-    // Search for scope elements with prefix matching (ComponentName_xxx)
-    lines.push(`  const __allScopes = Array.from((__parentScope || document).querySelectorAll('[data-bf-scope^="${ctx.componentName}_"]'))`)
-    lines.push(`  const __uninitializedScopes = __allScopes.filter(s => !s.hasAttribute('data-bf-init'))`)
-    lines.push(`  __scope = __uninitializedScopes[__instanceIndex]`)
-    lines.push(`}`)
+    lines.push(`const __scope = findScope('${ctx.componentName}', __instanceIndex, __parentScope)`)
     lines.push(`if (!__scope) return`)
-    lines.push(`__scope.setAttribute('data-bf-init', 'true')`)
   }
 
   // Collect all element IDs that need to be queried, sorted by path length
@@ -433,24 +417,8 @@ function generateElementQueries(
   for (const el of refElements) allElementIds.add(el.id)
   // Note: conditional elements are found by data-bf-cond attribute, not by ID/path
 
-  // Check if we need a scoped element finder
-  // True if any element we need to query has a null/undefined path or is not in elementPaths
-  const needsScopedFinder = [...allElementIds].some(id => {
-    const path = ctx.elementPaths.get(id)
-    return path === null || path === undefined
-  })
-
-  // Add scoped element finder helper if needed (for elements with null paths)
-  // This finder excludes elements that are inside nested data-bf-scope components
-  if (needsScopedFinder || conditionalElements.length > 0) {
-    lines.push(`const __findInScope = (sel) => {`)
-    lines.push(`  if (__scope?.matches?.(sel)) return __scope`)
-    lines.push(`  for (const el of __scope?.querySelectorAll(sel) || []) {`)
-    lines.push(`    if (el.closest('[data-bf-scope]') === __scope) return el`)
-    lines.push(`  }`)
-    lines.push(`  return null`)
-    lines.push(`}`)
-  }
+  // Note: Scoped element finder is now provided by find() from @barefootjs/dom
+  // No inline helper needed - use find(__scope, selector) directly
 
   // Sort by path length to ensure proper chaining order
   const sortedIds = Array.from(allElementIds).sort((a, b) => {
@@ -584,134 +552,46 @@ function generateAttributeEffects(
 }
 
 /**
- * Generate createEffect blocks for conditional DOM switching
+ * Generate cond() calls for conditional DOM switching
+ * Uses the cond() helper from @barefootjs/dom for DOM manipulation
  */
 function generateConditionalEffects(
   conditionalElements: ConditionalElement[]
 ): string[] {
   const lines: string[] = []
 
-  for (const cond of conditionalElements) {
-    const condId = cond.id
+  for (const condEl of conditionalElements) {
+    const condId = condEl.id
     // Templates use backticks for template literals with ${} interpolation
     // Only escape backticks that aren't part of nested template literals
-    const whenTrueTemplate = cond.whenTrueTemplate.replace(/\n/g, '\\n')
-    const whenFalseTemplate = cond.whenFalseTemplate.replace(/\n/g, '\\n')
+    const whenTrueTemplate = condEl.whenTrueTemplate.replace(/\n/g, '\\n').replace(/`/g, '\\`')
+    const whenFalseTemplate = condEl.whenFalseTemplate.replace(/\n/g, '\\n').replace(/`/g, '\\`')
 
-    // Check if this is a fragment conditional (uses comment markers)
-    const isFragmentCond = whenTrueTemplate.includes(`<!--bf-cond-start:${condId}-->`) ||
-                           whenFalseTemplate.includes(`<!--bf-cond-start:${condId}-->`)
-
-    // Track previous condition value to only replace DOM when condition changes
-    // This prevents unnecessary DOM replacement when only content signals change
-    lines.push(`let __prevCond_${condId}`)
-    lines.push(`createEffect(() => {`)
-    lines.push(`  const __currCond = Boolean(${cond.condition})`)
-    lines.push(`  const __isFirstRun = __prevCond_${condId} === undefined`)
-    lines.push(`  const __prevVal = __prevCond_${condId}`)
-    lines.push(`  __prevCond_${condId} = __currCond`)
-    // On first run, skip DOM replacement but attach handlers
-    // On subsequent runs, skip if condition unchanged
-    lines.push(`  if (__isFirstRun) {`)
-    lines.push(`    if (!__currCond) return`)
-    lines.push(`  } else if (__currCond === __prevVal) {`)
-    lines.push(`    return`)
-    lines.push(`  }`)
-    lines.push(`  if (!__isFirstRun) {`)
-    if (isFragmentCond) {
-      // Fragment conditional: find content between comment markers
-      lines.push(`  const __html = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
-      // Find start comment marker
-      lines.push(`  let __startComment = null`)
-      lines.push(`  const __walker = document.createTreeWalker(__scope, NodeFilter.SHOW_COMMENT)`)
-      lines.push(`  while (__walker.nextNode()) {`)
-      lines.push(`    if (__walker.currentNode.nodeValue === 'bf-cond-start:${condId}') {`)
-      lines.push(`      __startComment = __walker.currentNode`)
-      lines.push(`      break`)
-      lines.push(`    }`)
-      lines.push(`  }`)
-      // Also check for single element with data-bf-cond (for branch switching)
-      lines.push(`  const __condEl = __scope?.querySelector('[data-bf-cond="${condId}"]')`)
-      lines.push(`  if (__startComment) {`)
-      // Remove nodes between start and end markers
-      lines.push(`    const __nodesToRemove = []`)
-      lines.push(`    let __node = __startComment.nextSibling`)
-      lines.push(`    while (__node && !((__node.nodeType === 8) && __node.nodeValue === 'bf-cond-end:${condId}')) {`)
-      lines.push(`      __nodesToRemove.push(__node)`)
-      lines.push(`      __node = __node.nextSibling`)
-      lines.push(`    }`)
-      lines.push(`    const __endComment = __node`)
-      lines.push(`    __nodesToRemove.forEach(n => n.remove())`)
-      // Insert new content
-      lines.push(`    const __template = document.createElement('template')`)
-      lines.push(`    __template.innerHTML = __html`)
-      // Extract content (skip comment markers from template)
-      lines.push(`    const __newNodes = []`)
-      lines.push(`    let __child = __template.content.firstChild`)
-      lines.push(`    while (__child) {`)
-      lines.push(`      if (!(__child.nodeType === 8 && (__child.nodeValue?.startsWith('bf-cond-') || false))) {`)
-      lines.push(`        __newNodes.push(__child.cloneNode(true))`)
-      lines.push(`      }`)
-      lines.push(`      __child = __child.nextSibling`)
-      lines.push(`    }`)
-      lines.push(`    __newNodes.forEach(n => __startComment.parentNode?.insertBefore(n, __endComment))`)
-      lines.push(`  } else if (__condEl) {`)
-      // Single element: replace with new content
-      lines.push(`    const __template = document.createElement('template')`)
-      lines.push(`    __template.innerHTML = __html`)
-      // Check if new content is fragment or single element
-      lines.push(`    const __firstChild = __template.content.firstChild`)
-      lines.push(`    if (__firstChild?.nodeType === 8 && __firstChild?.nodeValue === 'bf-cond-start:${condId}') {`)
-      // Switching from element to fragment: insert markers and content
-      lines.push(`      const __parent = __condEl.parentNode`)
-      lines.push(`      const __nodes = Array.from(__template.content.childNodes).map(n => n.cloneNode(true))`)
-      lines.push(`      __nodes.forEach(n => __parent?.insertBefore(n, __condEl))`)
-      lines.push(`      __condEl.remove()`)
-      lines.push(`    } else if (__firstChild) {`)
-      lines.push(`      __condEl.replaceWith(__firstChild.cloneNode(true))`)
-      lines.push(`    }`)
-      lines.push(`  }`)
-    } else {
-      // Simple element conditional: use querySelector and replaceWith
-      lines.push(`  const __condEl = __scope?.querySelector('[data-bf-cond="${condId}"]')`)
-      lines.push(`  if (__condEl) {`)
-      lines.push(`    const __template = document.createElement('template')`)
-      lines.push(`    __template.innerHTML = ${cond.condition} ? \`${whenTrueTemplate}\` : \`${whenFalseTemplate}\``)
-      lines.push(`    const __newEl = __template.content.firstChild`)
-      lines.push(`    if (__newEl) {`)
-      lines.push(`      __condEl.replaceWith(__newEl)`)
-      lines.push(`    }`)
-      lines.push(`  }`)
-    }
-    lines.push(`  }`)  // Close if (!__isFirstRun) block
-
-    // Re-attach event handlers for elements inside conditional
-    // This runs on first run (to attach) and after DOM update (to re-attach)
-    if (cond.interactiveElements && cond.interactiveElements.length > 0) {
-      for (const el of cond.interactiveElements) {
-        const elVar = `__cond_el_${el.id}`
-        lines.push(`  ${generateScopedElementFinder({ varName: elVar, elementId: el.id, path: null })}`)
-        for (const event of el.events) {
+    // Build handlers array if there are interactive elements inside the conditional
+    let handlersArg = ''
+    if (condEl.interactiveElements && condEl.interactiveElements.length > 0) {
+      const handlerItems = condEl.interactiveElements.flatMap(el =>
+        el.events.map(event => {
           const handlerBody = extractArrowBody(event.handler)
           const conditionalHandler = parseConditionalHandler(handlerBody)
+          let handlerCode: string
 
-          lines.push(`  if (${elVar}) {`)
           if (conditionalHandler) {
             const params = extractArrowParams(event.handler)
-            lines.push(`    ${elVar}.on${event.eventName} = ${params} => {`)
-            lines.push(`      if (${conditionalHandler.condition}) {`)
-            lines.push(`        ${conditionalHandler.action}`)
-            lines.push(`      }`)
-            lines.push(`    }`)
+            handlerCode = `${params} => { if (${conditionalHandler.condition}) { ${conditionalHandler.action} } }`
           } else {
-            lines.push(`    ${elVar}.on${event.eventName} = ${event.handler}`)
+            handlerCode = event.handler
           }
-          lines.push(`  }`)
-        }
+
+          return `{ selector: '[data-bf="${el.id}"]', event: '${event.eventName}', handler: ${handlerCode} }`
+        })
+      )
+      if (handlerItems.length > 0) {
+        handlersArg = `, [${handlerItems.join(', ')}]`
       }
     }
 
-    lines.push(`})`)
+    lines.push(`cond(__scope, '${condId}', () => ${condEl.condition}, [() => \`${whenTrueTemplate}\`, () => \`${whenFalseTemplate}\`]${handlersArg})`)
   }
 
   return lines
@@ -843,7 +723,7 @@ function generateClientJsWithCreateEffect(
     // Fallback to scoped finder for null paths or when path not found
     // The scoped finder excludes elements inside nested data-bf-scope components
     if (path === undefined || path === null) {
-      return `__findInScope('[data-bf="${id}"]')`
+      return `find(__scope, '[data-bf="${id}"]')`
     }
 
     // Find the best base variable (longest matching prefix)

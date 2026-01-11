@@ -33,22 +33,22 @@ describe('generateScopedElementFinder', () => {
     expect(result).toBe('const _el1 = __scope?.firstChild.nextSibling')
   })
 
-  test('uses __findInScope when path is null', () => {
+  test('uses find() when path is null', () => {
     const result = generateScopedElementFinder({
       varName: '_el1',
       elementId: 'el1',
       path: null,
     })
-    expect(result).toBe("const _el1 = __findInScope('[data-bf=\"el1\"]')")
+    expect(result).toBe("const _el1 = find(__scope, '[data-bf=\"el1\"]')")
   })
 
-  test('uses __findInScope when path is undefined', () => {
+  test('uses find() when path is undefined', () => {
     const result = generateScopedElementFinder({
       varName: '_el1',
       elementId: 'el1',
       path: undefined,
     })
-    expect(result).toBe("const _el1 = __findInScope('[data-bf=\"el1\"]')")
+    expect(result).toBe("const _el1 = find(__scope, '[data-bf=\"el1\"]')")
   })
 })
 
@@ -113,7 +113,7 @@ describe('generateEffectWithInnerFinder', () => {
     })
     expect(result).toEqual([
       'createEffect(() => {',
-      "  const _el1 = __findInScope('[data-bf=\"el1\"]')",
+      "  const _el1 = find(__scope, '[data-bf=\"el1\"]')",
       '  const __textValue = count()',
       '  if (_el1) {',
       '    _el1.textContent = String(__textValue)',
