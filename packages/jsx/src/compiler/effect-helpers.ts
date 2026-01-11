@@ -21,14 +21,14 @@ export interface ScopedElementFinderOptions {
  * Generate code to find an element using path-based navigation or scoped finder.
  *
  * When path is known, uses direct property access: `__scope?.path`
- * When path is null/undefined, uses scoped finder: `__findInScope('[data-bf="id"]')`
+ * When path is null/undefined, uses scoped finder: `find(__scope, '[data-bf="id"]')`
  *
  * @example
  * generateScopedElementFinder({ varName: '_el1', elementId: 'el1', path: 'firstChild' })
  * // → 'const _el1 = __scope?.firstChild'
  *
  * generateScopedElementFinder({ varName: '_el1', elementId: 'el1', path: null })
- * // → 'const _el1 = __findInScope(\'[data-bf="el1"]\')'
+ * // → 'const _el1 = find(__scope, \'[data-bf="el1"]\')'
  */
 export function generateScopedElementFinder(options: ScopedElementFinderOptions): string {
   const { varName, elementId, path } = options
@@ -39,8 +39,8 @@ export function generateScopedElementFinder(options: ScopedElementFinderOptions)
     return `const ${varName} = ${accessCode}`
   } else {
     // Fallback to scoped finder for elements with null paths (inside conditionals, after components)
-    // Uses __findInScope to exclude elements inside nested data-bf-scope components
-    return `const ${varName} = __findInScope('[data-bf="${elementId}"]')`
+    // Uses find() from @barefootjs/dom to exclude elements inside nested data-bf-scope components
+    return `const ${varName} = find(__scope, '[data-bf="${elementId}"]')`
   }
 }
 

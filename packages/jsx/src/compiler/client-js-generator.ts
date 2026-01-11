@@ -123,6 +123,37 @@ function collectBarefootImports(fileComponents: ComponentData[]): Set<string> {
     if (comp.result.listElements.length > 0) {
       barefootImports.add('reconcileList')
     }
+
+    // Runtime helpers
+
+    // findScope is needed when component has elements (scope search)
+    // Check if clientJs contains scope search patterns
+    if (comp.result.clientJs?.includes('__scope')) {
+      barefootImports.add('findScope')
+    }
+
+    // find is needed when scoped finder is required (elements with null paths)
+    if (comp.result.clientJs?.includes('find(__scope')) {
+      barefootImports.add('find')
+    }
+
+    // bind is needed when rest props are present
+    if (comp.result.restPropsName) {
+      barefootImports.add('bind')
+    }
+
+    // cond is needed for conditional elements
+    if (comp.result.conditionalElements.length > 0) {
+      barefootImports.add('cond')
+    }
+  }
+
+  // hydrate is needed if any root component has props or child inits
+  const hasRootComponents = fileComponents.some(c =>
+    c.hasClientJs && (c.result.props.length > 0 || c.childInits.length > 0)
+  )
+  if (hasRootComponents) {
+    barefootImports.add('hydrate')
   }
 
   return barefootImports
@@ -311,33 +342,10 @@ function generateInitFunctionWithProps(
   const allDeclarations = [callbackDestructure, processedDeclarations].filter(Boolean).join('\n')
   const processedBodyCode = replacePropsWithObjectAccess(bodyCode, propNames, '__props')
 
-  // Generate rest props handling code
+  // Generate rest props handling code using bind() helper
   // When restPropsName is set, attach event listeners and handle reactive props
   const restPropsEventCode = result.restPropsName
-    ? `
-  // Attach event listeners and reactive props from rest props to root element
-  if (${result.restPropsName} && _0) {
-    const __booleanProps = ['disabled', 'checked', 'hidden', 'readOnly', 'required', 'multiple', 'autofocus', 'autoplay', 'controls', 'loop', 'muted', 'selected', 'open']
-    for (const [key, value] of Object.entries(${result.restPropsName})) {
-      if (key.startsWith('on') && key.length > 2 && typeof value === 'function') {
-        // Event listener
-        const eventName = key[2].toLowerCase() + key.slice(3)
-        _0.addEventListener(eventName, value)
-      } else if (typeof value === 'function') {
-        // Reactive prop - create effect to update attribute
-        if (__booleanProps.includes(key)) {
-          createEffect(() => { _0[key] = !!value() })
-        } else {
-          createEffect(() => {
-            const v = value()
-            if (v != null) _0.setAttribute(key, String(v))
-            else _0.removeAttribute(key)
-          })
-        }
-      }
-      // Static props are already correctly rendered server-side, no need to re-apply
-    }
-  }`
+    ? `\n  bind(_0, ${result.restPropsName})`
     : ''
 
   return `export function init${name}(${propsParam}, __instanceIndex = 0, __parentScope = null) {
@@ -378,7 +386,7 @@ ${bodyCode}`
 
 /**
  * Generate auto-hydration code for root components
- * Supports multiple instances of the same component using unique instance IDs
+ * Uses hydrate() helper to find and initialize all instances
  */
 function generateAutoHydrationCode(fileComponents: ComponentData[]): string {
   const rootComponents = fileComponents.filter(c => {
@@ -386,17 +394,5 @@ function generateAutoHydrationCode(fileComponents: ComponentData[]): string {
   })
 
   return rootComponents.map(c => `
-// Auto-hydration: initialize all ${c.name} instances (root components only)
-// Uses prefix matching to find all instances with unique IDs (e.g., ${c.name}_abc123)
-const __scopeEls_${c.name} = document.querySelectorAll('[data-bf-scope^="${c.name}_"]')
-for (const __scopeEl of __scopeEls_${c.name}) {
-  // Skip nested instances (inside another component's scope)
-  if (__scopeEl.parentElement?.closest('[data-bf-scope]')) continue
-  // Get unique instance ID from scope element
-  const __instanceId = __scopeEl.dataset.bfScope
-  // Find corresponding props script by instance ID
-  const __propsEl = document.querySelector(\`script[data-bf-props="\${__instanceId}"]\`)
-  const __props = __propsEl ? JSON.parse(__propsEl.textContent || '{}') : {}
-  init${c.name}(__props, 0, __scopeEl)
-}`).join('\n')
+hydrate('${c.name}', init${c.name})`).join('\n')
 }

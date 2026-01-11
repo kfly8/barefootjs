@@ -17,3 +17,6 @@ export {
 } from './portal'
 
 export { reconcileList } from './list'
+
+// Runtime helpers (internal, for compiler-generated code)
+export { findScope, find, hydrate, bind, cond } from './runtime'
