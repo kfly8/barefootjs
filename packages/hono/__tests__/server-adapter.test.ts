@@ -183,14 +183,14 @@ describe('honoMarkedJsxAdapter', () => {
         originalImports: [],
       })
 
-      // Should use try/catch for useRequestContext to handle Suspense boundaries
+      // Should use try/catch for useRequestContext to handle context unavailable
       expect(result).toContain('try {')
       expect(result).toContain('const c = useRequestContext()')
       expect(result).toContain('} catch {')
-      expect(result).toContain('// Inside Suspense boundary')
-      // Inside Suspense, falls back to inline scripts
-      expect(result).toContain('__inSuspense = true')
-      expect(result).toContain('{__inSuspense && __barefootSrc &&')
+      expect(result).toContain('// Context unavailable')
+      // Uses bfScriptsRendered flag to detect if BfScripts has already rendered
+      expect(result).toContain("c.get('bfScriptsRendered')")
+      expect(result).toContain('{__shouldOutputInline && __shouldOutputBarefoot &&')
     })
 
     it('only outputs data-bf-props for root component (first to render)', () => {
@@ -228,8 +228,8 @@ describe('honoMarkedJsxAdapter', () => {
       expect(result).toContain("c.set('bfRootComponent', 'TodoApp')")
       // Props scripts are collected for deferred rendering (for ALL components, not just root)
       expect(result).toContain("bfCollectedPropsScripts")
-      // data-bf-props should render inline for ALL components when __inSuspense is true
-      expect(result).toContain('{__inSuspense && __hasHydrateProps && (')
+      // data-bf-props should render inline for ALL components when __shouldOutputInline is true
+      expect(result).toContain('{__shouldOutputInline && __hasHydrateProps && (')
     })
   })
 })
