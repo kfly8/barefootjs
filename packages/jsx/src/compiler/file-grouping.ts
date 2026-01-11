@@ -73,7 +73,17 @@ export function collectComponentData(
       const signalInitializers = result.signals.map(s => s.initialValue)
       const effectBodies = result.effects.map(e => e.code)
 
+      // Extract expressions from dynamic content (JSX template interpolations)
+      const dynamicElementExpressions = result.dynamicElements.map(e => e.expression)
+      const listElementExpressions = result.listElements.flatMap(l => [
+        l.arrayExpression,
+        l.itemTemplate
+      ])
+      // Local variable code may reference module constants (e.g., const classes = `${baseClasses}...`)
+      const localVariableCodes = result.localVariables.map(lv => lv.code)
+
       // Check module-level constants
+      // Note: attributeExpressions are NOT included because dynamic attributes are evaluated at SSR time
       const usedModuleConstants = result.moduleConstants.filter(c =>
         isConstantUsedInClientCode(
           c.name,
@@ -83,13 +93,17 @@ export function collectComponentData(
           childPropsExpressions,
           memoComputations,
           signalInitializers,
-          effectBodies
+          effectBodies,
+          dynamicElementExpressions,
+          listElementExpressions,
+          localVariableCodes
         )
       )
 
       // Also check local variables used in reactive code (memo/signal/effect)
       // These are normally SSR-only, but if referenced in reactive computations,
       // they must be included in Client JS
+      // Note: We exclude the variable's own code to avoid self-referential matching
       const usedLocalVars = result.localVariables.filter(lv =>
         isConstantUsedInClientCode(
           lv.name,
@@ -99,7 +113,10 @@ export function collectComponentData(
           childPropsExpressions,
           memoComputations,
           signalInitializers,
-          effectBodies
+          effectBodies,
+          dynamicElementExpressions,
+          listElementExpressions,
+          localVariableCodes.filter(code => code !== lv.code)
         )
       )
 

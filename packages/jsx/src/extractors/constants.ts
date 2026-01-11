@@ -148,8 +148,12 @@ export function extractModuleVariables(source: string, filePath: string): Module
  * - Memo computations (createMemo)
  * - Signal initializers (createSignal)
  * - Effect bodies (createEffect)
+ * - Dynamic element expressions (JSX template interpolations)
+ * - List element expressions (.map() arrays and templates)
+ * - Local variable codes (e.g., const classes = `${baseClasses}...`)
  *
- * Note: localVariables are SSR-only and not checked here.
+ * Note: Dynamic attribute expressions are NOT included because
+ * attributes are evaluated at SSR time, not client time.
  */
 export function isConstantUsedInClientCode(
   constantName: string,
@@ -159,7 +163,10 @@ export function isConstantUsedInClientCode(
   childPropsExpressions: string[] = [],
   memoComputations: string[] = [],
   signalInitializers: string[] = [],
-  effectBodies: string[] = []
+  effectBodies: string[] = [],
+  dynamicElementExpressions: string[] = [],
+  listElementExpressions: string[] = [],
+  localVariableCodes: string[] = []
 ): boolean {
   const pattern = new RegExp(`\\b${constantName}\\b`)
 
@@ -196,6 +203,24 @@ export function isConstantUsedInClientCode(
   // Check effect bodies
   for (const body of effectBodies) {
     if (pattern.test(body)) return true
+  }
+
+  // Check dynamic element expressions (JSX template interpolations)
+  for (const expr of dynamicElementExpressions) {
+    if (pattern.test(expr)) return true
+  }
+
+  // Check list element expressions (.map() arrays and templates)
+  for (const expr of listElementExpressions) {
+    if (pattern.test(expr)) return true
+  }
+
+  // Note: Dynamic attribute expressions are NOT checked here because
+  // attributes are evaluated at SSR time, not client time
+
+  // Check local variable codes (e.g., const classes = `${baseClasses}...`)
+  for (const code of localVariableCodes) {
+    if (pattern.test(code)) return true
   }
 
   return false
