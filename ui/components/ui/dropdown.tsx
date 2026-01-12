@@ -20,6 +20,7 @@
  */
 
 import type { Child } from '../../types'
+import { CheckIcon, ChevronDownIcon } from './icon'
 
 // --- Dropdown ---
 // Note: This is a simple positioning wrapper with no client-side behavior.
@@ -66,22 +67,12 @@ export function DropdownTrigger({
       data-dropdown-trigger
     >
       <span class="truncate">{children}</span>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-normal ${
+      <ChevronDownIcon
+        size="sm"
+        class={`ml-2 text-muted-foreground transition-transform duration-normal ${
           open ? 'rotate-180' : ''
         }`}
-      >
-        <path d="m6 9 6 6 6-6"/>
-      </svg>
+      />
     </button>
   )
 }
@@ -205,20 +196,7 @@ export function DropdownItem({
       data-dropdown-item
     >
       {selected && (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="absolute left-2 h-4 w-4"
-        >
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <CheckIcon size="sm" class="absolute left-2" />
       )}
       <span class={selected ? 'pl-6' : ''}>{children}</span>
     </div>
