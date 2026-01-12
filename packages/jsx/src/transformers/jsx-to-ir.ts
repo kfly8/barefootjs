@@ -384,10 +384,10 @@ function conditionalToIR(expr: ts.ConditionalExpression, ctx: JsxToIRContext): I
   const whenTrue = processConditionalBranch(expr.whenTrue, ctx)
   const whenFalse = processConditionalBranch(expr.whenFalse, ctx)
 
-  // Check if condition is dynamic (signal/memo/prop-dependent) and involves JSX elements
+  // Check if condition is dynamic (signal/memo/prop-dependent) and involves JSX elements/components
   const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos, ctx.valueProps)
-  const hasJsxBranch = whenTrue.type === 'element' || whenTrue.type === 'fragment' ||
-                       whenFalse.type === 'element' || whenFalse.type === 'fragment' ||
+  const hasJsxBranch = whenTrue.type === 'element' || whenTrue.type === 'fragment' || whenTrue.type === 'component' ||
+                       whenFalse.type === 'element' || whenFalse.type === 'fragment' || whenFalse.type === 'component' ||
                        (whenFalse.type === 'expression' && whenFalse.expression === 'null')
 
   // Assign ID only for dynamic conditionals with JSX branches
@@ -830,7 +830,16 @@ export function findAndConvertJsxReturn(
   }
 
   function findReturnInBody(node: ts.Node | undefined) {
-    if (!node) return
+    if (!node || result) return // Stop if result already found
+
+    // Handle if statements with JSX returns (Issue #171)
+    if (ts.isIfStatement(node)) {
+      const ifResult = processIfStatementReturns(node, ctx)
+      if (ifResult) {
+        result = ifResult
+        return
+      }
+    }
 
     if (ts.isReturnStatement(node) && node.expression) {
       let expr = node.expression
@@ -855,4 +864,138 @@ export function findAndConvertJsxReturn(
   }
 
   return result
+}
+
+/**
+ * Processes if statement with JSX returns and converts to IRConditional (Issue #171)
+ *
+ * Handles patterns like:
+ * - if (condition) return <A />; return <B />
+ * - if (condition) return <A />; else return <B />
+ * - if (condition) { return <A /> } return <B />
+ */
+function processIfStatementReturns(
+  ifStmt: ts.IfStatement,
+  ctx: JsxToIRContext
+): IRNode | null {
+  const condition = ifStmt.expression.getText(ctx.sourceFile)
+
+  // Find JSX return in the "then" branch
+  const thenReturn = findJsxReturnInStatement(ifStmt.thenStatement)
+  if (!thenReturn) return null
+
+  // Find JSX return in the "else" branch or fallthrough
+  let elseReturn: ts.Expression | null = null
+
+  if (ifStmt.elseStatement) {
+    // Check for else-if chain
+    if (ts.isIfStatement(ifStmt.elseStatement)) {
+      // Recursively process else-if as nested conditional
+      const nestedResult = processIfStatementReturns(ifStmt.elseStatement, ctx)
+      if (nestedResult) {
+        const whenTrueIR = jsxToIR(thenReturn, ctx)
+        if (whenTrueIR) {
+          return createConditionalIRNode(condition, whenTrueIR, nestedResult, ctx)
+        }
+      }
+      return null
+    }
+    // Regular else branch
+    elseReturn = findJsxReturnInStatement(ifStmt.elseStatement)
+  } else {
+    // Look for fallthrough return after if statement
+    elseReturn = findFallthroughReturn(ifStmt)
+  }
+
+  if (!elseReturn) return null
+
+  const whenTrueIR = jsxToIR(thenReturn, ctx)
+  const whenFalseIR = jsxToIR(elseReturn, ctx)
+
+  if (!whenTrueIR || !whenFalseIR) return null
+
+  return createConditionalIRNode(condition, whenTrueIR, whenFalseIR, ctx)
+}
+
+/**
+ * Finds JSX return statement in a block or single statement
+ */
+function findJsxReturnInStatement(stmt: ts.Statement): ts.Expression | null {
+  if (ts.isReturnStatement(stmt) && stmt.expression) {
+    return extractJsxFromExpression(stmt.expression)
+  }
+
+  if (ts.isBlock(stmt)) {
+    for (const s of stmt.statements) {
+      if (ts.isReturnStatement(s) && s.expression) {
+        const jsx = extractJsxFromExpression(s.expression)
+        if (jsx) return jsx
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Extracts JSX expression, unwrapping parentheses
+ */
+function extractJsxFromExpression(expr: ts.Expression): ts.Expression | null {
+  if (ts.isParenthesizedExpression(expr)) {
+    expr = expr.expression
+  }
+  if (ts.isJsxElement(expr) || ts.isJsxSelfClosingElement(expr) || ts.isJsxFragment(expr)) {
+    return expr
+  }
+  return null
+}
+
+/**
+ * Finds fallthrough return statement after an if statement
+ */
+function findFallthroughReturn(ifStmt: ts.IfStatement): ts.Expression | null {
+  const parent = ifStmt.parent
+  if (!parent || !ts.isBlock(parent)) return null
+
+  const siblings = parent.statements
+  const ifIndex = siblings.indexOf(ifStmt)
+
+  // Look for return statements after the if
+  for (let i = ifIndex + 1; i < siblings.length; i++) {
+    const sibling = siblings[i]
+    if (ts.isReturnStatement(sibling) && sibling.expression) {
+      return extractJsxFromExpression(sibling.expression)
+    }
+    // Stop at nested if with returns (it has its own handling)
+    if (ts.isIfStatement(sibling)) {
+      break
+    }
+  }
+
+  return null
+}
+
+/**
+ * Creates an IRConditional node with proper ID assignment
+ */
+function createConditionalIRNode(
+  condition: string,
+  whenTrue: IRNode,
+  whenFalse: IRNode,
+  ctx: JsxToIRContext
+): IRConditional {
+  const isDynamic = containsReactiveCall(condition, ctx.signals, ctx.memos, ctx.valueProps)
+  const hasJsxBranch = whenTrue.type === 'element' || whenTrue.type === 'fragment' || whenTrue.type === 'component' ||
+                       whenFalse.type === 'element' || whenFalse.type === 'fragment' || whenFalse.type === 'component' ||
+                       (whenFalse.type === 'expression' && (whenFalse as { expression: string }).expression === 'null')
+
+  const id = isDynamic && hasJsxBranch ? ctx.idGenerator.generateSlotId() : null
+
+  return {
+    type: 'conditional',
+    id,
+    condition,
+    whenTrue,
+    whenFalse,
+  }
 }

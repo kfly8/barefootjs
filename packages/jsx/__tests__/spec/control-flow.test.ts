@@ -383,4 +383,154 @@ describe('Control Flow Specs', () => {
 
     cleanup()
   })
+
+  // CTRL-017: Component ternary (issue #171)
+  // Verifies that components in ternary expressions generate proper conditional IR
+  // with slot IDs (hasJsxBranch includes 'component' type)
+  it('CTRL-017: generates cond() for component ternary', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function ChildA() {
+        return <span class="a">A</span>
+      }
+      function ChildB() {
+        return <span class="b">B</span>
+      }
+      function Component() {
+        const [showA, setShowA] = createSignal(true)
+        return (
+          <div>
+            {showA() ? <ChildA /> : <ChildB />}
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated in client JS (component conditional has slot ID)
+    expect(result.clientJs).toContain('cond(')
+    // Verify both component placeholders are in the cond() templates
+    expect(result.clientJs).toContain('ChildA')
+    expect(result.clientJs).toContain('ChildB')
+  })
+
+  // CTRL-018: Component with null ternary (issue #171)
+  // Tests that ternary with element and null generates proper conditional markers
+  it('CTRL-018: handles element in ternary with null', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [show, setShow] = createSignal(false)
+        return (
+          <div>
+            {show() ? <span class="child">Child Content</span> : null}
+            <button onClick={() => setShow(true)}>Show</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    // Initially hidden (null branch)
+    expect(container.querySelector('.child')).toBeNull()
+
+    // Click to show
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+
+    // Now visible
+    expect(container.querySelector('.child')).not.toBeNull()
+
+    cleanup()
+  })
+
+  // CTRL-019: Logical AND with element (issue #171)
+  // Tests that logical AND with element generates proper conditional markers
+  it('CTRL-019: handles logical AND with element', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [show, setShow] = createSignal(false)
+        return (
+          <div>
+            {show() && <span class="child">Visible</span>}
+            <button onClick={() => setShow(true)}>Show</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const { container, cleanup } = await setupDOM(result)
+
+    expect(container.querySelector('.child')).toBeNull()
+
+    click(container.querySelector('button')!)
+    await waitForUpdate()
+    expect(container.querySelector('.child')!.textContent).toBe('Visible')
+
+    cleanup()
+  })
+
+  // CTRL-020: If statement with early return (issue #171)
+  // Verifies that if/return patterns are converted to IRConditional
+  it('CTRL-020: converts if/return to conditional IR', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [show, setShow] = createSignal(true)
+        if (show()) {
+          return (
+            <div>
+              <span class="visible">Visible</span>
+            </div>
+          )
+        }
+        return (
+          <div>
+            <span class="hidden">Hidden</span>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated (if/return converted to conditional)
+    expect(result.clientJs).toContain('cond(')
+    // Verify both branches are in the templates
+    expect(result.clientJs).toContain('visible')
+    expect(result.clientJs).toContain('hidden')
+    // Initially shows "visible" branch (show() is true)
+    expect(result.html).toContain('visible')
+  })
+
+  // CTRL-021: If-else statement with returns (issue #171)
+  // Verifies that if-else patterns are converted to IRConditional
+  it('CTRL-021: converts if-else/return to conditional IR', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [mode, setMode] = createSignal('a')
+        if (mode() === 'a') {
+          return <span class="mode-a">Mode A</span>
+        } else {
+          return <span class="mode-b">Mode B</span>
+        }
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated
+    expect(result.clientJs).toContain('cond(')
+    // Verify both branches are in templates
+    expect(result.clientJs).toContain('mode-a')
+    expect(result.clientJs).toContain('mode-b')
+    // Initially shows "mode-a" branch (mode() === 'a' is true)
+    expect(result.html).toContain('mode-a')
+  })
 })

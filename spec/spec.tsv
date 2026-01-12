@@ -73,7 +73,12 @@ CTRL-013	Control Flow	items().map((item, i) => <li key={i}>)	key uses __index	ma
 CTRL-014	Control Flow	<li key={item.a + item.b}>	Complex key expression preserved	markedJsx	✅ Implemented	Computed key
 CTRL-015	Control Flow	items().map(i => i.subs.map(s => <X/>))	Nested innerHTML	clientJs	✅ Implemented	Nested map
 CTRL-016	Control Flow	items().map(i => i.done ? <A/> : <B/>)	Ternary in template string	clientJs	✅ Implemented	Conditional in map
+CTRL-017	Control Flow	{show() ? <ComponentA /> : <ComponentB />}	markedJsx: data-bf-cond markers on both	both	✅ Implemented	Component ternary (#171)
+CTRL-018	Control Flow	{show() ? <Child /> : null}	markedJsx: data-bf-cond on component	both	✅ Implemented	Component with null (#171)
+CTRL-019	Control Flow	{show() && <Child />}	markedJsx: data-bf-cond on component	both	✅ Implemented	Logical AND with component (#171)
 CTRL-020	Control Flow	{a ? (b ? <X/> : <Y/>) : <Z/>}	Properly escaped template literal	clientJs	✅ Implemented	Nested ternary JSX escaping
+CTRL-021	Control Flow	if (sig()) return <A/>; return <B/>	Converted to IRConditional	both	✅ Implemented	If early return (#171)
+CTRL-022	Control Flow	if (sig()) return <A/>; else return <B/>	Converted to IRConditional	both	✅ Implemented	If-else returns (#171)
 COMP-001	Components	<Child />	<Child /> (direct render)	preserve	✅ Implemented	Static component
 COMP-002	Components	<Child name='A' />	Props passed to Child	preserve	✅ Implemented	Static props
 COMP-003	Components	<Child value={count()} />	Props wrapped: { value: () => count() }	clientJs	✅ Implemented	Dynamic props wrapped
