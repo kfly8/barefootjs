@@ -64,6 +64,12 @@ export function generateFileMarkedJsx(
     arr.findIndex(x => x.name === c.name) === i
   )
 
+  // Collect all module functions (deduplicated)
+  const allModuleFunctions = fileComponents.flatMap(c => c.result.moduleFunctions)
+  const uniqueModuleFunctions = allModuleFunctions.filter((fn, i, arr) =>
+    arr.findIndex(x => x.name === fn.name) === i
+  )
+
   // Collect all imports (deduplicated)
   const allOriginalImports = fileComponents.flatMap(c => c.result.imports)
   const uniqueImports = allOriginalImports.filter((imp, i, arr) =>
@@ -80,6 +86,7 @@ export function generateFileMarkedJsx(
     sourcePath,
     components: markedJsxComponents,
     moduleConstants: uniqueModuleConstants,
+    moduleFunctions: uniqueModuleFunctions,
     originalImports: uniqueImports,
     externalImports: uniqueExternalImports,
   })

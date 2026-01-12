@@ -49,7 +49,7 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
   /**
    * Generate Marked JSX file code (multiple components in one file)
    */
-  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, originalImports, externalImports = [] }) => {
+  generateMarkedJsxFile: ({ sourcePath, components, moduleConstants, moduleFunctions, originalImports, externalImports = [] }) => {
     // Calculate relative path to manifest.json based on source path depth
     const sourceDir = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : ''
     const dirDepth = sourceDir ? sourceDir.split('/').length : 0
@@ -94,6 +94,11 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
     // Module-level constants (shared)
     const constantDefs = moduleConstants.length > 0
       ? '\n' + moduleConstants.map(c => c.code).join('\n') + '\n'
+      : ''
+
+    // Module-level helper functions (shared)
+    const functionDefs = moduleFunctions && moduleFunctions.length > 0
+      ? '\n' + moduleFunctions.map(fn => fn.code).join('\n\n') + '\n'
       : ''
 
     // Generate each component function
@@ -286,7 +291,7 @@ ${contextHelper}${localVarDefs}
     }).join('\n\n')
 
     return `${allImports}
-${typeDefs}${constantDefs}${rawHtmlHelper}
+${typeDefs}${constantDefs}${functionDefs}${rawHtmlHelper}
 ${componentFunctions}
 `
   }
