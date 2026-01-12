@@ -59,7 +59,8 @@ export function extractLocalFunctions(
                 const tsCode = statement.getText(sourceFile)
                 // Strip TypeScript type annotations
                 const code = stripTypeAnnotations(tsCode)
-                localFunctions.push({ name, code })
+                // Local functions (event handlers inside components) typically don't contain JSX
+                localFunctions.push({ name, code, containsJsx: false })
               }
             }
           })
