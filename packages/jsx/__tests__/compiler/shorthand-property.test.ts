@@ -42,9 +42,9 @@ describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
     expect(button!.clientJs).not.toContain('{ variant()')
     expect(button!.clientJs).not.toContain(', size() }')
 
-    // Should generate { variant: __props.variant, size: __props.size } in event handler
-    expect(button!.clientJs).toContain('variant: __props.variant')
-    expect(button!.clientJs).toContain('size: __props.size')
+    // Should generate { variant: unwrap(__props.variant), size: unwrap(__props.size) } in event handler
+    expect(button!.clientJs).toContain('variant: unwrap(__props.variant)')
+    expect(button!.clientJs).toContain('size: unwrap(__props.size)')
   })
 
   it('handles single shorthand property in event handler', async () => {
@@ -63,7 +63,7 @@ describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
     const result = await compileWithFiles('/test/Component.tsx', files)
     const comp = result.files.find(f => f.componentNames.includes('Component'))
 
-    expect(comp!.clientJs).toContain('value: __props.value')
+    expect(comp!.clientJs).toContain('value: unwrap(__props.value)')
     expect(comp!.clientJs).not.toContain('{ value() }')
   })
 
@@ -83,9 +83,9 @@ describe('Issue #138: Shorthand property in event handlers (Client JS)', () => {
     const result = await compileWithFiles('/test/Component.tsx', files)
     const comp = result.files.find(f => f.componentNames.includes('Component'))
 
-    expect(comp!.clientJs).toContain('a: __props.a')
-    expect(comp!.clientJs).toContain('b: __props.b')
-    expect(comp!.clientJs).toContain('c: __props.c')
+    expect(comp!.clientJs).toContain('a: unwrap(__props.a)')
+    expect(comp!.clientJs).toContain('b: unwrap(__props.b)')
+    expect(comp!.clientJs).toContain('c: unwrap(__props.c)')
   })
 })
 
@@ -136,22 +136,22 @@ describe('Local variables are SSR-only - shorthand not in Client JS', () => {
 describe('replacePropsWithObjectAccess unit tests', () => {
   it('replaces simple identifier', () => {
     const result = replacePropsWithObjectAccess('const x = value + 1', ['value'])
-    expect(result).toBe('const x = __props.value + 1')
+    expect(result).toBe('const x = unwrap(__props.value) + 1')
   })
 
   it('replaces shorthand property', () => {
     const result = replacePropsWithObjectAccess('fn({ value })', ['value'])
-    expect(result).toBe('fn({ value: __props.value })')
+    expect(result).toBe('fn({ value: unwrap(__props.value) })')
   })
 
   it('replaces multiple shorthand properties', () => {
     const result = replacePropsWithObjectAccess('fn({ a, b, c })', ['a', 'b', 'c'])
-    expect(result).toBe('fn({ a: __props.a, b: __props.b, c: __props.c })')
+    expect(result).toBe('fn({ a: unwrap(__props.a), b: unwrap(__props.b), c: unwrap(__props.c) })')
   })
 
   it('handles mixed shorthand and explicit properties', () => {
     const result = replacePropsWithObjectAccess('fn({ a, x: 1, b })', ['a', 'b'])
-    expect(result).toBe('fn({ a: __props.a, x: 1, b: __props.b })')
+    expect(result).toBe('fn({ a: unwrap(__props.a), x: 1, b: unwrap(__props.b) })')
   })
 
   it('skips property access right side', () => {
@@ -168,13 +168,13 @@ describe('replacePropsWithObjectAccess unit tests', () => {
   it('keeps function call as is (not a prop)', () => {
     const result = replacePropsWithObjectAccess('value()', ['value'])
     // Function calls are kept as-is - caller might be calling a local function
-    expect(result).toBe('__props.value()')
+    expect(result).toBe('unwrap(__props.value)()')
   })
 
   it('skips function parameter', () => {
     const result = replacePropsWithObjectAccess('(value) => value * 2', ['value'])
     // Only the usage should be replaced, not the parameter
-    expect(result).toBe('(value) => __props.value * 2')
+    expect(result).toBe('(value) => unwrap(__props.value) * 2')
   })
 
   it('skips variable declaration left side', () => {
@@ -189,7 +189,7 @@ describe('replacePropsWithObjectAccess unit tests', () => {
 
   it('handles template literals', () => {
     const result = replacePropsWithObjectAccess('`Hello ${value}`', ['value'])
-    expect(result).toBe('`Hello ${__props.value}`')
+    expect(result).toBe('`Hello ${unwrap(__props.value)}`')
   })
 
   it('preserves string literals', () => {
@@ -202,7 +202,7 @@ describe('replacePropsWithObjectAccess unit tests', () => {
       'fn({ variant, size }) + variant + obj.variant',
       ['variant', 'size']
     )
-    expect(result).toBe('fn({ variant: __props.variant, size: __props.size }) + __props.variant + obj.variant')
+    expect(result).toBe('fn({ variant: unwrap(__props.variant), size: unwrap(__props.size) }) + unwrap(__props.variant) + obj.variant')
   })
 
   it('returns empty string unchanged', () => {
@@ -217,6 +217,6 @@ describe('replacePropsWithObjectAccess unit tests', () => {
 
   it('uses custom props object name', () => {
     const result = replacePropsWithObjectAccess('const x = value', ['value'], 'props')
-    expect(result).toBe('const x = props.value')
+    expect(result).toBe('const x = unwrap(props.value)')
   })
 })
