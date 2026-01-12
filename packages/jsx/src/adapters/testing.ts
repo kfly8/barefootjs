@@ -33,7 +33,7 @@ export const testJsxAdapter: MarkedJsxAdapter = {
     helperCode: "const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })",
   },
 
-  generateMarkedJsxFile: ({ components }) => {
+  generateMarkedJsxFile: ({ components, moduleFunctions }) => {
     // For test adapter, only output the first component's JSX
     // This matches the behavior expected by existing tests
     const comp = components[0]
@@ -53,12 +53,17 @@ export const testJsxAdapter: MarkedJsxAdapter = {
     const needsRawHtml = comp.jsx.includes('__rawHtml(')
     const rawHtmlHelper = needsRawHtml ? 'const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })\n\n' : ''
 
+    // Module-level helper functions
+    const functionDefs = moduleFunctions && moduleFunctions.length > 0
+      ? moduleFunctions.map(fn => fn.code).join('\n\n') + '\n\n'
+      : ''
+
     // Local variable declarations (computed from props)
     const localVarDefs = comp.localVariables && comp.localVariables.length > 0
       ? '\n  ' + comp.localVariables.map(v => v.code).join('\n  ') + '\n'
       : ''
 
-    return `${rawHtmlHelper}export function ${comp.name}(${propsParam}) {${localVarDefs}
+    return `${rawHtmlHelper}${functionDefs}export function ${comp.name}(${propsParam}) {${localVarDefs}
   return (
     ${comp.jsx}
   )
@@ -83,7 +88,7 @@ export const testJsxAdapter: MarkedJsxAdapter = {
  * ```
  */
 export const testHtmlAdapter: MarkedJsxAdapter = {
-  generateMarkedJsxFile: ({ components }) => {
+  generateMarkedJsxFile: ({ components, moduleFunctions: _moduleFunctions }) => {
     // For test adapter, only output the first component's HTML
     // This matches the behavior expected by existing tests
     const comp = components[0]

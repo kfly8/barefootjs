@@ -162,3 +162,115 @@ describe('Module Functions - Arrow Functions', () => {
     expect(file.clientJs).toContain('double')
   })
 })
+
+/**
+ * Issue #174: Module functions missing in SSR output
+ *
+ * Module-level helper functions should be included in the Marked JSX output
+ * for SSR, not just in client JS. Without this, functions called at render
+ * time cause ReferenceError on the server.
+ */
+describe('Module Functions - SSR Output (Issue #174)', () => {
+  it('includes module functions in marked JSX for SSR', async () => {
+    const source = `
+      "use client"
+
+      function isComplexDefinition(def) {
+        return typeof def === 'object' && 'elements' in def
+      }
+
+      function Component() {
+        const def = { elements: [] }
+        if (isComplexDefinition(def)) {
+          return <div>Complex</div>
+        }
+        return <div>Simple</div>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Module function should be included in BOTH client JS and marked JSX
+    expect(file.clientJs).toContain('function isComplexDefinition(def)')
+    expect(file.markedJsx).toContain('function isComplexDefinition(def)')
+  })
+
+  it('includes multiple module functions in marked JSX', async () => {
+    const source = `
+      "use client"
+
+      function helperOne(x) {
+        return x + 1
+      }
+
+      function helperTwo(y) {
+        return y * 2
+      }
+
+      const helperThree = (z) => z - 1
+
+      function Component() {
+        return <div>{helperOne(1) + helperTwo(2) + helperThree(3)}</div>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // All module functions should be in marked JSX
+    expect(file.markedJsx).toContain('function helperOne(x)')
+    expect(file.markedJsx).toContain('function helperTwo(y)')
+    expect(file.markedJsx).toContain('const helperThree = (z) => z - 1')
+  })
+
+  it('includes module functions used in conditional rendering', async () => {
+    const source = `
+      "use client"
+
+      function shouldRender(flag) {
+        return flag === true
+      }
+
+      function Component({ show }) {
+        if (shouldRender(show)) {
+          return <span>Visible</span>
+        }
+        return null
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Module function used in conditional should be in SSR output
+    expect(file.markedJsx).toContain('function shouldRender(flag)')
+  })
+
+  it('includes type guard functions in marked JSX', async () => {
+    const source = `
+      "use client"
+
+      type IconDefinition = { elements: string[] }
+      type IconPath = string
+
+      function isIconDefinition(def: IconPath | IconDefinition): def is IconDefinition {
+        return typeof def === 'object' && 'elements' in def
+      }
+
+      function renderIcon(def: IconPath | IconDefinition) {
+        if (isIconDefinition(def)) {
+          return def.elements.join('')
+        }
+        return def
+      }
+
+      function Icon({ definition }: { definition: IconPath | IconDefinition }) {
+        return <svg>{renderIcon(definition)}</svg>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Type guard and helper functions should be in SSR output
+    expect(file.markedJsx).toContain('function isIconDefinition(def)')
+    expect(file.markedJsx).toContain('function renderIcon(def)')
+  })
+})

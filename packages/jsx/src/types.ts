@@ -327,6 +327,8 @@ export type MarkedJsxAdapter = {
     components: MarkedJsxComponentData[]
     /** Module-level constants shared by all components */
     moduleConstants: ModuleConstant[]
+    /** Module-level helper functions shared by all components */
+    moduleFunctions: LocalFunction[]
     /** Original import statements for child components */
     originalImports: ComponentImport[]
     /** External package imports (npm packages like 'class-variance-authority') */
