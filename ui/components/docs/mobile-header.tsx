@@ -9,24 +9,8 @@
 
 import { createSignal, createEffect } from '@barefootjs/dom'
 import { ThemeSwitcher } from './theme-switcher'
+import { LogoIcon } from './logo'
 import { MenuIcon, XIcon, SearchIcon, GitHubIcon, ChevronRightIcon } from '../ui/icon'
-
-// Logo icon from images/logo.svg (custom, not in Icon component)
-function LogoIcon() {
-  return (
-    <svg
-      class="h-6 w-6"
-      viewBox="0 0 100 100"
-      fill="currentColor"
-    >
-      <ellipse cx="18" cy="46" rx="9" ry="12" transform="rotate(-15 20 46)" />
-      <ellipse cx="38" cy="44" rx="7" ry="10" transform="rotate(-8 38 44)" />
-      <ellipse cx="54" cy="48" rx="6" ry="9" transform="rotate(0 54 50)" />
-      <ellipse cx="68" cy="56" rx="4.5" ry="7" transform="rotate(8 68 56)" />
-      <ellipse cx="80" cy="67" rx="3.5" ry="5.5" transform="rotate(15 80 60)" />
-    </svg>
-  )
-}
 
 export interface MobileHeaderProps {
   currentPath?: string
