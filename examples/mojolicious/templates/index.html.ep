@@ -1,0 +1,29 @@
+% layout 'default';
+% title 'BarefootJS + Mojolicious Demo';
+
+<h1>BarefootJS + Mojolicious</h1>
+
+<p>
+  This demo shows <strong>Marked Templates</strong> working with Perl/Mojolicious.
+  The same Client JS works with any server-side language.
+</p>
+
+<div class="demo-section">
+  <h2>Counter Component (count starts at <%= $count1 %>)</h2>
+  %= include 'counter', instance_id => $instance_id1, count => $count1
+</div>
+
+<div class="demo-section">
+  <h2>Another Counter (count starts at <%= $count2 %>)</h2>
+  %= include 'counter', instance_id => $instance_id2, count => $count2
+</div>
+
+<div class="demo-section">
+  <h2>How it works</h2>
+  <ol>
+    <li>Server renders <code>counter.html.ep</code> with Perl variables</li>
+    <li>HTML includes <code>data-bf-scope</code> and <code>data-bf</code> markers</li>
+    <li>Client JS (<code>counter.js</code>) hydrates the components</li>
+    <li>SolidJS-style reactivity handles updates</li>
+  </ol>
+</div>
