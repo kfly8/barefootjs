@@ -278,9 +278,12 @@ describe('Module Functions - SSR Output (Issue #174)', () => {
 /**
  * Issue #176: Helper function JSX not compiled correctly in 'use client' files
  *
- * Module-level helper functions that return JSX should be properly transformed:
- * - For Marked JSX (SSR): JSX should be preserved as-is
- * - For Client JS: JSX should be transformed to jsx() function calls
+ * Module-level helper functions that return JSX are SSR-only:
+ * - For Marked JSX (SSR): JSX is preserved as-is
+ * - For Client JS: JSX-containing functions are NOT included (SSR-only by design)
+ *
+ * This is because BarefootJS updates DOM directly without re-rendering JSX on the client.
+ * Helper functions with JSX are only needed at SSR time to generate the initial HTML.
  */
 describe('Module Functions - JSX Transformation (Issue #176)', () => {
   it('preserves JSX in helper functions for SSR (Marked JSX)', async () => {
@@ -304,7 +307,7 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     expect(file.markedJsx).not.toContain('jsx("path"')
   })
 
-  it('transforms JSX to jsx() calls in helper functions for Client JS', async () => {
+  it('does not include JSX-containing helper functions in Client JS (SSR-only)', async () => {
     const source = `
       "use client"
 
@@ -319,12 +322,13 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Client JS should have jsx() calls, not JSX syntax
-    expect(file.clientJs).toContain('jsx("path"')
+    // JSX-containing helper functions are SSR-only, not in Client JS
+    expect(file.clientJs).not.toContain('renderPath')
+    expect(file.clientJs).not.toContain('jsx("path"')
     expect(file.clientJs).not.toContain('<path')
   })
 
-  it('imports jsx when module functions contain JSX', async () => {
+  it('does not import hono/jsx/dom (no JSX runtime needed)', async () => {
     const source = `
       "use client"
 
@@ -339,9 +343,9 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Client JS should import jsx from hono/jsx/dom
-    expect(file.clientJs).toContain("import { jsx")
-    expect(file.clientJs).toContain("from 'hono/jsx/dom'")
+    // No JSX runtime import needed - JSX helpers are SSR-only
+    expect(file.clientJs).not.toContain("import { jsx")
+    expect(file.clientJs).not.toContain("from 'hono/jsx/dom'")
   })
 
   it('handles complex JSX patterns (Issue #176 reproduction)', async () => {
@@ -374,9 +378,9 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     expect(file.markedJsx).toContain('<path d={el.d}')
     expect(file.markedJsx).toContain('<circle cx={el.cx}')
 
-    // Client JS should transform to jsx() calls
-    expect(file.clientJs).toContain('jsx("path"')
-    expect(file.clientJs).toContain('jsx("circle"')
+    // Client JS should NOT contain JSX-related code (SSR-only)
+    expect(file.clientJs).not.toContain('renderElements')
+    expect(file.clientJs).not.toContain('jsx("path"')
   })
 
   it('handles arrow functions with JSX', async () => {
@@ -395,8 +399,8 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     // Marked JSX should preserve JSX
     expect(file.markedJsx).toContain('<label>{text}</label>')
 
-    // Client JS should transform to jsx() calls
-    expect(file.clientJs).toContain('jsx("label"')
+    // Client JS should NOT contain JSX-related code (SSR-only)
+    expect(file.clientJs).not.toContain('renderLabel')
   })
 
   it('handles nested JSX in helper functions', async () => {
@@ -424,13 +428,11 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     expect(file.markedJsx).toContain('<h2>{title}</h2>')
     expect(file.markedJsx).toContain('<p>{content}</p>')
 
-    // Client JS should transform all elements
-    expect(file.clientJs).toContain('jsx("div"')
-    expect(file.clientJs).toContain('jsx("h2"')
-    expect(file.clientJs).toContain('jsx("p"')
+    // Client JS should NOT contain JSX-related code (SSR-only)
+    expect(file.clientJs).not.toContain('renderCard')
   })
 
-  it('does not add jsx import for non-JSX helper functions', async () => {
+  it('includes non-JSX helper functions in both SSR and Client JS', async () => {
     const source = `
       "use client"
       import { createSignal } from 'barefoot'
@@ -452,7 +454,11 @@ describe('Module Functions - JSX Transformation (Issue #176)', () => {
     const result = await compile(source)
     const file = result.files[0]
 
-    // Should NOT import jsx/jsxs/Fragment for non-JSX helper functions
+    // Non-JSX helper functions should be in both outputs
+    expect(file.markedJsx).toContain('function formatValue(x)')
+    expect(file.clientJs).toContain('function formatValue(x)')
+
+    // Should NOT import jsx/jsxs/Fragment
     expect(file.clientJs).not.toContain("import { jsx")
     expect(file.clientJs).not.toContain("from 'hono/jsx/dom'")
   })

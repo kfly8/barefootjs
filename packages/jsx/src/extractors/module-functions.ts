@@ -3,6 +3,9 @@
  *
  * Extracts helper functions defined at the module level (not inside components).
  * These functions are included in the client JS so they can be called by event handlers.
+ *
+ * Note: JSX-containing helper functions are SSR-only and not included in Client JS.
+ * This is by design - BarefootJS updates DOM directly without re-rendering JSX on the client.
  */
 
 import ts from 'typescript'
@@ -12,7 +15,6 @@ import {
   stripTypeAnnotations,
   containsJsxInCode,
   stripTypeAnnotationsPreserveJsx,
-  transpileWithJsx
 } from '../utils/helpers'
 import { isComponentFunction } from './common'
 
@@ -21,6 +23,10 @@ import { isComponentFunction } from './common'
  * These are functions defined at the top level of the file, not inside any component.
  * e.g., function validateEmail(email: string): string { ... }
  *       const createField = (id: number) => { ... }
+ *
+ * JSX-containing functions are SSR-only:
+ * - tsxCode is set for Marked JSX (SSR) output
+ * - code is empty (not included in Client JS)
  *
  * @param source - Source code
  * @param filePath - File path
@@ -44,12 +50,11 @@ export function extractModuleFunctions(
         const hasJsx = containsJsxInCode(tsCode)
 
         if (hasJsx) {
-          // JSX-containing function: different code for SSR vs Client
-          const tsxCode = stripTypeAnnotationsPreserveJsx(tsCode)  // For Marked JSX
-          const code = transpileWithJsx(tsCode)                     // For Client JS
-          moduleFunctions.push({ name, code, containsJsx: true, tsxCode })
+          // JSX-containing function: SSR-only (not included in Client JS)
+          const tsxCode = stripTypeAnnotationsPreserveJsx(tsCode)
+          moduleFunctions.push({ name, code: '', containsJsx: true, tsxCode })
         } else {
-          // No JSX: same code for both
+          // No JSX: included in both SSR and Client JS
           const code = stripTypeAnnotations(tsCode)
           moduleFunctions.push({ name, code, containsJsx: false })
         }
@@ -68,12 +73,11 @@ export function extractModuleFunctions(
             const hasJsx = containsJsxInCode(tsCode)
 
             if (hasJsx) {
-              // JSX-containing function: different code for SSR vs Client
-              const tsxCode = stripTypeAnnotationsPreserveJsx(tsCode)  // For Marked JSX
-              const code = transpileWithJsx(tsCode)                     // For Client JS
-              moduleFunctions.push({ name, code, containsJsx: true, tsxCode })
+              // JSX-containing function: SSR-only (not included in Client JS)
+              const tsxCode = stripTypeAnnotationsPreserveJsx(tsCode)
+              moduleFunctions.push({ name, code: '', containsJsx: true, tsxCode })
             } else {
-              // No JSX: same code for both
+              // No JSX: included in both SSR and Client JS
               const code = stripTypeAnnotations(tsCode)
               moduleFunctions.push({ name, code, containsJsx: false })
             }

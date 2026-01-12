@@ -63,6 +63,7 @@ export function generateFileClientJs(
   }
 
   // Collect and deduplicate module-level helper functions across all components in this file
+  // Note: JSX-containing functions have empty code and are SSR-only (not included here)
   const allModuleFunctions: Set<string> = new Set()
   for (const comp of fileComponents) {
     if (!comp.hasClientJs) continue
@@ -73,13 +74,6 @@ export function generateFileClientJs(
         allModuleFunctions.add(fn.trim())
       }
     }
-  }
-  // Check if any module functions contain jsx() calls (from JSX transformation)
-  const needsJsxImport = Array.from(allModuleFunctions).some(fn =>
-    fn.includes('jsx(') || fn.includes('jsxs(') || fn.includes('Fragment')
-  )
-  if (needsJsxImport) {
-    allImports.add(`import { jsx, jsxs, Fragment } from 'hono/jsx/dom'`)
   }
 
   const moduleFunctionsCode = allModuleFunctions.size > 0
