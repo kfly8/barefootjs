@@ -24,17 +24,6 @@ function GitHubStarsPlaceholder() {
   )
 }
 
-function LogoLink() {
-  return (
-    <a
-      href="/"
-      class="flex items-center gap-1 text-foreground transition-colors no-underline"
-    >
-      <Logo />
-    </a>
-  )
-}
-
 export interface HeaderProps {
   currentPath?: string
 }
@@ -52,7 +41,12 @@ export function Header({ currentPath = '/' }: HeaderProps) {
         {/* Left section: Logo + Navigation */}
         <div class="flex items-center gap-6">
           {/* Logo */}
-          <LogoLink />
+          <a
+            href="/"
+            class="text-foreground transition-colors no-underline"
+          >
+            <Logo />
+          </a>
 
           {/* Navigation separator */}
           <div class="hidden sm:block h-5 w-px bg-border" />
