@@ -146,6 +146,14 @@ function collectBarefootImports(fileComponents: ComponentData[]): Set<string> {
     if (comp.result.conditionalElements.length > 0) {
       barefootImports.add('cond')
     }
+
+    // unwrap is needed when component has value props (non-callback props)
+    // Value props may be passed as getter functions from parent components
+    const isCallbackProp = (propName: string) => /^on[A-Z]/.test(propName)
+    const hasValueProps = comp.result.props.some(p => !isCallbackProp(p.name))
+    if (hasValueProps) {
+      barefootImports.add('unwrap')
+    }
   }
 
   // hydrate is needed if any root component has props or child inits

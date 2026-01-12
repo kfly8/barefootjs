@@ -7,6 +7,21 @@
 
 import { createEffect } from './reactive'
 
+// --- unwrap ---
+
+/**
+ * Unwrap a prop value that may be a getter function.
+ * When props are passed from parent to child components, reactive values
+ * are wrapped as getter functions to maintain reactivity.
+ * This helper unwraps them transparently.
+ *
+ * @param prop - The prop value (may be a value or a getter function)
+ * @returns The unwrapped value
+ */
+export function unwrap<T>(prop: T | (() => T)): T {
+  return typeof prop === 'function' ? (prop as () => T)() : prop
+}
+
 // --- findScope ---
 
 /**

@@ -712,26 +712,26 @@ export function replacePropsWithObjectAccess(
   }
 
   function visit(node: ts.Node) {
-    // Shorthand property: { variant } → { variant: __props.variant }
+    // Shorthand property: { variant } → { variant: unwrap(__props.variant) }
     if (ts.isShorthandPropertyAssignment(node)) {
       const name = node.name.text
       if (propSet.has(name)) {
         replacements.push({
           start: node.getStart(),
           end: node.getEnd(),
-          value: `${name}: ${propsObjectName}.${name}`
+          value: `${name}: unwrap(${propsObjectName}.${name})`
         })
         return // Don't visit children
       }
     }
 
-    // Regular identifier: variant → __props.variant
+    // Regular identifier: variant → unwrap(__props.variant)
     if (ts.isIdentifier(node) && propSet.has(node.text)) {
       if (!shouldSkipIdentifier(node)) {
         replacements.push({
           start: node.getStart(),
           end: node.getEnd(),
-          value: `${propsObjectName}.${node.text}`
+          value: `unwrap(${propsObjectName}.${node.text})`
         })
       }
     }
