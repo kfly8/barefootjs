@@ -885,7 +885,7 @@ function processIfStatementReturns(
   if (!thenReturn) return null
 
   // Find JSX return in the "else" branch or fallthrough
-  let elseReturn: ts.Expression | null = null
+  let elseResult: ts.Expression | IRNode | null = null
 
   if (ifStmt.elseStatement) {
     // Check for else-if chain
@@ -901,16 +901,24 @@ function processIfStatementReturns(
       return null
     }
     // Regular else branch
-    elseReturn = findJsxReturnInStatement(ifStmt.elseStatement)
+    elseResult = findJsxReturnInStatement(ifStmt.elseStatement)
   } else {
     // Look for fallthrough return after if statement
-    elseReturn = findFallthroughReturn(ifStmt)
+    // This may return an IRNode for consecutive if statements
+    elseResult = findFallthroughReturn(ifStmt, ctx)
   }
 
-  if (!elseReturn) return null
+  if (!elseResult) return null
 
   const whenTrueIR = jsxToIR(thenReturn, ctx)
-  const whenFalseIR = jsxToIR(elseReturn, ctx)
+
+  // Handle case where elseResult is already an IRNode (from consecutive if)
+  let whenFalseIR: IRNode | null
+  if (isIRNode(elseResult)) {
+    whenFalseIR = elseResult
+  } else {
+    whenFalseIR = jsxToIR(elseResult, ctx)
+  }
 
   if (!whenTrueIR || !whenFalseIR) return null
 
@@ -951,25 +959,69 @@ function extractJsxFromExpression(expr: ts.Expression): ts.Expression | null {
 }
 
 /**
- * Finds fallthrough return statement after an if statement
+ * Type guard to check if a value is an IRNode
  */
-function findFallthroughReturn(ifStmt: ts.IfStatement): ts.Expression | null {
+function isIRNode(value: ts.Expression | IRNode | null): value is IRNode {
+  return value !== null && typeof value === 'object' && 'type' in value
+}
+
+/**
+ * Finds fallthrough return statement after an if statement.
+ * Handles consecutive if statements with early returns by treating them
+ * as nested else-if chains.
+ */
+function findFallthroughReturn(
+  ifStmt: ts.IfStatement,
+  ctx: JsxToIRContext
+): ts.Expression | IRNode | null {
   const parent = ifStmt.parent
   if (!parent || !ts.isBlock(parent)) return null
 
   const siblings = parent.statements
   const ifIndex = siblings.indexOf(ifStmt)
 
-  // Look for return statements after the if
+  // Look for return statements or consecutive if statements after this one
   for (let i = ifIndex + 1; i < siblings.length; i++) {
     const sibling = siblings[i]
+
+    // Direct return statement - return as JSX expression or handle null
     if (ts.isReturnStatement(sibling) && sibling.expression) {
-      return extractJsxFromExpression(sibling.expression)
-    }
-    // Stop at nested if with returns (it has its own handling)
-    if (ts.isIfStatement(sibling)) {
+      const jsxExpr = extractJsxFromExpression(sibling.expression)
+      if (jsxExpr) {
+        return jsxExpr
+      }
+      // Handle "return null" as a valid fallback
+      if (sibling.expression.kind === ts.SyntaxKind.NullKeyword) {
+        // Return an IRExpression node for null
+        return {
+          type: 'expression',
+          expression: 'null',
+          isDynamic: false,
+        } as IRNode
+      }
+      // Other non-JSX returns - stop searching
       break
     }
+
+    // Consecutive if statement with early return - process recursively
+    if (ts.isIfStatement(sibling)) {
+      const nestedResult = processIfStatementReturns(sibling, ctx)
+      if (nestedResult) {
+        // Return the IRNode directly instead of JSX expression
+        return nestedResult
+      }
+      // If the nested if doesn't have JSX returns, continue looking
+      continue
+    }
+
+    // Variable declarations are allowed between if statements
+    // (e.g., "const path = strokeIcons[name]")
+    if (ts.isVariableStatement(sibling)) {
+      continue
+    }
+
+    // Other statements - stop searching
+    break
   }
 
   return null

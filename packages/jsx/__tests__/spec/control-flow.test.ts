@@ -533,4 +533,66 @@ describe('Control Flow Specs', () => {
     // Initially shows "mode-a" branch (mode() === 'a' is true)
     expect(result.html).toContain('mode-a')
   })
+
+  // CTRL-022: Consecutive if statements with early returns (issue #169)
+  // Verifies that multiple consecutive if/return patterns chain as nested conditionals
+  it('CTRL-022: handles consecutive if statements with early returns', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [type, setType] = createSignal('a')
+        if (type() === 'a') {
+          return <span class="type-a">Type A</span>
+        }
+        if (type() === 'b') {
+          return <span class="type-b">Type B</span>
+        }
+        return <span class="default">Default</span>
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated (consecutive if/return converted to nested conditional)
+    expect(result.clientJs).toContain('cond(')
+    // Verify all branches are in the templates
+    expect(result.clientJs).toContain('type-a')
+    expect(result.clientJs).toContain('type-b')
+    expect(result.clientJs).toContain('default')
+    // Initially shows "type-a" branch (type() === 'a' is true)
+    expect(result.html).toContain('type-a')
+  })
+
+  // CTRL-023: If statements with variable declarations between them (issue #169)
+  // Verifies handling of: if (a) return X; const b = ...; if (b) return Y; return Z;
+  it('CTRL-023: handles if statements with intermediate variable declarations', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [name, setName] = createSignal('special')
+        const items: Record<string, string> = { foo: 'FOO' }
+
+        if (name() === 'special') {
+          return <span class="special">Special</span>
+        }
+
+        const item = items[name()]
+        if (item) {
+          return <span class="item">{item}</span>
+        }
+
+        return <span class="fallback">Not found</span>
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated
+    expect(result.clientJs).toContain('cond(')
+    // Verify compilation succeeds and structure is valid
+    expect(result.html).toBeTruthy()
+    // Initially shows "special" branch (name() === 'special' is true)
+    expect(result.html).toContain('special')
+  })
+
 })
