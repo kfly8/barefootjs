@@ -563,9 +563,10 @@ function generateConditionalEffects(
   for (const condEl of conditionalElements) {
     const condId = condEl.id
     // Templates use backticks for template literals with ${} interpolation
+    // Replace newlines with spaces to avoid syntax errors in template literal expressions
     // Only escape backticks that aren't part of nested template literals
-    const whenTrueTemplate = condEl.whenTrueTemplate.replace(/\n/g, '\\n').replace(/`/g, '\\`')
-    const whenFalseTemplate = condEl.whenFalseTemplate.replace(/\n/g, '\\n').replace(/`/g, '\\`')
+    const whenTrueTemplate = condEl.whenTrueTemplate.replace(/\n\s*/g, ' ').replace(/`/g, '\\`')
+    const whenFalseTemplate = condEl.whenFalseTemplate.replace(/\n\s*/g, ' ').replace(/`/g, '\\`')
 
     // Build handlers array if there are interactive elements inside the conditional
     let handlersArg = ''

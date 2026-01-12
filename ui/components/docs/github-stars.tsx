@@ -1,19 +1,16 @@
-'use client'
-
 /**
  * GitHub Stars Component
  *
  * Displays GitHub repository stars with Octocat icon.
- * Fetches star count from GitHub API on client side.
+ * Server provides initial star count via Suspense pattern.
+ * No client-side reactivity needed - value comes from server.
  */
-
-import { createSignal, createEffect } from '@barefootjs/dom'
 
 // GitHub Octocat icon (simplified mark)
 function GitHubIcon() {
   return (
     <svg
-      class="h-5 w-5"
+      class="h-5 w-5 text-foreground"
       viewBox="0 0 24 24"
       fill="currentColor"
     >
@@ -24,39 +21,19 @@ function GitHubIcon() {
 
 export interface GitHubStarsProps {
   repo?: string
+  /** Star count from server */
+  initialStars?: number | null
 }
 
-export function GitHubStars({ repo = 'kfly8/barefootjs' }: GitHubStarsProps) {
-  const [stars, setStars] = createSignal<number | null>(null)
-  const [loading, setLoading] = createSignal(true)
-
-  // Fetch stars from GitHub API
-  createEffect(() => {
-    const fetchStars = async () => {
-      try {
-        const response = await fetch(`https://api.github.com/repos/${repo}`)
-        if (response.ok) {
-          const data = await response.json()
-          setStars(data.stargazers_count)
-        }
-      } catch {
-        // Silently fail, show just the icon
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStars()
-  })
-
-  // Format star count (e.g., 1234 -> 1.2k)
-  const formatStars = (count: number) => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}k`
-    }
-    return count.toString()
+// Format star count (e.g., 1234 -> 1K)
+function formatStars(count: number): string {
+  if (count >= 1000) {
+    return `${Math.round(count / 1000)}K`
   }
+  return count.toString()
+}
 
+export function GitHubStars({ repo = 'kfly8/barefootjs', initialStars = null }: GitHubStarsProps) {
   return (
     <a
       href={`https://github.com/${repo}`}
@@ -66,15 +43,9 @@ export function GitHubStars({ repo = 'kfly8/barefootjs' }: GitHubStarsProps) {
       aria-label="View on GitHub"
     >
       <GitHubIcon />
-      <span
-        data-github-stars
-        class="text-sm font-medium"
-      >
-        {loading() ? (
-          <span class="inline-block w-6 h-4 bg-muted rounded animate-pulse" />
-        ) : stars() !== null ? (
-          formatStars(stars() || 0)
-        ) : null}
+      {/* Fixed width for 2 digits */}
+      <span data-github-stars class="text-sm font-medium min-w-[1.25rem] text-right tabular-nums">
+        {initialStars !== null ? formatStars(initialStars) : null}
       </span>
     </a>
   )
