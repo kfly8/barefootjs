@@ -41,6 +41,6 @@
   <%= content %>
 
   %# BarefootJS scripts at end of body
-  <script type="module" src="/js/counter.js"></script>
+  <script type="module" src="/js/counter-hydrate.js"></script>
 </body>
 </html>

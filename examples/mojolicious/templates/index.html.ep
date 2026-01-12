@@ -21,9 +21,10 @@
 <div class="demo-section">
   <h2>How it works</h2>
   <ol>
+    <li>BarefootJS compiles <code>Counter.tsx</code> to generate client JS</li>
     <li>Server renders <code>counter.html.ep</code> with Perl variables</li>
-    <li>HTML includes <code>data-bf-scope</code> and <code>data-bf</code> markers</li>
-    <li>Client JS (<code>counter.js</code>) hydrates the components</li>
+    <li>HTML includes <code>data-bf-scope</code> markers for hydration</li>
+    <li>Client JS (<code>counter-hydrate.js</code>) hydrates the components</li>
     <li>SolidJS-style reactivity handles updates</li>
   </ol>
 </div>
