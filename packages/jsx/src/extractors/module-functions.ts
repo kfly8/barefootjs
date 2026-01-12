@@ -7,7 +7,13 @@
 
 import ts from 'typescript'
 import type { LocalFunction } from '../types'
-import { createSourceFile, stripTypeAnnotations } from '../utils/helpers'
+import {
+  createSourceFile,
+  stripTypeAnnotations,
+  containsJsxInCode,
+  stripTypeAnnotationsPreserveJsx,
+  transpileWithJsx
+} from '../utils/helpers'
 import { isComponentFunction } from './common'
 
 /**
@@ -35,8 +41,18 @@ export function extractModuleFunctions(
       if (!isComponentFunction(statement)) {
         const name = statement.name.text
         const tsCode = statement.getText(sourceFile)
-        const code = stripTypeAnnotations(tsCode)
-        moduleFunctions.push({ name, code })
+        const hasJsx = containsJsxInCode(tsCode)
+
+        if (hasJsx) {
+          // JSX-containing function: different code for SSR vs Client
+          const tsxCode = stripTypeAnnotationsPreserveJsx(tsCode)  // For Marked JSX
+          const code = transpileWithJsx(tsCode)                     // For Client JS
+          moduleFunctions.push({ name, code, containsJsx: true, tsxCode })
+        } else {
+          // No JSX: same code for both
+          const code = stripTypeAnnotations(tsCode)
+          moduleFunctions.push({ name, code, containsJsx: false })
+        }
       }
     }
 
@@ -49,8 +65,18 @@ export function extractModuleFunctions(
             // Skip if it looks like a component (PascalCase)
             if (/^[A-Z]/.test(name)) continue
             const tsCode = statement.getText(sourceFile)
-            const code = stripTypeAnnotations(tsCode)
-            moduleFunctions.push({ name, code })
+            const hasJsx = containsJsxInCode(tsCode)
+
+            if (hasJsx) {
+              // JSX-containing function: different code for SSR vs Client
+              const tsxCode = stripTypeAnnotationsPreserveJsx(tsCode)  // For Marked JSX
+              const code = transpileWithJsx(tsCode)                     // For Client JS
+              moduleFunctions.push({ name, code, containsJsx: true, tsxCode })
+            } else {
+              // No JSX: same code for both
+              const code = stripTypeAnnotations(tsCode)
+              moduleFunctions.push({ name, code, containsJsx: false })
+            }
           }
         }
       }

@@ -74,6 +74,14 @@ export function generateFileClientJs(
       }
     }
   }
+  // Check if any module functions contain jsx() calls (from JSX transformation)
+  const needsJsxImport = Array.from(allModuleFunctions).some(fn =>
+    fn.includes('jsx(') || fn.includes('jsxs(') || fn.includes('Fragment')
+  )
+  if (needsJsxImport) {
+    allImports.add(`import { jsx, jsxs, Fragment } from 'hono/jsx/dom'`)
+  }
+
   const moduleFunctionsCode = allModuleFunctions.size > 0
     ? '\n' + Array.from(allModuleFunctions).join('\n') + '\n'
     : ''

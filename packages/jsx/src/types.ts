@@ -182,7 +182,9 @@ export type ModuleConstant = {
 
 export type LocalFunction = {
   name: string        // handleToggle
-  code: string        // const handleToggle = (id) => { ... }
+  code: string        // const handleToggle = (id) => { ... } - For Client JS (jsx() calls if contains JSX)
+  containsJsx: boolean // Whether this function contains JSX elements
+  tsxCode?: string    // For Marked JSX (JSX preserved) - only set if containsJsx is true
 }
 
 export type LocalVariable = {

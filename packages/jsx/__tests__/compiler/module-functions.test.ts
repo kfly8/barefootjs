@@ -274,3 +274,186 @@ describe('Module Functions - SSR Output (Issue #174)', () => {
     expect(file.markedJsx).toContain('function renderIcon(def)')
   })
 })
+
+/**
+ * Issue #176: Helper function JSX not compiled correctly in 'use client' files
+ *
+ * Module-level helper functions that return JSX should be properly transformed:
+ * - For Marked JSX (SSR): JSX should be preserved as-is
+ * - For Client JS: JSX should be transformed to jsx() function calls
+ */
+describe('Module Functions - JSX Transformation (Issue #176)', () => {
+  it('preserves JSX in helper functions for SSR (Marked JSX)', async () => {
+    const source = `
+      "use client"
+
+      function renderPath(d: string) {
+        return <path d={d} />
+      }
+
+      function Component() {
+        return <svg>{renderPath('M0 0')}</svg>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Marked JSX should preserve JSX syntax (not jsx() calls)
+    // Note: TypeScript's JSX Preserve mode may remove spaces before />
+    expect(file.markedJsx).toContain('<path d={d}')
+    expect(file.markedJsx).not.toContain('jsx("path"')
+  })
+
+  it('transforms JSX to jsx() calls in helper functions for Client JS', async () => {
+    const source = `
+      "use client"
+
+      function renderPath(d: string) {
+        return <path d={d} />
+      }
+
+      function Component() {
+        return <svg>{renderPath('M0 0')}</svg>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Client JS should have jsx() calls, not JSX syntax
+    expect(file.clientJs).toContain('jsx("path"')
+    expect(file.clientJs).not.toContain('<path')
+  })
+
+  it('imports jsx when module functions contain JSX', async () => {
+    const source = `
+      "use client"
+
+      function renderItem(text: string) {
+        return <span>{text}</span>
+      }
+
+      function Component() {
+        return <div>{renderItem('test')}</div>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Client JS should import jsx from hono/jsx/dom
+    expect(file.clientJs).toContain("import { jsx")
+    expect(file.clientJs).toContain("from 'hono/jsx/dom'")
+  })
+
+  it('handles complex JSX patterns (Issue #176 reproduction)', async () => {
+    const source = `
+      "use client"
+
+      type IconElement = { type: 'path', d: string } | { type: 'circle', cx: number, cy: number, r: number }
+
+      function renderElements(elements: IconElement[]) {
+        return elements.map((el) => {
+          if (el.type === 'path') {
+            return <path d={el.d} />
+          }
+          if (el.type === 'circle') {
+            return <circle cx={el.cx} cy={el.cy} r={el.r} />
+          }
+          return null
+        })
+      }
+
+      function Icon({ elements }: { elements: IconElement[] }) {
+        return <svg>{renderElements(elements)}</svg>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Marked JSX should preserve JSX
+    // Note: TypeScript's JSX Preserve mode may remove spaces before />
+    expect(file.markedJsx).toContain('<path d={el.d}')
+    expect(file.markedJsx).toContain('<circle cx={el.cx}')
+
+    // Client JS should transform to jsx() calls
+    expect(file.clientJs).toContain('jsx("path"')
+    expect(file.clientJs).toContain('jsx("circle"')
+  })
+
+  it('handles arrow functions with JSX', async () => {
+    const source = `
+      "use client"
+
+      const renderLabel = (text: string) => <label>{text}</label>
+
+      function Component() {
+        return <div>{renderLabel('Name')}</div>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Marked JSX should preserve JSX
+    expect(file.markedJsx).toContain('<label>{text}</label>')
+
+    // Client JS should transform to jsx() calls
+    expect(file.clientJs).toContain('jsx("label"')
+  })
+
+  it('handles nested JSX in helper functions', async () => {
+    const source = `
+      "use client"
+
+      function renderCard(title: string, content: string) {
+        return (
+          <div class="card">
+            <h2>{title}</h2>
+            <p>{content}</p>
+          </div>
+        )
+      }
+
+      function Component() {
+        return <section>{renderCard('Hello', 'World')}</section>
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Marked JSX should preserve JSX structure
+    expect(file.markedJsx).toContain('<div class="card">')
+    expect(file.markedJsx).toContain('<h2>{title}</h2>')
+    expect(file.markedJsx).toContain('<p>{content}</p>')
+
+    // Client JS should transform all elements
+    expect(file.clientJs).toContain('jsx("div"')
+    expect(file.clientJs).toContain('jsx("h2"')
+    expect(file.clientJs).toContain('jsx("p"')
+  })
+
+  it('does not add jsx import for non-JSX helper functions', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+
+      function formatValue(x: number) {
+        return 'Value: ' + x
+      }
+
+      function Component() {
+        const [count, setCount] = createSignal(0)
+        return (
+          <div>
+            <p>{formatValue(count())}</p>
+            <button onClick={() => setCount(n => n + 1)}>+1</button>
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+    const file = result.files[0]
+
+    // Should NOT import jsx/jsxs/Fragment for non-JSX helper functions
+    expect(file.clientJs).not.toContain("import { jsx")
+    expect(file.clientJs).not.toContain("from 'hono/jsx/dom'")
+  })
+})

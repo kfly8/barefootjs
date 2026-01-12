@@ -54,8 +54,10 @@ export const testJsxAdapter: MarkedJsxAdapter = {
     const rawHtmlHelper = needsRawHtml ? 'const __rawHtml = (s: string) => ({ dangerouslySetInnerHTML: { __html: s } })\n\n' : ''
 
     // Module-level helper functions
+    // Use tsxCode for functions containing JSX (preserves JSX syntax for SSR)
+    // Fall back to code for non-JSX functions
     const functionDefs = moduleFunctions && moduleFunctions.length > 0
-      ? moduleFunctions.map(fn => fn.code).join('\n\n') + '\n\n'
+      ? moduleFunctions.map(fn => fn.tsxCode || fn.code).join('\n\n') + '\n\n'
       : ''
 
     // Local variable declarations (computed from props)
