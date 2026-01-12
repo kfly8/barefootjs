@@ -13,7 +13,23 @@
  */
 
 import { createSignal, createEffect } from '@barefootjs/dom'
-import { SearchIcon } from '../ui/icon'
+
+// Search icon
+function SearchIcon() {
+  return (
+    <svg
+      class="h-4 w-4 text-muted-foreground"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  )
+}
 
 // Navigation items grouped by category (static, for server-side rendering)
 const getStartedItems = [
@@ -223,7 +239,7 @@ export function CommandPalette() {
         <div class="mx-4 sm:mx-0 overflow-hidden rounded-lg border border-border bg-background shadow-2xl">
           {/* Search input */}
           <div class="flex items-center gap-2 border-b border-border px-3">
-            <SearchIcon size="sm" class="text-muted-foreground" />
+            <SearchIcon />
             <input
               data-command-input
               type="text"

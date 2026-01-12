@@ -40,7 +40,7 @@ const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
 <Button size="lg">Large</Button>
 <Button size="icon">
-  <PlusIcon />
+  <PlusIcon size="sm" />
 </Button>`
 
 const disabledCode = `<Button disabled>Disabled</Button>
@@ -90,6 +90,7 @@ export function ButtonPage() {
         {/* Preview */}
         <Example title="" code={`
 import { Button } from "@/components/ui/button"
+import { PlusIcon } from "@/components/ui/icon"
 
 function ButtonExample() {
   return (
@@ -105,7 +106,7 @@ function ButtonExample() {
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
             <Button variant="outline">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
-                <PlusIcon />
+                <PlusIcon size="sm" />
             </Button>
           </div>
         </Example>
