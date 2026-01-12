@@ -97,8 +97,10 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       : ''
 
     // Module-level helper functions (shared)
+    // Use tsxCode for functions containing JSX (preserves JSX syntax for SSR)
+    // Fall back to code for non-JSX functions
     const functionDefs = moduleFunctions && moduleFunctions.length > 0
-      ? '\n' + moduleFunctions.map(fn => fn.code).join('\n\n') + '\n'
+      ? '\n' + moduleFunctions.map(fn => fn.tsxCode || fn.code).join('\n\n') + '\n'
       : ''
 
     // Generate each component function
