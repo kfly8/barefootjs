@@ -38,7 +38,7 @@ export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
     }
   })
 
-  // Apply theme to document when theme changes
+  // Apply theme to document when theme changes (initial load only, no transition)
   createEffect(() => {
     if (!initialized()) return
     const currentTheme = theme()
@@ -47,9 +47,20 @@ export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
     localStorage.setItem('theme', currentTheme)
   })
 
-  // Simple toggle between light and dark
+  // Toggle with smooth transition animation
   const toggleTheme = () => {
+    const root = document.documentElement
+
+    // Enable transition temporarily
+    root.classList.add('theme-transition')
+
+    // Toggle theme
     setTheme(theme() === 'light' ? 'dark' : 'light')
+
+    // Remove transition class after animation completes (buffer time)
+    setTimeout(() => {
+      root.classList.remove('theme-transition')
+    }, 300)
   }
 
   const isDark = createMemo(() => theme() === 'dark')

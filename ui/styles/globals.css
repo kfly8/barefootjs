@@ -138,6 +138,18 @@
   --ring: oklch(0.556 0 0);
 }
 
+/* Theme transition - applied temporarily during theme switch */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default),
+              fill var(--duration-fast) var(--ease-default),
+              stroke var(--duration-fast) var(--ease-default) !important;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
