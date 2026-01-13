@@ -14,6 +14,7 @@ import type {
   MarkedJsxContext,
   PropWithType,
 } from '../types'
+import { isSelfClosingTag } from '../utils/html-helpers'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
@@ -502,12 +503,6 @@ function replaceSignalAndMemoCalls(
   return replaceInternal(expr, new Set())
 }
 
-/**
- * Checks if a tag is a self-closing tag
- */
-function isSelfClosingTag(tagName: string): boolean {
-  return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
-}
 
 /**
  * Injects conditional markers into branch for DOM tracking

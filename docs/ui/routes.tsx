@@ -7,8 +7,8 @@
 
 import { Hono } from 'hono'
 import { renderer } from './renderer'
-// All pages imported from source
-// Pages import compiled components via @/components (dist/components)
+
+// Component pages
 import { BadgePage } from './pages/badge'
 import { ButtonPage } from './pages/button'
 import { CardPage } from './pages/card'
@@ -23,10 +23,50 @@ import { DropdownPage } from './pages/dropdown'
 import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+
+// Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
 import { ValidationPage } from './pages/forms/validation'
 import { SubmitPage } from './pages/forms/submit'
 import { FieldArraysPage } from './pages/forms/field-arrays'
+
+// Navigation data for the home page
+const components = [
+  { name: 'Badge', path: '/docs/components/badge', description: 'Displays a badge or a component that looks like a badge.' },
+  { name: 'Button', path: '/docs/components/button', description: 'Displays a button or a component that looks like a button.' },
+  { name: 'Card', path: '/docs/components/card', description: 'Displays a card with header, content, and footer.' },
+  { name: 'Checkbox', path: '/docs/components/checkbox', description: 'A control that allows the user to toggle between checked and unchecked states.' },
+  { name: 'Input', path: '/docs/components/input', description: 'Displays an input field for user text entry.' },
+  { name: 'Switch', path: '/docs/components/switch', description: 'A control that allows the user to toggle between checked and not checked.' },
+  { name: 'Counter', path: '/docs/components/counter', description: 'A numeric input with increment and decrement buttons.' },
+  { name: 'Accordion', path: '/docs/components/accordion', description: 'A vertically stacked set of interactive headings that each reveal content.' },
+  { name: 'Tabs', path: '/docs/components/tabs', description: 'A set of layered sections of content displayed one at a time.' },
+  { name: 'Dialog', path: '/docs/components/dialog', description: 'A modal dialog that displays content in a layer above the page.' },
+  { name: 'Dropdown', path: '/docs/components/dropdown', description: 'A select-like dropdown menu for choosing from a list of options.' },
+  { name: 'Toast', path: '/docs/components/toast', description: 'A non-blocking notification that displays brief messages to users.' },
+  { name: 'Tooltip', path: '/docs/components/tooltip', description: 'A popup that displays contextual information on hover or focus.' },
+  { name: 'Select', path: '/docs/components/select', description: 'A dropdown for choosing from a list of options.' },
+]
+
+const formPatterns = [
+  { name: 'Controlled Input', path: '/docs/forms/controlled-input', description: 'Two-way binding between signals and input values.' },
+  { name: 'Form Validation', path: '/docs/forms/validation', description: 'Error state management and multi-field validation patterns.' },
+  { name: 'Form Submit', path: '/docs/forms/submit', description: 'Async submit handling with loading, success, and error states.' },
+  { name: 'Field Arrays', path: '/docs/forms/field-arrays', description: 'Dynamic list of form inputs with add/remove and per-item validation.' },
+]
+
+// Reusable link card component for the home page
+function NavLink({ name, path, description }: { name: string; path: string; description: string }) {
+  return (
+    <a
+      href={path}
+      class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
+    >
+      <h2 class="font-semibold text-foreground">{name}</h2>
+      <p class="text-sm text-muted-foreground mt-1">{description}</p>
+    </a>
+  )
+}
 
 /**
  * Create the documentation app with all routes.
@@ -49,132 +89,7 @@ export function createApp() {
         </div>
 
         <div class="grid gap-4">
-          <a
-            href="/docs/components/badge"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Badge</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Displays a badge or a component that looks like a badge.
-            </p>
-          </a>
-          <a
-            href="/docs/components/button"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Button</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Displays a button or a component that looks like a button.
-            </p>
-          </a>
-          <a
-            href="/docs/components/card"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Card</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Displays a card with header, content, and footer.
-            </p>
-          </a>
-          <a
-            href="/docs/components/checkbox"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Checkbox</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A control that allows the user to toggle between checked and unchecked states.
-            </p>
-          </a>
-          <a
-            href="/docs/components/input"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Input</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Displays an input field for user text entry.
-            </p>
-          </a>
-          <a
-            href="/docs/components/switch"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Switch</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A control that allows the user to toggle between checked and not checked.
-            </p>
-          </a>
-          <a
-            href="/docs/components/counter"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Counter</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A numeric input with increment and decrement buttons.
-            </p>
-          </a>
-          <a
-            href="/docs/components/accordion"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Accordion</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A vertically stacked set of interactive headings that each reveal content.
-            </p>
-          </a>
-          <a
-            href="/docs/components/tabs"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Tabs</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A set of layered sections of content displayed one at a time.
-            </p>
-          </a>
-          <a
-            href="/docs/components/dialog"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Dialog</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A modal dialog that displays content in a layer above the page.
-            </p>
-          </a>
-          <a
-            href="/docs/components/dropdown"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Dropdown</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A select-like dropdown menu for choosing from a list of options.
-            </p>
-          </a>
-          <a
-            href="/docs/components/toast"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Toast</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A non-blocking notification that displays brief messages to users.
-            </p>
-          </a>
-          <a
-            href="/docs/components/tooltip"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Tooltip</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A popup that displays contextual information on hover or focus.
-            </p>
-          </a>
-          <a
-            href="/docs/components/select"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Select</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              A dropdown for choosing from a list of options.
-            </p>
-          </a>
+          {components.map((c) => <NavLink {...c} />)}
         </div>
 
         <div class="space-y-2 mt-8">
@@ -185,42 +100,7 @@ export function createApp() {
         </div>
 
         <div class="grid gap-4">
-          <a
-            href="/docs/forms/controlled-input"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Controlled Input</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Two-way binding between signals and input values.
-            </p>
-          </a>
-          <a
-            href="/docs/forms/validation"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Form Validation</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Error state management and multi-field validation patterns.
-            </p>
-          </a>
-          <a
-            href="/docs/forms/submit"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Form Submit</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Async submit handling with loading, success, and error states.
-            </p>
-          </a>
-          <a
-            href="/docs/forms/field-arrays"
-            class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
-          >
-            <h2 class="font-semibold text-foreground">Field Arrays</h2>
-            <p class="text-sm text-muted-foreground mt-1">
-              Dynamic list of form inputs with add/remove and per-item validation.
-            </p>
-          </a>
+          {formPatterns.map((p) => <NavLink {...p} />)}
         </div>
       </div>
     )

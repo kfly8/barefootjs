@@ -20,6 +20,29 @@ import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve, join } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
+
+// File type helpers
+function isTsOrTsxFile(filename: string): boolean {
+  return filename.endsWith('.tsx') || filename.endsWith('.ts')
+}
+
+function hasUseClientDirective(content: string): boolean {
+  const trimmed = content.trimStart()
+  return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
+}
+
+// Copy all TS/TSX files from a directory (non-recursive)
+async function copyTsFiles(srcDir: string, destDir: string, prefix: string = ''): Promise<void> {
+  await mkdir(destDir, { recursive: true })
+  const files = await readdir(srcDir).catch(() => [])
+  for (const file of files) {
+    if (isTsOrTsxFile(file)) {
+      await Bun.write(resolve(destDir, file), Bun.file(resolve(srcDir, file)))
+      console.log(`Copied: ${prefix}${file}`)
+    }
+  }
+}
+
 const DOCS_COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const UI_COMPONENTS_DIR = resolve(ROOT_DIR, '../../ui/components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
@@ -180,23 +203,15 @@ if (await Bun.file(globalsSource).exists()) {
   console.log('Copied: dist/globals.css')
 }
 
-// Copy lib/ and base/ directories to dist/components/
+// Copy lib/ and base/ directories to dist/
 // These are runtime utilities needed by compiled components
 const LIB_DIR = resolve(ROOT_DIR, 'lib')
 const BASE_DIR = resolve(ROOT_DIR, '../../ui/base')
-const DIST_LIB_DIR = resolve(DIST_COMPONENTS_DIR, '../lib')
-const DIST_BASE_DIR = resolve(DIST_COMPONENTS_DIR, '../base')
-
-await mkdir(DIST_LIB_DIR, { recursive: true })
-await mkdir(DIST_BASE_DIR, { recursive: true })
+const DIST_LIB_DIR = resolve(DIST_DIR, 'lib')
+const DIST_BASE_DIR = resolve(DIST_DIR, 'base')
 
 // Copy lib/*.tsx files
-for (const file of await readdir(LIB_DIR).catch(() => [])) {
-  if (file.endsWith('.tsx') || file.endsWith('.ts')) {
-    await Bun.write(resolve(DIST_LIB_DIR, file), Bun.file(resolve(LIB_DIR, file)))
-    console.log(`Copied: dist/lib/${file}`)
-  }
-}
+await copyTsFiles(LIB_DIR, DIST_LIB_DIR, 'dist/lib/')
 
 // Copy server components (without "use client") to dist
 // These are components that don't need compilation but are still imported from @/components/
@@ -210,11 +225,8 @@ async function copyServerComponents(srcDir: string, destDir: string, prefix: str
       await copyServerComponents(srcPath, destPath, `${prefix}${entry.name}/`)
     } else if (entry.name.endsWith('.tsx')) {
       const content = await Bun.file(srcPath).text()
-      // Skip files that have "use client" directive at start (already compiled)
-      // Check if file starts with "use client" (with optional leading whitespace/comments)
-      const hasUseClient = content.trimStart().startsWith('"use client"') ||
-                           content.trimStart().startsWith("'use client'")
-      if (!hasUseClient) {
+      // Skip files that have "use client" directive (already compiled)
+      if (!hasUseClientDirective(content)) {
         // Check if file wasn't already output by compiler
         const distFile = resolve(DIST_COMPONENTS_DIR, prefix, entry.name)
         if (!await Bun.file(distFile).exists()) {
@@ -237,21 +249,10 @@ await copyServerComponents(UI_COMPONENTS_DIR, DIST_COMPONENTS_DIR)
 // Copy shared/ directory (utility modules)
 const SHARED_DIR = resolve(ROOT_DIR, 'components/shared')
 const DIST_SHARED_DIR = resolve(DIST_COMPONENTS_DIR, 'shared')
-await mkdir(DIST_SHARED_DIR, { recursive: true })
-for (const file of await readdir(SHARED_DIR).catch(() => [])) {
-  if (file.endsWith('.tsx') || file.endsWith('.ts')) {
-    await Bun.write(resolve(DIST_SHARED_DIR, file), Bun.file(resolve(SHARED_DIR, file)))
-    console.log(`Copied: dist/components/shared/${file}`)
-  }
-}
+await copyTsFiles(SHARED_DIR, DIST_SHARED_DIR, 'dist/components/shared/')
 
 // Copy base/*.tsx files
-for (const file of await readdir(BASE_DIR).catch(() => [])) {
-  if (file.endsWith('.tsx') || file.endsWith('.ts')) {
-    await Bun.write(resolve(DIST_BASE_DIR, file), Bun.file(resolve(BASE_DIR, file)))
-    console.log(`Copied: dist/base/${file}`)
-  }
-}
+await copyTsFiles(BASE_DIR, DIST_BASE_DIR, 'dist/base/')
 
 // Rewrite @ui/ imports in all dist/*.tsx files to @/
 // This is needed because compiled components may reference @ui/ paths

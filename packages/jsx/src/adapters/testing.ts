@@ -10,6 +10,7 @@
  */
 
 import type { MarkedJsxAdapter, IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
+import { isSelfClosingTag } from '../utils/html-helpers'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
@@ -287,9 +288,6 @@ function escapeAttr(str: string): string {
   return str.replace(/"/g, '&quot;')
 }
 
-function isSelfClosingTag(tagName: string): boolean {
-  return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
-}
 
 function injectDataKeyAttribute(html: string, keyValue: string): string {
   const match = html.match(/^<([a-zA-Z][a-zA-Z0-9]*)/)
