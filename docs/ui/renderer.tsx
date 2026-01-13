@@ -19,6 +19,7 @@ declare module 'hono' {
   }
 }
 import { BfScripts } from '../../packages/hono/src/scripts'
+import { BfPreload } from '../../packages/hono/src/preload'
 import { SidebarMenu } from '@/components/sidebar-menu'
 import { SidebarPreview } from '@/components/sidebar-preview'
 import { Header } from '@/components/header'
@@ -68,6 +69,7 @@ export const renderer = jsxRenderer(
       <WithPredictableIds>
         <html lang="en">
           <head>
+            <BfPreload />
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>{pageTitle}</title>
