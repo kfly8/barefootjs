@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Dialog Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/dialog')
+    await page.goto('/docs/components/dialog')
   })
 
   test('displays page header', async ({ page }) => {
@@ -362,14 +362,14 @@ test.describe.skip('Dialog Documentation Page', () => {
 test.describe.skip('Home Page - Dialog Link', () => {
   test('displays Dialog component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/dialog"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/dialog"] h2')).toContainText('Dialog')
+    await expect(page.locator('a[href="/docs/components/dialog"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/dialog"] h2')).toContainText('Dialog')
   })
 
   test('navigates to Dialog page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/dialog"]')
-    await expect(page).toHaveURL('/docs/dialog')
+    await page.click('a[href="/docs/components/dialog"]')
+    await expect(page).toHaveURL('/docs/components/dialog')
     await expect(page.locator('h1')).toContainText('Dialog')
   })
 })

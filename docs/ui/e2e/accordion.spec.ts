@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Accordion Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/accordion')
+    await page.goto('/docs/components/accordion')
   })
 
   test('displays page header', async ({ page }) => {
@@ -216,14 +216,14 @@ test.describe.skip('Accordion Documentation Page', () => {
 test.describe.skip('Home Page - Accordion Link', () => {
   test('displays Accordion component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/accordion"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/accordion"] h2')).toContainText('Accordion')
+    await expect(page.locator('a[href="/docs/components/accordion"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/accordion"] h2')).toContainText('Accordion')
   })
 
   test('navigates to Accordion page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/accordion"]')
-    await expect(page).toHaveURL('/docs/accordion')
+    await page.click('a[href="/docs/components/accordion"]')
+    await expect(page).toHaveURL('/docs/components/accordion')
     await expect(page.locator('h1')).toContainText('Accordion')
   })
 })
@@ -231,7 +231,7 @@ test.describe.skip('Home Page - Accordion Link', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Accordion Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/accordion')
+    await page.goto('/docs/components/accordion')
   })
 
   test('ArrowDown navigates to next accordion trigger', async ({ page }) => {

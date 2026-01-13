@@ -98,10 +98,10 @@ export function SidebarPreview() {
       data-state={visible() ? 'visible' : 'hidden'}
       class="hidden sm:block fixed left-56 w-64 p-4 bg-background border border-border rounded-lg shadow-lg z-[9999] transition-opacity duration-150 data-[state=hidden]:opacity-0 data-[state=hidden]:pointer-events-none data-[state=visible]:opacity-100"
     >
-      <div data-preview-for="/components/button">
+      <div data-preview-for="/docs/components/button">
         <ButtonPreview />
       </div>
-      <div data-preview-for="/components/badge" style="display: none">
+      <div data-preview-for="/docs/components/badge" style="display: none">
         <BadgePreview />
       </div>
     </div>

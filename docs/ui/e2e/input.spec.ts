@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Input Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/input')
+    await page.goto('/docs/components/input')
   })
 
   test('displays page header', async ({ page }) => {
@@ -101,14 +101,14 @@ test.describe.skip('Input Documentation Page', () => {
 test.describe.skip('Home Page - Input Link', () => {
   test('displays Input component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/input"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/input"] h2')).toContainText('Input')
+    await expect(page.locator('a[href="/docs/components/input"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/input"] h2')).toContainText('Input')
   })
 
   test('navigates to Input page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/input"]')
-    await expect(page).toHaveURL('/docs/input')
+    await page.click('a[href="/docs/components/input"]')
+    await expect(page).toHaveURL('/docs/components/input')
     await expect(page.locator('h1')).toContainText('Input')
   })
 })

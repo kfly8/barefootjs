@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Counter Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/counter')
+    await page.goto('/docs/components/counter')
   })
 
   test('displays page header', async ({ page }) => {
@@ -133,14 +133,14 @@ test.describe.skip('Counter Documentation Page', () => {
 test.describe.skip('Home Page - Counter Link', () => {
   test('displays Counter component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/counter"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/counter"] h2')).toContainText('Counter')
+    await expect(page.locator('a[href="/docs/components/counter"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/counter"] h2')).toContainText('Counter')
   })
 
   test('navigates to Counter page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/counter"]')
-    await expect(page).toHaveURL('/docs/counter')
+    await page.click('a[href="/docs/components/counter"]')
+    await expect(page).toHaveURL('/docs/components/counter')
     await expect(page.locator('h1')).toContainText('Counter')
   })
 })

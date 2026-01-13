@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Checkbox Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/checkbox')
+    await page.goto('/docs/components/checkbox')
   })
 
   test('displays page header', async ({ page }) => {
@@ -139,14 +139,14 @@ test.describe.skip('Checkbox Documentation Page', () => {
 test.describe.skip('Home Page - Checkbox Link', () => {
   test('displays Checkbox component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/checkbox"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/checkbox"] h2')).toContainText('Checkbox')
+    await expect(page.locator('a[href="/docs/components/checkbox"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/checkbox"] h2')).toContainText('Checkbox')
   })
 
   test('navigates to Checkbox page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/checkbox"]')
-    await expect(page).toHaveURL('/docs/checkbox')
+    await page.click('a[href="/docs/components/checkbox"]')
+    await expect(page).toHaveURL('/docs/components/checkbox')
     await expect(page.locator('h1')).toContainText('Checkbox')
   })
 })

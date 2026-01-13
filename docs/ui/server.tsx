@@ -59,7 +59,7 @@ app.get('/', (c) => {
 
       <div class="grid gap-4">
         <a
-          href="/docs/badge"
+          href="/docs/components/badge"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Badge</h2>
@@ -68,7 +68,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/button"
+          href="/docs/components/button"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Button</h2>
@@ -77,7 +77,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/card"
+          href="/docs/components/card"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Card</h2>
@@ -86,7 +86,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/checkbox"
+          href="/docs/components/checkbox"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Checkbox</h2>
@@ -95,7 +95,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/input"
+          href="/docs/components/input"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Input</h2>
@@ -104,7 +104,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/switch"
+          href="/docs/components/switch"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Switch</h2>
@@ -113,7 +113,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/counter"
+          href="/docs/components/counter"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Counter</h2>
@@ -122,7 +122,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/accordion"
+          href="/docs/components/accordion"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Accordion</h2>
@@ -131,7 +131,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/tabs"
+          href="/docs/components/tabs"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Tabs</h2>
@@ -140,7 +140,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/dialog"
+          href="/docs/components/dialog"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Dialog</h2>
@@ -149,7 +149,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/dropdown"
+          href="/docs/components/dropdown"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Dropdown</h2>
@@ -158,7 +158,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/toast"
+          href="/docs/components/toast"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Toast</h2>
@@ -167,7 +167,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/tooltip"
+          href="/docs/components/tooltip"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Tooltip</h2>
@@ -176,7 +176,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/docs/select"
+          href="/docs/components/select"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Select</h2>
@@ -195,7 +195,7 @@ app.get('/', (c) => {
 
       <div class="grid gap-4">
         <a
-          href="/forms/controlled-input"
+          href="/docs/forms/controlled-input"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Controlled Input</h2>
@@ -204,7 +204,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/forms/validation"
+          href="/docs/forms/validation"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Form Validation</h2>
@@ -213,7 +213,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/forms/submit"
+          href="/docs/forms/submit"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Form Submit</h2>
@@ -222,7 +222,7 @@ app.get('/', (c) => {
           </p>
         </a>
         <a
-          href="/forms/field-arrays"
+          href="/docs/forms/field-arrays"
           class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
         >
           <h2 class="font-semibold text-foreground">Field Arrays</h2>
@@ -236,12 +236,12 @@ app.get('/', (c) => {
 })
 
 // Badge documentation
-app.get('/docs/badge', (c) => {
+app.get('/docs/components/badge', (c) => {
   return c.render(<BadgePage />)
 })
 
 // Button documentation
-app.get('/docs/button', (c) => {
+app.get('/docs/components/button', (c) => {
   return c.render(<ButtonPage />, {
     title: 'Button - barefootjs/ui',
     description: 'Displays a button or a component that looks like a button.',
@@ -249,82 +249,82 @@ app.get('/docs/button', (c) => {
 })
 
 // Card documentation
-app.get('/docs/card', (c) => {
+app.get('/docs/components/card', (c) => {
   return c.render(<CardPage />)
 })
 
 // Checkbox documentation
-app.get('/docs/checkbox', (c) => {
+app.get('/docs/components/checkbox', (c) => {
   return c.render(<CheckboxPage />)
 })
 
 // Input documentation
-app.get('/docs/input', (c) => {
+app.get('/docs/components/input', (c) => {
   return c.render(<InputPage />)
 })
 
 // Switch documentation
-app.get('/docs/switch', (c) => {
+app.get('/docs/components/switch', (c) => {
   return c.render(<SwitchPage />)
 })
 
 // Counter documentation
-app.get('/docs/counter', (c) => {
+app.get('/docs/components/counter', (c) => {
   return c.render(<CounterPage />)
 })
 
 // Accordion documentation
-app.get('/docs/accordion', (c) => {
+app.get('/docs/components/accordion', (c) => {
   return c.render(<AccordionPage />)
 })
 
 // Tabs documentation
-app.get('/docs/tabs', (c) => {
+app.get('/docs/components/tabs', (c) => {
   return c.render(<TabsPage />)
 })
 
 // Dialog documentation
-app.get('/docs/dialog', (c) => {
+app.get('/docs/components/dialog', (c) => {
   return c.render(<DialogPage />)
 })
 
 // Dropdown documentation
-app.get('/docs/dropdown', (c) => {
+app.get('/docs/components/dropdown', (c) => {
   return c.render(<DropdownPage />)
 })
 
 // Toast documentation
-app.get('/docs/toast', (c) => {
+app.get('/docs/components/toast', (c) => {
   return c.render(<ToastPage />)
 })
 
 // Tooltip documentation
-app.get('/docs/tooltip', (c) => {
+app.get('/docs/components/tooltip', (c) => {
   return c.render(<TooltipPage />)
 })
 
 // Select documentation
-app.get('/docs/select', (c) => {
+app.get('/docs/components/select', (c) => {
   return c.render(<SelectPage />)
 })
 
 // Controlled Input pattern documentation
-app.get('/forms/controlled-input', (c) => {
+app.get('/docs/forms/controlled-input', (c) => {
   return c.render(<ControlledInputPage />)
 })
 
 // Form Validation pattern documentation
-app.get('/forms/validation', (c) => {
+app.get('/docs/forms/validation', (c) => {
   return c.render(<ValidationPage />)
 })
 
 // Form Submit pattern documentation
-app.get('/forms/submit', (c) => {
+app.get('/docs/forms/submit', (c) => {
   return c.render(<SubmitPage />)
 })
 
 // Field Arrays pattern documentation
-app.get('/forms/field-arrays', (c) => {
+app.get('/docs/forms/field-arrays', (c) => {
   return c.render(<FieldArraysPage />)
 })
 

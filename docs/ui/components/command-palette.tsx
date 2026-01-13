@@ -21,27 +21,27 @@ const getStartedItems = [
 ]
 
 const componentItems = [
-  { id: 'accordion', title: 'Accordion', href: '/components/accordion', category: 'Components' },
-  { id: 'badge', title: 'Badge', href: '/components/badge', category: 'Components' },
-  { id: 'button', title: 'Button', href: '/components/button', category: 'Components' },
-  { id: 'card', title: 'Card', href: '/components/card', category: 'Components' },
-  { id: 'checkbox', title: 'Checkbox', href: '/components/checkbox', category: 'Components' },
-  { id: 'counter', title: 'Counter', href: '/components/counter', category: 'Components' },
-  { id: 'dialog', title: 'Dialog', href: '/components/dialog', category: 'Components' },
-  { id: 'dropdown', title: 'Dropdown', href: '/components/dropdown', category: 'Components' },
-  { id: 'input', title: 'Input', href: '/components/input', category: 'Components' },
-  { id: 'select', title: 'Select', href: '/components/select', category: 'Components' },
-  { id: 'switch', title: 'Switch', href: '/components/switch', category: 'Components' },
-  { id: 'tabs', title: 'Tabs', href: '/components/tabs', category: 'Components' },
-  { id: 'toast', title: 'Toast', href: '/components/toast', category: 'Components' },
-  { id: 'tooltip', title: 'Tooltip', href: '/components/tooltip', category: 'Components' },
+  { id: 'accordion', title: 'Accordion', href: '/docs/components/accordion', category: 'Components' },
+  { id: 'badge', title: 'Badge', href: '/docs/components/badge', category: 'Components' },
+  { id: 'button', title: 'Button', href: '/docs/components/button', category: 'Components' },
+  { id: 'card', title: 'Card', href: '/docs/components/card', category: 'Components' },
+  { id: 'checkbox', title: 'Checkbox', href: '/docs/components/checkbox', category: 'Components' },
+  { id: 'counter', title: 'Counter', href: '/docs/components/counter', category: 'Components' },
+  { id: 'dialog', title: 'Dialog', href: '/docs/components/dialog', category: 'Components' },
+  { id: 'dropdown', title: 'Dropdown', href: '/docs/components/dropdown', category: 'Components' },
+  { id: 'input', title: 'Input', href: '/docs/components/input', category: 'Components' },
+  { id: 'select', title: 'Select', href: '/docs/components/select', category: 'Components' },
+  { id: 'switch', title: 'Switch', href: '/docs/components/switch', category: 'Components' },
+  { id: 'tabs', title: 'Tabs', href: '/docs/components/tabs', category: 'Components' },
+  { id: 'toast', title: 'Toast', href: '/docs/components/toast', category: 'Components' },
+  { id: 'tooltip', title: 'Tooltip', href: '/docs/components/tooltip', category: 'Components' },
 ]
 
 const formItems = [
-  { id: 'controlled-input', title: 'Controlled Input', href: '/forms/controlled-input', category: 'Forms' },
-  { id: 'field-arrays', title: 'Field Arrays', href: '/forms/field-arrays', category: 'Forms' },
-  { id: 'submit', title: 'Submit', href: '/forms/submit', category: 'Forms' },
-  { id: 'validation', title: 'Validation', href: '/forms/validation', category: 'Forms' },
+  { id: 'controlled-input', title: 'Controlled Input', href: '/docs/forms/controlled-input', category: 'Forms' },
+  { id: 'field-arrays', title: 'Field Arrays', href: '/docs/forms/field-arrays', category: 'Forms' },
+  { id: 'submit', title: 'Submit', href: '/docs/forms/submit', category: 'Forms' },
+  { id: 'validation', title: 'Validation', href: '/docs/forms/validation', category: 'Forms' },
 ]
 
 export function CommandPalette() {

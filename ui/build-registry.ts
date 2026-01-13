@@ -12,13 +12,14 @@ const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist/r')
 
 // Component metadata (title, description, dependencies)
+// Note: For custom registries, we include all dependency files directly
+// instead of using registryDependencies (which resolves to shadcn's registry)
 const componentMeta: Record<
   string,
   {
     title: string
     description: string
     dependencies: string[]
-    registryDependencies: string[]
     files: Array<{ sourcePath: string; targetPath: string }>
   }
 > = {
@@ -26,7 +27,6 @@ const componentMeta: Record<
     title: 'Slot',
     description: 'A polymorphic component that merges props with child element',
     dependencies: ['@barefootjs/jsx'],
-    registryDependencies: [],
     files: [
       { sourcePath: 'base/slot.tsx', targetPath: 'base/slot.tsx' },
       { sourcePath: 'types/index.tsx', targetPath: 'types/index.tsx' },
@@ -36,8 +36,12 @@ const componentMeta: Record<
     title: 'Button',
     description: 'A button component with variants and sizes',
     dependencies: ['@barefootjs/jsx'],
-    registryDependencies: ['slot'],
-    files: [{ sourcePath: 'components/ui/button.tsx', targetPath: 'components/ui/button.tsx' }],
+    // Include slot files directly (button depends on slot)
+    files: [
+      { sourcePath: 'components/ui/button.tsx', targetPath: 'components/ui/button.tsx' },
+      { sourcePath: 'base/slot.tsx', targetPath: 'base/slot.tsx' },
+      { sourcePath: 'types/index.tsx', targetPath: 'types/index.tsx' },
+    ],
   },
 }
 
@@ -48,7 +52,6 @@ interface RegistryItem {
   title: string
   description: string
   dependencies: string[]
-  registryDependencies: string[]
   files: Array<{
     path: string
     type: string
@@ -92,7 +95,6 @@ async function buildRegistryItem(name: string): Promise<RegistryItem> {
     title: meta.title,
     description: meta.description,
     dependencies: meta.dependencies,
-    registryDependencies: meta.registryDependencies,
     files,
   }
 }

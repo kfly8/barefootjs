@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Card Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/card')
+    await page.goto('/docs/components/card')
   })
 
   test('displays page header', async ({ page }) => {

@@ -28,7 +28,7 @@ interface MenuCategory {
 }
 
 // Map of component hrefs that have preview available
-const previewHrefs = new Set(['/components/button', '/components/badge'])
+const previewHrefs = new Set(['/docs/components/button', '/docs/components/badge'])
 
 // Menu configuration
 const menuData: MenuCategory[] = [
@@ -42,29 +42,29 @@ const menuData: MenuCategory[] = [
   {
     title: 'Components',
     items: [
-      { title: 'Accordion', href: '/components/accordion' },
-      { title: 'Badge', href: '/components/badge' },
-      { title: 'Button', href: '/components/button' },
-      { title: 'Card', href: '/components/card' },
-      { title: 'Checkbox', href: '/components/checkbox' },
-      { title: 'Counter', href: '/components/counter' },
-      { title: 'Dialog', href: '/components/dialog' },
-      { title: 'Dropdown', href: '/components/dropdown' },
-      { title: 'Input', href: '/components/input' },
-      { title: 'Select', href: '/components/select' },
-      { title: 'Switch', href: '/components/switch' },
-      { title: 'Tabs', href: '/components/tabs' },
-      { title: 'Toast', href: '/components/toast' },
-      { title: 'Tooltip', href: '/components/tooltip' },
+      { title: 'Accordion', href: '/docs/components/accordion' },
+      { title: 'Badge', href: '/docs/components/badge' },
+      { title: 'Button', href: '/docs/components/button' },
+      { title: 'Card', href: '/docs/components/card' },
+      { title: 'Checkbox', href: '/docs/components/checkbox' },
+      { title: 'Counter', href: '/docs/components/counter' },
+      { title: 'Dialog', href: '/docs/components/dialog' },
+      { title: 'Dropdown', href: '/docs/components/dropdown' },
+      { title: 'Input', href: '/docs/components/input' },
+      { title: 'Select', href: '/docs/components/select' },
+      { title: 'Switch', href: '/docs/components/switch' },
+      { title: 'Tabs', href: '/docs/components/tabs' },
+      { title: 'Toast', href: '/docs/components/toast' },
+      { title: 'Tooltip', href: '/docs/components/tooltip' },
     ],
   },
   {
     title: 'Forms',
     items: [
-      { title: 'Controlled Input', href: '/forms/controlled-input' },
-      { title: 'Field Arrays', href: '/forms/field-arrays' },
-      { title: 'Submit', href: '/forms/submit' },
-      { title: 'Validation', href: '/forms/validation' },
+      { title: 'Controlled Input', href: '/docs/forms/controlled-input' },
+      { title: 'Field Arrays', href: '/docs/forms/field-arrays' },
+      { title: 'Submit', href: '/docs/forms/submit' },
+      { title: 'Validation', href: '/docs/forms/validation' },
     ],
   },
   {

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Tabs Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/tabs')
+    await page.goto('/docs/components/tabs')
   })
 
   test('displays page header', async ({ page }) => {
@@ -139,14 +139,14 @@ test.describe.skip('Tabs Documentation Page', () => {
 test.describe.skip('Home Page - Tabs Link', () => {
   test('displays Tabs component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/tabs"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/tabs"] h2')).toContainText('Tabs')
+    await expect(page.locator('a[href="/docs/components/tabs"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/tabs"] h2')).toContainText('Tabs')
   })
 
   test('navigates to Tabs page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/tabs"]')
-    await expect(page).toHaveURL('/docs/tabs')
+    await page.click('a[href="/docs/components/tabs"]')
+    await expect(page).toHaveURL('/docs/components/tabs')
     await expect(page.locator('h1')).toContainText('Tabs')
   })
 })
@@ -154,7 +154,7 @@ test.describe.skip('Home Page - Tabs Link', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Tabs Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/tabs')
+    await page.goto('/docs/components/tabs')
   })
 
   test('ArrowRight navigates to next tab', async ({ page }) => {

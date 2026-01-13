@@ -81,7 +81,7 @@ export function getNavLinks(currentSlug: string): PageNavigationProps {
   const next = currentIndex < componentOrder.length - 1 ? componentOrder[currentIndex + 1] : undefined
 
   return {
-    prev: prev ? { href: `/components/${prev.slug}`, title: prev.title } : undefined,
-    next: next ? { href: `/components/${next.slug}`, title: next.title } : undefined,
+    prev: prev ? { href: `/docs/components/${prev.slug}`, title: prev.title } : undefined,
+    next: next ? { href: `/docs/components/${next.slug}`, title: next.title } : undefined,
   }
 }

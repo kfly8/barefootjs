@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Form Submit Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/forms/submit')
+    await page.goto('/docs/forms/submit')
   })
 
   test('displays page header', async ({ page }) => {
@@ -215,14 +215,14 @@ test.describe.skip('Home Page - Form Submit Link', () => {
 
   test('displays Form Submit link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/forms/submit"]')).toBeVisible()
-    await expect(page.locator('a[href="/forms/submit"] h2')).toContainText('Form Submit')
+    await expect(page.locator('a[href="/docs/forms/submit"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/forms/submit"] h2')).toContainText('Form Submit')
   })
 
   test('navigates to Form Submit page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/forms/submit"]')
-    await expect(page).toHaveURL('/forms/submit')
+    await page.click('a[href="/docs/forms/submit"]')
+    await expect(page).toHaveURL('/docs/forms/submit')
     await expect(page.locator('h1')).toContainText('Form Submit')
   })
 })

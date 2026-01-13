@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Tooltip Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/tooltip')
+    await page.goto('/docs/components/tooltip')
   })
 
   test('displays page header', async ({ page }) => {
@@ -159,7 +159,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Tooltip with Delay', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/tooltip')
+    await page.goto('/docs/components/tooltip')
   })
 
   test('does not show tooltip before delay duration', async ({ page }) => {
@@ -212,14 +212,14 @@ test.describe.skip('Tooltip with Delay', () => {
 test.describe.skip('Home Page - Tooltip Link', () => {
   test('displays Tooltip component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/tooltip"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/tooltip"] h2')).toContainText('Tooltip')
+    await expect(page.locator('a[href="/docs/components/tooltip"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/tooltip"] h2')).toContainText('Tooltip')
   })
 
   test('navigates to Tooltip page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/tooltip"]')
-    await expect(page).toHaveURL('/docs/tooltip')
+    await page.click('a[href="/docs/components/tooltip"]')
+    await expect(page).toHaveURL('/docs/components/tooltip')
     await expect(page.locator('h1')).toContainText('Tooltip')
   })
 })

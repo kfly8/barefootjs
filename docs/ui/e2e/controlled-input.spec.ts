@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Controlled Input Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/forms/controlled-input')
+    await page.goto('/docs/forms/controlled-input')
   })
 
   test('displays page header', async ({ page }) => {
@@ -181,14 +181,14 @@ test.describe.skip('Home Page - Controlled Input Link', () => {
 
   test('displays Controlled Input link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/forms/controlled-input"]')).toBeVisible()
-    await expect(page.locator('a[href="/forms/controlled-input"] h2')).toContainText('Controlled Input')
+    await expect(page.locator('a[href="/docs/forms/controlled-input"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/forms/controlled-input"] h2')).toContainText('Controlled Input')
   })
 
   test('navigates to Controlled Input page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/forms/controlled-input"]')
-    await expect(page).toHaveURL('/forms/controlled-input')
+    await page.click('a[href="/docs/forms/controlled-input"]')
+    await expect(page).toHaveURL('/docs/forms/controlled-input')
     await expect(page.locator('h1')).toContainText('Controlled Input')
   })
 })

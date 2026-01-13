@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Toast Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/toast')
+    await page.goto('/docs/components/toast')
   })
 
   test('displays page header', async ({ page }) => {
@@ -314,14 +314,14 @@ test.describe.skip('Toast Documentation Page', () => {
 test.describe.skip('Home Page - Toast Link', () => {
   test('displays Toast component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/toast"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/toast"] h2')).toContainText('Toast')
+    await expect(page.locator('a[href="/docs/components/toast"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/toast"] h2')).toContainText('Toast')
   })
 
   test('navigates to Toast page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/toast"]')
-    await expect(page).toHaveURL('/docs/toast')
+    await page.click('a[href="/docs/components/toast"]')
+    await expect(page).toHaveURL('/docs/components/toast')
     await expect(page.locator('h1')).toContainText('Toast')
   })
 })

@@ -12,7 +12,7 @@ test.describe.skip('Field Arrays Documentation Page', () => {
     page.on('pageerror', error => {
       console.log('Page error:', error.message)
     })
-    await page.goto('/forms/field-arrays')
+    await page.goto('/docs/forms/field-arrays')
   })
 
   test('displays page header', async ({ page }) => {
@@ -296,14 +296,14 @@ test.describe.skip('Home Page - Field Arrays Link', () => {
 
   test('displays Field Arrays link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/forms/field-arrays"]')).toBeVisible()
-    await expect(page.locator('a[href="/forms/field-arrays"] h2')).toContainText('Field Arrays')
+    await expect(page.locator('a[href="/docs/forms/field-arrays"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/forms/field-arrays"] h2')).toContainText('Field Arrays')
   })
 
   test('navigates to Field Arrays page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/forms/field-arrays"]')
-    await expect(page).toHaveURL('/forms/field-arrays')
+    await page.click('a[href="/docs/forms/field-arrays"]')
+    await expect(page).toHaveURL('/docs/forms/field-arrays')
     await expect(page.locator('h1')).toContainText('Field Arrays')
   })
 })

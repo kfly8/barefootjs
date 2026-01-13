@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Dropdown Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/dropdown')
+    await page.goto('/docs/components/dropdown')
   })
 
   test('displays page header', async ({ page }) => {
@@ -219,14 +219,14 @@ test.describe.skip('Dropdown Documentation Page', () => {
 test.describe.skip('Home Page - Dropdown Link', () => {
   test('displays Dropdown component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/dropdown"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/dropdown"] h2')).toContainText('Dropdown')
+    await expect(page.locator('a[href="/docs/components/dropdown"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/dropdown"] h2')).toContainText('Dropdown')
   })
 
   test('navigates to Dropdown page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/dropdown"]')
-    await expect(page).toHaveURL('/docs/dropdown')
+    await page.click('a[href="/docs/components/dropdown"]')
+    await expect(page).toHaveURL('/docs/components/dropdown')
     await expect(page.locator('h1')).toContainText('Dropdown')
   })
 })
@@ -234,7 +234,7 @@ test.describe.skip('Home Page - Dropdown Link', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Dropdown Animation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/dropdown')
+    await page.goto('/docs/components/dropdown')
   })
 
   test('opens with scale and fade animation from trigger', async ({ page }) => {
@@ -308,7 +308,7 @@ test.describe.skip('Dropdown Animation', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Dropdown with CSS Transforms', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/dropdown')
+    await page.goto('/docs/components/dropdown')
   })
 
   test('opens and positions correctly inside scaled container', async ({ page }) => {
@@ -411,7 +411,7 @@ test.describe.skip('Dropdown with CSS Transforms', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Dropdown Viewport Edge Positioning', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/dropdown')
+    await page.goto('/docs/components/dropdown')
   })
 
   test('dropdown near bottom of viewport still displays correctly', async ({ page }) => {
@@ -435,7 +435,7 @@ test.describe.skip('Dropdown Viewport Edge Positioning', () => {
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Dropdown Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/dropdown')
+    await page.goto('/docs/components/dropdown')
   })
 
   test('ArrowDown navigates to next item', async ({ page }) => {

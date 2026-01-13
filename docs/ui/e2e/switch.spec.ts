@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Switch Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/switch')
+    await page.goto('/docs/components/switch')
   })
 
   test('displays page header', async ({ page }) => {
@@ -97,14 +97,14 @@ test.describe.skip('Switch Documentation Page', () => {
 test.describe.skip('Home Page - Switch Link', () => {
   test('displays Switch component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/components/switch"]')).toBeVisible()
-    await expect(page.locator('a[href="/components/switch"] h2')).toContainText('Switch')
+    await expect(page.locator('a[href="/docs/components/switch"]')).toBeVisible()
+    await expect(page.locator('a[href="/docs/components/switch"] h2')).toContainText('Switch')
   })
 
   test('navigates to Switch page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/components/switch"]')
-    await expect(page).toHaveURL('/docs/switch')
+    await page.click('a[href="/docs/components/switch"]')
+    await expect(page).toHaveURL('/docs/components/switch')
     await expect(page.locator('h1')).toContainText('Switch')
   })
 })
