@@ -5,6 +5,7 @@
 import ts from 'typescript'
 import type { ModuleConstant } from '../types'
 import { createSourceFile } from '../utils/helpers'
+import type { EvaluatedValue } from '../compiler/expression-evaluator'
 
 /**
  * Checks if an initializer is a module-level value (can be included in generated code).
@@ -224,4 +225,140 @@ export function isConstantUsedInClientCode(
   }
 
   return false
+}
+
+/**
+ * Parses a module constant value into an EvaluatedValue for compile-time evaluation.
+ *
+ * This enables the compiler to evaluate expressions like:
+ * - sizeMap["md"] → 20
+ * - strokeIcons["sun"] → "M12..."
+ *
+ * @param constant - The module constant to parse
+ * @returns EvaluatedValue representation of the constant
+ */
+export function parseModuleConstantValue(constant: ModuleConstant): EvaluatedValue {
+  return parseValueExpression(constant.value)
+}
+
+/**
+ * Parses a value expression string into an EvaluatedValue.
+ * Handles literals, objects, and arrays.
+ */
+function parseValueExpression(valueStr: string): EvaluatedValue {
+  const trimmed = valueStr.trim()
+
+  // Parse as TypeScript expression
+  const sourceFile = createSourceFile(`const __val = ${trimmed}`, '__parse.ts')
+  const statement = sourceFile.statements[0]
+
+  if (!ts.isVariableStatement(statement)) {
+    return { kind: 'unknown' }
+  }
+
+  const decl = statement.declarationList.declarations[0]
+  if (!decl.initializer) {
+    return { kind: 'unknown' }
+  }
+
+  return nodeToEvaluatedValue(decl.initializer)
+}
+
+/**
+ * Converts a TypeScript AST node to an EvaluatedValue.
+ */
+function nodeToEvaluatedValue(node: ts.Expression): EvaluatedValue {
+  // String literal
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return { kind: 'literal', value: node.text }
+  }
+
+  // Numeric literal
+  if (ts.isNumericLiteral(node)) {
+    return { kind: 'literal', value: parseFloat(node.text) }
+  }
+
+  // Boolean literals
+  if (node.kind === ts.SyntaxKind.TrueKeyword) {
+    return { kind: 'literal', value: true }
+  }
+  if (node.kind === ts.SyntaxKind.FalseKeyword) {
+    return { kind: 'literal', value: false }
+  }
+
+  // Null literal
+  if (node.kind === ts.SyntaxKind.NullKeyword) {
+    return { kind: 'literal', value: null }
+  }
+
+  // Object literal
+  if (ts.isObjectLiteralExpression(node)) {
+    const entries = new Map<string, EvaluatedValue>()
+
+    for (const prop of node.properties) {
+      if (ts.isPropertyAssignment(prop)) {
+        let key: string | null = null
+
+        if (ts.isIdentifier(prop.name)) {
+          key = prop.name.text
+        } else if (ts.isStringLiteral(prop.name)) {
+          key = prop.name.text
+        }
+
+        if (key !== null) {
+          entries.set(key, nodeToEvaluatedValue(prop.initializer))
+        }
+      }
+    }
+
+    return { kind: 'object', entries }
+  }
+
+  // Array literal
+  if (ts.isArrayLiteralExpression(node)) {
+    const elements: EvaluatedValue[] = []
+
+    for (const el of node.elements) {
+      if (ts.isSpreadElement(el)) {
+        return { kind: 'unknown' }
+      }
+      elements.push(nodeToEvaluatedValue(el as ts.Expression))
+    }
+
+    return { kind: 'array', elements }
+  }
+
+  // Type assertions (as const, satisfies Type)
+  if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node)) {
+    return nodeToEvaluatedValue(node.expression)
+  }
+
+  // Parenthesized expressions
+  if (ts.isParenthesizedExpression(node)) {
+    return nodeToEvaluatedValue(node.expression)
+  }
+
+  // For other types (functions, template expressions, etc.), return unknown
+  // These can't be used in compile-time evaluation of props
+  return { kind: 'unknown' }
+}
+
+/**
+ * Extracts module constants and parses them into EvaluatedValue format.
+ *
+ * @returns Map of constant name to EvaluatedValue
+ */
+export function extractModuleConstantsAsValues(source: string, filePath: string): Map<string, EvaluatedValue> {
+  const constants = extractModuleVariables(source, filePath)
+  const result = new Map<string, EvaluatedValue>()
+
+  for (const constant of constants) {
+    const value = parseModuleConstantValue(constant)
+    // Only add if we could parse it
+    if (value.kind !== 'unknown') {
+      result.set(constant.name, value)
+    }
+  }
+
+  return result
 }

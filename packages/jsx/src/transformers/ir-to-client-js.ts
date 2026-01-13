@@ -8,14 +8,19 @@
 import type {
   IRNode,
   IRElement,
+  IRComponent,
   InteractiveElement,
   DynamicElement,
   ListElement,
   DynamicAttribute,
   RefElement,
   ConditionalElement,
-  CollectContext,
+  CollectContextWithCompileTimeEval,
 } from '../types'
+import {
+  tryEvaluateComponentCall,
+  createCompileTimeContext,
+} from '../compiler/compile-time-evaluator'
 
 /**
  * Checks if an event requires capture phase (non-bubbling events)
@@ -82,7 +87,7 @@ export function collectClientJsInfo(
   childInits: Array<{ name: string; propsExpr: string }> = [],
   refElements: RefElement[] = [],
   conditionalElements: ConditionalElement[] = [],
-  ctx: CollectContext = { signals: [], memos: [] }
+  ctx: CollectContextWithCompileTimeEval = { signals: [], memos: [] }
 ): void {
   switch (node.type) {
     case 'element':
@@ -91,11 +96,14 @@ export function collectClientJsInfo(
     case 'conditional':
       // If this conditional has an ID, it's a dynamic element conditional that needs DOM switching
       if (node.id) {
-        // Collect interactive elements from conditional branches separately
-        // These need event re-attachment after DOM updates
+        // Collect interactive elements and childInits from conditional branches separately
+        // These need event re-attachment and component re-initialization after DOM updates
         const condInteractiveElements: InteractiveElement[] = []
-        collectClientJsInfo(node.whenTrue, condInteractiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
-        collectClientJsInfo(node.whenFalse, condInteractiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, ctx)
+        const whenTrueChildInits: Array<{ name: string; propsExpr: string }> = []
+        const whenFalseChildInits: Array<{ name: string; propsExpr: string }> = []
+
+        collectClientJsInfo(node.whenTrue, condInteractiveElements, dynamicElements, listElements, dynamicAttributes, whenTrueChildInits, refElements, conditionalElements, ctx)
+        collectClientJsInfo(node.whenFalse, condInteractiveElements, dynamicElements, listElements, dynamicAttributes, whenFalseChildInits, refElements, conditionalElements, ctx)
 
         const whenTrueTemplate = irToHtmlTemplate(node.whenTrue, node.id, ctx)
         const whenFalseTemplate = irToHtmlTemplate(node.whenFalse, node.id, ctx)
@@ -105,6 +113,8 @@ export function collectClientJsInfo(
           whenTrueTemplate,
           whenFalseTemplate,
           interactiveElements: condInteractiveElements,
+          whenTrueChildInits,
+          whenFalseChildInits,
         })
       } else {
         // Static conditional - still recurse into branches
@@ -180,7 +190,7 @@ function collectChildComponentNamesRecursive(node: IRNode, names: string[]): voi
  * Used to generate dynamic HTML templates for conditional branches.
  * Signal calls are kept as ${expression} for template literal interpolation.
  */
-function irToHtmlTemplate(node: IRNode, condId: string, ctx: CollectContext): string {
+function irToHtmlTemplate(node: IRNode, condId: string, ctx: CollectContextWithCompileTimeEval): string {
   switch (node.type) {
     case 'text':
       return `<span data-bf-cond="${condId}">${escapeHtmlForTemplate(node.content)}</span>`
@@ -215,7 +225,21 @@ function irToHtmlTemplate(node: IRNode, condId: string, ctx: CollectContext): st
     }
 
     case 'component':
-      // Components are rendered server-side, use placeholder
+      // For static components with inlined IR, use the actual HTML
+      if (node.inlinedIR) {
+        const inlinedHtml = irNodeToHtmlDynamic(node.inlinedIR, ctx)
+        return `<div data-bf-cond="${condId}">${inlinedHtml}</div>`
+      }
+
+      // Try compile-time evaluation for components with static props
+      if (ctx.compileTimeEval) {
+        const html = tryEvaluateComponentFromIR(node, ctx)
+        if (html !== null) {
+          return `<div data-bf-cond="${condId}">${html}</div>`
+        }
+      }
+
+      // Dynamic components need re-initialization, use placeholder
       return `<div data-bf-cond="${condId}"><!-- ${node.name} --></div>`
 
     case 'conditional': {
@@ -234,7 +258,7 @@ function irToHtmlTemplate(node: IRNode, condId: string, ctx: CollectContext): st
  * Converts IR element to HTML string with data-bf-cond attribute
  * Uses template literal interpolation for dynamic content
  */
-function elementToHtmlTemplate(el: IRElement, condId: string, ctx: CollectContext): string {
+function elementToHtmlTemplate(el: IRElement, condId: string, ctx: CollectContextWithCompileTimeEval): string {
   const { tagName, staticAttrs, dynamicAttrs, children } = el
 
   const attrParts: string[] = [`data-bf-cond="${condId}"`]
@@ -276,7 +300,7 @@ function elementToHtmlTemplate(el: IRElement, condId: string, ctx: CollectContex
  * Converts IR node to HTML string with dynamic expressions as template literal interpolations
  * Used for conditional branch templates where signals should be evaluated at runtime
  */
-function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContext): string {
+function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContextWithCompileTimeEval): string {
   switch (node.type) {
     case 'text':
       return escapeHtmlForTemplate(node.content)
@@ -327,6 +351,19 @@ function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContext): string {
       return node.children.map(child => irNodeToHtmlDynamic(child, ctx)).join('')
 
     case 'component':
+      // Use inlined IR for static components (no client JS)
+      if (node.inlinedIR) {
+        return irNodeToHtmlDynamic(node.inlinedIR, ctx)
+      }
+
+      // Try compile-time evaluation for components with static props
+      if (ctx.compileTimeEval) {
+        const html = tryEvaluateComponentFromIR(node, ctx)
+        if (html !== null) {
+          return html
+        }
+      }
+
       return `<!-- ${node.name} -->`
 
     case 'conditional': {
@@ -339,6 +376,38 @@ function irNodeToHtmlDynamic(node: IRNode, ctx: CollectContext): string {
       return `\${${node.condition} ? \`${escapedTrue}\` : \`${escapedFalse}\`}`
     }
   }
+}
+
+/**
+ * Tries to evaluate a component at compile time using the compile-time evaluator.
+ * Returns the generated HTML or null if evaluation fails.
+ */
+function tryEvaluateComponentFromIR(
+  node: IRComponent,
+  ctx: CollectContextWithCompileTimeEval
+): string | null {
+  if (!ctx.compileTimeEval) {
+    return null
+  }
+
+  // Build props object expression from IR props
+  const propEntries: string[] = []
+  for (const prop of node.props) {
+    // Skip dynamic props - we can only evaluate static props at compile time
+    if (prop.isDynamic) {
+      return null
+    }
+    propEntries.push(`${prop.name}: ${prop.value}`)
+  }
+  const propsExpr = `{ ${propEntries.join(', ')} }`
+
+  // Create compile-time evaluation context
+  const evalCtx = createCompileTimeContext(
+    ctx.compileTimeEval.components,
+    ctx.compileTimeEval.componentSources
+  )
+
+  return tryEvaluateComponentCall(node.name, propsExpr, evalCtx)
 }
 
 /**
@@ -381,7 +450,7 @@ function collectFromElement(
   childInits: Array<{ name: string; propsExpr: string }>,
   refElements: RefElement[],
   conditionalElements: ConditionalElement[] = [],
-  ctx: CollectContext = { signals: [], memos: [] }
+  ctx: CollectContextWithCompileTimeEval = { signals: [], memos: [] }
 ): void {
   // If element has ref
   if (el.ref && el.id) {

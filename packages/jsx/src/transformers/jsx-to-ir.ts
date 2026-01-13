@@ -243,15 +243,17 @@ function componentToIR(
     }
   }
 
-  // Always set childInits for components that need client-side initialization
-  // This includes components with: signals, memos, childInits, or any client-side logic
-  // Note: componentResult.clientJs may be empty at this point (signals/childInits added later)
-  const needsClientInit = componentResult.signals.length > 0 ||
-                          componentResult.memos.length > 0 ||
-                          componentResult.childInits.length > 0 ||
-                          componentResult.clientJs.length > 0 ||
-                          allPropsForInit.length > 0
-  if (needsClientInit) {
+  // Determine if the component itself has client-side logic (signals, memos, etc.)
+  // This is separate from whether we need to pass props to the child
+  const componentHasClientJs = componentResult.signals.length > 0 ||
+                               componentResult.memos.length > 0 ||
+                               componentResult.childInits.length > 0 ||
+                               componentResult.clientJs.length > 0
+
+  // Set childInits if: (1) component has client JS, OR (2) we need to pass props
+  // Props need to be passed even to static components for SSR consistency
+  const needsChildInits = componentHasClientJs || allPropsForInit.length > 0
+  if (needsChildInits) {
     const propsExpr = allPropsForInit.length > 0
       ? `{ ${allPropsForInit.map(p => {
           // Wrap dynamic props in getter functions for reactivity
@@ -269,6 +271,14 @@ function componentToIR(
     childInits = { name: tagName, propsExpr }
   }
 
+  // Inline component IR for use in cond() templates only if the IR is "simple"
+  // Simple IR: no nested conditionals, no nested components, no variable expressions
+  // This allows actual HTML to be included in client-side templates instead of placeholders
+  let inlinedIR: IRNode | undefined
+  if (componentResult.ir && isSimpleIR(componentResult.ir)) {
+    inlinedIR = componentResult.ir
+  }
+
   return {
     type: 'component',
     name: tagName,
@@ -278,6 +288,7 @@ function componentToIR(
     childInits,
     children,
     hasLazyChildren: hasReactiveChildren,
+    inlinedIR,
   }
 }
 
@@ -764,6 +775,42 @@ function childrenContainComplexNodes(children: IRNode[]): boolean {
         return false
     }
   })
+}
+
+/**
+ * Checks if IR is "simple" enough to be inlined in cond() templates.
+ * Simple IR contains only static elements, text, and non-dynamic expressions.
+ * Complex IR (conditionals, nested components, dynamic expressions) cannot be safely inlined.
+ */
+function isSimpleIR(node: IRNode): boolean {
+  switch (node.type) {
+    case 'text':
+      return true
+
+    case 'expression':
+      // Dynamic expressions contain variable references that won't be available in parent scope
+      return !node.isDynamic
+
+    case 'element': {
+      // Check if element has dynamic attributes or content
+      if (node.dynamicAttrs.length > 0) return false
+      if (node.dynamicContent) return false
+      if (node.listInfo) return false
+      // Check children recursively
+      return node.children.every(child => isSimpleIR(child))
+    }
+
+    case 'fragment':
+      return node.children.every(child => isSimpleIR(child))
+
+    case 'component':
+      // Nested components are not simple - they may have their own logic
+      return false
+
+    case 'conditional':
+      // Conditionals are not simple - they require runtime evaluation
+      return false
+  }
 }
 
 /**
