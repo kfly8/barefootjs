@@ -25,6 +25,7 @@
  */
 
 import type { Child } from '../../types'
+import { XIcon } from './icon'
 
 // --- Toast Variants ---
 
@@ -157,19 +158,7 @@ export function ToastClose({ onClick }: ToastCloseProps) {
       onClick={onClick}
       data-toast-close
     >
-      <svg
-        class="h-4 w-4 pointer-events-none"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
+      <XIcon size="sm" class="pointer-events-none" />
     </button>
   )
 }

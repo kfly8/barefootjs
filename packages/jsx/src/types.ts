@@ -77,6 +77,22 @@ export interface MarkedJsxContext extends BaseTransformContext {
 export type CollectContext = BaseTransformContext
 
 /**
+ * Extended context for collecting Client JS information with compile-time evaluation support.
+ *
+ * When compileTimeEval is provided, components without inlinedIR can be
+ * evaluated at compile time if their props are statically known.
+ */
+export interface CollectContextWithCompileTimeEval extends BaseTransformContext {
+  /** Compile-time evaluation context for evaluating components with static props */
+  compileTimeEval?: {
+    /** Map of component name to CompileResult */
+    components: Map<string, CompileResult>
+    /** Map of component name to source code */
+    componentSources: Map<string, string>
+  }
+}
+
+/**
  * Context for Client JS code generation.
  *
  * Used during the final phase when generating executable client-side
@@ -157,6 +173,10 @@ export type ConditionalElement = {
   whenFalseTemplate: string   // '<!--bf-cond-start:0--><!--bf-cond-end:0-->' (for null)
   /** Interactive elements inside this conditional that need event re-attachment after DOM updates */
   interactiveElements: InteractiveElement[]
+  /** Child components inside whenTrue branch that need re-initialization after DOM updates */
+  whenTrueChildInits: ChildComponentInit[]
+  /** Child components inside whenFalse branch that need re-initialization after DOM updates */
+  whenFalseChildInits: ChildComponentInit[]
 }
 
 export type SignalDeclaration = {
@@ -444,6 +464,8 @@ export type IRComponent = {
   children: IRNode[]  // Children passed to the component
   /** Whether children contain reactive expressions and should be lazy-evaluated */
   hasLazyChildren: boolean
+  /** Inlined IR for static components (no client JS) - used in cond() templates */
+  inlinedIR?: IRNode
 }
 
 export type IRConditional = {

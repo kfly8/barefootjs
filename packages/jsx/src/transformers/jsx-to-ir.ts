@@ -243,15 +243,17 @@ function componentToIR(
     }
   }
 
-  // Always set childInits for components that need client-side initialization
-  // This includes components with: signals, memos, childInits, or any client-side logic
-  // Note: componentResult.clientJs may be empty at this point (signals/childInits added later)
-  const needsClientInit = componentResult.signals.length > 0 ||
-                          componentResult.memos.length > 0 ||
-                          componentResult.childInits.length > 0 ||
-                          componentResult.clientJs.length > 0 ||
-                          allPropsForInit.length > 0
-  if (needsClientInit) {
+  // Determine if the component itself has client-side logic (signals, memos, etc.)
+  // This is separate from whether we need to pass props to the child
+  const componentHasClientJs = componentResult.signals.length > 0 ||
+                               componentResult.memos.length > 0 ||
+                               componentResult.childInits.length > 0 ||
+                               componentResult.clientJs.length > 0
+
+  // Set childInits if: (1) component has client JS, OR (2) we need to pass props
+  // Props need to be passed even to static components for SSR consistency
+  const needsChildInits = componentHasClientJs || allPropsForInit.length > 0
+  if (needsChildInits) {
     const propsExpr = allPropsForInit.length > 0
       ? `{ ${allPropsForInit.map(p => {
           // Wrap dynamic props in getter functions for reactivity
@@ -269,6 +271,14 @@ function componentToIR(
     childInits = { name: tagName, propsExpr }
   }
 
+  // Inline component IR for use in cond() templates only if the IR is "simple"
+  // Simple IR: no nested conditionals, no nested components, no variable expressions
+  // This allows actual HTML to be included in client-side templates instead of placeholders
+  let inlinedIR: IRNode | undefined
+  if (componentResult.ir && isSimpleIR(componentResult.ir)) {
+    inlinedIR = componentResult.ir
+  }
+
   return {
     type: 'component',
     name: tagName,
@@ -278,6 +288,7 @@ function componentToIR(
     childInits,
     children,
     hasLazyChildren: hasReactiveChildren,
+    inlinedIR,
   }
 }
 
@@ -767,6 +778,42 @@ function childrenContainComplexNodes(children: IRNode[]): boolean {
 }
 
 /**
+ * Checks if IR is "simple" enough to be inlined in cond() templates.
+ * Simple IR contains only static elements, text, and non-dynamic expressions.
+ * Complex IR (conditionals, nested components, dynamic expressions) cannot be safely inlined.
+ */
+function isSimpleIR(node: IRNode): boolean {
+  switch (node.type) {
+    case 'text':
+      return true
+
+    case 'expression':
+      // Dynamic expressions contain variable references that won't be available in parent scope
+      return !node.isDynamic
+
+    case 'element': {
+      // Check if element has dynamic attributes or content
+      if (node.dynamicAttrs.length > 0) return false
+      if (node.dynamicContent) return false
+      if (node.listInfo) return false
+      // Check children recursively
+      return node.children.every(child => isSimpleIR(child))
+    }
+
+    case 'fragment':
+      return node.children.every(child => isSimpleIR(child))
+
+    case 'component':
+      // Nested components are not simple - they may have their own logic
+      return false
+
+    case 'conditional':
+      // Conditionals are not simple - they require runtime evaluation
+      return false
+  }
+}
+
+/**
  * Checks if IR node contains reactive expressions (recursively)
  */
 function irNodeContainsReactiveCall(node: IRNode, signals: SignalDeclaration[], memos: MemoDeclaration[], valueProps: string[] = []): boolean {
@@ -885,7 +932,7 @@ function processIfStatementReturns(
   if (!thenReturn) return null
 
   // Find JSX return in the "else" branch or fallthrough
-  let elseReturn: ts.Expression | null = null
+  let elseResult: ts.Expression | IRNode | null = null
 
   if (ifStmt.elseStatement) {
     // Check for else-if chain
@@ -901,16 +948,24 @@ function processIfStatementReturns(
       return null
     }
     // Regular else branch
-    elseReturn = findJsxReturnInStatement(ifStmt.elseStatement)
+    elseResult = findJsxReturnInStatement(ifStmt.elseStatement)
   } else {
     // Look for fallthrough return after if statement
-    elseReturn = findFallthroughReturn(ifStmt)
+    // This may return an IRNode for consecutive if statements
+    elseResult = findFallthroughReturn(ifStmt, ctx)
   }
 
-  if (!elseReturn) return null
+  if (!elseResult) return null
 
   const whenTrueIR = jsxToIR(thenReturn, ctx)
-  const whenFalseIR = jsxToIR(elseReturn, ctx)
+
+  // Handle case where elseResult is already an IRNode (from consecutive if)
+  let whenFalseIR: IRNode | null
+  if (isIRNode(elseResult)) {
+    whenFalseIR = elseResult
+  } else {
+    whenFalseIR = jsxToIR(elseResult, ctx)
+  }
 
   if (!whenTrueIR || !whenFalseIR) return null
 
@@ -951,25 +1006,69 @@ function extractJsxFromExpression(expr: ts.Expression): ts.Expression | null {
 }
 
 /**
- * Finds fallthrough return statement after an if statement
+ * Type guard to check if a value is an IRNode
  */
-function findFallthroughReturn(ifStmt: ts.IfStatement): ts.Expression | null {
+function isIRNode(value: ts.Expression | IRNode | null): value is IRNode {
+  return value !== null && typeof value === 'object' && 'type' in value
+}
+
+/**
+ * Finds fallthrough return statement after an if statement.
+ * Handles consecutive if statements with early returns by treating them
+ * as nested else-if chains.
+ */
+function findFallthroughReturn(
+  ifStmt: ts.IfStatement,
+  ctx: JsxToIRContext
+): ts.Expression | IRNode | null {
   const parent = ifStmt.parent
   if (!parent || !ts.isBlock(parent)) return null
 
   const siblings = parent.statements
   const ifIndex = siblings.indexOf(ifStmt)
 
-  // Look for return statements after the if
+  // Look for return statements or consecutive if statements after this one
   for (let i = ifIndex + 1; i < siblings.length; i++) {
     const sibling = siblings[i]
+
+    // Direct return statement - return as JSX expression or handle null
     if (ts.isReturnStatement(sibling) && sibling.expression) {
-      return extractJsxFromExpression(sibling.expression)
-    }
-    // Stop at nested if with returns (it has its own handling)
-    if (ts.isIfStatement(sibling)) {
+      const jsxExpr = extractJsxFromExpression(sibling.expression)
+      if (jsxExpr) {
+        return jsxExpr
+      }
+      // Handle "return null" as a valid fallback
+      if (sibling.expression.kind === ts.SyntaxKind.NullKeyword) {
+        // Return an IRExpression node for null
+        return {
+          type: 'expression',
+          expression: 'null',
+          isDynamic: false,
+        } as IRNode
+      }
+      // Other non-JSX returns - stop searching
       break
     }
+
+    // Consecutive if statement with early return - process recursively
+    if (ts.isIfStatement(sibling)) {
+      const nestedResult = processIfStatementReturns(sibling, ctx)
+      if (nestedResult) {
+        // Return the IRNode directly instead of JSX expression
+        return nestedResult
+      }
+      // If the nested if doesn't have JSX returns, continue looking
+      continue
+    }
+
+    // Variable declarations are allowed between if statements
+    // (e.g., "const path = strokeIcons[name]")
+    if (ts.isVariableStatement(sibling)) {
+      continue
+    }
+
+    // Other statements - stop searching
+    break
   }
 
   return null

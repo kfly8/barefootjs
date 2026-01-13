@@ -11,6 +11,7 @@ import { CopyButton } from '@/components/docs/copy-button'
 export { PackageManagerTabs } from '@/components/docs/package-manager-tabs'
 import { PageNavigation, getNavLinks } from './PageNavigation'
 import { highlight } from './highlighter'
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icon'
 
 // Re-export TocItem for convenience
 export type { TocItem }
@@ -78,9 +79,7 @@ export function PageHeader({ title, description, prev, next }: PageHeaderProps) 
                 class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
                 title={`Previous: ${prev.title}`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m15 18-6-6 6-6"/>
-                </svg>
+                <ChevronLeftIcon size="sm" />
                 <span class="max-w-24 truncate">{prev.title}</span>
               </a>
             ) : (
@@ -94,9 +93,7 @@ export function PageHeader({ title, description, prev, next }: PageHeaderProps) 
                 title={`Next: ${next.title}`}
               >
                 <span class="max-w-24 truncate">{next.title}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
+                <ChevronRightIcon size="sm" />
               </a>
             ) : (
               <div class="w-20" />

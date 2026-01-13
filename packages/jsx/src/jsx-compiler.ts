@@ -287,8 +287,24 @@ function compileJsxWithComponents(
   const refElements: RefElement[] = []
   const conditionalElements: ConditionalElement[] = []
 
+  // Build compile-time evaluation context from available components
+  // This enables evaluating components like Icon with static props at compile time
+  const componentSources = new Map<string, string>()
+  for (const [name, result] of components) {
+    if (result.source) {
+      componentSources.set(name, result.source)
+    }
+  }
+
   if (ir) {
-    collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, { signals, memos })
+    collectClientJsInfo(ir, interactiveElements, dynamicElements, listElements, dynamicAttributes, childInits, refElements, conditionalElements, {
+      signals,
+      memos,
+      compileTimeEval: componentSources.size > 0 ? {
+        components,
+        componentSources,
+      } : undefined
+    })
   }
 
   // Generate client JS (createEffect-based)
@@ -592,7 +608,27 @@ function generateConditionalEffects(
       }
     }
 
-    lines.push(`cond(__scope, '${condId}', () => ${condEl.condition}, [() => \`${whenTrueTemplate}\`, () => \`${whenFalseTemplate}\`]${handlersArg})`)
+    // Build childInits object if there are components inside the conditional branches
+    // These will be re-initialized after DOM swap
+    let childInitsArg = ''
+    const hasWhenTrueInits = condEl.whenTrueChildInits && condEl.whenTrueChildInits.length > 0
+    const hasWhenFalseInits = condEl.whenFalseChildInits && condEl.whenFalseChildInits.length > 0
+    if (hasWhenTrueInits || hasWhenFalseInits) {
+      const trueInits = condEl.whenTrueChildInits?.map(ci =>
+        `{ name: '${ci.name}', props: ${ci.propsExpr}, init: init${ci.name} }`
+      ).join(', ') || ''
+      const falseInits = condEl.whenFalseChildInits?.map(ci =>
+        `{ name: '${ci.name}', props: ${ci.propsExpr}, init: init${ci.name} }`
+      ).join(', ') || ''
+
+      // If no handlers but we have childInits, add empty handlers array first
+      if (!handlersArg) {
+        handlersArg = ', []'
+      }
+      childInitsArg = `, { whenTrue: [${trueInits}], whenFalse: [${falseInits}] }`
+    }
+
+    lines.push(`cond(__scope, '${condId}', () => ${condEl.condition}, [() => \`${whenTrueTemplate}\`, () => \`${whenFalseTemplate}\`]${handlersArg}${childInitsArg})`)
   }
 
   return lines

@@ -13,6 +13,8 @@
  * but implementation is pending compiler improvements.
  */
 
+import { ChevronRightIcon } from '../ui/icon'
+
 // Menu data types
 interface MenuItem {
   title: string
@@ -75,21 +77,6 @@ const menuData: MenuCategory[] = [
   },
 ]
 
-// Chevron icon component
-function ChevronIcon() {
-  return (
-    <svg
-      class="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-90"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="2"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  )
-}
 
 // Sidebar item component (server-side only)
 interface SidebarItemProps {
@@ -139,7 +126,7 @@ export function SidebarCategory({
     <details class="mb-2 group" open={hasActiveItem || defaultOpen}>
       <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
         <span>{title}</span>
-        <ChevronIcon />
+        <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
       </summary>
       <div class="pl-2 py-1 space-y-0.5">
         {items.map(item => (

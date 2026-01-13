@@ -3,6 +3,7 @@
  */
 
 import { Button } from '@/components/ui/button'
+import { PlusIcon } from '@/components/ui/icon'
 import { ButtonDemo } from '@/components/docs/button-demo'
 import {
   DocPage,
@@ -39,7 +40,7 @@ const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
 <Button size="lg">Large</Button>
 <Button size="icon">
-  <PlusIcon />
+  <PlusIcon size="sm" />
 </Button>`
 
 const disabledCode = `<Button disabled>Disabled</Button>
@@ -72,15 +73,6 @@ const buttonProps: PropDefinition[] = [
   },
 ]
 
-// Plus icon for size example
-function PlusIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M5 12h14"/>
-      <path d="M12 5v14"/>
-    </svg>
-  )
-}
 
 export function ButtonPage() {
   // Generate highlighted commands inside component (after Shiki is initialized)
@@ -98,13 +90,14 @@ export function ButtonPage() {
         {/* Preview */}
         <Example title="" code={`
 import { Button } from "@/components/ui/button"
+import { PlusIcon } from "@/components/ui/icon"
 
 function ButtonExample() {
   return (
     <div class="flex flex-wrap items-center gap-2 md:flex-row">
       <Button variant="outline">Button</Button>
       <Button variant="outline" size="icon" aria-label="Submit">
-          <PlusIcon />
+          <PlusIcon size="sm" />
       </Button>
     </div>
   )
@@ -113,7 +106,7 @@ function ButtonExample() {
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
             <Button variant="outline">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
-                <PlusIcon />
+                <PlusIcon size="sm" />
             </Button>
           </div>
         </Example>
@@ -147,7 +140,7 @@ function ButtonExample() {
               <Button size="default">Default</Button>
               <Button size="lg">Large</Button>
               <Button size="icon">
-                <PlusIcon />
+                <PlusIcon size="sm" />
               </Button>
             </Example>
 

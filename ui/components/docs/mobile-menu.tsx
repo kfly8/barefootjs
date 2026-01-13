@@ -12,8 +12,9 @@
  */
 
 import { createSignal, createEffect } from '@barefootjs/dom'
+import { XIcon, ChevronRightIcon } from '../ui/icon'
 
-// Three vertical dots icon
+// Three vertical dots icon (custom, not in Icon component)
 function DotsVerticalIcon() {
   return (
     <svg
@@ -24,37 +25,6 @@ function DotsVerticalIcon() {
       <circle cx="12" cy="5" r="2" />
       <circle cx="12" cy="12" r="2" />
       <circle cx="12" cy="19" r="2" />
-    </svg>
-  )
-}
-
-// Close icon
-function CloseIcon() {
-  return (
-    <svg
-      class="h-6 w-6"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="2"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  )
-}
-
-// Chevron icon for accordion
-function ChevronIcon() {
-  return (
-    <svg
-      class="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-90"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="2"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
     </svg>
   )
 }
@@ -245,7 +215,7 @@ export function MobileMenu() {
               class="p-2 text-foreground hover:bg-accent rounded-md transition-colors"
               aria-label="Close menu"
             >
-              <CloseIcon />
+              <XIcon size="lg" />
             </button>
           </div>
 
@@ -256,7 +226,7 @@ export function MobileMenu() {
               <details data-category="get-started" class="mb-2 group">
                 <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Get Started</span>
-                  <ChevronIcon />
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
                   <a href="/" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">
@@ -269,7 +239,7 @@ export function MobileMenu() {
               <details data-category="components" class="mb-2 group">
                 <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Components</span>
-                  <ChevronIcon />
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
                   <a href="/components/accordion" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Accordion</a>
@@ -293,7 +263,7 @@ export function MobileMenu() {
               <details data-category="forms" class="mb-2 group">
                 <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Forms</span>
-                  <ChevronIcon />
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
                   <a href="/forms/controlled-input" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Controlled Input</a>
@@ -307,7 +277,7 @@ export function MobileMenu() {
               <details data-category="blocks" class="mb-2 group">
                 <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Blocks</span>
-                  <ChevronIcon />
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
                   {/* Empty for now */}
@@ -318,7 +288,7 @@ export function MobileMenu() {
               <details data-category="charts" class="mb-2 group">
                 <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Charts</span>
-                  <ChevronIcon />
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
                   {/* Empty for now */}

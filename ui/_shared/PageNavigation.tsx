@@ -5,6 +5,8 @@
  * Helps users navigate between component pages.
  */
 
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icon'
+
 export interface NavLink {
   href: string
   title: string
@@ -25,20 +27,7 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
           href={prev.href}
           class="group flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors no-underline"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="transition-transform group-hover:-translate-x-1"
-          >
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
+          <ChevronLeftIcon size="lg" class="transition-transform group-hover:-translate-x-1" />
           <div class="flex flex-col">
             <span class="text-sm text-muted-foreground">Previous</span>
             <span class="text-xl font-medium text-foreground">{prev.title}</span>
@@ -56,20 +45,7 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
             <span class="text-sm text-muted-foreground">Next</span>
             <span class="text-xl font-medium text-foreground">{next.title}</span>
           </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="transition-transform group-hover:translate-x-1"
-          >
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
+          <ChevronRightIcon size="lg" class="transition-transform group-hover:translate-x-1" />
         </a>
       ) : (
         <div />

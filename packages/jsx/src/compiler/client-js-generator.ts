@@ -183,7 +183,21 @@ function generateChildImports(
   for (const comp of fileComponents) {
     if (!comp.hasClientJs) continue
 
-    const uniqueChildNames = [...new Set(comp.childInits.map(child => child.name))]
+    // Collect child names from regular childInits
+    const childNamesFromInit = comp.childInits.map(child => child.name)
+
+    // Collect child names from conditional childInits (whenTrue/whenFalse branches)
+    const childNamesFromConditionals: string[] = []
+    for (const condEl of comp.result.conditionalElements) {
+      if (condEl.whenTrueChildInits) {
+        childNamesFromConditionals.push(...condEl.whenTrueChildInits.map(ci => ci.name))
+      }
+      if (condEl.whenFalseChildInits) {
+        childNamesFromConditionals.push(...condEl.whenFalseChildInits.map(ci => ci.name))
+      }
+    }
+
+    const uniqueChildNames = [...new Set([...childNamesFromInit, ...childNamesFromConditionals])]
     const childrenWithClientJs = filterChildrenWithClientJs(uniqueChildNames, ctx.allComponentData, componentNames)
 
     for (const childName of childrenWithClientJs) {

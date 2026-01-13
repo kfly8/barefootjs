@@ -169,6 +169,15 @@ export function bind(
 // --- cond ---
 
 /**
+ * Child component initialization info for conditional re-initialization
+ */
+type ChildInitInfo = {
+  name: string
+  props: Record<string, unknown>
+  init: (props: Record<string, unknown>, instanceIndex: number, parentScope: Element | null) => void
+}
+
+/**
  * Handle conditional DOM updates based on reactive condition.
  *
  * @param scope - Component scope element
@@ -176,6 +185,7 @@ export function bind(
  * @param conditionFn - Function that returns current condition value
  * @param templateFns - [whenTrueTemplateFn, whenFalseTemplateFn] Functions that return HTML strings
  * @param handlers - Optional event handlers to re-attach after DOM update
+ * @param childInits - Optional child component init info for re-initialization after DOM swap
  */
 export function cond(
   scope: Element | null,
@@ -186,7 +196,11 @@ export function cond(
     selector: string
     event: string
     handler: EventListenerOrEventListenerObject
-  }>
+  }>,
+  childInits?: {
+    whenTrue: ChildInitInfo[]
+    whenFalse: ChildInitInfo[]
+  }
 ): void {
   if (!scope) return
 
@@ -224,6 +238,22 @@ export function cond(
       } else {
         updateElementConditional(scope, id, html)
       }
+
+      // Re-initialize child components after DOM swap
+      if (childInits) {
+        const inits = currCond ? childInits.whenTrue : childInits.whenFalse
+        for (const { name, props, init } of inits) {
+          // Find the scope for the newly inserted component
+          // The component should be inside the conditional element
+          const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+          if (condEl) {
+            const componentScope = condEl.querySelector(`[data-bf-scope^="${name}"]`)
+            if (componentScope && init) {
+              init(props, 0, componentScope as Element)
+            }
+          }
+        }
+      }
     }
 
     // Re-attach event handlers
@@ -243,10 +273,11 @@ export function cond(
  */
 function updateFragmentConditional(scope: Element, id: string, html: string): void {
   // Find start comment marker
+  const startMarker = `bf-cond-start:${id}`
   let startComment: Comment | null = null
   const walker = document.createTreeWalker(scope, NodeFilter.SHOW_COMMENT)
   while (walker.nextNode()) {
-    if (walker.currentNode.nodeValue === `bf-cond-start:${id}`) {
+    if (walker.currentNode.nodeValue === startMarker) {
       startComment = walker.currentNode as Comment
       break
     }
@@ -254,11 +285,13 @@ function updateFragmentConditional(scope: Element, id: string, html: string): vo
 
   const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
 
+  const endMarker = `bf-cond-end:${id}`
+
   if (startComment) {
     // Remove nodes between start and end markers
     const nodesToRemove: Node[] = []
     let node = startComment.nextSibling
-    while (node && !(node.nodeType === 8 && node.nodeValue === `bf-cond-end:${id}`)) {
+    while (node && !(node.nodeType === 8 && node.nodeValue === endMarker)) {
       nodesToRemove.push(node)
       node = node.nextSibling
     }

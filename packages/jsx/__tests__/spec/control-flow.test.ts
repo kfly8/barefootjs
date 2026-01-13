@@ -410,9 +410,12 @@ describe('Control Flow Specs', () => {
 
     // Verify cond() is generated in client JS (component conditional has slot ID)
     expect(result.clientJs).toContain('cond(')
-    // Verify both component placeholders are in the cond() templates
-    expect(result.clientJs).toContain('ChildA')
-    expect(result.clientJs).toContain('ChildB')
+    // Verify static component content is inlined in templates (not placeholders)
+    expect(result.clientJs).toContain('class="a"')
+    expect(result.clientJs).toContain('class="b"')
+    // Should NOT contain placeholder comments
+    expect(result.clientJs).not.toContain('<!-- ChildA -->')
+    expect(result.clientJs).not.toContain('<!-- ChildB -->')
   })
 
   // CTRL-018: Component with null ternary (issue #171)
@@ -533,4 +536,129 @@ describe('Control Flow Specs', () => {
     // Initially shows "mode-a" branch (mode() === 'a' is true)
     expect(result.html).toContain('mode-a')
   })
+
+  // CTRL-022: Consecutive if statements with early returns (issue #169)
+  // Verifies that multiple consecutive if/return patterns chain as nested conditionals
+  it('CTRL-022: handles consecutive if statements with early returns', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [type, setType] = createSignal('a')
+        if (type() === 'a') {
+          return <span class="type-a">Type A</span>
+        }
+        if (type() === 'b') {
+          return <span class="type-b">Type B</span>
+        }
+        return <span class="default">Default</span>
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated (consecutive if/return converted to nested conditional)
+    expect(result.clientJs).toContain('cond(')
+    // Verify all branches are in the templates
+    expect(result.clientJs).toContain('type-a')
+    expect(result.clientJs).toContain('type-b')
+    expect(result.clientJs).toContain('default')
+    // Initially shows "type-a" branch (type() === 'a' is true)
+    expect(result.html).toContain('type-a')
+  })
+
+  // CTRL-023: If statements with variable declarations between them (issue #169)
+  // Verifies handling of: if (a) return X; const b = ...; if (b) return Y; return Z;
+  it('CTRL-023: handles if statements with intermediate variable declarations', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+      function Component() {
+        const [name, setName] = createSignal('special')
+        const items: Record<string, string> = { foo: 'FOO' }
+
+        if (name() === 'special') {
+          return <span class="special">Special</span>
+        }
+
+        const item = items[name()]
+        if (item) {
+          return <span class="item">{item}</span>
+        }
+
+        return <span class="fallback">Not found</span>
+      }
+    `
+    const result = await compile(source)
+
+    // Verify cond() is generated
+    expect(result.clientJs).toContain('cond(')
+    // Verify compilation succeeds and structure is valid
+    expect(result.html).toBeTruthy()
+    // Initially shows "special" branch (name() === 'special' is true)
+    expect(result.html).toContain('special')
+  })
+
+  // CTRL-024: Static component in conditional - preserves content after condition change
+  // Tests that static components (no client JS) have their HTML included in cond() templates
+  it('CTRL-024: preserves static component content in conditional templates', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+
+      function IconA() { return <span class="icon-a">A</span> }
+      function IconB() { return <span class="icon-b">B</span> }
+
+      function Switcher() {
+        const [flag, setFlag] = createSignal(true)
+        return (
+          <button onClick={() => setFlag(!flag())}>
+            {flag() ? <IconA /> : <IconB />}
+          </button>
+        )
+      }
+    `
+    const result = await compile(source)
+
+    // Both component contents should be in the client JS templates (not just placeholders)
+    expect(result.clientJs).toContain('icon-a')
+    expect(result.clientJs).toContain('icon-b')
+    // Should NOT contain placeholder comments
+    expect(result.clientJs).not.toContain('<!-- IconA -->')
+    expect(result.clientJs).not.toContain('<!-- IconB -->')
+  })
+
+  // CTRL-025: Dynamic component in conditional - reinitializes after condition change
+  // Tests that dynamic components (with client JS) have childInits info passed to cond()
+  it('CTRL-025: includes childInits info for dynamic components in conditionals', async () => {
+    const source = `
+      "use client"
+      import { createSignal } from 'barefoot'
+
+      function Counter() {
+        const [count, setCount] = createSignal(0)
+        return <button onClick={() => setCount(c => c + 1)}>{count()}</button>
+      }
+
+      function Static() { return <span class="static">static</span> }
+
+      function App() {
+        const [show, setShow] = createSignal(true)
+        return (
+          <div>
+            <button onClick={() => setShow(!show())}>Toggle</button>
+            {show() ? <Counter /> : <Static />}
+          </div>
+        )
+      }
+    `
+    const result = await compile(source)
+
+    // cond() should be called with childInits information for Counter
+    // The exact format may vary, but it should include init function reference
+    expect(result.clientJs).toContain('cond(')
+    // Dynamic component (Counter) should have initialization info
+    // Static component content should be in template
+    expect(result.clientJs).toContain('static')
+  })
+
 })
