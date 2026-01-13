@@ -45,7 +45,7 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 // Manifest
-const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[] }> = {
+const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[]; dependencies?: string[] }> = {
   '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
 }
 
@@ -81,10 +81,12 @@ for (const entryPath of componentFiles) {
 
     // Manifest entries for each component in file
     for (const compName of file.componentNames) {
+      const deps = file.componentDependencies[compName]
       manifest[compName] = {
         markedJsx: markedJsxPath,
         clientJs: clientJsPath,
         props: file.componentProps[compName],
+        dependencies: deps && deps.length > 0 ? deps : undefined,
       }
     }
   }

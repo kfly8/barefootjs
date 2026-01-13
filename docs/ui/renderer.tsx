@@ -19,12 +19,17 @@ declare module 'hono' {
   }
 }
 import { BfScripts } from '../../packages/hono/src/scripts'
-import { BfPreload } from '../../packages/hono/src/preload'
+import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
 import { SidebarMenu } from '@/components/sidebar-menu'
 import { SidebarPreview } from '@/components/sidebar-preview'
 import { Header } from '@/components/header'
 import { MobileHeader } from '@/components/mobile-header'
 import { CommandPalette } from '@/components/command-palette'
+
+// Import manifest for dependency-aware preloading
+// This enables BfPreload to automatically preload the full dependency chain
+// Example: If Button depends on Slot, preloading Button will also preload Slot
+import manifest from './dist/components/manifest.json'
 
 /**
  * Predictable instance ID generator for E2E testing.
@@ -69,7 +74,10 @@ export const renderer = jsxRenderer(
       <WithPredictableIds>
         <html lang="en">
           <head>
-            <BfPreload />
+            <BfPreload
+              manifest={manifest as Manifest}
+              components={['Button', 'CopyButton', 'Toggle', 'ThemeToggle']}
+            />
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>{pageTitle}</title>

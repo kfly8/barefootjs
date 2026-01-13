@@ -301,6 +301,8 @@ export type FileOutput = {
   componentProps: Record<string, PropWithType[]>
   /** Whether file has "use client" directive */
   hasUseClientDirective: boolean
+  /** Component dependencies (keyed by component name) - child components that need client-side initialization */
+  componentDependencies: Record<string, string[]>
 }
 
 export type CompileJSXResult = {
