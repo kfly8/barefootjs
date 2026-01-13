@@ -48,7 +48,7 @@ export type Manifest = Record<string, ManifestEntry>
 export interface BfPreloadProps {
   /**
    * Path to static files directory.
-   * @default '/static'
+   * @default '/static/components'
    */
   staticPath?: string
 
@@ -126,7 +126,7 @@ function resolveDependencyChain(
  * preloads the full dependency chain for those components.
  */
 export function BfPreload({
-  staticPath = '/static',
+  staticPath = '/static/components',
   scripts = [],
   includeRuntime = true,
   manifest,
