@@ -1,0 +1,6 @@
+name = "barefootjs-ui"
+main = "dist/worker.js"
+compatibility_date = "2024-01-01"
+
+[site]
+bucket = "./dist"
