@@ -30,7 +30,7 @@ import { Fragment } from 'hono/jsx'
 export interface BfPreloadProps {
   /**
    * Path to static files directory.
-   * @default '/static'
+   * @default '/static/components'
    */
   staticPath?: string
 
@@ -55,7 +55,7 @@ export interface BfPreloadProps {
  * by all BarefootJS components.
  */
 export function BfPreload({
-  staticPath = '/static',
+  staticPath = '/static/components',
   scripts = [],
   includeRuntime = true,
 }: BfPreloadProps = {}) {
