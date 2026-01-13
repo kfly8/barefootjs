@@ -323,8 +323,9 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
     attrParts.push(`data-bf="${id}"`)
   }
 
-  // Add xmlns for SVG root element
-  if (isSvgRoot(tagName)) {
+  // Add xmlns for SVG root element (only if not already present)
+  const hasXmlns = staticAttrs.some(attr => attr.name === 'xmlns')
+  if (isSvgRoot(tagName) && !hasXmlns) {
     attrParts.push('xmlns="http://www.w3.org/2000/svg"')
   }
 

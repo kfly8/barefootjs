@@ -62,11 +62,20 @@ if (!await Bun.file(domDistFile).exists()) {
   await proc.exited
 }
 
+// Copy to dist/components/ for components inside rootDir (ui/components/)
 await Bun.write(
   resolve(DIST_COMPONENTS_DIR, barefootFileName),
   Bun.file(domDistFile)
 )
 console.log(`Generated: dist/components/${barefootFileName}`)
+
+// Also copy to dist/ root for components outside rootDir (ui/base/)
+// Their relative imports resolve to dist/ level
+await Bun.write(
+  resolve(DIST_DIR, barefootFileName),
+  Bun.file(domDistFile)
+)
+console.log(`Generated: dist/${barefootFileName}`)
 
 // Manifest
 const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[] }> = {
@@ -99,8 +108,9 @@ for (const entryPath of componentFiles) {
     console.log(`Generated: dist/components/${relativePath}`)
 
     // Client JS filename includes directory (e.g., "ui/Button-abc123.js")
+    // Handle root-level files where dirPath is "."
     const clientJsRelativePath = file.hasClientJs
-      ? `${dirPath}/${baseNameNoExt}-${file.hash}.js`
+      ? (dirPath === '.' ? `${baseNameNoExt}-${file.hash}.js` : `${dirPath}/${baseNameNoExt}-${file.hash}.js`)
       : ''
 
     // Client JS - colocate with Marked JSX in same subdirectory
@@ -272,5 +282,42 @@ const unoProc = Bun.spawn(['bunx', 'unocss', './**/*.tsx', './dist/**/*.tsx', '-
 })
 await unoProc.exited
 console.log('Generated: dist/uno.css')
+
+// Create dist/static/ directory for Cloudflare Workers compatibility
+// Wrangler [assets] serves files from dist/ at /, so /static/* needs dist/static/*
+// Bun dev server uses serveStatic with rewrite, so this is only needed for production
+const DIST_STATIC_DIR = resolve(DIST_DIR, 'static')
+await mkdir(DIST_STATIC_DIR, { recursive: true })
+
+// Copy CSS files to static/
+await Bun.write(resolve(DIST_STATIC_DIR, 'globals.css'), Bun.file(resolve(DIST_DIR, 'globals.css')))
+await Bun.write(resolve(DIST_STATIC_DIR, 'uno.css'), Bun.file(resolve(DIST_DIR, 'uno.css')))
+console.log('Copied: dist/static/globals.css')
+console.log('Copied: dist/static/uno.css')
+
+// Copy barefoot.js to static/ root for base components
+await Bun.write(resolve(DIST_STATIC_DIR, 'barefoot.js'), Bun.file(resolve(DIST_DIR, 'barefoot.js')))
+console.log('Copied: dist/static/barefoot.js')
+
+// Copy components/ to static/components/ for client JS
+async function copyDir(src: string, dest: string) {
+  await mkdir(dest, { recursive: true })
+  const entries = await readdir(src, { withFileTypes: true })
+  for (const entry of entries) {
+    const srcPath = join(src, entry.name)
+    const destPath = join(dest, entry.name)
+    if (entry.isDirectory()) {
+      await copyDir(srcPath, destPath)
+    } else {
+      await Bun.write(destPath, Bun.file(srcPath))
+    }
+  }
+}
+await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
+console.log('Copied: dist/static/components/')
+
+// Copy base/ to static/base/ for base component client JS (e.g., slot)
+await copyDir(DIST_BASE_DIR, resolve(DIST_STATIC_DIR, 'base'))
+console.log('Copied: dist/static/base/')
 
 console.log('\nBuild complete!')

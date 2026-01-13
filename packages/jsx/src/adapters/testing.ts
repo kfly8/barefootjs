@@ -186,7 +186,8 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
     attrParts.push(`data-event-id="${eventId}"`)
   }
 
-  if (isSvgRoot(tagName)) {
+  const hasXmlns = staticAttrs.some(attr => attr.name === 'xmlns')
+  if (isSvgRoot(tagName) && !hasXmlns) {
     attrParts.push('xmlns="http://www.w3.org/2000/svg"')
   }
 

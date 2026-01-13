@@ -45,8 +45,18 @@ export function generateFileClientJs(
   const componentNames = fileComponents.map(c => c.name)
 
   // Calculate path to barefoot.js (at dist root)
+  // Normalize the path to handle '..' segments correctly
   const currentDir = ctx.sourcePath.includes('/') ? ctx.sourcePath.substring(0, ctx.sourcePath.lastIndexOf('/')) : ''
-  const dirDepth = currentDir ? currentDir.split('/').length : 0
+  // Count actual depth by resolving '..' segments
+  const segments = currentDir ? currentDir.split('/') : []
+  let dirDepth = 0
+  for (const seg of segments) {
+    if (seg === '..') {
+      dirDepth = Math.max(0, dirDepth - 1)
+    } else if (seg !== '.' && seg !== '') {
+      dirDepth++
+    }
+  }
   const barefootPath = dirDepth > 0 ? '../'.repeat(dirDepth) + 'barefoot.js' : './barefoot.js'
 
   // Collect all barefoot imports needed

@@ -1,27 +1,15 @@
 /**
  * Cloudflare Worker Entry Point
  *
- * Handles:
- * - Static file serving for /r/*.json (registry)
- * - Documentation pages via Hono
+ * Production server for Cloudflare Workers.
+ * Static files in ./dist are served automatically via [assets] in wrangler.toml.
+ *
+ * Note: Syntax highlighting may not be available in Workers environment.
+ * Code blocks will display without highlighting as a fallback.
  */
 
-import { Hono } from 'hono'
-import { serveStatic } from 'hono/cloudflare-workers'
+import { createApp } from './routes'
 
-const app = new Hono()
-
-// Registry routes - serve static JSON files
-app.get('/r/*', serveStatic({ root: './' }))
-
-// For now, redirect docs routes to home
-// TODO: Integrate with full documentation server after migration is complete
-app.get('/', (c) => {
-  return c.text('BarefootJS UI - Coming Soon')
-})
-
-app.get('/docs/*', (c) => {
-  return c.text('Documentation - Coming Soon')
-})
+const app = createApp()
 
 export default app
