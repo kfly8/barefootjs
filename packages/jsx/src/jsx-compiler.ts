@@ -124,11 +124,31 @@ export async function compileJSX(
     const sourcePath = mappings.fileToSourcePath.get(sourceFile)!
     const fileHash = mappings.fileHashes.get(sourceFile)!
 
-    // Collect component names and props
+    // Collect component names, props, and dependencies
     const componentNames = fileComponents.map(c => c.name)
     const componentProps: Record<string, typeof fileComponents[0]['result']['props']> = {}
+    const componentDependencies: Record<string, string[]> = {}
     for (const comp of fileComponents) {
       componentProps[comp.name] = comp.result.props
+      // Extract unique child component names from childInits and conditionalElements
+      const allChildNames = new Set<string>()
+      // From regular childInits
+      for (const ci of comp.childInits) {
+        allChildNames.add(ci.name)
+      }
+      // From conditional elements (whenTrue/whenFalse branches)
+      for (const condEl of comp.result.conditionalElements) {
+        for (const ci of condEl.whenTrueChildInits || []) {
+          allChildNames.add(ci.name)
+        }
+        for (const ci of condEl.whenFalseChildInits || []) {
+          allChildNames.add(ci.name)
+        }
+      }
+      const childNames = [...allChildNames]
+      if (childNames.length > 0) {
+        componentDependencies[comp.name] = childNames
+      }
     }
 
     // Check if any component in this file needs client JS
@@ -165,6 +185,7 @@ export async function compileJSX(
       componentNames,
       componentProps,
       hasUseClientDirective,
+      componentDependencies,
     })
   }
 
