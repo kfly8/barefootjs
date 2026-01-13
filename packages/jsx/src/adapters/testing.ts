@@ -10,6 +10,7 @@
  */
 
 import type { MarkedJsxAdapter, IRNode, IRElement, IRFragment, SignalDeclaration, MemoDeclaration } from '../types'
+import { isSelfClosingTag } from '../utils/html-helpers'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
@@ -186,7 +187,8 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
     attrParts.push(`data-event-id="${eventId}"`)
   }
 
-  if (isSvgRoot(tagName)) {
+  const hasXmlns = staticAttrs.some(attr => attr.name === 'xmlns')
+  if (isSvgRoot(tagName) && !hasXmlns) {
     attrParts.push('xmlns="http://www.w3.org/2000/svg"')
   }
 
@@ -286,9 +288,6 @@ function escapeAttr(str: string): string {
   return str.replace(/"/g, '&quot;')
 }
 
-function isSelfClosingTag(tagName: string): boolean {
-  return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
-}
 
 function injectDataKeyAttribute(html: string, keyValue: string): string {
   const match = html.match(/^<([a-zA-Z][a-zA-Z0-9]*)/)

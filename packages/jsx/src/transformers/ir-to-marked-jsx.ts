@@ -14,6 +14,7 @@ import type {
   MarkedJsxContext,
   PropWithType,
 } from '../types'
+import { isSelfClosingTag } from '../utils/html-helpers'
 import { isSvgRoot } from '../utils/svg-helpers'
 
 /**
@@ -323,8 +324,9 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
     attrParts.push(`data-bf="${id}"`)
   }
 
-  // Add xmlns for SVG root element
-  if (isSvgRoot(tagName)) {
+  // Add xmlns for SVG root element (only if not already present)
+  const hasXmlns = staticAttrs.some(attr => attr.name === 'xmlns')
+  if (isSvgRoot(tagName) && !hasXmlns) {
     attrParts.push('xmlns="http://www.w3.org/2000/svg"')
   }
 
@@ -501,12 +503,6 @@ function replaceSignalAndMemoCalls(
   return replaceInternal(expr, new Set())
 }
 
-/**
- * Checks if a tag is a self-closing tag
- */
-function isSelfClosingTag(tagName: string): boolean {
-  return ['input', 'br', 'hr', 'img', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName.toLowerCase())
-}
 
 /**
  * Injects conditional markers into branch for DOM tracking

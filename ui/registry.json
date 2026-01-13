@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "barefootjs",
+  "homepage": "https://ui.barefootjs.dev",
+  "items": [
+    {
+      "name": "slot",
+      "type": "registry:ui",
+      "title": "Slot",
+      "description": "A polymorphic component that merges props with child element"
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "title": "Button",
+      "description": "A button component with variants and sizes"
+    }
+  ]
+}
