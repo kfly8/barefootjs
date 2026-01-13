@@ -135,7 +135,7 @@ function SearchSvg({ size, className }: { size: number; className: string }) {
 export function Icon({ name, size = 'md', class: className = '' }: IconProps) {
   const pixelSize = sizeMap[size]
 
-  // Handle special icons with dedicated components
+  // Special icons with dedicated components
   if (name === 'github') {
     return <GitHubSvg size={pixelSize} className={className} />
   }
@@ -144,14 +144,14 @@ export function Icon({ name, size = 'md', class: className = '' }: IconProps) {
     return <SearchSvg size={pixelSize} className={className} />
   }
 
-  // Handle simple stroke-based icons
+  // Stroke-based icons
   const path = strokeIcons[name]
-  if (path) {
-    return <StrokeIcon d={path} size={pixelSize} className={className} linecap={buttLinecapIcons.includes(name) ? 'butt' : 'round'} />
+  if (!path) {
+    return null
   }
 
-  // Fallback (should not happen if IconName is used correctly)
-  return null
+  const linecap = buttLinecapIcons.includes(name) ? 'butt' : 'round'
+  return <StrokeIcon d={path} size={pixelSize} className={className} linecap={linecap} />
 }
 
 // Convenience components for commonly used icons

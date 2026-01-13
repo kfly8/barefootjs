@@ -273,10 +273,11 @@ export function cond(
  */
 function updateFragmentConditional(scope: Element, id: string, html: string): void {
   // Find start comment marker
+  const startMarker = `bf-cond-start:${id}`
   let startComment: Comment | null = null
   const walker = document.createTreeWalker(scope, NodeFilter.SHOW_COMMENT)
   while (walker.nextNode()) {
-    if (walker.currentNode.nodeValue === `bf-cond-start:${id}`) {
+    if (walker.currentNode.nodeValue === startMarker) {
       startComment = walker.currentNode as Comment
       break
     }
@@ -284,11 +285,13 @@ function updateFragmentConditional(scope: Element, id: string, html: string): vo
 
   const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
 
+  const endMarker = `bf-cond-end:${id}`
+
   if (startComment) {
     // Remove nodes between start and end markers
     const nodesToRemove: Node[] = []
     let node = startComment.nextSibling
-    while (node && !(node.nodeType === 8 && node.nodeValue === `bf-cond-end:${id}`)) {
+    while (node && !(node.nodeType === 8 && node.nodeValue === endMarker)) {
       nodesToRemove.push(node)
       node = node.nextSibling
     }

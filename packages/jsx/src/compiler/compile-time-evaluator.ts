@@ -370,8 +370,7 @@ function evaluateJsxFragment(
   ctx: CompileTimeEvalContext,
   sourceFile: ts.SourceFile
 ): CompileTimeEvalResult | null {
-  const childResults = evaluateJsxChildren(node.children, evalCtx, ctx, sourceFile)
-  return childResults
+  return evaluateJsxChildren(node.children, evalCtx, ctx, sourceFile)
 }
 
 /**
@@ -525,26 +524,20 @@ function isComponentTag(tagName: string): boolean {
  * Returns true for truthy, false for falsy, or null if the value is dynamic/unknown.
  */
 function isTruthyValue(value: EvaluatedValue): boolean | null {
-  if (value.kind === 'literal') {
-    // JavaScript truthy/falsy rules
-    if (value.value === null || value.value === false || value.value === '' || value.value === 0) {
-      return false
+  switch (value.kind) {
+    case 'literal': {
+      // JavaScript truthy/falsy rules
+      const falsyValues = [null, false, '', 0]
+      return !falsyValues.includes(value.value as null | boolean | string | number)
     }
-    return true
+    case 'object':
+    case 'array':
+      // Objects and arrays are always truthy in JavaScript
+      return true
+    default:
+      // Dynamic or unknown - cannot determine
+      return null
   }
-
-  if (value.kind === 'object') {
-    // Objects are always truthy in JavaScript
-    return true
-  }
-
-  if (value.kind === 'array') {
-    // Arrays are always truthy in JavaScript
-    return true
-  }
-
-  // Dynamic or unknown - cannot determine
-  return null
 }
 
 /**

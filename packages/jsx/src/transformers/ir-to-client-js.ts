@@ -183,7 +183,6 @@ function collectChildComponentNamesRecursive(node: IRNode, names: string[]): voi
   }
 }
 
-
 /**
  * Converts IR node to HTML template string for client-side rendering
  *

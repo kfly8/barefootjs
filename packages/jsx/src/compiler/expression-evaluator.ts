@@ -99,17 +99,14 @@ function evaluateNode(node: ts.Expression, ctx: EvalContext): EvaluatedValue {
     return { kind: 'literal', value: parseFloat(node.text) }
   }
 
-  // Boolean literals
-  if (node.kind === ts.SyntaxKind.TrueKeyword) {
-    return { kind: 'literal', value: true }
-  }
-  if (node.kind === ts.SyntaxKind.FalseKeyword) {
-    return { kind: 'literal', value: false }
-  }
-
-  // Null literal
-  if (node.kind === ts.SyntaxKind.NullKeyword) {
-    return { kind: 'literal', value: null }
+  // Boolean and null literals
+  switch (node.kind) {
+    case ts.SyntaxKind.TrueKeyword:
+      return { kind: 'literal', value: true }
+    case ts.SyntaxKind.FalseKeyword:
+      return { kind: 'literal', value: false }
+    case ts.SyntaxKind.NullKeyword:
+      return { kind: 'literal', value: null }
   }
 
   // Undefined
@@ -393,8 +390,12 @@ function evaluateNode(node: ts.Expression, ctx: EvalContext): EvaluatedValue {
     }
 
     if (operand.kind === 'dynamic') {
-      const op = node.operator === ts.SyntaxKind.ExclamationToken ? '!' :
-                 node.operator === ts.SyntaxKind.MinusToken ? '-' : '+'
+      const operatorMap: Record<number, string> = {
+        [ts.SyntaxKind.ExclamationToken]: '!',
+        [ts.SyntaxKind.MinusToken]: '-',
+        [ts.SyntaxKind.PlusToken]: '+',
+      }
+      const op = operatorMap[node.operator] ?? '+'
       return { kind: 'dynamic', expression: `${op}${operand.expression}` }
     }
 

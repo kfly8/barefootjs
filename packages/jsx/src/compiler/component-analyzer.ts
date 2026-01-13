@@ -197,20 +197,18 @@ function extractConditionalReturn(
  * Collects all identifier names from a node
  */
 function collectIdentifiers(node: ts.Node): string[] {
-  const identifiers: Set<string> = new Set()
+  const identifiers = new Set<string>()
 
   function visit(n: ts.Node): void {
     if (ts.isIdentifier(n)) {
-      // Skip property names in property access (e.g., skip 'md' in sizeMap.md)
       const parent = n.parent
-      if (ts.isPropertyAccessExpression(parent) && parent.name === n) {
-        return
+      // Skip property names (e.g., 'md' in sizeMap.md, 'size' in { size: pixelSize })
+      const isPropertyName =
+        (ts.isPropertyAccessExpression(parent) && parent.name === n) ||
+        (ts.isPropertyAssignment(parent) && parent.name === n)
+      if (!isPropertyName) {
+        identifiers.add(n.text)
       }
-      // Skip property names in property assignments (e.g., skip 'size' in { size: pixelSize })
-      if (ts.isPropertyAssignment(parent) && parent.name === n) {
-        return
-      }
-      identifiers.add(n.text)
     }
     ts.forEachChild(n, visit)
   }
