@@ -81,9 +81,10 @@ export function collectComponentData(
       ])
       // Local variable code may reference module constants (e.g., const classes = `${baseClasses}...`)
       const localVariableCodes = result.localVariables.map(lv => lv.code)
+      // Dynamic attribute expressions (prop-driven attributes like d={strokePaths['icon']})
+      const dynamicAttributeExpressions = result.dynamicAttributes.map(da => da.expression)
 
       // Check module-level constants
-      // Note: attributeExpressions are NOT included because dynamic attributes are evaluated at SSR time
       const usedModuleConstants = result.moduleConstants.filter(c =>
         isConstantUsedInClientCode(
           c.name,
@@ -96,7 +97,8 @@ export function collectComponentData(
           effectBodies,
           dynamicElementExpressions,
           listElementExpressions,
-          localVariableCodes
+          localVariableCodes,
+          dynamicAttributeExpressions
         )
       )
 
@@ -116,7 +118,8 @@ export function collectComponentData(
           effectBodies,
           dynamicElementExpressions,
           listElementExpressions,
-          localVariableCodes.filter(code => code !== lv.code)
+          localVariableCodes.filter(code => code !== lv.code),
+          dynamicAttributeExpressions
         )
       )
 

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Tabs Documentation Page', () => {
+test.describe('Tabs Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/tabs')
   })
@@ -136,23 +135,26 @@ test.describe.skip('Tabs Documentation Page', () => {
 })
 
 // Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Tabs Link', () => {
+test.describe('Home Page - Tabs Link', () => {
   test('displays Tabs component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/tabs"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/tabs"] h2')).toContainText('Tabs')
+    // Use role locator to find the card link specifically
+    const tabsCard = page.getByRole('link', { name: 'Tabs A set of layered' })
+    await expect(tabsCard).toBeVisible()
+    await expect(tabsCard.locator('h2')).toContainText('Tabs')
   })
 
   test('navigates to Tabs page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/components/tabs"]')
+    // Use role locator to find the card link specifically
+    await page.getByRole('link', { name: 'Tabs A set of layered' }).click()
     await expect(page).toHaveURL('/docs/components/tabs')
     await expect(page.locator('h1')).toContainText('Tabs')
   })
 })
 
 // Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Tabs Keyboard Navigation', () => {
+test.describe('Tabs Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/tabs')
   })

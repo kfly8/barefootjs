@@ -157,9 +157,7 @@ export function extractModuleVariables(source: string, filePath: string): Module
  * - Dynamic element expressions (JSX template interpolations)
  * - List element expressions (.map() arrays and templates)
  * - Local variable codes (e.g., const classes = `${baseClasses}...`)
- *
- * Note: Dynamic attribute expressions are NOT included because
- * attributes are evaluated at SSR time, not client time.
+ * - Dynamic attribute expressions (prop-driven attributes in createEffect)
  */
 export function isConstantUsedInClientCode(
   constantName: string,
@@ -172,7 +170,8 @@ export function isConstantUsedInClientCode(
   effectBodies: string[] = [],
   dynamicElementExpressions: string[] = [],
   listElementExpressions: string[] = [],
-  localVariableCodes: string[] = []
+  localVariableCodes: string[] = [],
+  dynamicAttributeExpressions: string[] = []
 ): boolean {
   const pattern = new RegExp(`\\b${constantName}\\b`)
 
@@ -221,12 +220,15 @@ export function isConstantUsedInClientCode(
     if (pattern.test(expr)) return true
   }
 
-  // Note: Dynamic attribute expressions are NOT checked here because
-  // attributes are evaluated at SSR time, not client time
-
   // Check local variable codes (e.g., const classes = `${baseClasses}...`)
   for (const code of localVariableCodes) {
     if (pattern.test(code)) return true
+  }
+
+  // Check dynamic attribute expressions (prop-driven attributes like d={strokePaths['icon']})
+  // These are included in client JS createEffect for reactive updates
+  for (const expr of dynamicAttributeExpressions) {
+    if (pattern.test(expr)) return true
   }
 
   return false
