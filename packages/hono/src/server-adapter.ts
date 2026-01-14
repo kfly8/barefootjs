@@ -119,7 +119,7 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       })
       // Get local variable names for use in function body
       const propLocalNames = props.map(p => p.localName || p.name)
-      const allProps = [...propDestructure, '"data-key": __dataKey', '__listIndex']
+      const allProps = [...propDestructure, '"data-key": __dataKey', '"data-bf-scope": __bfScope', '__listIndex']
       // Add rest spread at the end if present
       if (restPropsName) {
         allProps.push(`...${restPropsName}`)
@@ -127,7 +127,7 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
       const propsParam = `{ ${allProps.join(', ')} }`
 
       // Hydration props that are always added
-      const hydrationProps = `{ "data-key"?: string | number; __listIndex?: number }`
+      const hydrationProps = `{ "data-key"?: string | number; "data-bf-scope"?: string; __listIndex?: number }`
 
       // Build propsType with actual type annotations
       let propsType: string
@@ -141,10 +141,10 @@ export const honoMarkedJsxAdapter: MarkedJsxAdapter = {
           return `${p.name}${optionalMark}: ${p.type}`
         }).join('; ')
         const restPropsType = restPropsName ? `[key: string]: unknown; ` : ''
-        propsType = `: { ${basePropsType}; ${restPropsType}"data-key"?: string | number; __listIndex?: number }`
+        propsType = `: { ${basePropsType}; ${restPropsType}"data-key"?: string | number; "data-bf-scope"?: string; __listIndex?: number }`
       } else {
         const restPropsType = restPropsName ? `[key: string]: unknown; ` : ''
-        propsType = `: { ${restPropsType}"data-key"?: string | number; __listIndex?: number }`
+        propsType = `: { ${restPropsType}"data-key"?: string | number; "data-bf-scope"?: string; __listIndex?: number }`
       }
 
       // Inject conditional data-key attribute
@@ -268,7 +268,7 @@ ${contextHelper}${localVarDefs}
   )
 }`
       } else {
-        return `${exportKeyword} ${name}({ "data-key": __dataKey, __listIndex }: { "data-key"?: string | number; __listIndex?: number } = {}) {
+        return `${exportKeyword} ${name}({ "data-key": __dataKey, "data-bf-scope": __bfScope, __listIndex }: { "data-key"?: string | number; "data-bf-scope"?: string; __listIndex?: number } = {}) {
 ${contextHelper}${localVarDefs}
 
   // Generate unique instance ID for this component instance

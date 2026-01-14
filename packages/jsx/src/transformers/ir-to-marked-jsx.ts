@@ -315,7 +315,7 @@ function elementToMarkedJsxInternal(el: IRElement, ctx: MarkedJsxContext, isRoot
   // Skip scope when __listIndex is defined (component is inside a list and will be re-rendered by client)
   // Uses __instanceId for unique identification of multiple component instances
   if (isRoot && ctx.componentName) {
-    attrParts.push(`{...(__listIndex === undefined ? { "data-bf-scope": __instanceId } : {})}`)
+    attrParts.push(`{...(__listIndex === undefined ? { "data-bf-scope": __bfScope || __instanceId } : {})}`)
   }
 
   // Add data-bf for elements that need querySelector fallback
