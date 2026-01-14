@@ -95,8 +95,7 @@ export function ButtonPage() {
           {...getNavLinks('button')}
         />
 
-        <Example title="" code={`
-import { Button } from "@/components/ui/button"
+        <Example title="" code={`import { Button } from "@/components/ui/button"
 import { PlusIcon } from "@/components/ui/icon"
 
 function ButtonExample() {
