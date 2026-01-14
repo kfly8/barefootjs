@@ -30,7 +30,7 @@ const tocItems: TocItem[] = [
   { id: 'link', title: 'Link', branch: 'child' },
   { id: 'sizes', title: 'Sizes', branch: 'child' },
   { id: 'icon-sizes', title: 'Icon Sizes', branch: 'child' },
-  { id: 'interactive', title: 'Interactive', branch: 'end' },
+  { id: 'counter', title: 'Counter', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
@@ -48,10 +48,17 @@ const iconSizeCode = `<Button size="icon-sm">
   <PlusIcon size="sm" />
 </Button>`
 
-const interactiveCode = `const [count, setCount] = createSignal(0)
-<Button onClick={() => setCount(n => n + 1)}>
-  Clicked {count()} times
-</Button>`
+const counterCode = `import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+
+function Counter() {
+  const [count, setCount] = createSignal(0)
+  return (
+    <Button onClick={() => setCount(n => n + 1)}>
+      Clicked {count()} times
+    </Button>
+  )
+}`
 
 // Props definition
 const buttonProps: PropDefinition[] = [
@@ -159,7 +166,7 @@ function ButtonExample() {
               </Button>
             </Example>
 
-            <Example title="Interactive" code={interactiveCode}>
+            <Example title="Counter" code={counterCode}>
               <ButtonDemo />
             </Example>
           </div>
