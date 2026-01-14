@@ -19,12 +19,32 @@ export interface ExternalImport {
 }
 
 /**
- * Extracts import statements from file (local imports only - for component resolution)
+ * Check if a path matches any configured path alias
+ */
+function matchPathAlias(path: string, aliases: Record<string, string>): string | null {
+  for (const [alias, replacement] of Object.entries(aliases)) {
+    if (path.startsWith(alias)) {
+      return replacement + path.slice(alias.length)
+    }
+  }
+  return null
+}
+
+/**
+ * Extracts import statements from file (local and aliased imports - for component resolution)
  *
  * Note: Type-only imports (import type { ... }) are skipped because they don't
  * represent actual component dependencies and shouldn't affect Server/Client boundaries.
+ *
+ * @param source - The source code to extract imports from
+ * @param filePath - The path to the source file
+ * @param pathAliases - Optional path aliases (e.g., { '@/': '/path/to/src/' })
  */
-export function extractImports(source: string, filePath: string): ComponentImport[] {
+export function extractImports(
+  source: string,
+  filePath: string,
+  pathAliases?: Record<string, string>
+): ComponentImport[] {
   const sourceFile = createSourceFile(source, filePath)
 
   const imports: ComponentImport[] = []
@@ -33,9 +53,23 @@ export function extractImports(source: string, filePath: string): ComponentImpor
     if (ts.isImportDeclaration(node)) {
       const moduleSpecifier = node.moduleSpecifier
       if (ts.isStringLiteral(moduleSpecifier)) {
-        const path = moduleSpecifier.text
-        // Only local imports (starting with ./)
+        let path = moduleSpecifier.text
+        let shouldProcess = false
+
+        // Check if it's a relative import
         if (path.startsWith('./') || path.startsWith('../')) {
+          shouldProcess = true
+        }
+        // Check if it matches a path alias
+        else if (pathAliases) {
+          const resolvedPath = matchPathAlias(path, pathAliases)
+          if (resolvedPath) {
+            path = resolvedPath
+            shouldProcess = true
+          }
+        }
+
+        if (shouldProcess) {
           const importClause = node.importClause
 
           // Skip type-only imports: import type { ... } from '...'

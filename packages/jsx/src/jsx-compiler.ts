@@ -98,13 +98,13 @@ export async function compileJSX(
   }
 
   // 1. Resolve all components recursively
-  const ctx = createResolveContext(readFile, rootDir, compileComponentFn)
+  const ctx = createResolveContext(readFile, rootDir, compileComponentFn, options?.pathAliases)
   await resolveComponent(entryPath, ctx)
 
   // 2. Collect and organize component data
   const componentData = collectComponentData(ctx.compiledComponents)
   const fileGroups = groupComponentsByFile(componentData)
-  const mappings = calculateFileMappings(fileGroups, rootDir)
+  const mappings = calculateFileMappings(fileGroups, rootDir, options?.pathAliases)
 
   // 3. Generate output for each file
   // Only include files with "use client" directive
@@ -113,6 +113,12 @@ export async function compileJSX(
   const files: FileOutput[] = []
 
   for (const [sourceFile, fileComponents] of fileGroups) {
+    // Skip files outside rootDir (they will be compiled when their own entry is processed)
+    // This happens when path aliases resolve to files in a different directory tree
+    if (!sourceFile.startsWith(rootDir + '/')) {
+      continue
+    }
+
     // Get directive status from first component (all components in same file share directive)
     const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
 

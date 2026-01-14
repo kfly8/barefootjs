@@ -192,16 +192,31 @@ export function groupComponentsByFile(
  */
 export function calculateFileMappings(
   fileGroups: Map<string, ComponentData[]>,
-  rootDir: string
+  rootDir: string,
+  pathAliases?: Record<string, string>
 ): FileMappings {
   const fileHashes: Map<string, string> = new Map()
   const componentToFile: Map<string, string> = new Map()
   const fileToSourcePath: Map<string, string> = new Map()
 
   for (const [sourceFile, fileComponents] of fileGroups) {
-    const sourcePath = sourceFile.startsWith(rootDir + '/')
-      ? sourceFile.substring(rootDir.length + 1)
-      : sourceFile
+    let sourcePath: string = sourceFile
+
+    if (sourceFile.startsWith(rootDir + '/')) {
+      // File is within rootDir - use relative path
+      sourcePath = sourceFile.substring(rootDir.length + 1)
+    } else if (pathAliases) {
+      // File is from path alias - find matching alias and use relative path from alias target
+      for (const [, aliasPath] of Object.entries(pathAliases)) {
+        if (sourceFile.startsWith(aliasPath)) {
+          // Extract relative path within the alias target directory
+          const relativePath = sourceFile.substring(aliasPath.length)
+          // Remove leading slash if present
+          sourcePath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath
+          break
+        }
+      }
+    }
 
     fileToSourcePath.set(sourceFile, sourcePath)
 

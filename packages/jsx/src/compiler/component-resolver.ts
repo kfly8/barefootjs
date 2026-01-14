@@ -25,6 +25,8 @@ export interface ResolveContext {
   readFile: (path: string) => Promise<string>
   /** Root directory for calculating relative paths */
   rootDir: string
+  /** Path aliases for resolving imports (e.g., { '@/': '/path/to/src/' }) */
+  pathAliases: Record<string, string>
   /** Function to compile a single component with its dependencies */
   compileComponentFn: (
     source: string,
@@ -41,7 +43,8 @@ export interface ResolveContext {
 export function createResolveContext(
   readFile: (path: string) => Promise<string>,
   rootDir: string,
-  compileComponentFn: ResolveContext['compileComponentFn']
+  compileComponentFn: ResolveContext['compileComponentFn'],
+  pathAliases?: Record<string, string>
 ): ResolveContext {
   return {
     compiledComponents: new Map(),
@@ -49,6 +52,7 @@ export function createResolveContext(
     fileDirectives: new Map(),
     readFile,
     rootDir,
+    pathAliases: pathAliases || {},
     compileComponentFn,
   }
 }
@@ -227,8 +231,8 @@ export async function resolveComponent(
   // Get base directory for this component (resolve imports relative to this file)
   const componentDir = fullPath.substring(0, fullPath.lastIndexOf('/'))
 
-  // Extract imports for this component
-  const imports = extractImports(source, fullPath)
+  // Extract imports for this component (including aliased paths)
+  const imports = extractImports(source, fullPath, ctx.pathAliases)
 
   // Compile dependent components first (imported from other files)
   const componentResults: Map<string, CompileResult> = new Map()

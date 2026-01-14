@@ -49,6 +49,12 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
+// Path aliases for resolving imports like @/components/ui/tabs or @ui/components/ui/tabs
+const PATH_ALIASES: Record<string, string> = {
+  '@/components/': UI_COMPONENTS_DIR + '/',
+  '@ui/components/': UI_COMPONENTS_DIR + '/',
+}
+
 // Recursively discover all component files in ui/ and docs/ subdirectories
 // Skip 'shared' directory which contains non-compilable utility modules
 async function discoverComponentFiles(dir: string): Promise<string[]> {
@@ -105,7 +111,7 @@ for (const entryPath of componentFiles) {
   const rootDir = isUiComponent ? UI_COMPONENTS_DIR : DOCS_COMPONENTS_DIR
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { markedJsxAdapter: honoMarkedJsxAdapter, rootDir })
+  }, { markedJsxAdapter: honoMarkedJsxAdapter, rootDir, pathAliases: PATH_ALIASES })
 
   for (const file of result.files) {
     // Preserve subdirectory structure (ui/, docs/)

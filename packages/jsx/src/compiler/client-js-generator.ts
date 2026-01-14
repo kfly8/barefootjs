@@ -251,7 +251,7 @@ function calculateRelativePath(currentDir: string, targetDir: string, filename: 
 
   const upCount = currentParts.length - commonLength
   const downPath = targetParts.slice(commonLength).join('/')
-  const upPath = '../'.repeat(upCount)
+  const upPath = upCount > 0 ? '../'.repeat(upCount) : './'
 
   return upPath + (downPath ? downPath + '/' : '') + filename
 }
