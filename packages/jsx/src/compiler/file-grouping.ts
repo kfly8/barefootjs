@@ -106,6 +106,8 @@ export function collectComponentData(
       // These are normally SSR-only, but if referenced in reactive computations,
       // they must be included in Client JS
       // Note: We exclude the variable's own code to avoid self-referential matching
+      // Note: We do NOT check dynamicAttributeExpressions here because local variables
+      // used in attributes are SSR-only - only module constants need this check
       const usedLocalVars = result.localVariables.filter(lv =>
         isConstantUsedInClientCode(
           lv.name,
@@ -119,7 +121,7 @@ export function collectComponentData(
           dynamicElementExpressions,
           listElementExpressions,
           localVariableCodes.filter(code => code !== lv.code),
-          dynamicAttributeExpressions
+          [] // No dynamicAttributeExpressions - local vars in attrs are SSR-only
         )
       )
 
