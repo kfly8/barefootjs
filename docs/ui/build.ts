@@ -292,6 +292,25 @@ await Bun.write(resolve(DIST_STATIC_DIR, 'uno.css'), Bun.file(resolve(DIST_DIR, 
 console.log('Copied: dist/static/globals.css')
 console.log('Copied: dist/static/uno.css')
 
+// Copy icon files
+// - dist/ for Bun dev server (serveStatic rewrites /static/* to /*)
+// - dist/static/ for Cloudflare Workers ([assets] serves dist/ at /)
+// - dist/favicon.ico for /favicon.ico requests
+const IMAGES_DIR = resolve(ROOT_DIR, '../../images/logo')
+const icon32 = resolve(IMAGES_DIR, 'icon-32.png')
+const icon64 = resolve(IMAGES_DIR, 'icon-64.png')
+if (await Bun.file(icon32).exists()) {
+  await Bun.write(resolve(DIST_DIR, 'icon-32.png'), Bun.file(icon32))
+  await Bun.write(resolve(DIST_STATIC_DIR, 'icon-32.png'), Bun.file(icon32))
+  await Bun.write(resolve(DIST_DIR, 'favicon.ico'), Bun.file(icon32))
+  console.log('Copied: dist/icon-32.png, dist/static/icon-32.png, dist/favicon.ico')
+}
+if (await Bun.file(icon64).exists()) {
+  await Bun.write(resolve(DIST_DIR, 'icon-64.png'), Bun.file(icon64))
+  await Bun.write(resolve(DIST_STATIC_DIR, 'icon-64.png'), Bun.file(icon64))
+  console.log('Copied: dist/icon-64.png, dist/static/icon-64.png')
+}
+
 // Copy components/ to static/components/ for client JS
 async function copyDir(src: string, dest: string) {
   await mkdir(dest, { recursive: true })
