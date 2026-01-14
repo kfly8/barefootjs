@@ -81,9 +81,10 @@ export function collectComponentData(
       ])
       // Local variable code may reference module constants (e.g., const classes = `${baseClasses}...`)
       const localVariableCodes = result.localVariables.map(lv => lv.code)
+      // Dynamic attribute expressions (prop-driven attributes like d={strokePaths['icon']})
+      const dynamicAttributeExpressions = result.dynamicAttributes.map(da => da.expression)
 
       // Check module-level constants
-      // Note: attributeExpressions are NOT included because dynamic attributes are evaluated at SSR time
       const usedModuleConstants = result.moduleConstants.filter(c =>
         isConstantUsedInClientCode(
           c.name,
@@ -96,7 +97,8 @@ export function collectComponentData(
           effectBodies,
           dynamicElementExpressions,
           listElementExpressions,
-          localVariableCodes
+          localVariableCodes,
+          dynamicAttributeExpressions
         )
       )
 
@@ -104,6 +106,8 @@ export function collectComponentData(
       // These are normally SSR-only, but if referenced in reactive computations,
       // they must be included in Client JS
       // Note: We exclude the variable's own code to avoid self-referential matching
+      // Note: We do NOT check dynamicAttributeExpressions here because local variables
+      // used in attributes are SSR-only - only module constants need this check
       const usedLocalVars = result.localVariables.filter(lv =>
         isConstantUsedInClientCode(
           lv.name,
@@ -116,7 +120,8 @@ export function collectComponentData(
           effectBodies,
           dynamicElementExpressions,
           listElementExpressions,
-          localVariableCodes.filter(code => code !== lv.code)
+          localVariableCodes.filter(code => code !== lv.code),
+          [] // No dynamicAttributeExpressions - local vars in attrs are SSR-only
         )
       )
 
@@ -192,16 +197,31 @@ export function groupComponentsByFile(
  */
 export function calculateFileMappings(
   fileGroups: Map<string, ComponentData[]>,
-  rootDir: string
+  rootDir: string,
+  pathAliases?: Record<string, string>
 ): FileMappings {
   const fileHashes: Map<string, string> = new Map()
   const componentToFile: Map<string, string> = new Map()
   const fileToSourcePath: Map<string, string> = new Map()
 
   for (const [sourceFile, fileComponents] of fileGroups) {
-    const sourcePath = sourceFile.startsWith(rootDir + '/')
-      ? sourceFile.substring(rootDir.length + 1)
-      : sourceFile
+    let sourcePath: string = sourceFile
+
+    if (sourceFile.startsWith(rootDir + '/')) {
+      // File is within rootDir - use relative path
+      sourcePath = sourceFile.substring(rootDir.length + 1)
+    } else if (pathAliases) {
+      // File is from path alias - find matching alias and use relative path from alias target
+      for (const [, aliasPath] of Object.entries(pathAliases)) {
+        if (sourceFile.startsWith(aliasPath)) {
+          // Extract relative path within the alias target directory
+          const relativePath = sourceFile.substring(aliasPath.length)
+          // Remove leading slash if present
+          sourcePath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath
+          break
+        }
+      }
+    }
 
     fileToSourcePath.set(sourceFile, sourcePath)
 

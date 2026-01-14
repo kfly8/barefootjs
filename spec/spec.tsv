@@ -30,6 +30,8 @@ ATTR-020	Attributes	<div {...props}>X</div>	<div {...props}>X</div>	preserve	✅
 ATTR-021	Attributes	<div {...a} {...b}>X</div>	<div {...a} {...b}>X</div>	preserve	✅ Implemented	Multiple spreads
 ATTR-022	Attributes	<div id='x' {...props}>X</div>	<div id='x' {...props}>X</div>	preserve	✅ Implemented	Static + spread
 ATTR-023	Attributes	<input {...props} />	<input {...props} />	preserve	✅ Implemented	Spread on self-closing
+ATTR-024	Attributes	<div dangerouslySetInnerHTML={{__html: x}}>	clientJs: _0.innerHTML = expr.__html	clientJs	✅ Implemented	innerHTML assignment
+ATTR-025	Attributes	<div dangerouslySetInnerHTML={{__html: sig()}}>	clientJs: createEffect(() => _0.innerHTML = ...)	both	✅ Implemented	Dynamic innerHTML
 EXPR-001	Expressions	const [count, setCount] = createSignal(0)	clientJs: const [count, setCount] = createSignal(0)	clientJs	✅ Implemented	Number signal extracted
 EXPR-002	Expressions	const [on, setOn] = createSignal(false)	clientJs: const [on, setOn] = createSignal(false)	clientJs	✅ Implemented	Boolean signal
 EXPR-003	Expressions	const [text, setText] = createSignal('hi')	clientJs: const [text, setText] = createSignal('hi')	clientJs	✅ Implemented	String signal
@@ -182,7 +184,6 @@ TYPE-014	Type Preservation	function C({ x }: Props & { extra: string })	Inline i
 OOS-001	Out of Scope	useEffect(() => {...})	Not supported	n/a	❌ OOS	Use createEffect
 OOS-002	Out of Scope	useState(0)	Not supported	n/a	❌ OOS	Use createSignal
 OOS-003	Out of Scope	<Context.Provider value={...}>	Not supported	n/a	❌ OOS	Pass props
-OOS-004	Out of Scope	dangerouslySetInnerHTML={{__html: x}}	Not supported	n/a	❌ OOS	Security
 OOS-005	Out of Scope	class C extends Component {...}	Not supported	n/a	❌ OOS	Function only
 OOS-006	Out of Scope	forwardRef((props, ref) => ...)	Not supported	n/a	❌ OOS	Use ref callbacks
 OOS-007	Out of Scope	<ErrorBoundary>...</ErrorBoundary>	Not supported	n/a	❌ OOS	Handle in code

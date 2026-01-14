@@ -378,6 +378,12 @@ export type CompileOptions = {
   outputFormat?: OutputFormat  // Default: 'html'
   markedJsxAdapter?: MarkedJsxAdapter  // Required for 'jsx' output
   rootDir?: string  // Root directory for computing relative source paths
+  /**
+   * Path aliases for resolving imports (e.g., { '@/': '/path/to/src/' })
+   * Keys should include the trailing slash for prefix matching.
+   * Values should be absolute paths with trailing slash.
+   */
+  pathAliases?: Record<string, string>
 }
 
 export type ListExpressionInfo = {

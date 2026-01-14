@@ -45,6 +45,11 @@ export function isBooleanAttribute(attrName: string): boolean {
 export function generateAttributeUpdate(da: DynamicAttribute): string {
   const { id, attrName, expression } = da
 
+  if (attrName === 'dangerouslySetInnerHTML') {
+    // Extract __html property and assign to innerHTML
+    return `${id}.innerHTML = (${expression}).__html`
+  }
+
   if (attrName === 'class' || attrName === 'className') {
     // Use setAttribute for class to support both HTML and SVG elements
     // SVG elements have className as SVGAnimatedString (read-only)

@@ -37,7 +37,7 @@ describe('honoMarkedJsxAdapter', () => {
         originalImports: [],
       })
 
-      expect(result).toContain('export function Hello({ "data-key": __dataKey, __listIndex }')
+      expect(result).toContain('export function Hello({ "data-key": __dataKey, "data-bf-scope": __bfScope, __listIndex }')
       expect(result).toContain('useRequestContext')
       // Scripts are now collected for deferred rendering (via BfScripts)
       expect(result).toContain("bfOutputScripts")
@@ -73,7 +73,7 @@ describe('honoMarkedJsxAdapter', () => {
         originalImports: [],
       })
 
-      expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, __listIndex }')
+      expect(result).toContain('export function Counter({ initialCount, "data-key": __dataKey, "data-bf-scope": __bfScope, __listIndex }')
       expect(result).toContain('__isRoot')
       expect(result).toContain('bfRootComponent')
       // data-bf-props uses unique instance ID variable

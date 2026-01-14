@@ -35,7 +35,7 @@ describe('Fragment Support', () => {
     // Fragment outputs as-is, first element gets data-bf-scope with __instanceId (for unique instance identification)
     expect(file.markedJsx).toContain('<>')
     expect(file.markedJsx).toContain('</>')
-    expect(file.markedJsx).toContain('data-bf-scope": __instanceId')
+    expect(file.markedJsx).toContain('data-bf-scope": __bfScope || __instanceId')
     expect(file.markedJsx).toContain('Title')
     expect(file.markedJsx).toContain('<p>Content</p>')
   })
@@ -158,7 +158,7 @@ describe('Fragment Support', () => {
     const file = result.files[0]
 
     // Fragment outputs as-is, first element gets data-bf-scope with __instanceId (for unique instance identification)
-    expect(file.markedJsx).toContain('data-bf-scope": __instanceId')
+    expect(file.markedJsx).toContain('data-bf-scope": __bfScope || __instanceId')
     expect(file.markedJsx).toContain('Only child')
   })
 

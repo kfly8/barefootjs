@@ -98,13 +98,13 @@ export async function compileJSX(
   }
 
   // 1. Resolve all components recursively
-  const ctx = createResolveContext(readFile, rootDir, compileComponentFn)
+  const ctx = createResolveContext(readFile, rootDir, compileComponentFn, options?.pathAliases)
   await resolveComponent(entryPath, ctx)
 
   // 2. Collect and organize component data
   const componentData = collectComponentData(ctx.compiledComponents)
   const fileGroups = groupComponentsByFile(componentData)
-  const mappings = calculateFileMappings(fileGroups, rootDir)
+  const mappings = calculateFileMappings(fileGroups, rootDir, options?.pathAliases)
 
   // 3. Generate output for each file
   // Only include files with "use client" directive
@@ -113,6 +113,12 @@ export async function compileJSX(
   const files: FileOutput[] = []
 
   for (const [sourceFile, fileComponents] of fileGroups) {
+    // Skip files outside rootDir (they will be compiled when their own entry is processed)
+    // This happens when path aliases resolve to files in a different directory tree
+    if (!sourceFile.startsWith(rootDir + '/')) {
+      continue
+    }
+
     // Get directive status from first component (all components in same file share directive)
     const hasUseClientDirective = fileComponents[0]?.result.hasUseClientDirective ?? false
 
@@ -383,6 +389,11 @@ function compileJsxWithComponents(
 function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): string {
   const { attrName, expression } = da
 
+  if (attrName === 'dangerouslySetInnerHTML') {
+    // Extract __html property and assign to innerHTML
+    return `${varName}.innerHTML = (${expression}).__html`
+  }
+
   if (attrName === 'class' || attrName === 'className') {
     // Use setAttribute for class to support both HTML and SVG elements
     // SVG elements have className as SVGAnimatedString (read-only)
@@ -493,13 +504,14 @@ function generateDynamicElementEffects(
     // (e.g., element is inside a conditional that's currently false)
     if (el.expression === 'children' || el.fullContent === 'children') {
       // Handle children prop - if it's a function (lazy children), call it
-      // Only update if children is defined (static children are rendered server-side)
+      // Only update if children is defined and is a primitive (string/number)
+      // If children is an object (JSX element), it was already rendered server-side
       lines.push(...generateEffectWithInnerFinder({
         varName: v,
         elementId: el.id,
         path,
         effectBody: `${v}.textContent = String(__childrenResult)`,
-        evaluateFirst: `const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined\nif (!${v} || __childrenResult === undefined) return`,
+        evaluateFirst: `const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined\nif (!${v} || __childrenResult === undefined || typeof __childrenResult === 'object') return`,
       }))
     } else {
       // Evaluate expression first to track dependencies

@@ -37,7 +37,7 @@ describe('irToMarkedJsx', () => {
     }
     const result = irToMarkedJsx(node, 'Test', [])
     // data-bf-scope is now conditional for list compatibility
-    expect(result).toContain('data-bf-scope": __instanceId')
+    expect(result).toContain('data-bf-scope": __bfScope || __instanceId')
     expect(result).toContain('className="container"')
     expect(result).toContain('Hello')
   })
@@ -173,7 +173,7 @@ describe('irToMarkedJsx', () => {
     }
     const result = irToMarkedJsx(node, 'Test', [])
     // data-bf-scope is now conditional for list compatibility
-    expect(result).toContain('data-bf-scope": __instanceId')
+    expect(result).toContain('data-bf-scope": __bfScope || __instanceId')
     expect(result).toContain('type="text"')
   })
 })
@@ -198,7 +198,7 @@ describe('irToMarkedJsx - fragment handling', () => {
     }
     const result = irToMarkedJsx(node, 'Test', [])
     // data-bf-scope is now conditional for list compatibility
-    expect(result).toContain('data-bf-scope": __instanceId')
+    expect(result).toContain('data-bf-scope": __bfScope || __instanceId')
     expect(result).toContain('First')
     expect(result).toContain('<p>Second</p>')
   })
@@ -213,7 +213,7 @@ describe('irToMarkedJsx - fragment handling', () => {
     }
     const result = irToMarkedJsx(node, 'TestComponent', [])
     // data-bf-scope is now conditional for list compatibility
-    expect(result).toContain('data-bf-scope": __instanceId')
+    expect(result).toContain('data-bf-scope": __bfScope || __instanceId')
     // The first element should have the scope, not the second
     expect(result).toContain('<header')
     expect(result).toContain('<main></main>')
@@ -546,7 +546,7 @@ describe('irToMarkedJsx - edge cases', () => {
     }
     const result = irToMarkedJsx(node, 'Test', [])
     // data-bf-scope is now conditional for list compatibility
-    expect(result).toContain('data-bf-scope": __instanceId')
+    expect(result).toContain('data-bf-scope": __bfScope || __instanceId')
     expect(result).toContain('<div')
     expect(result).toContain('</div>')
   })
@@ -780,7 +780,7 @@ describe('irToMarkedJsx with honoMarkedJsxAdapter integration', () => {
     })
 
     expect(result).toContain('import { useRequestContext }')
-    expect(result).toContain('function Counter({ "data-key": __dataKey, __listIndex }')
+    expect(result).toContain('function Counter({ "data-key": __dataKey, "data-bf-scope": __bfScope, __listIndex }')
     expect(result).toContain("c.get('bfOutputScripts')")
     expect(result).toContain('className="counter"')
   })
@@ -837,7 +837,7 @@ describe('irToMarkedJsx with honoMarkedJsxAdapter integration', () => {
       originalImports: [],
     })
 
-    expect(result).toContain('export function TodoApp({ initialTodos, "data-key": __dataKey, __listIndex }')
+    expect(result).toContain('export function TodoApp({ initialTodos, "data-key": __dataKey, "data-bf-scope": __bfScope, __listIndex }')
     expect(result).toContain('data-bf-props={__instanceId}')
     expect(result).toContain('__hydrateProps')
     // Check that list is generated with map
