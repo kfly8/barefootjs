@@ -22,24 +22,28 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'variants', title: 'Variants', branch: 'start' },
+  { id: 'default', title: 'Default', branch: 'start' },
+  { id: 'secondary', title: 'Secondary', branch: 'child' },
+  { id: 'destructive', title: 'Destructive', branch: 'child' },
+  { id: 'outline', title: 'Outline', branch: 'child' },
+  { id: 'ghost', title: 'Ghost', branch: 'child' },
+  { id: 'link', title: 'Link', branch: 'child' },
   { id: 'sizes', title: 'Sizes', branch: 'child' },
   { id: 'disabled', title: 'Disabled', branch: 'child' },
   { id: 'interactive', title: 'Interactive', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
-const variantCode = `<Button variant="default">Default</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="destructive">Destructive</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>`
-
 const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
 <Button size="lg">Large</Button>
 <Button size="icon">
+  <PlusIcon size="sm" />
+</Button>
+<Button size="icon-sm">
+  <PlusIcon size="sm" />
+</Button>
+<Button size="icon-lg">
   <PlusIcon size="sm" />
 </Button>`
 
@@ -119,19 +123,27 @@ function ButtonExample() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div class="space-y-8">
-            <Example title="Variants" code={`
-<Button variant="default">Default</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="destructive">Destructive</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>
-`}>
+            <Example title="Default" code={`<Button variant="default">Default</Button>`}>
               <Button variant="default">Default</Button>
+            </Example>
+
+            <Example title="Secondary" code={`<Button variant="secondary">Secondary</Button>`}>
               <Button variant="secondary">Secondary</Button>
+            </Example>
+
+            <Example title="Destructive" code={`<Button variant="destructive">Destructive</Button>`}>
               <Button variant="destructive">Destructive</Button>
+            </Example>
+
+            <Example title="Outline" code={`<Button variant="outline">Outline</Button>`}>
               <Button variant="outline">Outline</Button>
+            </Example>
+
+            <Example title="Ghost" code={`<Button variant="ghost">Ghost</Button>`}>
               <Button variant="ghost">Ghost</Button>
+            </Example>
+
+            <Example title="Link" code={`<Button variant="link">Link</Button>`}>
               <Button variant="link">Link</Button>
             </Example>
 
@@ -140,6 +152,12 @@ function ButtonExample() {
               <Button size="default">Default</Button>
               <Button size="lg">Large</Button>
               <Button size="icon">
+                <PlusIcon size="sm" />
+              </Button>
+              <Button size="icon-sm">
+                <PlusIcon size="sm" />
+              </Button>
+              <Button size="icon-lg">
                 <PlusIcon size="sm" />
               </Button>
             </Example>
