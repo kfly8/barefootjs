@@ -98,13 +98,9 @@ export const renderer = jsxRenderer(
             `}</style>
           </head>
           <body>
-            {/* Desktop Header */}
             <Header currentPath={currentPath} />
-            {/* Mobile Header */}
-            <MobileHeader currentPath={currentPath} />
-            {/* Mobile Menu (FAB + Bottom Sheet) */}
+            <MobileHeader />
             <MobileMenu />
-            {/* Command Palette (global) */}
             <CommandPalette />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
