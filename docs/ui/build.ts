@@ -4,7 +4,7 @@
  * Generates (file-based output):
  * - dist/components/{Component}.tsx (Marked JSX)
  * - dist/components/{Component}-{hash}.js (Client JS)
- * - dist/barefoot.js (Runtime)
+ * - dist/components/barefoot.js (Runtime)
  * - dist/uno.css (UnoCSS output)
  * - dist/manifest.json
  *
@@ -92,13 +92,6 @@ await Bun.write(
 )
 console.log(`Generated: dist/components/${barefootFileName}`)
 
-// Also copy to dist/ root for components outside rootDir (ui/base/)
-// Their relative imports resolve to dist/ level
-await Bun.write(
-  resolve(DIST_DIR, barefootFileName),
-  Bun.file(domDistFile)
-)
-console.log(`Generated: dist/${barefootFileName}`)
 
 // Manifest
 const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[]; dependencies?: string[] }> = {
@@ -205,12 +198,10 @@ if (await Bun.file(globalsSource).exists()) {
   console.log('Copied: dist/globals.css')
 }
 
-// Copy lib/ and base/ directories to dist/
+// Copy lib/ directory to dist/
 // These are runtime utilities needed by compiled components
 const LIB_DIR = resolve(ROOT_DIR, 'lib')
-const BASE_DIR = resolve(ROOT_DIR, '../../ui/base')
 const DIST_LIB_DIR = resolve(DIST_DIR, 'lib')
-const DIST_BASE_DIR = resolve(DIST_DIR, 'base')
 
 // Copy lib/*.tsx files
 await copyTsFiles(LIB_DIR, DIST_LIB_DIR, 'dist/lib/')
@@ -252,9 +243,6 @@ await copyServerComponents(UI_COMPONENTS_DIR, DIST_COMPONENTS_DIR)
 const SHARED_DIR = resolve(ROOT_DIR, 'components/shared')
 const DIST_SHARED_DIR = resolve(DIST_COMPONENTS_DIR, 'shared')
 await copyTsFiles(SHARED_DIR, DIST_SHARED_DIR, 'dist/components/shared/')
-
-// Copy base/*.tsx files
-await copyTsFiles(BASE_DIR, DIST_BASE_DIR, 'dist/base/')
 
 // Rewrite @ui/ imports in all dist/*.tsx files to @/
 // This is needed because compiled components may reference @ui/ paths
@@ -298,10 +286,6 @@ await Bun.write(resolve(DIST_STATIC_DIR, 'uno.css'), Bun.file(resolve(DIST_DIR, 
 console.log('Copied: dist/static/globals.css')
 console.log('Copied: dist/static/uno.css')
 
-// Copy barefoot.js to static/ root for base components
-await Bun.write(resolve(DIST_STATIC_DIR, 'barefoot.js'), Bun.file(resolve(DIST_DIR, 'barefoot.js')))
-console.log('Copied: dist/static/barefoot.js')
-
 // Copy components/ to static/components/ for client JS
 async function copyDir(src: string, dest: string) {
   await mkdir(dest, { recursive: true })
@@ -318,9 +302,5 @@ async function copyDir(src: string, dest: string) {
 }
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
-
-// Copy base/ to static/base/ for base component client JS (e.g., slot)
-await copyDir(DIST_BASE_DIR, resolve(DIST_STATIC_DIR, 'base'))
-console.log('Copied: dist/static/base/')
 
 console.log('\nBuild complete!')
