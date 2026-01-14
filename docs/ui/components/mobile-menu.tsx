@@ -2,67 +2,26 @@
 
 /**
  * Mobile Menu Component
- * Hamburger menu with slide-in drawer for mobile devices.
+ *
+ * Hamburger menu for mobile devices.
+ * Features:
+ * - Hamburger button visible on mobile (hidden on xl:)
+ * - Slide-in drawer with menu items
+ * - Close on overlay click or close button
+ * - Close on navigation
  */
 
 import { createSignal, createEffect } from '@barefootjs/dom'
 import { XIcon, ChevronRightIcon, SearchIcon } from '@ui/components/ui/icon'
 
-const MENU_ITEMS = [
-  {
-    category: 'get-started',
-    label: 'Get Started',
-    items: [{ href: '/', label: 'Introduction' }],
-  },
-  {
-    category: 'components',
-    label: 'Components',
-    items: [
-      { href: '/docs/components/accordion', label: 'Accordion' },
-      { href: '/docs/components/badge', label: 'Badge' },
-      { href: '/docs/components/button', label: 'Button' },
-      { href: '/docs/components/card', label: 'Card' },
-      { href: '/docs/components/checkbox', label: 'Checkbox' },
-      { href: '/docs/components/counter', label: 'Counter' },
-      { href: '/docs/components/dialog', label: 'Dialog' },
-      { href: '/docs/components/dropdown', label: 'Dropdown' },
-      { href: '/docs/components/input', label: 'Input' },
-      { href: '/docs/components/select', label: 'Select' },
-      { href: '/docs/components/switch', label: 'Switch' },
-      { href: '/docs/components/tabs', label: 'Tabs' },
-      { href: '/docs/components/toast', label: 'Toast' },
-      { href: '/docs/components/tooltip', label: 'Tooltip' },
-    ],
-  },
-  {
-    category: 'forms',
-    label: 'Forms',
-    items: [
-      { href: '/docs/forms/controlled-input', label: 'Controlled Input' },
-      { href: '/docs/forms/field-arrays', label: 'Field Arrays' },
-      { href: '/docs/forms/submit', label: 'Submit' },
-      { href: '/docs/forms/validation', label: 'Validation' },
-    ],
-  },
-  {
-    category: 'blocks',
-    label: 'Blocks',
-    items: [],
-  },
-  {
-    category: 'charts',
-    label: 'Charts',
-    items: [],
-  },
-] as const
-
-const LINK_CLASS = 'block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline'
-const ACTIVE_LINK_CLASS = 'block py-1.5 px-3 text-sm rounded-md bg-accent text-foreground font-medium no-underline'
-const SUMMARY_CLASS = 'flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden'
-
+// Three vertical dots icon (custom, not in Icon component)
 function DotsVerticalIcon() {
   return (
-    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+    <svg
+      class="h-6 w-6"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+    >
       <circle cx="12" cy="5" r="2" />
       <circle cx="12" cy="12" r="2" />
       <circle cx="12" cy="19" r="2" />
@@ -70,125 +29,128 @@ function DotsVerticalIcon() {
   )
 }
 
-function getCategoryForPath(path: string): string | null {
-  if (path === '/') return 'get-started'
-  if (path.startsWith('/docs/components')) return 'components'
-  if (path.startsWith('/docs/forms')) return 'forms'
-  if (path.startsWith('/blocks')) return 'blocks'
-  if (path.startsWith('/charts')) return 'charts'
-  return null
-}
-
 export function MobileMenu() {
   const [open, setOpen] = createSignal(false)
-  const [expanded, setExpanded] = createSignal(false)
+  const [expanded, setExpanded] = createSignal(false) // false = 50%, true = 85%
 
+  // Event delegation for menu interactions and drag handling
   createEffect(() => {
     const toggleBtn = document.querySelector('[data-mobile-menu-toggle]')
     const closeBtn = document.querySelector('[data-mobile-menu-close]')
     const overlay = document.querySelector('[data-mobile-menu-overlay]')
-    const drawer = document.querySelector('[data-mobile-menu-drawer]') as HTMLElement | null
-    const dragHandle = document.querySelector('[data-drag-handle]') as HTMLElement | null
-    const searchBtn = document.querySelector('[data-mobile-menu-search]')
+    const drawer = document.querySelector('[data-mobile-menu-drawer]') as HTMLElement
+    const dragHandle = document.querySelector('[data-drag-handle]') as HTMLElement
 
     if (!toggleBtn || !overlay || !drawer) return
 
+    // Open current category based on URL and highlight active item
     const currentPath = window.location.pathname
+    const activeClass = 'bg-accent text-foreground font-medium'
 
-    // Highlight active menu item
+    // Find and highlight active menu item
     const allLinks = drawer.querySelectorAll('nav a[href]') as NodeListOf<HTMLAnchorElement>
-    for (const link of allLinks) {
+    allLinks.forEach(link => {
       if (link.getAttribute('href') === currentPath) {
-        link.className = ACTIVE_LINK_CLASS
+        link.className = `block py-1.5 px-3 text-sm rounded-md no-underline ${activeClass}`
+      }
+    })
+
+    // Open the category containing the current page
+    if (currentPath === '/') {
+      const details = drawer.querySelector('[data-category="get-started"]') as HTMLDetailsElement
+      if (details) details.open = true
+    } else {
+      const categoryMap: Record<string, string> = {
+        '/docs/components': 'components',
+        '/docs/forms': 'forms',
+        '/blocks': 'blocks',
+        '/charts': 'charts',
+      }
+      for (const [prefix, category] of Object.entries(categoryMap)) {
+        if (currentPath.startsWith(prefix)) {
+          const details = drawer.querySelector(`[data-category="${category}"]`) as HTMLDetailsElement
+          if (details) details.open = true
+        }
       }
     }
 
-    // Open the category containing the current page
-    const activeCategory = getCategoryForPath(currentPath)
-    if (activeCategory) {
-      const details = drawer.querySelector(`[data-category="${activeCategory}"]`) as HTMLDetailsElement | null
-      if (details) details.open = true
-    }
-
-    function openMenu(): void {
+    const openMenu = () => {
       setOpen(true)
-      setExpanded(false)
+      setExpanded(false) // Start at 50%
       document.body.style.overflow = 'hidden'
     }
 
-    function closeMenu(): void {
+    const closeMenu = () => {
       setOpen(false)
       setExpanded(false)
       document.body.style.overflow = ''
     }
 
-    // Drag handling
+    // Drag handling (supports both touch and mouse events)
     let startY = 0
     let startHeight = 0
     let isDragging = false
 
-    function handleDragStart(clientY: number): void {
+    const handleDragStart = (clientY: number) => {
       isDragging = true
       startY = clientY
-      startHeight = drawer!.offsetHeight
-      drawer!.style.transition = 'none'
+      startHeight = drawer.offsetHeight
+      drawer.style.transition = 'none'
     }
 
-    function handleDragMove(clientY: number): void {
+    const handleDragMove = (clientY: number) => {
       if (!isDragging) return
       const deltaY = startY - clientY
-      const minHeight = window.innerHeight * 0.3
-      const maxHeight = window.innerHeight * 0.85
-      const newHeight = Math.min(Math.max(startHeight + deltaY, minHeight), maxHeight)
-      drawer!.style.height = `${newHeight}px`
+      const newHeight = Math.min(Math.max(startHeight + deltaY, window.innerHeight * 0.3), window.innerHeight * 0.85)
+      drawer.style.height = `${newHeight}px`
     }
 
-    function handleDragEnd(): void {
+    const handleDragEnd = () => {
       if (!isDragging) return
       isDragging = false
-      drawer!.style.transition = ''
+      drawer.style.transition = ''
+      const currentHeight = drawer.offsetHeight
+      const threshold = window.innerHeight * 0.65
 
-      const currentHeight = drawer!.offsetHeight
-      const expandThreshold = window.innerHeight * 0.65
-      const closeThreshold = window.innerHeight * 0.35
-
-      drawer!.style.height = ''
-
-      if (currentHeight > expandThreshold) {
+      if (currentHeight > threshold) {
         setExpanded(true)
-      } else if (currentHeight < closeThreshold) {
+        drawer.style.height = ''
+      } else if (currentHeight < window.innerHeight * 0.35) {
         closeMenu()
+        drawer.style.height = ''
       } else {
         setExpanded(false)
+        drawer.style.height = ''
       }
     }
 
-    // Event handlers
-    function handleTouchStart(e: TouchEvent): void {
-      handleDragStart(e.touches[0].clientY)
-    }
-    function handleTouchMove(e: TouchEvent): void {
-      handleDragMove(e.touches[0].clientY)
-    }
-    function handleMouseDown(e: MouseEvent): void {
+    // Touch events
+    const handleTouchStart = (e: TouchEvent) => handleDragStart(e.touches[0].clientY)
+    const handleTouchMove = (e: TouchEvent) => handleDragMove(e.touches[0].clientY)
+    const handleTouchEnd = () => handleDragEnd()
+
+    // Mouse events (for PC)
+    const handleMouseDown = (e: MouseEvent) => {
       e.preventDefault()
       handleDragStart(e.clientY)
     }
-    function handleMouseMove(e: MouseEvent): void {
-      handleDragMove(e.clientY)
-    }
+    const handleMouseMove = (e: MouseEvent) => handleDragMove(e.clientY)
+    const handleMouseUp = () => handleDragEnd()
 
-    function handleOverlayClick(e: Event): void {
+    const handleToggleClick = () => openMenu()
+    const handleCloseClick = () => closeMenu()
+    const handleOverlayClick = (e: Event) => {
       if (e.target === overlay) closeMenu()
     }
-
-    function handleNavClick(e: Event): void {
+    const handleNavClick = (e: Event) => {
       const target = e.target as HTMLElement
       if (target.tagName === 'A') closeMenu()
     }
 
-    function handleSearchClick(): void {
+    const searchBtn = document.querySelector('[data-mobile-menu-search]')
+    const handleSearchClick = () => {
       closeMenu()
+      // Dispatch Cmd+K event to open command palette
       setTimeout(() => {
         const event = new KeyboardEvent('keydown', {
           key: 'k',
@@ -200,35 +162,40 @@ export function MobileMenu() {
       }, 100)
     }
 
-    toggleBtn.addEventListener('click', openMenu)
-    closeBtn?.addEventListener('click', closeMenu)
+    toggleBtn.addEventListener('click', handleToggleClick)
+    closeBtn?.addEventListener('click', handleCloseClick)
     overlay.addEventListener('click', handleOverlayClick)
     drawer.addEventListener('click', handleNavClick)
     searchBtn?.addEventListener('click', handleSearchClick)
+    // Touch events
     dragHandle?.addEventListener('touchstart', handleTouchStart)
     document.addEventListener('touchmove', handleTouchMove)
-    document.addEventListener('touchend', handleDragEnd)
+    document.addEventListener('touchend', handleTouchEnd)
+    // Mouse events (for PC)
     dragHandle?.addEventListener('mousedown', handleMouseDown)
     document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleDragEnd)
+    document.addEventListener('mouseup', handleMouseUp)
 
     return () => {
-      toggleBtn.removeEventListener('click', openMenu)
-      closeBtn?.removeEventListener('click', closeMenu)
+      toggleBtn.removeEventListener('click', handleToggleClick)
+      closeBtn?.removeEventListener('click', handleCloseClick)
       overlay.removeEventListener('click', handleOverlayClick)
       drawer.removeEventListener('click', handleNavClick)
       searchBtn?.removeEventListener('click', handleSearchClick)
+      // Touch events
       dragHandle?.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchmove', handleTouchMove)
-      document.removeEventListener('touchend', handleDragEnd)
+      document.removeEventListener('touchend', handleTouchEnd)
+      // Mouse events
       dragHandle?.removeEventListener('mousedown', handleMouseDown)
       document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleDragEnd)
+      document.removeEventListener('mouseup', handleMouseUp)
     }
   })
 
   return (
     <>
+      {/* Menu button - fixed at bottom right, visible on mobile only */}
       <button
         data-mobile-menu-toggle
         class="sm:hidden fixed bottom-6 right-6 z-[10000] w-14 h-14 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
@@ -237,21 +204,25 @@ export function MobileMenu() {
         <DotsVerticalIcon />
       </button>
 
+      {/* Overlay */}
       <div
         data-mobile-menu-overlay
         data-state={open() ? 'open' : 'closed'}
         class="fixed inset-0 z-[10001] bg-black/50 sm:hidden transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=closed]:pointer-events-none"
       >
+        {/* Bottom Sheet */}
         <div
           data-mobile-menu-drawer
           class="fixed bottom-0 left-0 right-0 z-[10002] bg-background rounded-t-2xl shadow-lg transform transition-all duration-300 ease-out data-[state=closed]:translate-y-full data-[expanded=false]:h-[50vh] data-[expanded=true]:h-[85vh]"
           data-state={open() ? 'open' : 'closed'}
           data-expanded={expanded() ? 'true' : 'false'}
         >
+          {/* Drag Handle */}
           <div data-drag-handle class="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none">
             <div class="w-12 h-1.5 bg-muted-foreground/30 rounded-full"></div>
           </div>
 
+          {/* Header */}
           <div class="flex items-center justify-between px-4 pb-3 border-b border-border">
             <a href="/" class="text-lg font-semibold text-foreground no-underline">
               BarefootJS
@@ -265,6 +236,7 @@ export function MobileMenu() {
             </button>
           </div>
 
+          {/* Search Button */}
           <div class="px-4 py-3 border-b border-border">
             <button
               data-mobile-menu-search
@@ -276,23 +248,81 @@ export function MobileMenu() {
             </button>
           </div>
 
+          {/* Navigation */}
           <nav class="p-4 overflow-y-auto h-[calc(100%-140px)]">
             <div class="space-y-1">
-              {MENU_ITEMS.map(({ category, label, items }) => (
-                <details key={category} data-category={category} class="mb-2 group">
-                  <summary class={SUMMARY_CLASS}>
-                    <span>{label}</span>
-                    <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
-                  </summary>
-                  <div class="pl-2 py-1 space-y-0.5">
-                    {items.map((item) => (
-                      <a key={item.href} href={item.href} class={LINK_CLASS}>
-                        {item.label}
-                      </a>
-                    ))}
-                  </div>
-                </details>
-              ))}
+              {/* Get Started */}
+              <details data-category="get-started" class="mb-2 group">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                  <span>Get Started</span>
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
+                </summary>
+                <div class="pl-2 py-1 space-y-0.5">
+                  <a href="/" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">
+                    Introduction
+                  </a>
+                </div>
+              </details>
+
+              {/* Components */}
+              <details data-category="components" class="mb-2 group">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                  <span>Components</span>
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
+                </summary>
+                <div class="pl-2 py-1 space-y-0.5">
+                  <a href="/docs/components/accordion" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Accordion</a>
+                  <a href="/docs/components/badge" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Badge</a>
+                  <a href="/docs/components/button" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Button</a>
+                  <a href="/docs/components/card" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Card</a>
+                  <a href="/docs/components/checkbox" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Checkbox</a>
+                  <a href="/docs/components/counter" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Counter</a>
+                  <a href="/docs/components/dialog" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Dialog</a>
+                  <a href="/docs/components/dropdown" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Dropdown</a>
+                  <a href="/docs/components/input" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Input</a>
+                  <a href="/docs/components/select" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Select</a>
+                  <a href="/docs/components/switch" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Switch</a>
+                  <a href="/docs/components/tabs" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Tabs</a>
+                  <a href="/docs/components/toast" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Toast</a>
+                  <a href="/docs/components/tooltip" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Tooltip</a>
+                </div>
+              </details>
+
+              {/* Forms */}
+              <details data-category="forms" class="mb-2 group">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                  <span>Forms</span>
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
+                </summary>
+                <div class="pl-2 py-1 space-y-0.5">
+                  <a href="/docs/forms/controlled-input" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Controlled Input</a>
+                  <a href="/docs/forms/field-arrays" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Field Arrays</a>
+                  <a href="/docs/forms/submit" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Submit</a>
+                  <a href="/docs/forms/validation" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Validation</a>
+                </div>
+              </details>
+
+              {/* Blocks */}
+              <details data-category="blocks" class="mb-2 group">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                  <span>Blocks</span>
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
+                </summary>
+                <div class="pl-2 py-1 space-y-0.5">
+                  {/* Empty for now */}
+                </div>
+              </details>
+
+              {/* Charts */}
+              <details data-category="charts" class="mb-2 group">
+                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                  <span>Charts</span>
+                  <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
+                </summary>
+                <div class="pl-2 py-1 space-y-0.5">
+                  {/* Empty for now */}
+                </div>
+              </details>
             </div>
           </nav>
         </div>
