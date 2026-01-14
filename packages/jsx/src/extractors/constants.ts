@@ -121,7 +121,12 @@ export function extractModuleVariables(source: string, filePath: string): Module
       // Extract module-level values (including functions)
       if (isModuleLevelValue(decl.initializer)) {
         const name = decl.name.text
-        const value = decl.initializer.getText(sourceFile)
+        // Strip TypeScript type assertions (as const, as Type, satisfies Type)
+        let initExpr = decl.initializer
+        while (ts.isAsExpression(initExpr) || ts.isSatisfiesExpression(initExpr)) {
+          initExpr = initExpr.expression
+        }
+        const value = initExpr.getText(sourceFile)
         // Reconstruct declaration without type annotations (for client JS)
         const keyword = isConst ? 'const' : 'let'
         const code = `${keyword} ${name} = ${value}`
