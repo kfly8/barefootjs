@@ -498,13 +498,14 @@ function generateDynamicElementEffects(
     // (e.g., element is inside a conditional that's currently false)
     if (el.expression === 'children' || el.fullContent === 'children') {
       // Handle children prop - if it's a function (lazy children), call it
-      // Only update if children is defined (static children are rendered server-side)
+      // Only update if children is defined and is a primitive (string/number)
+      // If children is an object (JSX element), it was already rendered server-side
       lines.push(...generateEffectWithInnerFinder({
         varName: v,
         elementId: el.id,
         path,
         effectBody: `${v}.textContent = String(__childrenResult)`,
-        evaluateFirst: `const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined\nif (!${v} || __childrenResult === undefined) return`,
+        evaluateFirst: `const __childrenResult = children !== undefined ? (typeof children === 'function' ? children() : children) : undefined\nif (!${v} || __childrenResult === undefined || typeof __childrenResult === 'object') return`,
       }))
     } else {
       // Evaluate expression first to track dependencies
