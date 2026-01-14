@@ -383,6 +383,11 @@ function compileJsxWithComponents(
 function generateAttributeUpdateWithVar(da: DynamicAttribute, varName: string): string {
   const { attrName, expression } = da
 
+  if (attrName === 'dangerouslySetInnerHTML') {
+    // Extract __html property and assign to innerHTML
+    return `${varName}.innerHTML = (${expression}).__html`
+  }
+
   if (attrName === 'class' || attrName === 'className') {
     // Use setAttribute for class to support both HTML and SVG elements
     // SVG elements have className as SVGAnimatedString (read-only)

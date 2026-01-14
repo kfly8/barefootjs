@@ -171,6 +171,7 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
   const { tagName, id, staticAttrs, dynamicAttrs, children, listInfo, events } = el
 
   const attrParts: string[] = []
+  let dangerousInnerHtml: string | null = null
 
   if (isRoot && ctx.componentName) {
     // Use suffix format to match client JS prefix matching (ComponentName_xxx)
@@ -201,6 +202,14 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
   }
 
   for (const attr of dynamicAttrs) {
+    // Handle dangerouslySetInnerHTML specially - extract __html and use as innerHTML
+    if (attr.name === 'dangerouslySetInnerHTML') {
+      const value = evaluateExpression(attr.expression, ctx)
+      if (value && typeof value === 'object' && '__html' in value) {
+        dangerousInnerHtml = value.__html
+      }
+      continue
+    }
     const value = evaluateExpression(attr.expression, ctx)
     if (value !== undefined && value !== null && value !== false) {
       if (value === true) {
@@ -233,6 +242,11 @@ function elementToHtml(el: IRElement, ctx: HtmlContext, isRoot: boolean): string
       return `<${tagName}${attrsStr}>${itemsHtml}</${tagName}>`
     }
     return `<${tagName}${attrsStr}></${tagName}>`
+  }
+
+  // If dangerouslySetInnerHTML is set, use it instead of children
+  if (dangerousInnerHtml !== null) {
+    return `<${tagName}${attrsStr}>${dangerousInnerHtml}</${tagName}>`
   }
 
   const childrenHtml = children.map(child => irToHtmlInternal(child, ctx, false)).join('')

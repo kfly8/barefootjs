@@ -515,4 +515,69 @@ describe('Attributes Specs', () => {
     // Spread on self-closing compiles successfully
     expect(result.html).toBeTruthy()
   })
+
+  // ATTR-024: dangerouslySetInnerHTML - innerHTML assignment
+  describe('ATTR-024: dangerouslySetInnerHTML static', () => {
+    it('renders HTML content via innerHTML', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <div dangerouslySetInnerHTML={{ __html: '<strong>Bold</strong>' }} />
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const div = container.querySelector('div')!
+      expect(div.innerHTML).toBe('<strong>Bold</strong>')
+
+      cleanup()
+    })
+
+    it('renders complex HTML content', async () => {
+      const source = `
+        "use client"
+        function Component() {
+          return <div dangerouslySetInnerHTML={{ __html: '<span class="highlight">Code</span>' }} />
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const div = container.querySelector('div')!
+      expect(div.innerHTML).toBe('<span class="highlight">Code</span>')
+
+      cleanup()
+    })
+  })
+
+  // ATTR-025: dangerouslySetInnerHTML - dynamic innerHTML
+  describe('ATTR-025: dangerouslySetInnerHTML dynamic', () => {
+    it('updates innerHTML when signal changes', async () => {
+      const source = `
+        "use client"
+        import { createSignal } from 'barefoot'
+        function Component() {
+          const [html, setHtml] = createSignal('<em>Initial</em>')
+          return (
+            <div>
+              <div class="content" dangerouslySetInnerHTML={{ __html: html() }} />
+              <button onClick={() => setHtml('<strong>Updated</strong>')}>Update</button>
+            </div>
+          )
+        }
+      `
+      const result = await compile(source)
+      const { container, cleanup } = await setupDOM(result)
+
+      const content = container.querySelector('.content')!
+      expect(content.innerHTML).toBe('<em>Initial</em>')
+
+      click(container.querySelector('button')!)
+      await waitForUpdate()
+      expect(content.innerHTML).toBe('<strong>Updated</strong>')
+
+      cleanup()
+    })
+  })
 })

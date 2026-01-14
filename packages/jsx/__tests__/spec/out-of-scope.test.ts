@@ -38,13 +38,8 @@ describe('Out of Scope Specs', () => {
     expect(true).toBe(true)
   })
 
-  // OOS-004: dangerouslySetInnerHTML not supported
-  it('OOS-004: documents that dangerouslySetInnerHTML is not supported', () => {
-    // dangerouslySetInnerHTML is intentionally not supported for security
-    // Users should construct safe HTML programmatically
-    // This is a documentation test
-    expect(true).toBe(true)
-  })
+  // OOS-004: dangerouslySetInnerHTML - NOW SUPPORTED (see ATTR-024, ATTR-025)
+  // Moved to attributes.test.ts
 
   // OOS-005: Class components not supported
   it('OOS-005: documents that class components are not supported', () => {
