@@ -30,7 +30,6 @@ const tocItems: TocItem[] = [
   { id: 'link', title: 'Link', branch: 'child' },
   { id: 'sizes', title: 'Sizes', branch: 'child' },
   { id: 'icon-sizes', title: 'Icon Sizes', branch: 'child' },
-  { id: 'disabled', title: 'Disabled', branch: 'child' },
   { id: 'interactive', title: 'Interactive', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -48,9 +47,6 @@ const iconSizeCode = `<Button size="icon-sm">
 <Button size="icon-lg">
   <PlusIcon size="sm" />
 </Button>`
-
-const disabledCode = `<Button disabled>Disabled</Button>
-<Button variant="outline" disabled>Disabled</Button>`
 
 const interactiveCode = `const [count, setCount] = createSignal(0)
 <Button onClick={() => setCount(n => n + 1)}>
@@ -161,11 +157,6 @@ function ButtonExample() {
               <Button size="icon-lg">
                 <PlusIcon size="sm" />
               </Button>
-            </Example>
-
-            <Example title="Disabled" code={disabledCode}>
-              <Button disabled>Disabled</Button>
-              <Button variant="outline" disabled>Disabled</Button>
             </Example>
 
             <Example title="Interactive" code={interactiveCode}>
