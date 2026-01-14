@@ -77,7 +77,6 @@ const buttonProps: PropDefinition[] = [
   },
 ]
 
-
 export function ButtonPage() {
   // Generate highlighted commands inside component (after Shiki is initialized)
   const installCommands = getHighlightedCommands('barefoot add button')
@@ -91,7 +90,6 @@ export function ButtonPage() {
           {...getNavLinks('button')}
         />
 
-        {/* Preview */}
         <Example title="" code={`
 import { Button } from "@/components/ui/button"
 import { PlusIcon } from "@/components/ui/icon"
@@ -115,12 +113,10 @@ function ButtonExample() {
           </div>
         </Example>
 
-        {/* Installation */}
         <Section id="installation" title="Installation">
           <PackageManagerTabs command="barefoot add button" highlightedCommands={installCommands} />
         </Section>
 
-        {/* Examples */}
         <Section id="examples" title="Examples">
           <div class="space-y-8">
             <Example title="Default" code={`<Button variant="default">Default</Button>`}>
@@ -173,7 +169,6 @@ function ButtonExample() {
           </div>
         </Section>
 
-        {/* API Reference */}
         <Section id="api-reference" title="API Reference">
           <PropsTable props={buttonProps} />
         </Section>
