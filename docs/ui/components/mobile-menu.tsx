@@ -12,7 +12,7 @@
  */
 
 import { createSignal, createEffect } from '@barefootjs/dom'
-import { XIcon, ChevronRightIcon } from '@ui/components/ui/icon'
+import { XIcon, ChevronRightIcon, SearchIcon } from '@ui/components/ui/icon'
 
 // Three vertical dots icon (custom, not in Icon component)
 function DotsVerticalIcon() {
@@ -147,10 +147,26 @@ export function MobileMenu() {
       if (target.tagName === 'A') closeMenu()
     }
 
+    const searchBtn = document.querySelector('[data-mobile-menu-search]')
+    const handleSearchClick = () => {
+      closeMenu()
+      // Dispatch Cmd+K event to open command palette
+      setTimeout(() => {
+        const event = new KeyboardEvent('keydown', {
+          key: 'k',
+          metaKey: true,
+          ctrlKey: true,
+          bubbles: true,
+        })
+        document.dispatchEvent(event)
+      }, 100)
+    }
+
     toggleBtn.addEventListener('click', handleToggleClick)
     closeBtn?.addEventListener('click', handleCloseClick)
     overlay.addEventListener('click', handleOverlayClick)
     drawer.addEventListener('click', handleNavClick)
+    searchBtn?.addEventListener('click', handleSearchClick)
     // Touch events
     dragHandle?.addEventListener('touchstart', handleTouchStart)
     document.addEventListener('touchmove', handleTouchMove)
@@ -165,6 +181,7 @@ export function MobileMenu() {
       closeBtn?.removeEventListener('click', handleCloseClick)
       overlay.removeEventListener('click', handleOverlayClick)
       drawer.removeEventListener('click', handleNavClick)
+      searchBtn?.removeEventListener('click', handleSearchClick)
       // Touch events
       dragHandle?.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchmove', handleTouchMove)
@@ -207,7 +224,7 @@ export function MobileMenu() {
 
           {/* Header */}
           <div class="flex items-center justify-between px-4 pb-3 border-b border-border">
-            <a href="/" class="text-lg font-semibold text-foreground">
+            <a href="/" class="text-lg font-semibold text-foreground no-underline">
               BarefootJS
             </a>
             <button
@@ -219,8 +236,20 @@ export function MobileMenu() {
             </button>
           </div>
 
+          {/* Search Button */}
+          <div class="px-4 py-3 border-b border-border">
+            <button
+              data-mobile-menu-search
+              type="button"
+              class="flex items-center gap-2 w-full h-10 rounded-md border border-border bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-accent transition-colors"
+            >
+              <SearchIcon size="md" />
+              <span>Search...</span>
+            </button>
+          </div>
+
           {/* Navigation */}
-          <nav class="p-4 overflow-y-auto h-[calc(100%-80px)]">
+          <nav class="p-4 overflow-y-auto h-[calc(100%-140px)]">
             <div class="space-y-1">
               {/* Get Started */}
               <details data-category="get-started" class="mb-2 group">
