@@ -3,18 +3,32 @@
  *
  * Provides build-time syntax highlighting for code blocks.
  * Uses Shiki with dark/light theme support.
+ *
+ * Uses fine-grained bundles and JavaScript RegExp engine for Cloudflare Workers compatibility.
+ * The JavaScript engine avoids WASM which has restrictions in Workers environments.
  */
 
-import { createHighlighter, type BundledLanguage } from 'shiki'
+import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
+
+// Fine-grained theme imports
+import githubLight from '@shikijs/themes/github-light'
+import githubDark from '@shikijs/themes/github-dark'
+
+// Fine-grained language imports
+import langTsx from '@shikijs/langs/tsx'
+import langTypescript from '@shikijs/langs/typescript'
+import langJavascript from '@shikijs/langs/javascript'
+import langBash from '@shikijs/langs/bash'
+import langJson from '@shikijs/langs/json'
+import langHtml from '@shikijs/langs/html'
+import langCss from '@shikijs/langs/css'
 
 // Singleton highlighter instance
-let highlighter: Awaited<ReturnType<typeof createHighlighter>> | null = null
-
-// Supported languages
-type SupportedLang = 'tsx' | 'typescript' | 'javascript' | 'bash' | 'json' | 'css' | 'html'
+let highlighter: HighlighterCore | null = null
 
 // Language mapping for common aliases
-const langMap: Record<string, BundledLanguage> = {
+const langMap: Record<string, string> = {
   tsx: 'tsx',
   ts: 'typescript',
   typescript: 'typescript',
@@ -31,13 +45,15 @@ const langMap: Record<string, BundledLanguage> = {
 /**
  * Initialize the Shiki highlighter.
  * Call this once at application startup.
+ * Uses JavaScript RegExp engine for Cloudflare Workers compatibility (no WASM).
  */
 export async function initHighlighter(): Promise<void> {
   if (highlighter) return
 
-  highlighter = await createHighlighter({
-    themes: ['github-dark', 'github-light'],
-    langs: ['tsx', 'typescript', 'javascript', 'bash', 'json', 'css', 'html'],
+  highlighter = await createHighlighterCore({
+    themes: [githubDark, githubLight],
+    langs: [langTsx, langTypescript, langJavascript, langBash, langJson, langCss, langHtml],
+    engine: createJavaScriptRegexEngine(),
   })
 }
 
