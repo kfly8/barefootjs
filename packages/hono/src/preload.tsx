@@ -48,7 +48,7 @@ export type Manifest = Record<string, ManifestEntry>
 export interface BfPreloadProps {
   /**
    * Path to static files directory.
-   * @default '/static/components'
+   * @default '/static'
    */
   staticPath?: string
 
@@ -126,7 +126,7 @@ function resolveDependencyChain(
  * preloads the full dependency chain for those components.
  */
 export function BfPreload({
-  staticPath = '/static/components',
+  staticPath = '/static',
   scripts = [],
   includeRuntime = true,
   manifest,
@@ -136,7 +136,7 @@ export function BfPreload({
 
   // Always preload the barefoot runtime first (most critical)
   if (includeRuntime) {
-    urls.push(`${staticPath}/barefoot.js`)
+    urls.push(`${staticPath}/components/barefoot.js`)
   }
 
   // Auto-preload component dependencies from manifest
