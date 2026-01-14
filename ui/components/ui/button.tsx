@@ -25,7 +25,7 @@
  */
 
 import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
-import { Slot } from '../../base/slot'
+import { Slot } from './slot'
 
 // Type definitions for button variants
 type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'

@@ -12,7 +12,7 @@
  *   <Slot class="btn">{children}</Slot>
  */
 
-import type { Child } from '../types'
+import type { Child } from '../../types'
 
 export interface SlotProps {
   children?: Child
