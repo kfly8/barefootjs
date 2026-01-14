@@ -29,6 +29,7 @@ const tocItems: TocItem[] = [
   { id: 'ghost', title: 'Ghost', branch: 'child' },
   { id: 'link', title: 'Link', branch: 'child' },
   { id: 'sizes', title: 'Sizes', branch: 'child' },
+  { id: 'icon-sizes', title: 'Icon Sizes', branch: 'child' },
   { id: 'disabled', title: 'Disabled', branch: 'child' },
   { id: 'interactive', title: 'Interactive', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
@@ -36,11 +37,12 @@ const tocItems: TocItem[] = [
 
 const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
-<Button size="lg">Large</Button>
-<Button size="icon">
+<Button size="lg">Large</Button>`
+
+const iconSizeCode = `<Button size="icon-sm">
   <PlusIcon size="sm" />
 </Button>
-<Button size="icon-sm">
+<Button size="icon">
   <PlusIcon size="sm" />
 </Button>
 <Button size="icon-lg">
@@ -147,10 +149,13 @@ function ButtonExample() {
               <Button size="sm">Small</Button>
               <Button size="default">Default</Button>
               <Button size="lg">Large</Button>
-              <Button size="icon">
+            </Example>
+
+            <Example title="Icon Sizes" code={iconSizeCode}>
+              <Button size="icon-sm">
                 <PlusIcon size="sm" />
               </Button>
-              <Button size="icon-sm">
+              <Button size="icon">
                 <PlusIcon size="sm" />
               </Button>
               <Button size="icon-lg">
