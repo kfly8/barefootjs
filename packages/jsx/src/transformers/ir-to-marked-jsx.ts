@@ -205,8 +205,9 @@ function irToMarkedJsxInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: bool
       }
 
       // Static conditional - use standard processing
-      const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx)
-      const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx)
+      // Pass isRoot to branches so elements get data-bf-scope when at component root
+      const whenTrue = nodeToJsxExpressionValueInternal(node.whenTrue, ctx, isRoot)
+      const whenFalse = nodeToJsxExpressionValueInternal(node.whenFalse, ctx, isRoot)
       return `{${condition} ? ${whenTrue} : ${whenFalse}}`
 
     case 'element':
@@ -242,9 +243,10 @@ function fragmentToMarkedJsxInternal(node: IRFragment, ctx: MarkedJsxContext, is
  *
  * @param node - IR node to convert
  * @param ctx - Marked JSX context
+ * @param isRoot - Whether this is the root element (for data-bf-scope injection)
  * @returns String suitable for use inside JSX expression (e.g., ternary)
  */
-function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext): string {
+function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext, isRoot: boolean = false): string {
   switch (node.type) {
     case 'text':
       // Text inside expression context needs to be a quoted string
@@ -258,7 +260,8 @@ function nodeToJsxExpressionValueInternal(node: IRNode, ctx: MarkedJsxContext): 
 
     case 'element':
       // Element is valid JSX, use as-is
-      return elementToMarkedJsxInternal(node, ctx, false)
+      // Pass isRoot so root element gets data-bf-scope
+      return elementToMarkedJsxInternal(node, ctx, isRoot)
 
     case 'conditional':
       // Nested conditional - recursively process

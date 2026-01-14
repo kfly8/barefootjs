@@ -155,8 +155,8 @@ describe('irToMarkedJsx', () => {
       { getter: 'isOn', setter: 'setIsOn', initialValue: 'false' },
     ]
     const result = irToMarkedJsx(node, 'Test', isOnSignal)
-    // Element branches are valid JSX as-is
-    expect(result).toBe('{false ? <span className="on">ON</span> : <span className="off">OFF</span>}')
+    // Element branches at root get data-bf-scope for hydration
+    expect(result).toBe('{false ? <span {...(__listIndex === undefined ? { "data-bf-scope": __bfScope || __instanceId } : {})} className="on">ON</span> : <span {...(__listIndex === undefined ? { "data-bf-scope": __bfScope || __instanceId } : {})} className="off">OFF</span>}')
   })
 
   it('handles self-closing tags', () => {
