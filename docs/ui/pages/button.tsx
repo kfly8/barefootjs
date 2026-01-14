@@ -22,34 +22,43 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'variants', title: 'Variants', branch: 'start' },
+  { id: 'default', title: 'Default', branch: 'start' },
+  { id: 'secondary', title: 'Secondary', branch: 'child' },
+  { id: 'destructive', title: 'Destructive', branch: 'child' },
+  { id: 'outline', title: 'Outline', branch: 'child' },
+  { id: 'ghost', title: 'Ghost', branch: 'child' },
+  { id: 'link', title: 'Link', branch: 'child' },
   { id: 'sizes', title: 'Sizes', branch: 'child' },
-  { id: 'disabled', title: 'Disabled', branch: 'child' },
-  { id: 'interactive', title: 'Interactive', branch: 'end' },
+  { id: 'icon-sizes', title: 'Icon Sizes', branch: 'child' },
+  { id: 'counter', title: 'Counter', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
-const variantCode = `<Button variant="default">Default</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="destructive">Destructive</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>`
-
 const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
-<Button size="lg">Large</Button>
+<Button size="lg">Large</Button>`
+
+const iconSizeCode = `<Button size="icon-sm">
+  <PlusIcon size="sm" />
+</Button>
 <Button size="icon">
+  <PlusIcon size="sm" />
+</Button>
+<Button size="icon-lg">
   <PlusIcon size="sm" />
 </Button>`
 
-const disabledCode = `<Button disabled>Disabled</Button>
-<Button variant="outline" disabled>Disabled</Button>`
+const counterCode = `import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
 
-const interactiveCode = `const [count, setCount] = createSignal(0)
-<Button onClick={() => setCount(n => n + 1)}>
-  Clicked {count()} times
-</Button>`
+function Counter() {
+  const [count, setCount] = createSignal(0)
+  return (
+    <Button onClick={() => setCount(n => n + 1)}>
+      Clicked {count()} times
+    </Button>
+  )
+}`
 
 // Props definition
 const buttonProps: PropDefinition[] = [
@@ -73,7 +82,6 @@ const buttonProps: PropDefinition[] = [
   },
 ]
 
-
 export function ButtonPage() {
   // Generate highlighted commands inside component (after Shiki is initialized)
   const installCommands = getHighlightedCommands('barefoot add button')
@@ -87,9 +95,7 @@ export function ButtonPage() {
           {...getNavLinks('button')}
         />
 
-        {/* Preview */}
-        <Example title="" code={`
-import { Button } from "@/components/ui/button"
+        <Example title="" code={`import { Button } from "@/components/ui/button"
 import { PlusIcon } from "@/components/ui/icon"
 
 function ButtonExample() {
@@ -111,27 +117,33 @@ function ButtonExample() {
           </div>
         </Example>
 
-        {/* Installation */}
         <Section id="installation" title="Installation">
           <PackageManagerTabs command="barefoot add button" highlightedCommands={installCommands} />
         </Section>
 
-        {/* Examples */}
         <Section id="examples" title="Examples">
           <div class="space-y-8">
-            <Example title="Variants" code={`
-<Button variant="default">Default</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="destructive">Destructive</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>
-`}>
+            <Example title="Default" code={`<Button variant="default">Default</Button>`}>
               <Button variant="default">Default</Button>
+            </Example>
+
+            <Example title="Secondary" code={`<Button variant="secondary">Secondary</Button>`}>
               <Button variant="secondary">Secondary</Button>
+            </Example>
+
+            <Example title="Destructive" code={`<Button variant="destructive">Destructive</Button>`}>
               <Button variant="destructive">Destructive</Button>
+            </Example>
+
+            <Example title="Outline" code={`<Button variant="outline">Outline</Button>`}>
               <Button variant="outline">Outline</Button>
+            </Example>
+
+            <Example title="Ghost" code={`<Button variant="ghost">Ghost</Button>`}>
               <Button variant="ghost">Ghost</Button>
+            </Example>
+
+            <Example title="Link" code={`<Button variant="link">Link</Button>`}>
               <Button variant="link">Link</Button>
             </Example>
 
@@ -139,23 +151,26 @@ function ButtonExample() {
               <Button size="sm">Small</Button>
               <Button size="default">Default</Button>
               <Button size="lg">Large</Button>
+            </Example>
+
+            <Example title="Icon Sizes" code={iconSizeCode}>
+              <Button size="icon-sm">
+                <PlusIcon size="sm" />
+              </Button>
               <Button size="icon">
+                <PlusIcon size="sm" />
+              </Button>
+              <Button size="icon-lg">
                 <PlusIcon size="sm" />
               </Button>
             </Example>
 
-            <Example title="Disabled" code={disabledCode}>
-              <Button disabled>Disabled</Button>
-              <Button variant="outline" disabled>Disabled</Button>
-            </Example>
-
-            <Example title="Interactive" code={interactiveCode}>
+            <Example title="Counter" code={counterCode}>
               <ButtonDemo />
             </Example>
           </div>
         </Section>
 
-        {/* API Reference */}
         <Section id="api-reference" title="API Reference">
           <PropsTable props={buttonProps} />
         </Section>
