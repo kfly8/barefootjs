@@ -12,7 +12,7 @@
  */
 
 import { createSignal, createEffect } from '@barefootjs/dom'
-import { XIcon, ChevronRightIcon, SearchIcon } from '@ui/components/ui/icon'
+import { XIcon, ChevronRightIcon } from '@ui/components/ui/icon'
 
 // Three vertical dots icon (custom, not in Icon component)
 function DotsVerticalIcon() {
@@ -147,26 +147,10 @@ export function MobileMenu() {
       if (target.tagName === 'A') closeMenu()
     }
 
-    const searchBtn = document.querySelector('[data-mobile-menu-search]')
-    const handleSearchClick = () => {
-      closeMenu()
-      // Dispatch Cmd+K event to open command palette
-      setTimeout(() => {
-        const event = new KeyboardEvent('keydown', {
-          key: 'k',
-          metaKey: true,
-          ctrlKey: true,
-          bubbles: true,
-        })
-        document.dispatchEvent(event)
-      }, 100)
-    }
-
     toggleBtn.addEventListener('click', handleToggleClick)
     closeBtn?.addEventListener('click', handleCloseClick)
     overlay.addEventListener('click', handleOverlayClick)
     drawer.addEventListener('click', handleNavClick)
-    searchBtn?.addEventListener('click', handleSearchClick)
     // Touch events
     dragHandle?.addEventListener('touchstart', handleTouchStart)
     document.addEventListener('touchmove', handleTouchMove)
@@ -181,7 +165,6 @@ export function MobileMenu() {
       closeBtn?.removeEventListener('click', handleCloseClick)
       overlay.removeEventListener('click', handleOverlayClick)
       drawer.removeEventListener('click', handleNavClick)
-      searchBtn?.removeEventListener('click', handleSearchClick)
       // Touch events
       dragHandle?.removeEventListener('touchstart', handleTouchStart)
       document.removeEventListener('touchmove', handleTouchMove)
@@ -217,39 +200,22 @@ export function MobileMenu() {
           data-state={open() ? 'open' : 'closed'}
           data-expanded={expanded() ? 'true' : 'false'}
         >
-          {/* Drag Handle */}
-          <div data-drag-handle class="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none">
-            <div class="w-12 h-1.5 bg-muted-foreground/30 rounded-full"></div>
-          </div>
-
-          {/* Header */}
-          <div class="flex items-center justify-between px-4 pb-3 border-b border-border">
-            <a href="/" class="text-lg font-semibold text-foreground no-underline">
-              BarefootJS
-            </a>
+          {/* Drag Handle + Close Button */}
+          <div class="flex items-center justify-between px-4 pt-3 pb-2">
+            <div data-drag-handle class="flex-1 flex justify-center cursor-grab active:cursor-grabbing touch-none">
+              <div class="w-12 h-1.5 bg-muted-foreground/30 rounded-full"></div>
+            </div>
             <button
               data-mobile-menu-close
-              class="p-2 text-foreground hover:bg-accent rounded-md transition-colors"
+              class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
               aria-label="Close menu"
             >
-              <XIcon size="lg" />
-            </button>
-          </div>
-
-          {/* Search Button */}
-          <div class="px-4 py-3 border-b border-border">
-            <button
-              data-mobile-menu-search
-              type="button"
-              class="flex items-center gap-2 w-full h-10 rounded-md border border-border bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-accent transition-colors"
-            >
-              <SearchIcon size="md" />
-              <span>Search...</span>
+              <XIcon size="md" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav class="p-4 overflow-y-auto h-[calc(100%-140px)]">
+          <nav class="p-4 overflow-y-auto h-[calc(100%-48px)]">
             <div class="space-y-1">
               {/* Get Started */}
               <details data-category="get-started" class="mb-2 group">
