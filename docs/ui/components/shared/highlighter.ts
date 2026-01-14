@@ -4,14 +4,27 @@
  * Initializes Shiki with commonly used languages for documentation.
  * Must be initialized before use via initHighlighter().
  * Supports both light and dark themes via CSS variables.
+ *
+ * Uses fine-grained bundles and JavaScript RegExp engine for Cloudflare Workers compatibility.
+ * The JavaScript engine avoids WASM which has restrictions in Workers environments.
  */
 
-import { createHighlighter, type Highlighter, type BundledLanguage } from 'shiki'
+import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 
-let highlighter: Highlighter | null = null
+// Fine-grained theme imports
+import githubLight from '@shikijs/themes/github-light'
+import githubDark from '@shikijs/themes/github-dark'
 
-// Languages needed for documentation
-const LANGUAGES: BundledLanguage[] = ['tsx', 'typescript', 'bash', 'json', 'html', 'css']
+// Fine-grained language imports
+import langTsx from '@shikijs/langs/tsx'
+import langTypescript from '@shikijs/langs/typescript'
+import langBash from '@shikijs/langs/bash'
+import langJson from '@shikijs/langs/json'
+import langHtml from '@shikijs/langs/html'
+import langCss from '@shikijs/langs/css'
+
+let highlighter: HighlighterCore | null = null
 
 // Themes for light and dark modes
 const LIGHT_THEME = 'github-light'
@@ -20,13 +33,15 @@ const DARK_THEME = 'github-dark'
 /**
  * Initialize the Shiki highlighter.
  * Must be called once at server startup.
+ * Uses JavaScript RegExp engine for Cloudflare Workers compatibility (no WASM).
  */
 export async function initHighlighter(): Promise<void> {
   if (highlighter) return
 
-  highlighter = await createHighlighter({
-    themes: [LIGHT_THEME, DARK_THEME],
-    langs: LANGUAGES,
+  highlighter = await createHighlighterCore({
+    themes: [githubLight, githubDark],
+    langs: [langTsx, langTypescript, langBash, langJson, langHtml, langCss],
+    engine: createJavaScriptRegexEngine(),
   })
 }
 
@@ -41,8 +56,8 @@ export function highlight(code: string, lang: string = 'tsx'): string {
     return escapeHtml(code)
   }
 
-  // Map common aliases
-  const langMap: Record<string, BundledLanguage> = {
+  // Map common aliases to supported languages
+  const langMap: Record<string, string> = {
     ts: 'typescript',
     js: 'typescript', // Use TS highlighting for JS too
     jsx: 'tsx',
@@ -50,7 +65,7 @@ export function highlight(code: string, lang: string = 'tsx'): string {
     shell: 'bash',
   }
 
-  const resolvedLang = (langMap[lang] || lang) as BundledLanguage
+  const resolvedLang = langMap[lang] || lang
 
   try {
     // Use dual themes with CSS variables for light/dark mode support
