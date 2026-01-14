@@ -279,14 +279,14 @@ export function MobileMenu() {
           <nav class="p-4 overflow-y-auto h-[calc(100%-140px)]">
             <div class="space-y-1">
               {MENU_ITEMS.map(({ category, label, items }) => (
-                <details data-category={category} class="mb-2 group">
+                <details key={category} data-category={category} class="mb-2 group">
                   <summary class={SUMMARY_CLASS}>
                     <span>{label}</span>
                     <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                   </summary>
                   <div class="pl-2 py-1 space-y-0.5">
                     {items.map((item) => (
-                      <a href={item.href} class={LINK_CLASS}>
+                      <a key={item.href} href={item.href} class={LINK_CLASS}>
                         {item.label}
                       </a>
                     ))}
