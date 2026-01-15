@@ -28,21 +28,21 @@ export function MobilePageNav({ currentPath }: MobilePageNavProps) {
       {prev && (
         <a
           href={prev.href}
-          class="flex items-center gap-1 px-3 py-2 bg-background/95 backdrop-blur rounded-full shadow-lg border border-border text-muted-foreground hover:text-foreground transition-colors no-underline"
+          class="flex items-center px-2 py-1.5 w-28 bg-background/95 backdrop-blur rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors no-underline"
           aria-label={`Previous: ${prev.title}`}
         >
-          <ChevronLeftIcon size="sm" />
-          <span class="text-sm truncate">{prev.title}</span>
+          <ChevronLeftIcon size="sm" class="shrink-0" />
+          <span class="flex-1 text-center text-xs truncate">{prev.title}</span>
         </a>
       )}
       {next && (
         <a
           href={next.href}
-          class="flex items-center gap-1 px-3 py-2 bg-background/95 backdrop-blur rounded-full shadow-lg border border-border text-muted-foreground hover:text-foreground transition-colors no-underline"
+          class="flex items-center px-2 py-1.5 w-28 bg-background/95 backdrop-blur rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors no-underline"
           aria-label={`Next: ${next.title}`}
         >
-          <span class="text-sm truncate">{next.title}</span>
-          <ChevronRightIcon size="sm" />
+          <span class="flex-1 text-center text-xs truncate">{next.title}</span>
+          <ChevronRightIcon size="sm" class="shrink-0" />
         </a>
       )}
     </div>
