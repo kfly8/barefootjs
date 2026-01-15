@@ -7,7 +7,8 @@ test.describe('Button Documentation Page', () => {
 
   test('displays page header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Button')
-    await expect(page.locator('text=Displays a button or a component')).toBeVisible()
+    // Use first() to avoid strict mode violation when text appears in multiple places
+    await expect(page.locator('text=Displays a button or a component').first()).toBeVisible()
   })
 
   test('displays installation section', async ({ page }) => {
