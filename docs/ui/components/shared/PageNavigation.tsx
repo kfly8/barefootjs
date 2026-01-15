@@ -21,7 +21,7 @@ export function PageNavigation({ prev, next }: PageNavigationProps) {
   if (!prev && !next) return null
 
   return (
-    <nav class="flex items-center justify-between pt-8 mt-12 border-0 border-t border-solid border-border" aria-label="Page navigation">
+    <nav class="hidden sm:flex items-center justify-between pt-8 mt-12 border-0 border-t border-solid border-border" aria-label="Page navigation">
       {prev ? (
         <a
           href={prev.href}

@@ -25,7 +25,7 @@ export function MobilePageNav({ currentPath }: MobilePageNavProps) {
 
   return (
     <div class="fixed bottom-6 right-6 z-[10000] sm:hidden flex items-center gap-1 bg-background/95 backdrop-blur rounded-full shadow-lg border border-border px-2 py-1.5">
-      {prev ? (
+      {prev && (
         <a
           href={prev.href}
           class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground transition-colors no-underline"
@@ -34,11 +34,9 @@ export function MobilePageNav({ currentPath }: MobilePageNavProps) {
           <ChevronLeftIcon size="sm" />
           <span class="text-sm max-w-16 truncate">{prev.title}</span>
         </a>
-      ) : (
-        <div class="w-16" />
       )}
-      <span class="text-muted-foreground/50">|</span>
-      {next ? (
+      {prev && next && <span class="text-muted-foreground/50">|</span>}
+      {next && (
         <a
           href={next.href}
           class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground transition-colors no-underline"
@@ -47,8 +45,6 @@ export function MobilePageNav({ currentPath }: MobilePageNavProps) {
           <span class="text-sm max-w-16 truncate">{next.title}</span>
           <ChevronRightIcon size="sm" />
         </a>
-      ) : (
-        <div class="w-16" />
       )}
     </div>
   )
