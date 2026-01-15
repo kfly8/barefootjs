@@ -39,13 +39,13 @@ const sizeCode = `<Button size="sm">Small</Button>
 <Button size="lg">Large</Button>`
 
 const iconSizeCode = `<Button size="icon-sm">
-  <PlusIcon size="sm" />
+  <PlusIcon />
 </Button>
 <Button size="icon">
-  <PlusIcon size="sm" />
+  <PlusIcon />
 </Button>
 <Button size="icon-lg">
-  <PlusIcon size="sm" />
+  <PlusIcon />
 </Button>`
 
 const counterCode = `import { createSignal } from '@barefootjs/dom'
@@ -103,7 +103,7 @@ function ButtonExample() {
     <div class="flex flex-wrap items-center gap-2 md:flex-row">
       <Button variant="outline">Button</Button>
       <Button variant="outline" size="icon" aria-label="Submit">
-          <PlusIcon size="sm" />
+          <PlusIcon />
       </Button>
     </div>
   )
@@ -112,7 +112,7 @@ function ButtonExample() {
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
             <Button variant="outline">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
-                <PlusIcon size="sm" />
+                <PlusIcon />
             </Button>
           </div>
         </Example>
@@ -155,13 +155,13 @@ function ButtonExample() {
 
             <Example title="Icon Sizes" code={iconSizeCode}>
               <Button size="icon-sm">
-                <PlusIcon size="sm" />
+                <PlusIcon />
               </Button>
               <Button size="icon">
-                <PlusIcon size="sm" />
+                <PlusIcon />
               </Button>
               <Button size="icon-lg">
-                <PlusIcon size="sm" />
+                <PlusIcon />
               </Button>
             </Example>
 
