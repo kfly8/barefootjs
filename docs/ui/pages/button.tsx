@@ -38,17 +38,19 @@ const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
 <Button size="lg">Large</Button>`
 
-const iconSizeCode = `<Button size="icon-sm">
-  <PlusIcon size="sm" />
+const iconSizeCode = `<Button size="icon-sm" aria-label="Add">
+  <PlusIcon />
 </Button>
-<Button size="icon">
-  <PlusIcon size="sm" />
+<Button size="icon" aria-label="Add">
+  <PlusIcon />
 </Button>
-<Button size="icon-lg">
-  <PlusIcon size="sm" />
+<Button size="icon-lg" aria-label="Add">
+  <PlusIcon />
 </Button>`
 
-const counterCode = `import { createSignal } from '@barefootjs/dom'
+const counterCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
 import { Button } from '@/components/ui/button'
 
 function Counter() {
@@ -103,7 +105,7 @@ function ButtonExample() {
     <div class="flex flex-wrap items-center gap-2 md:flex-row">
       <Button variant="outline">Button</Button>
       <Button variant="outline" size="icon" aria-label="Submit">
-          <PlusIcon size="sm" />
+          <PlusIcon />
       </Button>
     </div>
   )
@@ -112,7 +114,7 @@ function ButtonExample() {
           <div class="flex flex-wrap items-center gap-2 md:flex-row">
             <Button variant="outline">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
-                <PlusIcon size="sm" />
+                <PlusIcon />
             </Button>
           </div>
         </Example>
@@ -123,45 +125,45 @@ function ButtonExample() {
 
         <Section id="examples" title="Examples">
           <div class="space-y-8">
-            <Example title="Default" code={`<Button variant="default">Default</Button>`}>
+            <Example title="Default" code={`<Button variant="default">Default</Button>`} showLineNumbers={false}>
               <Button variant="default">Default</Button>
             </Example>
 
-            <Example title="Secondary" code={`<Button variant="secondary">Secondary</Button>`}>
+            <Example title="Secondary" code={`<Button variant="secondary">Secondary</Button>`} showLineNumbers={false}>
               <Button variant="secondary">Secondary</Button>
             </Example>
 
-            <Example title="Destructive" code={`<Button variant="destructive">Destructive</Button>`}>
+            <Example title="Destructive" code={`<Button variant="destructive">Destructive</Button>`} showLineNumbers={false}>
               <Button variant="destructive">Destructive</Button>
             </Example>
 
-            <Example title="Outline" code={`<Button variant="outline">Outline</Button>`}>
+            <Example title="Outline" code={`<Button variant="outline">Outline</Button>`} showLineNumbers={false}>
               <Button variant="outline">Outline</Button>
             </Example>
 
-            <Example title="Ghost" code={`<Button variant="ghost">Ghost</Button>`}>
+            <Example title="Ghost" code={`<Button variant="ghost">Ghost</Button>`} showLineNumbers={false}>
               <Button variant="ghost">Ghost</Button>
             </Example>
 
-            <Example title="Link" code={`<Button variant="link">Link</Button>`}>
+            <Example title="Link" code={`<Button variant="link">Link</Button>`} showLineNumbers={false}>
               <Button variant="link">Link</Button>
             </Example>
 
-            <Example title="Sizes" code={sizeCode}>
+            <Example title="Sizes" code={sizeCode} showLineNumbers={false}>
               <Button size="sm">Small</Button>
               <Button size="default">Default</Button>
               <Button size="lg">Large</Button>
             </Example>
 
             <Example title="Icon Sizes" code={iconSizeCode}>
-              <Button size="icon-sm">
-                <PlusIcon size="sm" />
+              <Button size="icon-sm" aria-label="Add">
+                <PlusIcon />
               </Button>
-              <Button size="icon">
-                <PlusIcon size="sm" />
+              <Button size="icon" aria-label="Add">
+                <PlusIcon />
               </Button>
-              <Button size="icon-lg">
-                <PlusIcon size="sm" />
+              <Button size="icon-lg" aria-label="Add">
+                <PlusIcon />
               </Button>
             </Example>
 

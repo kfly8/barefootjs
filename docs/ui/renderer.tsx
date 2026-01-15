@@ -25,6 +25,7 @@ import { SidebarPreview } from '@/components/sidebar-preview'
 import { Header } from '@/components/header'
 import { MobileHeader } from '@/components/mobile-header'
 import { MobileMenu } from '@/components/mobile-menu'
+import { MobilePageNav } from '@/components/mobile-page-nav'
 import { CommandPalette } from '@/components/command-palette'
 
 // Import manifest for dependency-aware preloading
@@ -93,7 +94,12 @@ export const renderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
             <style>{`
               body {
-                padding: 5rem 1.5rem 3rem;
+                padding: 5rem 0.3rem 3rem;
+              }
+              @media (min-width: 640px) {
+                body {
+                  padding: 5rem 1.5rem 3rem;
+                }
               }
             `}</style>
           </head>
@@ -101,11 +107,12 @@ export const renderer = jsxRenderer(
             <Header currentPath={currentPath} />
             <MobileHeader />
             <MobileMenu />
+            <MobilePageNav currentPath={currentPath} />
             <CommandPalette />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
             <div class="sm:pl-56">
-              <main class="max-w-[1000px] mx-auto px-4">
+              <main class="max-w-[1000px] mx-auto px-0 sm:px-4">
                 {children}
               </main>
             </div>

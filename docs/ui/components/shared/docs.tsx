@@ -201,25 +201,25 @@ export interface PropDefinition {
 function PropRow({ name, type, defaultValue, description }: PropDefinition) {
   return (
     <tr class="border-b border-border last:border-b-0">
-      <td class="py-3 px-4 font-mono text-sm text-foreground">{name}</td>
-      <td class="py-3 px-4 font-mono text-sm text-muted-foreground">{type}</td>
-      <td class="py-3 px-4 font-mono text-sm text-muted-foreground">{defaultValue || '-'}</td>
-      <td class="py-3 px-4 text-sm text-muted-foreground">{description}</td>
+      <td class="py-3 px-4 font-mono text-sm text-foreground whitespace-nowrap">{name}</td>
+      <td class="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{type}</td>
+      <td class="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{defaultValue || '-'}</td>
+      <td class="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap">{description}</td>
     </tr>
   )
 }
 
-// Props table component
+// Props table component with horizontal scroll for mobile
 export function PropsTable({ props }: { props: PropDefinition[] }) {
   return (
-    <div class="border border-border rounded-lg overflow-hidden">
-      <table class="w-full text-left">
+    <div class="border border-border rounded-lg overflow-x-auto">
+      <table class="w-full text-left min-w-[600px]">
         <thead class="bg-muted">
           <tr class="border-b border-border">
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Prop</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Type</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Default</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Description</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Prop</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Type</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Default</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Description</th>
           </tr>
         </thead>
         <tbody>
@@ -238,7 +238,17 @@ function toKebabCase(str: string): string {
 }
 
 // Example component with preview and code in a unified container
-export function Example({ title, code, children }: { title?: string; code: string; children: any }) {
+export function Example({
+  title,
+  code,
+  children,
+  showLineNumbers: showLineNumbersProp,
+}: {
+  title?: string
+  code: string
+  children: any
+  showLineNumbers?: boolean
+}) {
   // Highlight code and split into lines for line number display
   const highlightedCode = highlight(code, 'tsx')
   const lines = highlightedCode.split('\n')
@@ -246,6 +256,9 @@ export function Example({ title, code, children }: { title?: string; code: strin
   if (lines[lines.length - 1] === '') {
     lines.pop()
   }
+
+  // Default to showing line numbers, can be explicitly disabled
+  const showLineNumbers = showLineNumbersProp ?? true
 
   const id = title ? toKebabCase(title) : undefined
 
@@ -273,18 +286,22 @@ export function Example({ title, code, children }: { title?: string; code: strin
             {children}
           </div>
         </div>
-        {/* Code section with line numbers */}
+        {/* Code section with conditional line numbers */}
         <div class="relative group">
           <pre class="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
             <code class="block">
-              {lines.map((line, i) => (
-                <span key={i} class="table-row">
-                  <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
-                    {i + 1}
+              {showLineNumbers ? (
+                lines.map((line, i) => (
+                  <span key={i} class="table-row">
+                    <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+                      {i + 1}
+                    </span>
+                    <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
                   </span>
-                  <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
-                </span>
-              ))}
+                ))
+              ) : (
+                <span dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+              )}
             </code>
           </pre>
           <CopyButton code={code} />
