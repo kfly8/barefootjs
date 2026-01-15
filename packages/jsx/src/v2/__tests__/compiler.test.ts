@@ -3,9 +3,10 @@
  */
 
 import { describe, test, expect } from 'bun:test'
-import { compileJSXSync } from '../compiler'
+import { compileJSXSync, compileJSX } from '../compiler'
 import { analyzeComponent } from '../analyzer'
 import { jsxToIR } from '../jsx-to-ir'
+import { resolve, dirname } from 'node:path'
 
 describe('Compiler v2', () => {
   describe('analyzeComponent', () => {
@@ -189,6 +190,68 @@ describe('Compiler v2', () => {
       const ir = result.files.find(f => f.type === 'ir')
       expect(ir).toBeDefined()
       expect(ir?.content).toContain('"version": "2.0"')
+    })
+  })
+
+  describe('real components', () => {
+    test('compiles ButtonDemo component', async () => {
+      // Path to the actual button-demo component
+      const docsUiPath = resolve(dirname(import.meta.path), '../../../../../docs/ui')
+      const buttonDemoPath = resolve(docsUiPath, 'components/button-demo.tsx')
+
+      const result = await compileJSX(buttonDemoPath, async (path) => {
+        const file = Bun.file(path)
+        return await file.text()
+      })
+
+      // Should have no errors
+      expect(result.errors).toHaveLength(0)
+
+      // Should generate markedJsx and clientJs
+      expect(result.files.length).toBeGreaterThanOrEqual(2)
+
+      const markedJsx = result.files.find(f => f.type === 'markedJsx')
+      expect(markedJsx).toBeDefined()
+      expect(markedJsx?.content).toContain('export function ButtonDemo')
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain('initButtonDemo')
+    })
+
+    test('compiles component with props', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface CounterProps {
+          initial?: number
+          label: string
+        }
+
+        export function Counter({ initial = 0, label }: CounterProps) {
+          const [count, setCount] = createSignal(initial)
+          return (
+            <button onClick={() => setCount(n => n + 1)}>
+              {label}: {count()}
+            </button>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Counter.tsx')
+
+      expect(result.errors).toHaveLength(0)
+
+      const markedJsx = result.files.find(f => f.type === 'markedJsx')
+      expect(markedJsx).toBeDefined()
+      // Should preserve props in function signature
+      expect(markedJsx?.content).toContain('initial')
+      expect(markedJsx?.content).toContain('label')
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain('createSignal')
     })
   })
 })

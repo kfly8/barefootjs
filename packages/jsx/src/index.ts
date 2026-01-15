@@ -1,5 +1,8 @@
 export { compileJSX } from './jsx-compiler'
 export type { CompileJSXResult } from './jsx-compiler'
+
+// Compiler v2 (multi-backend architecture)
+export * as v2 from './v2'
 export type {
   OutputFormat,
   CompileOptions,
