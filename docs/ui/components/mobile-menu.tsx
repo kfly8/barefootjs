@@ -51,7 +51,7 @@ export function MobileMenu() {
     const allLinks = drawer.querySelectorAll('nav a[href]') as NodeListOf<HTMLAnchorElement>
     allLinks.forEach(link => {
       if (link.getAttribute('href') === currentPath) {
-        link.className = `block py-1.5 px-3 text-sm rounded-md no-underline ${activeClass}`
+        link.className = `block py-2.5 px-4 text-base rounded-md no-underline ${activeClass}`
       }
     })
 
@@ -178,10 +178,10 @@ export function MobileMenu() {
 
   return (
     <>
-      {/* Menu button - fixed at bottom right, visible on mobile only */}
+      {/* Menu button - fixed at bottom left, visible on mobile only */}
       <button
         data-mobile-menu-toggle
-        class="sm:hidden fixed bottom-6 right-6 z-[10000] w-14 h-14 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+        class="sm:hidden fixed bottom-6 left-6 z-[10000] w-14 h-14 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
         aria-label="Open menu"
       >
         <DotsVerticalIcon />
@@ -219,12 +219,12 @@ export function MobileMenu() {
             <div class="space-y-1">
               {/* Get Started */}
               <details data-category="get-started" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Get Started</span>
                   <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
-                  <a href="/" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">
+                  <a href="/" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">
                     Introduction
                   </a>
                 </div>
@@ -232,45 +232,45 @@ export function MobileMenu() {
 
               {/* Components */}
               <details data-category="components" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Components</span>
                   <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
-                  <a href="/docs/components/accordion" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Accordion</a>
-                  <a href="/docs/components/badge" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Badge</a>
-                  <a href="/docs/components/button" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Button</a>
-                  <a href="/docs/components/card" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Card</a>
-                  <a href="/docs/components/checkbox" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Checkbox</a>
-                  <a href="/docs/components/counter" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Counter</a>
-                  <a href="/docs/components/dialog" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Dialog</a>
-                  <a href="/docs/components/dropdown" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Dropdown</a>
-                  <a href="/docs/components/input" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Input</a>
-                  <a href="/docs/components/select" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Select</a>
-                  <a href="/docs/components/switch" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Switch</a>
-                  <a href="/docs/components/tabs" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Tabs</a>
-                  <a href="/docs/components/toast" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Toast</a>
-                  <a href="/docs/components/tooltip" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Tooltip</a>
+                  <a href="/docs/components/accordion" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Accordion</a>
+                  <a href="/docs/components/badge" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Badge</a>
+                  <a href="/docs/components/button" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Button</a>
+                  <a href="/docs/components/card" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Card</a>
+                  <a href="/docs/components/checkbox" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Checkbox</a>
+                  <a href="/docs/components/counter" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Counter</a>
+                  <a href="/docs/components/dialog" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Dialog</a>
+                  <a href="/docs/components/dropdown" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Dropdown</a>
+                  <a href="/docs/components/input" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Input</a>
+                  <a href="/docs/components/select" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Select</a>
+                  <a href="/docs/components/switch" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Switch</a>
+                  <a href="/docs/components/tabs" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Tabs</a>
+                  <a href="/docs/components/toast" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Toast</a>
+                  <a href="/docs/components/tooltip" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Tooltip</a>
                 </div>
               </details>
 
               {/* Forms */}
               <details data-category="forms" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Forms</span>
                   <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div class="pl-2 py-1 space-y-0.5">
-                  <a href="/docs/forms/controlled-input" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Controlled Input</a>
-                  <a href="/docs/forms/field-arrays" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Field Arrays</a>
-                  <a href="/docs/forms/submit" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Submit</a>
-                  <a href="/docs/forms/validation" class="block py-1.5 px-3 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Validation</a>
+                  <a href="/docs/forms/controlled-input" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Controlled Input</a>
+                  <a href="/docs/forms/field-arrays" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Field Arrays</a>
+                  <a href="/docs/forms/submit" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Submit</a>
+                  <a href="/docs/forms/validation" class="block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline">Validation</a>
                 </div>
               </details>
 
               {/* Blocks */}
               <details data-category="blocks" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Blocks</span>
                   <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>
@@ -281,7 +281,7 @@ export function MobileMenu() {
 
               {/* Charts */}
               <details data-category="charts" class="mb-2 group">
-                <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                   <span>Charts</span>
                   <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
                 </summary>

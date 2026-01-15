@@ -201,25 +201,25 @@ export interface PropDefinition {
 function PropRow({ name, type, defaultValue, description }: PropDefinition) {
   return (
     <tr class="border-b border-border last:border-b-0">
-      <td class="py-3 px-4 font-mono text-sm text-foreground">{name}</td>
-      <td class="py-3 px-4 font-mono text-sm text-muted-foreground">{type}</td>
-      <td class="py-3 px-4 font-mono text-sm text-muted-foreground">{defaultValue || '-'}</td>
-      <td class="py-3 px-4 text-sm text-muted-foreground">{description}</td>
+      <td class="py-3 px-4 font-mono text-sm text-foreground whitespace-nowrap">{name}</td>
+      <td class="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{type}</td>
+      <td class="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{defaultValue || '-'}</td>
+      <td class="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap">{description}</td>
     </tr>
   )
 }
 
-// Props table component
+// Props table component with horizontal scroll for mobile
 export function PropsTable({ props }: { props: PropDefinition[] }) {
   return (
-    <div class="border border-border rounded-lg overflow-hidden">
-      <table class="w-full text-left">
+    <div class="border border-border rounded-lg overflow-x-auto">
+      <table class="w-full text-left min-w-[600px]">
         <thead class="bg-muted">
           <tr class="border-b border-border">
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Prop</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Type</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Default</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground">Description</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Prop</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Type</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Default</th>
+            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Description</th>
           </tr>
         </thead>
         <tbody>

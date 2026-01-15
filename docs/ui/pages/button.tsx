@@ -38,17 +38,19 @@ const sizeCode = `<Button size="sm">Small</Button>
 <Button size="default">Default</Button>
 <Button size="lg">Large</Button>`
 
-const iconSizeCode = `<Button size="icon-sm">
+const iconSizeCode = `<Button size="icon-sm" aria-label="Add">
   <PlusIcon />
 </Button>
-<Button size="icon">
+<Button size="icon" aria-label="Add">
   <PlusIcon />
 </Button>
-<Button size="icon-lg">
+<Button size="icon-lg" aria-label="Add">
   <PlusIcon />
 </Button>`
 
-const counterCode = `import { createSignal } from '@barefootjs/dom'
+const counterCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
 import { Button } from '@/components/ui/button'
 
 function Counter() {
@@ -154,13 +156,13 @@ function ButtonExample() {
             </Example>
 
             <Example title="Icon Sizes" code={iconSizeCode}>
-              <Button size="icon-sm">
+              <Button size="icon-sm" aria-label="Add">
                 <PlusIcon />
               </Button>
-              <Button size="icon">
+              <Button size="icon" aria-label="Add">
                 <PlusIcon />
               </Button>
-              <Button size="icon-lg">
+              <Button size="icon-lg" aria-label="Add">
                 <PlusIcon />
               </Button>
             </Example>

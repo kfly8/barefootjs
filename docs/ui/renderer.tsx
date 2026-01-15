@@ -25,6 +25,7 @@ import { SidebarPreview } from '@/components/sidebar-preview'
 import { Header } from '@/components/header'
 import { MobileHeader } from '@/components/mobile-header'
 import { MobileMenu } from '@/components/mobile-menu'
+import { MobilePageNav } from '@/components/mobile-page-nav'
 import { CommandPalette } from '@/components/command-palette'
 
 // Import manifest for dependency-aware preloading
@@ -106,6 +107,7 @@ export const renderer = jsxRenderer(
             <Header currentPath={currentPath} />
             <MobileHeader />
             <MobileMenu />
+            <MobilePageNav currentPath={currentPath} />
             <CommandPalette />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
