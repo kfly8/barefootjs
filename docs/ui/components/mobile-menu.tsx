@@ -181,7 +181,7 @@ export function MobileMenu() {
       {/* Menu button - fixed at bottom left, visible on mobile only */}
       <button
         data-mobile-menu-toggle
-        class="sm:hidden fixed bottom-6 left-6 z-[10000] w-14 h-14 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+        class="sm:hidden fixed bottom-6 left-4 z-[10000] w-11 h-11 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
         aria-label="Open menu"
       >
         <DotsVerticalIcon />
