@@ -93,7 +93,7 @@ export const renderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
             <style>{`
               body {
-                padding: 5rem 0 3rem;
+                padding: 5rem 0.3rem 3rem;
               }
               @media (min-width: 640px) {
                 body {
