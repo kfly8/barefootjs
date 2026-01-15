@@ -257,8 +257,8 @@ export function Example({
     lines.pop()
   }
 
-  // Auto-hide line numbers for 3 or fewer lines, unless explicitly set
-  const showLineNumbers = showLineNumbersProp ?? lines.length > 3
+  // Default to showing line numbers, can be explicitly disabled
+  const showLineNumbers = showLineNumbersProp ?? true
 
   const id = title ? toKebabCase(title) : undefined
 

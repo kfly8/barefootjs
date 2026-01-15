@@ -123,31 +123,31 @@ function ButtonExample() {
 
         <Section id="examples" title="Examples">
           <div class="space-y-8">
-            <Example title="Default" code={`<Button variant="default">Default</Button>`}>
+            <Example title="Default" code={`<Button variant="default">Default</Button>`} showLineNumbers={false}>
               <Button variant="default">Default</Button>
             </Example>
 
-            <Example title="Secondary" code={`<Button variant="secondary">Secondary</Button>`}>
+            <Example title="Secondary" code={`<Button variant="secondary">Secondary</Button>`} showLineNumbers={false}>
               <Button variant="secondary">Secondary</Button>
             </Example>
 
-            <Example title="Destructive" code={`<Button variant="destructive">Destructive</Button>`}>
+            <Example title="Destructive" code={`<Button variant="destructive">Destructive</Button>`} showLineNumbers={false}>
               <Button variant="destructive">Destructive</Button>
             </Example>
 
-            <Example title="Outline" code={`<Button variant="outline">Outline</Button>`}>
+            <Example title="Outline" code={`<Button variant="outline">Outline</Button>`} showLineNumbers={false}>
               <Button variant="outline">Outline</Button>
             </Example>
 
-            <Example title="Ghost" code={`<Button variant="ghost">Ghost</Button>`}>
+            <Example title="Ghost" code={`<Button variant="ghost">Ghost</Button>`} showLineNumbers={false}>
               <Button variant="ghost">Ghost</Button>
             </Example>
 
-            <Example title="Link" code={`<Button variant="link">Link</Button>`}>
+            <Example title="Link" code={`<Button variant="link">Link</Button>`} showLineNumbers={false}>
               <Button variant="link">Link</Button>
             </Example>
 
-            <Example title="Sizes" code={sizeCode}>
+            <Example title="Sizes" code={sizeCode} showLineNumbers={false}>
               <Button size="sm">Small</Button>
               <Button size="default">Default</Button>
               <Button size="lg">Large</Button>
