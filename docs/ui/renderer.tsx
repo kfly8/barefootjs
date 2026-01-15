@@ -93,7 +93,7 @@ export const renderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
             <style>{`
               body {
-                padding: 5rem 0.5rem 3rem;
+                padding: 5rem 0 3rem;
               }
               @media (min-width: 640px) {
                 body {
@@ -110,7 +110,7 @@ export const renderer = jsxRenderer(
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
             <div class="sm:pl-56">
-              <main class="max-w-[1000px] mx-auto px-2 sm:px-4">
+              <main class="max-w-[1000px] mx-auto px-0 sm:px-4">
                 {children}
               </main>
             </div>
