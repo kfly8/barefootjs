@@ -381,3 +381,52 @@ function updateElementConditional(scope: Element, id: string, html: string): voi
     condEl.replaceWith(newEl.cloneNode(true))
   }
 }
+
+// --- Component Registry ---
+
+/**
+ * Component init function type for registry
+ */
+type ComponentInitFn = (
+  idx: number,
+  scope: Element | null,
+  props: Record<string, unknown>
+) => void
+
+/**
+ * Component registry for parent-child communication.
+ * Each component registers its init function so parents can initialize children with props.
+ */
+const componentRegistry = new Map<string, ComponentInitFn>()
+
+/**
+ * Register a component's init function for parent initialization.
+ *
+ * @param name - Component name (e.g., 'Counter', 'AddTodoForm')
+ * @param init - Init function that takes (idx, scope, props)
+ */
+export function registerComponent(name: string, init: ComponentInitFn): void {
+  componentRegistry.set(name, init)
+}
+
+/**
+ * Initialize a child component with props from parent.
+ * Used by parent components to pass function props (like onAdd) to children.
+ *
+ * @param name - Child component name
+ * @param childScope - The child's scope element (found by parent)
+ * @param props - Props to pass to the child (including function props)
+ */
+export function initChild(
+  name: string,
+  childScope: Element | null,
+  props: Record<string, unknown> = {}
+): void {
+  const init = componentRegistry.get(name)
+  if (!init || !childScope) return
+
+  // Only initialize if not already initialized
+  if (!childScope.hasAttribute('data-bf-init')) {
+    init(0, childScope, props)
+  }
+}

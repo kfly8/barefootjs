@@ -92,6 +92,7 @@ interface RefElement {
 interface ChildInit {
   name: string
   slotId: string | null
+  propsExpr: string // e.g., "{ onAdd: handleAdd }"
 }
 
 interface ReactiveAttribute {
@@ -267,9 +268,38 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         }
       }
 
+      // Build propsExpr from component props for parent-child communication
+      const propsForInit: string[] = []
+      for (const prop of node.props) {
+        // Event handlers (on*) passed directly to child
+        const isEventHandler =
+          prop.name.startsWith('on') &&
+          prop.name.length > 2 &&
+          prop.name[2] === prop.name[2].toUpperCase()
+        if (isEventHandler) {
+          propsForInit.push(`${prop.name}: ${prop.value}`)
+        } else if (prop.dynamic) {
+          // Dynamic props wrapped in getters for reactivity
+          propsForInit.push(`${prop.name}: () => ${prop.value}`)
+        } else {
+          // Static props - check if value looks like a variable or literal
+          const val = prop.value
+          if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val) || val.includes('(')) {
+            // Variable reference or function call
+            propsForInit.push(`${prop.name}: ${val}`)
+          } else {
+            // String literal
+            propsForInit.push(`${prop.name}: ${JSON.stringify(val)}`)
+          }
+        }
+      }
+      const propsExpr =
+        propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+
       ctx.childInits.push({
         name: node.name,
         slotId: node.slotId,
+        propsExpr,
       })
       for (const child of node.children) {
         collectElements(child, ctx)
@@ -478,6 +508,22 @@ function irToHtmlTemplate(node: IRNode): string {
     case 'fragment':
       return node.children.map(irToHtmlTemplate).join('')
 
+    case 'component': {
+      // Component children in loops require special handling.
+      // We generate a placeholder with scope marker that can be hydrated.
+      // Note: Full component rendering on client is a known limitation.
+      // For dynamic lists, consider using plain elements instead of components.
+      const keyProp = node.props.find((p) => p.name === 'key')
+      const keyAttr = keyProp ? ` data-key="\${${keyProp.value}}"` : ''
+      const scopeAttr = ` data-bf-scope="${node.name}_\${Math.random().toString(36).slice(2, 8)}"`
+      // Generate minimal placeholder - content will be rendered by component
+      return `<div${keyAttr}${scopeAttr}></div>`
+    }
+
+    case 'loop':
+      // Nested loops - render children
+      return node.children.map(irToHtmlTemplate).join('')
+
     default:
       return ''
   }
@@ -575,6 +621,17 @@ function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
   // From ref callbacks
   for (const elem of ctx.refElements) {
     extractIdentifiers(elem.callback, used)
+  }
+
+  // From local function bodies (to find prop references like onAdd)
+  for (const fn of ctx.localFunctions) {
+    extractIdentifiers(fn.body, used)
+  }
+
+  // From local constants (including arrow functions like handleAdd)
+  // Arrow functions in const declarations may reference props
+  for (const constant of ctx.localConstants) {
+    extractIdentifiers(constant.value, used)
   }
 
   return used
@@ -762,7 +819,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   const name = ctx.componentName
 
   // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, reconcileList } from '@barefootjs/dom'`)
+  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, reconcileList, registerComponent, initChild } from '@barefootjs/dom'`)
   lines.push('')
 
   // Init function
@@ -1138,12 +1195,22 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     lines.push(`  createEffect(${jsBody})`)
   }
 
-  // Child component inits
-  for (const child of ctx.childInits) {
-    lines.push(`  // TODO: init${child.name}(__instanceIndex, __scope)`)
+  // Child component inits with props
+  if (ctx.childInits.length > 0) {
+    lines.push('')
+    lines.push(`  // Initialize child components with props`)
+    for (const child of ctx.childInits) {
+      const slotVar = child.slotId ? `_${child.slotId}` : '__scope'
+      lines.push(`  initChild('${child.name}', ${slotVar}, ${child.propsExpr})`)
+    }
   }
 
   lines.push(`}`)
+  lines.push('')
+
+  // Register component for parent initialization
+  lines.push(`// Register for parent initialization`)
+  lines.push(`registerComponent('${name}', init${name})`)
   lines.push('')
 
   // Auto-hydrate on script load

@@ -19,4 +19,4 @@ export {
 export { reconcileList } from './list'
 
 // Runtime helpers (internal, for compiler-generated code)
-export { findScope, find, hydrate, bind, cond, unwrap } from './runtime'
+export { findScope, find, hydrate, bind, cond, unwrap, registerComponent, initChild } from './runtime'
