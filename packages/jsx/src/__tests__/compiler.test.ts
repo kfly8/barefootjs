@@ -144,6 +144,44 @@ describe('Compiler v2', () => {
         }
       }
     })
+
+    test('marks constant reference attributes as dynamic', () => {
+      // Regression test for: JSX attribute values referencing constants should be
+      // rendered as {expr} not "expr" string literals
+      const source = `
+        'use client'
+
+        const paths = {
+          'icon': 'M12 0L24 12',
+        } as const
+
+        export function Icon() {
+          return <svg><path d={paths['icon']} /></svg>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Icon.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir?.type).toBe('element')
+      if (ir?.type === 'element') {
+        // svg element
+        expect(ir.tag).toBe('svg')
+        expect(ir.children).toHaveLength(1)
+
+        const pathElement = ir.children[0]
+        expect(pathElement.type).toBe('element')
+        if (pathElement.type === 'element') {
+          expect(pathElement.tag).toBe('path')
+          // The 'd' attribute should be marked as dynamic
+          const dAttr = pathElement.attrs.find(a => a.name === 'd')
+          expect(dAttr).toBeDefined()
+          expect(dAttr?.value).toBe("paths['icon']")
+          expect(dAttr?.dynamic).toBe(true)
+        }
+      }
+    })
   })
 
   describe('compileJSXSync', () => {
@@ -176,6 +214,66 @@ describe('Compiler v2', () => {
       expect(clientJs?.content).toContain('initCounter')
     })
 
+    test('extracts props-based event handlers in client JS', () => {
+      // Regression test: event handlers passed as props should be extracted from props
+      const source = `
+        'use client'
+
+        interface ButtonProps {
+          onClick?: () => void
+        }
+
+        export function Button({ onClick }: ButtonProps) {
+          return <button onClick={onClick}>Click</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Button.tsx')
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should extract onClick from props
+      expect(clientJs?.content).toContain('const onClick = props.onClick')
+    })
+
+    test('extracts props and props-dependent constants in client JS', () => {
+      // Regression test: props used in template literals should be extracted,
+      // and constants that depend on props should also be included
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface Props {
+          command: string
+        }
+
+        export function CommandDisplay({ command }: Props) {
+          const [show, setShow] = createSignal(true)
+          const fullCommand = \`npx \${command}\`
+
+          return (
+            <div>
+              <button onClick={() => setShow(!show())}>Toggle</button>
+              <pre>{show() ? fullCommand : ''}</pre>
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'CommandDisplay.tsx')
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should extract command prop
+      expect(clientJs?.content).toContain('const command = props.command')
+      // Should include fullCommand constant that depends on command prop
+      expect(clientJs?.content).toContain('const fullCommand = `npx ${command}`')
+    })
+
     test('outputs IR JSON when requested', () => {
       const source = `
         'use client'
@@ -196,7 +294,7 @@ describe('Compiler v2', () => {
   describe('real components', () => {
     test('compiles ButtonDemo component', async () => {
       // Path to the actual button-demo component
-      const docsUiPath = resolve(dirname(import.meta.path), '../../../../../docs/ui')
+      const docsUiPath = resolve(dirname(import.meta.path), '../../../../docs/ui')
       const buttonDemoPath = resolve(docsUiPath, 'components/button-demo.tsx')
 
       const result = await compileJSX(buttonDemoPath, async (path) => {

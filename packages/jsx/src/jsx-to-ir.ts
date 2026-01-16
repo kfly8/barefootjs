@@ -119,14 +119,23 @@ function transformHtmlElement(
     node.openingElement.attributes,
     ctx
   )
+
+  // Save isRoot BEFORE processing children (children will set it to false)
+  const needsScope = ctx.isRoot
+  ctx.isRoot = false
+
   const children = transformChildren(node.children, ctx)
 
   // Determine if this element needs a slot ID
-  const needsSlot = events.length > 0 || hasDynamicContent(children)
+  // Elements need slotIds if they have: events, dynamic children, reactive attributes, or refs
+  const needsSlot = events.length > 0 || hasDynamicContent(children) || hasReactiveAttributes(attrs, ctx) || ref !== null
   const slotId = needsSlot ? generateSlotId(ctx) : null
 
-  const needsScope = ctx.isRoot
-  ctx.isRoot = false
+  // Propagate slotId to loop children (they need to use parent's marker)
+  // This includes loops nested in fragments
+  if (slotId) {
+    propagateSlotIdToLoops(children, slotId)
+  }
 
   return {
     type: 'element',
@@ -154,7 +163,8 @@ function transformSelfClosingElement(
 
   const { attrs, events, ref } = processAttributes(node.attributes, ctx)
 
-  const needsSlot = events.length > 0
+  // Elements need slotIds if they have events, reactive attributes, or refs
+  const needsSlot = events.length > 0 || hasReactiveAttributes(attrs, ctx) || ref !== null
   const slotId = needsSlot ? generateSlotId(ctx) : null
 
   const needsScope = ctx.isRoot
@@ -185,6 +195,17 @@ function transformComponentElement(
   const props = processComponentProps(node.openingElement.attributes, ctx)
   const children = transformChildren(node.children, ctx)
 
+  // Assign slotId if component has:
+  // - event handler props (onClick, etc.)
+  // - reactive props (function calls like selected={isSelected()})
+  const hasEventHandlers = props.some(
+    (p) => p.name.startsWith('on') && p.name.length > 2
+  )
+  const hasReactiveProps = props.some(
+    (p) => !p.name.startsWith('on') && p.value.endsWith('()')
+  )
+  const slotId = hasEventHandlers || hasReactiveProps ? generateSlotId(ctx) : null
+
   return {
     type: 'component',
     name,
@@ -192,6 +213,7 @@ function transformComponentElement(
     propsType: null, // Will be resolved later
     children,
     template: name.toLowerCase(),
+    slotId,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
@@ -203,6 +225,17 @@ function transformSelfClosingComponent(
 ): IRComponent {
   const props = processComponentProps(node.attributes, ctx)
 
+  // Assign slotId if component has:
+  // - event handler props (onClick, etc.)
+  // - reactive props (function calls like selected={isSelected()})
+  const hasEventHandlers = props.some(
+    (p) => p.name.startsWith('on') && p.name.length > 2
+  )
+  const hasReactiveProps = props.some(
+    (p) => !p.name.startsWith('on') && p.value.endsWith('()')
+  )
+  const slotId = hasEventHandlers || hasReactiveProps ? generateSlotId(ctx) : null
+
   return {
     type: 'component',
     name,
@@ -210,6 +243,7 @@ function transformSelfClosingComponent(
     propsType: null,
     children: [],
     template: name.toLowerCase(),
+    slotId,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
@@ -222,7 +256,21 @@ function transformFragment(
   node: ts.JsxFragment,
   ctx: TransformContext
 ): IRFragment {
+  // For fragment roots, we need to mark ALL direct element children with needsScope
+  // This is because fragments don't render a DOM element, so each child needs the scope marker
+  // to enable proper hydration queries across siblings
+  const isFragmentRoot = ctx.isRoot
+
   const children = transformChildren(node.children, ctx)
+
+  // If this was the root fragment, ensure all direct element children have needsScope
+  if (isFragmentRoot) {
+    for (const child of children) {
+      if (child.type === 'element') {
+        child.needsScope = true
+      }
+    }
+  }
 
   return {
     type: 'fragment',
@@ -469,7 +517,9 @@ function transformMapCall(
     index,
     key,
     children,
-    slotId: generateSlotId(ctx),
+    // Loops don't generate their own slotId; they inherit from parent element
+    // The parent element will assign its slotId to the loop after transformation
+    slotId: null,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
@@ -557,10 +607,12 @@ function getAttributeValue(
   }
 
   // Expression: <div class={className} />
+  // JSX expressions are always dynamic - they should be rendered as {expr} not "expr"
+  // The distinction between "dynamic" (JSX expression) and "reactive" (needs client updates)
+  // is handled separately in client JS generation
   if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
     const expr = attr.initializer.expression.getText(ctx.sourceFile)
-    const dynamic = isReactiveExpression(expr, ctx)
-    return { value: expr, dynamic }
+    return { value: expr, dynamic: true }
   }
 
   return { value: null, dynamic: false }
@@ -625,15 +677,101 @@ function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
     }
   }
 
-  // Check for props that might be reactive (called as functions)
+  // Check for props references (both direct references and function calls)
+  // Props need to be dynamic so SSR can render them correctly
+  // But exclude 'children' as it's server-rendered, not dynamically updated
   for (const prop of ctx.analyzer.propsParams) {
-    const pattern = new RegExp(`\\b${prop.name}\\s*\\(`)
+    if (prop.name === 'children') continue
+    const pattern = new RegExp(`\\b${prop.name}\\b`)
     if (pattern.test(expr)) {
       return true
     }
   }
 
+  // Check if expression is a local constant that references props/signals/memos
+  // e.g., const classes = `${className} ${variant}` and then class={classes}
+  for (const constant of ctx.analyzer.localConstants) {
+    const constPattern = new RegExp(`\\b${constant.name}\\b`)
+    if (constPattern.test(expr)) {
+      // Check if the constant's value contains reactive references
+      if (isReactiveValue(constant.value, ctx)) {
+        return true
+      }
+    }
+  }
+
   return false
+}
+
+function isReactiveValue(value: string, ctx: TransformContext): boolean {
+  // Check for props references in the value
+  for (const prop of ctx.analyzer.propsParams) {
+    const pattern = new RegExp(`\\b${prop.name}\\b`)
+    if (pattern.test(value)) {
+      return true
+    }
+  }
+
+  // Check for signal calls in the value
+  for (const signal of ctx.analyzer.signals) {
+    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
+    if (pattern.test(value)) {
+      return true
+    }
+  }
+
+  // Check for memo calls in the value
+  for (const memo of ctx.analyzer.memos) {
+    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
+    if (pattern.test(value)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Check if any attributes in the list are reactive (depend on signals/memos).
+ * Reactive attributes need a slotId so the client JS can update them.
+ */
+function hasReactiveAttributes(attrs: IRAttribute[], ctx: TransformContext): boolean {
+  for (const attr of attrs) {
+    if (attr.dynamic && attr.value) {
+      // Check for signal getter calls
+      for (const signal of ctx.analyzer.signals) {
+        const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
+        if (pattern.test(attr.value)) {
+          return true
+        }
+      }
+      // Check for memo calls
+      for (const memo of ctx.analyzer.memos) {
+        const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
+        if (pattern.test(attr.value)) {
+          return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+/**
+ * Propagate slotId to loop children that need it.
+ * Loops need to use their parent element's slotId for reconcileList.
+ * This handles loops directly in children or nested in fragments.
+ */
+function propagateSlotIdToLoops(children: IRNode[], slotId: string): void {
+  for (const child of children) {
+    if (child.type === 'loop' && child.slotId === null) {
+      child.slotId = slotId
+    } else if (child.type === 'fragment') {
+      // Recurse into fragments (they're transparent containers)
+      propagateSlotIdToLoops(child.children, slotId)
+    }
+    // Don't recurse into elements - they handle their own children
+  }
 }
 
 function hasDynamicContent(children: IRNode[]): boolean {

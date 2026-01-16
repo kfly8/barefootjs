@@ -67,6 +67,13 @@ const themeInitScript = `
 })();
 `
 
+// Import map for resolving @barefootjs/dom in client JS
+const importMapScript = JSON.stringify({
+  imports: {
+    '@barefootjs/dom': '/static/components/barefoot.js',
+  },
+})
+
 export const renderer = jsxRenderer(
   ({ children, title, description }) => {
     const c = useRequestContext()
@@ -76,6 +83,7 @@ export const renderer = jsxRenderer(
       <WithPredictableIds>
         <html lang="en">
           <head>
+            <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
             <BfPreload
               manifest={manifest as Manifest}
               components={['Button', 'CopyButton', 'Toggle', 'ThemeToggle']}

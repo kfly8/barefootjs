@@ -31,7 +31,12 @@ export class HonoAdapter extends BaseAdapter {
     const types = this.generateTypes(ir)
     const component = this.generateComponent(ir)
 
-    const template = [imports, types, component].filter(Boolean).join('\n\n')
+    // Add default export if the original had one
+    const defaultExport = ir.metadata.hasDefaultExport
+      ? `\nexport default ${this.componentName}`
+      : ''
+
+    const template = [imports, types, component].filter(Boolean).join('\n\n') + defaultExport
 
     return {
       template,
@@ -127,24 +132,29 @@ export class HonoAdapter extends BaseAdapter {
   private generateComponent(ir: ComponentIR): string {
     const name = ir.metadata.componentName
     const propsTypeName = this.getPropsTypeName(ir)
+    const hasClientInteractivity = ir.metadata.signals.length > 0 ||
+      ir.metadata.memos.length > 0 ||
+      this.hasEventHandlers(ir.root)
 
     // Build props parameter
     const propsParams = ir.metadata.propsParams
       .map((p: ParamInfo) => (p.defaultValue ? `${p.name} = ${p.defaultValue}` : p.name))
       .join(', ')
 
-    const restProps = ir.metadata.localConstants.find((c) => c.name === 'restProps')
-    const propsDestructure = restProps
-      ? `{ ${propsParams}, ...${restProps.name} }`
-      : propsParams
-        ? `{ ${propsParams} }`
-        : ''
+    const restPropsName = ir.metadata.restPropsName
 
-    // Add hydration props
+    // Build full destructure with hydration props
+    // Rest props must be at the end in TypeScript
     const hydrationProps = '__instanceId, __bfScope'
-    const fullPropsDestructure = propsDestructure
-      ? `{ ${propsDestructure.slice(2, -2)}, ${hydrationProps} }`
-      : `{ ${hydrationProps} }`
+    const parts: string[] = []
+    if (propsParams) {
+      parts.push(propsParams)
+    }
+    parts.push(hydrationProps)
+    if (restPropsName) {
+      parts.push(`...${restPropsName}`)
+    }
+    const fullPropsDestructure = `{ ${parts.join(', ')} }`
 
     // Props type annotation
     const typeAnnotation = propsTypeName
@@ -157,20 +167,94 @@ export class HonoAdapter extends BaseAdapter {
     // Generate JSX body
     const jsxBody = this.renderNode(ir.root)
 
+    // Generate props serialization for hydration (for components with props)
+    const propsToSerialize = ir.metadata.propsParams.filter(p => {
+      // Skip function props and internal props
+      return !p.name.startsWith('on') && !p.name.startsWith('__')
+    })
+    const hasPropsToSerialize = propsToSerialize.length > 0 && hasClientInteractivity
+
     const lines: string[] = []
     lines.push(`export function ${name}(${fullPropsDestructure}${typeAnnotation}) {`)
+
+    // Always generate scope ID - components with interactivity use their name,
+    // others just pass through parent's scope
+    if (hasClientInteractivity) {
+      lines.push(`  // Generate unique scope ID for hydration`)
+      lines.push(`  const __scopeId = __bfScope || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
+    } else {
+      // Pass through parent's scope (may be undefined, which is fine for non-interactive components)
+      lines.push(`  const __scopeId = __bfScope || __instanceId`)
+    }
 
     if (signalInits) {
       lines.push(signalInits)
     }
 
+    // Generate props serialization code
+    if (hasPropsToSerialize) {
+      lines.push('')
+      lines.push(`  // Serialize props for client hydration`)
+      lines.push(`  const __hydrateProps: Record<string, unknown> = {}`)
+      for (const p of propsToSerialize) {
+        // Skip functions and JSX elements (they can't be JSON serialized)
+        lines.push(`  if (typeof ${p.name} !== 'function' && !(typeof ${p.name} === 'object' && ${p.name} !== null && 'isEscaped' in ${p.name})) __hydrateProps['${p.name}'] = ${p.name}`)
+      }
+    }
+
     lines.push('')
-    lines.push(`  return (`)
-    lines.push(`    ${jsxBody}`)
-    lines.push(`  )`)
+
+    // Wrap JSX with fragment to include props script if needed
+    if (hasPropsToSerialize) {
+      lines.push(`  return (`)
+      lines.push(`    <>`)
+      lines.push(`      ${jsxBody}`)
+      lines.push(`      {Object.keys(__hydrateProps).length > 0 && (`)
+      lines.push(`        <script`)
+      lines.push(`          type="application/json"`)
+      lines.push(`          data-bf-props={__scopeId}`)
+      lines.push(`          dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}`)
+      lines.push(`        />`)
+      lines.push(`      )}`)
+      lines.push(`    </>`)
+      lines.push(`  )`)
+    } else {
+      lines.push(`  return (`)
+      lines.push(`    ${jsxBody}`)
+      lines.push(`  )`)
+    }
     lines.push(`}`)
 
     return lines.join('\n')
+  }
+
+  private hasEventHandlers(node: IRNode): boolean {
+    if (node.type === 'element') {
+      if (node.events.length > 0) return true
+      for (const child of node.children) {
+        if (this.hasEventHandlers(child)) return true
+      }
+    } else if (node.type === 'component') {
+      // Check if any props look like event handlers
+      for (const prop of node.props) {
+        if (prop.name.startsWith('on') && prop.name.length > 2) return true
+      }
+      for (const child of node.children) {
+        if (this.hasEventHandlers(child)) return true
+      }
+    } else if (node.type === 'fragment') {
+      for (const child of node.children) {
+        if (this.hasEventHandlers(child)) return true
+      }
+    } else if (node.type === 'conditional') {
+      if (this.hasEventHandlers(node.whenTrue)) return true
+      if (this.hasEventHandlers(node.whenFalse)) return true
+    } else if (node.type === 'loop') {
+      for (const child of node.children) {
+        if (this.hasEventHandlers(child)) return true
+      }
+    }
+    return false
   }
 
   private generateSignalInitializers(ir: ComponentIR): string {
@@ -179,6 +263,8 @@ export class HonoAdapter extends BaseAdapter {
     for (const signal of ir.metadata.signals) {
       // Create a getter that returns the initial value for SSR
       lines.push(`  const ${signal.getter} = () => ${signal.initialValue}`)
+      // Create a no-op setter for SSR (in case it's passed to child components)
+      lines.push(`  const ${signal.setter} = () => {}`)
     }
 
     for (const memo of ir.metadata.memos) {
@@ -186,7 +272,58 @@ export class HonoAdapter extends BaseAdapter {
       lines.push(`  const ${memo.name} = ${memo.computation}`)
     }
 
+    // Include local constants
+    for (const constant of ir.metadata.localConstants) {
+      const value = constant.value.trim()
+      // Check if it's an arrow function or function expression
+      const isArrowFunc =
+        value.startsWith('(') ||
+        value.startsWith('async (') ||
+        value.startsWith('async(') ||
+        value.startsWith('function') ||
+        /^\w+\s*=>/.test(value) ||
+        /^\([^)]*\)\s*=>/.test(value)
+
+      if (isArrowFunc) {
+        // Generate a stub function for SSR (these may be referenced as props)
+        // Extract parameters if possible
+        const params = this.extractFunctionParams(value)
+        lines.push(`  const ${constant.name} = (${params}) => {}`)
+      } else {
+        // Output non-function constants directly
+        lines.push(`  const ${constant.name} = ${constant.value}`)
+      }
+    }
+
     return lines.join('\n')
+  }
+
+  private extractFunctionParams(value: string): string {
+    // Match arrow function parameters: (a, b) => ... or a => ...
+    const arrowMatch = value.match(/^(?:async\s*)?\(([^)]*)\)\s*(?::\s*[^=]+)?\s*=>/)
+    if (arrowMatch) {
+      // Remove type annotations from parameters
+      return arrowMatch[1]
+        .split(',')
+        .map((p) => p.trim().split(':')[0].split('=')[0].trim())
+        .filter(Boolean)
+        .join(', ')
+    }
+    // Single param arrow function: a => ...
+    const singleMatch = value.match(/^(?:async\s*)?(\w+)\s*=>/)
+    if (singleMatch) {
+      return singleMatch[1]
+    }
+    // Function expression: function(a, b) { ... }
+    const funcMatch = value.match(/^(?:async\s*)?function\s*\w*\s*\(([^)]*)\)/)
+    if (funcMatch) {
+      return funcMatch[1]
+        .split(',')
+        .map((p) => p.trim().split(':')[0].split('=')[0].trim())
+        .filter(Boolean)
+        .join(', ')
+    }
+    return ''
   }
 
   // ===========================================================================
@@ -224,7 +361,8 @@ export class HonoAdapter extends BaseAdapter {
     // Add hydration markers
     let hydrationAttrs = ''
     if (element.needsScope) {
-      hydrationAttrs += ' {...(__bfScope ? { "data-bf-scope": __bfScope } : { "data-bf-scope": __instanceId })}'
+      // Use __scopeId which is generated by the component with client interactivity
+      hydrationAttrs += ' data-bf-scope={__scopeId}'
     }
     if (element.slotId) {
       hydrationAttrs += ` data-bf="${element.slotId}"`
@@ -242,21 +380,52 @@ export class HonoAdapter extends BaseAdapter {
   }
 
   renderExpression(expr: IRExpression): string {
+    // Keep null as 'null' for proper JSX rendering
     if (expr.expr === 'null' || expr.expr === 'undefined') {
-      return ''
+      return 'null'
+    }
+    // Wrap reactive expressions in a span with slot marker for client JS to find
+    if (expr.reactive && expr.slotId) {
+      return `<span data-bf="${expr.slotId}">{${expr.expr}}</span>`
     }
     return `{${expr.expr}}`
   }
 
+  // Render a node without wrapping braces (for use inside ternary expressions)
+  private renderNodeRaw(node: IRNode): string {
+    if (node.type === 'expression') {
+      // Return expression without braces
+      if (node.expr === 'null' || node.expr === 'undefined') {
+        return 'null'
+      }
+      // Strip quotes from string literals for text content
+      const trimmed = node.expr.trim()
+      if (
+        (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))
+      ) {
+        return trimmed.slice(1, -1)
+      }
+      return node.expr
+    }
+    return this.renderNode(node)
+  }
+
   renderConditional(cond: IRConditional): string {
-    const whenTrue = this.renderNode(cond.whenTrue)
-    const whenFalse = this.renderNode(cond.whenFalse)
+    const whenTrue = this.renderNodeRaw(cond.whenTrue)
+    let whenFalse = this.renderNodeRaw(cond.whenFalse)
+
+    // Handle empty/null whenFalse
+    if (!whenFalse || whenFalse === '' || whenFalse === 'null') {
+      whenFalse = 'null'
+    }
 
     // If reactive, wrap with markers
     if (cond.slotId) {
       const trueWithMarker = this.wrapWithCondMarker(whenTrue, cond.slotId)
+      // For null false branch, use fragment with comment markers
       const falseWithMarker = cond.whenFalse.type === 'expression' && cond.whenFalse.expr === 'null'
-        ? `{__rawHtml("<!--bf-cond-start:${cond.slotId}-->")}{__rawHtml("<!--bf-cond-end:${cond.slotId}-->")}`
+        ? 'null'
         : this.wrapWithCondMarker(whenFalse, cond.slotId)
 
       return `{${cond.condition} ? ${trueWithMarker} : ${falseWithMarker}}`
@@ -288,10 +457,23 @@ export class HonoAdapter extends BaseAdapter {
     const props = this.renderComponentProps(comp)
     const children = this.renderChildren(comp.children)
 
-    if (children) {
-      return `<${comp.name}${props}>${children}</${comp.name}>`
+    // For components with event handlers, pass a unique scope ID
+    // so the parent's client JS can find and attach handlers
+    // The component's root element will have data-bf-scope={this unique ID}
+    let scopeAttr: string
+    if (comp.slotId) {
+      // Generate a unique scope ID for this component instance
+      // Format: ParentName_slotX to ensure uniqueness
+      scopeAttr = ` __bfScope={\`\${__scopeId}_${comp.slotId}\`}`
     } else {
-      return `<${comp.name}${props} />`
+      // Non-interactive components inherit parent's scope
+      scopeAttr = ' __bfScope={__scopeId}'
+    }
+
+    if (children) {
+      return `<${comp.name}${props}${scopeAttr}>${children}</${comp.name}>`
+    } else {
+      return `<${comp.name}${props}${scopeAttr} />`
     }
   }
 
@@ -308,20 +490,21 @@ export class HonoAdapter extends BaseAdapter {
     const parts: string[] = []
 
     for (const attr of element.attrs) {
+      // Convert 'class' to 'className' for JSX
+      const attrName = attr.name === 'class' ? 'className' : attr.name
+
       if (attr.name === '...') {
         // Spread attribute
         parts.push(`{...${attr.value}}`)
       } else if (attr.value === null) {
         // Boolean attribute
-        parts.push(attr.name)
+        parts.push(attrName)
       } else if (attr.dynamic) {
         // Dynamic attribute
-        parts.push(`${attr.name}={${attr.value}}`)
+        parts.push(`${attrName}={${attr.value}}`)
       } else {
         // Static attribute
-        // Convert 'class' to 'className' for JSX
-        const name = attr.name === 'class' ? 'className' : attr.name
-        parts.push(`${name}="${attr.value}"`)
+        parts.push(`${attrName}="${attr.value}"`)
       }
     }
 
@@ -343,13 +526,40 @@ export class HonoAdapter extends BaseAdapter {
       } else if (prop.dynamic) {
         parts.push(`${prop.name}={${prop.value}}`)
       } else if (prop.value === 'true') {
+        // Boolean true: <Component disabled />
         parts.push(prop.name)
+      } else if (prop.value === 'false') {
+        // Boolean false: <Component disabled={false} />
+        // Note: we output this explicitly rather than omitting it
+        // because the child component may need the explicit false value
+        parts.push(`${prop.name}={false}`)
+      } else if (this.isJsExpression(prop.value)) {
+        // JavaScript expressions (arrow functions, etc.)
+        parts.push(`${prop.name}={${prop.value}}`)
       } else {
+        // String literals
         parts.push(`${prop.name}="${prop.value}"`)
       }
     }
 
     return parts.length > 0 ? ' ' + parts.join(' ') : ''
+  }
+
+  private isJsExpression(value: string): boolean {
+    // Arrow function: () => ..., (x) => ..., x => ...
+    if (/^(\([^)]*\)|[a-zA-Z_$][a-zA-Z0-9_$]*)\s*=>/.test(value)) {
+      return true
+    }
+    // Function call with parentheses: foo(), bar(x)
+    if (/^[a-zA-Z_$][a-zA-Z0-9_$.]*\s*\(/.test(value)) {
+      return true
+    }
+    // Function/setter reference: setFoo, handleClick (common naming patterns)
+    // These are likely function references, not string values
+    if (/^(set[A-Z]|handle[A-Z]|on[A-Z])[a-zA-Z0-9_$]*$/.test(value)) {
+      return true
+    }
+    return false
   }
 
   // ===========================================================================

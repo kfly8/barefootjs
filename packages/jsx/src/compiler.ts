@@ -1,0 +1,337 @@
+/**
+ * BarefootJS Compiler v2 - Main Entry Point
+ *
+ * Compiles JSX components to Marked Templates + Client JS.
+ */
+
+import type {
+  ComponentIR,
+  IRMetadata,
+  CompileOptions,
+  CompileResult,
+  FileOutput,
+} from './types'
+import { analyzeComponent, listExportedComponents } from './analyzer'
+import { jsxToIR } from './jsx-to-ir'
+import { HonoAdapter } from './adapters/hono'
+import { generateClientJs } from './ir-to-client-js'
+
+// =============================================================================
+// Main Entry Point
+// =============================================================================
+
+export async function compileJSX(
+  entryPath: string,
+  readFile: (path: string) => Promise<string>,
+  options?: CompileOptions
+): Promise<CompileResult> {
+  const files: FileOutput[] = []
+  const errors: CompileResult['errors'] = []
+
+  // Read source file
+  const source = await readFile(entryPath)
+
+  // List all exported components in the file
+  const componentNames = listExportedComponents(source, entryPath)
+
+  // If multiple components, compile each separately and combine
+  if (componentNames.length > 1) {
+    return compileMultipleComponents(source, entryPath, componentNames, options)
+  }
+
+  // Single component flow
+  const ctx = analyzeComponent(source, entryPath)
+  errors.push(...ctx.errors)
+
+  if (!ctx.jsxReturn) {
+    return { files, errors }
+  }
+
+  const ir = jsxToIR(ctx)
+  if (!ir) {
+    return { files, errors }
+  }
+
+  const componentIR: ComponentIR = {
+    version: '2.0',
+    metadata: buildMetadata(ctx),
+    root: ir,
+    errors: [],
+  }
+
+  if (options?.outputIR) {
+    files.push({
+      path: entryPath.replace(/\.tsx?$/, '.ir.json'),
+      content: JSON.stringify(componentIR, null, 2),
+      type: 'ir',
+    })
+  }
+
+  const adapter = new HonoAdapter()
+  const adapterOutput = adapter.generate(componentIR)
+
+  files.push({
+    path: entryPath.replace(/\.tsx?$/, adapter.extension),
+    content: adapterOutput.template,
+    type: 'markedJsx',
+  })
+
+  const clientJs = generateClientJs(componentIR)
+  if (clientJs) {
+    files.push({
+      path: entryPath.replace(/\.tsx?$/, '.client.js'),
+      content: clientJs,
+      type: 'clientJs',
+    })
+  }
+
+  return { files, errors }
+}
+
+// =============================================================================
+// Multiple Component Compilation
+// =============================================================================
+
+function compileMultipleComponentsSync(
+  source: string,
+  filePath: string,
+  componentNames: string[],
+  _options?: CompileOptions
+): CompileResult {
+  const files: FileOutput[] = []
+  const errors: CompileResult['errors'] = []
+  const adapter = new HonoAdapter()
+
+  // Compile each component and collect outputs
+  const allOutputs: { imports: string; types: string; component: string; clientJs?: string }[] = []
+
+  for (const componentName of componentNames) {
+    const ctx = analyzeComponent(source, filePath, componentName)
+    errors.push(...ctx.errors)
+
+    if (!ctx.jsxReturn) continue
+
+    const ir = jsxToIR(ctx)
+    if (!ir) continue
+
+    const componentIR: ComponentIR = {
+      version: '2.0',
+      metadata: buildMetadata(ctx),
+      root: ir,
+      errors: [],
+    }
+
+    const adapterOutput = adapter.generate(componentIR)
+    const fullContent = adapterOutput.template
+
+    // Parse output to separate imports, types, and component
+    const lines = fullContent.split('\n')
+    const importLines: string[] = []
+    const typeLines: string[] = []
+    const componentLines: string[] = []
+    let inComponent = false
+
+    for (const line of lines) {
+      if (line.startsWith('export function ')) {
+        inComponent = true
+      }
+
+      if (inComponent) {
+        componentLines.push(line)
+      } else if (line.startsWith('import ')) {
+        importLines.push(line)
+      } else if (line.trim()) {
+        typeLines.push(line)
+      }
+    }
+
+    allOutputs.push({
+      imports: importLines.join('\n'),
+      types: typeLines.join('\n'),
+      component: componentLines.join('\n'),
+      clientJs: generateClientJs(componentIR) || undefined,
+    })
+  }
+
+  if (allOutputs.length === 0) {
+    return { files, errors }
+  }
+
+  // Use imports from first component (they should be similar)
+  // Combine unique type definitions
+  const seenTypes = new Set<string>()
+  const uniqueTypes: string[] = []
+  for (const output of allOutputs) {
+    if (output.types && !seenTypes.has(output.types)) {
+      seenTypes.add(output.types)
+      uniqueTypes.push(output.types)
+    }
+  }
+
+  // Combine all components
+  const combinedTemplate = [
+    allOutputs[0].imports,
+    uniqueTypes.join('\n\n'),
+    '',
+    ...allOutputs.map(o => o.component),
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+
+  files.push({
+    path: filePath.replace(/\.tsx?$/, adapter.extension),
+    content: combinedTemplate,
+    type: 'markedJsx',
+  })
+
+  // Combine client JS if any
+  const clientJsOutputs = allOutputs.map(o => o.clientJs).filter(Boolean) as string[]
+  if (clientJsOutputs.length > 0) {
+    // Separate imports from code to avoid duplicate imports
+    const allImports: string[] = []
+    const allCode: string[] = []
+
+    for (const js of clientJsOutputs) {
+      const lines = js.split('\n')
+      const importLines: string[] = []
+      const codeLines: string[] = []
+
+      for (const line of lines) {
+        if (line.startsWith('import ')) {
+          importLines.push(line)
+        } else {
+          codeLines.push(line)
+        }
+      }
+
+      // Deduplicate imports
+      for (const imp of importLines) {
+        if (!allImports.includes(imp)) {
+          allImports.push(imp)
+        }
+      }
+      allCode.push(codeLines.join('\n').trim())
+    }
+
+    const combinedClientJs = [
+      ...allImports,
+      '',
+      ...allCode.filter(Boolean),
+    ].join('\n')
+
+    files.push({
+      path: filePath.replace(/\.tsx?$/, '.client.js'),
+      content: combinedClientJs,
+      type: 'clientJs',
+    })
+  }
+
+  return { files, errors }
+}
+
+async function compileMultipleComponents(
+  source: string,
+  filePath: string,
+  componentNames: string[],
+  options?: CompileOptions
+): Promise<CompileResult> {
+  return compileMultipleComponentsSync(source, filePath, componentNames, options)
+}
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+function buildMetadata(
+  ctx: ReturnType<typeof analyzeComponent>
+): IRMetadata {
+  return {
+    componentName: ctx.componentName || 'Unknown',
+    hasDefaultExport: ctx.hasDefaultExport,
+    typeDefinitions: ctx.typeDefinitions,
+    propsType: ctx.propsType,
+    propsParams: ctx.propsParams,
+    restPropsName: ctx.restPropsName,
+    signals: ctx.signals,
+    memos: ctx.memos,
+    effects: ctx.effects,
+    imports: ctx.imports,
+    localFunctions: ctx.localFunctions,
+    localConstants: ctx.localConstants,
+  }
+}
+
+// =============================================================================
+// Sync Version (for compatibility)
+// =============================================================================
+
+export function compileJSXSync(
+  source: string,
+  filePath: string,
+  options?: CompileOptions
+): CompileResult {
+  const files: FileOutput[] = []
+  const errors: CompileResult['errors'] = []
+
+  // List all exported components
+  const componentNames = listExportedComponents(source, filePath)
+
+  // If multiple components, compile each separately and combine
+  if (componentNames.length > 1) {
+    return compileMultipleComponentsSync(source, filePath, componentNames, options)
+  }
+
+  // Single component flow
+  const ctx = analyzeComponent(source, filePath)
+  errors.push(...ctx.errors)
+
+  if (!ctx.jsxReturn) {
+    return { files, errors }
+  }
+
+  const ir = jsxToIR(ctx)
+  if (!ir) {
+    return { files, errors }
+  }
+
+  const componentIR: ComponentIR = {
+    version: '2.0',
+    metadata: buildMetadata(ctx),
+    root: ir,
+    errors: [],
+  }
+
+  if (options?.outputIR) {
+    files.push({
+      path: filePath.replace(/\.tsx?$/, '.ir.json'),
+      content: JSON.stringify(componentIR, null, 2),
+      type: 'ir',
+    })
+  }
+
+  const adapter = new HonoAdapter()
+  const adapterOutput = adapter.generate(componentIR)
+
+  files.push({
+    path: filePath.replace(/\.tsx?$/, adapter.extension),
+    content: adapterOutput.template,
+    type: 'markedJsx',
+  })
+
+  const clientJs = generateClientJs(componentIR)
+  if (clientJs) {
+    files.push({
+      path: filePath.replace(/\.tsx?$/, '.client.js'),
+      content: clientJs,
+      type: 'clientJs',
+    })
+  }
+
+  return { files, errors }
+}
+
+// =============================================================================
+// Export Types
+// =============================================================================
+
+export type { ComponentIR, CompileOptions, CompileResult, FileOutput }

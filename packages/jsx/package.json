@@ -9,10 +9,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./adapters/testing": {
-      "types": "./dist/adapters/testing.d.ts",
-      "import": "./dist/adapters/testing.js"
     }
   },
   "files": [
@@ -21,7 +17,7 @@
   ],
   "scripts": {
     "build": "bun run build:js && bun run build:types",
-    "build:js": "bun build ./src/index.ts ./src/adapters/testing.ts --outdir ./dist --format esm",
+    "build:js": "bun build ./src/index.ts --outdir ./dist --format esm",
     "build:types": "tsc --emitDeclarationOnly --outDir ./dist",
     "test": "bun test",
     "clean": "rm -rf dist"

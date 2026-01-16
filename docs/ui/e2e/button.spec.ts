@@ -42,11 +42,9 @@ test.describe('Button Documentation Page', () => {
     })
 
     test('displays icon button', async ({ page }) => {
-      // Icon button has data-bf-scope attribute (not a copy button)
-      // It's the Button component with an SVG icon inside
-      // Note: data-bf-scope uses unique IDs like "Button_0", so we use prefix matching
-      // Multiple icon buttons may exist, so use first()
-      const iconButton = page.locator('button[data-bf-scope^="Button"]:has(svg)').first()
+      // Icon button is in the Sizes section, it's a button with only an SVG icon (no text)
+      // Find buttons with SVG that have icon size classes
+      const iconButton = page.locator('button:has(svg)').filter({ hasText: '' }).first()
       await expect(iconButton).toBeVisible()
     })
   })

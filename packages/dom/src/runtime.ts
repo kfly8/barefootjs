@@ -63,8 +63,9 @@ export function findScope(
 // --- find ---
 
 /**
- * Find an element within a scope, excluding nested component scopes.
- * This prevents selecting elements that belong to child components.
+ * Find an element within a scope.
+ * Checks if the scope element itself matches first, then searches descendants.
+ * Excludes elements that are inside nested scopes.
  *
  * @param scope - The scope element to search within
  * @param selector - CSS selector to match
@@ -79,10 +80,39 @@ export function find(
   // Check if scope itself matches
   if (scope.matches?.(selector)) return scope
 
-  // Search children, excluding nested scopes
-  for (const el of scope.querySelectorAll(selector)) {
-    if (el.closest('[data-bf-scope]') === scope) {
-      return el
+  // Search descendants, excluding nested scopes
+  const found = scope.querySelector(selector)
+  if (found) {
+    // Check if the found element is inside a nested scope
+    const nearestScope = found.closest('[data-bf-scope]')
+    // Only return if the element's nearest scope is our scope (or is the element itself)
+    if (nearestScope === scope || nearestScope === found) {
+      return found
+    }
+    // Element is in a nested scope, don't return it
+  }
+
+  // For fragment roots, elements may be in sibling scope elements
+  // Search siblings that share the same scope prefix
+  const scopeId = (scope as HTMLElement).dataset?.bfScope
+  if (scopeId) {
+    const scopePrefix = scopeId.split('_')[0] + '_'
+    const parent = scope.parentElement
+    if (parent) {
+      // Find sibling elements with matching scope prefix
+      const siblings = Array.from(parent.querySelectorAll(`[data-bf-scope^="${scopePrefix}"]`))
+      for (const sibling of siblings) {
+        if (sibling === scope) continue
+        if (sibling.matches?.(selector)) return sibling
+        const siblingFound = sibling.querySelector(selector)
+        if (siblingFound) {
+          // Check if the found element is inside a nested scope within the sibling
+          const nearestScopeInSibling = siblingFound.closest('[data-bf-scope]')
+          if (nearestScopeInSibling === sibling || nearestScopeInSibling === siblingFound) {
+            return siblingFound
+          }
+        }
+      }
     }
   }
 
@@ -104,12 +134,21 @@ export function hydrate(
 ): void {
   const scopeEls = document.querySelectorAll(`[data-bf-scope^="${name}_"]`)
 
+  // Track initialized scope IDs to avoid duplicate initialization
+  // (Fragment roots have multiple elements with the same scope ID)
+  const initializedScopes = new Set<string>()
+
   for (const scopeEl of scopeEls) {
     // Skip nested instances (inside another component's scope)
     if (scopeEl.parentElement?.closest('[data-bf-scope]')) continue
 
     // Get unique instance ID from scope element
     const instanceId = (scopeEl as HTMLElement).dataset.bfScope
+    if (!instanceId) continue
+
+    // Skip if already initialized (for fragment roots)
+    if (initializedScopes.has(instanceId)) continue
+    initializedScopes.add(instanceId)
 
     // Find corresponding props script by instance ID
     const propsEl = document.querySelector(

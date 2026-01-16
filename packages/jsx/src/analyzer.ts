@@ -85,6 +85,9 @@ function visit(
         ctx.componentNode = node
         analyzeComponentBody(node, ctx)
       }
+    } else {
+      // Skip recursion into non-target component bodies
+      return
     }
   }
 
@@ -96,6 +99,9 @@ function visit(
         ctx.componentNode = node.initializer
         analyzeComponentBody(node.initializer, ctx)
       }
+    } else {
+      // Skip recursion into non-target component bodies
+      return
     }
   }
 
@@ -115,6 +121,17 @@ function visit(
   // Module-level functions (outside component)
   if (ts.isFunctionDeclaration(node) && node.name && !isComponentFunction(node)) {
     collectFunction(node, ctx, true)
+  }
+
+  // Default export: export default ComponentName
+  if (ts.isExportAssignment(node) && !node.isExportEquals) {
+    const expr = node.expression
+    if (ts.isIdentifier(expr)) {
+      // Check if it exports the component
+      if (ctx.componentName && expr.text === ctx.componentName) {
+        ctx.hasDefaultExport = true
+      }
+    }
   }
 
   ts.forEachChild(node, (child) => visit(child, ctx, targetComponentName))
@@ -163,10 +180,12 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
     }
   }
 
-  // Effect calls
+  // Effect calls - collect the effect but don't recurse into it
   if (ts.isExpressionStatement(node)) {
     if (isEffectCall(node.expression)) {
       collectEffect(node.expression as ts.CallExpression, ctx)
+      // Don't recurse into createEffect body to avoid collecting inner variables
+      return
     }
   }
 
@@ -207,7 +226,15 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
     ctx.jsxReturn = node
   }
 
-  ts.forEachChild(node, (child) => visitComponentBody(child, ctx))
+  // Skip recursion into function bodies (arrow functions, function expressions)
+  // to avoid collecting inner local variables
+  ts.forEachChild(node, (child) => {
+    // Don't recurse into arrow functions or function expressions
+    if (ts.isArrowFunction(child) || ts.isFunctionExpression(child)) {
+      return
+    }
+    visitComponentBody(child, ctx)
+  })
 }
 
 // =============================================================================
@@ -592,6 +619,47 @@ function validateContext(ctx: AnalyzerContext): void {
       })
     )
   }
+}
+
+// =============================================================================
+// List Exported Components
+// =============================================================================
+
+/**
+ * Returns all exported component names in the file.
+ * Useful for files with multiple components (e.g., icon.tsx).
+ */
+export function listExportedComponents(
+  source: string,
+  filePath: string
+): string[] {
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  )
+
+  const componentNames: string[] = []
+
+  function collectComponents(node: ts.Node): void {
+    // Exported function declaration
+    if (isComponentFunction(node)) {
+      componentNames.push(node.name.text)
+    }
+
+    // Exported arrow function component
+    if (isArrowComponentFunction(node)) {
+      componentNames.push(node.name.text)
+    }
+
+    ts.forEachChild(node, collectComponents)
+  }
+
+  ts.forEachChild(sourceFile, collectComponents)
+
+  return componentNames
 }
 
 // =============================================================================
