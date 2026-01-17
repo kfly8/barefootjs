@@ -112,6 +112,36 @@ interface ReactiveAttribute {
 }
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Wrap arrow function handler in block to prevent accidental return false.
+ * Returning false from a DOM event handler prevents default behavior.
+ *
+ * Example:
+ *   Input:  (e) => e.key === 'Enter' && handleAdd()
+ *   Output: (e) => { e.key === 'Enter' && handleAdd() }
+ */
+function wrapHandlerInBlock(handler: string): string {
+  const trimmed = handler.trim()
+
+  // Check if it's an arrow function with expression body
+  if (trimmed.startsWith('(') && trimmed.includes('=>')) {
+    const arrowIndex = trimmed.indexOf('=>')
+    const params = trimmed.substring(0, arrowIndex + 2)
+    const body = trimmed.substring(arrowIndex + 2).trim()
+
+    // If body is not already a block, wrap it
+    if (!body.startsWith('{')) {
+      return `${params} { ${body} }`
+    }
+  }
+
+  return handler
+}
+
+// =============================================================================
 // Main Entry Point
 // =============================================================================
 
@@ -1284,7 +1314,14 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
       lines.push(`  createEffect(() => {`)
       lines.push(`    if (_${slotId}) {`)
       for (const attr of attrs) {
-        lines.push(`      _${slotId}.setAttribute('${attr.attrName}', String(${attr.expression}))`)
+        // Use DOM property for 'value' attribute (setAttribute doesn't update after user input)
+        // Add guard to only update when value differs - prevents interference with browser input handling
+        if (attr.attrName === 'value') {
+          lines.push(`      const __val = String(${attr.expression})`)
+          lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
+        } else {
+          lines.push(`      _${slotId}.setAttribute('${attr.attrName}', String(${attr.expression}))`)
+        }
       }
       lines.push(`    }`)
       lines.push(`  })`)
@@ -1312,7 +1349,9 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
       for (const [slotId, slotEvents] of eventsBySlot) {
         lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
         for (const event of slotEvents) {
-          lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${event.handler}`)
+          // Wrap handler in block to prevent accidental return false (which prevents default)
+          const wrappedHandler = wrapHandlerInBlock(event.handler)
+          lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${wrappedHandler}`)
         }
       }
     }
@@ -1435,11 +1474,13 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
 
     for (const event of elem.events) {
       const eventProp = `on${event.name}`
+      // Wrap handler in block to prevent accidental return false (which prevents default)
+      const wrappedHandler = wrapHandlerInBlock(event.handler)
       if (elem.slotId === '__scope') {
         // Attach to scope element directly (for events on component root)
-        lines.push(`  if (__scope) __scope.${eventProp} = ${event.handler}`)
+        lines.push(`  if (__scope) __scope.${eventProp} = ${wrappedHandler}`)
       } else {
-        lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${eventProp} = ${event.handler}`)
+        lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${eventProp} = ${wrappedHandler}`)
       }
     }
   }
