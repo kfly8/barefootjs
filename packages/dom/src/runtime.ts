@@ -111,14 +111,14 @@ export function find(
   }
 
   // For fragment roots, elements may be in sibling scope elements
-  // Search siblings that share the same scope prefix
+  // Search siblings that share the EXACT SAME scope ID (not just prefix)
+  // This is for fragment roots where multiple elements share one scope ID
   const scopeId = (scope as HTMLElement).dataset?.bfScope
   if (scopeId) {
-    const scopePrefix = scopeId.split('_')[0] + '_'
     const parent = scope.parentElement
     if (parent) {
-      // Find sibling elements with matching scope prefix
-      const siblings = Array.from(parent.querySelectorAll(`[data-bf-scope^="${scopePrefix}"]`))
+      // Find sibling elements with the exact same scope ID (fragment roots)
+      const siblings = Array.from(parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`))
       for (const sibling of siblings) {
         if (sibling === scope) continue
         if (sibling.matches?.(selector)) return sibling
@@ -142,6 +142,7 @@ export function find(
 /**
  * Auto-hydrate all instances of a component on the page.
  * Finds scope elements and their corresponding props, then initializes each instance.
+ * Supports Suspense streaming by using requestAnimationFrame for delayed re-hydration.
  *
  * @param name - Component name
  * @param init - Init function for the component
@@ -150,32 +151,47 @@ export function hydrate(
   name: string,
   init: (props: Record<string, unknown>, idx: number, scope: Element) => void
 ): void {
-  const scopeEls = document.querySelectorAll(`[data-bf-scope^="${name}_"]`)
-
-  // Track initialized scope IDs to avoid duplicate initialization
-  // (Fragment roots have multiple elements with the same scope ID)
-  const initializedScopes = new Set<string>()
-
-  for (const scopeEl of scopeEls) {
-    // Skip nested instances (inside another component's scope)
-    if (scopeEl.parentElement?.closest('[data-bf-scope]')) continue
-
-    // Get unique instance ID from scope element
-    const instanceId = (scopeEl as HTMLElement).dataset.bfScope
-    if (!instanceId) continue
-
-    // Skip if already initialized (for fragment roots)
-    if (initializedScopes.has(instanceId)) continue
-    initializedScopes.add(instanceId)
-
-    // Find corresponding props script by instance ID
-    const propsEl = document.querySelector(
-      `script[data-bf-props="${instanceId}"]`
+  const doHydrate = () => {
+    // Only select uninitialized elements (skip already hydrated ones)
+    const scopeEls = document.querySelectorAll(
+      `[data-bf-scope^="${name}_"]:not([data-bf-init])`
     )
-    const props = propsEl ? JSON.parse(propsEl.textContent || '{}') : {}
 
-    init(props, 0, scopeEl)
+    // Track initialized scope IDs to avoid duplicate initialization
+    // (Fragment roots have multiple elements with the same scope ID)
+    const initializedScopes = new Set<string>()
+
+    for (const scopeEl of scopeEls) {
+      // Skip nested instances (inside another component's scope)
+      if (scopeEl.parentElement?.closest('[data-bf-scope]')) continue
+
+      // Get unique instance ID from scope element
+      const instanceId = (scopeEl as HTMLElement).dataset.bfScope
+      if (!instanceId) continue
+
+      // Skip if already initialized in this batch (for fragment roots)
+      if (initializedScopes.has(instanceId)) continue
+      initializedScopes.add(instanceId)
+
+      // Mark as initialized immediately to prevent duplicate init
+      scopeEl.setAttribute('data-bf-init', 'true')
+
+      // Find corresponding props script by instance ID
+      const propsEl = document.querySelector(
+        `script[data-bf-props="${instanceId}"]`
+      )
+      const props = propsEl ? JSON.parse(propsEl.textContent || '{}') : {}
+
+      init(props, 0, scopeEl)
+    }
   }
+
+  // Immediately hydrate elements already in DOM
+  doHydrate()
+
+  // Re-hydrate after next frame (for Suspense streaming support)
+  // Hono's streaming script moves template content into document after initial script execution
+  requestAnimationFrame(doHydrate)
 }
 
 // --- bind ---
@@ -483,6 +499,9 @@ export function insert(
 
       // Bind events to the (possibly updated) SSR element
       branch.bindEvents(scope)
+
+      // Auto-focus on first run too (for components created via createComponent with editing=true)
+      autoFocusConditionalElement(scope, id)
       return
     }
 
@@ -501,6 +520,31 @@ export function insert(
 
     // Bind events to the newly inserted element
     branch.bindEvents(scope)
+
+    // Auto-focus elements with autofocus attribute (for dynamically created elements)
+    autoFocusConditionalElement(scope, id)
+  })
+}
+
+/**
+ * Auto-focus elements with autofocus attribute within a conditional slot.
+ * Used by insert() to focus inputs when they become visible.
+ * Uses requestAnimationFrame to ensure element is in DOM before focusing.
+ */
+function autoFocusConditionalElement(scope: Element, id: string): void {
+  // Use requestAnimationFrame to defer focus until after DOM updates.
+  // This is necessary because createComponent() may call insert() before
+  // the element is added to the document by reconcileList().
+  requestAnimationFrame(() => {
+    const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+    if (condEl) {
+      const autofocusEl = condEl.matches('[autofocus]')
+        ? condEl
+        : condEl.querySelector('[autofocus]')
+      if (autofocusEl && typeof (autofocusEl as HTMLElement).focus === 'function') {
+        ;(autofocusEl as HTMLElement).focus()
+      }
+    }
   })
 }
 
