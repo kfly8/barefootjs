@@ -128,6 +128,7 @@ export interface IRLoopChildComponent {
     name: string
     value: string // Expression (can use loop variables)
     dynamic: boolean
+    isLiteral: boolean // true if value came from a string literal attribute
     isEventHandler: boolean
   }>
 }
@@ -183,6 +184,7 @@ export interface IRAttribute {
   name: string
   value: string | null // null for boolean attrs like 'disabled'
   dynamic: boolean
+  isLiteral: boolean // true if value came from a string literal attribute
   loc: SourceLocation
 }
 
@@ -196,6 +198,7 @@ export interface IRProp {
   name: string
   value: string
   dynamic: boolean
+  isLiteral: boolean // true if value came from a string literal attribute (e.g., value="account")
   loc: SourceLocation
 }
 

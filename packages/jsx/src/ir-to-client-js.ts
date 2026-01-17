@@ -338,16 +338,12 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         } else if (prop.dynamic) {
           // Dynamic props wrapped in getters for reactivity
           propsForInit.push(`${prop.name}: () => ${prop.value}`)
+        } else if (prop.isLiteral) {
+          // String literal from JSX attribute (e.g., value="account")
+          propsForInit.push(`${prop.name}: ${JSON.stringify(prop.value)}`)
         } else {
-          // Static props - check if value looks like a variable or literal
-          const val = prop.value
-          if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val) || val.includes('(')) {
-            // Variable reference or function call
-            propsForInit.push(`${prop.name}: ${val}`)
-          } else {
-            // String literal
-            propsForInit.push(`${prop.name}: ${JSON.stringify(val)}`)
-          }
+          // Variable reference or function call (non-dynamic, non-literal)
+          propsForInit.push(`${prop.name}: ${prop.value}`)
         }
       }
       const propsExpr =
@@ -1384,8 +1380,11 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
         if (p.isEventHandler) {
           // Event handlers passed directly
           return `${p.name}: ${p.value}`
+        } else if (p.isLiteral) {
+          // String literal from JSX attribute - return quoted value
+          return `get ${p.name}() { return ${JSON.stringify(p.value)} }`
         } else {
-          // Data props wrapped in getters for reactivity
+          // Variable/expression props wrapped in getters for reactivity
           return `get ${p.name}() { return ${p.value} }`
         }
       })

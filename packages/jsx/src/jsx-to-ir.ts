@@ -527,6 +527,7 @@ function transformMapCall(
           name: p.name,
           value: p.value,
           dynamic: p.dynamic,
+          isLiteral: p.isLiteral,
           isEventHandler: p.name.startsWith('on') && p.name.length > 2,
         })),
     }
@@ -574,6 +575,7 @@ function processAttributes(
         name: '...',
         value: attr.expression.getText(ctx.sourceFile),
         dynamic: true,
+        isLiteral: false,
         loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
       })
       continue
@@ -605,11 +607,12 @@ function processAttributes(
     }
 
     // Regular attribute
-    const { value, dynamic } = getAttributeValue(attr, ctx)
+    const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
     attrs.push({
       name,
       value,
       dynamic,
+      isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
     })
   }
@@ -620,15 +623,15 @@ function processAttributes(
 function getAttributeValue(
   attr: ts.JsxAttribute,
   ctx: TransformContext
-): { value: string | null; dynamic: boolean } {
+): { value: string | null; dynamic: boolean; isLiteral: boolean } {
   // Boolean attribute: <button disabled />
   if (!attr.initializer) {
-    return { value: null, dynamic: false }
+    return { value: null, dynamic: false, isLiteral: false }
   }
 
   // String literal: <div id="main" />
   if (ts.isStringLiteral(attr.initializer)) {
-    return { value: attr.initializer.text, dynamic: false }
+    return { value: attr.initializer.text, dynamic: false, isLiteral: true }
   }
 
   // Expression: <div class={className} />
@@ -637,10 +640,10 @@ function getAttributeValue(
   // is handled separately in client JS generation
   if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
     const expr = attr.initializer.expression.getText(ctx.sourceFile)
-    return { value: expr, dynamic: true }
+    return { value: expr, dynamic: true, isLiteral: false }
   }
 
-  return { value: null, dynamic: false }
+  return { value: null, dynamic: false, isLiteral: false }
 }
 
 // =============================================================================
@@ -660,6 +663,7 @@ function processComponentProps(
         name: '...',
         value: attr.expression.getText(ctx.sourceFile),
         dynamic: true,
+        isLiteral: false,
         loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
       })
       continue
@@ -668,12 +672,13 @@ function processComponentProps(
     if (!ts.isJsxAttribute(attr)) continue
 
     const name = attr.name.getText(ctx.sourceFile)
-    const { value, dynamic } = getAttributeValue(attr, ctx)
+    const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
 
     props.push({
       name,
       value: value ?? 'true', // Boolean shorthand
       dynamic,
+      isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
     })
   }
