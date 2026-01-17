@@ -72,16 +72,13 @@ export function createComponent(
     element.setAttribute('data-key', String(key))
   }
 
-  // 5. Initialize the component
-  // Use queueMicrotask to defer initialization and avoid nested effects.
-  // createComponent may be called inside a createEffect (e.g., in reconcileList),
-  // and the child component's init function may create its own effects.
+  // 5. Initialize the component synchronously
+  // Event handlers need to be bound immediately so user interactions work right away.
+  // Nested effects are now supported in createEffect, so we don't need queueMicrotask.
   const initFn = getComponentInit(name)
   if (initFn) {
-    queueMicrotask(() => {
-      // Pass original props (with getters) for reactivity
-      initFn(0, element, props)
-    })
+    // Pass original props (with getters) for reactivity
+    initFn(0, element, props)
   }
 
   // 6. Store props and register update function for element reuse in reconcileList

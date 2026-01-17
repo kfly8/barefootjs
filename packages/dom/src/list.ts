@@ -10,6 +10,8 @@
  * 2. Element mode: renderItem returns HTMLElement (for component-based rendering)
  */
 
+import { getPropsUpdateFn, getComponentProps } from './component'
+
 
 /**
  * Render function type for list items.

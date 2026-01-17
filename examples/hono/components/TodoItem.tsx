@@ -27,6 +27,7 @@ function TodoItem({ todo, onToggle, onDelete, onStartEdit, onFinishEdit }: Props
           type="text"
           class="todo-input"
           value={todo.text}
+          autofocus
           onBlur={(e) => onFinishEdit(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && onFinishEdit(e.target.value)}
         />

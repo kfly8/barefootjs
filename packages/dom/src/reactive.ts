@@ -91,9 +91,9 @@ export function createSignal<T>(initialValue: T): Signal<T> {
  * setCount(1)  // Logs "count changed: 1"
  */
 export function createEffect(fn: EffectFn): void {
-  if (currentEffect !== null) {
-    throw new Error('createEffect cannot be nested inside another effect')
-  }
+  // Note: Nested effects are now allowed. runEffect() properly saves/restores
+  // prevEffect, so nested effects correctly track their own dependencies.
+  // This enables synchronous component initialization in reconcileList.
 
   const effect: EffectContext = {
     fn,
