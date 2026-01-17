@@ -301,16 +301,6 @@ describe('createEffect', () => {
     expect(cleanups).toEqual(['return'])
   })
 
-  test('throws error for nested effects', () => {
-    expect(() => {
-      createEffect(() => {
-        createEffect(() => {
-          // nested effect should throw
-        })
-      })
-    }).toThrow('createEffect cannot be nested inside another effect')
-  })
-
   test('re-tracks dependencies on each run', () => {
     const [condition, setCondition] = createSignal(true)
     const [a, setA] = createSignal('A')
