@@ -6,7 +6,7 @@
 
 // Main compiler API
 export { compileJSX, compileJSXSync } from './compiler'
-export type { CompileResult, CompileOptions, FileOutput } from './compiler'
+export type { CompileResult, CompileOptions, CompileOptionsWithAdapter, FileOutput } from './compiler'
 
 // Pure IR types
 export type {
@@ -21,6 +21,7 @@ export type {
   IRFragment,
   IRSlot,
   IRMetadata,
+  ParamInfo,
   TypeInfo,
   SourceLocation,
   CompilerError,
@@ -33,7 +34,7 @@ export { analyzeComponent, type AnalyzerContext } from './analyzer'
 export { jsxToIR } from './jsx-to-ir'
 
 // Adapters
-export { HonoAdapter } from './adapters/hono'
+export { BaseAdapter } from './adapters/interface'
 export type { TemplateAdapter, AdapterOutput } from './adapters/interface'
 
 // Client JS Generator

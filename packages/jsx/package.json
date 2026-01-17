@@ -39,7 +39,6 @@
     "@barefootjs/dom": "workspace:*"
   },
   "devDependencies": {
-    "@barefootjs/hono": "workspace:*",
     "@happy-dom/global-registrator": "^20.0.11",
     "typescript": "^5.0.0"
   }

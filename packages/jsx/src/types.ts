@@ -312,7 +312,6 @@ export interface ErrorSuggestion {
 // =============================================================================
 
 export interface CompileOptions {
-  adapter?: string // 'hono', 'go-template', etc. Default: 'hono'
   outputIR?: boolean // Output *.ir.json
   sourceMaps?: boolean
 }

@@ -6,7 +6,11 @@ import { describe, test, expect } from 'bun:test'
 import { compileJSXSync, compileJSX } from '../compiler'
 import { analyzeComponent } from '../analyzer'
 import { jsxToIR } from '../jsx-to-ir'
+import { TestAdapter } from '../adapters/test-adapter'
 import { resolve, dirname } from 'node:path'
+
+// Create a shared adapter instance for tests
+const adapter = new TestAdapter()
 
 describe('Compiler v2', () => {
   describe('analyzeComponent', () => {
@@ -200,7 +204,7 @@ describe('Compiler v2', () => {
         }
       `
 
-      const result = compileJSXSync(source, 'Counter.tsx')
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
 
       expect(result.errors).toHaveLength(0)
       expect(result.files).toHaveLength(2) // markedJsx + clientJs
@@ -228,7 +232,7 @@ describe('Compiler v2', () => {
         }
       `
 
-      const result = compileJSXSync(source, 'Button.tsx')
+      const result = compileJSXSync(source, 'Button.tsx', { adapter })
 
       expect(result.errors).toHaveLength(0)
 
@@ -262,7 +266,7 @@ describe('Compiler v2', () => {
         }
       `
 
-      const result = compileJSXSync(source, 'CommandDisplay.tsx')
+      const result = compileJSXSync(source, 'CommandDisplay.tsx', { adapter })
 
       expect(result.errors).toHaveLength(0)
 
@@ -283,7 +287,7 @@ describe('Compiler v2', () => {
         }
       `
 
-      const result = compileJSXSync(source, 'App.tsx', { outputIR: true })
+      const result = compileJSXSync(source, 'App.tsx', { adapter, outputIR: true })
 
       const ir = result.files.find(f => f.type === 'ir')
       expect(ir).toBeDefined()
@@ -300,7 +304,7 @@ describe('Compiler v2', () => {
       const result = await compileJSX(buttonDemoPath, async (path) => {
         const file = Bun.file(path)
         return await file.text()
-      })
+      }, { adapter })
 
       // Should have no errors
       expect(result.errors).toHaveLength(0)
@@ -337,7 +341,7 @@ describe('Compiler v2', () => {
         }
       `
 
-      const result = compileJSXSync(source, 'Counter.tsx')
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
 
       expect(result.errors).toHaveLength(0)
 

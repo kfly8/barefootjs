@@ -11,10 +11,18 @@ import type {
   CompileResult,
   FileOutput,
 } from './types'
+import type { TemplateAdapter } from './adapters/interface'
 import { analyzeComponent, listExportedComponents } from './analyzer'
 import { jsxToIR } from './jsx-to-ir'
-import { HonoAdapter } from './adapters/hono'
 import { generateClientJs } from './ir-to-client-js'
+
+/**
+ * Extended compile options with required adapter
+ */
+export interface CompileOptionsWithAdapter extends CompileOptions {
+  /** Template adapter for generating output (required) */
+  adapter: TemplateAdapter
+}
 
 // =============================================================================
 // Main Entry Point
@@ -23,7 +31,7 @@ import { generateClientJs } from './ir-to-client-js'
 export async function compileJSX(
   entryPath: string,
   readFile: (path: string) => Promise<string>,
-  options?: CompileOptions
+  options: CompileOptionsWithAdapter
 ): Promise<CompileResult> {
   const files: FileOutput[] = []
   const errors: CompileResult['errors'] = []
@@ -67,7 +75,7 @@ export async function compileJSX(
     })
   }
 
-  const adapter = new HonoAdapter()
+  const adapter = options.adapter
   const adapterOutput = adapter.generate(componentIR)
 
   files.push({
@@ -96,11 +104,11 @@ function compileMultipleComponentsSync(
   source: string,
   filePath: string,
   componentNames: string[],
-  _options?: CompileOptions
+  options: CompileOptionsWithAdapter
 ): CompileResult {
   const files: FileOutput[] = []
   const errors: CompileResult['errors'] = []
-  const adapter = new HonoAdapter()
+  const adapter = options.adapter
 
   // Compile each component and collect outputs
   const allOutputs: { imports: string; types: string; component: string; clientJs?: string }[] = []
@@ -233,7 +241,7 @@ async function compileMultipleComponents(
   source: string,
   filePath: string,
   componentNames: string[],
-  options?: CompileOptions
+  options: CompileOptionsWithAdapter
 ): Promise<CompileResult> {
   return compileMultipleComponentsSync(source, filePath, componentNames, options)
 }
@@ -268,7 +276,7 @@ function buildMetadata(
 export function compileJSXSync(
   source: string,
   filePath: string,
-  options?: CompileOptions
+  options: CompileOptionsWithAdapter
 ): CompileResult {
   const files: FileOutput[] = []
   const errors: CompileResult['errors'] = []
@@ -301,7 +309,7 @@ export function compileJSXSync(
     errors: [],
   }
 
-  if (options?.outputIR) {
+  if (options.outputIR) {
     files.push({
       path: filePath.replace(/\.tsx?$/, '.ir.json'),
       content: JSON.stringify(componentIR, null, 2),
@@ -309,7 +317,7 @@ export function compileJSXSync(
     })
   }
 
-  const adapter = new HonoAdapter()
+  const adapter = options.adapter
   const adapterOutput = adapter.generate(componentIR)
 
   files.push({
