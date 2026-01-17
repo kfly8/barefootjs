@@ -7,8 +7,8 @@
  * - dist/manifest.json
  */
 
-import { compileJSX, type PropWithType } from '@barefootjs/jsx'
-import { honoMarkedJsxAdapter } from '@barefootjs/hono'
+import { compileJSX } from '@barefootjs/jsx'
+import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 
@@ -20,11 +20,31 @@ const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
+// Check if file has "use client" directive
+function hasUseClientDirective(content: string): boolean {
+  let trimmed = content.trimStart()
+  // Skip block comments
+  while (trimmed.startsWith('/*')) {
+    const endIndex = trimmed.indexOf('*/')
+    if (endIndex === -1) break
+    trimmed = trimmed.slice(endIndex + 2).trimStart()
+  }
+  // Skip line comments
+  while (trimmed.startsWith('//')) {
+    const endIndex = trimmed.indexOf('\n')
+    if (endIndex === -1) break
+    trimmed = trimmed.slice(endIndex + 1).trimStart()
+  }
+  return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
+}
+
+// Generate short hash from content
+function generateHash(content: string): string {
+  const hash = Bun.hash(content)
+  return hash.toString(16).slice(0, 8)
+}
+
 // Discover all component files
-// The compiler handles "use client" filtering:
-// - Files with "use client" are included in output
-// - Files without "use client" are processed for dependency resolution only
-// - Files importing @barefootjs/dom without "use client" will error
 const componentFiles = (await readdir(COMPONENTS_DIR))
   .filter(f => f.endsWith('.tsx'))
   .map(f => resolve(COMPONENTS_DIR, f))
@@ -45,50 +65,91 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 // Manifest
-const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[]; dependencies?: string[] }> = {
-  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
+const manifest: Record<string, { clientJs?: string; markedJsx: string }> = {
+  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}` }
 }
+
+// Create HonoAdapter with script collection enabled
+const adapter = new HonoAdapter({
+  injectScriptCollection: true,
+  clientJsBasePath: '/static/components/',
+  barefootJsPath: '/static/components/barefoot.js',
+  clientJsFilenamePlaceholder: '__CLIENT_JS_FILENAME__',
+  componentIdPlaceholder: '__COMPONENT_ID__',
+})
 
 // Compile each component
 for (const entryPath of componentFiles) {
+  // Check if file has "use client" directive
+  const sourceContent = await Bun.file(entryPath).text()
+  if (!hasUseClientDirective(sourceContent)) {
+    continue // Skip server-only components
+  }
+
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { markedJsxAdapter: honoMarkedJsxAdapter })
+  }, { adapter })
+
+  if (result.errors.length > 0) {
+    console.error(`Errors compiling ${entryPath}:`)
+    for (const error of result.errors) {
+      console.error(`  ${error.message}`)
+    }
+    continue
+  }
+
+  // Extract base file name from entry path
+  const baseFileName = entryPath.split('/').pop()!
+  const baseNameNoExt = baseFileName.replace('.tsx', '')
+
+  // Process each output file
+  let markedJsxContent = ''
+  let clientJsContent = ''
 
   for (const file of result.files) {
-    // Marked JSX file - output to dist/components/
-    const baseFileName = file.sourcePath.split('/').pop()!
-    const jsxFileName = baseFileName
-    await Bun.write(resolve(DIST_COMPONENTS_DIR, jsxFileName), file.markedJsx)
-    console.log(`Generated: dist/components/${jsxFileName}`)
-
-    // Client JS - colocate with Marked JSX
-    if (file.hasClientJs) {
-      await Bun.write(resolve(DIST_COMPONENTS_DIR, file.clientJsFilename), file.clientJs)
-      console.log(`Generated: dist/components/${file.clientJsFilename}`)
+    if (file.type === 'markedJsx') {
+      markedJsxContent = file.content
+    } else if (file.type === 'clientJs') {
+      clientJsContent = file.content
     }
+  }
 
-    // Manifest entries for file-level script deduplication
-    // Key format: __file_{sourcePath} with non-alphanumeric chars replaced by underscores
-    const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
-    const markedJsxPath = `components/${jsxFileName}`
-    const clientJsPath = file.hasClientJs ? `components/${file.clientJsFilename}` : undefined
-    manifest[fileKey] = {
-      markedJsx: markedJsxPath,
-      clientJs: clientJsPath,
-      props: [],
-    }
+  // Skip if no output
+  if (!markedJsxContent && !clientJsContent) {
+    continue
+  }
 
-    // Manifest entries for each component in file
-    for (const compName of file.componentNames) {
-      const deps = file.componentDependencies[compName]
-      manifest[compName] = {
-        markedJsx: markedJsxPath,
-        clientJs: clientJsPath,
-        props: file.componentProps[compName],
-        dependencies: deps && deps.length > 0 ? deps : undefined,
-      }
+  // Write Client JS with hash
+  const hasClientJs = clientJsContent.length > 0
+  let clientJsFilename = ''
+
+  if (hasClientJs) {
+    const hash = generateHash(clientJsContent)
+    clientJsFilename = `${baseNameNoExt}-${hash}.js`
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, clientJsFilename), clientJsContent)
+    console.log(`Generated: dist/components/${clientJsFilename}`)
+  }
+
+  // Write Marked JSX with placeholders replaced
+  if (markedJsxContent) {
+    let finalContent = markedJsxContent
+    if (hasClientJs) {
+      // Replace placeholders with actual values
+      finalContent = finalContent
+        .replace(/__CLIENT_JS_FILENAME__/g, clientJsFilename)
+        .replace(/__COMPONENT_ID__/g, baseNameNoExt)
     }
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), finalContent)
+    console.log(`Generated: dist/components/${baseFileName}`)
+  }
+
+  // Manifest entry
+  const markedJsxPath = `components/${baseFileName}`
+  const clientJsPath = hasClientJs ? `components/${clientJsFilename}` : undefined
+
+  manifest[baseNameNoExt] = {
+    markedJsx: markedJsxPath,
+    clientJs: clientJsPath,
   }
 }
 

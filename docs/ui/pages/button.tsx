@@ -30,6 +30,7 @@ const tocItems: TocItem[] = [
   { id: 'link', title: 'Link', branch: 'child' },
   { id: 'sizes', title: 'Sizes', branch: 'child' },
   { id: 'icon-sizes', title: 'Icon Sizes', branch: 'child' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
   { id: 'counter', title: 'Counter', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -47,6 +48,9 @@ const iconSizeCode = `<Button size="icon-sm" aria-label="Add">
 <Button size="icon-lg" aria-label="Add">
   <PlusIcon />
 </Button>`
+
+const disabledCode = `<Button disabled>Disabled</Button>
+<Button variant="outline" disabled>Disabled</Button>`
 
 const counterCode = `"use client"
 
@@ -165,6 +169,11 @@ function ButtonExample() {
               <Button size="icon-lg" aria-label="Add">
                 <PlusIcon />
               </Button>
+            </Example>
+
+            <Example title="Disabled" code={disabledCode} showLineNumbers={false}>
+              <Button disabled>Disabled</Button>
+              <Button variant="outline" disabled>Disabled</Button>
             </Example>
 
             <Example title="Counter" code={counterCode}>

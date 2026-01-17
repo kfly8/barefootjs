@@ -14,10 +14,10 @@
  * - Files without "use client" are processed for dependency resolution only
  */
 
-import { compileJSX, type PropWithType } from '@barefootjs/jsx'
-import { honoMarkedJsxAdapter } from '@barefootjs/hono'
+import { compileJSX } from '@barefootjs/jsx'
+import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
-import { dirname, resolve, join } from 'node:path'
+import { dirname, resolve, join, relative } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 
@@ -27,8 +27,76 @@ function isTsOrTsxFile(filename: string): boolean {
 }
 
 function hasUseClientDirective(content: string): boolean {
-  const trimmed = content.trimStart()
+  // Remove leading comments (block and line comments)
+  let trimmed = content.trimStart()
+
+  // Skip block comments at the beginning
+  while (trimmed.startsWith('/*')) {
+    const endIndex = trimmed.indexOf('*/')
+    if (endIndex === -1) break
+    trimmed = trimmed.slice(endIndex + 2).trimStart()
+  }
+
+  // Skip line comments at the beginning
+  while (trimmed.startsWith('//')) {
+    const endIndex = trimmed.indexOf('\n')
+    if (endIndex === -1) break
+    trimmed = trimmed.slice(endIndex + 1).trimStart()
+  }
+
   return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
+}
+
+// Generate short hash from content
+function generateHash(content: string): string {
+  const hash = Bun.hash(content)
+  return hash.toString(16).slice(0, 8)
+}
+
+// Add script collection wrapper to SSR component
+function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
+  // Add import for useRequestContext
+  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\n"
+
+  // Find the last import statement and add our import after it
+  const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
+  if (!importMatch) {
+    return content
+  }
+
+  const beforeImports = importMatch[1]
+  const existingImports = importMatch[2]
+  const restOfFile = content.slice(importMatch[0].length)
+
+  // Script collection code to insert at the start of each component function
+  const scriptCollector = `
+  // Script collection for client JS hydration
+  try {
+    const __c = useRequestContext()
+    const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
+    const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
+    if (!__outputScripts.has('__barefoot__')) {
+      __outputScripts.add('__barefoot__')
+      __scripts.push({ src: '/static/components/barefoot.js' })
+    }
+    if (!__outputScripts.has('${componentId}')) {
+      __outputScripts.add('${componentId}')
+      __scripts.push({ src: '/static/components/${clientJsPath}' })
+    }
+    __c.set('bfCollectedScripts', __scripts)
+    __c.set('bfOutputScripts', __outputScripts)
+  } catch {}
+`
+
+  // Insert script collector at the start of each export function
+  const modifiedRest = restOfFile.replace(
+    /export function (\w+)\(([^)]*)\)([^{]*)\{/g,
+    (match, name, params, rest) => {
+      return `export function ${name}(${params})${rest}{${scriptCollector}`
+    }
+  )
+
+  return beforeImports + existingImports + importStatement + modifiedRest
 }
 
 // Copy all TS/TSX files from a directory (non-recursive)
@@ -48,12 +116,6 @@ const UI_COMPONENTS_DIR = resolve(ROOT_DIR, '../../ui/components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
-
-// Path aliases for resolving imports like @/components/ui/tabs or @ui/components/ui/tabs
-const PATH_ALIASES: Record<string, string> = {
-  '@/components/': UI_COMPONENTS_DIR + '/',
-  '@ui/components/': UI_COMPONENTS_DIR + '/',
-}
 
 // Recursively discover all component files in ui/ and docs/ subdirectories
 // Skip 'shared' directory which contains non-compilable utility modules
@@ -99,68 +161,115 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 
-// Manifest
-const manifest: Record<string, { clientJs?: string; markedJsx: string; props: PropWithType[]; dependencies?: string[] }> = {
-  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}`, props: [] }
+// Manifest - simplified structure
+const manifest: Record<string, { clientJs?: string; markedJsx: string }> = {
+  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}` }
 }
+
+// Create HonoAdapter (script collection is handled manually via addScriptCollection)
+const adapter = new HonoAdapter({
+  injectScriptCollection: false,
+})
 
 // Compile each component
 for (const entryPath of componentFiles) {
+  // Check if file has "use client" directive
+  const sourceContent = await Bun.file(entryPath).text()
+  if (!hasUseClientDirective(sourceContent)) {
+    continue // Skip server-only components
+  }
+
   // Determine rootDir based on whether the file is from UI or docs components
   const isUiComponent = entryPath.startsWith(UI_COMPONENTS_DIR)
   const rootDir = isUiComponent ? UI_COMPONENTS_DIR : DOCS_COMPONENTS_DIR
+
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { markedJsxAdapter: honoMarkedJsxAdapter, rootDir, pathAliases: PATH_ALIASES })
+  }, { adapter })
+
+  if (result.errors.length > 0) {
+    console.error(`Errors compiling ${entryPath}:`)
+    for (const error of result.errors) {
+      console.error(`  ${error.message}`)
+    }
+    continue
+  }
+
+  // Calculate relative path from rootDir
+  const relativePath = relative(rootDir, entryPath)
+  const dirPath = dirname(relativePath)
+  const baseFileName = relativePath.split('/').pop()!
+  const baseNameNoExt = baseFileName.replace('.tsx', '')
+
+  // Create subdirectory if needed
+  const outputDir = dirPath === '.' ? DIST_COMPONENTS_DIR : resolve(DIST_COMPONENTS_DIR, dirPath)
+  await mkdir(outputDir, { recursive: true })
+
+  // Process each output file
+  let markedJsxContent = ''
+  let clientJsContent = ''
 
   for (const file of result.files) {
-    // Preserve subdirectory structure (ui/, docs/)
-    // file.sourcePath is like "ui/Button.tsx" or "docs/CopyButton.tsx"
-    const relativePath = file.sourcePath
-    const dirPath = dirname(relativePath)
-    const baseFileName = relativePath.split('/').pop()!
-    const baseNameNoExt = baseFileName.replace('.tsx', '')
+    if (file.type === 'markedJsx') {
+      markedJsxContent = file.content
+    } else if (file.type === 'clientJs') {
+      clientJsContent = file.content
+    }
+  }
 
-    // Create subdirectory if needed
-    const outputDir = resolve(DIST_COMPONENTS_DIR, dirPath)
-    await mkdir(outputDir, { recursive: true })
-
-    // Marked JSX file - output to dist/components/{subdir}/
-    await Bun.write(resolve(outputDir, baseFileName), file.markedJsx)
+  // If no marked JSX and no client JS, copy original source with transformations
+  // This handles files like icon.tsx with multiple components but no reactivity
+  if (!markedJsxContent && !clientJsContent) {
+    // Transform source: remove 'use client', convert class to className
+    let transformedSource = sourceContent
+      .replace(/^['"]use client['"];?\s*/m, '')
+      .replace(/\bclass=/g, 'className=')
+    await Bun.write(resolve(outputDir, baseFileName), transformedSource)
     console.log(`Generated: dist/components/${relativePath}`)
+    manifest[baseNameNoExt] = { markedJsx: `components/${relativePath}` }
+    continue
+  }
 
-    // Client JS filename includes directory (e.g., "ui/Button-abc123.js")
-    // Handle root-level files where dirPath is "."
-    const clientJsRelativePath = file.hasClientJs
-      ? (dirPath === '.' ? `${baseNameNoExt}-${file.hash}.js` : `${dirPath}/${baseNameNoExt}-${file.hash}.js`)
-      : ''
+  // If we have marked JSX but no client JS, still use the compiled output
+  if (markedJsxContent && !clientJsContent) {
+    await Bun.write(resolve(outputDir, baseFileName), markedJsxContent)
+    console.log(`Generated: dist/components/${relativePath}`)
+    manifest[baseNameNoExt] = { markedJsx: `components/${relativePath}` }
+    continue
+  }
 
-    // Client JS - colocate with Marked JSX in same subdirectory
-    if (file.hasClientJs) {
-      await Bun.write(resolve(outputDir, file.clientJsFilename), file.clientJs)
-      console.log(`Generated: dist/components/${clientJsRelativePath}`)
-    }
+  // Write Client JS with hash
+  const hasClientJs = clientJsContent.length > 0
+  const hash = generateHash(clientJsContent || markedJsxContent)
+  const clientJsFilename = `${baseNameNoExt}-${hash}.js`
 
-    // Manifest entries
-    const fileKey = `__file_${file.sourcePath.replace(/[^a-zA-Z0-9]/g, '_')}`
-    const markedJsxPath = `components/${relativePath}`
-    const clientJsPath = file.hasClientJs ? `components/${clientJsRelativePath}` : undefined
-    manifest[fileKey] = {
-      markedJsx: markedJsxPath,
-      clientJs: clientJsPath,
-      props: [],
-    }
+  if (hasClientJs) {
+    await Bun.write(resolve(outputDir, clientJsFilename), clientJsContent)
+    const clientJsRelativePath = dirPath === '.' ? clientJsFilename : `${dirPath}/${clientJsFilename}`
+    console.log(`Generated: dist/components/${clientJsRelativePath}`)
+  }
 
-    // Manifest entries for each component in file
-    for (const compName of file.componentNames) {
-      const deps = file.componentDependencies[compName]
-      manifest[compName] = {
-        markedJsx: markedJsxPath,
-        clientJs: clientJsPath,
-        props: file.componentProps[compName] || [],
-        dependencies: deps && deps.length > 0 ? deps : undefined,
-      }
-    }
+  // Add script collection wrapper when client JS exists
+  if (markedJsxContent && hasClientJs) {
+    const clientJsRelPath = dirPath === '.' ? clientJsFilename : `${dirPath}/${clientJsFilename}`
+    const wrappedContent = addScriptCollection(markedJsxContent, baseNameNoExt, clientJsRelPath)
+    await Bun.write(resolve(outputDir, baseFileName), wrappedContent)
+    console.log(`Generated: dist/components/${relativePath}`)
+  } else if (markedJsxContent) {
+    await Bun.write(resolve(outputDir, baseFileName), markedJsxContent)
+    console.log(`Generated: dist/components/${relativePath}`)
+  }
+
+  // Manifest entry - use component name from file
+  const componentName = baseNameNoExt
+  const markedJsxPath = `components/${relativePath}`
+  const clientJsPath = hasClientJs
+    ? `components/${dirPath === '.' ? clientJsFilename : `${dirPath}/${clientJsFilename}`}`
+    : undefined
+
+  manifest[componentName] = {
+    markedJsx: markedJsxPath,
+    clientJs: clientJsPath,
   }
 }
 

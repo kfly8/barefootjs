@@ -8,6 +8,13 @@
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { BfScripts } from '../../packages/hono/src/scripts'
 
+// Import map for resolving @barefootjs/dom in client JS
+const importMapScript = JSON.stringify({
+  imports: {
+    '@barefootjs/dom': '/static/components/barefoot.js',
+  },
+})
+
 export const renderer = jsxRenderer(
   ({ children }) => {
     return (
@@ -16,6 +23,7 @@ export const renderer = jsxRenderer(
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <title>BarefootJS + Hono/JSX</title>
+          <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
           <style>{`
             body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
             h1 { color: #333; }

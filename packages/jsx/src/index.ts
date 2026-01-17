@@ -1,18 +1,47 @@
-export { compileJSX } from './jsx-compiler'
-export type { CompileJSXResult } from './jsx-compiler'
+/**
+ * BarefootJS JSX Compiler
+ *
+ * Multi-backend JSX compiler that generates Marked JSX and Client JS.
+ */
+
+// Main compiler API
+export { compileJSX, compileJSXSync } from './compiler'
+export type { CompileResult, CompileOptions, CompileOptionsWithAdapter, FileOutput } from './compiler'
+
+// Pure IR types
 export type {
-  OutputFormat,
-  CompileOptions,
-  MarkedJsxAdapter,
-  MarkedJsxComponentData,
-  PropWithType,
-  SignalDeclaration,
-  MemoDeclaration,
-  ModuleConstant,
-  LocalVariable,
-  ComponentImport,
-  FileOutput,
+  ComponentIR,
+  IRNode,
+  IRElement,
+  IRText,
+  IRExpression,
+  IRConditional,
+  IRLoop,
+  IRComponent,
+  IRFragment,
+  IRSlot,
+  IRMetadata,
+  ParamInfo,
+  TypeInfo,
+  SourceLocation,
+  CompilerError,
 } from './types'
+
+// Analyzer
+export { analyzeComponent, type AnalyzerContext } from './analyzer'
+
+// JSX to IR transformer
+export { jsxToIR } from './jsx-to-ir'
+
+// Adapters
+export { BaseAdapter } from './adapters/interface'
+export type { TemplateAdapter, AdapterOutput } from './adapters/interface'
+
+// Client JS Generator
+export { generateClientJs } from './ir-to-client-js'
+
+// Errors
+export { ErrorCodes, createError, formatError, generateCodeFrame } from './errors'
 
 // HTML element attribute types
 export type {

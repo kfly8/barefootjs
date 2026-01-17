@@ -38,9 +38,27 @@ export function findScope(
   idx: number,
   parent: Element | Document | null
 ): Element | null {
+  const parentEl = parent as HTMLElement
+
   // Check if parent is the scope element itself
-  if ((parent as HTMLElement)?.dataset?.bfScope?.startsWith(`${name}_`)) {
-    return parent as Element
+  // This handles two cases:
+  // 1. Scope ID starts with component name (e.g., "AddTodoForm_abc123")
+  // 2. Scope ID is from parent component via initChild (e.g., "TodoApp_xyz_slot_5")
+  //    In this case, initChild already found the correct element, so trust it
+  if (parentEl?.dataset?.bfScope) {
+    const scopeId = parentEl.dataset.bfScope
+    // Accept if it matches the name prefix OR if it's a child slot pattern
+    // (when initChild passes the scope element directly)
+    if (
+      scopeId.startsWith(`${name}_`) ||
+      (scopeId.includes('_slot_') && parent !== document)
+    ) {
+      // Mark as initialized if not already
+      if (!parentEl.hasAttribute('data-bf-init')) {
+        parentEl.setAttribute('data-bf-init', 'true')
+      }
+      return parent as Element
+    }
   }
 
   // Search for scope elements with prefix matching
@@ -63,8 +81,9 @@ export function findScope(
 // --- find ---
 
 /**
- * Find an element within a scope, excluding nested component scopes.
- * This prevents selecting elements that belong to child components.
+ * Find an element within a scope.
+ * Checks if the scope element itself matches first, then searches descendants.
+ * Excludes elements that are inside nested scopes.
  *
  * @param scope - The scope element to search within
  * @param selector - CSS selector to match
@@ -79,10 +98,39 @@ export function find(
   // Check if scope itself matches
   if (scope.matches?.(selector)) return scope
 
-  // Search children, excluding nested scopes
-  for (const el of scope.querySelectorAll(selector)) {
-    if (el.closest('[data-bf-scope]') === scope) {
-      return el
+  // Search descendants, excluding nested scopes
+  const found = scope.querySelector(selector)
+  if (found) {
+    // Check if the found element is inside a nested scope
+    const nearestScope = found.closest('[data-bf-scope]')
+    // Only return if the element's nearest scope is our scope (or is the element itself)
+    if (nearestScope === scope || nearestScope === found) {
+      return found
+    }
+    // Element is in a nested scope, don't return it
+  }
+
+  // For fragment roots, elements may be in sibling scope elements
+  // Search siblings that share the EXACT SAME scope ID (not just prefix)
+  // This is for fragment roots where multiple elements share one scope ID
+  const scopeId = (scope as HTMLElement).dataset?.bfScope
+  if (scopeId) {
+    const parent = scope.parentElement
+    if (parent) {
+      // Find sibling elements with the exact same scope ID (fragment roots)
+      const siblings = Array.from(parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`))
+      for (const sibling of siblings) {
+        if (sibling === scope) continue
+        if (sibling.matches?.(selector)) return sibling
+        const siblingFound = sibling.querySelector(selector)
+        if (siblingFound) {
+          // Check if the found element is inside a nested scope within the sibling
+          const nearestScopeInSibling = siblingFound.closest('[data-bf-scope]')
+          if (nearestScopeInSibling === sibling || nearestScopeInSibling === siblingFound) {
+            return siblingFound
+          }
+        }
+      }
     }
   }
 
@@ -94,6 +142,7 @@ export function find(
 /**
  * Auto-hydrate all instances of a component on the page.
  * Finds scope elements and their corresponding props, then initializes each instance.
+ * Supports Suspense streaming by using requestAnimationFrame for delayed re-hydration.
  *
  * @param name - Component name
  * @param init - Init function for the component
@@ -102,23 +151,47 @@ export function hydrate(
   name: string,
   init: (props: Record<string, unknown>, idx: number, scope: Element) => void
 ): void {
-  const scopeEls = document.querySelectorAll(`[data-bf-scope^="${name}_"]`)
-
-  for (const scopeEl of scopeEls) {
-    // Skip nested instances (inside another component's scope)
-    if (scopeEl.parentElement?.closest('[data-bf-scope]')) continue
-
-    // Get unique instance ID from scope element
-    const instanceId = (scopeEl as HTMLElement).dataset.bfScope
-
-    // Find corresponding props script by instance ID
-    const propsEl = document.querySelector(
-      `script[data-bf-props="${instanceId}"]`
+  const doHydrate = () => {
+    // Only select uninitialized elements (skip already hydrated ones)
+    const scopeEls = document.querySelectorAll(
+      `[data-bf-scope^="${name}_"]:not([data-bf-init])`
     )
-    const props = propsEl ? JSON.parse(propsEl.textContent || '{}') : {}
 
-    init(props, 0, scopeEl)
+    // Track initialized scope IDs to avoid duplicate initialization
+    // (Fragment roots have multiple elements with the same scope ID)
+    const initializedScopes = new Set<string>()
+
+    for (const scopeEl of scopeEls) {
+      // Skip nested instances (inside another component's scope)
+      if (scopeEl.parentElement?.closest('[data-bf-scope]')) continue
+
+      // Get unique instance ID from scope element
+      const instanceId = (scopeEl as HTMLElement).dataset.bfScope
+      if (!instanceId) continue
+
+      // Skip if already initialized in this batch (for fragment roots)
+      if (initializedScopes.has(instanceId)) continue
+      initializedScopes.add(instanceId)
+
+      // Mark as initialized immediately to prevent duplicate init
+      scopeEl.setAttribute('data-bf-init', 'true')
+
+      // Find corresponding props script by instance ID
+      const propsEl = document.querySelector(
+        `script[data-bf-props="${instanceId}"]`
+      )
+      const props = propsEl ? JSON.parse(propsEl.textContent || '{}') : {}
+
+      init(props, 0, scopeEl)
+    }
   }
+
+  // Immediately hydrate elements already in DOM
+  doHydrate()
+
+  // Re-hydrate after next frame (for Suspense streaming support)
+  // Hono's streaming script moves template content into document after initial script execution
+  requestAnimationFrame(doHydrate)
 }
 
 // --- bind ---
@@ -340,5 +413,206 @@ function updateElementConditional(scope: Element, id: string, html: string): voi
   const newEl = template.content.firstChild
   if (newEl) {
     condEl.replaceWith(newEl.cloneNode(true))
+  }
+}
+
+// --- insert ---
+
+/**
+ * Branch configuration for conditional rendering.
+ * Contains template and event binding functions for each branch.
+ */
+export interface BranchConfig {
+  /** HTML template function for this branch */
+  template: () => string
+
+  /**
+   * Bind events to elements within the branch.
+   * Called both during hydration (for SSR elements) and after DOM swaps.
+   * @param scope - The scope element to search within for event targets
+   */
+  bindEvents: (scope: Element) => void
+}
+
+
+/**
+ * Handle conditional DOM updates using branch configurations.
+ * This is the SolidJS-inspired replacement for cond() that properly
+ * handles event binding for both branches.
+ *
+ * Key behaviors:
+ * - First run (hydration): Reuse SSR element, call branch.bindEvents() for current branch
+ * - Condition change: Create new element from template, call branch.bindEvents()
+ *
+ * @param scope - Component scope element
+ * @param id - Conditional slot ID (e.g., 'slot_0')
+ * @param conditionFn - Function that returns current condition value
+ * @param whenTrue - Branch config for when condition is true
+ * @param whenFalse - Branch config for when condition is false
+ */
+export function insert(
+  scope: Element | null,
+  id: string,
+  conditionFn: () => boolean,
+  whenTrue: BranchConfig,
+  whenFalse: BranchConfig
+): void {
+  if (!scope) return
+
+  // Check if this is a fragment conditional (uses comment markers)
+  const sampleTrue = whenTrue.template()
+  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`)
+
+  let prevCond: boolean | undefined
+
+  createEffect(() => {
+    const currCond = Boolean(conditionFn())
+    const isFirstRun = prevCond === undefined
+    const prevVal = prevCond
+    prevCond = currCond
+
+    // Select the appropriate branch
+    const branch = currCond ? whenTrue : whenFalse
+
+    if (isFirstRun) {
+      // Hydration mode: check if existing DOM matches expected branch
+      // If the existing element doesn't match the expected branch,
+      // we need to swap the DOM first (e.g., SSR rendered whenFalse but now we need whenTrue)
+      const existingEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+      if (existingEl) {
+        // Check if the existing element type matches what we expect
+        // For simple cases, compare tag names from templates
+        const expectedTemplate = branch.template()
+        const expectedTag = getFirstTagFromTemplate(expectedTemplate)
+        const actualTag = existingEl.tagName.toLowerCase()
+
+        if (expectedTag && actualTag !== expectedTag) {
+          // DOM doesn't match expected branch - need to swap
+          const html = branch.template()
+          if (isFragmentCond) {
+            updateFragmentConditional(scope, id, html)
+          } else {
+            updateElementConditional(scope, id, html)
+          }
+        }
+      }
+
+      // Bind events to the (possibly updated) SSR element
+      branch.bindEvents(scope)
+
+      // Auto-focus on first run too (for components created via createComponent with editing=true)
+      autoFocusConditionalElement(scope, id)
+      return
+    }
+
+    if (currCond === prevVal) {
+      return
+    }
+
+    // Condition changed: swap DOM and bind events
+    const html = branch.template()
+
+    if (isFragmentCond) {
+      updateFragmentConditional(scope, id, html)
+    } else {
+      updateElementConditional(scope, id, html)
+    }
+
+    // Bind events to the newly inserted element
+    branch.bindEvents(scope)
+
+    // Auto-focus elements with autofocus attribute (for dynamically created elements)
+    autoFocusConditionalElement(scope, id)
+  })
+}
+
+/**
+ * Auto-focus elements with autofocus attribute within a conditional slot.
+ * Used by insert() to focus inputs when they become visible.
+ * Uses requestAnimationFrame to ensure element is in DOM before focusing.
+ */
+function autoFocusConditionalElement(scope: Element, id: string): void {
+  // Use requestAnimationFrame to defer focus until after DOM updates.
+  // This is necessary because createComponent() may call insert() before
+  // the element is added to the document by reconcileList().
+  requestAnimationFrame(() => {
+    const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+    if (condEl) {
+      const autofocusEl = condEl.matches('[autofocus]')
+        ? condEl
+        : condEl.querySelector('[autofocus]')
+      if (autofocusEl && typeof (autofocusEl as HTMLElement).focus === 'function') {
+        ;(autofocusEl as HTMLElement).focus()
+      }
+    }
+  })
+}
+
+/**
+ * Extract the first tag name from an HTML template string.
+ * Returns lowercase tag name or null if not found.
+ */
+function getFirstTagFromTemplate(template: string): string | null {
+  const match = template.match(/^<(\w+)/)
+  return match ? match[1].toLowerCase() : null
+}
+
+// --- Component Registry ---
+
+/**
+ * Component init function type for registry
+ */
+export type ComponentInitFn = (
+  idx: number,
+  scope: Element | null,
+  props: Record<string, unknown>
+) => void
+
+/**
+ * Component registry for parent-child communication.
+ * Each component registers its init function so parents can initialize children with props.
+ */
+const componentRegistry = new Map<string, ComponentInitFn>()
+
+/**
+ * Register a component's init function for parent initialization.
+ *
+ * @param name - Component name (e.g., 'Counter', 'AddTodoForm')
+ * @param init - Init function that takes (idx, scope, props)
+ */
+export function registerComponent(name: string, init: ComponentInitFn): void {
+  componentRegistry.set(name, init)
+}
+
+/**
+ * Get a component's init function from the registry.
+ * Used by createComponent() to initialize dynamically created components.
+ *
+ * @param name - Component name
+ * @returns Init function or undefined if not registered
+ */
+export function getComponentInit(name: string): ComponentInitFn | undefined {
+  return componentRegistry.get(name)
+}
+
+/**
+ * Initialize a child component with props from parent.
+ * Used by parent components to pass function props (like onAdd) to children.
+ *
+ * @param name - Child component name
+ * @param childScope - The child's scope element (found by parent)
+ * @param props - Props to pass to the child (including function props)
+ */
+export function initChild(
+  name: string,
+  childScope: Element | null,
+  props: Record<string, unknown> = {}
+): void {
+  const init = componentRegistry.get(name)
+  if (!init || !childScope) return
+
+  // Only initialize if not already initialized
+  if (!childScope.hasAttribute('data-bf-init')) {
+    init(0, childScope, props)
   }
 }

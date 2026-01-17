@@ -7,12 +7,20 @@
  * Displays "Search..." text with Cmd+K / Ctrl+K shortcut hint.
  */
 
-import { createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/dom'
 import { SearchIcon } from '@ui/components/ui/icon'
 
 export function SearchButton() {
-  // Open command palette when button is clicked
+  // Shortcut key display (detected on client)
+  const [shortcutKey, setShortcutKey] = createSignal('⌘')
+
+  // Detect OS and set up click handler on client
   createEffect(() => {
+    // Update shortcut display based on OS
+    const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+    setShortcutKey(isMac ? '⌘' : 'Ctrl')
+
+    // Set up click handler
     const button = document.querySelector('[data-search-button]')
     if (!button) return
 
@@ -31,9 +39,6 @@ export function SearchButton() {
     return () => button.removeEventListener('click', handleClick)
   })
 
-  // Detect OS for shortcut display
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
-
   return (
     <button
       data-search-button
@@ -43,7 +48,7 @@ export function SearchButton() {
       <SearchIcon size="sm" />
       <span class="flex-1 text-left">Search...</span>
       <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-        {isMac ? '⌘' : 'Ctrl'}K
+        <span data-shortcut-key>{shortcutKey()}</span>K
       </kbd>
     </button>
   )
