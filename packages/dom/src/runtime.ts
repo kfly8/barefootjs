@@ -38,9 +38,27 @@ export function findScope(
   idx: number,
   parent: Element | Document | null
 ): Element | null {
+  const parentEl = parent as HTMLElement
+
   // Check if parent is the scope element itself
-  if ((parent as HTMLElement)?.dataset?.bfScope?.startsWith(`${name}_`)) {
-    return parent as Element
+  // This handles two cases:
+  // 1. Scope ID starts with component name (e.g., "AddTodoForm_abc123")
+  // 2. Scope ID is from parent component via initChild (e.g., "TodoApp_xyz_slot_5")
+  //    In this case, initChild already found the correct element, so trust it
+  if (parentEl?.dataset?.bfScope) {
+    const scopeId = parentEl.dataset.bfScope
+    // Accept if it matches the name prefix OR if it's a child slot pattern
+    // (when initChild passes the scope element directly)
+    if (
+      scopeId.startsWith(`${name}_`) ||
+      (scopeId.includes('_slot_') && parent !== document)
+    ) {
+      // Mark as initialized if not already
+      if (!parentEl.hasAttribute('data-bf-init')) {
+        parentEl.setAttribute('data-bf-init', 'true')
+      }
+      return parent as Element
+    }
   }
 
   // Search for scope elements with prefix matching
@@ -387,7 +405,7 @@ function updateElementConditional(scope: Element, id: string, html: string): voi
 /**
  * Component init function type for registry
  */
-type ComponentInitFn = (
+export type ComponentInitFn = (
   idx: number,
   scope: Element | null,
   props: Record<string, unknown>
@@ -407,6 +425,17 @@ const componentRegistry = new Map<string, ComponentInitFn>()
  */
 export function registerComponent(name: string, init: ComponentInitFn): void {
   componentRegistry.set(name, init)
+}
+
+/**
+ * Get a component's init function from the registry.
+ * Used by createComponent() to initialize dynamically created components.
+ *
+ * @param name - Component name
+ * @returns Init function or undefined if not registered
+ */
+export function getComponentInit(name: string): ComponentInitFn | undefined {
+  return componentRegistry.get(name)
 }
 
 /**

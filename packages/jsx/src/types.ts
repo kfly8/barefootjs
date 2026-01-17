@@ -119,6 +119,19 @@ export interface IRConditional {
   loc: SourceLocation
 }
 
+/**
+ * Child component info for loop rendering with createComponent()
+ */
+export interface IRLoopChildComponent {
+  name: string
+  props: Array<{
+    name: string
+    value: string // Expression (can use loop variables)
+    dynamic: boolean
+    isEventHandler: boolean
+  }>
+}
+
 export interface IRLoop {
   type: 'loop'
   array: string
@@ -130,6 +143,13 @@ export interface IRLoop {
   children: IRNode[]
   slotId: string | null
   loc: SourceLocation
+
+  /**
+   * When the loop body is a single component, store its info here
+   * for createComponent-based rendering instead of template strings.
+   * This enables proper parent-to-child prop passing (including event handlers).
+   */
+  childComponent?: IRLoopChildComponent
 }
 
 export interface IRComponent {

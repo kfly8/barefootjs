@@ -9,6 +9,7 @@ import type {
   IRNode,
   IRElement,
   IREvent,
+  IRLoopChildComponent,
   SignalInfo,
   MemoInfo,
   EffectInfo,
@@ -82,6 +83,7 @@ interface LoopElement {
   template: string
   childEventHandlers: string[] // Event handlers from child elements (for identifier extraction)
   childEvents: LoopChildEvent[] // Detailed event info for delegation
+  childComponent?: IRLoopChildComponent // For createComponent-based rendering
 }
 
 interface RefElement {
@@ -202,15 +204,25 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
           childEvents.push(...collectLoopChildEvents(child))
         }
 
+        // Also extract identifiers from childComponent props if present
+        if (node.childComponent) {
+          for (const prop of node.childComponent.props) {
+            if (prop.isEventHandler) {
+              childHandlers.push(prop.value)
+            }
+          }
+        }
+
         ctx.loopElements.push({
           slotId: node.slotId,
           array: node.array,
           param: node.param,
           index: node.index,
           key: node.key,
-          template: irToHtmlTemplate(node.children[0]),
+          template: node.childComponent ? '' : irToHtmlTemplate(node.children[0]),
           childEventHandlers: childHandlers,
           childEvents,
+          childComponent: node.childComponent,
         })
       }
       // Don't traverse into loop children for interactive elements collection
@@ -539,9 +551,181 @@ function addCondAttrToTemplate(html: string, condId: string): string {
   return html.replace(/^(<\w+)(\s|>)/, `$1 data-bf-cond="${condId}"$2`)
 }
 
+/**
+ * Generate HTML template for registerTemplate().
+ * Used for client-side component creation via createComponent().
+ *
+ * This is similar to irToHtmlTemplate but:
+ * - Expressions are transformed to use the template function's props parameter
+ * - data-bf markers ARE included so client code can find elements
+ *
+ * @param node - IR node to render
+ * @param propNames - Set of prop names to prefix with 'props.'
+ */
+function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
+  // Helper to transform expressions to use props.propName
+  const transformExpr = (expr: string): string => {
+    // Replace prop references with props.propName
+    // Only match when the prop is used as an identifier (followed by . or [ or end of expression)
+    // Don't match inside string literals (preceded by ' or ")
+    let result = expr
+    for (const propName of propNames) {
+      // Match propName when:
+      // - Not already prefixed with 'props.'
+      // - Not inside a string literal (not preceded by ' or ")
+      // - Followed by property access (.), index access ([), method call (, or end of expression context
+      // This prevents matching 'todo' in 'todo-item' class names
+      const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?=[.\\[()])`, 'g')
+      result = result.replace(pattern, `props.${propName}`)
+    }
+    return result
+  }
+
+  switch (node.type) {
+    case 'element': {
+      const attrParts = node.attrs
+        .map((a) => {
+          if (a.name === '...') return '' // Skip spread for now
+          if (a.name === 'key') return '' // Key is handled separately
+          if (a.value === null) return a.name
+          if (a.dynamic) return `${a.name}="\${${transformExpr(a.value)}}"`
+          return `${a.name}="${a.value}"`
+        })
+        .filter(Boolean)
+
+      // Add data-bf marker if element has a slotId (for client-side event binding)
+      if (node.slotId) {
+        attrParts.push(`data-bf="${node.slotId}"`)
+      }
+
+      const attrs = attrParts.join(' ')
+      const children = node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+
+      if (children) {
+        return `<${node.tag}${attrs ? ' ' + attrs : ''}>${children}</${node.tag}>`
+      }
+      return `<${node.tag}${attrs ? ' ' + attrs : ''} />`
+    }
+
+    case 'text':
+      return node.value
+
+    case 'expression':
+      if (node.expr === 'null' || node.expr === 'undefined') return ''
+      // Wrap expression in span with data-bf marker if it has a slotId
+      if (node.slotId) {
+        return `<span data-bf="${node.slotId}">\${${transformExpr(node.expr)}}</span>`
+      }
+      return `\${${transformExpr(node.expr)}}`
+
+    case 'conditional': {
+      const trueBranch = irToComponentTemplate(node.whenTrue, propNames)
+      const falseBranch = irToComponentTemplate(node.whenFalse, propNames)
+      // Add data-bf-cond attribute to each branch for conditional swapping
+      const trueHtml = node.slotId ? addCondAttrToTemplate(trueBranch, node.slotId) : trueBranch
+      const falseHtml = node.slotId ? addCondAttrToTemplate(falseBranch, node.slotId) : falseBranch
+      return `\${${transformExpr(node.condition)} ? \`${trueHtml}\` : \`${falseHtml}\`}`
+    }
+
+    case 'fragment':
+      return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+
+    case 'component':
+      // Nested components render as placeholders
+      const keyProp = node.props.find((p) => p.name === 'key')
+      const keyAttr = keyProp ? ` data-key="\${${transformExpr(keyProp.value)}}"` : ''
+      return `<div${keyAttr} data-bf-scope="${node.name}_\${Math.random().toString(36).slice(2, 8)}"></div>`
+
+    case 'loop':
+      return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+
+    default:
+      return ''
+  }
+}
+
 // =============================================================================
 // Helper Functions
 // =============================================================================
+
+/**
+ * Check if a component can have a simple static template generated.
+ * Returns false if the component has:
+ * - Loops (which use dynamic signal arrays)
+ * - Child components (which can't be fully represented in templates)
+ * - Signal calls in expressions (like todos().length)
+ *
+ * Components that fail this check should not have registerTemplate() generated
+ * as the template would reference undefined variables at module scope.
+ */
+function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>): boolean {
+  switch (node.type) {
+    case 'loop':
+      // Loops use signal arrays which aren't available at module scope
+      return false
+
+    case 'component':
+      // Child components can't be fully represented in static templates
+      return false
+
+    case 'expression':
+      // Check if expression references non-prop variables with function calls
+      // e.g., todos().length or todos().filter(...) would fail
+      // Only allow: prop references (todo.done) or static values
+      if (node.expr.includes('()') && !isSimplePropExpression(node.expr, propNames)) {
+        return false
+      }
+      return true
+
+    case 'element':
+      // Check all children and dynamic attributes
+      for (const attr of node.attrs) {
+        if (attr.dynamic && attr.value && attr.value.includes('()') &&
+            !isSimplePropExpression(attr.value, propNames)) {
+          return false
+        }
+      }
+      return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
+
+    case 'conditional':
+      // Check condition and both branches
+      if (node.condition.includes('()') && !isSimplePropExpression(node.condition, propNames)) {
+        return false
+      }
+      return canGenerateStaticTemplate(node.whenTrue, propNames) &&
+             canGenerateStaticTemplate(node.whenFalse, propNames)
+
+    case 'fragment':
+      return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
+
+    case 'text':
+      return true
+
+    default:
+      return true
+  }
+}
+
+/**
+ * Check if an expression is a simple prop-based expression.
+ * Simple prop expressions access props only: todo.done, todo.text, props.name
+ * Non-prop expressions call signals: todos(), todos().length, todos().filter(...)
+ */
+function isSimplePropExpression(expr: string, propNames: Set<string>): boolean {
+  // Extract the root identifier (before any . or [ or ()
+  const match = expr.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)/)
+  if (!match) return true // Not an identifier, probably a literal
+
+  const rootIdent = match[1]
+
+  // If the root is a prop, it's safe (props are passed to the template function)
+  if (propNames.has(rootIdent)) return true
+
+  // If it contains () and root is not a prop, it's a signal call
+  if (expr.includes('()')) return false
+
+  return true
+}
 
 /**
  * Collect local function names used as event handlers
@@ -819,7 +1003,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   const name = ctx.componentName
 
   // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, reconcileList, registerComponent, initChild } from '@barefootjs/dom'`)
+  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, reconcileList, createComponent, registerComponent, registerTemplate, initChild } from '@barefootjs/dom'`)
   lines.push('')
 
   // Init function
@@ -1061,14 +1245,39 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   // Loop updates
   for (const elem of ctx.loopElements) {
     const keyFn = elem.key ? `(${elem.param}) => String(${elem.key})` : 'null'
-    lines.push(`  createEffect(() => {`)
-    lines.push(`    const __arr = ${elem.array}`)
-    lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}) => \`${elem.template}\`)`)
-    lines.push(`  })`)
+
+    if (elem.childComponent) {
+      // createComponent-based rendering for loop with component children
+      const { name, props } = elem.childComponent
+      const propsEntries = props.map((p) => {
+        if (p.isEventHandler) {
+          // Event handlers passed directly
+          return `${p.name}: ${p.value}`
+        } else {
+          // Data props wrapped in getters for reactivity
+          return `get ${p.name}() { return ${p.value} }`
+        }
+      })
+      const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
+      const keyExpr = elem.key || '__idx'
+      const indexParam = elem.index || '__idx'
+
+      lines.push(`  createEffect(() => {`)
+      lines.push(`    reconcileList(_${elem.slotId}, ${elem.array}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
+      lines.push(`      createComponent('${name}', ${propsExpr}, ${keyExpr})`)
+      lines.push(`    )`)
+      lines.push(`  })`)
+    } else {
+      // Template string-based rendering (original implementation)
+      lines.push(`  createEffect(() => {`)
+      lines.push(`    const __arr = ${elem.array}`)
+      lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}) => \`${elem.template}\`)`)
+      lines.push(`  })`)
+    }
     lines.push('')
 
-    // Event delegation for loop child events
-    if (elem.childEvents.length > 0) {
+    // Event delegation for loop child events (only for template string mode)
+    if (!elem.childComponent && elem.childEvents.length > 0) {
       // Group events by event name
       const eventsByName = new Map<string, typeof elem.childEvents>()
       for (const ev of elem.childEvents) {
@@ -1212,6 +1421,21 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   lines.push(`// Register for parent initialization`)
   lines.push(`registerComponent('${name}', init${name})`)
   lines.push('')
+
+  // Register template for client-side component creation (via createComponent)
+  // Only generate templates for components that:
+  // - Don't have loops (which reference signal arrays)
+  // - Don't have child components (which can't be represented in static templates)
+  // - Don't have signal calls in expressions
+  const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+  if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate)) {
+    const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate)
+    if (templateHtml) {
+      lines.push(`// Register template for client-side creation`)
+      lines.push(`registerTemplate('${name}', (props) => \`${templateHtml}\`)`)
+      lines.push('')
+    }
+  }
 
   // Auto-hydrate on script load
   lines.push(`// Auto-hydrate component instances on page load`)

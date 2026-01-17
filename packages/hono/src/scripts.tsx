@@ -54,9 +54,20 @@ export function BfScripts() {
     const scripts: CollectedScript[] = c.get('bfCollectedScripts') || []
     const propsScripts: CollectedPropsScript[] = c.get('bfCollectedPropsScripts') || []
 
+    // Reverse script order so child components load before parents.
+    // During SSR, parent components render first and collect their scripts,
+    // then child components add their scripts. But for hydration, children
+    // need to register their templates before parents try to use createComponent().
+    // barefoot.js must stay first since it provides the runtime.
+    const barefootScript = scripts.find(s => s.src.includes('barefoot.js'))
+    const componentScripts = scripts.filter(s => !s.src.includes('barefoot.js'))
+    const orderedScripts = barefootScript
+      ? [barefootScript, ...componentScripts.reverse()]
+      : componentScripts.reverse()
+
     return (
       <Fragment>
-        {scripts.map(({ src }) => (
+        {orderedScripts.map(({ src }) => (
           <script type="module" src={src} />
         ))}
         {propsScripts.map(({ instanceId, props }) => (

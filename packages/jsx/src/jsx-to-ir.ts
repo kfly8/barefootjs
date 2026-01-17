@@ -12,6 +12,7 @@ import type {
   IRExpression,
   IRConditional,
   IRLoop,
+  IRLoopChildComponent,
   IRComponent,
   IRFragment,
   IRAttribute,
@@ -499,12 +500,35 @@ function transformMapCall(
     }
   }
 
-  // Look for key prop in first child
+  // Look for key prop in first child (element or component)
   let key: string | null = null
   if (children.length > 0 && children[0].type === 'element') {
     const keyAttr = children[0].attrs.find((a) => a.name === 'key')
     if (keyAttr && keyAttr.value) {
       key = keyAttr.value
+    }
+  } else if (children.length > 0 && children[0].type === 'component') {
+    const keyProp = children[0].props.find((p) => p.name === 'key')
+    if (keyProp && keyProp.value) {
+      key = keyProp.value
+    }
+  }
+
+  // Extract childComponent info if the loop body is a single component
+  // This enables createComponent-based rendering with proper prop passing
+  let childComponent: IRLoopChildComponent | undefined
+  if (children.length === 1 && children[0].type === 'component') {
+    const comp = children[0] as IRComponent
+    childComponent = {
+      name: comp.name,
+      props: comp.props
+        .filter((p) => p.name !== 'key') // key is handled separately
+        .map((p) => ({
+          name: p.name,
+          value: p.value,
+          dynamic: p.dynamic,
+          isEventHandler: p.name.startsWith('on') && p.name.length > 2,
+        })),
     }
   }
 
@@ -520,6 +544,7 @@ function transformMapCall(
     // Loops don't generate their own slotId; they inherit from parent element
     // The parent element will assign its slotId to the loop after transformation
     slotId: null,
+    childComponent,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
