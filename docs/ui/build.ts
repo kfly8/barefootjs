@@ -15,6 +15,7 @@
  */
 
 import { compileJSX } from '@barefootjs/jsx'
+import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve, join, relative } from 'node:path'
 
@@ -165,6 +166,11 @@ const manifest: Record<string, { clientJs?: string; markedJsx: string }> = {
   '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}` }
 }
 
+// Create HonoAdapter (script collection is handled manually via addScriptCollection)
+const adapter = new HonoAdapter({
+  injectScriptCollection: false,
+})
+
 // Compile each component
 for (const entryPath of componentFiles) {
   // Check if file has "use client" directive
@@ -179,7 +185,7 @@ for (const entryPath of componentFiles) {
 
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  })
+  }, { adapter })
 
   if (result.errors.length > 0) {
     console.error(`Errors compiling ${entryPath}:`)
