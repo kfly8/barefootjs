@@ -61,11 +61,19 @@ interface DynamicElement {
   insideConditional?: boolean // true if element is inside a conditional branch
 }
 
+interface ConditionalBranchEvent {
+  slotId: string
+  eventName: string
+  handler: string
+}
+
 interface ConditionalElement {
   slotId: string
   condition: string
   whenTrueHtml: string
   whenFalseHtml: string
+  whenTrueEvents: ConditionalBranchEvent[]
+  whenFalseEvents: ConditionalBranchEvent[]
 }
 
 interface LoopChildEvent {
@@ -182,14 +190,21 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
 
     case 'conditional':
       if (node.reactive && node.slotId) {
+        // Collect events from each branch for use with insert()
+        const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
+        const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
+
         ctx.conditionalElements.push({
           slotId: node.slotId,
           condition: node.condition,
           whenTrueHtml: irToHtmlTemplate(node.whenTrue),
           whenFalseHtml: irToHtmlTemplate(node.whenFalse),
+          whenTrueEvents,
+          whenFalseEvents,
         })
       }
       // Recurse into conditional branches with insideConditional = true
+      // This is still needed for dynamic text elements inside conditionals
       collectElements(node.whenTrue, ctx, true)
       collectElements(node.whenFalse, ctx, true)
       break
@@ -428,6 +443,53 @@ function collectEventHandlersFromIR(node: IRNode): string[] {
   }
 
   return handlers
+}
+
+/**
+ * Collect events from a conditional branch for use with insert().
+ * These events will be bound via the branch's bindEvents function.
+ */
+function collectConditionalBranchEvents(node: IRNode): ConditionalBranchEvent[] {
+  const events: ConditionalBranchEvent[] = []
+
+  function traverse(n: IRNode): void {
+    switch (n.type) {
+      case 'element':
+        // Collect events from this element
+        if (n.slotId && n.events.length > 0) {
+          for (const event of n.events) {
+            events.push({
+              slotId: n.slotId,
+              eventName: event.name,
+              handler: event.handler,
+            })
+          }
+        }
+        // Recurse into children
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
+      case 'fragment':
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
+      case 'conditional':
+        // Nested conditionals - collect from both branches
+        traverse(n.whenTrue)
+        traverse(n.whenFalse)
+        break
+      case 'component':
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
+    }
+  }
+
+  traverse(node)
+  return events
 }
 
 /**
@@ -1003,7 +1065,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   const name = ctx.componentName
 
   // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, reconcileList, createComponent, registerComponent, registerTemplate, initChild } from '@barefootjs/dom'`)
+  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild } from '@barefootjs/dom'`)
   lines.push('')
 
   // Init function
@@ -1230,15 +1292,45 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     }
   }
 
-  // Conditional updates
+  // Conditional updates using insert() with branch configs
   for (const elem of ctx.conditionalElements) {
-    // Add data-bf-cond to template root elements so cond() can find them after DOM swap
+    // Add data-bf-cond to template root elements so insert() can find them after DOM swap
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
     const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
-    lines.push(`  cond(__scope, '${elem.slotId}', () => ${elem.condition}, [`)
-    lines.push(`    () => \`${whenTrueWithCond}\`,`)
-    lines.push(`    () => \`${whenFalseWithCond}\``)
-    lines.push(`  ])`)
+
+    // Helper to generate bindEvents function body for a branch
+    const generateBindEvents = (events: ConditionalBranchEvent[]) => {
+      // Group events by slotId to avoid duplicate variable declarations
+      const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
+      for (const event of events) {
+        if (!eventsBySlot.has(event.slotId)) {
+          eventsBySlot.set(event.slotId, [])
+        }
+        eventsBySlot.get(event.slotId)!.push(event)
+      }
+
+      for (const [slotId, slotEvents] of eventsBySlot) {
+        lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
+        for (const event of slotEvents) {
+          lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${event.handler}`)
+        }
+      }
+    }
+
+    // Generate whenTrue branch config
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
+    lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
+    lines.push(`    bindEvents: (__branchScope) => {`)
+    generateBindEvents(elem.whenTrueEvents)
+    lines.push(`    }`)
+    lines.push(`  }, {`)
+
+    // Generate whenFalse branch config
+    lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
+    lines.push(`    bindEvents: (__branchScope) => {`)
+    generateBindEvents(elem.whenFalseEvents)
+    lines.push(`    }`)
+    lines.push(`  })`)
     lines.push('')
   }
 
@@ -1325,8 +1417,22 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     }
   }
 
-  // Event handlers
+  // Collect slot IDs that are inside conditionals (handled by insert())
+  const conditionalSlotIds = new Set<string>()
+  for (const cond of ctx.conditionalElements) {
+    for (const event of cond.whenTrueEvents) {
+      conditionalSlotIds.add(event.slotId)
+    }
+    for (const event of cond.whenFalseEvents) {
+      conditionalSlotIds.add(event.slotId)
+    }
+  }
+
+  // Event handlers - skip those inside conditionals (handled by insert())
   for (const elem of ctx.interactiveElements) {
+    // Skip events that are inside conditionals
+    if (conditionalSlotIds.has(elem.slotId)) continue
+
     for (const event of elem.events) {
       const eventProp = `on${event.name}`
       if (elem.slotId === '__scope') {
@@ -1448,9 +1554,21 @@ function generateElementRefs(ctx: ClientJsContext): string {
   const regularSlots = new Set<string>()
   const componentSlots = new Set<string>()
 
+  // Collect slot IDs that are inside conditionals (handled by insert()'s bindEvents)
+  const conditionalSlotIds = new Set<string>()
+  for (const cond of ctx.conditionalElements) {
+    for (const event of cond.whenTrueEvents) {
+      conditionalSlotIds.add(event.slotId)
+    }
+    for (const event of cond.whenFalseEvents) {
+      conditionalSlotIds.add(event.slotId)
+    }
+  }
+
   for (const elem of ctx.interactiveElements) {
     // Skip __scope as it's already available
-    if (elem.slotId !== '__scope') {
+    // Skip slots inside conditionals (handled by insert())
+    if (elem.slotId !== '__scope' && !conditionalSlotIds.has(elem.slotId)) {
       if (elem.isComponentSlot) {
         componentSlots.add(elem.slotId)
       } else {

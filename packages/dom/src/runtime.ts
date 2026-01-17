@@ -400,6 +400,119 @@ function updateElementConditional(scope: Element, id: string, html: string): voi
   }
 }
 
+// --- insert ---
+
+/**
+ * Branch configuration for conditional rendering.
+ * Contains template and event binding functions for each branch.
+ */
+export interface BranchConfig {
+  /** HTML template function for this branch */
+  template: () => string
+
+  /**
+   * Bind events to elements within the branch.
+   * Called both during hydration (for SSR elements) and after DOM swaps.
+   * @param scope - The scope element to search within for event targets
+   */
+  bindEvents: (scope: Element) => void
+}
+
+
+/**
+ * Handle conditional DOM updates using branch configurations.
+ * This is the SolidJS-inspired replacement for cond() that properly
+ * handles event binding for both branches.
+ *
+ * Key behaviors:
+ * - First run (hydration): Reuse SSR element, call branch.bindEvents() for current branch
+ * - Condition change: Create new element from template, call branch.bindEvents()
+ *
+ * @param scope - Component scope element
+ * @param id - Conditional slot ID (e.g., 'slot_0')
+ * @param conditionFn - Function that returns current condition value
+ * @param whenTrue - Branch config for when condition is true
+ * @param whenFalse - Branch config for when condition is false
+ */
+export function insert(
+  scope: Element | null,
+  id: string,
+  conditionFn: () => boolean,
+  whenTrue: BranchConfig,
+  whenFalse: BranchConfig
+): void {
+  if (!scope) return
+
+  // Check if this is a fragment conditional (uses comment markers)
+  const sampleTrue = whenTrue.template()
+  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`)
+
+  let prevCond: boolean | undefined
+
+  createEffect(() => {
+    const currCond = Boolean(conditionFn())
+    const isFirstRun = prevCond === undefined
+    const prevVal = prevCond
+    prevCond = currCond
+
+    // Select the appropriate branch
+    const branch = currCond ? whenTrue : whenFalse
+
+    if (isFirstRun) {
+      // Hydration mode: check if existing DOM matches expected branch
+      // If the existing element doesn't match the expected branch,
+      // we need to swap the DOM first (e.g., SSR rendered whenFalse but now we need whenTrue)
+      const existingEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+      if (existingEl) {
+        // Check if the existing element type matches what we expect
+        // For simple cases, compare tag names from templates
+        const expectedTemplate = branch.template()
+        const expectedTag = getFirstTagFromTemplate(expectedTemplate)
+        const actualTag = existingEl.tagName.toLowerCase()
+
+        if (expectedTag && actualTag !== expectedTag) {
+          // DOM doesn't match expected branch - need to swap
+          const html = branch.template()
+          if (isFragmentCond) {
+            updateFragmentConditional(scope, id, html)
+          } else {
+            updateElementConditional(scope, id, html)
+          }
+        }
+      }
+
+      // Bind events to the (possibly updated) SSR element
+      branch.bindEvents(scope)
+      return
+    }
+
+    if (currCond === prevVal) {
+      return
+    }
+
+    // Condition changed: swap DOM and bind events
+    const html = branch.template()
+
+    if (isFragmentCond) {
+      updateFragmentConditional(scope, id, html)
+    } else {
+      updateElementConditional(scope, id, html)
+    }
+
+    // Bind events to the newly inserted element
+    branch.bindEvents(scope)
+  })
+}
+
+/**
+ * Extract the first tag name from an HTML template string.
+ * Returns lowercase tag name or null if not found.
+ */
+function getFirstTagFromTemplate(template: string): string | null {
+  const match = template.match(/^<(\w+)/)
+  return match ? match[1].toLowerCase() : null
+}
+
 // --- Component Registry ---
 
 /**

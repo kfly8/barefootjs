@@ -12,6 +12,11 @@ import { getComponentInit } from './runtime'
 // This allows reconcileList to update props when an element is reused
 const propsUpdateMap = new WeakMap<HTMLElement, (props: Record<string, unknown>) => void>()
 
+// WeakMap to store the current props for each component element
+// Used to pass props to existing elements when they are reused
+const propsMap = new WeakMap<HTMLElement, Record<string, unknown>>()
+
+
 /**
  * Create a component instance with DOM element and initialized state.
  *
@@ -79,84 +84,40 @@ export function createComponent(
     })
   }
 
-  // 6. Register props update function for element reuse in reconcileList
-  // When an element is reused, we need to update its props reference
-  // so that getter functions return new values
+  // 6. Store props and register update function for element reuse in reconcileList
+  propsMap.set(element, props)
   registerPropsUpdate(element, name, props)
 
   return element
 }
 
 /**
- * Register a props update function for a component element.
- * The update function stores the latest props reference and updates
- * any internal prop signals if available.
+ * Get the props stored for a component element.
+ * Used by reconcileList to pass props to an existing element.
  */
-function registerPropsUpdate(
-  element: HTMLElement,
-  _name: string,
-  initialProps: Record<string, unknown>
-): void {
-  // Store current props reference that can be updated
-  const propsRef = { current: initialProps }
-
-  // Create wrapper getters that read from propsRef.current
-  // This allows the props to be "updated" by changing propsRef.current
-  // Note: The component already has access to the original props object.
-  // We need to update the values that the getters return.
-
-  // Register update function that will be called by reconcileList
-  propsUpdateMap.set(element, (newProps: Record<string, unknown>) => {
-    // Update the reference so subsequent getter calls get new values
-    propsRef.current = newProps
-
-    // For each prop in the original props object that has a getter,
-    // we need to make sure the component can access the new value.
-    // Since we can't modify the original getter, we update a shared reference.
-
-    // However, the real solution is to update the element's DOM
-    // based on the new props, since the component was already initialized.
-    // Let's re-render the component template and update relevant parts.
-    updateComponentDOM(element, newProps)
-  })
+export function getComponentProps(element: HTMLElement): Record<string, unknown> | undefined {
+  return propsMap.get(element)
 }
 
 /**
- * Update a component's DOM based on new props.
- * This is called when an element is reused in reconcileList with new props.
+ * Register a props update function for a component element.
+ * When called, this function re-initializes the component with new props.
  */
-function updateComponentDOM(element: HTMLElement, props: Record<string, unknown>): void {
-  // Unwrap getter props to get current values
-  const unwrappedProps = unwrapPropsForTemplate(props)
-
-  // Update reactive text nodes (those with data-bf markers)
-  // For TodoItem, the key reactive elements are:
-  // - todo.text (slot_2)
-  // - toggle button text "Done"/"Undo" (slot_4)
-  // - class on the li element (todo-item vs todo-item done)
-
-  // Update class on the root element if it has a dynamic class
-  const todo = unwrappedProps.todo as { done?: boolean; text?: string } | undefined
-  if (todo) {
-    // Update the class based on todo.done
-    if (todo.done) {
-      element.classList.add('done')
-    } else {
-      element.classList.remove('done')
+function registerPropsUpdate(
+  element: HTMLElement,
+  name: string,
+  _initialProps: Record<string, unknown>
+): void {
+  // Register update function that will be called by reconcileList
+  propsUpdateMap.set(element, (newProps: Record<string, unknown>) => {
+    // Re-initialize the component with new props
+    // This allows the component to capture new values (e.g., todo with editing: true)
+    // and set up new effects that reference the new values
+    const init = getComponentInit(name)
+    if (init) {
+      init(0, element, newProps)
     }
-
-    // Update the text content
-    const textSlot = element.querySelector('[data-bf="slot_2"]')
-    if (textSlot) {
-      textSlot.textContent = todo.text || ''
-    }
-
-    // Update the toggle button text
-    const toggleCond = element.querySelector('[data-bf-cond="slot_4"]')
-    if (toggleCond) {
-      toggleCond.textContent = todo.done ? 'Undo' : 'Done'
-    }
-  }
+  })
 }
 
 /**
@@ -166,6 +127,7 @@ function updateComponentDOM(element: HTMLElement, props: Record<string, unknown>
 export function getPropsUpdateFn(element: HTMLElement): ((props: Record<string, unknown>) => void) | undefined {
   return propsUpdateMap.get(element)
 }
+
 
 /**
  * Generate a random ID for scope identification

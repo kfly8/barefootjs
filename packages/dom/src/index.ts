@@ -22,7 +22,7 @@ export { reconcileList, type RenderItemFn } from './list'
 export { registerTemplate, getTemplate, hasTemplate, type TemplateFn } from './template'
 
 // Component creation for dynamic rendering
-export { createComponent, getPropsUpdateFn } from './component'
+export { createComponent, getPropsUpdateFn, getComponentProps } from './component'
 
 // Runtime helpers (internal, for compiler-generated code)
 export {
@@ -31,9 +31,11 @@ export {
   hydrate,
   bind,
   cond,
+  insert,
   unwrap,
   registerComponent,
   getComponentInit,
   initChild,
   type ComponentInitFn,
+  type BranchConfig,
 } from './runtime'

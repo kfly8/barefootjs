@@ -10,7 +10,6 @@
  * 2. Element mode: renderItem returns HTMLElement (for component-based rendering)
  */
 
-import { getPropsUpdateFn } from './component'
 
 /**
  * Render function type for list items.
@@ -130,32 +129,26 @@ function reconcileListElements<T>(
         }
         fragment.appendChild(newEl)
       } else {
-        // Element is already initialized - update props and reuse
-        // Create a temporary element to get the new props
-        const tempEl = renderItem(item, i)
+        // Element is already initialized - decide whether to sync or replace
 
-        // Get the props update function from the temporary element
-        // and use it to update the existing element's DOM
-        const updateFn = getPropsUpdateFn(tempEl)
-        const existingUpdateFn = getPropsUpdateFn(existingEl)
+        // Check if the existing element has focus (user might be typing)
+        const hasFocus = existingEl.contains(document.activeElement)
 
-        if (existingUpdateFn && updateFn) {
-          // Get the new props from the temp element's update function context
-          // by calling the existing element's update function with new item data
-          // We need to extract props from the temp element somehow...
-
-          // Alternative approach: sync DOM state from temp to existing
+        if (hasFocus) {
+          // Preserve existing element to maintain focus state
+          // Create temp element to get new DOM state
+          const tempEl = renderItem(item, i)
           syncElementState(existingEl, tempEl)
-        } else if (existingUpdateFn) {
-          // Fallback: try to update with item directly
-          // This works if the item is the props structure
-          existingUpdateFn({ todo: item } as Record<string, unknown>)
+          fragment.appendChild(existingEl)
+        } else {
+          // No focus to preserve - use the temp element directly
+          // This ensures correct events are bound (via scheduled init)
+          const tempEl = renderItem(item, i)
+          if (!tempEl.dataset.key) {
+            tempEl.setAttribute('data-key', key)
+          }
+          fragment.appendChild(tempEl)
         }
-
-        // Reuse the existing element (with its event handlers and effects)
-        fragment.appendChild(existingEl)
-
-        // The temp element will be GC'd without initializing (queueMicrotask is canceled)
       }
     } else {
       // Create new element via renderItem (which calls createComponent)
@@ -190,10 +183,11 @@ function syncElementState(target: HTMLElement, source: HTMLElement): void {
     if (condId) {
       const targetCondSlot = target.querySelector(`[data-bf-cond="${condId}"]`)
       if (targetCondSlot) {
-        // Replace the entire conditional element with a clone from source
-        // This preserves the correct structure (e.g., span vs input for editing mode)
-        const newElement = sourceCondSlot.cloneNode(true) as HTMLElement
-        targetCondSlot.replaceWith(newElement)
+        // Move the source element directly (not clone) to preserve event listeners
+        // The source element comes from createComponent which has already bound events
+        // Using cloneNode() would lose the event listeners since DOM cloning
+        // doesn't copy event handlers attached via JavaScript
+        targetCondSlot.replaceWith(sourceCondSlot)
       }
     }
   }
