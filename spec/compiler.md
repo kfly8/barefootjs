@@ -1,4 +1,4 @@
-# Compiler v2: Multi-Backend Architecture
+# Compiler: Multi-Backend Architecture
 
 ## Vision
 
@@ -612,7 +612,7 @@ export function Counter({ initial = 0, label }: CounterProps) {
 ## Migration Plan
 
 ### Phase 1: Define Pure IR Schema
-- [ ] Create `packages/jsx/src/types-v2.ts`
+- [ ] Create `packages/jsx/src/types.ts`
 - [ ] Define JSON schema for validation
 - [ ] Add SourceLocation to all nodes
 
@@ -653,4 +653,4 @@ export function Counter({ initial = 0, label }: CounterProps) {
    - Future consideration after core is stable
 
 4. **Source maps** - Should we generate source maps for Client JS?
-   - Would improve debugging, consider for v2.1
+   - Would improve debugging, consider for future release

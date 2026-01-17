@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Pure IR Types
+ * BarefootJS Compiler - Pure IR Types
  *
  * JSX-independent intermediate representation for multi-backend support.
  */

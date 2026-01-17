@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Main Entry Point
+ * BarefootJS Compiler - Main Entry Point
  *
  * Compiles JSX components to Marked Templates + Client JS.
  */

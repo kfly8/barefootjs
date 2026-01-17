@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Single-Pass Analyzer
+ * BarefootJS Compiler - Single-Pass Analyzer
  *
  * Analyzes TypeScript/JSX source code in a single pass,
  * extracting all necessary metadata for IR generation.

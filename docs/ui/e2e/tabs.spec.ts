@@ -185,7 +185,7 @@ test.describe('Home Page - Tabs Link', () => {
 })
 
 // Skip: Keyboard navigation requires child component init calls
-// which is not yet supported in the v2 compiler architecture.
+// which is not yet supported in the current compiler architecture.
 // When a component like TabsTrigger is used inside another component (tabs-demo),
 // its init function is not called because it receives the parent's scope prefix.
 test.describe.skip('Tabs Keyboard Navigation', () => {

@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Error Definitions
+ * BarefootJS Compiler - Error Definitions
  */
 
 import type {

@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Basic Tests
+ * BarefootJS Compiler - Basic Tests
  */
 
 import { describe, test, expect } from 'bun:test'
@@ -12,7 +12,7 @@ import { resolve, dirname } from 'node:path'
 // Create a shared adapter instance for tests
 const adapter = new TestAdapter()
 
-describe('Compiler v2', () => {
+describe('Compiler', () => {
   describe('analyzeComponent', () => {
     test('extracts signals', () => {
       const source = `

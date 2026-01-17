@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Client JS Generator
+ * BarefootJS Compiler - Client JS Generator
  *
  * Generates client-side JavaScript from Pure IR for hydration.
  */

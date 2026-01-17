@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Analyzer Context
+ * BarefootJS Compiler - Analyzer Context
  *
  * Context object for single-pass AST analysis.
  */

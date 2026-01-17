@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - Template Adapter Interface
+ * BarefootJS Compiler - Template Adapter Interface
  *
  * Defines the interface for language-specific template adapters.
  */

@@ -1,5 +1,5 @@
 /**
- * BarefootJS Compiler v2 - JSX to Pure IR Transformer
+ * BarefootJS Compiler - JSX to Pure IR Transformer
  *
  * Transforms TypeScript JSX AST to Pure IR (JSX-independent JSON structure).
  */

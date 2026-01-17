@@ -64,7 +64,7 @@ await Bun.write(
 )
 console.log(`Generated: dist/components/${barefootFileName}`)
 
-// Manifest - simplified structure for v2
+// Manifest
 const manifest: Record<string, { clientJs?: string; markedJsx: string }> = {
   '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}` }
 }
