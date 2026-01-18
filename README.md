@@ -1,36 +1,95 @@
-# BarefootJS
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/logo/logo-for-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/logo/logo-for-light.svg">
+    <img alt="BarefootJS" src="images/logo/logo-for-light.svg" width="400">
+  </picture>
+</p>
 
-A compiler that generates static HTML + client-side JS from JSX.
+<p align="center">
+  <strong>Reactive JSX for any backend</strong><br>
+  Generates Marked Templates + Client JS from Signal-based JSX
+</p>
 
-## ARCHITECTURE
+---
 
+## Quick Start
+
+### STEP 1. Write Signal-based reactive JSX
+
+```tsx
+"use client"
+
+import { createSignal } from '@barefootjs/dom'
+
+export function Counter() {
+  const [count, setCount] = createSignal(0)
+
+  return (
+    <>
+      <p class="counter">{count()}</p>
+      <button onClick={() => setCount(n => n + 1)}>+1</button>
+      <button onClick={() => setCount(n => n - 1)}>-1</button>
+      <button onClick={() => setCount(0)}>Reset</button>
+    </>
+  )
+}
 ```
-┌─────────────────┐
-│  Counter.tsx    │  ← JSX Component
-└────────┬────────┘
-         │ compileJSX()
-         ▼
-┌─────────────────────────────────────┐
-│         jsx/jsx-compiler.ts         │
-│  - Extract signal declarations      │
-│  - Detect dynamic content (__d0)    │
-│  - Detect event handlers (__b0)     │
-└────────┬───────────────────┬────────┘
-         │                   │
-         ▼                   ▼
-┌─────────────────┐  ┌─────────────────┐
-│ Counter.tsx     │  │ Counter.client  │
-│ (Static HTML)   │  │ .js             │
-│                 │  │                 │
-│ - Add id attrs  │  │ - Init signals  │
-│ - Markers for   │  │ - updateAll()   │
-│   JS injection  │  │ - Set onclick   │
-└─────────────────┘  └────────┬────────┘
-                              │
-                              ▼
-                     ┌─────────────────┐
-                     │ dom/runtime.js  │
-                     │ - signal impl   │
-                     └─────────────────┘
+
+### STEP 2. Compile to Marked Template + Client JS
+
+```bash
+npx barefootjs compile Counter.tsx
 ```
 
+Output:
+- `Counter.tsx` - Marked Template (server-side, with `data-bf` hydration markers)
+- `Counter.client.js` - Client JS (minimal JS for reactivity)
+
+### STEP 3. Render on server, hydrate on client
+
+**Server (e.g., Hono):**
+```tsx
+import { Hono } from 'hono'
+import { Counter } from './dist/Counter'
+
+const app = new Hono()
+
+app.get('/', (c) => {
+  return c.html(
+    <html>
+      <body>
+        <Counter />
+        <script type="module" src="/Counter.client.js" />
+      </body>
+    </html>
+  )
+})
+
+export default app
+```
+
+**Client:**
+The Client JS automatically finds elements with `data-bf` markers and hydrates them with reactivity.
+
+---
+
+## Features
+
+- **Zero runtime overhead (SSR)** - Server renders pure templates, no JS framework needed
+- **Fine-grained reactivity** - Signal-based updates, only re-render what changed
+- **Type-safe** - Full TypeScript support with preserved type information
+- **Backend agnostic** - Currently supports Hono/JSX, designed for Go, Python, etc.
+
+---
+
+## Documentation
+
+- [barefootjs.dev](https://barefootjs.dev/) - Core documentation
+- [ui.barefootjs.dev](https://ui.barefootjs.dev/) - UI components built with BarefootJS
+
+---
+
+## License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

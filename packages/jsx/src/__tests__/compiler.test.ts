@@ -209,7 +209,7 @@ describe('Compiler', () => {
       expect(result.errors).toHaveLength(0)
       expect(result.files).toHaveLength(2) // markedJsx + clientJs
 
-      const markedJsx = result.files.find(f => f.type === 'markedJsx')
+      const markedJsx = result.files.find(f => f.type === 'markedTemplate')
       expect(markedJsx).toBeDefined()
       expect(markedJsx?.content).toContain('export function Counter')
 
@@ -312,7 +312,7 @@ describe('Compiler', () => {
       // Should generate markedJsx and clientJs
       expect(result.files.length).toBeGreaterThanOrEqual(2)
 
-      const markedJsx = result.files.find(f => f.type === 'markedJsx')
+      const markedJsx = result.files.find(f => f.type === 'markedTemplate')
       expect(markedJsx).toBeDefined()
       expect(markedJsx?.content).toContain('export function ButtonDemo')
 
@@ -345,7 +345,7 @@ describe('Compiler', () => {
 
       expect(result.errors).toHaveLength(0)
 
-      const markedJsx = result.files.find(f => f.type === 'markedJsx')
+      const markedJsx = result.files.find(f => f.type === 'markedTemplate')
       expect(markedJsx).toBeDefined()
       // Should preserve props in function signature
       expect(markedJsx?.content).toContain('initial')

@@ -1,8 +1,8 @@
 /**
  * BarefootJS + Hono/JSX build script
  *
- * Generates Marked JSX components for use with hono/jsx:
- * - dist/{Component}.tsx (Marked JSX component)
+ * Generates Marked Template components for use with hono/jsx:
+ * - dist/{Component}.tsx (Marked Template component)
  * - dist/{basename}-{hash}.js (client JS)
  * - dist/manifest.json
  */
@@ -65,8 +65,8 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 // Manifest
-const manifest: Record<string, { clientJs?: string; markedJsx: string }> = {
-  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}` }
+const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = {
+  '__barefoot__': { markedTemplate: '', clientJs: `components/${barefootFileName}` }
 }
 
 // Create HonoAdapter with script collection enabled
@@ -107,7 +107,7 @@ for (const entryPath of componentFiles) {
   let clientJsContent = ''
 
   for (const file of result.files) {
-    if (file.type === 'markedJsx') {
+    if (file.type === 'markedTemplate') {
       markedJsxContent = file.content
     } else if (file.type === 'clientJs') {
       clientJsContent = file.content
@@ -130,7 +130,7 @@ for (const entryPath of componentFiles) {
     console.log(`Generated: dist/components/${clientJsFilename}`)
   }
 
-  // Write Marked JSX with placeholders replaced
+  // Write Marked Template with placeholders replaced
   if (markedJsxContent) {
     let finalContent = markedJsxContent
     if (hasClientJs) {
@@ -148,7 +148,7 @@ for (const entryPath of componentFiles) {
   const clientJsPath = hasClientJs ? `components/${clientJsFilename}` : undefined
 
   manifest[baseNameNoExt] = {
-    markedJsx: markedJsxPath,
+    markedTemplate: markedJsxPath,
     clientJs: clientJsPath,
   }
 }

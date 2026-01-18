@@ -34,7 +34,7 @@ import { Fragment } from 'hono/jsx'
  * Manifest entry type for dependency tracking.
  */
 export interface ManifestEntry {
-  markedJsx: string
+  markedTemplate: string
   clientJs?: string
   props?: Array<{ name: string; type: string; optional: boolean }>
   dependencies?: string[]

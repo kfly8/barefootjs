@@ -322,7 +322,7 @@ export interface CompileOptions {
 export interface FileOutput {
   path: string
   content: string
-  type: 'markedJsx' | 'clientJs' | 'ir'
+  type: 'markedTemplate' | 'clientJs' | 'ir'
 }
 
 export interface CompileResult {

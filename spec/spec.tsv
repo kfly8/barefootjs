@@ -1,7 +1,7 @@
 id	category	input_pattern	expected_output	output_type	status	notes
 JSX-001	Basic JSX	<div>Hello</div>	<div>Hello</div>	preserve	✅ Implemented	Text content preserved
-JSX-002	Basic JSX	<div>\n  Hello\n</div>	<div>Hello</div>	markedJsx	✅ Implemented	Indentation whitespace removed
-JSX-003	Basic JSX	<div>{' '}</div>	<div> </div>	markedJsx	✅ Implemented	Explicit space preserved
+JSX-002	Basic JSX	<div>\n  Hello\n</div>	<div>Hello</div>	markedTemplate	✅ Implemented	Indentation whitespace removed
+JSX-003	Basic JSX	<div>{' '}</div>	<div> </div>	markedTemplate	✅ Implemented	Explicit space preserved
 JSX-004	Basic JSX	<div><p>A</p><span>B</span></div>	<div><p>A</p><span>B</span></div>	preserve	✅ Implemented	Nested elements preserved
 JSX-005	Basic JSX	<input type='text' />	<input type='text' />	preserve	✅ Implemented	Self-closing preserved
 JSX-006	Basic JSX	<br />	<br />	preserve	✅ Implemented	Void element supported
@@ -9,13 +9,13 @@ JSX-007	Basic JSX	<img src='x.png' alt='X' />	<img src='x.png' alt='X' />	preser
 JSX-008	Basic JSX	<></>	<></>	preserve	✅ Implemented	Empty fragment
 JSX-009	Basic JSX	<><p>A</p><p>B</p></>	<><p>A</p><p>B</p></>	preserve	✅ Implemented	Fragment with children
 JSX-010	Basic JSX	<><p>{count()}</p></>	<><p data-bf-scope='C' data-bf='0'>{count()}</p></>	both	✅ Implemented	First element gets scope marker
-JSX-011	Basic JSX	<><><span>A</span></><div>B</div></>	<><span>A</span><div>B</div></>	markedJsx	✅ Implemented	Nested fragments flattened
+JSX-011	Basic JSX	<><><span>A</span></><div>B</div></>	<><span>A</span><div>B</div></>	markedTemplate	✅ Implemented	Nested fragments flattened
 JSX-012	Basic JSX	<>Hello<span>World</span>!</>	<>Hello<span>World</span>!</>	preserve	✅ Implemented	Mixed text and elements
-JSX-013	Basic JSX	<><div>Only</div></>	<><div data-bf-scope='C'>Only</div></>	markedJsx	✅ Implemented	Single child gets scope
+JSX-013	Basic JSX	<><div>Only</div></>	<><div data-bf-scope='C'>Only</div></>	markedTemplate	✅ Implemented	Single child gets scope
 ATTR-001	Attributes	<div id='main'>X</div>	<div id='main'>X</div>	preserve	✅ Implemented	Static string attr preserved
 ATTR-002	Attributes	<input disabled />	<input disabled />	preserve	✅ Implemented	Boolean shorthand
-ATTR-003	Attributes	<div class='foo'>X</div>	<div className='foo'>X</div>	markedJsx	✅ Implemented	class -> className
-ATTR-004	Attributes	<svg>...</svg>	<svg xmlns='http://www.w3.org/2000/svg'>...</svg>	markedJsx	✅ Implemented	SVG gets xmlns
+ATTR-003	Attributes	<div class='foo'>X</div>	<div className='foo'>X</div>	markedTemplate	✅ Implemented	class -> className
+ATTR-004	Attributes	<svg>...</svg>	<svg xmlns='http://www.w3.org/2000/svg'>...</svg>	markedTemplate	✅ Implemented	SVG gets xmlns
 ATTR-005	Attributes	<svg viewBox='0 0 24 24'>	<svg viewBox='0 0 24 24'>	preserve	✅ Implemented	camelCase preserved
 ATTR-010	Attributes	<p class={active ? 'on' : 'off'}>X</p>	clientJs: _0.setAttribute('class', active ? 'on' : 'off')	clientJs	✅ Implemented	Dynamic class in effect
 ATTR-011	Attributes	<p style={{ color: isRed() ? 'red' : 'blue' }}>X</p>	clientJs: Object.assign(_0.style, {...})	clientJs	✅ Implemented	Style object assignment
@@ -53,31 +53,31 @@ EXPR-031	Expressions	function fmt(x) {...}; <p>{fmt(v)}</p>	clientJs: function f
 EXPR-032	Expressions	function C() { const x = 1; return <p>{x}</p> }	clientJs: const x = 1	clientJs	✅ Implemented	Local var included
 EXPR-033	Expressions	function C() { const fn = () => {}; ... }	clientJs: const fn = () => {}	clientJs	✅ Implemented	Local fn included
 EXPR-034	Expressions	const X = 5; <Child value={X} />	clientJs: const X = 5	clientJs	✅ Implemented	Const in child props
-EXPR-040	Expressions	const [x] = createSignal(propWithDefault)	markedJsx: (propWithDefault ?? 'default')	markedJsx	✅ Implemented	Prop default fallback for SSR
+EXPR-040	Expressions	const [x] = createSignal(propWithDefault)	markedTemplate: (propWithDefault ?? 'default')	markedTemplate	✅ Implemented	Prop default fallback for SSR
 EXPR-050	Expressions	createEffect(() => { localStorage.setItem(...) })	clientJs: createEffect(() => { localStorage.setItem(...) })	clientJs	✅ Implemented	User-written effect preserved
 EXPR-051	Expressions	createEffect(() => { const v = localStorage.getItem(...); setX(v) })	clientJs: effect preserved	clientJs	✅ Implemented	Effect reads localStorage
 EXPR-052	Expressions	createEffect(() => { document.body.setAttribute(...) })	clientJs: effect preserved	clientJs	✅ Implemented	Effect updates external DOM
 EXPR-053	Expressions	createEffect(...); createEffect(...)	clientJs: both effects preserved	clientJs	✅ Implemented	Multiple effects
 EXPR-054	Expressions	Only createEffect + static JSX	clientJs: effect in output	clientJs	✅ Implemented	Effect-only component
-CTRL-001	Control Flow	{true ? 'A' : 'B'}	'A' (evaluated at compile time)	markedJsx	✅ Implemented	Static ternary
+CTRL-001	Control Flow	{true ? 'A' : 'B'}	'A' (evaluated at compile time)	markedTemplate	✅ Implemented	Static ternary
 CTRL-002	Control Flow	<p>{show() ? 'Yes' : 'No'}</p>	clientJs: _0.textContent = show() ? 'Yes' : 'No'	both	✅ Implemented	Dynamic text ternary
-CTRL-003	Control Flow	{show() ? <A/> : <B/>}	markedJsx: <A data-bf-cond='0'/> + <B data-bf-cond='0'/>	both	✅ Implemented	Element ternary
+CTRL-003	Control Flow	{show() ? <A/> : <B/>}	markedTemplate: <A data-bf-cond='0'/> + <B data-bf-cond='0'/>	both	✅ Implemented	Element ternary
 CTRL-004	Control Flow	{show() && <A/>}	Same as {show() ? <A/> : null}	both	✅ Implemented	Logical AND
 CTRL-005	Control Flow	{loading || <A/>}	Inverted: {!loading ? <A/> : null}	both	✅ Implemented	Logical OR
-CTRL-006	Control Flow	{show() ? <A/> : null}	markedJsx: <A data-bf-cond='0'/> + DOM remove/insert	both	✅ Implemented	Null branch
-CTRL-007	Control Flow	{show() ? <><A/><B/></> : <C/>}	markedJsx: <!--bf-cond-start:0--><A/><B/><!--bf-cond-end:0-->	both	✅ Implemented	Fragment uses comments
+CTRL-006	Control Flow	{show() ? <A/> : null}	markedTemplate: <A data-bf-cond='0'/> + DOM remove/insert	both	✅ Implemented	Null branch
+CTRL-007	Control Flow	{show() ? <><A/><B/></> : <C/>}	markedTemplate: <!--bf-cond-start:0--><A/><B/><!--bf-cond-end:0-->	both	✅ Implemented	Fragment uses comments
 CTRL-008	Control Flow	{a() ? <A/> : b() ? <B/> : <C/>}	Nested data-bf-cond markers	both	✅ Implemented	Nested ternary
-CTRL-009	Control Flow	{true ? <A/> : <B/>}	No data-bf-cond (static)	markedJsx	✅ Implemented	Static conditional
+CTRL-009	Control Flow	{true ? <A/> : <B/>}	No data-bf-cond (static)	markedTemplate	✅ Implemented	Static conditional
 CTRL-010	Control Flow	<ul>{items().map(i => <li>{i}</li>)}</ul>	clientJs: _0.innerHTML = items().map(...).join('')	both	✅ Implemented	Array map
 CTRL-011	Control Flow	items().filter(...).map(...)	Chain preserved in clientJs	clientJs	✅ Implemented	Filter + map
-CTRL-012	Control Flow	<li key={item.id}>...</li>	<li data-key={item.id}>...</li>	markedJsx	✅ Implemented	key -> data-key
-CTRL-013	Control Flow	items().map((item, i) => <li key={i}>)	key uses __index	markedJsx	✅ Implemented	Index key
-CTRL-014	Control Flow	<li key={item.a + item.b}>	Complex key expression preserved	markedJsx	✅ Implemented	Computed key
+CTRL-012	Control Flow	<li key={item.id}>...</li>	<li data-key={item.id}>...</li>	markedTemplate	✅ Implemented	key -> data-key
+CTRL-013	Control Flow	items().map((item, i) => <li key={i}>)	key uses __index	markedTemplate	✅ Implemented	Index key
+CTRL-014	Control Flow	<li key={item.a + item.b}>	Complex key expression preserved	markedTemplate	✅ Implemented	Computed key
 CTRL-015	Control Flow	items().map(i => i.subs.map(s => <X/>))	Nested innerHTML	clientJs	✅ Implemented	Nested map
 CTRL-016	Control Flow	items().map(i => i.done ? <A/> : <B/>)	Ternary in template string	clientJs	✅ Implemented	Conditional in map
-CTRL-017	Control Flow	{show() ? <ComponentA /> : <ComponentB />}	markedJsx: data-bf-cond markers on both	both	✅ Implemented	Component ternary (#171)
-CTRL-018	Control Flow	{show() ? <Child /> : null}	markedJsx: data-bf-cond on component	both	✅ Implemented	Component with null (#171)
-CTRL-019	Control Flow	{show() && <Child />}	markedJsx: data-bf-cond on component	both	✅ Implemented	Logical AND with component (#171)
+CTRL-017	Control Flow	{show() ? <ComponentA /> : <ComponentB />}	markedTemplate: data-bf-cond markers on both	both	✅ Implemented	Component ternary (#171)
+CTRL-018	Control Flow	{show() ? <Child /> : null}	markedTemplate: data-bf-cond on component	both	✅ Implemented	Component with null (#171)
+CTRL-019	Control Flow	{show() && <Child />}	markedTemplate: data-bf-cond on component	both	✅ Implemented	Logical AND with component (#171)
 CTRL-020	Control Flow	{a ? (b ? <X/> : <Y/>) : <Z/>}	Properly escaped template literal	clientJs	✅ Implemented	Nested ternary JSX escaping
 CTRL-021	Control Flow	if (sig()) return <A/>; return <B/>	Converted to IRConditional	both	✅ Implemented	If early return (#171)
 CTRL-022	Control Flow	if (sig()) return <A/>; else return <B/>	Converted to IRConditional	both	✅ Implemented	If-else returns (#171)
@@ -86,7 +86,7 @@ COMP-002	Components	<Child name='A' />	Props passed to Child	preserve	✅ Implem
 COMP-003	Components	<Child value={count()} />	Props wrapped: { value: () => count() }	clientJs	✅ Implemented	Dynamic props wrapped
 COMP-004	Components	<Child {...props} />	Spread preserved	preserve	✅ Implemented	Spread props
 COMP-005	Components	<Card><p>X</p></Card>	Children passed to Card	preserve	✅ Implemented	Children
-COMP-006	Components	<Toggle active />	active={true}	markedJsx	✅ Implemented	Boolean shorthand
+COMP-006	Components	<Toggle active />	active={true}	markedTemplate	✅ Implemented	Boolean shorthand
 COMP-010	Components	function C({ name }: { name: string })	Type info extracted	clientJs	✅ Implemented	Typed props
 COMP-011	Components	function C({ x = 5 }: Props)	x marked optional	clientJs	✅ Implemented	Default value
 COMP-012	Components	<Child value={sig()} />	value: () => sig()	clientJs	✅ Implemented	Dynamic wrapped
@@ -117,20 +117,20 @@ EVT-005	Events	<form onSubmit={(e) => { e.preventDefault() }}>	clientJs: _0.onsu
 EVT-006	Events	<input onKeyDown={(e) => e.key === 'Enter' && fn()}>	clientJs: _0.onkeydown = (e) => ...	both	✅ Implemented	KeyDown handler
 EVT-007	Events	<input onBlur={() => validate()}/>	clientJs: addEventListener('blur', fn, { capture: true })	both	✅ Implemented	onBlur E2E test
 EVT-008	Events	<input onFocus={() => highlight()}/>	clientJs: addEventListener('focus', fn, { capture: true })	both	✅ Implemented	onFocus E2E test
-EVT-010	Events	<ul>{items().map(i => <li onClick={...}>)}</ul>	markedJsx: data-event-id='0' data-index={__index}	both	✅ Implemented	List delegation
+EVT-010	Events	<ul>{items().map(i => <li onClick={...}>)}</ul>	markedTemplate: data-event-id='0' data-index={__index}	both	✅ Implemented	List delegation
 EVT-011	Events	<li onClick={...} onDoubleClick={...}>	Multiple data-event-id attrs	both	✅ Implemented	Multiple list events
 EVT-012	Events	<li onFocus={...}> in list	addEventListener with capture	both	✅ Implemented	onFocus in list E2E test
 EVT-020	Events	onKeyDown={(e) => e.key === 'Enter' && submit()}	clientJs: if (e.key === 'Enter') { submit() }	clientJs	✅ Implemented	Conditional handler
 EVT-021	Events	Complex conditional in handler	Multiple if checks in clientJs	clientJs	✅ Implemented	Complex conditional
 REF-001	Refs	<input ref={(el) => inputRef = el}/>	clientJs: (el) => inputRef = el	both	✅ Implemented	Ref callback
-REF-002	Refs	<input ref={...}/>	ref not in markedJsx	both	✅ Implemented	Ref excluded from server
+REF-002	Refs	<input ref={...}/>	ref not in markedTemplate	both	✅ Implemented	Ref excluded from server
 REF-003	Refs	<input ref={...} onClick={...}/>	Both work independently	both	✅ Implemented	Ref + event
 REF-004	Refs	<input ref={...} value={sig()}/>	Effect + ref both work	both	✅ Implemented	Ref + dynamic
 REF-005	Refs	<input ref={ref1}/><input ref={ref2}/>	All refs executed	both	✅ Implemented	Multiple refs
 EDGE-001	Edge Cases	<div> <span>X</span></div>	Space before span preserved	preserve	✅ Implemented	Trailing whitespace
 EDGE-002	Edge Cases	<div></div>X	X preserved after closing	preserve	✅ Implemented	Leading text
-EDGE-003	Edge Cases	<div>\n  <span>X</span>\n</div>	Indentation removed	markedJsx	✅ Implemented	Block indentation
-EDGE-004	Edge Cases	<span>{' '}</span>	Space preserved	markedJsx	✅ Implemented	Explicit space
+EDGE-003	Edge Cases	<div>\n  <span>X</span>\n</div>	Indentation removed	markedTemplate	✅ Implemented	Block indentation
+EDGE-004	Edge Cases	<span>{' '}</span>	Space preserved	markedTemplate	✅ Implemented	Explicit space
 EDGE-005	Edge Cases	items().map(i => <li> {i} </li>)	Spaces in template preserved	clientJs	✅ Implemented	List whitespace
 EDGE-010	Edge Cases	<a><b><c><d><e>X</e></d></c></b></a>	5 levels processed correctly	preserve	✅ Implemented	Deep nesting
 EDGE-011	Edge Cases	<div><p>{a()}</p><span>{b()}</span></div>	All dynamics tracked	both	✅ Implemented	Multiple dynamics
@@ -141,7 +141,7 @@ EDGE-021	Edge Cases	{x && y > 0 && <A/>}	Operators escaped correctly	both	✅ Im
 EDGE-022	Edge Cases	<p>{a() + b() + c()}</p>	All 3 signals tracked	both	✅ Implemented	Multiple deps
 EDGE-023	Edge Cases	<style>{'.foo:hover { }'}</style>	:hover not replaced	preserve	✅ Implemented	CSS pseudo-class
 EDGE-024	Edge Cases	<input type='checkbox'/>	type not replaced	preserve	✅ Implemented	HTML attr name
-EDGE-030	Edge Cases	<svg><path/></svg>	<svg xmlns='http://www.w3.org/2000/svg'>	markedJsx	✅ Implemented	SVG xmlns
+EDGE-030	Edge Cases	<svg><path/></svg>	<svg xmlns='http://www.w3.org/2000/svg'>	markedTemplate	✅ Implemented	SVG xmlns
 EDGE-031	Edge Cases	<svg viewBox='0 0 24 24'>	viewBox preserved (camelCase)	preserve	✅ Implemented	SVG viewBox
 EDGE-032	Edge Cases	<path stroke-width='2'/>	stroke-width preserved	preserve	✅ Implemented	SVG stroke
 EDGE-033	Edge Cases	<path fill={color()}/>	clientJs: _0.setAttribute('fill', color())	both	✅ Implemented	Dynamic SVG attr
@@ -170,17 +170,17 @@ PATH-005	Element Paths	<div><Child/><span data-bf='0'/>	null (uses querySelector
 PATH-006	Element Paths	<div>{show() && <X/>}<span data-bf='0'>	Conditional skipped	clientJs	✅ Implemented	Conditional in path
 PATH-007	Element Paths	{cond ? <X/> : null}<span data-bf='0'>{text()}</span>	path: null (querySelector fallback)	clientJs	✅ Implemented	Elements after conditionals use querySelector
 PATH-008	Element Paths	{c1 && <X/>}{c2 && <Y/>}<span data-bf='0'>	path: null (querySelector fallback)	clientJs	✅ Implemented	Multiple conditionals before element
-TYPE-001	Type Preservation	interface Props { x: string }	interface Props { x: string } in output	markedJsx	✅ Implemented	Interface definition preserved
-TYPE-002	Type Preservation	interface ChildProps extends ParentProps { x: number }	Both interfaces extracted	markedJsx	✅ Implemented	Interface inheritance (local)
-TYPE-003	Type Preservation	type Props = { x: string }	type Props = { x: string } in output	markedJsx	✅ Implemented	Type alias preserved
-TYPE-004	Type Preservation	type Props = BaseProps & { x: string }	Intersection type preserved	markedJsx	✅ Implemented	Intersection type resolved
-TYPE-005	Type Preservation	function C({ x }: Props)	C({ x }: Props & { "data-key"?: ... })	markedJsx	✅ Implemented	Uses intersection for hydration props
-TYPE-006	Type Preservation	interface Props extends HTMLAttributes<...>	Interface preserved, external type referenced	markedJsx	✅ Implemented	External types not extracted
+TYPE-001	Type Preservation	interface Props { x: string }	interface Props { x: string } in output	markedTemplate	✅ Implemented	Interface definition preserved
+TYPE-002	Type Preservation	interface ChildProps extends ParentProps { x: number }	Both interfaces extracted	markedTemplate	✅ Implemented	Interface inheritance (local)
+TYPE-003	Type Preservation	type Props = { x: string }	type Props = { x: string } in output	markedTemplate	✅ Implemented	Type alias preserved
+TYPE-004	Type Preservation	type Props = BaseProps & { x: string }	Intersection type preserved	markedTemplate	✅ Implemented	Intersection type resolved
+TYPE-005	Type Preservation	function C({ x }: Props)	C({ x }: Props & { "data-key"?: ... })	markedTemplate	✅ Implemented	Uses intersection for hydration props
+TYPE-006	Type Preservation	interface Props extends HTMLAttributes<...>	Interface preserved, external type referenced	markedTemplate	✅ Implemented	External types not extracted
 TYPE-010	Type Preservation	interface Props<T> { items: T[] }	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Generic interfaces
 TYPE-011	Type Preservation	type Props = Pick<T, K>	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Utility types (Pick, Omit, etc.)
 TYPE-012	Type Preservation	type Props = T extends U ? X : Y	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Conditional types
 TYPE-013	Type Preservation	type Props = { [K in Keys]: V }	Not resolved (falls back to unknown)	n/a	❌ Not Supported	Mapped types
-TYPE-014	Type Preservation	function C({ x }: Props & { extra: string })	Inline intersection not preserved	markedJsx	❌ Not Supported	Inline intersection type annotation
+TYPE-014	Type Preservation	function C({ x }: Props & { extra: string })	Inline intersection not preserved	markedTemplate	❌ Not Supported	Inline intersection type annotation
 OOS-001	Out of Scope	useEffect(() => {...})	Not supported	n/a	❌ OOS	Use createEffect
 OOS-002	Out of Scope	useState(0)	Not supported	n/a	❌ OOS	Use createSignal
 OOS-003	Out of Scope	<Context.Provider value={...}>	Not supported	n/a	❌ OOS	Pass props

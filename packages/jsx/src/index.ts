@@ -1,7 +1,7 @@
 /**
  * BarefootJS JSX Compiler
  *
- * Multi-backend JSX compiler that generates Marked JSX and Client JS.
+ * Multi-backend JSX compiler that generates Marked Templates and Client JS.
  */
 
 // Main compiler API

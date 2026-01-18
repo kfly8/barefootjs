@@ -2,7 +2,7 @@
  * BarefootJS UI build script
  *
  * Generates (file-based output):
- * - dist/components/{Component}.tsx (Marked JSX)
+ * - dist/components/{Component}.tsx (Marked Template)
  * - dist/components/{Component}-{hash}.js (Client JS)
  * - dist/components/barefoot.js (Runtime)
  * - dist/uno.css (UnoCSS output)
@@ -162,8 +162,8 @@ console.log(`Generated: dist/components/${barefootFileName}`)
 
 
 // Manifest - simplified structure
-const manifest: Record<string, { clientJs?: string; markedJsx: string }> = {
-  '__barefoot__': { markedJsx: '', clientJs: `components/${barefootFileName}` }
+const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = {
+  '__barefoot__': { markedTemplate: '', clientJs: `components/${barefootFileName}` }
 }
 
 // Create HonoAdapter (script collection is handled manually via addScriptCollection)
@@ -210,7 +210,7 @@ for (const entryPath of componentFiles) {
   let clientJsContent = ''
 
   for (const file of result.files) {
-    if (file.type === 'markedJsx') {
+    if (file.type === 'markedTemplate') {
       markedJsxContent = file.content
     } else if (file.type === 'clientJs') {
       clientJsContent = file.content
@@ -226,7 +226,7 @@ for (const entryPath of componentFiles) {
       .replace(/\bclass=/g, 'className=')
     await Bun.write(resolve(outputDir, baseFileName), transformedSource)
     console.log(`Generated: dist/components/${relativePath}`)
-    manifest[baseNameNoExt] = { markedJsx: `components/${relativePath}` }
+    manifest[baseNameNoExt] = { markedTemplate: `components/${relativePath}` }
     continue
   }
 
@@ -234,7 +234,7 @@ for (const entryPath of componentFiles) {
   if (markedJsxContent && !clientJsContent) {
     await Bun.write(resolve(outputDir, baseFileName), markedJsxContent)
     console.log(`Generated: dist/components/${relativePath}`)
-    manifest[baseNameNoExt] = { markedJsx: `components/${relativePath}` }
+    manifest[baseNameNoExt] = { markedTemplate: `components/${relativePath}` }
     continue
   }
 
@@ -268,7 +268,7 @@ for (const entryPath of componentFiles) {
     : undefined
 
   manifest[componentName] = {
-    markedJsx: markedJsxPath,
+    markedTemplate: markedJsxPath,
     clientJs: clientJsPath,
   }
 }

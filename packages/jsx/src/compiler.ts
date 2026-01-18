@@ -81,7 +81,7 @@ export async function compileJSX(
   files.push({
     path: entryPath.replace(/\.tsx?$/, adapter.extension),
     content: adapterOutput.template,
-    type: 'markedJsx',
+    type: 'markedTemplate',
   })
 
   const clientJs = generateClientJs(componentIR)
@@ -189,7 +189,7 @@ function compileMultipleComponentsSync(
   files.push({
     path: filePath.replace(/\.tsx?$/, adapter.extension),
     content: combinedTemplate,
-    type: 'markedJsx',
+    type: 'markedTemplate',
   })
 
   // Combine client JS if any
@@ -323,7 +323,7 @@ export function compileJSXSync(
   files.push({
     path: filePath.replace(/\.tsx?$/, adapter.extension),
     content: adapterOutput.template,
-    type: 'markedJsx',
+    type: 'markedTemplate',
   })
 
   const clientJs = generateClientJs(componentIR)
