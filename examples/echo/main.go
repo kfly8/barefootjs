@@ -16,6 +16,7 @@ type CounterProps struct {
 	ScopeID string
 	Initial int
 	Count   int
+	Doubled int
 }
 
 // Template renderer for Echo
@@ -46,6 +47,9 @@ func main() {
 
 	// Static files (for client JS)
 	e.Static("/static", "dist")
+
+	// Shared styles
+	e.Static("/shared", "../shared")
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
@@ -81,6 +85,7 @@ func counterHandler(c echo.Context) error {
 		ScopeID: "Counter_1", // Must match pattern: ComponentName_instanceId
 		Initial: initial,
 		Count:   initial,
+		Doubled: initial * 2,
 	}
 
 	// Wrap the component in a full HTML page
@@ -96,10 +101,9 @@ func renderPage(componentName string, props interface{}) string {
 <html>
 <head>
     <title>` + componentName + ` - BarefootJS + Echo</title>
+    <link rel="stylesheet" href="/shared/styles/components.css">
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        button { padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; }
-        p { font-size: 1.5rem; }
     </style>
 </head>
 <body>

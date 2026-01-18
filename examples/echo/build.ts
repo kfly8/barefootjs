@@ -12,8 +12,8 @@ import { spawnSync } from 'node:child_process'
 
 const projectRoot = import.meta.dirname
 
-// Component files to compile
-const components = ['components/Counter.tsx']
+// Component files to compile (from shared directory)
+const components = ['../shared/components/Counter.tsx']
 
 // Output directories
 const outputDir = resolve(projectRoot, 'dist')
