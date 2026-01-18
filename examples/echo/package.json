@@ -1,0 +1,14 @@
+{
+  "name": "barefootjs-echo-example",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "bun run build.ts",
+    "go:deps": "go mod tidy",
+    "go:run": "go run main.go"
+  },
+  "devDependencies": {
+    "@barefootjs/jsx": "workspace:*",
+    "@barefootjs/go-template": "workspace:*",
+    "bun-types": "^1.1.0"
+  }
+}

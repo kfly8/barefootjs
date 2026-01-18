@@ -149,9 +149,28 @@ interface TemplateAdapter {
 ### Available Adapters
 
 - **HonoAdapter** (`@barefootjs/hono`) - Generates hono/jsx compatible TSX
+- **GoTemplateAdapter** (`@barefootjs/go-template`) - Generates Go html/template files
+
+#### GoTemplateAdapter
+
+The Go adapter generates `.tmpl` files compatible with Go's `html/template` package:
+
+| IR Node | Go html/template |
+|---------|------------------|
+| `IRExpression` | `{{.FieldName}}` |
+| `IRConditional` | `{{if .Cond}}...{{else}}...{{end}}` |
+| `IRLoop` | `{{range $i, $v := .Items}}...{{end}}` |
+| `IRComponent` | `{{template "Name" .}}` |
+| `IRSlot` | `{{block "children" .}}{{end}}` |
+
+Expression conversion:
+- `count()` (signal call) → `.Count`
+- `user.name` → `.User.Name`
+- Property names are capitalized for Go export
+
+Additionally generates `*_types.go` with Go struct definitions for component props.
 
 Future adapters (not yet implemented):
-- Go html/template
 - Jinja2
 - etc.
 
