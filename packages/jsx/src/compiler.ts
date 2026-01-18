@@ -61,7 +61,7 @@ export async function compileJSX(
   }
 
   const componentIR: ComponentIR = {
-    version: '2.0',
+    version: '0.1',
     metadata: buildMetadata(ctx),
     root: ir,
     errors: [],
@@ -123,7 +123,7 @@ function compileMultipleComponentsSync(
     if (!ir) continue
 
     const componentIR: ComponentIR = {
-      version: '2.0',
+      version: '0.1',
       metadata: buildMetadata(ctx),
       root: ir,
       errors: [],
@@ -303,7 +303,7 @@ export function compileJSXSync(
   }
 
   const componentIR: ComponentIR = {
-    version: '2.0',
+    version: '0.1',
     metadata: buildMetadata(ctx),
     root: ir,
     errors: [],

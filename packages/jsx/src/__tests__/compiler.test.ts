@@ -291,7 +291,7 @@ describe('Compiler', () => {
 
       const ir = result.files.find(f => f.type === 'ir')
       expect(ir).toBeDefined()
-      expect(ir?.content).toContain('"version": "2.0"')
+      expect(ir?.content).toContain('"version": "0.1"')
     })
   })
 

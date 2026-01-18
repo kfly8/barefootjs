@@ -285,7 +285,7 @@ export interface IRMetadata {
 // =============================================================================
 
 export interface ComponentIR {
-  version: '2.0'
+  version: '0.1'
   metadata: IRMetadata
   root: IRNode
   errors: CompilerError[]
