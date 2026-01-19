@@ -114,6 +114,7 @@ interface LoopElement {
   childEventHandlers: string[] // Event handlers from child elements (for identifier extraction)
   childEvents: LoopChildEvent[] // Detailed event info for delegation
   childComponent?: IRLoopChildComponent // For createComponent-based rendering
+  isStaticArray: boolean // True if array is a static prop (not a signal)
 }
 
 interface RefElement {
@@ -290,6 +291,7 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
           childEventHandlers: childHandlers,
           childEvents,
           childComponent: node.childComponent,
+          isStaticArray: node.isStaticArray,
         })
       }
       // Don't traverse into loop children for interactive elements collection
@@ -1404,6 +1406,28 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
 
   // Loop updates
   for (const elem of ctx.loopElements) {
+    // Static prop arrays don't need reconcileList - SSR elements are hydrated directly
+    // Dynamic signal arrays need reconcileList to update DOM when signal changes
+    if (elem.isStaticArray) {
+      // Static prop array - SSR elements are already rendered
+      // Need to initialize child components since hydrate() skips nested instances
+      if (elem.childComponent) {
+        const { name } = elem.childComponent
+        lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
+        lines.push(`  if (_${elem.slotId}) {`)
+        lines.push(`    const __childScopes = _${elem.slotId}.querySelectorAll('[data-bf-scope^="${name}_"]:not([data-bf-init])')`)
+        lines.push(`    __childScopes.forEach((childScope) => {`)
+        lines.push(`      const __instanceId = childScope.dataset.bfScope`)
+        // Match props from the array by scopeID
+        lines.push(`      const __childProps = ${elem.array}.find(item => item.scopeID === __instanceId) || {}`)
+        lines.push(`      initChild('${name}', childScope, __childProps)`)
+        lines.push(`    })`)
+        lines.push(`  }`)
+        lines.push('')
+      }
+      continue
+    }
+
     const keyFn = elem.key ? `(${elem.param}) => String(${elem.key})` : 'null'
 
     if (elem.childComponent) {

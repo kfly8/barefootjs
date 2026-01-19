@@ -102,6 +102,9 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push("import { useRequestContext } from 'hono/jsx-renderer'")
     }
 
+    // Add bfComment for conditional reconciliation markers
+    lines.push("import { bfComment } from '@barefootjs/hono/utils'")
+
     // Re-export original imports (excluding @barefootjs/dom)
     for (const imp of ir.metadata.imports) {
       if (imp.source === '@barefootjs/dom') continue
@@ -540,11 +543,11 @@ export class HonoAdapter implements TemplateAdapter {
 
     // If reactive, wrap with markers
     if (cond.slotId) {
-      const trueWithMarker = this.wrapWithCondMarker(whenTrue, cond.slotId)
+      const trueWithMarker = this.wrapWithCondMarker(cond.whenTrue, whenTrue, cond.slotId)
       // For null false branch, use fragment with comment markers
       const falseWithMarker = cond.whenFalse.type === 'expression' && cond.whenFalse.expr === 'null'
         ? 'null'
-        : this.wrapWithCondMarker(whenFalse, cond.slotId)
+        : this.wrapWithCondMarker(cond.whenFalse, whenFalse, cond.slotId)
 
       return `{${cond.condition} ? ${trueWithMarker} : ${falseWithMarker}}`
     }
@@ -552,7 +555,7 @@ export class HonoAdapter implements TemplateAdapter {
     return `{${cond.condition} ? ${whenTrue} : ${whenFalse}}`
   }
 
-  private wrapWithCondMarker(content: string, condId: string): string {
+  private wrapWithCondMarker(node: IRNode, content: string, condId: string): string {
     // If content is a JSX element, add data-bf-cond attribute
     if (content.startsWith('<')) {
       const match = content.match(/^<(\w+)/)
@@ -560,8 +563,21 @@ export class HonoAdapter implements TemplateAdapter {
         return content.replace(`<${match[1]}`, `<${match[1]} data-bf-cond="${condId}"`)
       }
     }
-    // Text: use comment markers instead of span
-    return `<!--bf-cond-start:${condId}-->${content}<!--bf-cond-end:${condId}-->`
+
+    // Determine if content should be wrapped in braces
+    if (node.type === 'expression') {
+      const trimmed = (node as IRExpression).expr.trim()
+      // String literal: output as text (quotes already stripped by renderNodeRaw)
+      if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+          (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        return `<>{bfComment("cond-start:${condId}")}${content}{bfComment("cond-end:${condId}")}</>`
+      }
+      // Other expression: wrap in braces
+      return `<>{bfComment("cond-start:${condId}")}{${content}}{bfComment("cond-end:${condId}")}</>`
+    }
+
+    // Text node or other: output as text
+    return `<>{bfComment("cond-start:${condId}")}${content}{bfComment("cond-end:${condId}")}</>`
   }
 
   renderLoop(loop: IRLoop): string {

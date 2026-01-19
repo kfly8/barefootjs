@@ -29,6 +29,10 @@
     "./jsx/jsx-dev-runtime": {
       "types": "./src/jsx/jsx-dev-runtime/index.d.ts",
       "import": "./src/jsx/jsx-dev-runtime/index.ts"
+    },
+    "./utils": {
+      "types": "./src/utils.ts",
+      "import": "./src/utils.ts"
     }
   },
   "files": [

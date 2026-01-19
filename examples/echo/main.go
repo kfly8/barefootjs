@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -74,17 +75,32 @@ type DashboardProps struct {
 
 // Todo represents a single todo item.
 type Todo struct {
-	ID   int    `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
+	ID      int    `json:"id"`
+	Text    string `json:"text"`
+	Done    bool   `json:"done"`
+	Editing bool   `json:"editing"`
+}
+
+// TodoItemProps represents props for individual todo items with scope.
+type TodoItemProps struct {
+	ScopeID string `json:"scopeID"`
+	Todo    Todo   `json:"todo"`
+}
+
+// AddTodoFormProps represents props for the AddTodoForm child component.
+type AddTodoFormProps struct {
+	ScopeID string `json:"scopeID"`
+	NewText string `json:"newText"`
 }
 
 // TodoAppProps represents the props for the TodoApp component.
 type TodoAppProps struct {
-	ScopeID      string `json:"scopeID"`
-	InitialTodos []Todo `json:"initialTodos"`
-	Todos        []Todo `json:"todos"`
-	DoneCount    int    `json:"doneCount"`
+	ScopeID      string           `json:"scopeID"`
+	InitialTodos []Todo           `json:"initialTodos"`
+	Todos        []Todo           `json:"todos"`          // For client hydration
+	TodoItems    []TodoItemProps  `json:"-"`              // For Go template (not in JSON)
+	DoneCount    int              `json:"doneCount"`
+	AddTodoForm  AddTodoFormProps `json:"addTodoForm"`
 }
 
 // In-memory todo storage
@@ -92,9 +108,9 @@ var (
 	todoMutex  sync.RWMutex
 	todoNextID = 4
 	todos      = []Todo{
-		{ID: 1, Text: "Setup project", Done: false},
-		{ID: 2, Text: "Create components", Done: false},
-		{ID: 3, Text: "Write tests", Done: true},
+		{ID: 1, Text: "Setup project", Done: false, Editing: false},
+		{ID: 2, Text: "Create components", Done: false, Editing: false},
+		{ID: 3, Text: "Write tests", Done: true, Editing: false},
 	}
 )
 
@@ -104,9 +120,9 @@ func resetTodos() {
 	defer todoMutex.Unlock()
 	todoNextID = 4
 	todos = []Todo{
-		{ID: 1, Text: "Setup project", Done: false},
-		{ID: 2, Text: "Create components", Done: false},
-		{ID: 3, Text: "Write tests", Done: true},
+		{ID: 1, Text: "Setup project", Done: false, Editing: false},
+		{ID: 2, Text: "Create components", Done: false, Editing: false},
+		{ID: 3, Text: "Write tests", Done: true, Editing: false},
 	}
 }
 
@@ -201,6 +217,10 @@ func counterHandler(c echo.Context) error {
 }
 
 func renderPage(componentName string, props interface{}) string {
+	return renderPageWithScripts(componentName, props)
+}
+
+func renderPageWithScripts(componentName string, props interface{}, childComponents ...string) string {
 	t := loadTemplates()
 
 	// Get ScopeID from props using reflection
@@ -243,8 +263,16 @@ func renderPage(componentName string, props interface{}) string {
 
 	buf.WriteString(`</div>
     <p><a href="/">← Back to index</a></p>
+`)
 
-    <script type="module" src="/static/client/` + componentName + `.client.js"></script>
+	// Add child component scripts first (they need to be registered before parent)
+	for _, child := range childComponents {
+		buf.WriteString(`    <script type="module" src="/static/client/` + child + `.client.js"></script>
+`)
+	}
+
+	// Add main component script
+	buf.WriteString(`    <script type="module" src="/static/client/` + componentName + `.client.js"></script>
 </body>
 </html>`)
 
@@ -350,14 +378,28 @@ func todosHandler(c echo.Context) error {
 		}
 	}
 
+	// Build TodoItemProps array with ScopeID for each item
+	todoItems := make([]TodoItemProps, len(currentTodos))
+	for i, t := range currentTodos {
+		todoItems[i] = TodoItemProps{
+			ScopeID: fmt.Sprintf("TodoItem_%d", t.ID),
+			Todo:    t,
+		}
+	}
+
 	props := TodoAppProps{
 		ScopeID:      "TodoApp_1",
 		InitialTodos: currentTodos,
-		Todos:        currentTodos,
+		Todos:        currentTodos, // For client hydration (JSON)
+		TodoItems:    todoItems,    // For Go template (not in JSON)
 		DoneCount:    doneCount,
+		AddTodoForm: AddTodoFormProps{
+			ScopeID: "TodoApp_1_slot_5", // parent_slotId format for client hydration
+			NewText: "",                 // signal initial value
+		},
 	}
 
-	return c.HTML(http.StatusOK, renderPage("TodoApp", props))
+	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "AddTodoForm", "TodoItem"))
 }
 
 // Todo API handlers

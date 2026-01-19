@@ -11,8 +11,6 @@
  */
 
 import { getPropsUpdateFn, getComponentProps } from './component'
-import { getComponentInit } from './runtime'
-import { hasTemplate } from './template'
 
 
 /**
@@ -69,20 +67,6 @@ export function reconcileList<T>(
     return
   }
 
-  // SSR detection: children with data-bf-scope but not initialized
-  // This must be checked BEFORE mode detection to avoid placeholder issues
-  const children = Array.from(container.children) as HTMLElement[]
-  const ssrElements = children.filter(
-    el => el.dataset.bfScope && !el.hasAttribute('data-bf-init')
-  )
-
-  // If SSR elements count matches items count, initialize them in-place
-  // This handles containers with mixed content (e.g., h3 + list items)
-  if (ssrElements.length === items.length && ssrElements.length > 0) {
-    initializeSSRElements(container, items, getKey, ssrElements)
-    return
-  }
-
   // Test the render function with first item to detect mode
   const testResult = renderItem(items[0], 0)
   const isElementMode = testResult instanceof HTMLElement
@@ -105,43 +89,6 @@ export function reconcileList<T>(
 }
 
 /**
- * Initialize SSR-rendered elements in-place without calling renderItem.
- * This avoids the placeholder issue when templates are not registered.
- */
-function initializeSSRElements<T>(
-  container: HTMLElement,
-  items: T[],
-  getKey: ((item: T, index: number) => string) | null,
-  ssrElements: HTMLElement[]
-): void {
-  for (let i = 0; i < items.length; i++) {
-    const el = ssrElements[i]
-    const item = items[i]
-    const key = getKey ? getKey(item, i) : String(i)
-
-    // Set data-key for future reconciliation
-    if (!el.dataset.key) {
-      el.setAttribute('data-key', key)
-    }
-
-    // Extract component name from scope ID (e.g., "ToggleItem_1" -> "ToggleItem")
-    const componentName = el.dataset.bfScope!.replace(/_[^_]+$/, '')
-
-    // Get init function and initialize with item props
-    const init = getComponentInit(componentName)
-    if (init) {
-      const props = typeof item === 'object' && item !== null
-        ? item as Record<string, unknown>
-        : {}
-      init(0, el, props)
-    }
-
-    // Mark as initialized
-    el.setAttribute('data-bf-init', 'true')
-  }
-}
-
-/**
  * Reconcile list using HTMLElement mode (for createComponent).
  * Reuses existing elements by key, creates new elements as needed.
  * For SSR-rendered elements that haven't been initialized, this function
@@ -154,15 +101,13 @@ function reconcileListElements<T>(
   renderItem: (item: T, index: number) => HTMLElement
 ): void {
   // Build key -> element map from existing children
-  // For SSR elements without data-key, use index as key
   const existingByKey = new Map<string, HTMLElement>()
-  let index = 0
   for (const child of Array.from(container.children)) {
     const el = child as HTMLElement
-    // Use data-key if available, otherwise use index for SSR elements
-    const key = el.dataset.key ?? String(index)
-    existingByKey.set(key, el)
-    index++
+    const key = el.dataset.key
+    if (key !== undefined) {
+      existingByKey.set(key, el)
+    }
   }
 
   const fragment = document.createDocumentFragment()
@@ -179,30 +124,12 @@ function reconcileListElements<T>(
       // Check if this is an uninitialized SSR element
       // SSR elements have data-bf-scope but no data-bf-init
       if (existingEl.dataset.bfScope && !existingEl.hasAttribute('data-bf-init')) {
-        // Extract component name from scope ID (e.g., "ToggleItem_1" -> "ToggleItem")
-        const componentName = existingEl.dataset.bfScope!.replace(/_\d+$/, '')
-
-        // Check if template is registered for this component
-        if (hasTemplate(componentName)) {
-          // Template is registered - create new element with proper initialization
-          const newEl = renderItem(item, i)
-          if (!newEl.dataset.key) {
-            newEl.setAttribute('data-key', key)
-          }
-          fragment.appendChild(newEl)
-        } else {
-          // No template registered - initialize SSR element in-place
-          // This preserves the server-rendered HTML
-          const init = getComponentInit(componentName)
-          if (init) {
-            // Get props from the item - assume item has the props we need
-            // For objects like { label, defaultOn }, use them directly
-            const props = typeof item === 'object' && item !== null ? item as Record<string, unknown> : {}
-            init(0, existingEl, props)
-          }
-          existingEl.setAttribute('data-bf-init', 'true')
-          fragment.appendChild(existingEl)
+        // For SSR elements, create new element with proper initialization
+        const newEl = renderItem(item, i)
+        if (!newEl.dataset.key) {
+          newEl.setAttribute('data-key', key)
         }
+        fragment.appendChild(newEl)
       } else {
         // Element is already initialized - decide whether to sync or replace
 

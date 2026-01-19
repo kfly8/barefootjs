@@ -23,8 +23,8 @@ export function todoAppTests(baseUrl: string) {
     })
 
     test('displays initial todos', async ({ page }) => {
-      // Check page title
-      await expect(page.locator('h1')).toContainText('BarefootJS Todo')
+      // Check page title (use #app h1 to avoid conflict with page header)
+      await expect(page.locator('#app h1')).toContainText('BarefootJS Todo')
 
       // Check initial todos are displayed
       await expect(page.locator('li')).toHaveCount(3)

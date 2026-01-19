@@ -107,7 +107,7 @@ app.get('/toggle', (c) => {
 
 app.get('/todos', (c) => {
   return c.render(
-    <div>
+    <div id="app">
       <TodoApp initialTodos={todos} />
       <p><a href="/">← Back</a></p>
     </div>

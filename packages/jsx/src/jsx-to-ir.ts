@@ -536,6 +536,11 @@ function transformMapCall(
     }
   }
 
+  // Determine if array is static (prop) or dynamic (signal/memo)
+  // Static arrays don't need reconcileList - SSR elements are hydrated directly
+  // Only signal and memo arrays need reconcileList for dynamic DOM updates
+  const isStaticArray = !isSignalOrMemoArray(array, ctx)
+
   return {
     type: 'loop',
     array,
@@ -548,6 +553,7 @@ function transformMapCall(
     // Loops don't generate their own slotId; they inherit from parent element
     // The parent element will assign its slotId to the loop after transformation
     slotId: null,
+    isStaticArray,
     childComponent,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
@@ -820,6 +826,31 @@ function templateLiteralToString(value: string | IRTemplateLiteral | null): stri
 // =============================================================================
 // Helpers
 // =============================================================================
+
+/**
+ * Check if array expression is a signal or memo getter call.
+ * Used to determine if a loop needs reconcileList for dynamic DOM updates.
+ * Props and local constants are considered static (don't change at runtime).
+ */
+function isSignalOrMemoArray(array: string, ctx: TransformContext): boolean {
+  // Check for signal calls: todos()
+  for (const signal of ctx.analyzer.signals) {
+    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
+    if (pattern.test(array)) {
+      return true
+    }
+  }
+
+  // Check for memo calls: filteredItems()
+  for (const memo of ctx.analyzer.memos) {
+    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
+    if (pattern.test(array)) {
+      return true
+    }
+  }
+
+  return false
+}
 
 function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
   // Check for signal calls: count()

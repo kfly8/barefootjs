@@ -146,6 +146,13 @@ export interface IRLoop {
   loc: SourceLocation
 
   /**
+   * True if the array is a static prop (not a signal).
+   * Static arrays don't need reconcileList - SSR elements are hydrated directly.
+   * Dynamic signal arrays need reconcileList to update DOM when signal changes.
+   */
+  isStaticArray: boolean
+
+  /**
    * When the loop body is a single component, store its info here
    * for createComponent-based rendering instead of template strings.
    * This enables proper parent-to-child prop passing (including event handlers).

@@ -31,6 +31,7 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   private componentName: string = ''
   private options: Required<GoTemplateAdapterOptions>
+  private inLoop: boolean = false
 
   constructor(options: GoTemplateAdapterOptions = {}) {
     super()
@@ -373,19 +374,55 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderLoop(loop: IRLoop): string {
-    const goArray = this.convertExpressionToGo(loop.array)
+    let goArray = this.convertExpressionToGo(loop.array)
     const param = loop.param
     const index = loop.index || '_'
 
+    // Check if the loop contains a component child
+    // If so, use .{ComponentName}s which has ScopeID for each item
+    // e.g., TodoItem children use .TodoItems, ToggleItem children use .ToggleItems
+    const childComponent = this.findChildComponent(loop.children)
+    if (childComponent) {
+      goArray = `.${childComponent.name}s`
+    }
+
+    this.inLoop = true
     const children = this.renderChildren(loop.children)
+    this.inLoop = false
 
     return `{{range $${index}, $${param} := ${goArray}}}${children}{{end}}`
   }
 
+  /**
+   * Find the first component child in a list of nodes
+   */
+  private findChildComponent(nodes: IRNode[]): IRComponent | null {
+    for (const node of nodes) {
+      if (node.type === 'component') {
+        return node as IRComponent
+      }
+      // Check children of elements
+      if (node.type === 'element' && (node as IRElement).children) {
+        const found = this.findChildComponent((node as IRElement).children)
+        if (found) return found
+      }
+      // Check children of fragments
+      if (node.type === 'fragment' && (node as IRFragment).children) {
+        const found = this.findChildComponent((node as IRFragment).children)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
   renderComponent(comp: IRComponent): string {
-    // In Go templates, components are rendered using {{template "name" .}}
-    // Props need to be passed as the pipeline data
-    return `{{template "${comp.name}" .}}`
+    // In Go templates, components are rendered using {{template "name" data}}
+    if (this.inLoop) {
+      // Loop children: dot becomes loop item (already has correct props)
+      return `{{template "${comp.name}" .}}`
+    }
+    // Static children: access via .ChildName field
+    return `{{template "${comp.name}" .${comp.name}}}`
   }
 
   private renderFragment(fragment: IRFragment): string {
