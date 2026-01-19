@@ -140,7 +140,7 @@ app.get('/async', (c) => {
   return c.render(
     <div>
       <h1>Async Data Fetching with Suspense</h1>
-      <Suspense fallback={<p className="loading">Loading users...</p>}>
+      <Suspense fallback={<p class="loading">Loading users...</p>}>
         <AsyncUserList />
       </Suspense>
       <p><a href="/">← Back</a></p>
@@ -153,7 +153,7 @@ app.get('/async-counter', (c) => {
   return c.render(
     <div>
       <h1>Async Counter with Suspense + BarefootJS</h1>
-      <Suspense fallback={<p className="loading">Loading counter...</p>}>
+      <Suspense fallback={<p class="loading">Loading counter...</p>}>
         <AsyncCounterWrapper />
       </Suspense>
       <p><a href="/">← Back</a></p>

@@ -152,7 +152,7 @@ export function DialogContent({
       aria-labelledby={ariaLabelledby}
       aria-describedby={ariaDescribedby}
       data-dialog-content
-      tabIndex={-1}
+      tabindex={-1}
       onKeyDown={handleKeyDown}
       data-dialog-open={open ? 'true' : 'false'}
       ref={handleFocusOnOpen}
