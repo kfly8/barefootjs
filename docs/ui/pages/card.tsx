@@ -71,30 +71,30 @@ const loginFormCode = `<Card class="w-full max-w-sm">
       Enter your email below to login to your account
     </CardDescription>
     <CardAction>
-      <Button variant="link" class="text-sm">
-        Sign up
-      </Button>
+      <Button variant="link">Sign Up</Button>
     </CardAction>
   </CardHeader>
   <CardContent>
-    <form class="flex flex-col gap-6">
-      <div class="flex flex-col gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input type="email" placeholder="m@example.com" />
-      </div>
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <a href="#" class="text-sm underline-offset-4 hover:underline">
-            Forgot your password?
-          </a>
+    <form>
+      <div class="flex flex-col gap-6">
+        <div class="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" placeholder="m@example.com" />
         </div>
-        <Input type="password" />
+        <div class="grid gap-2">
+          <div class="flex items-center">
+            <Label htmlFor="password">Password</Label>
+            <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+              Forgot your password?
+            </a>
+          </div>
+          <Input id="password" type="password" />
+        </div>
       </div>
     </form>
   </CardContent>
-  <CardFooter class="flex flex-col gap-2">
-    <Button class="w-full">Login</Button>
+  <CardFooter class="flex-col gap-2">
+    <Button type="submit" class="w-full">Login</Button>
     <Button variant="outline" class="w-full">Login with Google</Button>
   </CardFooter>
 </Card>`
@@ -239,30 +239,30 @@ export function CardPage() {
                 Enter your email below to login to your account
               </CardDescription>
               <CardAction>
-                <Button variant="link" class="text-sm">
-                  Sign up
-                </Button>
+                <Button variant="link">Sign Up</Button>
               </CardAction>
             </CardHeader>
             <CardContent>
-              <form class="flex flex-col gap-6">
-                <div class="flex flex-col gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input type="email" placeholder="m@example.com" />
-                </div>
-                <div class="flex flex-col gap-2">
-                  <div class="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <a href="#" class="text-sm underline-offset-4 hover:underline">
-                      Forgot your password?
-                    </a>
+              <form>
+                <div class="flex flex-col gap-6">
+                  <div class="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input type="email" placeholder="m@example.com" />
                   </div>
-                  <Input type="password" />
+                  <div class="grid gap-2">
+                    <div class="flex items-center">
+                      <Label htmlFor="password">Password</Label>
+                      <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+                        Forgot your password?
+                      </a>
+                    </div>
+                    <Input type="password" />
+                  </div>
                 </div>
               </form>
             </CardContent>
-            <CardFooter class="flex flex-col gap-2">
-              <Button class="w-full">Login</Button>
+            <CardFooter class="flex-col gap-2">
+              <Button type="submit" class="w-full">Login</Button>
               <Button variant="outline" class="w-full">Login with Google</Button>
             </CardFooter>
           </Card>
