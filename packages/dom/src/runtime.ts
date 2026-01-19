@@ -162,8 +162,19 @@ export function hydrate(
     const initializedScopes = new Set<string>()
 
     for (const scopeEl of scopeEls) {
-      // Skip nested instances (inside another component's scope)
-      if (scopeEl.parentElement?.closest('[data-bf-scope]')) continue
+      // Skip nested instances when parent is the same component type.
+      // This prevents double initialization (parent's initChild handles it).
+      //
+      // Different parent types are allowed to hydrate independently:
+      //   - ToggleItem inside Toggle → hydrate (different types)
+      //   - Counter inside Counter → skip (same type, parent initializes)
+      //
+      // Note: This relies on scopeId format "ComponentName_xxxxx"
+      const parentScope = scopeEl.parentElement?.closest('[data-bf-scope]')
+      if (parentScope) {
+        const parentScopeId = (parentScope as HTMLElement).dataset.bfScope
+        if (parentScopeId?.startsWith(name + '_')) continue
+      }
 
       // Get unique instance ID from scope element
       const instanceId = (scopeEl as HTMLElement).dataset.bfScope

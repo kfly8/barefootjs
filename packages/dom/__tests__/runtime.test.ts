@@ -149,9 +149,29 @@ describe('hydrate', () => {
     expect(initialized[0].scope.getAttribute('data-bf-scope')).toBe('Counter_abc')
   })
 
-  test('skips nested component scopes', () => {
+  test('skips nested component scopes with same component type', () => {
     const initialized: Element[] = []
 
+    // Counter nested inside another Counter should be skipped
+    // (parent component is responsible for initializing its children)
+    document.body.innerHTML = `
+      <div data-bf-scope="Counter_1">
+        <div data-bf-scope="Counter_nested">nested</div>
+      </div>
+    `
+
+    hydrate('Counter', (_, __, scope) => initialized.push(scope))
+
+    // Only the outer Counter_1 should be initialized, not the nested one
+    expect(initialized.length).toBe(1)
+    expect(initialized[0].getAttribute('data-bf-scope')).toBe('Counter_1')
+  })
+
+  test('initializes nested component with different parent type', () => {
+    const initialized: Element[] = []
+
+    // Counter nested inside Parent (different type) should NOT be skipped
+    // This allows e.g. ToggleItem to hydrate inside Toggle
     document.body.innerHTML = `
       <div data-bf-scope="Parent_1">
         <div data-bf-scope="Counter_nested">nested</div>
@@ -160,7 +180,8 @@ describe('hydrate', () => {
 
     hydrate('Counter', (_, __, scope) => initialized.push(scope))
 
-    expect(initialized.length).toBe(0)
+    expect(initialized.length).toBe(1)
+    expect(initialized[0].getAttribute('data-bf-scope')).toBe('Counter_nested')
   })
 
   test('initializes multiple instances', () => {
