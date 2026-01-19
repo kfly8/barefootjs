@@ -1,13 +1,13 @@
-/** @jsxImportSource @barefootjs/jsx */
+/** @jsxImportSource @barefootjs/hono/jsx */
 /**
- * Test jsxRenderer + Suspense with @barefootjs/jsx
+ * Test jsxRenderer + Suspense with @barefootjs/hono/jsx
  */
 import { describe, it, expect } from 'bun:test'
 import { Hono } from 'hono'
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { Suspense } from 'hono/jsx/streaming'
 
-describe('@barefootjs/jsx with jsxRenderer + Suspense', () => {
+describe('@barefootjs/hono/jsx with jsxRenderer + Suspense', () => {
   it('renders simple JSX without Suspense', async () => {
     const app = new Hono()
     app.use(jsxRenderer(({ children }) => (

@@ -2,8 +2,8 @@
  * Shared type definitions for UI components
  */
 
-// Import JSX type from @barefootjs/jsx for Child type definition
-import type { JSX } from '@barefootjs/jsx/jsx-runtime'
+// Import JSX type from @barefootjs/hono for Child type definition
+import type { JSX } from '@barefootjs/hono/jsx/jsx-runtime'
 
 /**
  * Child type for JSX children prop.
