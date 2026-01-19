@@ -117,7 +117,7 @@ export function TabsTrigger({
       {...(disabled ? { disabled: true } : {})}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
-      tabIndex={selected ? 0 : -1}
+      tabindex={selected ? 0 : -1}
       class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
@@ -150,7 +150,7 @@ export function TabsContent({
   return (
     <div
       role="tabpanel"
-      tabIndex={0}
+      tabindex={0}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
       class={`mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? '' : 'hidden'}`}

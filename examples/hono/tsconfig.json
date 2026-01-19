@@ -15,6 +15,6 @@
       "@/components/*": ["./dist/components/*"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["*.ts", "*.tsx", "components/**/*.ts", "components/**/*.tsx", "e2e/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

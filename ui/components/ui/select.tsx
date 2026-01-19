@@ -7,31 +7,21 @@
  * Uses CSS variables for theming support.
  */
 
+import type { SelectHTMLAttributes } from '@barefootjs/jsx'
+
 export interface SelectOption {
   value: string
   label: string
   disabled?: boolean
 }
 
-/**
- * Event with typed target for select elements.
- * Provides convenient access to e.target.value without manual casting.
- */
-export type SelectTargetEvent<T extends Event = Event> = T & { target: HTMLSelectElement }
-
-export interface SelectProps {
+export interface SelectProps extends Pick<SelectHTMLAttributes, 'onChange' | 'onFocus' | 'onBlur'> {
   options: SelectOption[]
   selectValue?: string
   selectPlaceholder?: string
   selectDisabled?: boolean
   selectError?: boolean
   selectDescribedBy?: string
-  /** Handler with typed target for convenient access to e.target.value */
-  onChange?: (e: SelectTargetEvent) => void
-  /** Handler with typed target for convenient access to e.target.value */
-  onFocus?: (e: SelectTargetEvent<FocusEvent>) => void
-  /** Handler with typed target for convenient access to e.target.value */
-  onBlur?: (e: SelectTargetEvent<FocusEvent>) => void
 }
 
 export function Select({

@@ -7,13 +7,9 @@
  * Uses CSS variables for theming support.
  */
 
-/**
- * Event with typed target for input elements.
- * Provides convenient access to e.target.value without manual casting.
- */
-export type InputTargetEvent<T extends Event = Event> = T & { target: HTMLInputElement }
+import type { InputHTMLAttributes } from '@barefootjs/jsx'
 
-export interface InputProps {
+export interface InputProps extends Pick<InputHTMLAttributes, 'onInput' | 'onChange' | 'onBlur' | 'onFocus'> {
   inputType?: string
   inputPlaceholder?: string
   inputValue?: string
@@ -21,14 +17,6 @@ export interface InputProps {
   inputReadOnly?: boolean
   inputError?: boolean
   inputDescribedBy?: string
-  /** Handler with typed target for convenient access to e.target.value */
-  onInput?: (e: InputTargetEvent<InputEvent>) => void
-  /** Handler with typed target for convenient access to e.target.value */
-  onChange?: (e: InputTargetEvent) => void
-  /** Handler with typed target for convenient access to e.target.value */
-  onBlur?: (e: InputTargetEvent<FocusEvent>) => void
-  /** Handler with typed target for convenient access to e.target.value */
-  onFocus?: (e: InputTargetEvent<FocusEvent>) => void
 }
 
 export function Input({
@@ -55,7 +43,7 @@ export function Input({
       placeholder={inputPlaceholder}
       value={inputValue}
       disabled={inputDisabled}
-      readOnly={inputReadOnly}
+      readonly={inputReadOnly}
       aria-invalid={inputError || undefined}
       {...(inputDescribedBy ? { 'aria-describedby': inputDescribedBy } : {})}
       onInput={onInput}
