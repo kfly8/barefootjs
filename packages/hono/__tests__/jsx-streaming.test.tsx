@@ -1,15 +1,15 @@
-/** @jsxImportSource @barefootjs/hono/jsx */
+/** @jsxImportSource @barefootjs/jsx */
 /**
- * JSX Streaming Tests for @barefootjs/hono/jsx
+ * JSX Streaming Tests for @barefootjs/jsx
  *
- * These tests verify that @barefootjs/hono/jsx properly supports
+ * These tests verify that @barefootjs/jsx properly supports
  * Hono's Suspense and streaming functionality.
  */
 import { describe, it, expect } from 'bun:test'
 import { Suspense, renderToReadableStream } from 'hono/jsx/streaming'
 import type { HtmlEscapedString } from 'hono/utils/html'
 
-describe('@barefootjs/hono/jsx Streaming', () => {
+describe('@barefootjs/jsx Streaming', () => {
   it('Suspense / renderToReadableStream basic', async () => {
     let contentEvaluatedCount = 0
     const Content = () => {
