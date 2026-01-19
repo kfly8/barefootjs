@@ -17,6 +17,7 @@ export type {
   IRExpression,
   IRConditional,
   IRLoop,
+  IRLoopChildComponent,
   IRComponent,
   IRFragment,
   IRSlot,

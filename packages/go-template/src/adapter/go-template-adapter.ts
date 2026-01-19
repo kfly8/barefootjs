@@ -12,6 +12,7 @@ import type {
   IRExpression,
   IRConditional,
   IRLoop,
+  IRLoopChildComponent,
   IRComponent,
   IRFragment,
   IRSlot,
@@ -58,30 +59,292 @@ export class GoTemplateAdapter extends BaseAdapter {
     const lines: string[] = []
     lines.push(`package ${this.options.packageName}`)
     lines.push('')
+    lines.push('import "math/rand"')
+    lines.push('')
 
     const componentName = ir.metadata.componentName
-    const propsTypeName = `${componentName}Props`
-    lines.push(`type ${propsTypeName} struct {`)
-    lines.push('\tScopeID string')
 
-    for (const param of ir.metadata.propsParams) {
-      const goType = this.typeInfoToGo(param.type)
-      const fieldName = this.capitalizeFieldName(param.name)
-      lines.push(`\t${fieldName} ${goType}`)
-    }
+    // Find nested components (loops with childComponent)
+    const nestedComponents = this.findNestedComponents(ir.root)
 
-    for (const signal of ir.metadata.signals) {
-      const goType = this.typeInfoToGo(signal.type)
-      const fieldName = this.capitalizeFieldName(signal.getter)
-      lines.push(`\t${fieldName} ${goType}`)
-    }
+    // Generate Input struct for main component
+    this.generateInputStruct(lines, ir, componentName, nestedComponents)
 
-    lines.push('}')
+    // Generate Props struct for main component
+    this.generatePropsStruct(lines, ir, componentName, nestedComponents)
+
+    // Generate NewXxxProps function
+    this.generateNewPropsFunction(lines, ir, componentName, nestedComponents)
 
     return lines.join('\n')
   }
 
-  private typeInfoToGo(typeInfo: TypeInfo): string {
+  /**
+   * Generate Input struct for a component
+   */
+  private generateInputStruct(
+    lines: string[],
+    ir: ComponentIR,
+    componentName: string,
+    nestedComponents: IRLoopChildComponent[]
+  ): void {
+    const inputTypeName = `${componentName}Input`
+    lines.push(`// ${inputTypeName} is the user-facing input type.`)
+    lines.push(`type ${inputTypeName} struct {`)
+    lines.push('\tScopeID string // Optional: if empty, random ID is generated')
+
+    // Collect nested component array field names to skip from propsParams
+    const nestedArrayFields = new Set(nestedComponents.map(n => `${n.name}s`))
+
+    // Add props params (excluding nested array fields)
+    for (const param of ir.metadata.propsParams) {
+      const fieldName = this.capitalizeFieldName(param.name)
+      if (nestedArrayFields.has(fieldName)) continue
+      const goType = this.typeInfoToGo(param.type, param.defaultValue)
+      lines.push(`\t${fieldName} ${goType}`)
+    }
+
+    // Add nested component input arrays
+    for (const nested of nestedComponents) {
+      lines.push(`\t${nested.name}s []${nested.name}Input`)
+    }
+
+    lines.push('}')
+    lines.push('')
+  }
+
+  /**
+   * Generate Props struct for a component
+   */
+  private generatePropsStruct(
+    lines: string[],
+    ir: ComponentIR,
+    componentName: string,
+    nestedComponents: IRLoopChildComponent[]
+  ): void {
+    const propsTypeName = `${componentName}Props`
+    lines.push(`// ${propsTypeName} is the props type for the ${componentName} component.`)
+    lines.push(`type ${propsTypeName} struct {`)
+    lines.push('\tScopeID string `json:"scopeID"`')
+
+    // Collect nested component array field names to skip from propsParams
+    const nestedArrayFields = new Set(nestedComponents.map(n => `${n.name}s`))
+
+    for (const param of ir.metadata.propsParams) {
+      const fieldName = this.capitalizeFieldName(param.name)
+      // Skip if this field will be replaced by a typed array for nested components
+      if (nestedArrayFields.has(fieldName)) continue
+      const goType = this.typeInfoToGo(param.type, param.defaultValue)
+      const jsonTag = this.toJsonTag(param.name)
+      lines.push(`\t${fieldName} ${goType} \`json:"${jsonTag}"\``)
+    }
+
+    // Find signal types by looking at their initial values
+    const propsParamMap = new Map(ir.metadata.propsParams.map(p => [p.name, p]))
+
+    for (const signal of ir.metadata.signals) {
+      const fieldName = this.capitalizeFieldName(signal.getter)
+      const jsonTag = this.toJsonTag(signal.getter)
+      // Infer type from initial value or referenced prop's type
+      let goType: string
+      const referencedProp = propsParamMap.get(signal.initialValue)
+      if (referencedProp) {
+        goType = this.typeInfoToGo(referencedProp.type, referencedProp.defaultValue)
+      } else {
+        goType = this.typeInfoToGo(signal.type, signal.initialValue)
+      }
+      lines.push(`\t${fieldName} ${goType} \`json:"${jsonTag}"\``)
+    }
+
+    // Add memos to Props (they are computed values needed for SSR)
+    for (const memo of ir.metadata.memos) {
+      const fieldName = this.capitalizeFieldName(memo.name)
+      const jsonTag = this.toJsonTag(memo.name)
+      // Memos that depend on number signals are usually numbers
+      const goType = this.inferMemoType(memo, ir.metadata.signals, propsParamMap)
+      lines.push(`\t${fieldName} ${goType} \`json:"${jsonTag}"\``)
+    }
+
+    // Add array fields for nested components (for template rendering)
+    for (const nested of nestedComponents) {
+      const jsonTag = this.toJsonTag(`${nested.name.charAt(0).toLowerCase()}${nested.name.slice(1)}s`)
+      lines.push(`\t${nested.name}s []${nested.name}Props \`json:"${jsonTag}"\``)
+    }
+
+    lines.push('}')
+    lines.push('')
+  }
+
+  /**
+   * Generate NewXxxProps function
+   */
+  private generateNewPropsFunction(
+    lines: string[],
+    ir: ComponentIR,
+    componentName: string,
+    nestedComponents: IRLoopChildComponent[]
+  ): void {
+    const inputTypeName = `${componentName}Input`
+    const propsTypeName = `${componentName}Props`
+
+    lines.push(`// New${componentName}Props creates ${propsTypeName} from ${inputTypeName}.`)
+    lines.push(`func New${componentName}Props(in ${inputTypeName}) ${propsTypeName} {`)
+    lines.push('\tscopeID := in.ScopeID')
+    lines.push('\tif scopeID == "" {')
+    lines.push(`\t\tscopeID = "${componentName}_" + randomID(6)`)
+    lines.push('\t}')
+    lines.push('')
+
+    // Handle nested components
+    if (nestedComponents.length > 0) {
+      for (const nested of nestedComponents) {
+        const varName = `${nested.name.charAt(0).toLowerCase()}${nested.name.slice(1)}s`
+        lines.push(`\t${varName} := make([]${nested.name}Props, len(in.${nested.name}s))`)
+        lines.push(`\tfor i, item := range in.${nested.name}s {`)
+        lines.push(`\t\t${varName}[i] = New${nested.name}Props(item)`)
+        lines.push('\t}')
+        lines.push('')
+      }
+    }
+
+    lines.push(`\treturn ${propsTypeName}{`)
+    lines.push('\t\tScopeID: scopeID,')
+
+    // Collect nested component array field names
+    const nestedArrayFields = new Set(nestedComponents.map(n => `${n.name}s`))
+
+    // Add props params
+    for (const param of ir.metadata.propsParams) {
+      const fieldName = this.capitalizeFieldName(param.name)
+      if (nestedArrayFields.has(fieldName)) continue
+      lines.push(`\t\t${fieldName}: in.${fieldName},`)
+    }
+
+    // Add signal initial values
+    for (const signal of ir.metadata.signals) {
+      const fieldName = this.capitalizeFieldName(signal.getter)
+      const initialValue = this.convertInitialValue(signal.initialValue, signal.type, ir.metadata.propsParams)
+      lines.push(`\t\t${fieldName}: ${initialValue},`)
+    }
+
+    // Add nested component arrays
+    for (const nested of nestedComponents) {
+      const varName = `${nested.name.charAt(0).toLowerCase()}${nested.name.slice(1)}s`
+      lines.push(`\t\t${nested.name}s: ${varName},`)
+    }
+
+    // Add memo initial values (computed from signal initial values)
+    for (const memo of ir.metadata.memos) {
+      const fieldName = this.capitalizeFieldName(memo.name)
+      const memoValue = this.computeMemoInitialValue(memo, ir.metadata.signals, ir.metadata.propsParams)
+      lines.push(`\t\t${fieldName}: ${memoValue},`)
+    }
+
+    lines.push('\t}')
+    lines.push('}')
+  }
+
+  /**
+   * Convert field name to JSON tag (camelCase)
+   */
+  private toJsonTag(name: string): string {
+    return name.charAt(0).toLowerCase() + name.slice(1)
+  }
+
+  /**
+   * Find all nested components (loops with childComponent)
+   */
+  private findNestedComponents(node: IRNode): IRLoopChildComponent[] {
+    const result: IRLoopChildComponent[] = []
+    this.collectNestedComponents(node, result)
+    return result
+  }
+
+  private collectNestedComponents(node: IRNode, result: IRLoopChildComponent[]): void {
+    if (node.type === 'loop') {
+      const loop = node as IRLoop
+      if (loop.isStaticArray && loop.childComponent) {
+        // Check for duplicates
+        if (!result.some(c => c.name === loop.childComponent!.name)) {
+          result.push(loop.childComponent)
+        }
+      }
+      for (const child of loop.children) {
+        this.collectNestedComponents(child, result)
+      }
+    } else if (node.type === 'element') {
+      const element = node as IRElement
+      for (const child of element.children) {
+        this.collectNestedComponents(child, result)
+      }
+    } else if (node.type === 'fragment') {
+      const fragment = node as IRFragment
+      for (const child of fragment.children) {
+        this.collectNestedComponents(child, result)
+      }
+    } else if (node.type === 'conditional') {
+      const cond = node as IRConditional
+      this.collectNestedComponents(cond.whenTrue, result)
+      if (cond.whenFalse) {
+        this.collectNestedComponents(cond.whenFalse, result)
+      }
+    }
+  }
+
+  /**
+   * Convert JavaScript initial value to Go value for NewXxxProps function.
+   * References to props params are converted to in.FieldName format.
+   */
+  private convertInitialValue(value: string, typeInfo: TypeInfo, propsParams?: { name: string }[]): string {
+    // Check if it's a simple identifier (props param reference)
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+      // Check if this matches a props param
+      if (propsParams?.some(p => p.name === value)) {
+        return `in.${this.capitalizeFieldName(value)}`
+      }
+    }
+
+    if (typeInfo.kind === 'primitive') {
+      if (typeInfo.primitive === 'boolean') {
+        return value === 'true' ? 'true' : 'false'
+      }
+      if (typeInfo.primitive === 'number') {
+        // Check if it's a simple number
+        if (/^\d+$/.test(value)) return value
+        if (/^\d+\.\d+$/.test(value)) return value
+        return '0'
+      }
+      if (typeInfo.primitive === 'string') {
+        // Remove quotes if present and add Go string syntax
+        if (value.startsWith("'") || value.endsWith("'")) {
+          return value.replace(/'/g, '"')
+        }
+        if (value.startsWith('"') && value.endsWith('"')) {
+          return value
+        }
+        return '""'
+      }
+    }
+
+    // For arrays, use nil for complex JS expressions
+    if (typeInfo.kind === 'array') {
+      // Simple array literal or empty
+      if (value === '[]' || value === 'null' || value === 'undefined') {
+        return 'nil'
+      }
+      // Complex expression - use nil as placeholder
+      return 'nil'
+    }
+
+    // Default for complex expressions
+    return 'nil'
+  }
+
+  /**
+   * Convert TypeInfo to Go type string.
+   * If type is unknown, tries to infer from defaultValue.
+   */
+  private typeInfoToGo(typeInfo: TypeInfo, defaultValue?: string): string {
     switch (typeInfo.kind) {
       case 'primitive':
         switch (typeInfo.primitive) {
@@ -101,9 +364,142 @@ export class GoTemplateAdapter extends BaseAdapter {
         return '[]interface{}'
       case 'object':
         return 'map[string]interface{}'
+      case 'unknown':
+        // Try to infer type from default value
+        if (defaultValue !== undefined) {
+          return this.inferTypeFromValue(defaultValue)
+        }
+        return 'interface{}'
       default:
         return 'interface{}'
     }
+  }
+
+  /**
+   * Get signal's initial value as Go code.
+   * Handles both literal values (0, true, "str") and props references (initial).
+   */
+  private getSignalInitialValueAsGo(initialValue: string, propsParams: { name: string }[]): string {
+    // Check if it's a props param reference
+    if (propsParams.some(p => p.name === initialValue)) {
+      return `in.${this.capitalizeFieldName(initialValue)}`
+    }
+
+    // Check if it's a literal value
+    // Number literals
+    if (/^-?\d+$/.test(initialValue)) {
+      return initialValue
+    }
+    if (/^-?\d+\.\d+$/.test(initialValue)) {
+      return initialValue
+    }
+    // Boolean literals
+    if (initialValue === 'true' || initialValue === 'false') {
+      return initialValue
+    }
+    // String literals
+    if ((initialValue.startsWith("'") && initialValue.endsWith("'")) ||
+        (initialValue.startsWith('"') && initialValue.endsWith('"'))) {
+      return initialValue.replace(/'/g, '"')
+    }
+
+    // Default: return 0 for unknown
+    return '0'
+  }
+
+  /**
+   * Compute the initial value for a memo based on its computation and signal initial values.
+   * Handles simple cases like `() => count() * 2` → `in.Initial * 2`
+   */
+  private computeMemoInitialValue(
+    memo: { name: string; computation: string; deps: string[] },
+    signals: { getter: string; initialValue: string }[],
+    propsParams: { name: string }[]
+  ): string {
+    const computation = memo.computation
+
+    // Pattern: () => dep() * N or () => dep() + N etc.
+    const arithmeticMatch = computation.match(/\(\)\s*=>\s*(\w+)\(\)\s*([*+\-/])\s*(\d+)/)
+    if (arithmeticMatch) {
+      const [, depName, operator, operand] = arithmeticMatch
+      const signal = signals.find(s => s.getter === depName)
+      if (signal) {
+        // Get the signal's initial value in Go format
+        const signalInitial = this.getSignalInitialValueAsGo(signal.initialValue, propsParams)
+        return `${signalInitial} ${operator} ${operand}`
+      }
+    }
+
+    // Pattern: () => dep() (just return the signal value)
+    const simpleMatch = computation.match(/\(\)\s*=>\s*(\w+)\(\)$/)
+    if (simpleMatch) {
+      const [, depName] = simpleMatch
+      const signal = signals.find(s => s.getter === depName)
+      if (signal) {
+        return this.getSignalInitialValueAsGo(signal.initialValue, propsParams)
+      }
+    }
+
+    // Default: return 0 for unknown computations
+    return '0'
+  }
+
+  /**
+   * Infer the Go type for a memo based on its computation and dependencies.
+   */
+  private inferMemoType(
+    memo: { name: string; computation: string; type: TypeInfo; deps: string[] },
+    signals: { getter: string; initialValue: string; type: TypeInfo }[],
+    propsParamMap: Map<string, { name: string; type: TypeInfo; defaultValue?: string }>
+  ): string {
+    // Check if computation involves multiplication (*) - likely number
+    if (memo.computation.includes('*') || memo.computation.includes('/') ||
+        memo.computation.includes('+') || memo.computation.includes('-')) {
+      // Check if deps are number-typed signals
+      for (const dep of memo.deps) {
+        const signal = signals.find(s => s.getter === dep)
+        if (signal) {
+          const referencedProp = propsParamMap.get(signal.initialValue)
+          if (referencedProp) {
+            const propType = this.typeInfoToGo(referencedProp.type, referencedProp.defaultValue)
+            if (propType === 'int' || propType === 'float64') {
+              return 'int'
+            }
+          }
+          // Check signal's own initial value
+          const signalType = this.typeInfoToGo(signal.type, signal.initialValue)
+          if (signalType === 'int' || signalType === 'float64') {
+            return 'int'
+          }
+        }
+      }
+    }
+
+    // Default to the memo's declared type
+    return this.typeInfoToGo(memo.type)
+  }
+
+  /**
+   * Infer Go type from a JavaScript value literal.
+   */
+  private inferTypeFromValue(value: string): string {
+    // Boolean literals
+    if (value === 'true' || value === 'false') return 'bool'
+    // Number literals (int)
+    if (/^-?\d+$/.test(value)) return 'int'
+    // Number literals (float)
+    if (/^-?\d+\.\d+$/.test(value)) return 'float64'
+    // String literals
+    if ((value.startsWith("'") && value.endsWith("'")) ||
+        (value.startsWith('"') && value.endsWith('"'))) {
+      return 'string'
+    }
+    // Empty string
+    if (value === '""' || value === "''") return 'string'
+    // Array literals
+    if (value.startsWith('[')) return '[]interface{}'
+    // Default
+    return 'interface{}'
   }
 
   private capitalizeFieldName(name: string): string {
