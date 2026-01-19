@@ -57,7 +57,6 @@ export class HonoAdapter implements TemplateAdapter {
   extension = '.hono.tsx'
 
   private componentName: string = ''
-  private hasClientInteractivity: boolean = false
   private options: HonoAdapterOptions
 
   constructor(options: HonoAdapterOptions = {}) {
@@ -189,7 +188,6 @@ export class HonoAdapter implements TemplateAdapter {
     const hasClientInteractivity = ir.metadata.signals.length > 0 ||
       ir.metadata.memos.length > 0 ||
       this.hasEventHandlers(ir.root)
-    this.hasClientInteractivity = hasClientInteractivity
 
     // Build props parameter
     const propsParams = ir.metadata.propsParams

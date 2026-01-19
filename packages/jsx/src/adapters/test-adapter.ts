@@ -24,7 +24,6 @@ export class TestAdapter extends BaseAdapter {
   extension = '.test.tsx'
 
   private componentName: string = ''
-  private hasClientInteractivity: boolean = false
 
   generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
@@ -112,7 +111,6 @@ export class TestAdapter extends BaseAdapter {
     const propsTypeName = ir.metadata.propsType?.raw
     const hasClientInteractivity = ir.metadata.signals.length > 0 ||
       ir.metadata.memos.length > 0
-    this.hasClientInteractivity = hasClientInteractivity
 
     const propsParams = ir.metadata.propsParams
       .map((p: ParamInfo) => (p.defaultValue ? `${p.name} = ${p.defaultValue}` : p.name))
