@@ -275,7 +275,8 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderComponent(comp)
-      expect(result).toBe('{{template "Button" .}}')
+      // Outside of loops, components are referenced via .ComponentName
+      expect(result).toBe('{{template "Button" .Button}}')
     })
   })
 
