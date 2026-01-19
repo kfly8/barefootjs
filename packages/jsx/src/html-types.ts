@@ -99,6 +99,35 @@ export interface HTMLBaseAttributes extends BaseEventAttributes {
   role?: string
   [key: `aria-${string}`]: string | number | boolean | undefined
 
+  // Interactive event handlers
+  onClick?: (event: MouseEvent) => void
+  onMouseEnter?: (event: MouseEvent) => void
+  onMouseLeave?: (event: MouseEvent) => void
+  onMouseDown?: (event: MouseEvent) => void
+  onMouseUp?: (event: MouseEvent) => void
+  onMouseMove?: (event: MouseEvent) => void
+  onKeyDown?: (event: KeyboardEvent) => void
+  onKeyUp?: (event: KeyboardEvent) => void
+  onKeyPress?: (event: KeyboardEvent) => void
+  onFocus?: (event: FocusEvent) => void
+  onBlur?: (event: FocusEvent) => void
+  onInput?: (event: InputEvent) => void
+  onChange?: (event: Event) => void
+  onTouchStart?: (event: TouchEvent) => void
+  onTouchEnd?: (event: TouchEvent) => void
+  onTouchMove?: (event: TouchEvent) => void
+  onTouchCancel?: (event: TouchEvent) => void
+  onPointerDown?: (event: PointerEvent) => void
+  onPointerUp?: (event: PointerEvent) => void
+  onPointerMove?: (event: PointerEvent) => void
+  onPointerEnter?: (event: PointerEvent) => void
+  onPointerLeave?: (event: PointerEvent) => void
+  onContextMenu?: (event: MouseEvent) => void
+  onDoubleClick?: (event: MouseEvent) => void
+
+  // Ref callback
+  ref?: (element: HTMLElement) => void
+
   // JSX special
   dangerouslySetInnerHTML?: { __html: string }
   children?: unknown
@@ -146,6 +175,8 @@ export interface ButtonHTMLAttributes extends HTMLBaseAttributes {
   onClick?: (event: MouseEvent) => void
   onBlur?: (event: FocusEvent) => void
   onFocus?: (event: FocusEvent) => void
+  onKeyDown?: (event: KeyboardEvent) => void
+  onKeyUp?: (event: KeyboardEvent) => void
   // Note: onSubmit inherits SubmitEvent from BaseEventAttributes
   // When spreading props to Hono JSX, use type assertion: {...(props as any)}
 }
@@ -278,8 +309,7 @@ export interface AnchorHTMLAttributes extends HTMLBaseAttributes {
   target?: '_self' | '_blank' | '_parent' | '_top' | string
   type?: string
   referrerpolicy?: string
-
-  onClick?: MouseEventHandler<HTMLAnchorElement>
+  // onClick inherited from HTMLBaseAttributes
 }
 
 // ============================================================================

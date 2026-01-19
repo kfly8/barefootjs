@@ -25,6 +25,7 @@
  */
 
 import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
+import type { Child } from '../../types'
 import { Slot } from './slot'
 
 // Type definitions for button variants
@@ -74,6 +75,10 @@ interface ButtonProps extends ButtonHTMLAttributes {
    * @default false
    */
   asChild?: boolean
+  /**
+   * Children to render inside the button.
+   */
+  children?: Child
 }
 
 /**

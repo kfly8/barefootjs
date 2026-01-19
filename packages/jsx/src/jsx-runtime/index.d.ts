@@ -1,15 +1,29 @@
 /**
- * BarefootJS Hono JSX Extension - Type Definitions
- *
- * Extends Hono's JSX types to provide properly typed event handlers
- * for interactive elements. Hono's JSX is designed for SSR, so event
- * types are weak. This module strengthens them for client-side use.
+ * BarefootJS JSX Runtime - Type Definitions
  *
  * Usage in tsconfig.json:
- *   "jsxImportSource": "@barefootjs/dom/hono-jsx"
+ *   "jsxImportSource": "@barefootjs/jsx"
  */
 
-export { jsx, jsxs, Fragment } from 'hono/jsx/jsx-runtime'
+type HtmlEscapedCallback = (opts: {
+  buffer?: [string]
+  phase: 1 | 2 | 3
+  context: object
+}) => Promise<string> | undefined
+type HtmlEscaped = { isEscaped: true; callbacks?: HtmlEscapedCallback[] }
+type HtmlEscapedString = string & HtmlEscaped
+
+// Stub function types (for type checking only)
+export declare const jsx: (
+  tag: string | Function,
+  props: Record<string, unknown>,
+  key?: string
+) => HtmlEscapedString
+export declare const jsxs: typeof jsx
+export declare const Fragment: (props: { children?: unknown }) => HtmlEscapedString
+export declare const jsxAttr: (key: string, v: unknown) => HtmlEscapedString
+export declare const jsxEscape: (value: string) => string
+export declare const jsxTemplate: typeof jsx
 
 // Import types for use in JSX namespace
 import type {
@@ -23,11 +37,11 @@ import type {
   ImgHTMLAttributes,
   LabelHTMLAttributes,
   OptionHTMLAttributes,
-} from '@barefootjs/jsx'
+} from '../html-types'
 
 // Re-export JSX namespace with proper types
 export declare namespace JSX {
-  type Element = import('hono/jsx').JSX.Element
+  type Element = HtmlEscapedString | Promise<HtmlEscapedString>
 
   interface ElementChildrenAttribute {
     children: {}

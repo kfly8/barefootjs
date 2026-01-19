@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "target": "ESNext",
     "jsx": "react-jsx",
-    "jsxImportSource": "@barefootjs/hono/jsx",
+    "jsxImportSource": "@barefootjs/jsx",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,6 +15,6 @@
       "@/components/*": ["./dist/components/*"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["*.ts", "*.tsx", "components/**/*.ts", "components/**/*.tsx", "e2e/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

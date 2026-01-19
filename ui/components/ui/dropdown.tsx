@@ -145,7 +145,7 @@ export function DropdownContent({
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-95 pointer-events-none'
       }`}
-      tabIndex={-1}
+      tabindex={-1}
       onKeyDown={handleKeyDown}
       data-dropdown-content
     >
@@ -184,7 +184,7 @@ export function DropdownItem({
       aria-selected={selected}
       aria-disabled={disabled}
       data-value={value}
-      tabIndex={disabled ? -1 : 0}
+      tabindex={disabled ? -1 : 0}
       class={`relative flex cursor-pointer select-none items-center px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground ${
         disabled ? 'pointer-events-none opacity-50' : ''
       } ${
