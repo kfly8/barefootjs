@@ -15,7 +15,6 @@ import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
 import { InputPage } from './pages/input'
 import { SwitchPage } from './pages/switch'
-import { CounterPage } from './pages/counter'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
@@ -38,7 +37,6 @@ const components = [
   { name: 'Checkbox', path: '/docs/components/checkbox', description: 'A control that allows the user to toggle between checked and unchecked states.' },
   { name: 'Input', path: '/docs/components/input', description: 'Displays an input field for user text entry.' },
   { name: 'Switch', path: '/docs/components/switch', description: 'A control that allows the user to toggle between checked and not checked.' },
-  { name: 'Counter', path: '/docs/components/counter', description: 'A numeric input with increment and decrement buttons.' },
   { name: 'Accordion', path: '/docs/components/accordion', description: 'A vertically stacked set of interactive headings that each reveal content.' },
   { name: 'Tabs', path: '/docs/components/tabs', description: 'A set of layered sections of content displayed one at a time.' },
   { name: 'Dialog', path: '/docs/components/dialog', description: 'A modal dialog that displays content in a layer above the page.' },
@@ -137,11 +135,6 @@ export function createApp() {
   // Switch documentation
   app.get('/docs/components/switch', (c) => {
     return c.render(<SwitchPage />)
-  })
-
-  // Counter documentation
-  app.get('/docs/components/counter', (c) => {
-    return c.render(<CounterPage />)
   })
 
   // Accordion documentation
