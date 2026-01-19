@@ -139,10 +139,14 @@ export class TestAdapter extends BaseAdapter {
     const lines: string[] = []
     lines.push(`export function ${name}(${fullPropsDestructure}${typeAnnotation}) {`)
 
+    // Generate scope ID
     if (hasClientInteractivity) {
-      lines.push(`  const __scopeId = __bfScope || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
+      // Interactive components: use __bfScope if it contains _slot_ (means parent passes event handlers)
+      // Otherwise, generate unique ID for independent hydration
+      lines.push(`  const __scopeId = (__bfScope?.includes('_slot_') ? __bfScope : null) || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
     } else {
-      lines.push(`  const __scopeId = __bfScope || __instanceId`)
+      // Non-interactive components can inherit parent's scope or use fallback
+      lines.push(`  const __scopeId = __bfScope || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
     }
 
     if (signalInits) {

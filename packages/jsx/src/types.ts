@@ -146,6 +146,13 @@ export interface IRLoop {
   loc: SourceLocation
 
   /**
+   * True if the array is a static prop (not a signal).
+   * Static arrays don't need reconcileList - SSR elements are hydrated directly.
+   * Dynamic signal arrays need reconcileList to update DOM when signal changes.
+   */
+  isStaticArray: boolean
+
+  /**
    * When the loop body is a single component, store its info here
    * for createComponent-based rendering instead of template strings.
    * This enables proper parent-to-child prop passing (including event handlers).
@@ -180,9 +187,23 @@ export interface IRFragment {
 // IR Attributes & Events
 // =============================================================================
 
+/**
+ * Template literal with ternary expressions for structured conditional rendering.
+ * Used when attribute values contain template literals with ternaries like:
+ * style={`background: ${on() ? '#4caf50' : '#ccc'}`}
+ */
+export interface IRTemplateLiteral {
+  type: 'template-literal'
+  parts: IRTemplatePart[]
+}
+
+export type IRTemplatePart =
+  | { type: 'string'; value: string }
+  | { type: 'ternary'; condition: string; whenTrue: string; whenFalse: string }
+
 export interface IRAttribute {
   name: string
-  value: string | null // null for boolean attrs like 'disabled'
+  value: string | IRTemplateLiteral | null // null for boolean attrs like 'disabled'
   dynamic: boolean
   isLiteral: boolean // true if value came from a string literal attribute
   loc: SourceLocation

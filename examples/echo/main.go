@@ -1,0 +1,393 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"io"
+	"net/http"
+	"reflect"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+// bfFuncMap contains BarefootJS template functions
+var bfFuncMap = template.FuncMap{
+	// bfComment outputs an HTML comment with "bf-" prefix.
+	// Example: {{bfComment "cond-start:slot_2"}} outputs <!--bf-cond-start:slot_2-->
+	"bfComment": func(key string) template.HTML {
+		return template.HTML("<!--bf-" + key + "-->")
+	},
+}
+
+// loadTemplates loads all templates with BarefootJS functions registered
+func loadTemplates() *template.Template {
+	return template.Must(
+		template.New("").Funcs(bfFuncMap).ParseGlob("dist/templates/*.tmpl"),
+	)
+}
+
+// In-memory todo storage
+var (
+	todoMutex  sync.RWMutex
+	todoNextID = 4
+	todos      = []Todo{
+		{ID: 1, Text: "Setup project", Done: false, Editing: false},
+		{ID: 2, Text: "Create components", Done: false, Editing: false},
+		{ID: 3, Text: "Write tests", Done: true, Editing: false},
+	}
+)
+
+// Reset todos to initial state (for testing)
+func resetTodos() {
+	todoMutex.Lock()
+	defer todoMutex.Unlock()
+	todoNextID = 4
+	todos = []Todo{
+		{ID: 1, Text: "Setup project", Done: false, Editing: false},
+		{ID: 2, Text: "Create components", Done: false, Editing: false},
+		{ID: 3, Text: "Write tests", Done: true, Editing: false},
+	}
+}
+
+// Template renderer for Echo
+type TemplateRenderer struct {
+	templates *template.Template
+}
+
+func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+func main() {
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Load templates with BarefootJS functions
+	t := &TemplateRenderer{
+		templates: loadTemplates(),
+	}
+	e.Renderer = t
+
+	// Routes
+	e.GET("/", indexHandler)
+	e.GET("/counter", counterHandler)
+	e.GET("/toggle", toggleHandler)
+	e.GET("/fizzbuzz", fizzbuzzHandler)
+	e.GET("/dashboard", dashboardHandler)
+	e.GET("/dashboard/counter-only", dashboardCounterOnlyHandler)
+	e.GET("/dashboard/message-only", dashboardMessageOnlyHandler)
+	e.GET("/todos", todosHandler)
+
+	// Todo API endpoints
+	e.GET("/api/todos", getTodosAPI)
+	e.POST("/api/todos", createTodoAPI)
+	e.PUT("/api/todos/:id", updateTodoAPI)
+	e.DELETE("/api/todos/:id", deleteTodoAPI)
+	e.POST("/api/todos/reset", resetTodosAPI)
+
+	// Static files (for client JS)
+	e.Static("/static", "dist")
+
+	// Shared styles
+	e.Static("/shared", "../shared")
+
+	e.Logger.Fatal(e.Start(":8080"))
+}
+
+func indexHandler(c echo.Context) error {
+	return c.HTML(http.StatusOK, `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BarefootJS + Echo Example</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { color: #333; }
+        a { color: #0066cc; }
+    </style>
+</head>
+<body>
+    <h1>BarefootJS + Echo Example</h1>
+    <p>This example demonstrates server-side rendering with Go Echo and BarefootJS.</p>
+    <ul>
+        <li><a href="/counter">Counter Component</a></li>
+        <li><a href="/toggle">Toggle Component</a></li>
+        <li><a href="/fizzbuzz">FizzBuzzCounter Component</a></li>
+        <li><a href="/dashboard">Dashboard Component</a></li>
+        <li><a href="/todos">TodoApp Component</a></li>
+    </ul>
+</body>
+</html>
+`)
+}
+
+func counterHandler(c echo.Context) error {
+	props := NewCounterProps(CounterInput{Initial: 0})
+
+	// Wrap the component in a full HTML page
+	return c.HTML(http.StatusOK, renderPage("Counter", props))
+}
+
+func renderPage(componentName string, props interface{}) string {
+	return renderPageWithScripts(componentName, props)
+}
+
+func renderPageWithScripts(componentName string, props interface{}, childComponents ...string) string {
+	t := loadTemplates()
+
+	// Get ScopeID from props using reflection
+	scopeID := ""
+	propsJSON := "{}"
+	if propsVal := getField(props, "ScopeID"); propsVal != "" {
+		scopeID = propsVal
+	}
+
+	// Serialize props to JSON for client hydration
+	if jsonBytes, err := json.Marshal(props); err == nil {
+		propsJSON = string(jsonBytes)
+	}
+
+	// Create a page template that includes the component
+	pageHTML := `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>` + componentName + ` - BarefootJS + Echo</title>
+    <link rel="stylesheet" href="/shared/styles/components.css">
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    </style>
+</head>
+<body>
+    <h1>` + componentName + ` Component</h1>
+    <div id="app">`
+
+	// Render the component
+	var buf strings.Builder
+	buf.WriteString(pageHTML)
+
+	t.ExecuteTemplate(&buf, componentName, props)
+
+	// Add props JSON for client hydration
+	if scopeID != "" {
+		buf.WriteString(`<script type="application/json" data-bf-props="` + scopeID + `">` + propsJSON + `</script>`)
+	}
+
+	buf.WriteString(`</div>
+    <p><a href="/">← Back to index</a></p>
+`)
+
+	// Add child component scripts first (they need to be registered before parent)
+	for _, child := range childComponents {
+		buf.WriteString(`    <script type="module" src="/static/client/` + child + `.client.js"></script>
+`)
+	}
+
+	// Add main component script
+	buf.WriteString(`    <script type="module" src="/static/client/` + componentName + `.client.js"></script>
+</body>
+</html>`)
+
+	return buf.String()
+}
+
+// getField extracts a string field from a struct using reflection
+func getField(v interface{}, field string) string {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return ""
+	}
+	f := val.FieldByName(field)
+	if !f.IsValid() {
+		return ""
+	}
+	if f.Kind() == reflect.String {
+		return f.String()
+	}
+	return ""
+}
+
+func toggleHandler(c echo.Context) error {
+	props := NewToggleProps(ToggleInput{
+		ToggleItems: []ToggleItemInput{
+			{Label: "Setting 1", DefaultOn: true},
+			{Label: "Setting 2", DefaultOn: false},
+			{Label: "Setting 3", DefaultOn: false},
+		},
+	})
+
+	return c.HTML(http.StatusOK, renderPage("Toggle", props))
+}
+
+func fizzbuzzHandler(c echo.Context) error {
+	// FizzBuzzCounter has no props - Count and ShowDetails are signals with fixed initial values
+	props := NewFizzBuzzCounterProps(FizzBuzzCounterInput{})
+
+	return c.HTML(http.StatusOK, renderPage("FizzBuzzCounter", props))
+}
+
+func dashboardHandler(c echo.Context) error {
+	props := NewDashboardProps(DashboardInput{
+		ShowCounter:  true,
+		ShowMessage:  true,
+		InitialCount: 10,
+		Message:      "Hello from server!",
+	})
+
+	return c.HTML(http.StatusOK, renderPage("Dashboard", props))
+}
+
+func dashboardCounterOnlyHandler(c echo.Context) error {
+	props := NewDashboardProps(DashboardInput{
+		ShowCounter:  true,
+		ShowMessage:  false,
+		InitialCount: 5,
+		Message:      "",
+	})
+
+	return c.HTML(http.StatusOK, renderPage("Dashboard", props))
+}
+
+func dashboardMessageOnlyHandler(c echo.Context) error {
+	props := NewDashboardProps(DashboardInput{
+		ShowCounter:  false,
+		ShowMessage:  true,
+		InitialCount: 0,
+		Message:      "Custom message!",
+	})
+
+	return c.HTML(http.StatusOK, renderPage("Dashboard", props))
+}
+
+func todosHandler(c echo.Context) error {
+	todoMutex.RLock()
+	currentTodos := make([]Todo, len(todos))
+	copy(currentTodos, todos)
+	todoMutex.RUnlock()
+
+	// Count done todos
+	doneCount := 0
+	for _, t := range currentTodos {
+		if t.Done {
+			doneCount++
+		}
+	}
+
+	// Build TodoItemProps array with ScopeID for each item
+	todoItems := make([]TodoItemProps, len(currentTodos))
+	for i, t := range currentTodos {
+		todoItems[i] = TodoItemProps{
+			ScopeID: fmt.Sprintf("TodoItem_%d", t.ID),
+			Todo:    t,
+		}
+	}
+
+	props := NewTodoAppProps(TodoAppInput{
+		InitialTodos: currentTodos,
+	})
+	// Manual fields not generated by NewTodoAppProps
+	props.Todos = currentTodos  // For client hydration (JSON)
+	props.TodoItems = todoItems // For Go template (not in JSON)
+	props.DoneCount = doneCount
+	props.AddTodoForm = AddTodoFormProps{
+		ScopeID: props.ScopeID + "_slot_5", // parent_slotId format for client hydration
+		NewText: "",                        // signal initial value
+	}
+
+	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "AddTodoForm", "TodoItem"))
+}
+
+// Todo API handlers
+func getTodosAPI(c echo.Context) error {
+	todoMutex.RLock()
+	defer todoMutex.RUnlock()
+	return c.JSON(http.StatusOK, todos)
+}
+
+func createTodoAPI(c echo.Context) error {
+	var input struct {
+		Text string `json:"text"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
+	}
+
+	todoMutex.Lock()
+	newTodo := Todo{
+		ID:   todoNextID,
+		Text: input.Text,
+		Done: false,
+	}
+	todoNextID++
+	todos = append(todos, newTodo)
+	todoMutex.Unlock()
+
+	return c.JSON(http.StatusCreated, newTodo)
+}
+
+func updateTodoAPI(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	var input struct {
+		Text *string `json:"text"`
+		Done *bool   `json:"done"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid input"})
+	}
+
+	todoMutex.Lock()
+	defer todoMutex.Unlock()
+
+	for i, todo := range todos {
+		if todo.ID == id {
+			if input.Text != nil {
+				todos[i].Text = *input.Text
+			}
+			if input.Done != nil {
+				todos[i].Done = *input.Done
+			}
+			return c.JSON(http.StatusOK, todos[i])
+		}
+	}
+
+	return c.JSON(http.StatusNotFound, map[string]string{"error": "not found"})
+}
+
+func deleteTodoAPI(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	todoMutex.Lock()
+	defer todoMutex.Unlock()
+
+	for i, todo := range todos {
+		if todo.ID == id {
+			todos = append(todos[:i], todos[i+1:]...)
+			return c.NoContent(http.StatusNoContent)
+		}
+	}
+
+	return c.JSON(http.StatusNotFound, map[string]string{"error": "not found"})
+}
+
+func resetTodosAPI(c echo.Context) error {
+	resetTodos()
+	return c.NoContent(http.StatusOK)
+}

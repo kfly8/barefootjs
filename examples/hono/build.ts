@@ -14,6 +14,7 @@ import { dirname, resolve } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
+const SHARED_COMPONENTS_DIR = resolve(ROOT_DIR, '../shared/components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
@@ -44,10 +45,14 @@ function generateHash(content: string): string {
   return hash.toString(16).slice(0, 8)
 }
 
-// Discover all component files
-const componentFiles = (await readdir(COMPONENTS_DIR))
+// Discover all component files from both local and shared directories
+const localComponents = (await readdir(COMPONENTS_DIR))
   .filter(f => f.endsWith('.tsx'))
   .map(f => resolve(COMPONENTS_DIR, f))
+const sharedComponents = (await readdir(SHARED_COMPONENTS_DIR))
+  .filter(f => f.endsWith('.tsx'))
+  .map(f => resolve(SHARED_COMPONENTS_DIR, f))
+const componentFiles = [...localComponents, ...sharedComponents]
 
 // Build and copy barefoot.js from @barefootjs/dom
 const barefootFileName = 'barefoot.js'

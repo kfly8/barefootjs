@@ -24,11 +24,11 @@ test.describe('Async Counter (Suspense + BarefootJS)', () => {
     await expect(page.locator('text=Data loaded from server')).toBeVisible()
 
     // Check that Counter is rendered with initial value
-    await expect(page.locator('.counter')).toHaveText('0')
+    await expect(page.locator('.counter-value')).toHaveText('0')
 
     // Click +1 button and verify counter increments
     await page.click('button:has-text("+1")')
-    await expect(page.locator('.counter')).toHaveText('1')
+    await expect(page.locator('.counter-value')).toHaveText('1')
   })
 
   test('counter handles multiple operations after Suspense', async ({ page }) => {
@@ -39,10 +39,10 @@ test.describe('Async Counter (Suspense + BarefootJS)', () => {
     await page.click('button:has-text("+1")')
     await page.click('button:has-text("+1")')
     await page.click('button:has-text("+1")')
-    await expect(page.locator('.counter')).toHaveText('3')
+    await expect(page.locator('.counter-value')).toHaveText('3')
 
     // Check doubled value
-    await expect(page.locator('.doubled')).toContainText('doubled: 6')
+    await expect(page.locator('.counter-doubled')).toContainText('doubled: 6')
   })
 
   test('counter decrement works after Suspense', async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe('Async Counter (Suspense + BarefootJS)', () => {
 
     // Decrement to negative
     await page.click('button:has-text("-1")')
-    await expect(page.locator('.counter')).toHaveText('-1')
+    await expect(page.locator('.counter-value')).toHaveText('-1')
   })
 
   test('counter reset works after Suspense', async ({ page }) => {
@@ -61,10 +61,10 @@ test.describe('Async Counter (Suspense + BarefootJS)', () => {
     // Increment first
     await page.click('button:has-text("+1")')
     await page.click('button:has-text("+1")')
-    await expect(page.locator('.counter')).toHaveText('2')
+    await expect(page.locator('.counter-value')).toHaveText('2')
 
     // Reset
     await page.click('button:has-text("Reset")')
-    await expect(page.locator('.counter')).toHaveText('0')
+    await expect(page.locator('.counter-value')).toHaveText('0')
   })
 })

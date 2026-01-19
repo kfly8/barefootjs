@@ -149,11 +149,7 @@ interface TemplateAdapter {
 ### Available Adapters
 
 - **HonoAdapter** (`@barefootjs/hono`) - Generates hono/jsx compatible TSX
-
-Future adapters (not yet implemented):
-- Go html/template
-- Jinja2
-- etc.
+- **GoTemplateAdapter** (`@barefootjs/go-template`) - Generates Go html/template files
 
 ---
 

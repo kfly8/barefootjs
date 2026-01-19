@@ -2,8 +2,13 @@
 
 import { createSignal } from '@barefootjs/dom'
 
+type ToggleItemProps = {
+  label: string
+  defaultOn?: boolean
+}
+
 // Reusable toggle component with label
-function ToggleItem({ label, defaultOn = false }: { label: string; defaultOn?: boolean }) {
+function ToggleItem({ label, defaultOn = false }: ToggleItemProps) {
   const [on, setOn] = createSignal(defaultOn)
   return (
     <div class="toggle-item" style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
@@ -18,14 +23,18 @@ function ToggleItem({ label, defaultOn = false }: { label: string; defaultOn?: b
   )
 }
 
+type ToggleProps = {
+  toggleItems: ToggleItemProps[]
+}
+
 // Settings panel with multiple toggles
-function Toggle() {
+function Toggle({ toggleItems }: ToggleProps) {
   return (
     <div class="settings-panel" style="padding: 16px; border: 1px solid #ddd; border-radius: 8px;">
       <h3 style="margin-top: 0;">Settings</h3>
-      <ToggleItem label="Setting 1" defaultOn={true} />
-      <ToggleItem label="Setting 2" defaultOn={false} />
-      <ToggleItem label="Setting 3" defaultOn={false} />
+      {toggleItems.map((item) => (
+        <ToggleItem label={item.label} defaultOn={item.defaultOn} />
+      ))}
     </div>
   )
 }

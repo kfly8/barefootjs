@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * BarefootJS TodoApp for Hono with SSR
+ * BarefootJS TodoApp with SSR
  *
  * Main component - renders initial todos from server, then uses API for updates
  */

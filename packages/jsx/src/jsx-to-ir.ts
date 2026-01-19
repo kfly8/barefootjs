@@ -18,6 +18,8 @@ import type {
   IRAttribute,
   IREvent,
   IRProp,
+  IRTemplateLiteral,
+  IRTemplatePart,
   SourceLocation,
   TypeInfo,
 } from './types'
@@ -504,7 +506,8 @@ function transformMapCall(
   let key: string | null = null
   if (children.length > 0 && children[0].type === 'element') {
     const keyAttr = children[0].attrs.find((a) => a.name === 'key')
-    if (keyAttr && keyAttr.value) {
+    // Key should be a simple string expression, not a template literal
+    if (keyAttr && keyAttr.value && typeof keyAttr.value === 'string') {
       key = keyAttr.value
     }
   } else if (children.length > 0 && children[0].type === 'component') {
@@ -533,6 +536,11 @@ function transformMapCall(
     }
   }
 
+  // Determine if array is static (prop) or dynamic (signal/memo)
+  // Static arrays don't need reconcileList - SSR elements are hydrated directly
+  // Only signal and memo arrays need reconcileList for dynamic DOM updates
+  const isStaticArray = !isSignalOrMemoArray(array, ctx)
+
   return {
     type: 'loop',
     array,
@@ -545,6 +553,7 @@ function transformMapCall(
     // Loops don't generate their own slotId; they inherit from parent element
     // The parent element will assign its slotId to the loop after transformation
     slotId: null,
+    isStaticArray,
     childComponent,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
@@ -623,7 +632,7 @@ function processAttributes(
 function getAttributeValue(
   attr: ts.JsxAttribute,
   ctx: TransformContext
-): { value: string | null; dynamic: boolean; isLiteral: boolean } {
+): { value: string | IRTemplateLiteral | null; dynamic: boolean; isLiteral: boolean } {
   // Boolean attribute: <button disabled />
   if (!attr.initializer) {
     return { value: null, dynamic: false, isLiteral: false }
@@ -639,11 +648,114 @@ function getAttributeValue(
   // The distinction between "dynamic" (JSX expression) and "reactive" (needs client updates)
   // is handled separately in client JS generation
   if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-    const expr = attr.initializer.expression.getText(ctx.sourceFile)
-    return { value: expr, dynamic: true, isLiteral: false }
+    const expr = attr.initializer.expression
+
+    // Template literal with ternaries: `...${cond ? 'a' : 'b'}...`
+    if (ts.isTemplateExpression(expr)) {
+      const parts = parseTemplateLiteral(expr, ctx)
+      if (parts.some(p => p.type === 'ternary')) {
+        return {
+          value: { type: 'template-literal', parts },
+          dynamic: true,
+          isLiteral: false,
+        }
+      }
+    }
+
+    // Simple ternary: cond ? 'a' : 'b'
+    if (ts.isConditionalExpression(expr)) {
+      const ternary = parseTernary(expr, ctx)
+      if (ternary) {
+        return {
+          value: { type: 'template-literal', parts: [ternary] },
+          dynamic: true,
+          isLiteral: false,
+        }
+      }
+    }
+
+    const exprText = expr.getText(ctx.sourceFile)
+    return { value: exprText, dynamic: true, isLiteral: false }
   }
 
   return { value: null, dynamic: false, isLiteral: false }
+}
+
+/**
+ * Parse a template literal expression into structured parts.
+ * Handles: `prefix${cond ? 'a' : 'b'}suffix`
+ */
+function parseTemplateLiteral(
+  expr: ts.TemplateExpression,
+  ctx: TransformContext
+): IRTemplatePart[] {
+  const parts: IRTemplatePart[] = []
+
+  // Add the head (text before first ${})
+  if (expr.head.text) {
+    parts.push({ type: 'string', value: expr.head.text })
+  }
+
+  for (const span of expr.templateSpans) {
+    if (ts.isConditionalExpression(span.expression)) {
+      // Ternary expression inside ${}
+      const ternary = parseTernary(span.expression, ctx)
+      if (ternary) {
+        parts.push(ternary)
+      } else {
+        // Fallback: keep as string expression
+        parts.push({ type: 'string', value: `\${${span.expression.getText(ctx.sourceFile)}}` })
+      }
+    } else {
+      // Non-ternary expression: keep as ${expr}
+      parts.push({ type: 'string', value: `\${${span.expression.getText(ctx.sourceFile)}}` })
+    }
+
+    // Add the literal part after this span (text after ${} until next ${} or end)
+    if (span.literal.text) {
+      parts.push({ type: 'string', value: span.literal.text })
+    }
+  }
+
+  return parts
+}
+
+/**
+ * Parse a conditional (ternary) expression into structured form.
+ * Only parses simple ternaries with string literal branches.
+ */
+function parseTernary(
+  expr: ts.ConditionalExpression,
+  ctx: TransformContext
+): IRTemplatePart | null {
+  const whenTrueValue = getStringValue(expr.whenTrue)
+  const whenFalseValue = getStringValue(expr.whenFalse)
+
+  // Only parse if both branches are string literals
+  if (whenTrueValue !== null && whenFalseValue !== null) {
+    return {
+      type: 'ternary',
+      condition: expr.condition.getText(ctx.sourceFile),
+      whenTrue: whenTrueValue,
+      whenFalse: whenFalseValue,
+    }
+  }
+
+  return null
+}
+
+/**
+ * Extract string value from an expression node.
+ * Handles string literals and NoSubstitutionTemplateLiteral.
+ */
+function getStringValue(node: ts.Expression): string | null {
+  if (ts.isStringLiteral(node)) {
+    return node.text
+  }
+  if (ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text
+  }
+  return null
 }
 
 // =============================================================================
@@ -674,9 +786,13 @@ function processComponentProps(
     const name = attr.name.getText(ctx.sourceFile)
     const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
 
+    // For component props, convert IRTemplateLiteral back to string expression
+    // since props are passed to components as-is
+    const propValue = templateLiteralToString(value) ?? 'true'
+
     props.push({
       name,
-      value: value ?? 'true', // Boolean shorthand
+      value: propValue,
       dynamic,
       isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
@@ -686,9 +802,55 @@ function processComponentProps(
   return props
 }
 
+/**
+ * Convert an IRTemplateLiteral back to its JavaScript string representation.
+ * Returns the original value if it's already a string.
+ */
+function templateLiteralToString(value: string | IRTemplateLiteral | null): string | null {
+  if (value === null) return null
+  if (typeof value === 'string') return value
+
+  // Reconstruct the template literal as a JS expression
+  let result = '`'
+  for (const part of value.parts) {
+    if (part.type === 'string') {
+      result += part.value
+    } else if (part.type === 'ternary') {
+      result += `\${${part.condition} ? '${part.whenTrue}' : '${part.whenFalse}'}`
+    }
+  }
+  result += '`'
+  return result
+}
+
 // =============================================================================
 // Helpers
 // =============================================================================
+
+/**
+ * Check if array expression is a signal or memo getter call.
+ * Used to determine if a loop needs reconcileList for dynamic DOM updates.
+ * Props and local constants are considered static (don't change at runtime).
+ */
+function isSignalOrMemoArray(array: string, ctx: TransformContext): boolean {
+  // Check for signal calls: todos()
+  for (const signal of ctx.analyzer.signals) {
+    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
+    if (pattern.test(array)) {
+      return true
+    }
+  }
+
+  // Check for memo calls: filteredItems()
+  for (const memo of ctx.analyzer.memos) {
+    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
+    if (pattern.test(array)) {
+      return true
+    }
+  }
+
+  return false
+}
 
 function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
   // Check for signal calls: count()
@@ -768,23 +930,40 @@ function isReactiveValue(value: string, ctx: TransformContext): boolean {
 function hasReactiveAttributes(attrs: IRAttribute[], ctx: TransformContext): boolean {
   for (const attr of attrs) {
     if (attr.dynamic && attr.value) {
+      // Get the string value to check for reactivity
+      const valueToCheck = getAttributeValueAsString(attr.value)
+      if (!valueToCheck) continue
+
       // Check for signal getter calls
       for (const signal of ctx.analyzer.signals) {
         const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
-        if (pattern.test(attr.value)) {
+        if (pattern.test(valueToCheck)) {
           return true
         }
       }
       // Check for memo calls
       for (const memo of ctx.analyzer.memos) {
         const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
-        if (pattern.test(attr.value)) {
+        if (pattern.test(valueToCheck)) {
           return true
         }
       }
     }
   }
   return false
+}
+
+/**
+ * Get the string representation of an attribute value for reactivity checking.
+ */
+function getAttributeValueAsString(value: string | IRTemplateLiteral | null): string | null {
+  if (value === null) return null
+  if (typeof value === 'string') return value
+  // For template literals, concatenate all parts for reactivity checking
+  return value.parts.map(p => {
+    if (p.type === 'string') return p.value
+    return p.condition // Check the condition for signals/memos
+  }).join('')
 }
 
 /**

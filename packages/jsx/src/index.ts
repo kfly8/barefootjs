@@ -17,10 +17,13 @@ export type {
   IRExpression,
   IRConditional,
   IRLoop,
+  IRLoopChildComponent,
   IRComponent,
   IRFragment,
   IRSlot,
   IRMetadata,
+  IRTemplateLiteral,
+  IRTemplatePart,
   ParamInfo,
   TypeInfo,
   SourceLocation,
@@ -28,7 +31,7 @@ export type {
 } from './types'
 
 // Analyzer
-export { analyzeComponent, type AnalyzerContext } from './analyzer'
+export { analyzeComponent, listExportedComponents, type AnalyzerContext } from './analyzer'
 
 // JSX to IR transformer
 export { jsxToIR } from './jsx-to-ir'
