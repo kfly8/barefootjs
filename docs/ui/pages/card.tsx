@@ -72,7 +72,7 @@ const imageCardCode = `<Card class="w-[350px]">
   <CardHeader>
     <CardTitle>Swiss Alps Adventure</CardTitle>
     <CardDescription>
-      7-day hiking tour through scenic mountain trails
+      Experience breathtaking views on a 7-day guided hiking tour through the Swiss Alps, featuring scenic mountain trails and charming alpine villages.
     </CardDescription>
     <CardAction>
       <Button variant="outline" size="sm" data-card-hover-action>
@@ -280,7 +280,7 @@ export function CardPage() {
             <CardHeader>
               <CardTitle>Swiss Alps Adventure</CardTitle>
               <CardDescription>
-                7-day hiking tour through scenic mountain trails
+                Experience breathtaking views on a 7-day guided hiking tour through the Swiss Alps, featuring scenic mountain trails and charming alpine villages.
               </CardDescription>
               <CardAction>
                 <Button variant="outline" size="sm" data-card-hover-action>
