@@ -46,8 +46,8 @@ const cardImageClasses = 'w-full aspect-video object-cover'
 // CardHeader classes (Grid for CardAction support)
 const cardHeaderClasses = '@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6'
 
-// CardTitle classes (text-base for smaller size)
-const cardTitleClasses = 'text-base font-semibold leading-tight tracking-tight'
+// CardTitle classes
+const cardTitleClasses = 'text-lg font-semibold leading-tight tracking-tight'
 
 // CardDescription classes
 const cardDescriptionClasses = 'text-sm text-muted-foreground'
