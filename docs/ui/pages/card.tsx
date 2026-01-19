@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Card,
+  CardImage,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -39,6 +40,7 @@ const installCode = `bunx barefoot add card`
 
 const usageCode = `import {
   Card,
+  CardImage,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -50,19 +52,33 @@ const usageCode = `import {
 export default function Page() {
   return (
     <Card>
+      <CardImage src="/image.jpg" alt="Card image" />
       <CardHeader>
         <CardTitle>Card Title</CardTitle>
         <CardDescription>Card Description</CardDescription>
+        <CardAction>
+          <Button size="sm">Action</Button>
+        </CardAction>
       </CardHeader>
-      <CardContent>
-        <p>Card Content</p>
-      </CardContent>
-      <CardFooter>
-        <p>Card Footer</p>
-      </CardFooter>
     </Card>
   )
 }`
+
+const imageCardCode = `<Card class="w-[350px]">
+  <CardImage
+    src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800"
+    alt="White cup on white surface"
+  />
+  <CardHeader>
+    <CardTitle>Minimalist Design</CardTitle>
+    <CardDescription>
+      Clean aesthetics for modern interfaces
+    </CardDescription>
+    <CardAction>
+      <Button variant="outline" size="sm">View</Button>
+    </CardAction>
+  </CardHeader>
+</Card>`
 
 const loginFormCode = `<Card class="w-full max-w-sm">
   <CardHeader>
@@ -122,18 +138,40 @@ const withActionCode = `<Card class="w-[380px]">
   </CardContent>
 </Card>`
 
-const minimalCode = `<Card>
-  <CardContent class="pt-6">
-    <p>A simple card with only content.</p>
-  </CardContent>
-</Card>`
-
 // Props definitions
 const cardProps: PropDefinition[] = [
   {
     name: 'children',
     type: 'ReactNode',
-    description: 'The content of the card (typically CardHeader, CardContent, CardFooter).',
+    description: 'The content of the card (typically CardImage, CardHeader, CardContent, CardFooter).',
+  },
+  {
+    name: 'class',
+    type: 'string',
+    description: 'Additional CSS classes to apply.',
+  },
+]
+
+const cardImageProps: PropDefinition[] = [
+  {
+    name: 'src',
+    type: 'string',
+    description: 'Image source URL (required).',
+  },
+  {
+    name: 'alt',
+    type: 'string',
+    description: 'Alternative text for the image (required).',
+  },
+  {
+    name: 'width',
+    type: 'number',
+    description: 'Image width in pixels.',
+  },
+  {
+    name: 'height',
+    type: 'number',
+    description: 'Image height in pixels.',
   },
   {
     name: 'class',
@@ -230,41 +268,22 @@ export function CardPage() {
           {...getNavLinks('card')}
         />
 
-        {/* Preview - Login Form Example (like shadcn/ui) */}
-        <Example title="" code={loginFormCode}>
-          <Card class="w-full max-w-sm">
+        {/* Preview - Image Card Example */}
+        <Example title="" code={imageCardCode}>
+          <Card class="w-[350px]">
+            <CardImage
+              src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+              alt="White cup on white surface"
+            />
             <CardHeader>
-              <CardTitle>Login to your account</CardTitle>
+              <CardTitle>Minimalist Design</CardTitle>
               <CardDescription>
-                Enter your email below to login to your account
+                Clean aesthetics for modern interfaces
               </CardDescription>
               <CardAction>
-                <Button variant="link">Sign Up</Button>
+                <Button variant="outline" size="sm">View</Button>
               </CardAction>
             </CardHeader>
-            <CardContent>
-              <form>
-                <div class="flex flex-col gap-6">
-                  <div class="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input type="email" placeholder="m@example.com" />
-                  </div>
-                  <div class="grid gap-2">
-                    <div class="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
-                        Forgot your password?
-                      </a>
-                    </div>
-                    <Input type="password" />
-                  </div>
-                </div>
-              </form>
-            </CardContent>
-            <CardFooter class="flex-col gap-2">
-              <Button type="submit" class="w-full">Login</Button>
-              <Button variant="outline" class="w-full">Login with Google</Button>
-            </CardFooter>
           </Card>
         </Example>
 
@@ -308,11 +327,40 @@ export function CardPage() {
               </Card>
             </Example>
 
-            <Example title="Minimal" code={minimalCode}>
-              <Card class="w-[350px]">
-                <CardContent class="pt-6">
-                  <p>A simple card with only content.</p>
+            <Example title="Login Form" code={loginFormCode}>
+              <Card class="w-full max-w-sm">
+                <CardHeader>
+                  <CardTitle>Login to your account</CardTitle>
+                  <CardDescription>
+                    Enter your email below to login to your account
+                  </CardDescription>
+                  <CardAction>
+                    <Button variant="link">Sign Up</Button>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <form>
+                    <div class="flex flex-col gap-6">
+                      <div class="grid gap-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input type="email" placeholder="m@example.com" />
+                      </div>
+                      <div class="grid gap-2">
+                        <div class="flex items-center">
+                          <Label htmlFor="password">Password</Label>
+                          <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+                            Forgot your password?
+                          </a>
+                        </div>
+                        <Input type="password" />
+                      </div>
+                    </div>
+                  </form>
                 </CardContent>
+                <CardFooter class="flex-col gap-2">
+                  <Button type="submit" class="w-full">Login</Button>
+                  <Button variant="outline" class="w-full">Login with Google</Button>
+                </CardFooter>
               </Card>
             </Example>
           </div>
@@ -324,6 +372,10 @@ export function CardPage() {
             <div>
               <h3 class="text-lg font-semibold text-foreground mb-4">Card</h3>
               <PropsTable props={cardProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-foreground mb-4">CardImage</h3>
+              <PropsTable props={cardImageProps} />
             </div>
             <div>
               <h3 class="text-lg font-semibold text-foreground mb-4">CardHeader</h3>

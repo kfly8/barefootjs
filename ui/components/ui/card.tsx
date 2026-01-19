@@ -36,8 +36,11 @@
 
 import type { Child } from '../../types'
 
-// Card classes
-const cardClasses = 'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm'
+// Card classes (has-data-[slot=card-image] removes top padding when image is present)
+const cardClasses = 'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm has-data-[slot=card-image]:pt-0 has-data-[slot=card-image]:overflow-hidden'
+
+// CardImage classes
+const cardImageClasses = 'w-full object-cover'
 
 // CardHeader classes (Grid for CardAction support)
 const cardHeaderClasses = '@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6'
@@ -174,6 +177,49 @@ function CardContent({ children, class: className = '' }: CardContentProps) {
 }
 
 /**
+ * Props for CardImage component.
+ */
+interface CardImageProps {
+  /** Image source URL */
+  src: string
+  /** Alternative text for the image */
+  alt: string
+  /** Image width */
+  width?: number
+  /** Image height */
+  height?: number
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Card image displayed at the top of the card.
+ *
+ * @param props.src - Image source URL
+ * @param props.alt - Alternative text
+ * @param props.width - Image width
+ * @param props.height - Image height
+ */
+function CardImage({
+  src,
+  alt,
+  width,
+  height,
+  class: className = '',
+}: CardImageProps) {
+  return (
+    <img
+      data-slot="card-image"
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      class={`${cardImageClasses} ${className}`}
+    />
+  )
+}
+
+/**
  * Props for CardAction component.
  */
 interface CardActionProps {
@@ -219,5 +265,5 @@ function CardFooter({ children, class: className = '' }: CardFooterProps) {
   )
 }
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction, CardFooter }
-export type { CardProps, CardHeaderProps, CardTitleProps, CardDescriptionProps, CardContentProps, CardActionProps, CardFooterProps }
+export { Card, CardImage, CardHeader, CardTitle, CardDescription, CardContent, CardAction, CardFooter }
+export type { CardProps, CardImageProps, CardHeaderProps, CardTitleProps, CardDescriptionProps, CardContentProps, CardActionProps, CardFooterProps }
