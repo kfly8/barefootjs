@@ -66,19 +66,19 @@ export default function Page() {
 
 const imageCardCode = `<Card class="w-[350px]">
   <CardImage
-    src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800"
-    alt="White cup on white surface"
+    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
+    alt="Mountain landscape"
   />
   <CardHeader>
-    <CardTitle>Minimalist Design</CardTitle>
+    <CardTitle>Swiss Alps Adventure</CardTitle>
     <CardDescription>
-      Clean aesthetics for modern interfaces
+      7-day hiking tour through scenic mountain trails
     </CardDescription>
     <CardAction>
       <Button
         variant="outline"
         size="sm"
-        class="opacity-0 group-hover:opacity-100 transition-opacity"
+        class="opacity-0 group-hover/card:opacity-100 transition-opacity"
       >
         View
       </Button>
@@ -278,19 +278,19 @@ export function CardPage() {
         <Example title="" code={imageCardCode}>
           <Card class="w-[350px]">
             <CardImage
-              src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
-              alt="White cup on white surface"
+              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&dpr=2&q=80"
+              alt="Mountain landscape"
             />
             <CardHeader>
-              <CardTitle>Minimalist Design</CardTitle>
+              <CardTitle>Swiss Alps Adventure</CardTitle>
               <CardDescription>
-                Clean aesthetics for modern interfaces
+                7-day hiking tour through scenic mountain trails
               </CardDescription>
               <CardAction>
                 <Button
                   variant="outline"
                   size="sm"
-                  class="opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="opacity-0 group-hover/card:opacity-100 transition-opacity"
                 >
                   View
                 </Button>

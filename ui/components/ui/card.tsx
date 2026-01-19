@@ -37,14 +37,14 @@
 import type { Child } from '../../types'
 
 // Card classes (has-data-[slot=card-image] removes top padding when image is present)
-// Card classes (group for hover state detection)
-const cardClasses = 'group bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm has-data-[slot=card-image]:pt-0 has-data-[slot=card-image]:overflow-hidden'
+// Card classes (group/card for hover state detection)
+const cardClasses = 'group/card bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm has-data-[slot=card-image]:pt-0 has-data-[slot=card-image]:overflow-hidden'
 
-// CardImage classes
-const cardImageClasses = 'w-full object-cover'
+// CardImage classes (aspect-video for consistent height)
+const cardImageClasses = 'w-full aspect-video object-cover'
 
 // CardHeader classes (Grid for CardAction support)
-const cardHeaderClasses = '@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6'
+const cardHeaderClasses = '@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-0.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6'
 
 // CardTitle classes
 const cardTitleClasses = 'font-semibold leading-none tracking-tight'
