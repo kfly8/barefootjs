@@ -1,87 +1,223 @@
+"use client"
+
 /**
- * Card Component
+ * Card Components
  *
- * A flexible container component inspired by shadcn/ui.
- * Supports composable sub-components: CardHeader, CardTitle, CardDescription, CardContent, CardFooter.
- * Uses CSS variables for theming support.
+ * A flexible container component with composable sub-components.
+ * Inspired by shadcn/ui with CSS variable theming support.
+ *
+ * @example Basic card with header and content
+ * ```tsx
+ * <Card>
+ *   <CardHeader>
+ *     <CardTitle>Card Title</CardTitle>
+ *     <CardDescription>Card description here</CardDescription>
+ *   </CardHeader>
+ *   <CardContent>
+ *     <p>Card content goes here.</p>
+ *   </CardContent>
+ * </Card>
+ * ```
+ *
+ * @example Card with footer
+ * ```tsx
+ * <Card>
+ *   <CardHeader>
+ *     <CardTitle>Confirm Action</CardTitle>
+ *   </CardHeader>
+ *   <CardContent>Are you sure?</CardContent>
+ *   <CardFooter>
+ *     <Button variant="outline">Cancel</Button>
+ *     <Button>Confirm</Button>
+ *   </CardFooter>
+ * </Card>
+ * ```
  */
 
 import type { Child } from '../../types'
 
-export interface CardProps {
+// Card classes
+const cardClasses = 'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm'
+
+// CardHeader classes (Grid for CardAction support)
+const cardHeaderClasses = '@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6'
+
+// CardTitle classes
+const cardTitleClasses = 'font-semibold leading-none tracking-tight'
+
+// CardDescription classes
+const cardDescriptionClasses = 'text-sm text-muted-foreground'
+
+// CardContent classes
+const cardContentClasses = 'px-6'
+
+// CardAction classes
+const cardActionClasses = 'col-start-2 row-span-2 row-start-1 self-start justify-self-end'
+
+// CardFooter classes
+const cardFooterClasses = 'flex items-center px-6 [.border-t]:pt-6'
+
+/**
+ * Props for Card component.
+ */
+interface CardProps {
+  /** Card content (typically CardHeader, CardContent, CardFooter) */
   children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function Card({ children, class: className = '' }: CardProps) {
+/**
+ * Card container component.
+ *
+ * @param props.children - Card sub-components
+ * @param props.class - Additional CSS classes
+ */
+function Card({ children, class: className = '' }: CardProps) {
   return (
-    <div class={`rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md ${className}`}>
+    <div data-slot="card" class={`${cardClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-export interface CardHeaderProps {
+/**
+ * Props for CardHeader component.
+ */
+interface CardHeaderProps {
+  /** Header content (typically CardTitle and CardDescription) */
   children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function CardHeader({ children, class: className = '' }: CardHeaderProps) {
+/**
+ * Card header section.
+ *
+ * @param props.children - Header content
+ */
+function CardHeader({ children, class: className = '' }: CardHeaderProps) {
   return (
-    <div class={`flex flex-col space-y-1.5 p-6 ${className}`}>
+    <div data-slot="card-header" class={`${cardHeaderClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-export interface CardTitleProps {
+/**
+ * Props for CardTitle component.
+ */
+interface CardTitleProps {
+  /** Title text */
   children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function CardTitle({ children, class: className = '' }: CardTitleProps) {
+/**
+ * Card title text.
+ *
+ * @param props.children - Title content
+ */
+function CardTitle({ children, class: className = '' }: CardTitleProps) {
   return (
-    <h3 class={`font-semibold leading-none tracking-tight ${className}`}>
+    <h3 data-slot="card-title" class={`${cardTitleClasses} ${className}`}>
       {children}
     </h3>
   )
 }
 
-export interface CardDescriptionProps {
+/**
+ * Props for CardDescription component.
+ */
+interface CardDescriptionProps {
+  /** Description text */
   children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function CardDescription({ children, class: className = '' }: CardDescriptionProps) {
+/**
+ * Card description text.
+ *
+ * @param props.children - Description content
+ */
+function CardDescription({ children, class: className = '' }: CardDescriptionProps) {
   return (
-    <p class={`text-sm text-muted-foreground ${className}`}>
+    <p data-slot="card-description" class={`${cardDescriptionClasses} ${className}`}>
       {children}
     </p>
   )
 }
 
-export interface CardContentProps {
+/**
+ * Props for CardContent component.
+ */
+interface CardContentProps {
+  /** Main content */
   children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function CardContent({ children, class: className = '' }: CardContentProps) {
+/**
+ * Card main content area.
+ *
+ * @param props.children - Main content
+ */
+function CardContent({ children, class: className = '' }: CardContentProps) {
   return (
-    <div class={`p-6 pt-0 ${className}`}>
+    <div data-slot="card-content" class={`${cardContentClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-export interface CardFooterProps {
+/**
+ * Props for CardAction component.
+ */
+interface CardActionProps {
+  /** Action content (typically buttons) */
   children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function CardFooter({ children, class: className = '' }: CardFooterProps) {
+/**
+ * Card action button area in the header.
+ *
+ * @param props.children - Action content
+ */
+function CardAction({ children, class: className = '' }: CardActionProps) {
   return (
-    <div class={`flex items-center p-6 pt-0 ${className}`}>
+    <div data-slot="card-action" class={`${cardActionClasses} ${className}`}>
       {children}
     </div>
   )
 }
+
+/**
+ * Props for CardFooter component.
+ */
+interface CardFooterProps {
+  /** Footer content (typically action buttons) */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Card footer section.
+ *
+ * @param props.children - Footer content
+ */
+function CardFooter({ children, class: className = '' }: CardFooterProps) {
+  return (
+    <div data-slot="card-footer" class={`${cardFooterClasses} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction, CardFooter }
+export type { CardProps, CardHeaderProps, CardTitleProps, CardDescriptionProps, CardContentProps, CardActionProps, CardFooterProps }

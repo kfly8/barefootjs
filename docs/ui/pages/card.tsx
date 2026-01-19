@@ -3,12 +3,14 @@
  */
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
+  CardAction,
   CardFooter,
 } from '@/components/ui/card'
 import {
@@ -40,6 +42,7 @@ const usageCode = `import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardAction,
   CardFooter,
 } from '@/components/ui/card'
 
@@ -60,6 +63,36 @@ export default function Page() {
   )
 }`
 
+const loginFormCode = `<Card class="w-full max-w-sm">
+  <CardHeader>
+    <CardTitle>Login to your account</CardTitle>
+    <CardDescription>
+      Enter your email below to login to your account
+    </CardDescription>
+    <CardAction>
+      <Button variant="link" class="text-sm">
+        Sign up
+      </Button>
+    </CardAction>
+  </CardHeader>
+  <CardContent>
+    <form class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
+        <label for="email" class="text-sm font-medium">Email</label>
+        <Input type="email" placeholder="m@example.com" />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="password" class="text-sm font-medium">Password</label>
+        <Input type="password" />
+      </div>
+    </form>
+  </CardContent>
+  <CardFooter class="flex-col gap-2">
+    <Button class="w-full">Login</Button>
+    <Button variant="outline" class="w-full">Login with Google</Button>
+  </CardFooter>
+</Card>`
+
 const simpleCode = `<Card>
   <CardHeader>
     <CardTitle>Notifications</CardTitle>
@@ -70,17 +103,17 @@ const simpleCode = `<Card>
   </CardContent>
 </Card>`
 
-const withFooterCode = `<Card>
+const withActionCode = `<Card class="w-[380px]">
   <CardHeader>
-    <CardTitle>Create project</CardTitle>
-    <CardDescription>Deploy your new project in one-click.</CardDescription>
+    <CardTitle>Team Members</CardTitle>
+    <CardDescription>Manage your team members here.</CardDescription>
+    <CardAction>
+      <Button size="sm">Add Member</Button>
+    </CardAction>
   </CardHeader>
   <CardContent>
-    <p>Configure your project settings here.</p>
+    <p>Your team members will be listed here.</p>
   </CardContent>
-  <CardFooter>
-    <Button>Create</Button>
-  </CardFooter>
 </Card>`
 
 const minimalCode = `<Card>
@@ -107,7 +140,7 @@ const cardHeaderProps: PropDefinition[] = [
   {
     name: 'children',
     type: 'ReactNode',
-    description: 'The content of the header (typically CardTitle, CardDescription).',
+    description: 'The content of the header (typically CardTitle, CardDescription, CardAction).',
   },
   {
     name: 'class',
@@ -134,6 +167,19 @@ const cardDescriptionProps: PropDefinition[] = [
     name: 'children',
     type: 'ReactNode',
     description: 'The description text.',
+  },
+  {
+    name: 'class',
+    type: 'string',
+    description: 'Additional CSS classes to apply.',
+  },
+]
+
+const cardActionProps: PropDefinition[] = [
+  {
+    name: 'children',
+    type: 'ReactNode',
+    description: 'Action elements (typically buttons or links).',
   },
   {
     name: 'class',
@@ -178,18 +224,35 @@ export function CardPage() {
           {...getNavLinks('card')}
         />
 
-        {/* Preview */}
-        <Example title="" code={`<Card>...</Card>`}>
-          <Card class="w-[350px]">
+        {/* Preview - Login Form Example (like shadcn/ui) */}
+        <Example title="" code={loginFormCode}>
+          <Card class="w-full max-w-sm">
             <CardHeader>
-              <CardTitle>Card Title</CardTitle>
-              <CardDescription>Card Description</CardDescription>
+              <CardTitle>Login to your account</CardTitle>
+              <CardDescription>
+                Enter your email below to login to your account
+              </CardDescription>
+              <CardAction>
+                <Button variant="link" class="text-sm">
+                  Sign up
+                </Button>
+              </CardAction>
             </CardHeader>
             <CardContent>
-              <p>Card Content</p>
+              <form class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                  <label for="email" class="text-sm font-medium">Email</label>
+                  <Input type="email" placeholder="m@example.com" />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label for="password" class="text-sm font-medium">Password</label>
+                  <Input type="password" />
+                </div>
+              </form>
             </CardContent>
-            <CardFooter>
-              <p>Card Footer</p>
+            <CardFooter class="flex-col gap-2">
+              <Button class="w-full">Login</Button>
+              <Button variant="outline" class="w-full">Login with Google</Button>
             </CardFooter>
           </Card>
         </Example>
@@ -219,18 +282,18 @@ export function CardPage() {
               </Card>
             </Example>
 
-            <Example title="With Footer" code={withFooterCode}>
-              <Card class="w-[350px]">
+            <Example title="With Action" code={withActionCode}>
+              <Card class="w-[380px]">
                 <CardHeader>
-                  <CardTitle>Create project</CardTitle>
-                  <CardDescription>Deploy your new project in one-click.</CardDescription>
+                  <CardTitle>Team Members</CardTitle>
+                  <CardDescription>Manage your team members here.</CardDescription>
+                  <CardAction>
+                    <Button size="sm">Add Member</Button>
+                  </CardAction>
                 </CardHeader>
                 <CardContent>
-                  <p>Configure your project settings here.</p>
+                  <p>Your team members will be listed here.</p>
                 </CardContent>
-                <CardFooter>
-                  <Button>Create</Button>
-                </CardFooter>
               </Card>
             </Example>
 
@@ -262,6 +325,10 @@ export function CardPage() {
             <div>
               <h3 class="text-lg font-semibold text-foreground mb-4">CardDescription</h3>
               <PropsTable props={cardDescriptionProps} />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-foreground mb-4">CardAction</h3>
+              <PropsTable props={cardActionProps} />
             </div>
             <div>
               <h3 class="text-lg font-semibold text-foreground mb-4">CardContent</h3>

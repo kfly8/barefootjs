@@ -1,12 +1,31 @@
 'use client'
 
 /**
- * Icon Component
+ * Icon Components
  *
  * SVG icons based on Lucide icon definitions.
- * Each icon component directly returns an SVG element (no wrapper components).
- *
+ * Each icon component directly returns an SVG element.
  * Based on lucide-static v0.562.0 icon definitions.
+ *
+ * @example Using a specific icon
+ * ```tsx
+ * <CheckIcon size="md" />
+ * <ChevronDownIcon size="sm" class="text-muted-foreground" />
+ * ```
+ *
+ * @example Using the generic Icon component
+ * ```tsx
+ * <Icon name="check" size="lg" />
+ * <Icon name="x" size="sm" class="text-destructive" />
+ * ```
+ *
+ * @example Available sizes
+ * ```tsx
+ * <CheckIcon size="sm" />  // 16px
+ * <CheckIcon size="md" />  // 20px (default)
+ * <CheckIcon size="lg" />  // 24px
+ * <CheckIcon size="xl" />  // 32px
+ * ```
  */
 
 export type IconSize = 'sm' | 'md' | 'lg' | 'xl'
