@@ -36,6 +36,11 @@ export function analyzeComponent(
 
   const ctx = createAnalyzerContext(sourceFile, filePath)
 
+  // If no target specified, prioritize the default exported component
+  if (!targetComponentName) {
+    targetComponentName = findDefaultExportedComponent(sourceFile)
+  }
+
   // Single pass visitor
   visit(sourceFile, ctx, targetComponentName)
 
@@ -43,6 +48,27 @@ export function analyzeComponent(
   validateContext(ctx)
 
   return ctx
+}
+
+/**
+ * Find the name of the default exported component in the source file.
+ * Returns undefined if no default export or if it doesn't export a component.
+ */
+function findDefaultExportedComponent(sourceFile: ts.SourceFile): string | undefined {
+  let defaultExportName: string | undefined
+
+  function findDefaultExport(node: ts.Node): void {
+    // export default ComponentName
+    if (ts.isExportAssignment(node) && !node.isExportEquals) {
+      if (ts.isIdentifier(node.expression)) {
+        defaultExportName = node.expression.text
+      }
+    }
+    ts.forEachChild(node, findDefaultExport)
+  }
+
+  ts.forEachChild(sourceFile, findDefaultExport)
+  return defaultExportName
 }
 
 // =============================================================================

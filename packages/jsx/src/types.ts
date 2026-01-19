@@ -180,9 +180,23 @@ export interface IRFragment {
 // IR Attributes & Events
 // =============================================================================
 
+/**
+ * Template literal with ternary expressions for structured conditional rendering.
+ * Used when attribute values contain template literals with ternaries like:
+ * style={`background: ${on() ? '#4caf50' : '#ccc'}`}
+ */
+export interface IRTemplateLiteral {
+  type: 'template-literal'
+  parts: IRTemplatePart[]
+}
+
+export type IRTemplatePart =
+  | { type: 'string'; value: string }
+  | { type: 'ternary'; condition: string; whenTrue: string; whenFalse: string }
+
 export interface IRAttribute {
   name: string
-  value: string | null // null for boolean attrs like 'disabled'
+  value: string | IRTemplateLiteral | null // null for boolean attrs like 'disabled'
   dynamic: boolean
   isLiteral: boolean // true if value came from a string literal attribute
   loc: SourceLocation

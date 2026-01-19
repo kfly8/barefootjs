@@ -10,6 +10,7 @@ import type {
   IRElement,
   IREvent,
   IRLoopChildComponent,
+  IRTemplateLiteral,
   SignalInfo,
   MemoInfo,
   EffectInfo,
@@ -17,6 +18,27 @@ import type {
   ConstantInfo,
   ParamInfo,
 } from './types'
+
+/**
+ * Convert an attribute value to a string expression.
+ * Handles both string values and IRTemplateLiteral.
+ */
+function attrValueToString(value: string | IRTemplateLiteral | null): string | null {
+  if (value === null) return null
+  if (typeof value === 'string') return value
+
+  // Reconstruct the template literal as a JS expression
+  let result = '`'
+  for (const part of value.parts) {
+    if (part.type === 'string') {
+      result += part.value
+    } else if (part.type === 'ternary') {
+      result += `\${${part.condition} ? '${part.whenTrue}' : '${part.whenFalse}'}`
+    }
+  }
+  result += '`'
+  return result
+}
 
 // =============================================================================
 // Types
@@ -388,13 +410,17 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
   if (element.slotId) {
     for (const attr of element.attrs) {
       if (attr.dynamic && attr.value) {
+        // Convert IRTemplateLiteral to string for reactivity checking
+        const valueStr = attrValueToString(attr.value)
+        if (!valueStr) continue
+
         // Check if the attribute value references any signal getters or memos
-        const isReactive = isReactiveExpression(attr.value, ctx)
+        const isReactive = isReactiveExpression(valueStr, ctx)
         if (isReactive) {
           ctx.reactiveAttrs.push({
             slotId: element.slotId,
             attrName: attr.name,
-            expression: attr.value,
+            expression: valueStr,
           })
         }
       }
@@ -634,9 +660,12 @@ function irToHtmlTemplate(node: IRNode): string {
  * This ensures cond() can find the element for subsequent swaps.
  */
 function addCondAttrToTemplate(html: string, condId: string): string {
-  // Find the first element tag and add data-bf-cond to it
-  // Matches <tagname or <tagname> or <tagname ...
-  return html.replace(/^(<\w+)(\s|>)/, `$1 data-bf-cond="${condId}"$2`)
+  // Element: add data-bf-cond attribute
+  if (/^<\w+/.test(html)) {
+    return html.replace(/^(<\w+)(\s|>)/, `$1 data-bf-cond="${condId}"$2`)
+  }
+  // Text: use comment markers
+  return `<!--bf-cond-start:${condId}-->${html}<!--bf-cond-end:${condId}-->`
 }
 
 /**
@@ -676,8 +705,10 @@ function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
           if (a.name === '...') return '' // Skip spread for now
           if (a.name === 'key') return '' // Key is handled separately
           if (a.value === null) return a.name
-          if (a.dynamic) return `${a.name}="\${${transformExpr(a.value)}}"`
-          return `${a.name}="${a.value}"`
+          const valueStr = attrValueToString(a.value)
+          if (a.dynamic && valueStr) return `${a.name}="\${${transformExpr(valueStr)}}"`
+          if (valueStr) return `${a.name}="${valueStr}"`
+          return a.name
         })
         .filter(Boolean)
 
@@ -768,9 +799,11 @@ function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>): boolea
     case 'element':
       // Check all children and dynamic attributes
       for (const attr of node.attrs) {
-        if (attr.dynamic && attr.value && attr.value.includes('()') &&
-            !isSimplePropExpression(attr.value, propNames)) {
-          return false
+        if (attr.dynamic && attr.value) {
+          const valueStr = attrValueToString(attr.value)
+          if (valueStr && valueStr.includes('()') && !isSimplePropExpression(valueStr, propNames)) {
+            return false
+          }
         }
       }
       return node.children.every((c) => canGenerateStaticTemplate(c, propNames))

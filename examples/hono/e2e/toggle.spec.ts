@@ -1,79 +1,9 @@
-import { test, expect } from '@playwright/test'
+/**
+ * Toggle E2E tests for Hono example
+ *
+ * Uses shared test suite from examples/shared/e2e
+ */
 
-test.describe('Toggle', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/toggle')
-  })
+import { toggleTests } from '../../shared/e2e/toggle.spec'
 
-  test('displays settings panel', async ({ page }) => {
-    await expect(page.locator('h3:has-text("Settings")')).toBeVisible()
-  })
-
-  test('displays three toggle items', async ({ page }) => {
-    await expect(page.locator('.toggle-item')).toHaveCount(3)
-  })
-
-  test('Setting 1 starts as ON', async ({ page }) => {
-    const setting1 = page.locator('.toggle-item').nth(0)
-    await expect(setting1.locator('button')).toHaveText('ON')
-  })
-
-  test('Setting 2 starts as OFF', async ({ page }) => {
-    const setting2 = page.locator('.toggle-item').nth(1)
-    await expect(setting2.locator('button')).toHaveText('OFF')
-  })
-
-  test('Setting 3 starts as OFF', async ({ page }) => {
-    const setting3 = page.locator('.toggle-item').nth(2)
-    await expect(setting3.locator('button')).toHaveText('OFF')
-  })
-
-  test('toggles Setting 1 from ON to OFF', async ({ page }) => {
-    const setting1Button = page.locator('.toggle-item').nth(0).locator('button')
-
-    await expect(setting1Button).toHaveText('ON')
-    await setting1Button.click()
-    await expect(setting1Button).toHaveText('OFF')
-  })
-
-  test('toggles Setting 2 from OFF to ON', async ({ page }) => {
-    const setting2Button = page.locator('.toggle-item').nth(1).locator('button')
-
-    await expect(setting2Button).toHaveText('OFF')
-    await setting2Button.click()
-    await expect(setting2Button).toHaveText('ON')
-  })
-
-  test('toggle button style changes with state', async ({ page }) => {
-    const setting2Button = page.locator('.toggle-item').nth(1).locator('button')
-
-    // OFF state - gray background
-    await expect(setting2Button).toHaveCSS('background-color', 'rgb(204, 204, 204)')
-
-    await setting2Button.click()
-
-    // ON state - green background
-    await expect(setting2Button).toHaveCSS('background-color', 'rgb(76, 175, 80)')
-  })
-
-  test('multiple toggles work independently', async ({ page }) => {
-    const setting1Button = page.locator('.toggle-item').nth(0).locator('button')
-    const setting2Button = page.locator('.toggle-item').nth(1).locator('button')
-    const setting3Button = page.locator('.toggle-item').nth(2).locator('button')
-
-    // Initial state
-    await expect(setting1Button).toHaveText('ON')
-    await expect(setting2Button).toHaveText('OFF')
-    await expect(setting3Button).toHaveText('OFF')
-
-    // Toggle all
-    await setting1Button.click()
-    await setting2Button.click()
-    await setting3Button.click()
-
-    // All should be flipped
-    await expect(setting1Button).toHaveText('OFF')
-    await expect(setting2Button).toHaveText('ON')
-    await expect(setting3Button).toHaveText('ON')
-  })
-})
+toggleTests('http://localhost:3001')

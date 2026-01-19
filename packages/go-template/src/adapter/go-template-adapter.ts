@@ -15,6 +15,7 @@ import type {
   IRComponent,
   IRFragment,
   IRSlot,
+  IRTemplateLiteral,
   TypeInfo,
 } from '@barefootjs/jsx'
 import { BaseAdapter, type AdapterOutput } from '@barefootjs/jsx'
@@ -181,6 +182,15 @@ export class GoTemplateAdapter extends BaseAdapter {
       return `print ${expr.replace(/'/g, '"')}`
     }
 
+    // Handle filter().length pattern: todos().filter(t => t.done).length -> .DoneCount
+    // This requires server-side pre-computation
+    const filterLengthMatch = expr.match(/(\w+)\(\)\.filter\([^)]+\)\.length/)
+    if (filterLengthMatch) {
+      // Convert to a pre-computed field name
+      // todos().filter(t => t.done).length -> .DoneCount
+      return '.DoneCount'
+    }
+
     // Handle function calls like count() -> .Count
     expr = expr.replace(/(\w+)\(\)/g, (_, name) => {
       return `.${this.capitalizeFieldName(name)}`
@@ -208,6 +218,32 @@ export class GoTemplateAdapter extends BaseAdapter {
     const goCondition = this.convertConditionToGo(cond.condition)
     const whenTrue = this.renderNode(cond.whenTrue)
 
+    // If reactive (has slotId), wrap each branch with cond marker
+    if (cond.slotId) {
+      const whenTrueWrapped = this.wrapWithCondMarker(whenTrue, cond.slotId)
+      let result = `{{if ${goCondition}}}${whenTrueWrapped}`
+
+      if (cond.whenFalse) {
+        // Skip null/undefined branches
+        if (cond.whenFalse.type === 'expression') {
+          const exprNode = cond.whenFalse as IRExpression
+          if (exprNode.expr !== 'null' && exprNode.expr !== 'undefined') {
+            const whenFalse = this.renderNode(cond.whenFalse)
+            const whenFalseWrapped = this.wrapWithCondMarker(whenFalse, cond.slotId)
+            result += `{{else}}${whenFalseWrapped}`
+          }
+        } else {
+          const whenFalse = this.renderNode(cond.whenFalse)
+          const whenFalseWrapped = this.wrapWithCondMarker(whenFalse, cond.slotId)
+          result += `{{else}}${whenFalseWrapped}`
+        }
+      }
+
+      result += '{{end}}'
+      return result
+    }
+
+    // Non-reactive: original logic
     let result = `{{if ${goCondition}}}${whenTrue}`
 
     if (cond.whenFalse && cond.whenFalse.type !== 'expression') {
@@ -231,6 +267,18 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   private convertConditionToGo(jsCondition: string): string {
     let cond = jsCondition.trim()
+
+    // Handle complex logical expressions with && and ||
+    if (cond.includes('&&') || cond.includes('||')) {
+      return this.convertLogicalExpression(cond)
+    }
+
+    // Handle negation: !showCounter -> not .ShowCounter
+    if (cond.startsWith('!')) {
+      const inner = cond.slice(1).trim()
+      const innerGo = this.convertConditionToGo(inner)
+      return `not ${innerGo}`
+    }
 
     // Handle boolean expressions with comparisons
     cond = cond.replace(/(\w+)\s*===?\s*(\w+)/g, (_, left, right) => {
@@ -277,6 +325,53 @@ export class GoTemplateAdapter extends BaseAdapter {
     return cond
   }
 
+  private convertLogicalExpression(expr: string): string {
+    // Split by && (AND) first, then handle || (OR)
+    // Handle: !showCounter && !showMessage
+
+    // Check for && (AND)
+    if (expr.includes('&&')) {
+      const parts = expr.split('&&').map(p => p.trim())
+      const goParts = parts.map(p => {
+        const converted = this.convertConditionToGo(p)
+        // Wrap in parentheses if it's a function call like 'not .X'
+        if (converted.startsWith('not ') || converted.startsWith('and ') || converted.startsWith('or ')) {
+          return `(${converted})`
+        }
+        return converted
+      })
+      // Build nested and: and (a) (b)
+      if (goParts.length === 2) {
+        return `and ${goParts[0]} ${goParts[1]}`
+      }
+      return goParts.reduce((acc, part) => {
+        if (!acc) return part
+        return `and (${acc}) ${part}`
+      }, '')
+    }
+
+    // Check for || (OR)
+    if (expr.includes('||')) {
+      const parts = expr.split('||').map(p => p.trim())
+      const goParts = parts.map(p => {
+        const converted = this.convertConditionToGo(p)
+        if (converted.startsWith('not ') || converted.startsWith('and ') || converted.startsWith('or ')) {
+          return `(${converted})`
+        }
+        return converted
+      })
+      if (goParts.length === 2) {
+        return `or ${goParts[0]} ${goParts[1]}`
+      }
+      return goParts.reduce((acc, part) => {
+        if (!acc) return part
+        return `or (${acc}) ${part}`
+      }, '')
+    }
+
+    return this.convertConditionToGo(expr)
+  }
+
   renderLoop(loop: IRLoop): string {
     const goArray = this.convertExpressionToGo(loop.array)
     const param = loop.param
@@ -315,15 +410,41 @@ export class GoTemplateAdapter extends BaseAdapter {
       if (attr.value === null) {
         // Boolean attribute
         parts.push(attr.name)
+      } else if (typeof attr.value === 'object' && attr.value.type === 'template-literal') {
+        // Template literal with structured ternaries
+        const output = this.renderTemplateLiteral(attr.value)
+        parts.push(`${attr.name}="${output}"`)
       } else if (attr.dynamic) {
-        const goValue = this.convertExpressionToGo(attr.value)
-        parts.push(`${attr.name}="{{${goValue}}}"`)
+        const value = attr.value as string
+        // Check for ternary operator: cond ? 'a' : 'b'
+        const ternaryMatch = value.match(/^(.+?)\s*\?\s*['"](.+?)['"]\s*:\s*['"](.+?)['"]$/)
+        if (ternaryMatch) {
+          const [, condition, trueVal, falseVal] = ternaryMatch
+          const goCond = this.convertConditionToGo(condition)
+          parts.push(`${attr.name}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
+        } else {
+          const goValue = this.convertExpressionToGo(value)
+          parts.push(`${attr.name}="{{${goValue}}}"`)
+        }
       } else {
         parts.push(`${attr.name}="${attr.value}"`)
       }
     }
 
     return parts.length > 0 ? ' ' + parts.join(' ') : ''
+  }
+
+  private renderTemplateLiteral(literal: IRTemplateLiteral): string {
+    let output = ''
+    for (const part of literal.parts) {
+      if (part.type === 'string') {
+        output += part.value
+      } else if (part.type === 'ternary') {
+        const goCond = this.convertConditionToGo(part.condition)
+        output += `{{if ${goCond}}}${part.whenTrue}{{else}}${part.whenFalse}{{end}}`
+      }
+    }
+    return output
   }
 
   renderScopeMarker(instanceIdExpr: string): string {
@@ -336,6 +457,20 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   renderCondMarker(condId: string): string {
     return `data-bf-cond="${condId}"`
+  }
+
+  private wrapWithCondMarker(content: string, condId: string): string {
+    // If content is an HTML element, add data-bf-cond attribute
+    if (content.startsWith('<')) {
+      const match = content.match(/^<(\w+)/)
+      if (match) {
+        return content.replace(`<${match[1]}`, `<${match[1]} ${this.renderCondMarker(condId)}`)
+      }
+    }
+    // Text: use bfComment function to output comment markers
+    // Go's html/template strips raw HTML comments, so we use a custom function
+    // bfComment automatically adds "bf-" prefix, so "cond-start:x" becomes "<!--bf-cond-start:x-->"
+    return `{{bfComment "cond-start:${condId}"}}${content}{{bfComment "cond-end:${condId}"}}`
   }
 }
 

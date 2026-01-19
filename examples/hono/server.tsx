@@ -91,10 +91,15 @@ app.get('/fizzbuzz', (c) => {
 })
 
 app.get('/toggle', (c) => {
+  const toggleItems = [
+    { label: 'Setting 1', defaultOn: true },
+    { label: 'Setting 2', defaultOn: false },
+    { label: 'Setting 3', defaultOn: false },
+  ]
   return c.render(
     <div>
       <h1>Toggle Example</h1>
-      <Toggle />
+      <Toggle toggleItems={toggleItems} />
       <p><a href="/">← Back</a></p>
     </div>
   )

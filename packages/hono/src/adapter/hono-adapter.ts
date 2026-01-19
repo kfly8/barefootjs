@@ -14,6 +14,7 @@ import {
   type IRLoop,
   type IRComponent,
   type IRFragment,
+  type IRTemplateLiteral,
   type ParamInfo,
   type AdapterOutput,
   type TemplateAdapter,
@@ -559,8 +560,8 @@ export class HonoAdapter implements TemplateAdapter {
         return content.replace(`<${match[1]}`, `<${match[1]} data-bf-cond="${condId}"`)
       }
     }
-    // Otherwise wrap in span
-    return `<span data-bf-cond="${condId}">${content}</span>`
+    // Text: use comment markers instead of span
+    return `<!--bf-cond-start:${condId}-->${content}<!--bf-cond-end:${condId}-->`
   }
 
   renderLoop(loop: IRLoop): string {
@@ -620,6 +621,10 @@ export class HonoAdapter implements TemplateAdapter {
       } else if (attr.value === null) {
         // Boolean attribute
         parts.push(attrName)
+      } else if (typeof attr.value === 'object' && attr.value.type === 'template-literal') {
+        // Template literal with structured ternaries
+        const output = this.renderTemplateLiteral(attr.value)
+        parts.push(`${attrName}={${output}}`)
       } else if (attr.dynamic) {
         // Dynamic attribute
         parts.push(`${attrName}={${attr.value}}`)
@@ -675,6 +680,19 @@ export class HonoAdapter implements TemplateAdapter {
     }
 
     return parts.length > 0 ? ' ' + parts.join(' ') : ''
+  }
+
+  private renderTemplateLiteral(literal: IRTemplateLiteral): string {
+    let output = '`'
+    for (const part of literal.parts) {
+      if (part.type === 'string') {
+        output += part.value
+      } else if (part.type === 'ternary') {
+        output += `\${${part.condition} ? '${part.whenTrue}' : '${part.whenFalse}'}`
+      }
+    }
+    output += '`'
+    return output
   }
 
   private isJsExpression(value: string): boolean {
