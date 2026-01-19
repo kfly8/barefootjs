@@ -75,11 +75,7 @@ const imageCardCode = `<Card class="w-[350px]">
       7-day hiking tour through scenic mountain trails
     </CardDescription>
     <CardAction>
-      <Button
-        variant="outline"
-        size="sm"
-        class="opacity-0 group-hover/card:opacity-100 transition-opacity"
-      >
+      <Button variant="outline" size="sm" data-card-hover-action>
         View
       </Button>
     </CardAction>
@@ -287,11 +283,7 @@ export function CardPage() {
                 7-day hiking tour through scenic mountain trails
               </CardDescription>
               <CardAction>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="opacity-0 group-hover/card:opacity-100 transition-opacity"
-                >
+                <Button variant="outline" size="sm" data-card-hover-action>
                   View
                 </Button>
               </CardAction>
