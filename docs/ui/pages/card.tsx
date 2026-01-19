@@ -74,10 +74,16 @@ const imageCardCode = `<Card class="w-[350px]">
     <CardDescription>
       Clean aesthetics for modern interfaces
     </CardDescription>
+    <CardAction>
+      <Button
+        variant="outline"
+        size="sm"
+        class="opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        View
+      </Button>
+    </CardAction>
   </CardHeader>
-  <CardFooter>
-    <Button variant="outline" size="sm">View</Button>
-  </CardFooter>
 </Card>`
 
 const loginFormCode = `<Card class="w-full max-w-sm">
@@ -280,10 +286,16 @@ export function CardPage() {
               <CardDescription>
                 Clean aesthetics for modern interfaces
               </CardDescription>
+              <CardAction>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  View
+                </Button>
+              </CardAction>
             </CardHeader>
-            <CardFooter>
-              <Button variant="outline" size="sm">View</Button>
-            </CardFooter>
           </Card>
         </Example>
 
