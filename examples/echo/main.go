@@ -80,10 +80,6 @@ func main() {
 	e.GET("/", indexHandler)
 	e.GET("/counter", counterHandler)
 	e.GET("/toggle", toggleHandler)
-	e.GET("/fizzbuzz", fizzbuzzHandler)
-	e.GET("/dashboard", dashboardHandler)
-	e.GET("/dashboard/counter-only", dashboardCounterOnlyHandler)
-	e.GET("/dashboard/message-only", dashboardMessageOnlyHandler)
 	e.GET("/todos", todosHandler)
 
 	// Todo API endpoints
@@ -120,8 +116,6 @@ func indexHandler(c echo.Context) error {
     <ul>
         <li><a href="/counter">Counter Component</a></li>
         <li><a href="/toggle">Toggle Component</a></li>
-        <li><a href="/fizzbuzz">FizzBuzzCounter Component</a></li>
-        <li><a href="/dashboard">Dashboard Component</a></li>
         <li><a href="/todos">TodoApp Component</a></li>
     </ul>
 </body>
@@ -228,46 +222,6 @@ func toggleHandler(c echo.Context) error {
 	})
 
 	return c.HTML(http.StatusOK, renderPage("Toggle", props))
-}
-
-func fizzbuzzHandler(c echo.Context) error {
-	// FizzBuzzCounter has no props - Count and ShowDetails are signals with fixed initial values
-	props := NewFizzBuzzCounterProps(FizzBuzzCounterInput{})
-
-	return c.HTML(http.StatusOK, renderPage("FizzBuzzCounter", props))
-}
-
-func dashboardHandler(c echo.Context) error {
-	props := NewDashboardProps(DashboardInput{
-		ShowCounter:  true,
-		ShowMessage:  true,
-		InitialCount: 10,
-		Message:      "Hello from server!",
-	})
-
-	return c.HTML(http.StatusOK, renderPage("Dashboard", props))
-}
-
-func dashboardCounterOnlyHandler(c echo.Context) error {
-	props := NewDashboardProps(DashboardInput{
-		ShowCounter:  true,
-		ShowMessage:  false,
-		InitialCount: 5,
-		Message:      "",
-	})
-
-	return c.HTML(http.StatusOK, renderPage("Dashboard", props))
-}
-
-func dashboardMessageOnlyHandler(c echo.Context) error {
-	props := NewDashboardProps(DashboardInput{
-		ShowCounter:  false,
-		ShowMessage:  true,
-		InitialCount: 0,
-		Message:      "Custom message!",
-	})
-
-	return c.HTML(http.StatusOK, renderPage("Dashboard", props))
 }
 
 func todosHandler(c echo.Context) error {

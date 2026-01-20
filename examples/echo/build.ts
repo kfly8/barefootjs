@@ -17,8 +17,6 @@ const projectRoot = import.meta.dirname
 const components = [
   '../shared/components/Counter.tsx',
   '../shared/components/Toggle.tsx',
-  '../shared/components/FizzBuzzCounter.tsx',
-  '../shared/components/Dashboard.tsx',
   '../shared/components/TodoItem.tsx',
   '../shared/components/AddTodoForm.tsx',
   '../shared/components/TodoApp.tsx',
