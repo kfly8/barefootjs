@@ -36,7 +36,11 @@ const errorClasses = 'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-de
 /**
  * Props for the Input component.
  */
-interface InputProps extends Pick<InputHTMLAttributes, 'onInput' | 'onChange' | 'onBlur' | 'onFocus' | 'class'> {
+interface InputProps extends Pick<InputHTMLAttributes, 'onInput' | 'onChange' | 'onBlur' | 'onFocus'> {
+  /**
+   * Additional CSS class names.
+   */
+  className?: string
   /**
    * Input type attribute (text, email, password, etc.).
    * @default 'text'
@@ -85,7 +89,7 @@ interface InputProps extends Pick<InputHTMLAttributes, 'onInput' | 'onChange' | 
  * @param props.describedBy - ID of describing element for accessibility
  */
 function Input({
-  class: className = '',
+  className = '',
   type = 'text',
   placeholder = '',
   value = '',

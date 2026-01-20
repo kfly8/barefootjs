@@ -20,7 +20,6 @@
  * ```
  */
 
-import type { LabelHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Label classes (aligned with shadcn/ui)
@@ -29,7 +28,11 @@ const labelClasses = 'flex items-center gap-2 text-sm leading-none font-medium s
 /**
  * Props for the Label component.
  */
-interface LabelProps extends Pick<LabelHTMLAttributes, 'class'> {
+interface LabelProps {
+  /**
+   * Additional CSS class names.
+   */
+  className?: string
   /**
    * The ID of the form element this label is for.
    */
@@ -47,7 +50,7 @@ interface LabelProps extends Pick<LabelHTMLAttributes, 'class'> {
  * @param props.children - Label content
  */
 function Label({
-  class: className = '',
+  className = '',
   htmlFor,
   children,
 }: LabelProps) {
