@@ -33,7 +33,6 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
   { id: 'profile-card', title: 'Profile Card', branch: 'start' },
-  { id: 'stats-card', title: 'Stats Card', branch: 'child' },
   { id: 'login-form', title: 'Login Form', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -163,35 +162,6 @@ export function ProfileCard() {
           <span className="text-muted-foreground">Phone:</span>
           <span>+1 (555) 123-4567</span>
         </div>
-      </CardContent>
-    </Card>
-  )
-}`
-
-const statsCardCode = `"use client"
-
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card'
-
-export function StatsCard() {
-  return (
-    <Card className="w-[300px] !gap-2">
-      <CardHeader>
-        <CardDescription>
-          Active Users
-          <span className="ml-2 text-xs">Jan 2025</span>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="text-5xl font-bold">12,486</div>
-        <p className="text-xs text-muted-foreground">
-          +8.2% from last month
-        </p>
       </CardContent>
     </Card>
   )
@@ -382,23 +352,6 @@ export function CardPage() {
                     <span className="text-muted-foreground">Phone:</span>
                     <span>+1 (555) 123-4567</span>
                   </div>
-                </CardContent>
-              </Card>
-            </Example>
-
-            <Example title="Stats Card" code={statsCardCode}>
-              <Card className="w-[300px] !gap-2">
-                <CardHeader>
-                  <CardDescription>
-                    Active Users
-                    <span className="ml-2 text-xs">Jan 2025</span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-5xl font-bold">12,486</div>
-                  <p className="text-xs text-muted-foreground">
-                    +8.2% from last month
-                  </p>
                 </CardContent>
               </Card>
             </Example>
