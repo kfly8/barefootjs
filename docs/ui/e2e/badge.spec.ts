@@ -1,28 +1,30 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Badge Documentation Page', () => {
+test.describe('Badge Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/badge')
   })
 
   test('displays page header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Badge')
-    await expect(page.locator('text=Displays a badge or a component')).toBeVisible()
+    // Use getByRole('main') to target description in main content (not sidebar)
+    await expect(page.getByRole('main').getByText('Displays a badge or a component')).toBeVisible()
   })
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add badge')).toBeVisible()
+    // Check that the installation section contains the package manager tabs
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
+  test('displays examples section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
   })
 
   test.describe('Badge Variants', () => {
-    // Use class selector to target actual Badge components (not syntax-highlighted code spans)
-    const badgeSelector = 'span.inline-flex.items-center.rounded-md'
+    // Use data-slot selector to target actual Badge components (not syntax-highlighted code spans)
+    const badgeSelector = '[data-slot="badge"]'
 
     test('displays all variant badges', async ({ page }) => {
       await expect(page.locator(`${badgeSelector}:has-text("Default")`).first()).toBeVisible()
