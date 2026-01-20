@@ -199,6 +199,69 @@ func renderPageWithScripts(componentName string, props interface{}, childCompone
 	return buf.String()
 }
 
+// renderPageWithChildProps renders a page with additional child props scripts
+func renderPageWithChildProps(componentName string, props interface{}, childPropsScripts string, childComponents ...string) string {
+	t := loadTemplates()
+
+	// Get ScopeID from props using reflection
+	scopeID := ""
+	propsJSON := "{}"
+	if propsVal := getField(props, "ScopeID"); propsVal != "" {
+		scopeID = propsVal
+	}
+
+	// Serialize props to JSON for client hydration
+	if jsonBytes, err := json.Marshal(props); err == nil {
+		propsJSON = string(jsonBytes)
+	}
+
+	// Create a page template that includes the component
+	pageHTML := `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>` + componentName + ` - BarefootJS + Echo</title>
+    <link rel="stylesheet" href="/shared/styles/components.css">
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    </style>
+</head>
+<body>
+    <h1>` + componentName + ` Component</h1>
+    <div id="app">`
+
+	// Render the component
+	var buf strings.Builder
+	buf.WriteString(pageHTML)
+
+	t.ExecuteTemplate(&buf, componentName, props)
+
+	// Add props JSON for client hydration (parent component)
+	if scopeID != "" {
+		buf.WriteString(`<script type="application/json" data-bf-props="` + scopeID + `">` + propsJSON + `</script>`)
+	}
+
+	// Add child component props scripts
+	buf.WriteString(childPropsScripts)
+
+	buf.WriteString(`</div>
+    <p><a href="/">← Back to index</a></p>
+`)
+
+	// Add child component scripts first (they need to be registered before parent)
+	for _, child := range childComponents {
+		buf.WriteString(`    <script type="module" src="/static/client/` + child + `.client.js"></script>
+`)
+	}
+
+	// Add main component script
+	buf.WriteString(`    <script type="module" src="/static/client/` + componentName + `.client.js"></script>
+</body>
+</html>`)
+
+	return buf.String()
+}
+
 // getField extracts a string field from a struct using reflection
 func getField(v interface{}, field string) string {
 	val := reflect.ValueOf(v)
@@ -227,7 +290,17 @@ func toggleHandler(c echo.Context) error {
 		},
 	})
 
-	return c.HTML(http.StatusOK, renderPage("Toggle", props))
+	// Build child component props scripts for each ToggleItem
+	var childPropsScripts strings.Builder
+	for _, item := range props.ToggleItems {
+		jsonBytes, _ := json.Marshal(item)
+		childPropsScripts.WriteString(fmt.Sprintf(
+			`<script type="application/json" data-bf-props="%s">%s</script>`,
+			item.ScopeID, string(jsonBytes),
+		))
+	}
+
+	return c.HTML(http.StatusOK, renderPageWithChildProps("Toggle", props, childPropsScripts.String(), "Toggle"))
 }
 
 func fizzbuzzHandler(c echo.Context) error {
