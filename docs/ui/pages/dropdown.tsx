@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,17 +19,20 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'default-value', title: 'Default Value', branch: 'child' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'css-transform', title: 'CSS Transform', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add dropdown`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
 import {
   Dropdown,
   DropdownTrigger,
@@ -37,7 +41,7 @@ import {
   DropdownLabel,
 } from '@/components/ui/dropdown'
 
-export default function Page() {
+function DropdownBasic() {
   const [open, setOpen] = createSignal(false)
   const [value, setValue] = createSignal('')
 
@@ -45,6 +49,7 @@ export default function Page() {
     { value: 'apple', label: 'Apple' },
     { value: 'banana', label: 'Banana' },
     { value: 'cherry', label: 'Cherry' },
+    { value: 'grape', label: 'Grape' },
   ]
 
   const selectedLabel = () => {
@@ -60,7 +65,7 @@ export default function Page() {
   return (
     <Dropdown>
       <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-        {value() ? selectedLabel() : <DropdownLabel>Select...</DropdownLabel>}
+        {value() ? selectedLabel() : <DropdownLabel>Select a fruit</DropdownLabel>}
       </DropdownTrigger>
       <DropdownContent open={open()} onClose={() => setOpen(false)}>
         {options.map(option => (
@@ -77,83 +82,119 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [open, setOpen] = createSignal(false)
-const [value, setValue] = createSignal('')
+const defaultValueCode = `"use client"
 
-const options = [
-  { value: 'apple', label: 'Apple' },
-  { value: 'banana', label: 'Banana' },
-  { value: 'cherry', label: 'Cherry' },
-  { value: 'grape', label: 'Grape' },
-]
+import { createSignal } from '@barefootjs/dom'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+} from '@/components/ui/dropdown'
 
-<Dropdown>
-  <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-    {value() ? selectedLabel() : <DropdownLabel>Select a fruit</DropdownLabel>}
-  </DropdownTrigger>
-  <DropdownContent open={open()} onClose={() => setOpen(false)}>
-    {options.map(option => (
-      <DropdownItem
-        value={option.value}
-        selected={value() === option.value}
-        onClick={() => handleSelect(option.value)}
-      >
-        {option.label}
-      </DropdownItem>
-    ))}
-  </DropdownContent>
-</Dropdown>`
+function DropdownWithDefault() {
+  const [open, setOpen] = createSignal(false)
+  const [value, setValue] = createSignal('medium') // Default value
 
-const defaultValueCode = `const [open, setOpen] = createSignal(false)
-const [value, setValue] = createSignal('medium') // Default value
+  const options = [
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'large', label: 'Large' },
+    { value: 'xlarge', label: 'Extra Large' },
+  ]
 
-const options = [
-  { value: 'small', label: 'Small' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'large', label: 'Large' },
-  { value: 'xlarge', label: 'Extra Large' },
-]
+  const selectedLabel = () => {
+    const selected = options.find(opt => opt.value === value())
+    return selected ? selected.label : ''
+  }
 
-<Dropdown>
-  <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-    {selectedLabel()}
-  </DropdownTrigger>
-  <DropdownContent open={open()} onClose={() => setOpen(false)}>
-    {options.map(option => (
-      <DropdownItem
-        value={option.value}
-        selected={value() === option.value}
-        onClick={() => handleSelect(option.value)}
-      >
-        {option.label}
-      </DropdownItem>
-    ))}
-  </DropdownContent>
-</Dropdown>`
+  const handleSelect = (optionValue: string) => {
+    setValue(optionValue)
+    setOpen(false)
+  }
 
-const disabledCode = `<Dropdown>
-  <DropdownTrigger open={open()} onClick={() => setOpen(!open())} disabled>
-    <DropdownLabel>Disabled</DropdownLabel>
-  </DropdownTrigger>
-  <DropdownContent open={open()} onClose={() => setOpen(false)}>
-    <DropdownItem value="option1" onClick={() => {}}>
-      Option 1
-    </DropdownItem>
-  </DropdownContent>
-</Dropdown>`
+  return (
+    <Dropdown>
+      <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
+        {selectedLabel()}
+      </DropdownTrigger>
+      <DropdownContent open={open()} onClose={() => setOpen(false)}>
+        {options.map(option => (
+          <DropdownItem
+            value={option.value}
+            selected={value() === option.value}
+            onClick={() => handleSelect(option.value)}
+          >
+            {option.label}
+          </DropdownItem>
+        ))}
+      </DropdownContent>
+    </Dropdown>
+  )
+}`
 
-const transformCode = `// Dropdown works correctly inside CSS transformed containers
-<div className="transform scale-100 translate-x-0">
-  <Dropdown>
-    <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-      {selectedLabel() || <DropdownLabel>Select option</DropdownLabel>}
-    </DropdownTrigger>
-    <DropdownContent open={open()} onClose={() => setOpen(false)}>
-      <DropdownItem value="option1">Option 1</DropdownItem>
-      <DropdownItem value="option2">Option 2</DropdownItem>
-    </DropdownContent>
-  </Dropdown>
-</div>`
+const disabledCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+} from '@/components/ui/dropdown'
+
+function DropdownDisabled() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <Dropdown>
+      <DropdownTrigger open={open()} onClick={() => setOpen(!open())} disabled>
+        <DropdownLabel>Disabled</DropdownLabel>
+      </DropdownTrigger>
+      <DropdownContent open={open()} onClose={() => setOpen(false)}>
+        <DropdownItem value="option1" onClick={() => {}}>
+          Option 1
+        </DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+  )
+}`
+
+const transformCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+} from '@/components/ui/dropdown'
+
+function DropdownTransform() {
+  const [open, setOpen] = createSignal(false)
+  const [value, setValue] = createSignal('')
+
+  // Dropdown works correctly inside CSS transformed containers
+  return (
+    <div className="transform scale-100 translate-x-0">
+      <Dropdown>
+        <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
+          {value() || <DropdownLabel>Select option</DropdownLabel>}
+        </DropdownTrigger>
+        <DropdownContent open={open()} onClose={() => setOpen(false)}>
+          <DropdownItem value="option1" onClick={() => setValue('Option 1')}>
+            Option 1
+          </DropdownItem>
+          <DropdownItem value="option2" onClick={() => setValue('Option 2')}>
+            Option 2
+          </DropdownItem>
+        </DropdownContent>
+      </Dropdown>
+    </div>
+  )
+}`
 
 // Props definitions
 const dropdownTriggerProps: PropDefinition[] = [
@@ -224,6 +265,8 @@ const dropdownLabelProps: PropDefinition[] = [
 ]
 
 export function DropdownPage() {
+  const installCommands = getHighlightedCommands('barefoot add dropdown')
+
   return (
     <DocPage slug="dropdown" toc={tocItems}>
       <div className="space-y-12">
@@ -242,12 +285,7 @@ export function DropdownPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add dropdown" highlightedCommands={installCommands} />
         </Section>
 
         {/* Features */}
@@ -264,11 +302,11 @@ export function DropdownPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Basic Dropdown" code={basicCode}>
+            <Example title="Basic" code={basicCode}>
               <DropdownBasicDemo />
             </Example>
 
-            <Example title="With Default Value" code={defaultValueCode}>
+            <Example title="Default Value" code={defaultValueCode}>
               <DropdownWithDefaultDemo />
             </Example>
 
@@ -276,7 +314,7 @@ export function DropdownPage() {
               <DropdownDisabledDemo />
             </Example>
 
-            <Example title="With CSS Transform" code={transformCode}>
+            <Example title="CSS Transform" code={transformCode}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">Dropdown inside a scaled container:</p>
                 <div className="transform scale-100 bg-muted p-4 rounded-lg" data-transform-container>

@@ -9,8 +9,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -19,68 +20,122 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'input-types', title: 'Input Types', branch: 'start' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'value-binding', title: 'Value Binding', branch: 'child' },
+  { id: 'focus-state', title: 'Focus State', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add input`
+const typesCode = `"use client"
 
-const usageCode = `import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
 
-export default function Page() {
-  return <Input placeholder="Enter text..." />
+function InputTypes() {
+  return (
+    <div className="flex flex-col gap-2 max-w-sm">
+      <Input type="text" placeholder="Text input" />
+      <Input type="email" placeholder="Email address" />
+      <Input type="password" placeholder="Password" />
+      <Input type="number" placeholder="Number" />
+    </div>
+  )
 }`
 
-const typesCode = `<Input inputType="text" inputPlaceholder="Text input" />
-<Input inputType="email" inputPlaceholder="Email address" />
-<Input inputType="password" inputPlaceholder="Password" />
-<Input inputType="number" inputPlaceholder="Number" />`
+const disabledCode = `"use client"
 
-const disabledCode = `<Input inputDisabled inputPlaceholder="Disabled input" />
-<Input inputReadOnly inputValue="Read-only value" />`
+import { Input } from '@/components/ui/input'
 
-const bindingCode = `import { createSignal } from '@barefootjs/dom'
+function InputDisabled() {
+  return (
+    <div className="flex flex-col gap-2 max-w-sm">
+      <Input disabled placeholder="Disabled input" />
+      <Input readOnly value="Read-only value" />
+    </div>
+  )
+}`
 
-const [value, setValue] = createSignal('')
+const bindingCode = `"use client"
 
-<Input
-  inputValue={value()}
-  onInput={(e) => setValue(e.target.value)}
-  inputPlaceholder="Type something..."
-/>
-<p>You typed: {value()}</p>`
+import { createSignal } from '@barefootjs/dom'
+import { Input } from '@/components/ui/input'
+
+function InputBinding() {
+  const [value, setValue] = createSignal('')
+
+  return (
+    <div className="max-w-sm space-y-2">
+      <Input
+        value={value()}
+        onInput={(e) => setValue(e.target.value)}
+        placeholder="Type something..."
+      />
+      <p className="text-sm text-muted-foreground">
+        You typed: {value()}
+      </p>
+    </div>
+  )
+}`
+
+const focusCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Input } from '@/components/ui/input'
+
+function InputFocus() {
+  const [focused, setFocused] = createSignal(false)
+
+  return (
+    <div className="max-w-sm space-y-2">
+      <Input
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder="Focus me..."
+      />
+      <p className="text-sm text-muted-foreground">
+        {focused() ? 'Input is focused' : 'Input is not focused'}
+      </p>
+    </div>
+  )
+}`
 
 // Props definition
 const inputProps: PropDefinition[] = [
   {
-    name: 'inputType',
+    name: 'type',
     type: "'text' | 'email' | 'password' | 'number' | 'search' | 'tel' | 'url'",
     defaultValue: "'text'",
     description: 'The type of the input.',
   },
   {
-    name: 'inputPlaceholder',
+    name: 'placeholder',
     type: 'string',
     description: 'Placeholder text shown when input is empty.',
   },
   {
-    name: 'inputValue',
+    name: 'value',
     type: 'string',
     description: 'The controlled value of the input.',
   },
   {
-    name: 'inputDisabled',
+    name: 'disabled',
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the input is disabled.',
   },
   {
-    name: 'inputReadOnly',
+    name: 'readOnly',
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the input is read-only.',
+  },
+  {
+    name: 'error',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Whether the input is in an error state.',
   },
   {
     name: 'onInput',
@@ -105,6 +160,8 @@ const inputProps: PropDefinition[] = [
 ]
 
 export function InputPage() {
+  const installCommands = getHighlightedCommands('barefoot add input')
+
   return (
     <DocPage slug="input" toc={tocItems}>
       <div className="space-y-12">
@@ -115,18 +172,13 @@ export function InputPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<Input inputPlaceholder="Enter text..." />`}>
-          <Input inputPlaceholder="Enter text..." />
+        <Example title="" code={`<Input placeholder="Enter text..." />`}>
+          <Input placeholder="Enter text..." />
         </Example>
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add input" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
@@ -134,17 +186,17 @@ export function InputPage() {
           <div className="space-y-8">
             <Example title="Input Types" code={typesCode}>
               <div className="flex flex-col gap-2 max-w-sm">
-                <Input inputType="text" inputPlaceholder="Text input" />
-                <Input inputType="email" inputPlaceholder="Email address" />
-                <Input inputType="password" inputPlaceholder="Password" />
-                <Input inputType="number" inputPlaceholder="Number" />
+                <Input type="text" placeholder="Text input" />
+                <Input type="email" placeholder="Email address" />
+                <Input type="password" placeholder="Password" />
+                <Input type="number" placeholder="Number" />
               </div>
             </Example>
 
-            <Example title="Disabled & Read-only" code={disabledCode}>
+            <Example title="Disabled" code={disabledCode}>
               <div className="flex flex-col gap-2 max-w-sm">
-                <Input inputDisabled inputPlaceholder="Disabled input" />
-                <Input inputReadOnly inputValue="Read-only value" />
+                <Input disabled placeholder="Disabled input" />
+                <Input readOnly value="Read-only value" />
               </div>
             </Example>
 
@@ -154,7 +206,7 @@ export function InputPage() {
               </div>
             </Example>
 
-            <Example title="Focus State" code={`<Input onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
+            <Example title="Focus State" code={focusCode}>
               <div className="max-w-sm">
                 <InputFocusDemo />
               </div>

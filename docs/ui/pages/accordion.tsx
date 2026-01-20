@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,16 +19,17 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'single-open', title: 'Single Open', branch: 'start' },
+  { id: 'multiple-open', title: 'Multiple Open', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add accordion`
+const singleCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
 import {
   Accordion,
   AccordionItem,
@@ -35,8 +37,8 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion'
 
-export default function Page() {
-  const [openItem, setOpenItem] = createSignal<string | null>(null)
+function AccordionSingle() {
+  const [openItem, setOpenItem] = createSignal<string | null>('item-1')
 
   const toggle = (value: string) => {
     setOpenItem(openItem() === value ? null : value)
@@ -55,50 +57,86 @@ export default function Page() {
           Yes. It adheres to the WAI-ARIA design pattern.
         </AccordionContent>
       </AccordionItem>
+      <AccordionItem value="item-2">
+        <AccordionTrigger
+          open={openItem() === 'item-2'}
+          onClick={() => toggle('item-2')}
+        >
+          Is it styled?
+        </AccordionTrigger>
+        <AccordionContent open={openItem() === 'item-2'}>
+          Yes. It comes with default styles that match your theme.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="item-3">
+        <AccordionTrigger
+          open={openItem() === 'item-3'}
+          onClick={() => toggle('item-3')}
+        >
+          Is it animated?
+        </AccordionTrigger>
+        <AccordionContent open={openItem() === 'item-3'}>
+          Yes. It's animated by default with CSS transitions.
+        </AccordionContent>
+      </AccordionItem>
     </Accordion>
   )
 }`
 
-const singleCode = `const [openItem, setOpenItem] = createSignal<string | null>('item-1')
+const multipleCode = `"use client"
 
-const toggle = (value: string) => {
-  setOpenItem(openItem() === value ? null : value)
-}
+import { createSignal } from '@barefootjs/dom'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion'
 
-<Accordion>
-  <AccordionItem value="item-1">
-    <AccordionTrigger
-      open={openItem() === 'item-1'}
-      onClick={() => toggle('item-1')}
-    >
-      Is it accessible?
-    </AccordionTrigger>
-    <AccordionContent open={openItem() === 'item-1'}>
-      Yes. It adheres to the WAI-ARIA design pattern.
-    </AccordionContent>
-  </AccordionItem>
-  {/* More items... */}
-</Accordion>`
+function AccordionMultiple() {
+  // Each item manages its own state independently
+  const [item1Open, setItem1Open] = createSignal(false)
+  const [item2Open, setItem2Open] = createSignal(false)
+  const [item3Open, setItem3Open] = createSignal(false)
 
-const multipleCode = `// Each item manages its own state independently
-const [item1Open, setItem1Open] = createSignal(false)
-const [item2Open, setItem2Open] = createSignal(false)
-const [item3Open, setItem3Open] = createSignal(false)
-
-<Accordion>
-  <AccordionItem value="item-1">
-    <AccordionTrigger
-      open={item1Open()}
-      onClick={() => setItem1Open(!item1Open())}
-    >
-      First Item
-    </AccordionTrigger>
-    <AccordionContent open={item1Open()}>
-      Content for first item.
-    </AccordionContent>
-  </AccordionItem>
-  {/* More items... */}
-</Accordion>`
+  return (
+    <Accordion>
+      <AccordionItem value="item-1">
+        <AccordionTrigger
+          open={item1Open()}
+          onClick={() => setItem1Open(!item1Open())}
+        >
+          First Item
+        </AccordionTrigger>
+        <AccordionContent open={item1Open()}>
+          Content for first item.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="item-2">
+        <AccordionTrigger
+          open={item2Open()}
+          onClick={() => setItem2Open(!item2Open())}
+        >
+          Second Item
+        </AccordionTrigger>
+        <AccordionContent open={item2Open()}>
+          Content for second item.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="item-3">
+        <AccordionTrigger
+          open={item3Open()}
+          onClick={() => setItem3Open(!item3Open())}
+        >
+          Third Item
+        </AccordionTrigger>
+        <AccordionContent open={item3Open()}>
+          Content for third item.
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  )
+}`
 
 // Props definition
 const accordionItemProps: PropDefinition[] = [
@@ -156,6 +194,8 @@ const accordionContentProps: PropDefinition[] = [
 ]
 
 export function AccordionPage() {
+  const installCommands = getHighlightedCommands('barefoot add accordion')
+
   return (
     <DocPage slug="accordion" toc={tocItems}>
       <div className="space-y-12">
@@ -174,18 +214,13 @@ export function AccordionPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add accordion" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Single Open (Only One at a Time)" code={singleCode}>
+            <Example title="Single Open" code={singleCode}>
               <div className="w-full max-w-md">
                 <AccordionSingleOpenDemo />
               </div>

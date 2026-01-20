@@ -16,8 +16,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -26,17 +27,23 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'success', title: 'Success', branch: 'child' },
+  { id: 'error', title: 'Error', branch: 'child' },
+  { id: 'warning', title: 'Warning', branch: 'child' },
+  { id: 'info', title: 'Info', branch: 'child' },
+  { id: 'with-action', title: 'With Action', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add toast`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
 import {
   ToastProvider,
   Toast,
@@ -45,7 +52,7 @@ import {
   ToastClose,
 } from '@/components/ui/toast'
 
-export default function Page() {
+function ToastBasic() {
   const [open, setOpen] = createSignal(false)
 
   const showToast = () => {
@@ -55,12 +62,12 @@ export default function Page() {
 
   return (
     <div>
-      <button onClick={showToast}>Show Toast</button>
+      <Button onClick={showToast}>Show Toast</Button>
       <ToastProvider position="bottom-right">
         <Toast open={open()}>
           <div className="flex-1">
             <ToastTitle>Notification</ToastTitle>
-            <ToastDescription>This is a toast message.</ToastDescription>
+            <ToastDescription>This is a basic toast message.</ToastDescription>
           </div>
           <ToastClose onClick={() => setOpen(false)} />
         </Toast>
@@ -69,52 +76,196 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [open, setOpen] = createSignal(false)
+const successCode = `"use client"
 
-const showToast = () => {
-  setOpen(true)
-  setTimeout(() => setOpen(false), 5000)
-}
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import {
+  ToastProvider,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+} from '@/components/ui/toast'
 
-<Button onClick={showToast}>Show Toast</Button>
-<ToastProvider position="bottom-right">
-  <Toast open={open()}>
-    <div className="flex-1">
-      <ToastTitle>Notification</ToastTitle>
-      <ToastDescription>This is a basic toast message.</ToastDescription>
+function ToastSuccess() {
+  const [open, setOpen] = createSignal(false)
+
+  const showToast = () => {
+    setOpen(true)
+    setTimeout(() => setOpen(false), 5000)
+  }
+
+  return (
+    <div>
+      <Button onClick={showToast}>Show Success</Button>
+      <ToastProvider position="bottom-right">
+        <Toast variant="success" open={open()}>
+          <div className="flex-1">
+            <ToastTitle>Success</ToastTitle>
+            <ToastDescription>Your changes have been saved.</ToastDescription>
+          </div>
+          <ToastClose onClick={() => setOpen(false)} />
+        </Toast>
+      </ToastProvider>
     </div>
-    <ToastClose onClick={() => setOpen(false)} />
-  </Toast>
-</ToastProvider>`
+  )
+}`
 
-const successCode = `<Toast variant="success" open={open()}>
-  <div className="flex-1">
-    <ToastTitle>Success</ToastTitle>
-    <ToastDescription>Your changes have been saved.</ToastDescription>
-  </div>
-  <ToastClose onClick={() => setOpen(false)} />
-</Toast>`
+const errorCode = `"use client"
 
-const errorCode = `<Toast variant="error" open={open()}>
-  <div className="flex-1">
-    <ToastTitle>Error</ToastTitle>
-    <ToastDescription>Something went wrong. Please try again.</ToastDescription>
-  </div>
-  <ToastClose onClick={() => setOpen(false)} />
-</Toast>`
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import {
+  ToastProvider,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+} from '@/components/ui/toast'
 
-const withActionCode = `<Toast open={open()}>
-  <div className="flex-1">
-    <ToastTitle>Item deleted</ToastTitle>
-    <ToastDescription>The item has been removed from your list.</ToastDescription>
-  </div>
-  <div className="flex gap-2">
-    <ToastAction altText="Undo deletion" onClick={handleUndo}>
-      Undo
-    </ToastAction>
-    <ToastClose onClick={() => setOpen(false)} />
-  </div>
-</Toast>`
+function ToastError() {
+  const [open, setOpen] = createSignal(false)
+
+  const showToast = () => {
+    setOpen(true)
+    setTimeout(() => setOpen(false), 5000)
+  }
+
+  return (
+    <div>
+      <Button onClick={showToast}>Show Error</Button>
+      <ToastProvider position="bottom-right">
+        <Toast variant="error" open={open()}>
+          <div className="flex-1">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>Something went wrong. Please try again.</ToastDescription>
+          </div>
+          <ToastClose onClick={() => setOpen(false)} />
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}`
+
+const warningCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import {
+  ToastProvider,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+} from '@/components/ui/toast'
+
+function ToastWarning() {
+  const [open, setOpen] = createSignal(false)
+
+  const showToast = () => {
+    setOpen(true)
+    setTimeout(() => setOpen(false), 5000)
+  }
+
+  return (
+    <div>
+      <Button onClick={showToast}>Show Warning</Button>
+      <ToastProvider position="bottom-right">
+        <Toast variant="warning" open={open()}>
+          <div className="flex-1">
+            <ToastTitle>Warning</ToastTitle>
+            <ToastDescription>Please review before continuing.</ToastDescription>
+          </div>
+          <ToastClose onClick={() => setOpen(false)} />
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}`
+
+const infoCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import {
+  ToastProvider,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+} from '@/components/ui/toast'
+
+function ToastInfo() {
+  const [open, setOpen] = createSignal(false)
+
+  const showToast = () => {
+    setOpen(true)
+    setTimeout(() => setOpen(false), 5000)
+  }
+
+  return (
+    <div>
+      <Button onClick={showToast}>Show Info</Button>
+      <ToastProvider position="bottom-right">
+        <Toast variant="info" open={open()}>
+          <div className="flex-1">
+            <ToastTitle>Info</ToastTitle>
+            <ToastDescription>Here is some helpful information.</ToastDescription>
+          </div>
+          <ToastClose onClick={() => setOpen(false)} />
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}`
+
+const withActionCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import {
+  ToastProvider,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastAction,
+  ToastClose,
+} from '@/components/ui/toast'
+
+function ToastWithAction() {
+  const [open, setOpen] = createSignal(false)
+
+  const showToast = () => {
+    setOpen(true)
+    setTimeout(() => setOpen(false), 5000)
+  }
+
+  const handleUndo = () => {
+    console.log('Undo clicked')
+    setOpen(false)
+  }
+
+  return (
+    <div>
+      <Button onClick={showToast}>Delete Item</Button>
+      <ToastProvider position="bottom-right">
+        <Toast open={open()}>
+          <div className="flex-1">
+            <ToastTitle>Item deleted</ToastTitle>
+            <ToastDescription>The item has been removed from your list.</ToastDescription>
+          </div>
+          <div className="flex gap-2">
+            <ToastAction altText="Undo deletion" onClick={handleUndo}>
+              Undo
+            </ToastAction>
+            <ToastClose onClick={() => setOpen(false)} />
+          </div>
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}`
 
 // Props definitions
 const toastProviderProps: PropDefinition[] = [
@@ -184,6 +335,8 @@ const toastActionProps: PropDefinition[] = [
 ]
 
 export function ToastPage() {
+  const installCommands = getHighlightedCommands('barefoot add toast')
+
   return (
     <DocPage slug="toast" toc={tocItems}>
       <div className="space-y-12">
@@ -202,12 +355,7 @@ export function ToastPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add toast" highlightedCommands={installCommands} />
         </Section>
 
         {/* Features */}
@@ -226,32 +374,28 @@ export function ToastPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Basic Toast" code={basicCode}>
+            <Example title="Basic" code={basicCode}>
               <ToastBasicDemo />
             </Example>
 
-            <Example title="Success Variant" code={successCode}>
+            <Example title="Success" code={successCode}>
               <ToastSuccessDemo />
             </Example>
 
-            <Example title="Error Variant" code={errorCode}>
+            <Example title="Error" code={errorCode}>
               <ToastErrorDemo />
             </Example>
 
-            <Example title="Warning Variant" code={`<Toast variant="warning" open={open()}>...</Toast>`}>
+            <Example title="Warning" code={warningCode}>
               <ToastWarningDemo />
             </Example>
 
-            <Example title="Info Variant" code={`<Toast variant="info" open={open()}>...</Toast>`}>
+            <Example title="Info" code={infoCode}>
               <ToastInfoDemo />
             </Example>
 
-            <Example title="With Action Button" code={withActionCode}>
+            <Example title="With Action" code={withActionCode}>
               <ToastWithActionDemo />
-            </Example>
-
-            <Example title="All Variants" code={`<Toast variant="default|success|error|warning|info" open={open()}>...</Toast>`}>
-              <ToastVariantsDemo />
             </Example>
           </div>
         </Section>

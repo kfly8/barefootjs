@@ -9,8 +9,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -19,40 +20,77 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'checked-state', title: 'Checked State', branch: 'start' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'state-binding', title: 'State Binding', branch: 'child' },
+  { id: 'with-label', title: 'With Label', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add checkbox`
+const checkedCode = `"use client"
 
-const usageCode = `import { Checkbox } from '@/components/ui/checkbox'
+import { Checkbox } from '@/components/ui/checkbox'
 
-export default function Page() {
-  return <Checkbox />
+function CheckboxChecked() {
+  return (
+    <div className="flex gap-4">
+      <Checkbox />
+      <Checkbox checked />
+    </div>
+  )
 }`
 
-const checkedCode = `<Checkbox />
-<Checkbox checked />`
+const disabledCode = `"use client"
 
-const disabledCode = `<Checkbox disabled />
-<Checkbox checked disabled />`
+import { Checkbox } from '@/components/ui/checkbox'
 
-const bindingCode = `import { createSignal } from '@barefootjs/dom'
+function CheckboxDisabled() {
+  return (
+    <div className="flex gap-4">
+      <Checkbox disabled />
+      <Checkbox checked disabled />
+    </div>
+  )
+}`
 
-const [checked, setChecked] = createSignal(false)
+const bindingCode = `"use client"
 
-<Checkbox
-  checked={checked()}
-  onCheckedChange={setChecked}
-/>
-<p>{checked() ? 'Checked' : 'Unchecked'}</p>`
+import { createSignal } from '@barefootjs/dom'
+import { Checkbox } from '@/components/ui/checkbox'
 
-const withLabelCode = `<label className="flex items-center gap-2">
-  <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
-  <span>Accept terms and conditions</span>
-</label>`
+function CheckboxBinding() {
+  const [checked, setChecked] = createSignal(false)
+
+  return (
+    <div className="flex items-center gap-4">
+      <Checkbox
+        checked={checked()}
+        onCheckedChange={setChecked}
+      />
+      <span className="text-sm text-muted-foreground">
+        {checked() ? 'Checked' : 'Unchecked'}
+      </span>
+    </div>
+  )
+}`
+
+const withLabelCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Checkbox } from '@/components/ui/checkbox'
+
+function CheckboxWithLabel() {
+  const [accepted, setAccepted] = createSignal(false)
+
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
+      <span className="text-sm">Accept terms and conditions</span>
+    </label>
+  )
+}`
 
 // Props definition
 const checkboxProps: PropDefinition[] = [
@@ -76,6 +114,8 @@ const checkboxProps: PropDefinition[] = [
 ]
 
 export function CheckboxPage() {
+  const installCommands = getHighlightedCommands('barefoot add checkbox')
+
   return (
     <DocPage slug="checkbox" toc={tocItems}>
       <div className="space-y-12">
@@ -92,12 +132,7 @@ export function CheckboxPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add checkbox" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}

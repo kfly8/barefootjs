@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,17 +19,18 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'with-form', title: 'With Form', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add dialog`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
 import {
   DialogTrigger,
   DialogOverlay,
@@ -40,7 +42,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 
-export default function Page() {
+function DialogBasic() {
   const [open, setOpen] = createSignal(false)
 
   return (
@@ -58,7 +60,7 @@ export default function Page() {
         <DialogHeader>
           <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
           <DialogDescription id="dialog-description">
-            Dialog description here.
+            This is a basic dialog example.
           </DialogDescription>
         </DialogHeader>
         <p>Dialog content goes here.</p>
@@ -70,60 +72,59 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [open, setOpen] = createSignal(false)
+const formCode = `"use client"
 
-<DialogTrigger onClick={() => setOpen(true)}>
-  Open Dialog
-</DialogTrigger>
-<DialogOverlay open={open()} onClick={() => setOpen(false)} />
-<DialogContent
-  open={open()}
-  onClose={() => setOpen(false)}
-  ariaLabelledby="dialog-title"
-  ariaDescribedby="dialog-description"
->
-  <DialogHeader>
-    <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
-    <DialogDescription id="dialog-description">
-      This is a basic dialog example.
-    </DialogDescription>
-  </DialogHeader>
-  <p>Dialog content goes here.</p>
-  <DialogFooter>
-    <DialogClose onClick={() => setOpen(false)}>Close</DialogClose>
-  </DialogFooter>
-</DialogContent>`
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  DialogTrigger,
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 
-const formCode = `const [open, setOpen] = createSignal(false)
+function DialogForm() {
+  const [open, setOpen] = createSignal(false)
 
-<DialogTrigger onClick={() => setOpen(true)}>
-  Edit Profile
-</DialogTrigger>
-<DialogOverlay open={open()} onClick={() => setOpen(false)} />
-<DialogContent
-  open={open()}
-  onClose={() => setOpen(false)}
-  ariaLabelledby="form-dialog-title"
->
-  <DialogHeader>
-    <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
-    <DialogDescription>
-      Make changes to your profile here.
-    </DialogDescription>
-  </DialogHeader>
-  <div className="grid gap-4 py-4">
-    <div className="grid grid-cols-4 items-center gap-4">
-      <label for="name" className="text-right text-sm font-medium">
-        Name
-      </label>
-      <input id="name" type="text" className="col-span-3 ..." />
+  return (
+    <div>
+      <DialogTrigger onClick={() => setOpen(true)}>
+        Edit Profile
+      </DialogTrigger>
+      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+      <DialogContent
+        open={open()}
+        onClose={() => setOpen(false)}
+        ariaLabelledby="form-dialog-title"
+      >
+        <DialogHeader>
+          <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input id="name" type="text" className="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
+          <Button onClick={() => setOpen(false)}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
     </div>
-  </div>
-  <DialogFooter>
-    <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-    <button onClick={() => setOpen(false)}>Save changes</button>
-  </DialogFooter>
-</DialogContent>`
+  )
+}`
 
 // Props definitions
 const dialogTriggerProps: PropDefinition[] = [
@@ -203,6 +204,8 @@ const dialogCloseProps: PropDefinition[] = [
 ]
 
 export function DialogPage() {
+  const installCommands = getHighlightedCommands('barefoot add dialog')
+
   return (
     <DocPage slug="dialog" toc={tocItems}>
       <div className="space-y-12">
@@ -221,12 +224,7 @@ export function DialogPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add dialog" highlightedCommands={installCommands} />
         </Section>
 
         {/* Features */}
@@ -244,11 +242,11 @@ export function DialogPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Basic Dialog" code={basicCode}>
+            <Example title="Basic" code={basicCode}>
               <DialogBasicDemo />
             </Example>
 
-            <Example title="Dialog with Form" code={formCode}>
+            <Example title="With Form" code={formCode}>
               <DialogFormDemo />
             </Example>
           </div>

@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,16 +19,18 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'multiple-tabs', title: 'Multiple Tabs', branch: 'child' },
+  { id: 'disabled-tab', title: 'Disabled Tab', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add tabs`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/dom'
 import {
   Tabs,
   TabsList,
@@ -35,15 +38,14 @@ import {
   TabsContent,
 } from '@/components/ui/tabs'
 
-export default function Page() {
+function TabsBasic() {
   const [activeTab, setActiveTab] = createSignal('account')
 
-  // Use createMemo for derived selection states
   const isAccountSelected = createMemo(() => activeTab() === 'account')
   const isPasswordSelected = createMemo(() => activeTab() === 'password')
 
   return (
-    <Tabs value={activeTab()} onValueChange={setActiveTab}>
+    <Tabs value={activeTab()}>
       <TabsList>
         <TabsTrigger
           value="account"
@@ -70,66 +72,67 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [activeTab, setActiveTab] = createSignal('account')
+const multipleTabsCode = `"use client"
 
-// Use createMemo for derived selection states
-const isAccountSelected = createMemo(() => activeTab() === 'account')
-const isPasswordSelected = createMemo(() => activeTab() === 'password')
+import { createSignal, createMemo } from '@barefootjs/dom'
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/ui/tabs'
 
-<Tabs value={activeTab()}>
-  <TabsList>
-    <TabsTrigger
-      value="account"
-      selected={isAccountSelected()}
-      onClick={() => setActiveTab('account')}
-    >
-      Account
-    </TabsTrigger>
-    <TabsTrigger
-      value="password"
-      selected={isPasswordSelected()}
-      onClick={() => setActiveTab('password')}
-    >
-      Password
-    </TabsTrigger>
-  </TabsList>
-  <TabsContent value="account" selected={isAccountSelected()}>
-    Make changes to your account here.
-  </TabsContent>
-  <TabsContent value="password" selected={isPasswordSelected()}>
-    Change your password here.
-  </TabsContent>
-</Tabs>`
+function TabsMultiple() {
+  const [activeTab, setActiveTab] = createSignal('overview')
 
-const multipleTabsCode = `const [activeTab, setActiveTab] = createSignal('overview')
+  const isOverviewSelected = createMemo(() => activeTab() === 'overview')
+  const isAnalyticsSelected = createMemo(() => activeTab() === 'analytics')
+  const isReportsSelected = createMemo(() => activeTab() === 'reports')
+  const isNotificationsSelected = createMemo(() => activeTab() === 'notifications')
 
-// Use createMemo for each tab's selection state
-const isOverviewSelected = createMemo(() => activeTab() === 'overview')
-const isAnalyticsSelected = createMemo(() => activeTab() === 'analytics')
-const isReportsSelected = createMemo(() => activeTab() === 'reports')
-const isNotificationsSelected = createMemo(() => activeTab() === 'notifications')
+  return (
+    <Tabs value={activeTab()}>
+      <TabsList>
+        <TabsTrigger value="overview" selected={isOverviewSelected()} onClick={() => setActiveTab('overview')}>
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="analytics" selected={isAnalyticsSelected()} onClick={() => setActiveTab('analytics')}>
+          Analytics
+        </TabsTrigger>
+        <TabsTrigger value="reports" selected={isReportsSelected()} onClick={() => setActiveTab('reports')}>
+          Reports
+        </TabsTrigger>
+        <TabsTrigger value="notifications" selected={isNotificationsSelected()} onClick={() => setActiveTab('notifications')}>
+          Notifications
+        </TabsTrigger>
+      </TabsList>
+      {/* TabsContent for each tab... */}
+    </Tabs>
+  )
+}`
 
-<Tabs value={activeTab()}>
-  <TabsList>
-    <TabsTrigger value="overview" selected={isOverviewSelected()} onClick={() => setActiveTab('overview')}>
-      Overview
-    </TabsTrigger>
-    <TabsTrigger value="analytics" selected={isAnalyticsSelected()} onClick={() => setActiveTab('analytics')}>
-      Analytics
-    </TabsTrigger>
-    <TabsTrigger value="reports" selected={isReportsSelected()} onClick={() => setActiveTab('reports')}>
-      Reports
-    </TabsTrigger>
-    <TabsTrigger value="notifications" selected={isNotificationsSelected()} onClick={() => setActiveTab('notifications')}>
-      Notifications
-    </TabsTrigger>
-  </TabsList>
-  {/* TabsContent for each tab... */}
-</Tabs>`
+const disabledCode = `"use client"
 
-const disabledCode = `<TabsTrigger value="disabled" disabled>
-  Disabled Tab
-</TabsTrigger>`
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs'
+
+function TabsDisabled() {
+  return (
+    <Tabs>
+      <TabsList>
+        <TabsTrigger value="enabled" selected>
+          Enabled Tab
+        </TabsTrigger>
+        <TabsTrigger value="disabled" disabled>
+          Disabled Tab
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
+  )
+}`
 
 // Props definition
 const tabsProps: PropDefinition[] = [
@@ -190,6 +193,8 @@ const tabsContentProps: PropDefinition[] = [
 ]
 
 export function TabsPage() {
+  const installCommands = getHighlightedCommands('barefoot add tabs')
+
   return (
     <DocPage slug="tabs" toc={tocItems}>
       <div className="space-y-12">
@@ -208,12 +213,7 @@ export function TabsPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add tabs" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}

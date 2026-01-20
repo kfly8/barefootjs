@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,24 +19,46 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'default', title: 'Default', branch: 'start' },
+  { id: 'secondary', title: 'Secondary', branch: 'child' },
+  { id: 'destructive', title: 'Destructive', branch: 'child' },
+  { id: 'outline', title: 'Outline', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add badge`
+const defaultCode = `"use client"
 
-const usageCode = `import { Badge } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 
-export default function Page() {
-  return <Badge>Badge</Badge>
+function BadgeDefault() {
+  return <Badge variant="default">Default</Badge>
 }`
 
-const variantCode = `<Badge variant="default">Default</Badge>
-<Badge variant="secondary">Secondary</Badge>
-<Badge variant="destructive">Destructive</Badge>
-<Badge variant="outline">Outline</Badge>`
+const secondaryCode = `"use client"
+
+import { Badge } from '@/components/ui/badge'
+
+function BadgeSecondary() {
+  return <Badge variant="secondary">Secondary</Badge>
+}`
+
+const destructiveCode = `"use client"
+
+import { Badge } from '@/components/ui/badge'
+
+function BadgeDestructive() {
+  return <Badge variant="destructive">Destructive</Badge>
+}`
+
+const outlineCode = `"use client"
+
+import { Badge } from '@/components/ui/badge'
+
+function BadgeOutline() {
+  return <Badge variant="outline">Outline</Badge>
+}`
 
 // Props definition
 const badgeProps: PropDefinition[] = [
@@ -53,6 +76,8 @@ const badgeProps: PropDefinition[] = [
 ]
 
 export function BadgePage() {
+  const installCommands = getHighlightedCommands('barefoot add badge')
+
   return (
     <DocPage slug="badge" toc={tocItems}>
       <div className="space-y-12">
@@ -69,21 +94,25 @@ export function BadgePage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add badge" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Variants" code={variantCode}>
+            <Example title="Default" code={defaultCode}>
               <Badge variant="default">Default</Badge>
+            </Example>
+
+            <Example title="Secondary" code={secondaryCode}>
               <Badge variant="secondary">Secondary</Badge>
+            </Example>
+
+            <Example title="Destructive" code={destructiveCode}>
               <Badge variant="destructive">Destructive</Badge>
+            </Example>
+
+            <Example title="Outline" code={outlineCode}>
               <Badge variant="outline">Outline</Badge>
             </Example>
           </div>
