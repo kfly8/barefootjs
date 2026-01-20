@@ -32,7 +32,8 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'profile-card', title: 'Profile Card', branch: 'start' },
+  { id: 'stats-cards', title: 'Stats Cards', branch: 'start' },
+  { id: 'profile-card', title: 'Profile Card', branch: 'child' },
   { id: 'login-form', title: 'Login Form', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -124,6 +125,59 @@ export function LoginForm() {
         <Button type="submit" className="w-full">Login</Button>
       </CardFooter>
     </Card>
+  )
+}`
+
+const statsCardsCode = `"use client"
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui/card'
+
+// Icon components for stats cards
+function DollarIcon() {
+  return (
+    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function UserIcon() {
+  return (
+    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  )
+}
+
+export function StatsCards() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Card className="min-w-[140px]">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Total Sales</CardTitle>
+          <DollarIcon />
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold">$45,231</p>
+          <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+        </CardContent>
+      </Card>
+      <Card className="min-w-[140px]">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Active Users</CardTitle>
+          <UserIcon />
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold">2,350</p>
+          <p className="text-xs text-muted-foreground">+180 since last hour</p>
+        </CardContent>
+      </Card>
+    </div>
   )
 }`
 
@@ -328,6 +382,35 @@ export function CardPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
+            <Example title="Stats Cards" code={statsCardsCode}>
+              <div className="grid gap-4 sm:grid-cols-2 w-full max-w-lg">
+                <Card className="min-w-[140px]">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Total Sales</CardTitle>
+                    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">$45,231</p>
+                    <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                  </CardContent>
+                </Card>
+                <Card className="min-w-[140px]">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Active Users</CardTitle>
+                    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">2,350</p>
+                    <p className="text-xs text-muted-foreground">+180 since last hour</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </Example>
+
             <Example title="Profile Card" code={profileCardCode}>
               <Card className="w-[350px]">
                 <CardHeader>
