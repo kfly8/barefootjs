@@ -117,6 +117,9 @@ jobs:
       - name: Build examples/echo
         run: cd examples/echo && bun run build
 
+      - name: Download Go dependencies
+        run: cd examples/echo && go mod download
+
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium
 
