@@ -26,9 +26,31 @@ jobs:
           cd packages/dom && bun run build
           cd ../jsx && bun run build
           cd ../hono && bun run build
+          cd ../go-template && bun run build
 
       - name: Run unit tests
         run: bun test packages/
+
+  e2e-hono:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          cd packages/dom && bun run build
+          cd ../jsx && bun run build
+          cd ../hono && bun run build
 
       - name: Build examples/hono
         run: cd examples/hono && bun run build
@@ -59,4 +81,50 @@ jobs:
         with:
           name: playwright-report-docs-ui
           path: docs/ui/playwright-report/
+          retention-days: 30
+
+  e2e-echo:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          cd packages/dom && bun run build
+          cd ../jsx && bun run build
+          cd ../go-template && bun run build
+
+      - name: Build examples/echo
+        run: cd examples/echo && bun run build
+
+      - name: Download Go dependencies
+        run: cd examples/echo && go mod download
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run examples/echo E2E tests
+        run: cd examples/echo && bun run test:e2e
+
+      - name: Upload Playwright report (examples/echo)
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-examples-echo
+          path: examples/echo/playwright-report/
           retention-days: 30
