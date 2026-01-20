@@ -137,111 +137,58 @@ func counterHandler(c echo.Context) error {
 }
 
 func renderPage(componentName string, props interface{}) string {
-	return renderPageWithScripts(componentName, props)
+	return renderPageWithScripts(componentName, props, "", nil)
 }
 
-func renderPageWithScripts(componentName string, props interface{}, childComponents ...string) string {
+// renderPageWithScripts renders a component in a full HTML page with hydration scripts.
+// childPropsScripts contains additional props script tags for child components.
+// childComponents lists component names that need their client scripts loaded before the parent.
+func renderPageWithScripts(componentName string, props interface{}, childPropsScripts string, childComponents []string) string {
 	t := loadTemplates()
 
 	// Get ScopeID from props using reflection
-	scopeID := ""
-	propsJSON := "{}"
-	if propsVal := getField(props, "ScopeID"); propsVal != "" {
-		scopeID = propsVal
-	}
+	scopeID := getField(props, "ScopeID")
 
 	// Serialize props to JSON for client hydration
+	propsJSON := "{}"
 	if jsonBytes, err := json.Marshal(props); err == nil {
 		propsJSON = string(jsonBytes)
 	}
 
-	// Create a page template that includes the component
-	pageHTML := `
+	var buf strings.Builder
+
+	// Write page header
+	buf.WriteString(`
 <!DOCTYPE html>
 <html>
 <head>
-    <title>` + componentName + ` - BarefootJS + Echo</title>
+    <title>`)
+	buf.WriteString(componentName)
+	buf.WriteString(` - BarefootJS + Echo</title>
     <link rel="stylesheet" href="/shared/styles/components.css">
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
     </style>
 </head>
 <body>
-    <h1>` + componentName + ` Component</h1>
-    <div id="app">`
+    <h1>`)
+	buf.WriteString(componentName)
+	buf.WriteString(` Component</h1>
+    <div id="app">`)
 
-	// Render the component
-	var buf strings.Builder
-	buf.WriteString(pageHTML)
-
+	// Render the component template
 	t.ExecuteTemplate(&buf, componentName, props)
 
 	// Add props JSON for client hydration
 	if scopeID != "" {
-		buf.WriteString(`<script type="application/json" data-bf-props="` + scopeID + `">` + propsJSON + `</script>`)
+		buf.WriteString(`<script type="application/json" data-bf-props="`)
+		buf.WriteString(scopeID)
+		buf.WriteString(`">`)
+		buf.WriteString(propsJSON)
+		buf.WriteString(`</script>`)
 	}
 
-	buf.WriteString(`</div>
-    <p><a href="/">← Back to index</a></p>
-`)
-
-	// Add child component scripts first (they need to be registered before parent)
-	for _, child := range childComponents {
-		buf.WriteString(`    <script type="module" src="/static/client/` + child + `.client.js"></script>
-`)
-	}
-
-	// Add main component script
-	buf.WriteString(`    <script type="module" src="/static/client/` + componentName + `.client.js"></script>
-</body>
-</html>`)
-
-	return buf.String()
-}
-
-// renderPageWithChildProps renders a page with additional child props scripts
-func renderPageWithChildProps(componentName string, props interface{}, childPropsScripts string, childComponents ...string) string {
-	t := loadTemplates()
-
-	// Get ScopeID from props using reflection
-	scopeID := ""
-	propsJSON := "{}"
-	if propsVal := getField(props, "ScopeID"); propsVal != "" {
-		scopeID = propsVal
-	}
-
-	// Serialize props to JSON for client hydration
-	if jsonBytes, err := json.Marshal(props); err == nil {
-		propsJSON = string(jsonBytes)
-	}
-
-	// Create a page template that includes the component
-	pageHTML := `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>` + componentName + ` - BarefootJS + Echo</title>
-    <link rel="stylesheet" href="/shared/styles/components.css">
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    </style>
-</head>
-<body>
-    <h1>` + componentName + ` Component</h1>
-    <div id="app">`
-
-	// Render the component
-	var buf strings.Builder
-	buf.WriteString(pageHTML)
-
-	t.ExecuteTemplate(&buf, componentName, props)
-
-	// Add props JSON for client hydration (parent component)
-	if scopeID != "" {
-		buf.WriteString(`<script type="application/json" data-bf-props="` + scopeID + `">` + propsJSON + `</script>`)
-	}
-
-	// Add child component props scripts
+	// Add child component props scripts if provided
 	buf.WriteString(childPropsScripts)
 
 	buf.WriteString(`</div>
@@ -250,12 +197,16 @@ func renderPageWithChildProps(componentName string, props interface{}, childProp
 
 	// Add child component scripts first (they need to be registered before parent)
 	for _, child := range childComponents {
-		buf.WriteString(`    <script type="module" src="/static/client/` + child + `.client.js"></script>
+		buf.WriteString(`    <script type="module" src="/static/client/`)
+		buf.WriteString(child)
+		buf.WriteString(`.client.js"></script>
 `)
 	}
 
 	// Add main component script
-	buf.WriteString(`    <script type="module" src="/static/client/` + componentName + `.client.js"></script>
+	buf.WriteString(`    <script type="module" src="/static/client/`)
+	buf.WriteString(componentName)
+	buf.WriteString(`.client.js"></script>
 </body>
 </html>`)
 
@@ -290,17 +241,31 @@ func toggleHandler(c echo.Context) error {
 		},
 	})
 
-	// Build child component props scripts for each ToggleItem
-	var childPropsScripts strings.Builder
-	for _, item := range props.ToggleItems {
-		jsonBytes, _ := json.Marshal(item)
-		childPropsScripts.WriteString(fmt.Sprintf(
-			`<script type="application/json" data-bf-props="%s">%s</script>`,
-			item.ScopeID, string(jsonBytes),
-		))
-	}
+	childPropsScripts := buildChildPropsScripts(props.ToggleItems)
 
-	return c.HTML(http.StatusOK, renderPageWithChildProps("Toggle", props, childPropsScripts.String(), "Toggle"))
+	return c.HTML(http.StatusOK, renderPageWithScripts("Toggle", props, childPropsScripts, []string{"Toggle"}))
+}
+
+// buildChildPropsScripts generates props script tags for a slice of child components.
+// Each element must have ScopeID field for client hydration.
+func buildChildPropsScripts[T any](items []T) string {
+	var buf strings.Builder
+	for _, item := range items {
+		scopeID := getField(item, "ScopeID")
+		if scopeID == "" {
+			continue
+		}
+		jsonBytes, err := json.Marshal(item)
+		if err != nil {
+			continue
+		}
+		buf.WriteString(`<script type="application/json" data-bf-props="`)
+		buf.WriteString(scopeID)
+		buf.WriteString(`">`)
+		buf.Write(jsonBytes)
+		buf.WriteString(`</script>`)
+	}
+	return buf.String()
 }
 
 func fizzbuzzHandler(c echo.Context) error {
@@ -378,7 +343,7 @@ func todosHandler(c echo.Context) error {
 		NewText: "",                        // signal initial value
 	}
 
-	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "AddTodoForm", "TodoItem"))
+	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "", []string{"AddTodoForm", "TodoItem"}))
 }
 
 // Todo API handlers
