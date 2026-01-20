@@ -1,98 +1,173 @@
 "use client"
+
 /**
- * Dropdown Component
+ * Dropdown Components
  *
  * A select-like dropdown menu for choosing from a list of options.
+ * Inspired by shadcn/ui with CSS variable theming support.
  *
  * Features:
- * - Open/close state management via props
  * - ESC key to close
- * - Click on item to select
+ * - Arrow key navigation
  * - Accessibility (role="combobox", role="listbox", role="option")
  *
- * Design Decision: Props-based state management
- * Similar to Accordion/Tabs/Dialog, this component uses props for state.
- * The parent component manages the open and selected state with signals.
+ * @example Basic dropdown
+ * ```tsx
+ * const [open, setOpen] = useState(false)
+ * const [selected, setSelected] = useState('apple')
  *
- * Note: Uses CSS-based visibility (hidden class) due to BarefootJS compiler
- * constraints. The compiler processes JSX structure but does not preserve
- * custom createEffect logic with conditional JSX returns.
+ * <Dropdown>
+ *   <DropdownTrigger open={open} onClick={() => setOpen(!open)}>
+ *     <DropdownLabel>{selected}</DropdownLabel>
+ *   </DropdownTrigger>
+ *   <DropdownContent open={open} onClose={() => setOpen(false)}>
+ *     <DropdownItem
+ *       value="apple"
+ *       selected={selected === 'apple'}
+ *       onClick={() => { setSelected('apple'); setOpen(false) }}
+ *     >
+ *       Apple
+ *     </DropdownItem>
+ *     <DropdownItem
+ *       value="banana"
+ *       selected={selected === 'banana'}
+ *       onClick={() => { setSelected('banana'); setOpen(false) }}
+ *     >
+ *       Banana
+ *     </DropdownItem>
+ *   </DropdownContent>
+ * </Dropdown>
+ * ```
  */
 
 import type { Child } from '../../types'
 import { CheckIcon, ChevronDownIcon } from './icon'
 
-// --- Dropdown ---
-// Note: This is a simple positioning wrapper with no client-side behavior.
-// Due to BarefootJS compiler constraints, this renders directly as a div.
+// Dropdown container classes
+const dropdownClasses = 'relative inline-block'
 
-export interface DropdownProps {
+// DropdownTrigger base classes
+const dropdownTriggerBaseClasses = 'inline-flex items-center justify-between rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent h-10 px-4 py-2 min-w-[160px] disabled:pointer-events-none disabled:opacity-50'
+
+// DropdownContent base classes
+const dropdownContentBaseClasses = 'absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-border bg-popover py-1 shadow-md transform-gpu origin-top transition-all duration-normal ease-out'
+
+// DropdownContent open/closed classes
+const dropdownContentOpenClasses = 'opacity-100 scale-100'
+const dropdownContentClosedClasses = 'opacity-0 scale-95 pointer-events-none'
+
+// DropdownItem base classes
+const dropdownItemBaseClasses = 'relative flex cursor-pointer select-none items-center gap-2 px-2 py-1.5 text-sm outline-hidden rounded-sm'
+
+// DropdownItem state classes
+const dropdownItemDefaultClasses = 'text-popover-foreground hover:bg-accent/50 focus:bg-accent focus:text-accent-foreground'
+const dropdownItemSelectedClasses = 'bg-accent text-accent-foreground font-medium'
+const dropdownItemDisabledClasses = 'pointer-events-none opacity-50'
+
+// DropdownLabel classes
+const dropdownLabelClasses = 'text-muted-foreground'
+
+/**
+ * Props for Dropdown component.
+ */
+interface DropdownProps {
+  /** DropdownTrigger and DropdownContent */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function Dropdown({ children }: DropdownProps) {
+/**
+ * Dropdown container component.
+ *
+ * @param props.children - Trigger and content components
+ */
+function Dropdown({ class: className = '', children }: DropdownProps) {
   return (
-    <div class="relative inline-block">
+    <div data-slot="dropdown" className={`${dropdownClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-// --- DropdownTrigger ---
-
-export interface DropdownTriggerProps {
+/**
+ * Props for DropdownTrigger component.
+ */
+interface DropdownTriggerProps {
+  /** Whether the dropdown is open */
   open?: boolean
+  /** Whether disabled */
   disabled?: boolean
+  /** Click handler to toggle dropdown */
   onClick?: () => void
+  /** Trigger content */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function DropdownTrigger({
+/**
+ * Button that toggles the dropdown.
+ *
+ * @param props.open - Whether open
+ * @param props.disabled - Whether disabled
+ * @param props.onClick - Click handler
+ */
+function DropdownTrigger({
+  class: className = '',
   open = false,
   disabled = false,
   onClick,
   children,
 }: DropdownTriggerProps) {
+  const iconClasses = `ml-2 text-muted-foreground transition-transform duration-normal ${open ? 'rotate-180' : ''}`
+
   return (
     <button
+      data-slot="dropdown-trigger"
       type="button"
       role="combobox"
       aria-expanded={open}
       aria-haspopup="listbox"
-      class={`inline-flex items-center justify-between rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent h-10 px-4 py-2 min-w-[160px] ${
-        disabled ? 'pointer-events-none opacity-50' : ''
-      }`}
-      {...(disabled ? { disabled: true } : {})}
+      disabled={disabled}
+      className={`${dropdownTriggerBaseClasses} ${className}`}
       onClick={onClick}
-      data-dropdown-trigger
     >
-      <span class="truncate">{children}</span>
-      <ChevronDownIcon
-        size="sm"
-        class={`ml-2 text-muted-foreground transition-transform duration-normal ${
-          open ? 'rotate-180' : ''
-        }`}
-      />
+      <span className="truncate">{children}</span>
+      <ChevronDownIcon size="sm" className={iconClasses} />
     </button>
   )
 }
 
-// --- DropdownContent ---
-
-export interface DropdownContentProps {
+/**
+ * Props for DropdownContent component.
+ */
+interface DropdownContentProps {
+  /** Whether the dropdown is open */
   open?: boolean
+  /** Callback to close the dropdown */
   onClose?: () => void
+  /** DropdownItem components */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function DropdownContent({
+/**
+ * Content container for dropdown items.
+ *
+ * @param props.open - Whether visible
+ * @param props.onClose - Close callback
+ */
+function DropdownContent({
+  class: className = '',
   open = false,
   onClose,
   children,
 }: DropdownContentProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = e.currentTarget as HTMLElement
-    const items = target.querySelectorAll('[data-dropdown-item]:not([aria-disabled="true"])')
+    const items = target.querySelectorAll('[data-slot="dropdown-item"]:not([aria-disabled="true"])')
     const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
 
     switch (e.key) {
@@ -116,7 +191,7 @@ export function DropdownContent({
       case 'Enter':
       case ' ':
         e.preventDefault()
-        if (document.activeElement && (document.activeElement as HTMLElement).dataset.dropdownItem !== undefined) {
+        if (document.activeElement && (document.activeElement as HTMLElement).dataset.slot === 'dropdown-item') {
           ;(document.activeElement as HTMLElement).click()
         }
         break
@@ -135,36 +210,50 @@ export function DropdownContent({
     }
   }
 
-  // Animation: scale + fade from trigger with transform-origin at top
-  // Uses CSS transitions for smooth open/close animation
+  const stateClasses = open ? dropdownContentOpenClasses : dropdownContentClosedClasses
+
   return (
     <div
+      data-slot="dropdown-content"
+      data-state={open ? 'open' : 'closed'}
       role="listbox"
-      class={`absolute z-50 mt-1 w-full min-w-[160px] rounded-md border border-border bg-popover py-1 shadow-md transform-gpu origin-top transition-all duration-normal ease-out ${
-        open
-          ? 'opacity-100 scale-100'
-          : 'opacity-0 scale-95 pointer-events-none'
-      }`}
       tabindex={-1}
+      className={`${dropdownContentBaseClasses} ${stateClasses} ${className}`}
       onKeyDown={handleKeyDown}
-      data-dropdown-content
     >
       {children}
     </div>
   )
 }
 
-// --- DropdownItem ---
-
-export interface DropdownItemProps {
+/**
+ * Props for DropdownItem component.
+ */
+interface DropdownItemProps {
+  /** Value identifier */
   value: string
+  /** Whether this item is selected */
   selected?: boolean
+  /** Whether disabled */
   disabled?: boolean
+  /** Click handler */
   onClick?: () => void
+  /** Item content */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function DropdownItem({
+/**
+ * Individual dropdown item.
+ *
+ * @param props.value - Item identifier
+ * @param props.selected - Whether selected
+ * @param props.disabled - Whether disabled
+ * @param props.onClick - Click handler
+ */
+function DropdownItem({
+  class: className = '',
   value,
   selected = false,
   disabled = false,
@@ -173,44 +262,55 @@ export function DropdownItem({
 }: DropdownItemProps) {
   const handleClick = () => {
     onClick?.()
-    // Return focus to trigger after selection
-    const trigger = document.querySelector('[data-dropdown-trigger]') as HTMLElement
+    const trigger = document.querySelector('[data-slot="dropdown-trigger"]') as HTMLElement
     setTimeout(() => trigger?.focus(), 0)
   }
 
+  const stateClasses = disabled
+    ? dropdownItemDisabledClasses
+    : selected
+    ? dropdownItemSelectedClasses
+    : dropdownItemDefaultClasses
+
   return (
     <div
+      data-slot="dropdown-item"
+      data-value={value}
       role="option"
       aria-selected={selected}
-      aria-disabled={disabled}
-      data-value={value}
+      aria-disabled={disabled || undefined}
       tabindex={disabled ? -1 : 0}
-      class={`relative flex cursor-pointer select-none items-center px-3 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground ${
-        disabled ? 'pointer-events-none opacity-50' : ''
-      } ${
-        selected
-          ? 'bg-accent text-accent-foreground font-medium'
-          : 'text-popover-foreground hover:bg-accent/50'
-      }`}
+      className={`${dropdownItemBaseClasses} ${stateClasses} ${className}`}
       onClick={handleClick}
-      data-dropdown-item
     >
-      {selected && (
-        <CheckIcon size="sm" class="absolute left-2" />
-      )}
-      <span class={selected ? 'pl-6' : ''}>{children}</span>
+      {selected && <CheckIcon size="sm" className="absolute left-2" />}
+      <span className={selected ? 'pl-6' : ''}>{children}</span>
     </div>
   )
 }
 
-// --- DropdownLabel ---
-
-export interface DropdownLabelProps {
+/**
+ * Props for DropdownLabel component.
+ */
+interface DropdownLabelProps {
+  /** Label text */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function DropdownLabel({ children }: DropdownLabelProps) {
+/**
+ * Label text inside the trigger.
+ *
+ * @param props.children - Label content
+ */
+function DropdownLabel({ class: className = '', children }: DropdownLabelProps) {
   return (
-    <span class="text-muted-foreground">{children}</span>
+    <span data-slot="dropdown-label" className={`${dropdownLabelClasses} ${className}`}>
+      {children}
+    </span>
   )
 }
+
+export { Dropdown, DropdownTrigger, DropdownContent, DropdownItem, DropdownLabel }
+export type { DropdownProps, DropdownTriggerProps, DropdownContentProps, DropdownItemProps, DropdownLabelProps }

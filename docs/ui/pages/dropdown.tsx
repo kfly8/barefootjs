@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,17 +19,20 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'default-value', title: 'Default Value', branch: 'child' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'css-transform', title: 'CSS Transform', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add dropdown`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
 import {
   Dropdown,
   DropdownTrigger,
@@ -37,7 +41,7 @@ import {
   DropdownLabel,
 } from '@/components/ui/dropdown'
 
-export default function Page() {
+function DropdownBasic() {
   const [open, setOpen] = createSignal(false)
   const [value, setValue] = createSignal('')
 
@@ -45,6 +49,7 @@ export default function Page() {
     { value: 'apple', label: 'Apple' },
     { value: 'banana', label: 'Banana' },
     { value: 'cherry', label: 'Cherry' },
+    { value: 'grape', label: 'Grape' },
   ]
 
   const selectedLabel = () => {
@@ -60,7 +65,7 @@ export default function Page() {
   return (
     <Dropdown>
       <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-        {value() ? selectedLabel() : <DropdownLabel>Select...</DropdownLabel>}
+        {value() ? selectedLabel() : <DropdownLabel>Select a fruit</DropdownLabel>}
       </DropdownTrigger>
       <DropdownContent open={open()} onClose={() => setOpen(false)}>
         {options.map(option => (
@@ -77,83 +82,119 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [open, setOpen] = createSignal(false)
-const [value, setValue] = createSignal('')
+const defaultValueCode = `"use client"
 
-const options = [
-  { value: 'apple', label: 'Apple' },
-  { value: 'banana', label: 'Banana' },
-  { value: 'cherry', label: 'Cherry' },
-  { value: 'grape', label: 'Grape' },
-]
+import { createSignal } from '@barefootjs/dom'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+} from '@/components/ui/dropdown'
 
-<Dropdown>
-  <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-    {value() ? selectedLabel() : <DropdownLabel>Select a fruit</DropdownLabel>}
-  </DropdownTrigger>
-  <DropdownContent open={open()} onClose={() => setOpen(false)}>
-    {options.map(option => (
-      <DropdownItem
-        value={option.value}
-        selected={value() === option.value}
-        onClick={() => handleSelect(option.value)}
-      >
-        {option.label}
-      </DropdownItem>
-    ))}
-  </DropdownContent>
-</Dropdown>`
+function DropdownWithDefault() {
+  const [open, setOpen] = createSignal(false)
+  const [value, setValue] = createSignal('medium') // Default value
 
-const defaultValueCode = `const [open, setOpen] = createSignal(false)
-const [value, setValue] = createSignal('medium') // Default value
+  const options = [
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'large', label: 'Large' },
+    { value: 'xlarge', label: 'Extra Large' },
+  ]
 
-const options = [
-  { value: 'small', label: 'Small' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'large', label: 'Large' },
-  { value: 'xlarge', label: 'Extra Large' },
-]
+  const selectedLabel = () => {
+    const selected = options.find(opt => opt.value === value())
+    return selected ? selected.label : ''
+  }
 
-<Dropdown>
-  <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-    {selectedLabel()}
-  </DropdownTrigger>
-  <DropdownContent open={open()} onClose={() => setOpen(false)}>
-    {options.map(option => (
-      <DropdownItem
-        value={option.value}
-        selected={value() === option.value}
-        onClick={() => handleSelect(option.value)}
-      >
-        {option.label}
-      </DropdownItem>
-    ))}
-  </DropdownContent>
-</Dropdown>`
+  const handleSelect = (optionValue: string) => {
+    setValue(optionValue)
+    setOpen(false)
+  }
 
-const disabledCode = `<Dropdown>
-  <DropdownTrigger open={open()} onClick={() => setOpen(!open())} disabled>
-    <DropdownLabel>Disabled</DropdownLabel>
-  </DropdownTrigger>
-  <DropdownContent open={open()} onClose={() => setOpen(false)}>
-    <DropdownItem value="option1" onClick={() => {}}>
-      Option 1
-    </DropdownItem>
-  </DropdownContent>
-</Dropdown>`
+  return (
+    <Dropdown>
+      <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
+        {selectedLabel()}
+      </DropdownTrigger>
+      <DropdownContent open={open()} onClose={() => setOpen(false)}>
+        {options.map(option => (
+          <DropdownItem
+            value={option.value}
+            selected={value() === option.value}
+            onClick={() => handleSelect(option.value)}
+          >
+            {option.label}
+          </DropdownItem>
+        ))}
+      </DropdownContent>
+    </Dropdown>
+  )
+}`
 
-const transformCode = `// Dropdown works correctly inside CSS transformed containers
-<div class="transform scale-100 translate-x-0">
-  <Dropdown>
-    <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
-      {selectedLabel() || <DropdownLabel>Select option</DropdownLabel>}
-    </DropdownTrigger>
-    <DropdownContent open={open()} onClose={() => setOpen(false)}>
-      <DropdownItem value="option1">Option 1</DropdownItem>
-      <DropdownItem value="option2">Option 2</DropdownItem>
-    </DropdownContent>
-  </Dropdown>
-</div>`
+const disabledCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+} from '@/components/ui/dropdown'
+
+function DropdownDisabled() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <Dropdown>
+      <DropdownTrigger open={open()} onClick={() => setOpen(!open())} disabled>
+        <DropdownLabel>Disabled</DropdownLabel>
+      </DropdownTrigger>
+      <DropdownContent open={open()} onClose={() => setOpen(false)}>
+        <DropdownItem value="option1" onClick={() => {}}>
+          Option 1
+        </DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+  )
+}`
+
+const transformCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+} from '@/components/ui/dropdown'
+
+function DropdownTransform() {
+  const [open, setOpen] = createSignal(false)
+  const [value, setValue] = createSignal('')
+
+  // Dropdown works correctly inside CSS transformed containers
+  return (
+    <div className="transform scale-100 translate-x-0">
+      <Dropdown>
+        <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
+          {value() || <DropdownLabel>Select option</DropdownLabel>}
+        </DropdownTrigger>
+        <DropdownContent open={open()} onClose={() => setOpen(false)}>
+          <DropdownItem value="option1" onClick={() => setValue('Option 1')}>
+            Option 1
+          </DropdownItem>
+          <DropdownItem value="option2" onClick={() => setValue('Option 2')}>
+            Option 2
+          </DropdownItem>
+        </DropdownContent>
+      </Dropdown>
+    </div>
+  )
+}`
 
 // Props definitions
 const dropdownTriggerProps: PropDefinition[] = [
@@ -224,9 +265,11 @@ const dropdownLabelProps: PropDefinition[] = [
 ]
 
 export function DropdownPage() {
+  const installCommands = getHighlightedCommands('barefoot add dropdown')
+
   return (
     <DocPage slug="dropdown" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Dropdown"
           description="A select-like dropdown menu for choosing from a list of options."
@@ -235,40 +278,35 @@ export function DropdownPage() {
 
         {/* Preview */}
         <Example title="" code={`<Dropdown><DropdownTrigger>...</DropdownTrigger><DropdownContent>...</DropdownContent></Dropdown>`}>
-          <div class="flex gap-4">
+          <div className="flex gap-4">
             <DropdownBasicDemo />
           </div>
         </Example>
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add dropdown" highlightedCommands={installCommands} />
         </Section>
 
         {/* Features */}
         <Section id="features" title="Features">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Props-based state</strong> - Parent controls open/selected state with signals</li>
-            <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dropdown</li>
-            <li><strong class="text-foreground">Click to select</strong> - Click an item to select it</li>
-            <li><strong class="text-foreground">Accessibility</strong> - role="combobox", role="listbox", role="option", aria-expanded, aria-selected</li>
-            <li><strong class="text-foreground">Visual feedback</strong> - Selected item shows checkmark</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Props-based state</strong> - Parent controls open/selected state with signals</li>
+            <li><strong className="text-foreground">ESC key to close</strong> - Press Escape to close the dropdown</li>
+            <li><strong className="text-foreground">Click to select</strong> - Click an item to select it</li>
+            <li><strong className="text-foreground">Accessibility</strong> - role="combobox", role="listbox", role="option", aria-expanded, aria-selected</li>
+            <li><strong className="text-foreground">Visual feedback</strong> - Selected item shows checkmark</li>
           </ul>
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
-            <Example title="Basic Dropdown" code={basicCode}>
+          <div className="space-y-8">
+            <Example title="Basic" code={basicCode}>
               <DropdownBasicDemo />
             </Example>
 
-            <Example title="With Default Value" code={defaultValueCode}>
+            <Example title="Default Value" code={defaultValueCode}>
               <DropdownWithDefaultDemo />
             </Example>
 
@@ -276,18 +314,18 @@ export function DropdownPage() {
               <DropdownDisabledDemo />
             </Example>
 
-            <Example title="With CSS Transform" code={transformCode}>
-              <div class="space-y-4">
-                <p class="text-sm text-muted-foreground">Dropdown inside a scaled container:</p>
-                <div class="transform scale-100 bg-muted p-4 rounded-lg" data-transform-container>
+            <Example title="CSS Transform" code={transformCode}>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Dropdown inside a scaled container:</p>
+                <div className="transform scale-100 bg-muted p-4 rounded-lg" data-transform-container>
                   <DropdownWithTransformDemo />
                 </div>
-                <p class="text-sm text-muted-foreground">Dropdown inside a rotated container:</p>
-                <div class="transform rotate-0 bg-muted p-4 rounded-lg" data-transform-container-rotate>
+                <p className="text-sm text-muted-foreground">Dropdown inside a rotated container:</p>
+                <div className="transform rotate-0 bg-muted p-4 rounded-lg" data-transform-container-rotate>
                   <DropdownWithTransformDemo />
                 </div>
-                <p class="text-sm text-muted-foreground">Dropdown inside a translated container:</p>
-                <div class="transform translate-x-4 bg-muted p-4 rounded-lg" data-transform-container-translate>
+                <p className="text-sm text-muted-foreground">Dropdown inside a translated container:</p>
+                <div className="transform translate-x-4 bg-muted p-4 rounded-lg" data-transform-container-translate>
                   <DropdownWithTransformDemo />
                 </div>
               </div>
@@ -297,32 +335,32 @@ export function DropdownPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate, Home/End to jump, Enter/Space to select</li>
-            <li><strong class="text-foreground">Focus Return</strong> - Focus returns to trigger after selection</li>
-            <li><strong class="text-foreground">ESC to Close</strong> - Press Escape to close the dropdown</li>
-            <li><strong class="text-foreground">ARIA</strong> - role="combobox" on trigger, role="listbox" on content, role="option" on items</li>
-            <li><strong class="text-foreground">State Attributes</strong> - aria-expanded, aria-haspopup, aria-selected, aria-disabled</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate, Home/End to jump, Enter/Space to select</li>
+            <li><strong className="text-foreground">Focus Return</strong> - Focus returns to trigger after selection</li>
+            <li><strong className="text-foreground">ESC to Close</strong> - Press Escape to close the dropdown</li>
+            <li><strong className="text-foreground">ARIA</strong> - role="combobox" on trigger, role="listbox" on content, role="option" on items</li>
+            <li><strong className="text-foreground">State Attributes</strong> - aria-expanded, aria-haspopup, aria-selected, aria-disabled</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownTrigger</h3>
               <PropsTable props={dropdownTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownContent</h3>
               <PropsTable props={dropdownContentProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownItem</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownItem</h3>
               <PropsTable props={dropdownItemProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownLabel</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownLabel</h3>
               <PropsTable props={dropdownLabelProps} />
             </div>
           </div>

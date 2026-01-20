@@ -79,7 +79,7 @@ export interface BaseEventAttributes {
 export interface HTMLBaseAttributes extends BaseEventAttributes {
   // Core attributes
   id?: string
-  class?: string | Promise<string>
+  className?: string | Promise<string>
   style?: string | Record<string, string | number>
   title?: string
   tabindex?: number

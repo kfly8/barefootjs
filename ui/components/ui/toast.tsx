@@ -1,186 +1,296 @@
 "use client"
+
 /**
- * Toast Component
+ * Toast Components
  *
- * A non-blocking notification component that displays brief messages to users.
+ * A non-blocking notification component that displays brief messages.
+ * Inspired by shadcn/ui with CSS variable theming support.
  *
  * Features:
  * - Variants: default, success, error, warning, info
  * - Auto-dismiss with configurable duration
  * - Manual dismiss via close button
- * - Multiple toasts can be stacked
  * - Position options: top-right, top-left, bottom-right, bottom-left
  * - Accessibility: role="status", aria-live="polite"
- * - Slide-in/slide-out animations with fade effect
  *
- * Design Decision: Props-based state management
- * Similar to Dialog, this component uses props for state.
- * The parent component manages the open state with a signal.
+ * @example Basic toast
+ * ```tsx
+ * const [open, setOpen] = useState(false)
  *
- * Animation States:
- * - 'entering': Toast is sliding in from right
- * - 'visible': Toast is fully visible
- * - 'exiting': Toast is sliding out to right
- * - 'hidden': Toast is not rendered (display: none)
+ * <ToastProvider position="bottom-right">
+ *   <Toast variant="success" open={open}>
+ *     <div className="flex-1">
+ *       <ToastTitle>Success!</ToastTitle>
+ *       <ToastDescription>Your changes have been saved.</ToastDescription>
+ *     </div>
+ *     <ToastClose onClick={() => setOpen(false)} />
+ *   </Toast>
+ * </ToastProvider>
+ * ```
+ *
+ * @example Toast with action
+ * ```tsx
+ * <Toast variant="default" open={open}>
+ *   <div className="flex-1">
+ *     <ToastTitle>Undo?</ToastTitle>
+ *     <ToastDescription>Item was deleted.</ToastDescription>
+ *   </div>
+ *   <ToastAction altText="Undo" onClick={handleUndo}>Undo</ToastAction>
+ *   <ToastClose onClick={() => setOpen(false)} />
+ * </Toast>
+ * ```
  */
 
 import type { Child } from '../../types'
 import { XIcon } from './icon'
 
-// --- Toast Variants ---
+// Type definitions
+type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
+type ToastAnimationState = 'entering' | 'visible' | 'exiting' | 'hidden'
+type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
 
-export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
-
-/** Animation states for the toast */
-export type ToastAnimationState = 'entering' | 'visible' | 'exiting' | 'hidden'
-
-// --- ToastProvider ---
-
-export type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
-
-export interface ToastProviderProps {
-  position?: ToastPosition
-  children?: Child
+// ToastProvider position classes
+const positionClasses: Record<ToastPosition, string> = {
+  'top-right': 'top-4 right-4',
+  'top-left': 'top-4 left-4',
+  'bottom-right': 'bottom-4 right-4',
+  'bottom-left': 'bottom-4 left-4',
 }
 
-export function ToastProvider({
+// ToastProvider base classes
+const toastProviderClasses = 'fixed z-50 flex flex-col gap-2 pointer-events-none'
+
+// Toast base classes
+const toastBaseClasses = 'items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-slow ease-out'
+
+// Toast variant classes
+const toastVariantClasses: Record<ToastVariant, string> = {
+  default: 'bg-background border-border text-foreground',
+  success: 'bg-success/10 border-success text-foreground',
+  error: 'bg-destructive/10 border-destructive text-foreground',
+  warning: 'bg-warning/10 border-warning text-foreground',
+  info: 'bg-info/10 border-info text-foreground',
+}
+
+// Toast animation classes
+const toastAnimationClasses: Record<ToastAnimationState, string> = {
+  entering: 'flex translate-x-full opacity-0',
+  visible: 'flex translate-x-0 opacity-100',
+  exiting: 'flex translate-x-full opacity-0',
+  hidden: 'hidden',
+}
+
+// ToastTitle classes
+const toastTitleClasses = 'text-sm font-semibold'
+
+// ToastDescription classes
+const toastDescriptionClasses = 'text-sm opacity-90'
+
+// ToastClose classes
+const toastCloseClasses = 'ml-auto -mr-1 -mt-1 h-6 w-6 rounded-md inline-flex items-center justify-center opacity-50 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring'
+
+// ToastAction classes
+const toastActionClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border border-current opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring'
+
+/**
+ * Props for ToastProvider component.
+ */
+interface ToastProviderProps {
+  /**
+   * Position of the toast container.
+   * @default 'bottom-right'
+   */
+  position?: ToastPosition
+  /** Toast components */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Container for toast notifications.
+ *
+ * @param props.position - Position of the container
+ */
+function ToastProvider({
+  class: className = '',
   position = 'bottom-right',
   children,
 }: ToastProviderProps) {
   return (
     <div
-      class={`fixed z-50 flex flex-col gap-2 pointer-events-none ${
-        position === 'top-right' ? 'top-4 right-4' :
-        position === 'top-left' ? 'top-4 left-4' :
-        position === 'bottom-left' ? 'bottom-4 left-4' :
-        'bottom-4 right-4'
-      }`}
-      data-toast-provider
+      data-slot="toast-provider"
+      className={`${toastProviderClasses} ${positionClasses[position]} ${className}`}
     >
       {children}
     </div>
   )
 }
 
-// --- Toast ---
-
-export interface ToastProps {
+/**
+ * Props for Toast component.
+ */
+interface ToastProps {
+  /**
+   * Visual variant of the toast.
+   * @default 'default'
+   */
   variant?: ToastVariant
-  /** Controls visibility of the toast */
+  /**
+   * Whether the toast is visible.
+   * @default false
+   */
   open?: boolean
   /** Animation state for enter/exit animations */
   animationState?: ToastAnimationState
+  /** Callback when open state changes */
   onOpenChange?: (open: boolean) => void
+  /** Toast content */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function Toast({
+/**
+ * Toast notification component.
+ *
+ * @param props.variant - Visual variant
+ *   - `'default'` - Neutral styling
+ *   - `'success'` - Success message (green)
+ *   - `'error'` - Error message (red)
+ *   - `'warning'` - Warning message (yellow)
+ *   - `'info'` - Informational message (blue)
+ * @param props.open - Whether visible
+ * @param props.animationState - Current animation state
+ */
+function Toast({
+  class: className = '',
   variant = 'default',
   open = false,
   animationState,
   children,
 }: ToastProps) {
-  // Note: animationState is passed as a reactive accessor from the parent.
-  // All expressions using animationState must be inline in JSX for reactivity.
-  //
-  // Animation class mapping:
-  // - 'entering': translated right and transparent (for enter animation start)
-  // - 'visible': in position and visible
-  // - 'exiting': translated right and transparent (for exit animation)
-  // - 'hidden': not displayed
+  // Determine the effective animation state
+  const effectiveState = animationState ?? (open ? 'visible' : 'hidden')
 
   return (
     <div
-      class={`${
-        (animationState ?? (open ? 'visible' : 'hidden')) === 'entering' ? 'flex translate-x-full opacity-0' :
-        (animationState ?? (open ? 'visible' : 'hidden')) === 'visible' ? 'flex translate-x-0 opacity-100' :
-        (animationState ?? (open ? 'visible' : 'hidden')) === 'exiting' ? 'flex translate-x-full opacity-0' :
-        'hidden'
-      } items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-slow ease-out ${
-        variant === 'success' ? 'bg-success/10 border-success text-foreground' :
-        variant === 'error' ? 'bg-destructive/10 border-destructive text-foreground' :
-        variant === 'warning' ? 'bg-warning/10 border-warning text-foreground' :
-        variant === 'info' ? 'bg-info/10 border-info text-foreground' :
-        'bg-background border-border text-foreground'
-      }`}
+      data-slot="toast"
+      data-variant={variant}
+      data-state={effectiveState}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
-      data-toast
-      data-toast-variant={variant}
-      data-toast-animation-state={animationState ?? (open ? 'visible' : 'hidden')}
+      className={`${toastAnimationClasses[effectiveState]} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`}
     >
       {children}
     </div>
   )
 }
 
-// --- ToastTitle ---
-
-export interface ToastTitleProps {
+/**
+ * Props for ToastTitle component.
+ */
+interface ToastTitleProps {
+  /** Title text */
   children?: Child
-}
-
-export function ToastTitle({ children }: ToastTitleProps) {
-  return (
-    <div class="text-sm font-semibold" data-toast-title>
-      {children}
-    </div>
-  )
-}
-
-// --- ToastDescription ---
-
-export interface ToastDescriptionProps {
-  children?: Child
+  /** Additional CSS classes */
   class?: string
 }
 
-export function ToastDescription({ children, class: className }: ToastDescriptionProps) {
+/**
+ * Title text for the toast.
+ */
+function ToastTitle({ class: className = '', children }: ToastTitleProps) {
   return (
-    <div class={`text-sm opacity-90 ${className || ''}`} data-toast-description>
+    <div data-slot="toast-title" className={`${toastTitleClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-// --- ToastClose ---
-
-export interface ToastCloseProps {
-  onClick?: () => void
+/**
+ * Props for ToastDescription component.
+ */
+interface ToastDescriptionProps {
+  /** Description text */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function ToastClose({ onClick }: ToastCloseProps) {
+/**
+ * Description text for the toast.
+ */
+function ToastDescription({ class: className = '', children }: ToastDescriptionProps) {
+  return (
+    <div data-slot="toast-description" className={`${toastDescriptionClasses} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Props for ToastClose component.
+ */
+interface ToastCloseProps {
+  /** Click handler to dismiss the toast */
+  onClick?: () => void
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Close button for the toast.
+ *
+ * @param props.onClick - Click handler
+ */
+function ToastClose({ class: className = '', onClick }: ToastCloseProps) {
   return (
     <button
+      data-slot="toast-close"
       type="button"
-      class="ml-auto -mr-1 -mt-1 h-6 w-6 rounded-md inline-flex items-center justify-center opacity-50 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label="Close"
+      className={`${toastCloseClasses} ${className}`}
       onClick={onClick}
-      data-toast-close
     >
-      <XIcon size="sm" class="pointer-events-none" />
+      <XIcon size="sm" className="pointer-events-none" />
     </button>
   )
 }
 
-// --- ToastAction ---
-
-export interface ToastActionProps {
+/**
+ * Props for ToastAction component.
+ */
+interface ToastActionProps {
+  /** Accessible text describing the action */
   altText: string
+  /** Click handler */
   onClick?: () => void
+  /** Button content */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function ToastAction({ altText, onClick, children }: ToastActionProps) {
+/**
+ * Action button for the toast.
+ *
+ * @param props.altText - Accessible description
+ * @param props.onClick - Click handler
+ */
+function ToastAction({ class: className = '', altText, onClick, children }: ToastActionProps) {
   return (
     <button
+      data-slot="toast-action"
       type="button"
-      class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border border-current opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label={altText}
+      className={`${toastActionClasses} ${className}`}
       onClick={onClick}
-      data-toast-action
     >
       {children}
     </button>
   )
 }
+
+export { ToastProvider, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction }
+export type { ToastVariant, ToastAnimationState, ToastPosition, ToastProviderProps, ToastProps, ToastTitleProps, ToastDescriptionProps, ToastCloseProps, ToastActionProps }

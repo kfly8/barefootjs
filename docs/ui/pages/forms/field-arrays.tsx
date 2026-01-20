@@ -95,7 +95,7 @@ const duplicateCount = createMemo(() => {
 })
 
 {duplicateCount() > 0 && (
-  <p class="text-amber-400">{duplicateCount()} duplicate(s) detected</p>
+  <p className="text-amber-400">{duplicateCount()} duplicate(s) detected</p>
 )}`
 
 const minMaxFieldsCode = `import { createSignal, createMemo } from '@barefootjs/dom'
@@ -126,8 +126,8 @@ const handleRemove = (id: number) => {
 
 export function FieldArraysPage() {
   return (
-    <div class="flex gap-10">
-      <div class="flex-1 min-w-0 space-y-12">
+    <div className="flex gap-10">
+      <div className="flex-1 min-w-0 space-y-12">
         <PageHeader
           title="Field Arrays"
           description="Demonstrates dynamic list of form inputs with add/remove and per-item validation."
@@ -135,12 +135,12 @@ export function FieldArraysPage() {
 
         {/* Preview - Static example */}
         <Example title="" code={basicFieldArrayCode}>
-          <div class="max-w-md">
-            <div class="space-y-2">
+          <div className="max-w-md">
+            <div className="space-y-2">
               <Input inputPlaceholder="Email 1" />
               <Input inputPlaceholder="Email 2" />
             </div>
-            <p class="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
             </p>
           </div>
@@ -148,15 +148,15 @@ export function FieldArraysPage() {
 
         {/* Pattern Overview */}
         <Section id="pattern-overview" title="Pattern Overview">
-          <div class="prose prose-invert max-w-none">
-            <p class="text-muted-foreground">
-              Field arrays in BarefootJS use a <code class="text-foreground">createSignal</code> containing an array of field objects.
+          <div className="prose prose-invert max-w-none">
+            <p className="text-muted-foreground">
+              Field arrays in BarefootJS use a <code className="text-foreground">createSignal</code> containing an array of field objects.
               Each field has a unique ID for proper list reconciliation, and its own value and touched state.
             </p>
-            <p class="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2">
               Key concepts:
             </p>
-            <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+            <ul className="list-disc list-inside text-muted-foreground space-y-1 mt-2">
               <li><strong>Field object</strong>: Contains id, value, and touched state</li>
               <li><strong>Unique ID</strong>: Each field has a unique ID for stable key management</li>
               <li><strong>Per-field validation</strong>: Validate each field independently</li>
@@ -168,21 +168,21 @@ export function FieldArraysPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic Field Array" code={basicFieldArrayCode}>
-              <div class="max-w-md">
+              <div className="max-w-md">
                 <BasicFieldArrayDemo />
               </div>
             </Example>
 
             <Example title="Duplicate Detection" code={duplicateValidationCode}>
-              <div class="max-w-md">
+              <div className="max-w-md">
                 <DuplicateValidationDemo />
               </div>
             </Example>
 
             <Example title="Min/Max Field Constraints" code={minMaxFieldsCode}>
-              <div class="max-w-md">
+              <div className="max-w-md">
                 <MinMaxFieldsDemo />
               </div>
             </Example>
@@ -191,49 +191,49 @@ export function FieldArraysPage() {
 
         {/* Key Points */}
         <Section id="key-points" title="Key Points">
-          <div class="space-y-4">
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Array State Management</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Store field array in a single signal: <code class="text-foreground">{'createSignal<Field[]>([])'}</code></li>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Array State Management</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Store field array in a single signal: <code className="text-foreground">{'createSignal<Field[]>([])'}</code></li>
                 <li>Each field object contains: id, value, touched (and any other state)</li>
-                <li>Use immutable operations: <code class="text-foreground">map()</code>, <code class="text-foreground">filter()</code>, spread operator</li>
+                <li>Use immutable operations: <code className="text-foreground">map()</code>, <code className="text-foreground">filter()</code>, spread operator</li>
                 <li>Maintain a separate counter signal for generating unique IDs</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Key Management</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Always use <code class="text-foreground">key={'{field.id}'}</code> for list items</li>
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Key Management</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Always use <code className="text-foreground">key={'{field.id}'}</code> for list items</li>
                 <li>Never use array index as key (causes issues on reorder/delete)</li>
-                <li>Generate unique IDs with incrementing counter: <code class="text-foreground">nextId()</code></li>
+                <li>Generate unique IDs with incrementing counter: <code className="text-foreground">nextId()</code></li>
                 <li>Unique keys ensure proper DOM reconciliation</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Per-Item Validation</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Per-Item Validation</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li>Create a validation function that takes the field value</li>
                 <li>Check touched state before showing errors</li>
-                <li>Update touched state on blur: <code class="text-foreground">{'onBlur={() => handleBlur(field.id)}'}</code></li>
+                <li>Update touched state on blur: <code className="text-foreground">{'onBlur={() => handleBlur(field.id)}'}</code></li>
                 <li>Each field error is computed independently</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Cross-Field Validation</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Access entire array in validation: <code class="text-foreground">fields().some()</code></li>
-                <li>Use <code class="text-foreground">createMemo</code> for derived validations (e.g., duplicate count)</li>
-                <li>Exclude current field when checking duplicates: <code class="text-foreground">f.id !== id</code></li>
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Cross-Field Validation</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Access entire array in validation: <code className="text-foreground">fields().some()</code></li>
+                <li>Use <code className="text-foreground">createMemo</code> for derived validations (e.g., duplicate count)</li>
+                <li>Exclude current field when checking duplicates: <code className="text-foreground">f.id !== id</code></li>
                 <li>Show summary warnings for array-level issues</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Add/Remove Operations</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Add/Remove Operations</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li><strong>Add</strong>: Spread existing array and append new field</li>
                 <li><strong>Remove</strong>: Filter out field by ID</li>
-                <li>Enforce min/max constraints with <code class="text-foreground">createMemo</code> for canAdd/canRemove</li>
+                <li>Enforce min/max constraints with <code className="text-foreground">createMemo</code> for canAdd/canRemove</li>
                 <li>Disable buttons when constraints are reached</li>
               </ul>
             </div>

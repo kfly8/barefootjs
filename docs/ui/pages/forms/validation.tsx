@@ -44,7 +44,7 @@ const error = createMemo(() => {
   onBlur={() => setTouched(true)}
   inputPlaceholder="Enter your name"
 />
-<p class="text-red-400">{error()}</p>`
+<p className="text-red-400">{error()}</p>`
 
 const emailValidationCode = `import { createSignal, createMemo } from '@barefootjs/dom'
 
@@ -64,8 +64,8 @@ const isValid = createMemo(() => touched() && error() === '')
   onInput={(e) => setEmail(e.target.value)}
   onBlur={() => setTouched(true)}
 />
-<p class="text-red-400">{error()}</p>
-{isValid() ? <span class="text-green-400">Valid</span> : null}`
+<p className="text-red-400">{error()}</p>
+{isValid() ? <span className="text-green-400">Valid</span> : null}`
 
 const passwordConfirmCode = `import { createSignal, createMemo } from '@barefootjs/dom'
 
@@ -131,8 +131,8 @@ const handleSubmit = () => {
 
 export function ValidationPage() {
   return (
-    <div class="flex gap-10">
-      <div class="flex-1 min-w-0 space-y-12">
+    <div className="flex gap-10">
+      <div className="flex-1 min-w-0 space-y-12">
         <PageHeader
           title="Form Validation"
           description="Demonstrates error state management and multi-field validation patterns using signals and memos."
@@ -140,9 +140,9 @@ export function ValidationPage() {
 
         {/* Preview - Static example */}
         <Example title="" code={requiredFieldCode}>
-          <div class="max-w-sm">
+          <div className="max-w-sm">
             <Input inputPlaceholder="Enter your name" />
-            <p class="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
             </p>
           </div>
@@ -150,16 +150,16 @@ export function ValidationPage() {
 
         {/* Pattern Overview */}
         <Section id="pattern-overview" title="Pattern Overview">
-          <div class="prose prose-invert max-w-none">
-            <p class="text-muted-foreground">
-              Form validation in BarefootJS uses <code class="text-foreground">createSignal</code> for field values and{' '}
-              <code class="text-foreground">createMemo</code> for derived error states.
+          <div className="prose prose-invert max-w-none">
+            <p className="text-muted-foreground">
+              Form validation in BarefootJS uses <code className="text-foreground">createSignal</code> for field values and{' '}
+              <code className="text-foreground">createMemo</code> for derived error states.
               This pattern provides reactive validation that automatically updates when field values change.
             </p>
-            <p class="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2">
               Key concepts:
             </p>
-            <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+            <ul className="list-disc list-inside text-muted-foreground space-y-1 mt-2">
               <li><strong>Field value signal</strong>: Stores the current input value</li>
               <li><strong>Touched signal</strong>: Tracks if user has interacted with the field</li>
               <li><strong>Error memo</strong>: Computes error message based on value and touched state</li>
@@ -170,27 +170,27 @@ export function ValidationPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Required Field" code={requiredFieldCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <RequiredFieldDemo />
               </div>
             </Example>
 
             <Example title="Email Format Validation" code={emailValidationCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <EmailValidationDemo />
               </div>
             </Example>
 
             <Example title="Password Confirmation" code={passwordConfirmCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <PasswordConfirmationDemo />
               </div>
             </Example>
 
             <Example title="Multi-Field Form" code={multiFieldFormCode}>
-              <div class="max-w-md">
+              <div className="max-w-md">
                 <MultiFieldFormDemo />
               </div>
             </Example>
@@ -199,36 +199,36 @@ export function ValidationPage() {
 
         {/* Key Points */}
         <Section id="key-points" title="Key Points">
-          <div class="space-y-4">
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Error State Management</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Use <code class="text-foreground">createSignal</code> for field values and touched states</li>
-                <li>Use <code class="text-foreground">createMemo</code> for computed error messages</li>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Error State Management</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Use <code className="text-foreground">createSignal</code> for field values and touched states</li>
+                <li>Use <code className="text-foreground">createMemo</code> for computed error messages</li>
                 <li>Only show errors after field is touched (better UX)</li>
                 <li>Return empty string for valid state, error message for invalid</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Validation Timing</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Validation Timing</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li><strong>On blur</strong>: Show errors when user leaves field (recommended)</li>
                 <li><strong>On submit</strong>: Validate all fields before form submission</li>
                 <li><strong>Real-time</strong>: For instant feedback (e.g., password strength)</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Field Dependencies</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Field Dependencies</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li>Access other field signals within a memo for cross-field validation</li>
-                <li>Example: <code class="text-foreground">{'password() !== confirmPassword()'}</code></li>
+                <li>Example: <code className="text-foreground">{'password() !== confirmPassword()'}</code></li>
                 <li>The memo automatically re-evaluates when either signal changes</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Form-Level Validity</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Combine field validations in a single <code class="text-foreground">createMemo</code></li>
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Form-Level Validity</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Combine field validations in a single <code className="text-foreground">createMemo</code></li>
                 <li>Use for enabling/disabling submit button</li>
                 <li>No need for a separate form library - signals are sufficient</li>
               </ul>

@@ -536,17 +536,17 @@ function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): voi
   if (ts.isObjectBindingPattern(param.name)) {
     for (const element of param.name.elements) {
       if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
-        const name = element.name.text
+        const localName = element.name.text
         const defaultValue = element.initializer?.getText(ctx.sourceFile)
 
         // Handle rest props: { ...props }
         if (element.dotDotDotToken) {
-          ctx.restPropsName = name
+          ctx.restPropsName = localName
           continue
         }
 
         ctx.propsParams.push({
-          name,
+          name: localName,
           type: { kind: 'unknown', raw: 'unknown' },
           optional: !!element.initializer,
           defaultValue,

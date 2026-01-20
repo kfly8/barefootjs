@@ -90,18 +90,18 @@ export function BasicFieldArrayDemo() {
   }
 
   return (
-    <div class="space-y-4">
+    <div className="space-y-4">
       {submitted() ? (
-        <div class="success-message p-4 bg-success/10 border border-success rounded-lg">
-          <p class="text-success font-medium">Emails submitted successfully!</p>
-          <p class="text-sm text-muted-foreground mt-2">{fields().map(f => f.value).join(', ')}</p>
+        <div className="success-message p-4 bg-success/10 border border-success rounded-lg">
+          <p className="text-success font-medium">Emails submitted successfully!</p>
+          <p className="text-sm text-muted-foreground mt-2">{fields().map(f => f.value).join(', ')}</p>
         </div>
       ) : (
-        <div class="space-y-4">
-          <div class="field-list space-y-3">
+        <div className="space-y-4">
+          <div className="field-list space-y-3">
             {fields().map((field, index) => (
-              <div key={field.id} class="field-item flex gap-2 items-start">
-                <div class="flex-1 space-y-1">
+              <div key={field.id} className="field-item flex gap-2 items-start">
+                <div className="flex-1 space-y-1">
                   <Input
                     inputType="email"
                     inputValue={field.value}
@@ -109,7 +109,7 @@ export function BasicFieldArrayDemo() {
                     onInput={(e) => handleChange(field.id, e.target.value)}
                     onBlur={() => handleBlur(field.id)}
                   />
-                  <p class="field-error text-sm text-destructive min-h-5">{field.error}</p>
+                  <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
                 </div>
                 <Button
                   variant="destructive"
@@ -123,7 +123,7 @@ export function BasicFieldArrayDemo() {
             ))}
           </div>
 
-          <div class="flex gap-2">
+          <div className="flex gap-2">
             <Button variant="outline" onClick={handleAdd}>
               + Add Email
             </Button>
@@ -132,7 +132,7 @@ export function BasicFieldArrayDemo() {
             </Button>
           </div>
 
-          <p class="field-count text-sm text-muted-foreground">
+          <p className="field-count text-sm text-muted-foreground">
             {fields().length} email(s) added
           </p>
         </div>
@@ -215,11 +215,11 @@ export function DuplicateValidationDemo() {
   }
 
   return (
-    <div class="space-y-4">
-      <div class="field-list space-y-3">
+    <div className="space-y-4">
+      <div className="field-list space-y-3">
         {fields().map((field, index) => (
-          <div key={field.id} class="field-item flex gap-2 items-start">
-            <div class="flex-1 space-y-1">
+          <div key={field.id} className="field-item flex gap-2 items-start">
+            <div className="flex-1 space-y-1">
               <Input
                 inputType="email"
                 inputValue={field.value}
@@ -227,7 +227,7 @@ export function DuplicateValidationDemo() {
                 onInput={(e) => handleChange(field.id, e.target.value)}
                 onBlur={() => handleBlur(field.id)}
               />
-              <p class="field-error text-sm text-destructive min-h-5">{field.error}</p>
+              <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
             </div>
             <Button
               variant="destructive"
@@ -246,7 +246,7 @@ export function DuplicateValidationDemo() {
       </Button>
 
       {duplicateCount() > 0 ? (
-        <p class="duplicate-warning text-sm text-warning">
+        <p className="duplicate-warning text-sm text-warning">
           {duplicateCount()} duplicate email(s) detected
         </p>
       ) : null}
@@ -298,11 +298,11 @@ export function MinMaxFieldsDemo() {
   }
 
   return (
-    <div class="space-y-4">
-      <div class="field-list space-y-3">
+    <div className="space-y-4">
+      <div className="field-list space-y-3">
         {fields().map((field, index) => (
-          <div key={field.id} class="field-item flex gap-2 items-start">
-            <div class="flex-1 space-y-1">
+          <div key={field.id} className="field-item flex gap-2 items-start">
+            <div className="flex-1 space-y-1">
               <Input
                 inputType="email"
                 inputValue={field.value}
@@ -310,7 +310,7 @@ export function MinMaxFieldsDemo() {
                 onInput={(e) => handleChange(field.id, e.target.value)}
                 onBlur={() => handleBlur(field.id)}
               />
-              <p class="field-error text-sm text-destructive min-h-5">{field.error}</p>
+              <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
             </div>
             <Button
               variant="destructive"
@@ -324,17 +324,17 @@ export function MinMaxFieldsDemo() {
         ))}
       </div>
 
-      <div class="flex items-center gap-4">
+      <div className="flex items-center gap-4">
         <Button variant="outline" onClick={handleAdd} disabled={!canAdd()}>
           + Add Email
         </Button>
-        <p class="field-count text-sm text-muted-foreground">
+        <p className="field-count text-sm text-muted-foreground">
           {fields().length} / {MAX_FIELDS} emails
         </p>
       </div>
 
       {!canAdd() ? (
-        <p class="max-warning text-sm text-warning">
+        <p className="max-warning text-sm text-warning">
           Maximum {MAX_FIELDS} emails allowed
         </p>
       ) : null}

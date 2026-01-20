@@ -101,7 +101,7 @@ interface ButtonProps extends ButtonHTMLAttributes {
  * @param props.asChild - Render child element instead of button
  */
 function Button({
-  class: className = '',
+  className = '',
   variant = 'default',
   size = 'default',
   asChild = false,
@@ -111,9 +111,9 @@ function Button({
   const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`
 
   if (asChild) {
-    return <Slot class={classes} {...props}>{children}</Slot>
+    return <Slot className={classes} {...props}>{children}</Slot>
   }
-  return <button class={classes} {...props}>{children}</button>
+  return <button className={classes} {...props}>{children}</button>
 }
 
 export { Button }

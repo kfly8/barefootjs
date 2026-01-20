@@ -162,9 +162,13 @@ html.theme-transition *::after {
   }
 }
 
-/* Base styles */
-* {
+/* Base styles (Tailwind preflight compatible) */
+*,
+::before,
+::after {
   box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
   border-color: var(--border);
 }
 
@@ -231,4 +235,13 @@ html {
 /* Ensure hidden attribute works with flexbox items */
 [hidden] {
   display: none !important;
+}
+
+/* Card hover action - show action button only on card hover */
+[data-slot="card"] [data-card-hover-action] {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+[data-slot="card"]:hover [data-card-hover-action] {
+  opacity: 1;
 }

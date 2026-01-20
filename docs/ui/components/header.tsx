@@ -15,10 +15,10 @@ import { GitHubIcon } from '@ui/components/ui/icon'
 // Loading placeholder for GitHub stars (matches GitHubStars layout)
 function GitHubStarsPlaceholder() {
   return (
-    <span class="flex items-center gap-1.5 text-muted-foreground">
-      <GitHubIcon size="md" class="text-foreground" />
-      <span class="text-sm font-medium min-w-[1.25rem] text-right">
-        <span class="inline-block w-5 h-4 bg-muted rounded animate-pulse" />
+    <span className="flex items-center gap-1.5 text-muted-foreground">
+      <GitHubIcon size="md" className="text-foreground" />
+      <span className="text-sm font-medium min-w-[1.25rem] text-right">
+        <span className="inline-block w-5 h-4 bg-muted rounded animate-pulse" />
       </span>
     </span>
   )
@@ -36,26 +36,26 @@ export function Header({ currentPath = '/' }: HeaderProps) {
   }
 
   return (
-    <header class="hidden sm:block fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div class="px-6 h-14 flex items-center justify-between gap-4">
+    <header className="hidden sm:block fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <div className="px-6 h-14 flex items-center justify-between gap-4">
         {/* Left section: Logo + Navigation */}
-        <div class="flex items-center gap-6">
+        <div className="flex items-center gap-6">
           {/* Logo */}
           <a
             href="/"
-            class="text-foreground transition-colors no-underline"
+            className="text-foreground transition-colors no-underline"
           >
             <Logo />
           </a>
 
           {/* Navigation separator */}
-          <div class="hidden sm:block h-5 w-px bg-border" />
+          <div className="hidden sm:block h-5 w-px bg-border" />
 
           {/* Navigation links */}
-          <nav class="hidden sm:flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1">
             <a
               href="/docs/core"
-              class={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
                 isActive('/docs/core')
                   ? 'bg-accent text-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
@@ -65,7 +65,7 @@ export function Header({ currentPath = '/' }: HeaderProps) {
             </a>
             <a
               href="/components"
-              class={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
                 isActive('/components') || isActive('/forms')
                   ? 'bg-accent text-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
@@ -77,7 +77,7 @@ export function Header({ currentPath = '/' }: HeaderProps) {
         </div>
 
         {/* Right section: Search + GitHub + Theme */}
-        <div class="flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <SearchButton />
           <Suspense fallback={<GitHubStarsPlaceholder />}>
             <AsyncGitHubStars repo="kfly8/barefootjs" />

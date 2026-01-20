@@ -5,6 +5,8 @@ export default defineConfig({
   // Safelist responsive classes used in dynamic contexts
   safelist: [
     'hidden', 'sm:block', 'sm:hidden', 'lg:block', 'sm:pl-56',
+    'border-input', 'border-border',
+    'group/card', 'group-hover/card:opacity-100',
   ],
   // Theme configuration with CSS variable references (OKLCH colors)
   theme: {

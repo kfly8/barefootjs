@@ -135,12 +135,12 @@ const handleSubmit = async () => {
     setServerError('')
   }}
 />
-{serverError() && <p class="text-red-400">{serverError()}</p>}`
+{serverError() && <p className="text-red-400">{serverError()}</p>}`
 
 export function SubmitPage() {
   return (
-    <div class="flex gap-10">
-      <div class="flex-1 min-w-0 space-y-12">
+    <div className="flex gap-10">
+      <div className="flex-1 min-w-0 space-y-12">
         <PageHeader
           title="Form Submit"
           description="Demonstrates async submit handling with loading, success, and error states."
@@ -148,9 +148,9 @@ export function SubmitPage() {
 
         {/* Preview - Static example */}
         <Example title="" code={basicSubmitCode}>
-          <div class="max-w-sm">
+          <div className="max-w-sm">
             <Input inputPlaceholder="Enter your email" />
-            <p class="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
             </p>
           </div>
@@ -158,16 +158,16 @@ export function SubmitPage() {
 
         {/* Pattern Overview */}
         <Section id="pattern-overview" title="Pattern Overview">
-          <div class="prose prose-invert max-w-none">
-            <p class="text-muted-foreground">
+          <div className="prose prose-invert max-w-none">
+            <p className="text-muted-foreground">
               Form submission in BarefootJS uses signals to manage async state transitions:
-              <code class="text-foreground">idle → loading → success/error</code>.
+              <code className="text-foreground">idle → loading → success/error</code>.
               This pattern provides reactive feedback without external state machines.
             </p>
-            <p class="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2">
               Key concepts:
             </p>
-            <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+            <ul className="list-disc list-inside text-muted-foreground space-y-1 mt-2">
               <li><strong>Loading signal</strong>: Tracks submission in progress</li>
               <li><strong>Error signal</strong>: Stores error message from failed requests</li>
               <li><strong>Success signal</strong>: Triggers success feedback (toast, message)</li>
@@ -178,21 +178,21 @@ export function SubmitPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic Submit with Loading" code={basicSubmitCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <BasicSubmitDemo />
               </div>
             </Example>
 
             <Example title="Network Error and Retry" code={errorHandlingCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <NetworkErrorDemo />
               </div>
             </Example>
 
             <Example title="Server Validation Error" code={serverValidationCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <ServerValidationDemo />
               </div>
             </Example>
@@ -201,36 +201,36 @@ export function SubmitPage() {
 
         {/* Key Points */}
         <Section id="key-points" title="Key Points">
-          <div class="space-y-4">
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Async State Management</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Use <code class="text-foreground">loading</code> signal to track submission state</li>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Async State Management</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Use <code className="text-foreground">loading</code> signal to track submission state</li>
                 <li>Disable form inputs and button during submission</li>
-                <li>Show loading text in button: <code class="text-foreground">{'loading() ? "Submitting..." : "Submit"'}</code></li>
+                <li>Show loading text in button: <code className="text-foreground">{'loading() ? "Submitting..." : "Submit"'}</code></li>
                 <li>Signals are sufficient for typical forms - no state machine needed</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Error Handling</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Store error message in signal: <code class="text-foreground">setErrorMsg(err.message)</code></li>
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Error Handling</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Store error message in signal: <code className="text-foreground">setErrorMsg(err.message)</code></li>
                 <li>Display errors via Toast (error variant) or inline message</li>
                 <li>Provide retry action for network errors</li>
                 <li>Clear error when user modifies input or retries</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Success Feedback</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Success Feedback</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li>Use Toast (success variant) for non-blocking feedback</li>
-                <li>Auto-dismiss success toast: <code class="text-foreground">setTimeout(() =&gt; setSuccess(false), 3000)</code></li>
+                <li>Auto-dismiss success toast: <code className="text-foreground">setTimeout(() =&gt; setSuccess(false), 3000)</code></li>
                 <li>Reset form after successful submission if appropriate</li>
               </ul>
             </div>
-            <div class="p-4 bg-muted rounded-lg">
-              <h3 class="font-semibold text-foreground mb-2">Server Validation</h3>
-              <ul class="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Server Validation</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li>Separate client-side and server-side validation signals</li>
                 <li>Display server errors inline near the relevant field</li>
                 <li>Clear server error when user modifies the field</li>

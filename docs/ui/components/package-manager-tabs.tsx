@@ -77,8 +77,8 @@ export function PackageManagerTabs({ command, highlightedCommands }: PackageMana
         </TabsTrigger>
       </TabsList>
       <TabsContent value="pnpm" selected={isPnpmSelected()}>
-        <div class="relative group">
-          <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+        <div className="relative group">
+          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
             {highlightedCommands ? (
               <code dangerouslySetInnerHTML={{ __html: highlightedCommands.pnpm }} />
             ) : (
@@ -89,8 +89,8 @@ export function PackageManagerTabs({ command, highlightedCommands }: PackageMana
         </div>
       </TabsContent>
       <TabsContent value="npm" selected={isNpmSelected()}>
-        <div class="relative group">
-          <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+        <div className="relative group">
+          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
             {highlightedCommands ? (
               <code dangerouslySetInnerHTML={{ __html: highlightedCommands.npm }} />
             ) : (
@@ -101,8 +101,8 @@ export function PackageManagerTabs({ command, highlightedCommands }: PackageMana
         </div>
       </TabsContent>
       <TabsContent value="yarn" selected={isYarnSelected()}>
-        <div class="relative group">
-          <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+        <div className="relative group">
+          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
             {highlightedCommands ? (
               <code dangerouslySetInnerHTML={{ __html: highlightedCommands.yarn }} />
             ) : (
@@ -113,8 +113,8 @@ export function PackageManagerTabs({ command, highlightedCommands }: PackageMana
         </div>
       </TabsContent>
       <TabsContent value="bun" selected={isBunSelected()}>
-        <div class="relative group">
-          <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+        <div className="relative group">
+          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
             {highlightedCommands ? (
               <code dangerouslySetInnerHTML={{ __html: highlightedCommands.bun }} />
             ) : (

@@ -9,8 +9,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -19,58 +20,73 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'multiple', title: 'Multiple Switches', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add switch`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
 import { Switch } from '@/components/ui/switch'
 
-export default function Page() {
-  const [checked, setChecked] = createSignal(false)
+function SwitchBasic() {
+  const [airplaneMode, setAirplaneMode] = createSignal(false)
+
   return (
-    <Switch
-      checked={checked()}
-      onCheckedChange={setChecked}
-    />
+    <div className="flex items-center gap-2">
+      <Switch
+        checked={airplaneMode()}
+        onCheckedChange={setAirplaneMode}
+      />
+      <span className="text-sm">Airplane Mode</span>
+    </div>
   )
 }`
 
-const basicCode = `const [airplaneMode, setAirplaneMode] = createSignal(false)
+const disabledCode = `"use client"
 
-<div class="flex items-center gap-2">
-  <Switch
-    checked={airplaneMode()}
-    onCheckedChange={setAirplaneMode}
-  />
-  <span>Airplane Mode</span>
-</div>`
+import { Switch } from '@/components/ui/switch'
 
-const disabledCode = `<Switch checked={false} disabled />
-<Switch checked={true} disabled />`
+function SwitchDisabled() {
+  return (
+    <div className="flex gap-4">
+      <Switch checked={false} disabled />
+      <Switch checked={true} disabled />
+    </div>
+  )
+}`
 
-const multipleCode = `const [wifi, setWifi] = createSignal(true)
-const [bluetooth, setBluetooth] = createSignal(false)
-const [notifications, setNotifications] = createSignal(true)
+const multipleCode = `"use client"
 
-<div class="space-y-4">
-  <div class="flex items-center justify-between">
-    <span>Wi-Fi</span>
-    <Switch checked={wifi()} onCheckedChange={setWifi} />
-  </div>
-  <div class="flex items-center justify-between">
-    <span>Bluetooth</span>
-    <Switch checked={bluetooth()} onCheckedChange={setBluetooth} />
-  </div>
-  <div class="flex items-center justify-between">
-    <span>Notifications</span>
-    <Switch checked={notifications()} onCheckedChange={setNotifications} />
-  </div>
-</div>`
+import { createSignal } from '@barefootjs/dom'
+import { Switch } from '@/components/ui/switch'
+
+function SwitchMultiple() {
+  const [wifi, setWifi] = createSignal(true)
+  const [bluetooth, setBluetooth] = createSignal(false)
+  const [notifications, setNotifications] = createSignal(true)
+
+  return (
+    <div className="space-y-4 w-64">
+      <div className="flex items-center justify-between">
+        <span className="text-sm">Wi-Fi</span>
+        <Switch checked={wifi()} onCheckedChange={setWifi} />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm">Bluetooth</span>
+        <Switch checked={bluetooth()} onCheckedChange={setBluetooth} />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm">Notifications</span>
+        <Switch checked={notifications()} onCheckedChange={setNotifications} />
+      </div>
+    </div>
+  )
+}`
 
 // Props definition
 const switchProps: PropDefinition[] = [
@@ -94,9 +110,11 @@ const switchProps: PropDefinition[] = [
 ]
 
 export function SwitchPage() {
+  const installCommands = getHighlightedCommands('barefoot add switch')
+
   return (
     <DocPage slug="switch" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Switch"
           description="A control that allows the user to toggle between checked and not checked."
@@ -110,23 +128,18 @@ export function SwitchPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add switch" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic" code={basicCode}>
               <SwitchInteractiveDemo />
             </Example>
 
             <Example title="Disabled" code={disabledCode}>
-              <div class="flex gap-4">
+              <div className="flex gap-4">
                 <Switch checked={false} disabled />
                 <Switch checked={true} disabled />
               </div>

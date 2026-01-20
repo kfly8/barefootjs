@@ -47,7 +47,6 @@ const menuData: MenuCategory[] = [
       { title: 'Button', href: '/docs/components/button' },
       { title: 'Card', href: '/docs/components/card' },
       { title: 'Checkbox', href: '/docs/components/checkbox' },
-      { title: 'Counter', href: '/docs/components/counter' },
       { title: 'Dialog', href: '/docs/components/dialog' },
       { title: 'Dropdown', href: '/docs/components/dropdown' },
       { title: 'Input', href: '/docs/components/input' },
@@ -93,12 +92,12 @@ export function SidebarItem({ title, href, isActive = false }: SidebarItemProps)
 
   return (
     <span
-      class="block"
+      className="block"
       data-preview-href={hasPreview ? href : undefined}
     >
       <a
         href={href}
-        class={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
+        className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
       >
         {title}
       </a>
@@ -123,12 +122,12 @@ export function SidebarCategory({
   const hasActiveItem = items.some(item => item.href === currentPath)
 
   return (
-    <details class="mb-2 group" open={hasActiveItem || defaultOpen}>
-      <summary class="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+    <details className="mb-2 group" open={hasActiveItem || defaultOpen}>
+      <summary className="flex w-full items-center justify-between py-2 px-3 text-sm font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
         <span>{title}</span>
-        <ChevronRightIcon size="sm" class="transition-transform duration-200 group-open:rotate-90" />
+        <ChevronRightIcon size="sm" className="transition-transform duration-200 group-open:rotate-90" />
       </summary>
-      <div class="pl-2 py-1 space-y-0.5">
+      <div className="pl-2 py-1 space-y-0.5">
         {items.map(item => (
           <SidebarItem
             key={item.href}
@@ -154,11 +153,11 @@ export function SidebarMenu({ currentPath = '' }: SidebarMenuProps) {
 
   return (
     <nav
-      class="hidden sm:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
+      className="hidden sm:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
       aria-label="Main navigation"
       data-sidebar-menu
     >
-      <div class="space-y-1">
+      <div className="space-y-1">
         {menuData.map(category => {
           const shouldOpen = hasActiveItemAnywhere
             ? category.items.some(item => item.href === currentPath)

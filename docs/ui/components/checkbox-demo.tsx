@@ -15,13 +15,13 @@ import { Checkbox } from '@ui/components/ui/checkbox'
 export function CheckboxBindingDemo() {
   const [checked, setChecked] = createSignal(false)
   return (
-    <div class="space-y-2">
+    <div className="space-y-2">
       <Checkbox
         checked={checked()}
         onCheckedChange={setChecked}
       />
-      <p class="text-sm text-muted-foreground">
-        Status: <span class="checked-status font-medium">{checked() ? 'Checked' : 'Unchecked'}</span>
+      <p className="text-sm text-muted-foreground">
+        Status: <span className="checked-status font-medium">{checked() ? 'Checked' : 'Unchecked'}</span>
       </p>
     </div>
   )
@@ -33,13 +33,13 @@ export function CheckboxBindingDemo() {
 export function CheckboxWithLabelDemo() {
   const [accepted, setAccepted] = createSignal(false)
   return (
-    <div class="space-y-2">
-      <label class="flex items-center gap-2 cursor-pointer">
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 cursor-pointer">
         <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
-        <span class="text-sm">Accept terms and conditions</span>
+        <span className="text-sm">Accept terms and conditions</span>
       </label>
-      <p class="text-sm text-muted-foreground">
-        Terms: <span class="terms-status font-medium">{accepted() ? 'Accepted' : 'Not accepted'}</span>
+      <p className="text-sm text-muted-foreground">
+        Terms: <span className="terms-status font-medium">{accepted() ? 'Accepted' : 'Not accepted'}</span>
       </p>
     </div>
   )

@@ -14,12 +14,12 @@ import { Badge } from '@ui/components/ui/badge'
 // Preview content for Button component
 function ButtonPreview() {
   return (
-    <div class="space-y-3">
+    <div className="space-y-3">
       <div>
-        <h4 class="font-medium text-foreground text-sm">Button</h4>
-        <p class="text-xs text-muted-foreground">Displays a button or a component that looks like a button.</p>
+        <h4 className="font-medium text-foreground text-sm">Button</h4>
+        <p className="text-xs text-muted-foreground">Displays a button or a component that looks like a button.</p>
       </div>
-      <div class="flex items-center justify-center p-4 border border-border rounded-md">
+      <div className="flex items-center justify-center p-4 border border-border rounded-md">
         <Button>Button</Button>
       </div>
     </div>
@@ -29,12 +29,12 @@ function ButtonPreview() {
 // Preview content for Badge component
 function BadgePreview() {
   return (
-    <div class="space-y-3">
+    <div className="space-y-3">
       <div>
-        <h4 class="font-medium text-foreground text-sm">Badge</h4>
-        <p class="text-xs text-muted-foreground">Displays a badge or a component that looks like a badge.</p>
+        <h4 className="font-medium text-foreground text-sm">Badge</h4>
+        <p className="text-xs text-muted-foreground">Displays a badge or a component that looks like a badge.</p>
       </div>
-      <div class="flex items-center justify-center p-4 border border-border rounded-md">
+      <div className="flex items-center justify-center p-4 border border-border rounded-md">
         <Badge>Badge</Badge>
       </div>
     </div>
@@ -96,7 +96,7 @@ export function SidebarPreview() {
     <div
       data-sidebar-preview
       data-state={visible() ? 'visible' : 'hidden'}
-      class="hidden sm:block fixed left-56 w-64 p-4 bg-background border border-border rounded-lg shadow-lg z-[9999] transition-opacity duration-150 data-[state=hidden]:opacity-0 data-[state=hidden]:pointer-events-none data-[state=visible]:opacity-100"
+      className="hidden sm:block fixed left-56 w-64 p-4 bg-background border border-border rounded-lg shadow-lg z-[9999] transition-opacity duration-150 data-[state=hidden]:opacity-0 data-[state=hidden]:pointer-events-none data-[state=visible]:opacity-100"
     >
       <div data-preview-for="/docs/components/button">
         <ButtonPreview />

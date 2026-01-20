@@ -1,43 +1,107 @@
 "use client"
+
 /**
  * Checkbox Component
  *
- * A styled checkbox component inspired by shadcn/ui.
- * Supports checked state binding and change events.
- * Uses CSS variables for theming support.
+ * An accessible checkbox with custom styling.
+ * Inspired by shadcn/ui with CSS variable theming support.
+ *
+ * @example Basic usage
+ * ```tsx
+ * <Checkbox checked={isChecked} onCheckedChange={setIsChecked} />
+ * ```
+ *
+ * @example With label (using external label)
+ * ```tsx
+ * <label className="flex items-center gap-2">
+ *   <Checkbox checked={agreed} onCheckedChange={setAgreed} />
+ *   I agree to the terms
+ * </label>
+ * ```
+ *
+ * @example Disabled state
+ * ```tsx
+ * <Checkbox checked disabled />
+ * ```
  */
 
-export interface CheckboxProps {
+// Base classes for all checkboxes
+const baseClasses = 'peer size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50'
+
+// Focus visible classes
+const focusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50'
+
+// Error state classes
+const errorClasses = 'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+
+// Unchecked state classes
+const uncheckedClasses = 'border-input dark:bg-input/30 bg-background'
+
+// Checked state classes
+const checkedClasses = 'bg-primary text-primary-foreground border-primary'
+
+/**
+ * Props for the Checkbox component.
+ */
+interface CheckboxProps {
+  /**
+   * Whether the checkbox is checked.
+   * @default false
+   */
   checked?: boolean
+  /**
+   * Whether the checkbox is disabled.
+   * @default false
+   */
   disabled?: boolean
+  /**
+   * Whether the checkbox is in an error state.
+   * @default false
+   */
   error?: boolean
+  /**
+   * Callback when the checked state changes.
+   */
   onCheckedChange?: (checked: boolean) => void
+  /**
+   * Additional CSS classes.
+   */
+  class?: string
 }
 
-export function Checkbox({
+/**
+ * Checkbox component with custom styling.
+ *
+ * @param props.checked - Whether checked
+ * @param props.disabled - Whether disabled
+ * @param props.error - Whether in error state
+ * @param props.onCheckedChange - Callback when checked state changes
+ */
+function Checkbox({
+  class: className = '',
   checked = false,
   disabled = false,
   error = false,
   onCheckedChange,
 }: CheckboxProps) {
+  const stateClasses = checked ? checkedClasses : uncheckedClasses
+  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${className}`
+
   return (
     <button
+      data-slot="checkbox"
+      data-state={checked ? 'checked' : 'unchecked'}
       role="checkbox"
       aria-checked={checked}
-      aria-invalid={error}
+      aria-invalid={error || undefined}
       disabled={disabled}
-      class={`peer h-4 w-4 shrink-0 rounded-sm border shadow focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 ${
-        error
-          ? 'border-destructive focus-visible:ring-destructive'
-          : 'border-primary focus-visible:ring-ring'
-      } ${
-        checked ? 'bg-primary text-primary-foreground' : 'bg-background'
-      }`}
+      className={classes}
       onClick={() => onCheckedChange?.(!checked)}
     >
       {checked && (
         <svg
-          class="h-4 w-4 text-current"
+          data-slot="checkbox-indicator"
+          className="size-4 text-current"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -53,3 +117,6 @@ export function Checkbox({
     </button>
   )
 }
+
+export { Checkbox }
+export type { CheckboxProps }

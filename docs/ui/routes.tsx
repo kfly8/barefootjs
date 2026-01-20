@@ -58,10 +58,10 @@ function NavLink({ name, path, description }: { name: string; path: string; desc
   return (
     <a
       href={path}
-      class="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
+      className="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
     >
-      <h2 class="font-semibold text-foreground">{name}</h2>
-      <p class="text-sm text-muted-foreground mt-1">{description}</p>
+      <h2 className="font-semibold text-foreground">{name}</h2>
+      <p className="text-sm text-muted-foreground mt-1">{description}</p>
     </a>
   )
 }
@@ -78,26 +78,26 @@ export function createApp() {
   // Home - Components list
   app.get('/', (c) => {
     return c.render(
-      <div class="space-y-8">
-        <div class="space-y-2">
-          <h1 class="text-3xl font-bold tracking-tight text-foreground">Components</h1>
-          <p class="text-muted-foreground text-lg">
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Components</h1>
+          <p className="text-muted-foreground text-lg">
             Beautifully designed components built with BarefootJS and UnoCSS.
           </p>
         </div>
 
-        <div class="grid gap-4">
+        <div className="grid gap-4">
           {components.map((c) => <NavLink {...c} />)}
         </div>
 
-        <div class="space-y-2 mt-8">
-          <h2 class="text-2xl font-bold tracking-tight text-foreground">Form Patterns</h2>
-          <p class="text-muted-foreground">
+        <div className="space-y-2 mt-8">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">Form Patterns</h2>
+          <p className="text-muted-foreground">
             Common patterns for building forms with BarefootJS.
           </p>
         </div>
 
-        <div class="grid gap-4">
+        <div className="grid gap-4">
           {formPatterns.map((p) => <NavLink {...p} />)}
         </div>
       </div>

@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,16 +19,18 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'multiple-tabs', title: 'Multiple Tabs', branch: 'child' },
+  { id: 'disabled-tab', title: 'Disabled Tab', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add tabs`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/dom'
 import {
   Tabs,
   TabsList,
@@ -35,15 +38,14 @@ import {
   TabsContent,
 } from '@/components/ui/tabs'
 
-export default function Page() {
+function TabsBasic() {
   const [activeTab, setActiveTab] = createSignal('account')
 
-  // Use createMemo for derived selection states
   const isAccountSelected = createMemo(() => activeTab() === 'account')
   const isPasswordSelected = createMemo(() => activeTab() === 'password')
 
   return (
-    <Tabs value={activeTab()} onValueChange={setActiveTab}>
+    <Tabs value={activeTab()}>
       <TabsList>
         <TabsTrigger
           value="account"
@@ -70,66 +72,67 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [activeTab, setActiveTab] = createSignal('account')
+const multipleTabsCode = `"use client"
 
-// Use createMemo for derived selection states
-const isAccountSelected = createMemo(() => activeTab() === 'account')
-const isPasswordSelected = createMemo(() => activeTab() === 'password')
+import { createSignal, createMemo } from '@barefootjs/dom'
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/ui/tabs'
 
-<Tabs value={activeTab()}>
-  <TabsList>
-    <TabsTrigger
-      value="account"
-      selected={isAccountSelected()}
-      onClick={() => setActiveTab('account')}
-    >
-      Account
-    </TabsTrigger>
-    <TabsTrigger
-      value="password"
-      selected={isPasswordSelected()}
-      onClick={() => setActiveTab('password')}
-    >
-      Password
-    </TabsTrigger>
-  </TabsList>
-  <TabsContent value="account" selected={isAccountSelected()}>
-    Make changes to your account here.
-  </TabsContent>
-  <TabsContent value="password" selected={isPasswordSelected()}>
-    Change your password here.
-  </TabsContent>
-</Tabs>`
+function TabsMultiple() {
+  const [activeTab, setActiveTab] = createSignal('overview')
 
-const multipleTabsCode = `const [activeTab, setActiveTab] = createSignal('overview')
+  const isOverviewSelected = createMemo(() => activeTab() === 'overview')
+  const isAnalyticsSelected = createMemo(() => activeTab() === 'analytics')
+  const isReportsSelected = createMemo(() => activeTab() === 'reports')
+  const isNotificationsSelected = createMemo(() => activeTab() === 'notifications')
 
-// Use createMemo for each tab's selection state
-const isOverviewSelected = createMemo(() => activeTab() === 'overview')
-const isAnalyticsSelected = createMemo(() => activeTab() === 'analytics')
-const isReportsSelected = createMemo(() => activeTab() === 'reports')
-const isNotificationsSelected = createMemo(() => activeTab() === 'notifications')
+  return (
+    <Tabs value={activeTab()}>
+      <TabsList>
+        <TabsTrigger value="overview" selected={isOverviewSelected()} onClick={() => setActiveTab('overview')}>
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="analytics" selected={isAnalyticsSelected()} onClick={() => setActiveTab('analytics')}>
+          Analytics
+        </TabsTrigger>
+        <TabsTrigger value="reports" selected={isReportsSelected()} onClick={() => setActiveTab('reports')}>
+          Reports
+        </TabsTrigger>
+        <TabsTrigger value="notifications" selected={isNotificationsSelected()} onClick={() => setActiveTab('notifications')}>
+          Notifications
+        </TabsTrigger>
+      </TabsList>
+      {/* TabsContent for each tab... */}
+    </Tabs>
+  )
+}`
 
-<Tabs value={activeTab()}>
-  <TabsList>
-    <TabsTrigger value="overview" selected={isOverviewSelected()} onClick={() => setActiveTab('overview')}>
-      Overview
-    </TabsTrigger>
-    <TabsTrigger value="analytics" selected={isAnalyticsSelected()} onClick={() => setActiveTab('analytics')}>
-      Analytics
-    </TabsTrigger>
-    <TabsTrigger value="reports" selected={isReportsSelected()} onClick={() => setActiveTab('reports')}>
-      Reports
-    </TabsTrigger>
-    <TabsTrigger value="notifications" selected={isNotificationsSelected()} onClick={() => setActiveTab('notifications')}>
-      Notifications
-    </TabsTrigger>
-  </TabsList>
-  {/* TabsContent for each tab... */}
-</Tabs>`
+const disabledCode = `"use client"
 
-const disabledCode = `<TabsTrigger value="disabled" disabled>
-  Disabled Tab
-</TabsTrigger>`
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs'
+
+function TabsDisabled() {
+  return (
+    <Tabs>
+      <TabsList>
+        <TabsTrigger value="enabled" selected>
+          Enabled Tab
+        </TabsTrigger>
+        <TabsTrigger value="disabled" disabled>
+          Disabled Tab
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
+  )
+}`
 
 // Props definition
 const tabsProps: PropDefinition[] = [
@@ -190,9 +193,11 @@ const tabsContentProps: PropDefinition[] = [
 ]
 
 export function TabsPage() {
+  const installCommands = getHighlightedCommands('barefoot add tabs')
+
   return (
     <DocPage slug="tabs" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Tabs"
           description="A set of layered sections of content—known as tab panels—that are displayed one at a time."
@@ -201,38 +206,33 @@ export function TabsPage() {
 
         {/* Preview */}
         <Example title="" code={`<Tabs>...</Tabs>`}>
-          <div class="w-full max-w-md">
+          <div className="w-full max-w-md">
             <TabsBasicDemo />
           </div>
         </Example>
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add tabs" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic" code={basicCode}>
-              <div class="w-full max-w-md">
+              <div className="w-full max-w-md">
                 <TabsBasicDemo />
               </div>
             </Example>
 
             <Example title="Multiple Tabs" code={multipleTabsCode}>
-              <div class="w-full max-w-lg">
+              <div className="w-full max-w-lg">
                 <TabsMultipleDemo />
               </div>
             </Example>
 
             <Example title="Disabled Tab" code={disabledCode}>
-              <div class="w-full max-w-md">
+              <div className="w-full max-w-md">
                 <TabsDisabledDemo />
               </div>
             </Example>
@@ -241,28 +241,28 @@ export function TabsPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
-            <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
-            <li><strong class="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
-            <li><strong class="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
-            <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
+            <li><strong className="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
+            <li><strong className="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
+            <li><strong className="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
+            <li><strong className="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">Tabs</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">Tabs</h3>
               <PropsTable props={tabsProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
               <PropsTable props={tabsTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">TabsContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">TabsContent</h3>
               <PropsTable props={tabsContentProps} />
             </div>
           </div>

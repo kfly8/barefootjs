@@ -15,7 +15,7 @@ const activeLinkClass = 'block py-2.5 px-4 text-base rounded-md no-underline bg-
 
 function DotsVerticalIcon() {
   return (
-    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+    <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
       <circle cx="12" cy="5" r="2" />
       <circle cx="12" cy="12" r="2" />
       <circle cx="12" cy="19" r="2" />
@@ -157,7 +157,7 @@ export function MobileMenu() {
     <>
       <button
         data-mobile-menu-toggle
-        class="sm:hidden fixed bottom-6 left-4 z-[10000] w-11 h-11 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+        className="sm:hidden fixed bottom-6 left-4 z-[10000] w-11 h-11 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
         aria-label="Open menu"
       >
         <DotsVerticalIcon />
@@ -166,89 +166,88 @@ export function MobileMenu() {
       <div
         data-mobile-menu-overlay
         data-state={open() ? 'open' : 'closed'}
-        class="fixed inset-0 z-[10001] bg-black/50 sm:hidden transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=closed]:pointer-events-none"
+        className="fixed inset-0 z-[10001] bg-black/50 sm:hidden transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=closed]:pointer-events-none"
       >
         <div
           data-mobile-menu-drawer
-          class="fixed bottom-0 left-0 right-0 z-[10002] bg-background rounded-t-2xl shadow-lg transform transition-all duration-300 ease-out data-[state=closed]:translate-y-full data-[expanded=false]:h-[50vh] data-[expanded=true]:h-[85vh]"
+          className="fixed bottom-0 left-0 right-0 z-[10002] bg-background rounded-t-2xl shadow-lg transform transition-all duration-300 ease-out data-[state=closed]:translate-y-full data-[expanded=false]:h-[50vh] data-[expanded=true]:h-[85vh]"
           data-state={open() ? 'open' : 'closed'}
           data-expanded={expanded() ? 'true' : 'false'}
         >
-          <div class="flex items-center justify-between px-4 pt-3 pb-2">
-            <div data-drag-handle class="flex-1 flex justify-center cursor-grab active:cursor-grabbing touch-none">
-              <div class="w-12 h-1.5 bg-muted-foreground/30 rounded-full"></div>
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <div data-drag-handle className="flex-1 flex justify-center cursor-grab active:cursor-grabbing touch-none">
+              <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full"></div>
             </div>
             <button
               data-mobile-menu-close
-              class="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
               aria-label="Close menu"
             >
               <XIcon size="md" />
             </button>
           </div>
 
-          <nav class="p-4 overflow-y-auto h-[calc(100%-48px)]">
-            <div class="space-y-1">
-              <details data-category="get-started" class="mb-2 group">
-                <summary class={summaryClass}>
+          <nav className="p-4 overflow-y-auto h-[calc(100%-48px)]">
+            <div className="space-y-1">
+              <details data-category="get-started" className="mb-2 group">
+                <summary className={summaryClass}>
                   <span>Get Started</span>
-                  <ChevronRightIcon size="sm" class={chevronClass} />
+                  <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
-                <div class="pl-2 py-1 space-y-0.5">
-                  <a href="/" class={menuLinkClass}>Introduction</a>
+                <div className="pl-2 py-1 space-y-0.5">
+                  <a href="/" className={menuLinkClass}>Introduction</a>
                 </div>
               </details>
 
-              <details data-category="components" class="mb-2 group">
-                <summary class={summaryClass}>
+              <details data-category="components" className="mb-2 group">
+                <summary className={summaryClass}>
                   <span>Components</span>
-                  <ChevronRightIcon size="sm" class={chevronClass} />
+                  <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
-                <div class="pl-2 py-1 space-y-0.5">
-                  <a href="/docs/components/accordion" class={menuLinkClass}>Accordion</a>
-                  <a href="/docs/components/badge" class={menuLinkClass}>Badge</a>
-                  <a href="/docs/components/button" class={menuLinkClass}>Button</a>
-                  <a href="/docs/components/card" class={menuLinkClass}>Card</a>
-                  <a href="/docs/components/checkbox" class={menuLinkClass}>Checkbox</a>
-                  <a href="/docs/components/counter" class={menuLinkClass}>Counter</a>
-                  <a href="/docs/components/dialog" class={menuLinkClass}>Dialog</a>
-                  <a href="/docs/components/dropdown" class={menuLinkClass}>Dropdown</a>
-                  <a href="/docs/components/input" class={menuLinkClass}>Input</a>
-                  <a href="/docs/components/select" class={menuLinkClass}>Select</a>
-                  <a href="/docs/components/switch" class={menuLinkClass}>Switch</a>
-                  <a href="/docs/components/tabs" class={menuLinkClass}>Tabs</a>
-                  <a href="/docs/components/toast" class={menuLinkClass}>Toast</a>
-                  <a href="/docs/components/tooltip" class={menuLinkClass}>Tooltip</a>
+                <div className="pl-2 py-1 space-y-0.5">
+                  <a href="/docs/components/accordion" className={menuLinkClass}>Accordion</a>
+                  <a href="/docs/components/badge" className={menuLinkClass}>Badge</a>
+                  <a href="/docs/components/button" className={menuLinkClass}>Button</a>
+                  <a href="/docs/components/card" className={menuLinkClass}>Card</a>
+                  <a href="/docs/components/checkbox" className={menuLinkClass}>Checkbox</a>
+                  <a href="/docs/components/dialog" className={menuLinkClass}>Dialog</a>
+                  <a href="/docs/components/dropdown" className={menuLinkClass}>Dropdown</a>
+                  <a href="/docs/components/input" className={menuLinkClass}>Input</a>
+                  <a href="/docs/components/select" className={menuLinkClass}>Select</a>
+                  <a href="/docs/components/switch" className={menuLinkClass}>Switch</a>
+                  <a href="/docs/components/tabs" className={menuLinkClass}>Tabs</a>
+                  <a href="/docs/components/toast" className={menuLinkClass}>Toast</a>
+                  <a href="/docs/components/tooltip" className={menuLinkClass}>Tooltip</a>
                 </div>
               </details>
 
-              <details data-category="forms" class="mb-2 group">
-                <summary class={summaryClass}>
+              <details data-category="forms" className="mb-2 group">
+                <summary className={summaryClass}>
                   <span>Forms</span>
-                  <ChevronRightIcon size="sm" class={chevronClass} />
+                  <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
-                <div class="pl-2 py-1 space-y-0.5">
-                  <a href="/docs/forms/controlled-input" class={menuLinkClass}>Controlled Input</a>
-                  <a href="/docs/forms/field-arrays" class={menuLinkClass}>Field Arrays</a>
-                  <a href="/docs/forms/submit" class={menuLinkClass}>Submit</a>
-                  <a href="/docs/forms/validation" class={menuLinkClass}>Validation</a>
+                <div className="pl-2 py-1 space-y-0.5">
+                  <a href="/docs/forms/controlled-input" className={menuLinkClass}>Controlled Input</a>
+                  <a href="/docs/forms/field-arrays" className={menuLinkClass}>Field Arrays</a>
+                  <a href="/docs/forms/submit" className={menuLinkClass}>Submit</a>
+                  <a href="/docs/forms/validation" className={menuLinkClass}>Validation</a>
                 </div>
               </details>
 
-              <details data-category="blocks" class="mb-2 group">
-                <summary class={summaryClass}>
+              <details data-category="blocks" className="mb-2 group">
+                <summary className={summaryClass}>
                   <span>Blocks</span>
-                  <ChevronRightIcon size="sm" class={chevronClass} />
+                  <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
-                <div class="pl-2 py-1 space-y-0.5"></div>
+                <div className="pl-2 py-1 space-y-0.5"></div>
               </details>
 
-              <details data-category="charts" class="mb-2 group">
-                <summary class={summaryClass}>
+              <details data-category="charts" className="mb-2 group">
+                <summary className={summaryClass}>
                   <span>Charts</span>
-                  <ChevronRightIcon size="sm" class={chevronClass} />
+                  <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
-                <div class="pl-2 py-1 space-y-0.5"></div>
+                <div className="pl-2 py-1 space-y-0.5"></div>
               </details>
             </div>
           </nav>

@@ -1,73 +1,151 @@
 "use client"
+
 /**
- * Tabs Component
+ * Tabs Components
  *
- * A set of layered sections of content—known as tab panels—that are
- * displayed one at a time.
- * Inspired by shadcn/ui Tabs component.
+ * A set of layered sections of content displayed one at a time.
+ * Inspired by shadcn/ui with CSS variable theming support.
  *
- * Design Decision: Selected state management
- * This component uses props-based state management rather than Context.
- * The parent component should:
- * 1. Use a signal to track the currently selected tab value
- * 2. Pass `value` and `onValueChange` props to Tabs
- * 3. Pass the same `value` to TabsTrigger and TabsContent for matching
+ * Design Decision: Props-based state management instead of Context.
+ * The parent component should use signals to track state and pass
+ * `selected` prop to TabsTrigger and TabsContent for matching.
  *
- * This approach keeps the component tree explicit and avoids Context
- * complexity while maintaining full control over tab state.
+ * @example Basic tabs
+ * ```tsx
+ * const [activeTab, setActiveTab] = useState('account')
+ *
+ * <Tabs value={activeTab} onValueChange={setActiveTab}>
+ *   <TabsList>
+ *     <TabsTrigger value="account" selected={activeTab === 'account'} onClick={() => setActiveTab('account')}>
+ *       Account
+ *     </TabsTrigger>
+ *     <TabsTrigger value="password" selected={activeTab === 'password'} onClick={() => setActiveTab('password')}>
+ *       Password
+ *     </TabsTrigger>
+ *   </TabsList>
+ *   <TabsContent value="account" selected={activeTab === 'account'}>
+ *     Account settings here
+ *   </TabsContent>
+ *   <TabsContent value="password" selected={activeTab === 'password'}>
+ *     Password settings here
+ *   </TabsContent>
+ * </Tabs>
+ * ```
  */
 
 import type { Child } from '../../types'
 
-// Tabs - Container component
-export interface TabsProps {
+// Tabs container classes
+const tabsClasses = 'flex flex-col gap-2 w-full'
+
+// TabsList classes
+const tabsListClasses = 'bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]'
+
+// TabsTrigger base classes
+const tabsTriggerBaseClasses = 'inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4'
+
+// TabsTrigger focus classes
+const tabsTriggerFocusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
+
+// TabsTrigger active classes
+const tabsTriggerActiveClasses = 'bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30'
+
+// TabsTrigger inactive classes
+const tabsTriggerInactiveClasses = 'text-foreground dark:text-muted-foreground'
+
+// TabsContent classes
+const tabsContentClasses = 'flex-1 outline-none'
+
+/**
+ * Props for Tabs component.
+ */
+interface TabsProps {
+  /** Currently selected tab value */
   value?: string
+  /** Default selected value (uncontrolled) */
   defaultValue?: string
+  /** Callback when tab changes */
   onValueChange?: (value: string) => void
+  /** Tab components (TabsList and TabsContent) */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function Tabs({
+/**
+ * Tabs container component.
+ *
+ * @param props.value - Currently selected tab value
+ * @param props.defaultValue - Default value for uncontrolled usage
+ * @param props.onValueChange - Callback when tab changes
+ */
+function Tabs({
+  class: className = '',
   value,
   defaultValue,
-  onValueChange,
   children,
 }: TabsProps) {
   return (
-    <div class="w-full" data-value={value || defaultValue}>
+    <div data-slot="tabs" data-value={value || defaultValue} className={`${tabsClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-// TabsList - Container for tab triggers
-export interface TabsListProps {
+/**
+ * Props for TabsList component.
+ */
+interface TabsListProps {
+  /** TabsTrigger components */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function TabsList({
+/**
+ * Container for tab triggers.
+ *
+ * @param props.children - TabsTrigger components
+ */
+function TabsList({
+  class: className = '',
   children,
 }: TabsListProps) {
   return (
-    <div
-      role="tablist"
-      class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
-    >
+    <div data-slot="tabs-list" role="tablist" className={`${tabsListClasses} ${className}`}>
       {children}
     </div>
   )
 }
 
-// TabsTrigger - Individual tab button
-export interface TabsTriggerProps {
+/**
+ * Props for TabsTrigger component.
+ */
+interface TabsTriggerProps {
+  /** Value that identifies this tab */
   value: string
+  /** Whether this tab is currently selected */
   selected?: boolean
+  /** Whether this tab is disabled */
   disabled?: boolean
+  /** Click handler */
   onClick?: () => void
+  /** Tab label */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function TabsTrigger({
+/**
+ * Individual tab button.
+ *
+ * @param props.value - Tab identifier
+ * @param props.selected - Whether selected
+ * @param props.disabled - Whether disabled
+ * @param props.onClick - Click handler
+ */
+function TabsTrigger({
+  class: className = '',
   value,
   selected = false,
   disabled = false,
@@ -110,21 +188,19 @@ export function TabsTrigger({
     }
   }
 
+  const stateClasses = selected ? tabsTriggerActiveClasses : tabsTriggerInactiveClasses
+  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${stateClasses} ${className}`
+
   return (
     <button
+      data-slot="tabs-trigger"
       role="tab"
       aria-selected={selected}
-      {...(disabled ? { disabled: true } : {})}
+      disabled={disabled}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
       tabindex={selected ? 0 : -1}
-      class={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-        disabled ? 'pointer-events-none opacity-50' : ''
-      } ${
-        selected
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-      }`}
+      className={classes}
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
@@ -133,29 +209,48 @@ export function TabsTrigger({
   )
 }
 
-// TabsContent - Content panel for each tab
-// Note: Uses CSS to show/hide instead of conditional rendering
-// because the compiler has limitations with ternary conditional returns.
-export interface TabsContentProps {
+/**
+ * Props for TabsContent component.
+ */
+interface TabsContentProps {
+  /** Value that identifies which tab this content belongs to */
   value: string
+  /** Whether this content is currently visible */
   selected?: boolean
+  /** Content to display */
   children?: Child
+  /** Additional CSS classes */
+  class?: string
 }
 
-export function TabsContent({
+/**
+ * Content panel for a tab.
+ *
+ * @param props.value - Tab identifier
+ * @param props.selected - Whether visible
+ */
+function TabsContent({
+  class: className = '',
   value,
   selected = false,
   children,
 }: TabsContentProps) {
+  const visibilityClass = selected ? '' : 'hidden'
+  const classes = `${tabsContentClasses} ${visibilityClass} ${className}`
+
   return (
     <div
+      data-slot="tabs-content"
       role="tabpanel"
       tabindex={0}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
-      class={`mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? '' : 'hidden'}`}
+      className={classes}
     >
       {children}
     </div>
   )
 }
+
+export { Tabs, TabsList, TabsTrigger, TabsContent }
+export type { TabsProps, TabsListProps, TabsTriggerProps, TabsContentProps }

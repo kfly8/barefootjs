@@ -8,8 +8,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -18,17 +19,18 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'with-form', title: 'With Form', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add dialog`
+const basicCode = `"use client"
 
-const usageCode = `import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/dom'
 import {
   DialogTrigger,
   DialogOverlay,
@@ -40,7 +42,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 
-export default function Page() {
+function DialogBasic() {
   const [open, setOpen] = createSignal(false)
 
   return (
@@ -58,7 +60,7 @@ export default function Page() {
         <DialogHeader>
           <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
           <DialogDescription id="dialog-description">
-            Dialog description here.
+            This is a basic dialog example.
           </DialogDescription>
         </DialogHeader>
         <p>Dialog content goes here.</p>
@@ -70,60 +72,59 @@ export default function Page() {
   )
 }`
 
-const basicCode = `const [open, setOpen] = createSignal(false)
+const formCode = `"use client"
 
-<DialogTrigger onClick={() => setOpen(true)}>
-  Open Dialog
-</DialogTrigger>
-<DialogOverlay open={open()} onClick={() => setOpen(false)} />
-<DialogContent
-  open={open()}
-  onClose={() => setOpen(false)}
-  ariaLabelledby="dialog-title"
-  ariaDescribedby="dialog-description"
->
-  <DialogHeader>
-    <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
-    <DialogDescription id="dialog-description">
-      This is a basic dialog example.
-    </DialogDescription>
-  </DialogHeader>
-  <p>Dialog content goes here.</p>
-  <DialogFooter>
-    <DialogClose onClick={() => setOpen(false)}>Close</DialogClose>
-  </DialogFooter>
-</DialogContent>`
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  DialogTrigger,
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 
-const formCode = `const [open, setOpen] = createSignal(false)
+function DialogForm() {
+  const [open, setOpen] = createSignal(false)
 
-<DialogTrigger onClick={() => setOpen(true)}>
-  Edit Profile
-</DialogTrigger>
-<DialogOverlay open={open()} onClick={() => setOpen(false)} />
-<DialogContent
-  open={open()}
-  onClose={() => setOpen(false)}
-  ariaLabelledby="form-dialog-title"
->
-  <DialogHeader>
-    <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
-    <DialogDescription>
-      Make changes to your profile here.
-    </DialogDescription>
-  </DialogHeader>
-  <div class="grid gap-4 py-4">
-    <div class="grid grid-cols-4 items-center gap-4">
-      <label for="name" class="text-right text-sm font-medium">
-        Name
-      </label>
-      <input id="name" type="text" class="col-span-3 ..." />
+  return (
+    <div>
+      <DialogTrigger onClick={() => setOpen(true)}>
+        Edit Profile
+      </DialogTrigger>
+      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+      <DialogContent
+        open={open()}
+        onClose={() => setOpen(false)}
+        ariaLabelledby="form-dialog-title"
+      >
+        <DialogHeader>
+          <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input id="name" type="text" className="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
+          <Button onClick={() => setOpen(false)}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
     </div>
-  </div>
-  <DialogFooter>
-    <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-    <button onClick={() => setOpen(false)}>Save changes</button>
-  </DialogFooter>
-</DialogContent>`
+  )
+}`
 
 // Props definitions
 const dialogTriggerProps: PropDefinition[] = [
@@ -203,9 +204,11 @@ const dialogCloseProps: PropDefinition[] = [
 ]
 
 export function DialogPage() {
+  const installCommands = getHighlightedCommands('barefoot add dialog')
+
   return (
     <DocPage slug="dialog" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Dialog"
           description="A modal dialog that displays content in a layer above the page. Supports ESC key, overlay click, focus trap, and scroll lock."
@@ -214,41 +217,36 @@ export function DialogPage() {
 
         {/* Preview */}
         <Example title="" code={`<DialogContent open={open()} onClose={() => setOpen(false)}>...</DialogContent>`}>
-          <div class="flex gap-4">
+          <div className="flex gap-4">
             <DialogBasicDemo />
           </div>
         </Example>
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add dialog" highlightedCommands={installCommands} />
         </Section>
 
         {/* Features */}
         <Section id="features" title="Features">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
-            <li><strong class="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
-            <li><strong class="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
-            <li><strong class="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
-            <li><strong class="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-            <li><strong class="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
+            <li><strong className="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
+            <li><strong className="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
+            <li><strong className="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
+            <li><strong className="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+            <li><strong className="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
           </ul>
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
-            <Example title="Basic Dialog" code={basicCode}>
+          <div className="space-y-8">
+            <Example title="Basic" code={basicCode}>
               <DialogBasicDemo />
             </Example>
 
-            <Example title="Dialog with Form" code={formCode}>
+            <Example title="With Form" code={formCode}>
               <DialogFormDemo />
             </Example>
           </div>
@@ -256,40 +254,40 @@ export function DialogPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
-            <li><strong class="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
-            <li><strong class="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
-            <li><strong class="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-            <li><strong class="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
+            <li><strong className="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
+            <li><strong className="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
+            <li><strong className="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+            <li><strong className="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
               <PropsTable props={dialogTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
               <PropsTable props={dialogOverlayProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogContent</h3>
               <PropsTable props={dialogContentProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
               <PropsTable props={dialogTitleProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
               <PropsTable props={dialogDescriptionProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogClose</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogClose</h3>
               <PropsTable props={dialogCloseProps} />
             </div>
           </div>
