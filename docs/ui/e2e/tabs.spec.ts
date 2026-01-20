@@ -40,11 +40,11 @@ test.describe('Tabs Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add tabs')).toBeVisible()
+    await expect(page.locator('text=bunx --bun barefoot add tabs')).toBeVisible()
   })
 
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
+  test('displays examples section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
   })
 
   test.describe('Tabs Rendering', () => {
