@@ -7,14 +7,10 @@
 
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
-import { Suspense } from 'hono/jsx/streaming'
 import { renderer } from './renderer'
 import Counter from '@/components/Counter'
 import Toggle from '@/components/Toggle'
 import TodoApp from '@/components/TodoApp'
-import Game from '@/components/Game'
-import { AsyncUserList } from './components/AsyncUserList'
-import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
 const app = new Hono()
 
@@ -50,9 +46,6 @@ app.get('/', (c) => {
           <li><a href="/counter">Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
           <li><a href="/todos">Todo (SSR + API)</a></li>
-          <li><a href="/async">Async User List (Suspense)</a></li>
-          <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
-          <li><a href="/game">Game (100x100 Grid Benchmark)</a></li>
         </ul>
       </nav>
     </div>
@@ -88,42 +81,6 @@ app.get('/todos', (c) => {
   return c.render(
     <div id="app">
       <TodoApp initialTodos={todos} />
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Async User List with Suspense (streaming)
-app.get('/async', (c) => {
-  return c.render(
-    <div>
-      <h1>Async Data Fetching with Suspense</h1>
-      <Suspense fallback={<p class="loading">Loading users...</p>}>
-        <AsyncUserList />
-      </Suspense>
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Async Counter with Suspense + BarefootJS (streaming + interactivity)
-app.get('/async-counter', (c) => {
-  return c.render(
-    <div>
-      <h1>Async Counter with Suspense + BarefootJS</h1>
-      <Suspense fallback={<p class="loading">Loading counter...</p>}>
-        <AsyncCounterWrapper />
-      </Suspense>
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Game (100x100 Grid Benchmark)
-app.get('/game', (c) => {
-  return c.render(
-    <div>
-      <Game />
       <p><a href="/">← Back</a></p>
     </div>
   )
