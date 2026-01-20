@@ -42,7 +42,7 @@ export default function Page() {
 
 const basicCode = `const [airplaneMode, setAirplaneMode] = createSignal(false)
 
-<div class="flex items-center gap-2">
+<div className="flex items-center gap-2">
   <Switch
     checked={airplaneMode()}
     onCheckedChange={setAirplaneMode}
@@ -57,16 +57,16 @@ const multipleCode = `const [wifi, setWifi] = createSignal(true)
 const [bluetooth, setBluetooth] = createSignal(false)
 const [notifications, setNotifications] = createSignal(true)
 
-<div class="space-y-4">
-  <div class="flex items-center justify-between">
+<div className="space-y-4">
+  <div className="flex items-center justify-between">
     <span>Wi-Fi</span>
     <Switch checked={wifi()} onCheckedChange={setWifi} />
   </div>
-  <div class="flex items-center justify-between">
+  <div className="flex items-center justify-between">
     <span>Bluetooth</span>
     <Switch checked={bluetooth()} onCheckedChange={setBluetooth} />
   </div>
-  <div class="flex items-center justify-between">
+  <div className="flex items-center justify-between">
     <span>Notifications</span>
     <Switch checked={notifications()} onCheckedChange={setNotifications} />
   </div>
@@ -96,7 +96,7 @@ const switchProps: PropDefinition[] = [
 export function SwitchPage() {
   return (
     <DocPage slug="switch" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Switch"
           description="A control that allows the user to toggle between checked and not checked."
@@ -120,13 +120,13 @@ export function SwitchPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic" code={basicCode}>
               <SwitchInteractiveDemo />
             </Example>
 
             <Example title="Disabled" code={disabledCode}>
-              <div class="flex gap-4">
+              <div className="flex gap-4">
                 <Switch checked={false} disabled />
                 <Switch checked={true} disabled />
               </div>

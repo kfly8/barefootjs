@@ -119,8 +119,8 @@ export const renderer = jsxRenderer(
             <CommandPalette />
             <SidebarMenu currentPath={currentPath} />
             <SidebarPreview />
-            <div class="sm:pl-56">
-              <main class="max-w-[1000px] mx-auto px-0 sm:px-4">
+            <div className="sm:pl-56">
+              <main className="max-w-[1000px] mx-auto px-0 sm:px-4">
                 {children}
               </main>
             </div>

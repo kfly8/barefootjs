@@ -48,8 +48,8 @@ export function DocPage({ slug, toc, children }: DocPageProps) {
   const navLinks = getNavLinks(slug)
 
   return (
-    <div class="flex gap-16">
-      <div class="flex-1 min-w-0">
+    <div className="flex gap-16">
+      <div className="flex-1 min-w-0">
         {children}
         <PageNavigation {...navLinks} />
       </div>
@@ -68,40 +68,40 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, description, prev, next }: PageHeaderProps) {
   return (
-    <div class="space-y-2">
-      <div class="flex items-center justify-between gap-4">
-        <h1 class="text-3xl font-bold tracking-tighter text-foreground">{title}</h1>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tighter text-foreground">{title}</h1>
         {(prev || next) && (
-          <nav class="hidden sm:flex items-center gap-1 text-sm" aria-label="Quick navigation">
+          <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Quick navigation">
             {prev ? (
               <a
                 href={prev.href}
-                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
+                className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
                 title={`Previous: ${prev.title}`}
               >
                 <ChevronLeftIcon size="sm" />
-                <span class="max-w-24 truncate">{prev.title}</span>
+                <span className="max-w-24 truncate">{prev.title}</span>
               </a>
             ) : (
-              <div class="w-20" />
+              <div className="w-20" />
             )}
-            <span class="text-border">|</span>
+            <span className="text-border">|</span>
             {next ? (
               <a
                 href={next.href}
-                class="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
+                className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
                 title={`Next: ${next.title}`}
               >
-                <span class="max-w-24 truncate">{next.title}</span>
+                <span className="max-w-24 truncate">{next.title}</span>
                 <ChevronRightIcon size="sm" />
               </a>
             ) : (
-              <div class="w-20" />
+              <div className="w-20" />
             )}
           </nav>
         )}
       </div>
-      <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
+      <p className="text-muted-foreground text-lg leading-relaxed">{description}</p>
     </div>
   )
 }
@@ -109,9 +109,9 @@ export function PageHeader({ title, description, prev, next }: PageHeaderProps) 
 // Preview component wrapper with subtle dot pattern background
 export function Preview({ children }: { children: any }) {
   return (
-    <div class="flex flex-wrap items-center justify-center gap-4 p-8 border border-border rounded-lg bg-card relative overflow-hidden">
-      <div class="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
-      <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-4 p-8 border border-border rounded-lg bg-card relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
         {children}
       </div>
     </div>
@@ -136,16 +136,16 @@ export function CodeBlock({
   }
 
   return (
-    <div class="relative group">
-      <pre class="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono">
-        <code class="block">
+    <div className="relative group">
+      <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono">
+        <code className="block">
           {showLineNumbers ? (
             lines.map((line, i) => (
-              <span key={i} class="table-row">
-                <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+              <span key={i} className="table-row">
+                <span className="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
                   {i + 1}
                 </span>
-                <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
+                <span className="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
               </span>
             ))
           ) : (
@@ -161,12 +161,12 @@ export function CodeBlock({
 // Section component with scroll margin for anchor links
 export function Section({ id, title, children }: { id?: string; title: string; children: any }) {
   return (
-    <section id={id} class="space-y-4 scroll-mt-16">
-      <h2 class="text-xl font-semibold tracking-tight text-foreground group relative">
+    <section id={id} className="space-y-4 scroll-mt-16">
+      <h2 className="text-xl font-semibold tracking-tight text-foreground group relative">
         {id && (
           <a
             href={`#${id}`}
-            class="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+            className="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
             aria-label={`Link to ${title}`}
           >
             #
@@ -182,8 +182,8 @@ export function Section({ id, title, children }: { id?: string; title: string; c
 // Subsection component
 export function Subsection({ title, children }: { title: string; children: any }) {
   return (
-    <div class="space-y-4">
-      <h3 class="text-lg font-medium text-foreground">{title}</h3>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium text-foreground">{title}</h3>
       {children}
     </div>
   )
@@ -200,11 +200,11 @@ export interface PropDefinition {
 // Props table row
 function PropRow({ name, type, defaultValue, description }: PropDefinition) {
   return (
-    <tr class="border-b border-border last:border-b-0">
-      <td class="py-3 px-4 font-mono text-sm text-foreground whitespace-nowrap">{name}</td>
-      <td class="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{type}</td>
-      <td class="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{defaultValue || '-'}</td>
-      <td class="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap">{description}</td>
+    <tr className="border-b border-border last:border-b-0">
+      <td className="py-3 px-4 font-mono text-sm text-foreground whitespace-nowrap">{name}</td>
+      <td className="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{type}</td>
+      <td className="py-3 px-4 font-mono text-sm text-muted-foreground whitespace-nowrap">{defaultValue || '-'}</td>
+      <td className="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap">{description}</td>
     </tr>
   )
 }
@@ -212,14 +212,14 @@ function PropRow({ name, type, defaultValue, description }: PropDefinition) {
 // Props table component with horizontal scroll for mobile
 export function PropsTable({ props }: { props: PropDefinition[] }) {
   return (
-    <div class="border border-border rounded-lg overflow-x-auto">
-      <table class="w-full text-left min-w-[600px]">
-        <thead class="bg-muted">
-          <tr class="border-b border-border">
-            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Prop</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Type</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Default</th>
-            <th class="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Description</th>
+    <div className="border border-border rounded-lg overflow-x-auto">
+      <table className="w-full text-left min-w-[600px]">
+        <thead className="bg-muted">
+          <tr className="border-b border-border">
+            <th className="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Prop</th>
+            <th className="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Type</th>
+            <th className="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Default</th>
+            <th className="py-3 px-4 text-sm font-medium text-foreground whitespace-nowrap">Description</th>
           </tr>
         </thead>
         <tbody>
@@ -263,13 +263,13 @@ export function Example({
   const id = title ? toKebabCase(title) : undefined
 
   return (
-    <div class="space-y-4">
+    <div className="space-y-4">
       {title && (
-        <h3 id={id} class="text-lg font-medium text-foreground scroll-mt-20 group relative">
+        <h3 id={id} className="text-lg font-medium text-foreground scroll-mt-20 group relative">
           {id && (
             <a
               href={`#${id}`}
-              class="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+              className="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
               aria-label={`Link to ${title}`}
             >
               #
@@ -278,25 +278,25 @@ export function Example({
           {title}
         </h3>
       )}
-      <div class="border border-solid border-border rounded-lg overflow-hidden">
+      <div className="border border-solid border-border rounded-lg overflow-hidden">
         {/* Preview section */}
-        <div class="flex flex-wrap items-center justify-center gap-4 px-8 py-32 bg-card relative overflow-hidden">
-          <div class="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
-          <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4 px-8 py-32 bg-card relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
+          <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
             {children}
           </div>
         </div>
         {/* Code section with conditional line numbers */}
-        <div class="relative group">
-          <pre class="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
-            <code class="block">
+        <div className="relative group">
+          <pre className="m-0 p-4 pr-12 bg-muted overflow-x-auto text-sm font-mono">
+            <code className="block">
               {showLineNumbers ? (
                 lines.map((line, i) => (
-                  <span key={i} class="table-row">
-                    <span class="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
+                  <span key={i} className="table-row">
+                    <span className="table-cell pr-4 text-right select-none text-muted-foreground/50 w-8">
                       {i + 1}
                     </span>
-                    <span class="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
+                    <span className="table-cell" dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }} />
                   </span>
                 ))
               ) : (

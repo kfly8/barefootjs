@@ -20,8 +20,9 @@ import {
   PageHeader,
   Section,
   Example,
-  CodeBlock,
   PropsTable,
+  PackageManagerTabs,
+  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -30,17 +31,54 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
+  { id: 'profile-card', title: 'Profile Card', branch: 'start' },
+  { id: 'stats-card', title: 'Stats Card', branch: 'child' },
+  { id: 'login-form', title: 'Login Form', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const installCode = `bunx barefoot add card`
+const imageCardCode = `"use client"
 
-const usageCode = `import {
+import {
   Card,
   CardImage,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction,
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+
+export function TravelCard() {
+  return (
+    <Card className="w-[350px]">
+      <CardImage
+        src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
+        alt="Mountain landscape"
+      />
+      <CardHeader>
+        <CardTitle>Swiss Alps Adventure</CardTitle>
+        <CardDescription>
+          Experience breathtaking views on a 7-day guided hiking tour through
+          the Swiss Alps, featuring scenic mountain trails and charming
+          alpine villages.
+        </CardDescription>
+        <CardAction>
+          <Button variant="outline" size="sm" data-card-hover-action>
+            View
+          </Button>
+        </CardAction>
+      </CardHeader>
+    </Card>
+  )
+}`
+
+const loginFormCode = `"use client"
+
+import {
+  Card,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -48,97 +86,116 @@ const usageCode = `import {
   CardAction,
   CardFooter,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-export default function Page() {
+export function LoginForm() {
   return (
-    <Card>
-      <CardImage src="/image.jpg" alt="Card image" />
+    <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Card Title</CardTitle>
-        <CardDescription>Card Description</CardDescription>
+        <CardTitle>Login to your account</CardTitle>
+        <CardDescription>
+          Enter your email below to login to your account
+        </CardDescription>
         <CardAction>
-          <Button size="sm">Action</Button>
+          <Button variant="link">Sign Up</Button>
         </CardAction>
       </CardHeader>
+      <CardContent>
+        <form>
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="m@example.com" />
+            </div>
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Button variant="link" className="ml-auto h-auto p-0">
+                  Forgot your password?
+                </Button>
+              </div>
+              <Input id="password" type="password" />
+            </div>
+          </div>
+        </form>
+      </CardContent>
+      <CardFooter>
+        <Button type="submit" className="w-full">Login</Button>
+      </CardFooter>
     </Card>
   )
 }`
 
-const imageCardCode = `<Card class="w-[350px]">
-  <CardImage
-    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
-    alt="Mountain landscape"
-  />
-  <CardHeader>
-    <CardTitle>Swiss Alps Adventure</CardTitle>
-    <CardDescription>
-      Experience breathtaking views on a 7-day guided hiking tour through the Swiss Alps, featuring scenic mountain trails and charming alpine villages.
-    </CardDescription>
-    <CardAction>
-      <Button variant="outline" size="sm" data-card-hover-action>
-        View
-      </Button>
-    </CardAction>
-  </CardHeader>
-</Card>`
+const profileCardCode = `"use client"
 
-const loginFormCode = `<Card class="w-full max-w-sm">
-  <CardHeader>
-    <CardTitle>Login to your account</CardTitle>
-    <CardDescription>
-      Enter your email below to login to your account
-    </CardDescription>
-    <CardAction>
-      <Button variant="link">Sign Up</Button>
-    </CardAction>
-  </CardHeader>
-  <CardContent>
-    <form>
-      <div class="flex flex-col gap-6">
-        <div class="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="m@example.com" />
-        </div>
-        <div class="grid gap-2">
-          <div class="flex items-center">
-            <Label htmlFor="password">Password</Label>
-            <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
-              Forgot your password?
-            </a>
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card'
+
+export function ProfileCard() {
+  return (
+    <Card className="w-[350px]">
+      <CardHeader>
+        <div className="flex items-center gap-4">
+          <img
+            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emily"
+            alt="Emily Chen"
+            className="h-12 w-12 rounded-full"
+          />
+          <div>
+            <CardTitle>Emily Chen</CardTitle>
+            <CardDescription>Senior Product Designer</CardDescription>
           </div>
-          <Input id="password" type="password" />
         </div>
-      </div>
-    </form>
-  </CardContent>
-  <CardFooter class="flex-col gap-2">
-    <Button type="submit" class="w-full">Login</Button>
-    <Button variant="outline" class="w-full">Login with Google</Button>
-  </CardFooter>
-</Card>`
+      </CardHeader>
+      <CardContent className="grid gap-2 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">Email:</span>
+          <span>emily.chen@example.com</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">Phone:</span>
+          <span>+1 (555) 123-4567</span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}`
 
-const simpleCode = `<Card>
-  <CardHeader>
-    <CardTitle>Notifications</CardTitle>
-    <CardDescription>You have 3 unread messages.</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <p>Your notifications will appear here.</p>
-  </CardContent>
-</Card>`
+const statsCardCode = `"use client"
 
-const withActionCode = `<Card class="w-[380px]">
-  <CardHeader>
-    <CardTitle>Team Members</CardTitle>
-    <CardDescription>Manage your team members here.</CardDescription>
-    <CardAction>
-      <Button size="sm">Add Member</Button>
-    </CardAction>
-  </CardHeader>
-  <CardContent>
-    <p>Your team members will be listed here.</p>
-  </CardContent>
-</Card>`
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card'
+
+export function StatsCard() {
+  return (
+    <Card className="w-[300px] !gap-2">
+      <CardHeader>
+        <CardDescription>
+          Active Users
+          <span className="ml-2 text-xs">Jan 2025</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="text-5xl font-bold">12,486</div>
+        <p className="text-xs text-muted-foreground">
+          +8.2% from last month
+        </p>
+      </CardContent>
+    </Card>
+  )
+}`
 
 // Props definitions
 const cardProps: PropDefinition[] = [
@@ -261,9 +318,11 @@ const cardFooterProps: PropDefinition[] = [
 ]
 
 export function CardPage() {
+  const installCommands = getHighlightedCommands('barefoot add card')
+
   return (
     <DocPage slug="card" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Card"
           description="Displays a card with header, content, and footer."
@@ -272,7 +331,7 @@ export function CardPage() {
 
         {/* Preview - Image Card Example */}
         <Example title="" code={imageCardCode}>
-          <Card class="w-[350px]">
+          <Card className="w-[350px]">
             <CardImage
               src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&dpr=2&q=80"
               alt="Mountain landscape"
@@ -293,46 +352,59 @@ export function CardPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <CodeBlock code={installCode} lang="bash" />
-        </Section>
-
-        {/* Usage */}
-        <Section id="usage" title="Usage">
-          <CodeBlock code={usageCode} />
+          <PackageManagerTabs command="barefoot add card" highlightedCommands={installCommands} />
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
-            <Example title="Simple" code={simpleCode}>
-              <Card class="w-[350px]">
+          <div className="space-y-8">
+            <Example title="Profile Card" code={profileCardCode}>
+              <Card className="w-[350px]">
                 <CardHeader>
-                  <CardTitle>Notifications</CardTitle>
-                  <CardDescription>You have 3 unread messages.</CardDescription>
+                  <div className="flex items-center gap-4">
+                    <img
+                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emily"
+                      alt="Emily Chen"
+                      className="h-12 w-12 rounded-full"
+                    />
+                    <div>
+                      <CardTitle>Emily Chen</CardTitle>
+                      <CardDescription>Senior Product Designer</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p>Your notifications will appear here.</p>
+                <CardContent className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Email:</span>
+                    <span>emily.chen@example.com</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span>+1 (555) 123-4567</span>
+                  </div>
                 </CardContent>
               </Card>
             </Example>
 
-            <Example title="With Action" code={withActionCode}>
-              <Card class="w-[380px]">
+            <Example title="Stats Card" code={statsCardCode}>
+              <Card className="w-[300px] !gap-2">
                 <CardHeader>
-                  <CardTitle>Team Members</CardTitle>
-                  <CardDescription>Manage your team members here.</CardDescription>
-                  <CardAction>
-                    <Button size="sm">Add Member</Button>
-                  </CardAction>
+                  <CardDescription>
+                    Active Users
+                    <span className="ml-2 text-xs">Jan 2025</span>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Your team members will be listed here.</p>
+                  <div className="text-5xl font-bold">12,486</div>
+                  <p className="text-xs text-muted-foreground">
+                    +8.2% from last month
+                  </p>
                 </CardContent>
               </Card>
             </Example>
 
             <Example title="Login Form" code={loginFormCode}>
-              <Card class="w-full max-w-sm">
+              <Card className="w-full max-w-sm">
                 <CardHeader>
                   <CardTitle>Login to your account</CardTitle>
                   <CardDescription>
@@ -344,26 +416,25 @@ export function CardPage() {
                 </CardHeader>
                 <CardContent>
                   <form>
-                    <div class="flex flex-col gap-6">
-                      <div class="grid gap-2">
+                    <div className="flex flex-col gap-4">
+                      <div className="grid gap-2">
                         <Label htmlFor="email">Email</Label>
                         <Input type="email" placeholder="m@example.com" />
                       </div>
-                      <div class="grid gap-2">
-                        <div class="flex items-center">
+                      <div className="grid gap-2">
+                        <div className="flex items-center justify-between">
                           <Label htmlFor="password">Password</Label>
-                          <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+                          <Button variant="link" className="ml-auto h-auto p-0">
                             Forgot your password?
-                          </a>
+                          </Button>
                         </div>
                         <Input type="password" />
                       </div>
                     </div>
                   </form>
                 </CardContent>
-                <CardFooter class="flex-col gap-2">
-                  <Button type="submit" class="w-full">Login</Button>
-                  <Button variant="outline" class="w-full">Login with Google</Button>
+                <CardFooter>
+                  <Button type="submit" className="w-full">Login</Button>
                 </CardFooter>
               </Card>
             </Example>
@@ -372,37 +443,37 @@ export function CardPage() {
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">Card</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Card</h3>
               <PropsTable props={cardProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardImage</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardImage</h3>
               <PropsTable props={cardImageProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardHeader</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardHeader</h3>
               <PropsTable props={cardHeaderProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardTitle</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardTitle</h3>
               <PropsTable props={cardTitleProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardDescription</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardDescription</h3>
               <PropsTable props={cardDescriptionProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardAction</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardAction</h3>
               <PropsTable props={cardActionProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardContent</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardContent</h3>
               <PropsTable props={cardContentProps} />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-foreground mb-4">CardFooter</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">CardFooter</h3>
               <PropsTable props={cardFooterProps} />
             </div>
           </div>

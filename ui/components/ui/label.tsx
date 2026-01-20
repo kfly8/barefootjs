@@ -15,7 +15,7 @@
  * @example With required indicator
  * ```tsx
  * <Label htmlFor="name">
- *   Name <span class="text-destructive">*</span>
+ *   Name <span className="text-destructive">*</span>
  * </Label>
  * ```
  */
@@ -55,7 +55,7 @@ function Label({
     <label
       data-slot="label"
       for={htmlFor}
-      class={`${labelClasses} ${className}`}
+      className={`${labelClasses} ${className}`}
     >
       {children}
     </label>

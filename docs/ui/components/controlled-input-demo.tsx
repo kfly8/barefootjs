@@ -15,14 +15,14 @@ import { Input } from '@ui/components/ui/input'
 export function BasicControlledDemo() {
   const [text, setText] = createSignal('')
   return (
-    <div class="space-y-2">
+    <div className="space-y-2">
       <Input
         inputValue={text()}
         onInput={(e) => setText(e.target.value)}
         inputPlaceholder="Type something..."
       />
-      <p class="text-sm text-muted-foreground">
-        Current value: <span class="current-value font-medium text-foreground">{text()}</span>
+      <p className="text-sm text-muted-foreground">
+        Current value: <span className="current-value font-medium text-foreground">{text()}</span>
       </p>
     </div>
   )
@@ -37,18 +37,18 @@ export function CharacterCountDemo() {
   const remaining = createMemo(() => 100 - text().length)
 
   return (
-    <div class="space-y-2">
+    <div className="space-y-2">
       <Input
         inputValue={text()}
         onInput={(e) => setText(e.target.value)}
         inputPlaceholder="Type to see character count..."
       />
-      <div class="flex justify-between text-sm">
-        <span class="text-muted-foreground">
-          Characters: <span class="char-count font-medium text-foreground">{charCount()}</span>
+      <div className="flex justify-between text-sm">
+        <span className="text-muted-foreground">
+          Characters: <span className="char-count font-medium text-foreground">{charCount()}</span>
         </span>
-        <span class="text-muted-foreground">
-          <span class="remaining-count font-medium">{remaining()}</span> remaining
+        <span className="text-muted-foreground">
+          <span className="remaining-count font-medium">{remaining()}</span> remaining
         </span>
       </div>
     </div>
@@ -64,18 +64,18 @@ export function LivePreviewDemo() {
   const wordCount = createMemo(() => text().trim() === '' ? 0 : text().trim().split(/\s+/).length)
 
   return (
-    <div class="space-y-4">
+    <div className="space-y-4">
       <Input
         inputValue={text()}
         onInput={(e) => setText(e.target.value)}
         inputPlaceholder="Type to see live preview..."
       />
-      <div class="p-3 bg-muted rounded-md space-y-2">
-        <p class="text-sm text-muted-foreground">
-          Uppercase: <span class="uppercase-preview font-medium text-foreground">{uppercase()}</span>
+      <div className="p-3 bg-muted rounded-md space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Uppercase: <span className="uppercase-preview font-medium text-foreground">{uppercase()}</span>
         </p>
-        <p class="text-sm text-muted-foreground">
-          Word count: <span class="word-count font-medium text-foreground">{wordCount()}</span>
+        <p className="text-sm text-muted-foreground">
+          Word count: <span className="word-count font-medium text-foreground">{wordCount()}</span>
         </p>
       </div>
     </div>
@@ -89,25 +89,25 @@ export function MultiInputSyncDemo() {
   const [text, setText] = createSignal('')
 
   return (
-    <div class="space-y-4">
-      <div class="space-y-2">
-        <label class="text-sm text-muted-foreground">Input A</label>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">Input A</label>
         <Input
           inputValue={text()}
           onInput={(e) => setText(e.target.value)}
           inputPlaceholder="Type here..."
         />
       </div>
-      <div class="space-y-2">
-        <label class="text-sm text-muted-foreground">Input B (synced)</label>
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">Input B (synced)</label>
         <Input
           inputValue={text()}
           onInput={(e) => setText(e.target.value)}
           inputPlaceholder="Or type here..."
         />
       </div>
-      <p class="text-sm text-muted-foreground">
-        Shared value: <span class="shared-value font-medium text-foreground">{text()}</span>
+      <p className="text-sm text-muted-foreground">
+        Shared value: <span className="shared-value font-medium text-foreground">{text()}</span>
       </p>
     </div>
   )

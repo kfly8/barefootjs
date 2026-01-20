@@ -101,7 +101,7 @@ function DialogTrigger({
     <button
       data-slot="dialog-trigger"
       type="button"
-      class={`${dialogTriggerClasses} ${className}`}
+      className={`${dialogTriggerClasses} ${className}`}
       disabled={disabled}
       onClick={onClick}
     >
@@ -138,7 +138,7 @@ function DialogOverlay({
     <div
       data-slot="dialog-overlay"
       data-state={open ? 'open' : 'closed'}
-      class={`${dialogOverlayBaseClasses} ${stateClasses} ${className}`}
+      className={`${dialogOverlayBaseClasses} ${stateClasses} ${className}`}
       onClick={onClick}
     />
   )
@@ -228,7 +228,7 @@ function DialogContent({
       aria-labelledby={ariaLabelledby}
       aria-describedby={ariaDescribedby}
       tabindex={-1}
-      class={`${dialogContentBaseClasses} ${stateClasses} ${className}`}
+      className={`${dialogContentBaseClasses} ${stateClasses} ${className}`}
       onKeyDown={handleKeyDown}
       ref={handleFocusOnOpen}
     >
@@ -254,7 +254,7 @@ interface DialogHeaderProps {
  */
 function DialogHeader({ class: className = '', children }: DialogHeaderProps) {
   return (
-    <div data-slot="dialog-header" class={`${dialogHeaderClasses} ${className}`}>
+    <div data-slot="dialog-header" className={`${dialogHeaderClasses} ${className}`}>
       {children}
     </div>
   )
@@ -279,7 +279,7 @@ interface DialogTitleProps {
  */
 function DialogTitle({ class: className = '', id, children }: DialogTitleProps) {
   return (
-    <h2 data-slot="dialog-title" id={id} class={`${dialogTitleClasses} ${className}`}>
+    <h2 data-slot="dialog-title" id={id} className={`${dialogTitleClasses} ${className}`}>
       {children}
     </h2>
   )
@@ -304,7 +304,7 @@ interface DialogDescriptionProps {
  */
 function DialogDescription({ class: className = '', id, children }: DialogDescriptionProps) {
   return (
-    <p data-slot="dialog-description" id={id} class={`${dialogDescriptionClasses} ${className}`}>
+    <p data-slot="dialog-description" id={id} className={`${dialogDescriptionClasses} ${className}`}>
       {children}
     </p>
   )
@@ -327,7 +327,7 @@ interface DialogFooterProps {
  */
 function DialogFooter({ class: className = '', children }: DialogFooterProps) {
   return (
-    <div data-slot="dialog-footer" class={`${dialogFooterClasses} ${className}`}>
+    <div data-slot="dialog-footer" className={`${dialogFooterClasses} ${className}`}>
       {children}
     </div>
   )
@@ -355,7 +355,7 @@ function DialogClose({ class: className = '', onClick, children }: DialogClosePr
     <button
       data-slot="dialog-close"
       type="button"
-      class={`${dialogCloseClasses} ${className}`}
+      className={`${dialogCloseClasses} ${className}`}
       onClick={onClick}
     >
       {children}

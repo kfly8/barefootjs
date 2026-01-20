@@ -158,7 +158,7 @@ const accordionContentProps: PropDefinition[] = [
 export function AccordionPage() {
   return (
     <DocPage slug="accordion" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Accordion"
           description="A vertically stacked set of interactive headings that each reveal an associated section of content."
@@ -167,7 +167,7 @@ export function AccordionPage() {
 
         {/* Preview */}
         <Example title="" code={`<Accordion>...</Accordion>`}>
-          <div class="w-full max-w-md">
+          <div className="w-full max-w-md">
             <AccordionSingleOpenDemo />
           </div>
         </Example>
@@ -184,15 +184,15 @@ export function AccordionPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Single Open (Only One at a Time)" code={singleCode}>
-              <div class="w-full max-w-md">
+              <div className="w-full max-w-md">
                 <AccordionSingleOpenDemo />
               </div>
             </Example>
 
             <Example title="Multiple Open" code={multipleCode}>
-              <div class="w-full max-w-md">
+              <div className="w-full max-w-md">
                 <AccordionMultipleOpenDemo />
               </div>
             </Example>
@@ -201,28 +201,28 @@ export function AccordionPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate between triggers, Home/End to jump</li>
-            <li><strong class="text-foreground">Activation</strong> - Enter/Space to toggle accordion item</li>
-            <li><strong class="text-foreground">ARIA</strong> - Triggers use aria-expanded, aria-controls; Content uses aria-labelledby</li>
-            <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled triggers, skipped in keyboard navigation</li>
-            <li><strong class="text-foreground">Screen Readers</strong> - State changes are announced when items are expanded/collapsed</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate between triggers, Home/End to jump</li>
+            <li><strong className="text-foreground">Activation</strong> - Enter/Space to toggle accordion item</li>
+            <li><strong className="text-foreground">ARIA</strong> - Triggers use aria-expanded, aria-controls; Content uses aria-labelledby</li>
+            <li><strong className="text-foreground">Disabled State</strong> - aria-disabled on disabled triggers, skipped in keyboard navigation</li>
+            <li><strong className="text-foreground">Screen Readers</strong> - State changes are announced when items are expanded/collapsed</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">AccordionItem</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">AccordionItem</h3>
               <PropsTable props={accordionItemProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">AccordionTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">AccordionTrigger</h3>
               <PropsTable props={accordionTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">AccordionContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">AccordionContent</h3>
               <PropsTable props={accordionContentProps} />
             </div>
           </div>

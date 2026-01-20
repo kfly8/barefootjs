@@ -33,15 +33,15 @@ export function CounterDerivedDemo() {
   const isEven = createMemo(() => count() % 2 === 0)
 
   return (
-    <div class="space-y-2">
+    <div className="space-y-2">
       <Counter
         value={count()}
         disabled={false}
         onIncrement={() => setCount(n => n + 1)}
         onDecrement={() => setCount(n => n - 1)}
       />
-      <p class="text-foreground">Doubled: <span class="font-mono">{doubled()}</span></p>
-      <p class="text-foreground">Is even: <span class="font-mono">{isEven() ? 'Yes' : 'No'}</span></p>
+      <p className="text-foreground">Doubled: <span className="font-mono">{doubled()}</span></p>
+      <p className="text-foreground">Is even: <span className="font-mono">{isEven() ? 'Yes' : 'No'}</span></p>
     </div>
   )
 }

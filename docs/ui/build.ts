@@ -220,10 +220,9 @@ for (const entryPath of componentFiles) {
   // If no marked JSX and no client JS, copy original source with transformations
   // This handles files like icon.tsx with multiple components but no reactivity
   if (!markedJsxContent && !clientJsContent) {
-    // Transform source: remove 'use client', convert class to className
+    // Transform source: remove 'use client'
     let transformedSource = sourceContent
       .replace(/^['"]use client['"];?\s*/m, '')
-      .replace(/\bclass=/g, 'className=')
     await Bun.write(resolve(outputDir, baseFileName), transformedSource)
     console.log(`Generated: dist/components/${relativePath}`)
     manifest[baseNameNoExt] = { markedTemplate: `components/${relativePath}` }
@@ -339,11 +338,9 @@ async function copyServerComponents(srcDir: string, destDir: string, prefix: str
         const distFile = resolve(DIST_COMPONENTS_DIR, prefix, entry.name)
         if (!await Bun.file(distFile).exists()) {
           await mkdir(dirname(distFile), { recursive: true })
-          // Rewrite @ui/ imports to point to compiled components
-          const rewrittenContent = content.replace(
-            /@ui\/components\/ui\//g,
-            '@/components/ui/'
-          )
+          // Rewrite @ui/ imports
+          const rewrittenContent = content
+            .replace(/@ui\/components\/ui\//g, '@/components/ui/')
           await Bun.write(distFile, rewrittenContent)
           console.log(`Copied (server component): dist/components/${prefix}${entry.name}`)
         }
@@ -359,7 +356,7 @@ const SHARED_DIR = resolve(ROOT_DIR, 'components/shared')
 const DIST_SHARED_DIR = resolve(DIST_COMPONENTS_DIR, 'shared')
 await copyTsFiles(SHARED_DIR, DIST_SHARED_DIR, 'dist/components/shared/')
 
-// Rewrite @ui/ imports in all dist/*.tsx files to @/
+// Rewrite @ui/ imports in all dist/*.tsx files
 // This is needed because compiled components may reference @ui/ paths
 async function rewriteUiImports(dir: string) {
   const entries = await readdir(dir, { withFileTypes: true })
@@ -370,7 +367,8 @@ async function rewriteUiImports(dir: string) {
     } else if (entry.name.endsWith('.tsx')) {
       const content = await Bun.file(fullPath).text()
       if (content.includes('@ui/')) {
-        const rewritten = content.replace(/@ui\/components\/ui\//g, '@/components/ui/')
+        const rewritten = content
+          .replace(/@ui\/components\/ui\//g, '@/components/ui/')
         await Bun.write(fullPath, rewritten)
       }
     }

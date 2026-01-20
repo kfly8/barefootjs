@@ -148,7 +148,7 @@ function Tooltip({
   return (
     <span
       data-slot="tooltip"
-      class={tooltipContainerClasses}
+      className={tooltipContainerClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
@@ -159,15 +159,15 @@ function Tooltip({
       <div
         data-slot="tooltip-content"
         data-state={open() ? 'open' : 'closed'}
-        class={`absolute z-50 ${placementClasses[placement]}`}
+        className={`absolute z-50 ${placementClasses[placement]}`}
         role="tooltip"
         id={id}
       >
-        <div class={tooltipContentClasses}>
+        <div className={tooltipContentClasses}>
           {content}
         </div>
         <span
-          class={`absolute w-0 h-0 border-4 ${arrowClasses[placement]}`}
+          className={`absolute w-0 h-0 border-4 ${arrowClasses[placement]}`}
           aria-hidden="true"
         />
       </div>
@@ -204,7 +204,7 @@ function TooltipTrigger({
 }: TooltipTriggerProps) {
   return (
     <span
-      class="inline-block"
+      className="inline-block"
       aria-describedby={ariaDescribedby}
       data-tooltip-trigger
     >
@@ -236,17 +236,17 @@ function TooltipContent({
 }: TooltipContentProps) {
   return (
     <div
-      class={`absolute z-50 ${placementClasses[placement]}`}
+      className={`absolute z-50 ${placementClasses[placement]}`}
       role="tooltip"
       id={id}
       data-tooltip-content
       data-tooltip-open={open ? 'true' : 'false'}
     >
-      <div class={tooltipContentClasses}>
+      <div className={tooltipContentClasses}>
         {children}
       </div>
       <span
-        class={`absolute w-0 h-0 border-4 ${arrowClasses[placement]}`}
+        className={`absolute w-0 h-0 border-4 ${arrowClasses[placement]}`}
         aria-hidden="true"
       />
     </div>

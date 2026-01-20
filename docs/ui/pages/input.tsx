@@ -107,7 +107,7 @@ const inputProps: PropDefinition[] = [
 export function InputPage() {
   return (
     <DocPage slug="input" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Input"
           description="Displays an input field for user text entry."
@@ -131,9 +131,9 @@ export function InputPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Input Types" code={typesCode}>
-              <div class="flex flex-col gap-2 max-w-sm">
+              <div className="flex flex-col gap-2 max-w-sm">
                 <Input inputType="text" inputPlaceholder="Text input" />
                 <Input inputType="email" inputPlaceholder="Email address" />
                 <Input inputType="password" inputPlaceholder="Password" />
@@ -142,20 +142,20 @@ export function InputPage() {
             </Example>
 
             <Example title="Disabled & Read-only" code={disabledCode}>
-              <div class="flex flex-col gap-2 max-w-sm">
+              <div className="flex flex-col gap-2 max-w-sm">
                 <Input inputDisabled inputPlaceholder="Disabled input" />
                 <Input inputReadOnly inputValue="Read-only value" />
               </div>
             </Example>
 
             <Example title="Value Binding" code={bindingCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <InputBindingDemo />
               </div>
             </Example>
 
             <Example title="Focus State" code={`<Input onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <InputFocusDemo />
               </div>
             </Example>

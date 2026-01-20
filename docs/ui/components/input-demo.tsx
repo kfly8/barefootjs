@@ -15,13 +15,13 @@ import { Input } from '@ui/components/ui/input'
 export function InputBindingDemo() {
   const [value, setValue] = createSignal('')
   return (
-    <div class="space-y-2">
+    <div className="space-y-2">
       <Input
         inputValue={value()}
         onInput={(e) => setValue(e.target.value)}
         inputPlaceholder="Type something..."
       />
-      <p class="text-sm text-muted-foreground">You typed: <span class="typed-value font-medium">{value()}</span></p>
+      <p className="text-sm text-muted-foreground">You typed: <span className="typed-value font-medium">{value()}</span></p>
     </div>
   )
 }
@@ -32,14 +32,14 @@ export function InputBindingDemo() {
 export function InputFocusDemo() {
   const [focused, setFocused] = createSignal(false)
   return (
-    <div class="space-y-2">
+    <div className="space-y-2">
       <Input
         inputPlaceholder="Focus me..."
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       />
-      <p class="text-sm">
-        Status: <span class="focus-status font-medium">{focused() ? 'Focused' : 'Not focused'}</span>
+      <p className="text-sm">
+        Status: <span className="focus-status font-medium">{focused() ? 'Focused' : 'Not focused'}</span>
       </p>
     </div>
   )

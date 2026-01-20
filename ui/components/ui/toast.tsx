@@ -19,7 +19,7 @@
  *
  * <ToastProvider position="bottom-right">
  *   <Toast variant="success" open={open}>
- *     <div class="flex-1">
+ *     <div className="flex-1">
  *       <ToastTitle>Success!</ToastTitle>
  *       <ToastDescription>Your changes have been saved.</ToastDescription>
  *     </div>
@@ -31,7 +31,7 @@
  * @example Toast with action
  * ```tsx
  * <Toast variant="default" open={open}>
- *   <div class="flex-1">
+ *   <div className="flex-1">
  *     <ToastTitle>Undo?</ToastTitle>
  *     <ToastDescription>Item was deleted.</ToastDescription>
  *   </div>
@@ -120,7 +120,7 @@ function ToastProvider({
   return (
     <div
       data-slot="toast-provider"
-      class={`${toastProviderClasses} ${positionClasses[position]} ${className}`}
+      className={`${toastProviderClasses} ${positionClasses[position]} ${className}`}
     >
       {children}
     </div>
@@ -180,7 +180,7 @@ function Toast({
       data-state={effectiveState}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
-      class={`${toastAnimationClasses[effectiveState]} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`}
+      className={`${toastAnimationClasses[effectiveState]} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`}
     >
       {children}
     </div>
@@ -202,7 +202,7 @@ interface ToastTitleProps {
  */
 function ToastTitle({ class: className = '', children }: ToastTitleProps) {
   return (
-    <div data-slot="toast-title" class={`${toastTitleClasses} ${className}`}>
+    <div data-slot="toast-title" className={`${toastTitleClasses} ${className}`}>
       {children}
     </div>
   )
@@ -223,7 +223,7 @@ interface ToastDescriptionProps {
  */
 function ToastDescription({ class: className = '', children }: ToastDescriptionProps) {
   return (
-    <div data-slot="toast-description" class={`${toastDescriptionClasses} ${className}`}>
+    <div data-slot="toast-description" className={`${toastDescriptionClasses} ${className}`}>
       {children}
     </div>
   )
@@ -250,10 +250,10 @@ function ToastClose({ class: className = '', onClick }: ToastCloseProps) {
       data-slot="toast-close"
       type="button"
       aria-label="Close"
-      class={`${toastCloseClasses} ${className}`}
+      className={`${toastCloseClasses} ${className}`}
       onClick={onClick}
     >
-      <XIcon size="sm" class="pointer-events-none" />
+      <XIcon size="sm" className="pointer-events-none" />
     </button>
   )
 }
@@ -284,7 +284,7 @@ function ToastAction({ class: className = '', altText, onClick, children }: Toas
       data-slot="toast-action"
       type="button"
       aria-label={altText}
-      class={`${toastActionClasses} ${className}`}
+      className={`${toastActionClasses} ${className}`}
       onClick={onClick}
     >
       {children}

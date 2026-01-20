@@ -28,12 +28,12 @@ export function GitHubStars({ repo = 'kfly8/barefootjs', initialStars = null }: 
       href={`https://github.com/${repo}`}
       target="_blank"
       rel="noopener noreferrer"
-      class="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors no-underline"
+      className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors no-underline"
       aria-label="View on GitHub"
     >
-      <GitHubIcon size="md" class="text-foreground" />
+      <GitHubIcon size="md" className="text-foreground" />
       {/* Fixed width for 2 digits */}
-      <span data-github-stars class="text-sm font-medium min-w-[1.25rem] text-right tabular-nums">
+      <span data-github-stars className="text-sm font-medium min-w-[1.25rem] text-right tabular-nums">
         {initialStars !== null ? formatStars(initialStars) : null}
       </span>
     </a>

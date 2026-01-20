@@ -104,7 +104,7 @@ function Input({
     <input
       data-slot="input"
       type={type}
-      class={classes}
+      className={classes}
       placeholder={placeholder}
       value={value}
       disabled={disabled}

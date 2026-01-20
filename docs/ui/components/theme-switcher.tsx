@@ -70,7 +70,7 @@ export function ThemeSwitcher({ defaultTheme = 'system' }: ThemeSwitcherProps) {
     <button
       type="button"
       onClick={toggleTheme}
-      class="inline-flex items-center justify-center w-9 h-9 rounded-md border border-border bg-background text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
+      className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-border bg-background text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
       aria-label={isDark() ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {isDark() ? <SunIcon size="md" /> : <MoonIcon size="md" />}

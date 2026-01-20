@@ -13,7 +13,7 @@
  *
  * @example With label (using external label)
  * ```tsx
- * <label class="flex items-center gap-2">
+ * <label className="flex items-center gap-2">
  *   <Checkbox checked={agreed} onCheckedChange={setAgreed} />
  *   I agree to the terms
  * </label>
@@ -95,13 +95,13 @@ function Checkbox({
       aria-checked={checked}
       aria-invalid={error || undefined}
       disabled={disabled}
-      class={classes}
+      className={classes}
       onClick={() => onCheckedChange?.(!checked)}
     >
       {checked && (
         <svg
           data-slot="checkbox-indicator"
-          class="size-4 text-current"
+          className="size-4 text-current"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

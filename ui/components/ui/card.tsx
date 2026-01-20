@@ -68,18 +68,18 @@ interface CardProps {
   /** Card content (typically CardHeader, CardContent, CardFooter) */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
  * Card container component.
  *
  * @param props.children - Card sub-components
- * @param props.class - Additional CSS classes
+ * @param props.className - Additional CSS classes
  */
-function Card({ children, class: className = '' }: CardProps) {
+function Card({ children, className = '' }: CardProps) {
   return (
-    <div data-slot="card" class={`${cardClasses} ${className}`}>
+    <div data-slot="card" className={`${cardClasses} ${className}`}>
       {children}
     </div>
   )
@@ -92,7 +92,7 @@ interface CardHeaderProps {
   /** Header content (typically CardTitle and CardDescription) */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -100,9 +100,9 @@ interface CardHeaderProps {
  *
  * @param props.children - Header content
  */
-function CardHeader({ children, class: className = '' }: CardHeaderProps) {
+function CardHeader({ children, className = '' }: CardHeaderProps) {
   return (
-    <div data-slot="card-header" class={`${cardHeaderClasses} ${className}`}>
+    <div data-slot="card-header" className={`${cardHeaderClasses} ${className}`}>
       {children}
     </div>
   )
@@ -115,7 +115,7 @@ interface CardTitleProps {
   /** Title text */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -123,9 +123,9 @@ interface CardTitleProps {
  *
  * @param props.children - Title content
  */
-function CardTitle({ children, class: className = '' }: CardTitleProps) {
+function CardTitle({ children, className = '' }: CardTitleProps) {
   return (
-    <h3 data-slot="card-title" class={`${cardTitleClasses} ${className}`}>
+    <h3 data-slot="card-title" className={`${cardTitleClasses} ${className}`}>
       {children}
     </h3>
   )
@@ -138,7 +138,7 @@ interface CardDescriptionProps {
   /** Description text */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -146,9 +146,9 @@ interface CardDescriptionProps {
  *
  * @param props.children - Description content
  */
-function CardDescription({ children, class: className = '' }: CardDescriptionProps) {
+function CardDescription({ children, className = '' }: CardDescriptionProps) {
   return (
-    <p data-slot="card-description" class={`${cardDescriptionClasses} ${className}`}>
+    <p data-slot="card-description" className={`${cardDescriptionClasses} ${className}`}>
       {children}
     </p>
   )
@@ -161,7 +161,7 @@ interface CardContentProps {
   /** Main content */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -169,9 +169,9 @@ interface CardContentProps {
  *
  * @param props.children - Main content
  */
-function CardContent({ children, class: className = '' }: CardContentProps) {
+function CardContent({ children, className = '' }: CardContentProps) {
   return (
-    <div data-slot="card-content" class={`${cardContentClasses} ${className}`}>
+    <div data-slot="card-content" className={`${cardContentClasses} ${className}`}>
       {children}
     </div>
   )
@@ -190,7 +190,7 @@ interface CardImageProps {
   /** Image height */
   height?: number
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -201,13 +201,7 @@ interface CardImageProps {
  * @param props.width - Image width
  * @param props.height - Image height
  */
-function CardImage({
-  src,
-  alt,
-  width,
-  height,
-  class: className = '',
-}: CardImageProps) {
+function CardImage({ src, alt, width, height, className = '' }: CardImageProps) {
   return (
     <img
       data-slot="card-image"
@@ -215,7 +209,7 @@ function CardImage({
       alt={alt}
       width={width}
       height={height}
-      class={`${cardImageClasses} ${className}`}
+      className={`${cardImageClasses} ${className}`}
     />
   )
 }
@@ -227,7 +221,7 @@ interface CardActionProps {
   /** Action content (typically buttons) */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -235,9 +229,9 @@ interface CardActionProps {
  *
  * @param props.children - Action content
  */
-function CardAction({ children, class: className = '' }: CardActionProps) {
+function CardAction({ children, className = '' }: CardActionProps) {
   return (
-    <div data-slot="card-action" class={`${cardActionClasses} ${className}`}>
+    <div data-slot="card-action" className={`${cardActionClasses} ${className}`}>
       {children}
     </div>
   )
@@ -250,7 +244,7 @@ interface CardFooterProps {
   /** Footer content (typically action buttons) */
   children?: Child
   /** Additional CSS classes */
-  class?: string
+  className?: string
 }
 
 /**
@@ -258,9 +252,9 @@ interface CardFooterProps {
  *
  * @param props.children - Footer content
  */
-function CardFooter({ children, class: className = '' }: CardFooterProps) {
+function CardFooter({ children, className = '' }: CardFooterProps) {
   return (
-    <div data-slot="card-footer" class={`${cardFooterClasses} ${className}`}>
+    <div data-slot="card-footer" className={`${cardFooterClasses} ${className}`}>
       {children}
     </div>
   )

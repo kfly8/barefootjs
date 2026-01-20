@@ -15,13 +15,13 @@ import { Switch } from '@ui/components/ui/switch'
 export function SwitchInteractiveDemo() {
   const [checked, setChecked] = createSignal(false)
   return (
-    <div class="flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <Switch
         checked={checked()}
         disabled={false}
         onCheckedChange={setChecked}
       />
-      <span class="text-foreground">{checked() ? 'On' : 'Off'}</span>
+      <span className="text-foreground">{checked() ? 'On' : 'Off'}</span>
     </div>
   )
 }
@@ -35,17 +35,17 @@ export function SwitchSettingsPanelDemo() {
   const [notifications, setNotifications] = createSignal(true)
 
   return (
-    <div class="w-64 space-y-4">
-      <div class="flex items-center justify-between">
-        <span class="text-foreground">Wi-Fi</span>
+    <div className="w-64 space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-foreground">Wi-Fi</span>
         <Switch checked={wifi()} disabled={false} onCheckedChange={setWifi} />
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-foreground">Bluetooth</span>
+      <div className="flex items-center justify-between">
+        <span className="text-foreground">Bluetooth</span>
         <Switch checked={bluetooth()} disabled={false} onCheckedChange={setBluetooth} />
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-foreground">Notifications</span>
+      <div className="flex items-center justify-between">
+        <span className="text-foreground">Notifications</span>
         <Switch checked={notifications()} disabled={false} onCheckedChange={setNotifications} />
       </div>
     </div>

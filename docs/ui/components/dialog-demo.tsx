@@ -62,7 +62,7 @@ export function DialogBasicDemo() {
             This is a basic dialog example. Press ESC or click outside to close.
           </DialogDescription>
         </DialogHeader>
-        <p class="text-sm text-muted-foreground py-4">
+        <p className="text-sm text-muted-foreground py-4">
           Dialog content goes here. You can add any content you need.
         </p>
         <DialogFooter>
@@ -97,27 +97,27 @@ export function DialogFormDemo() {
             Make changes to your profile here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <div class="grid gap-4 py-4">
-          <div class="grid grid-cols-4 items-center gap-4">
-            <label for="name" class="text-right text-sm font-medium">
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label for="name" className="text-right text-sm font-medium">
               Name
             </label>
             <input
               id="name"
               type="text"
               placeholder="Enter your name"
-              class="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
-          <div class="grid grid-cols-4 items-center gap-4">
-            <label for="email" class="text-right text-sm font-medium">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label for="email" className="text-right text-sm font-medium">
               Email
             </label>
             <input
               id="email"
               type="email"
               placeholder="Enter your email"
-              class="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
         </div>

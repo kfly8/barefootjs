@@ -192,7 +192,7 @@ const tabsContentProps: PropDefinition[] = [
 export function TabsPage() {
   return (
     <DocPage slug="tabs" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Tabs"
           description="A set of layered sections of content—known as tab panels—that are displayed one at a time."
@@ -201,7 +201,7 @@ export function TabsPage() {
 
         {/* Preview */}
         <Example title="" code={`<Tabs>...</Tabs>`}>
-          <div class="w-full max-w-md">
+          <div className="w-full max-w-md">
             <TabsBasicDemo />
           </div>
         </Example>
@@ -218,21 +218,21 @@ export function TabsPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic" code={basicCode}>
-              <div class="w-full max-w-md">
+              <div className="w-full max-w-md">
                 <TabsBasicDemo />
               </div>
             </Example>
 
             <Example title="Multiple Tabs" code={multipleTabsCode}>
-              <div class="w-full max-w-lg">
+              <div className="w-full max-w-lg">
                 <TabsMultipleDemo />
               </div>
             </Example>
 
             <Example title="Disabled Tab" code={disabledCode}>
-              <div class="w-full max-w-md">
+              <div className="w-full max-w-md">
                 <TabsDisabledDemo />
               </div>
             </Example>
@@ -241,28 +241,28 @@ export function TabsPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
-            <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
-            <li><strong class="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
-            <li><strong class="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
-            <li><strong class="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Keyboard Navigation</strong> - Arrow Left/Right to switch tabs, Home/End to jump to first/last</li>
+            <li><strong className="text-foreground">Focus Management</strong> - Focus moves to the selected tab trigger</li>
+            <li><strong className="text-foreground">ARIA</strong> - role="tablist" on container, role="tab" on triggers, role="tabpanel" on content</li>
+            <li><strong className="text-foreground">State Attributes</strong> - aria-selected on triggers, aria-controls/aria-labelledby for associations</li>
+            <li><strong className="text-foreground">Disabled State</strong> - aria-disabled on disabled tabs, skipped in keyboard navigation</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">Tabs</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">Tabs</h3>
               <PropsTable props={tabsProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">TabsTrigger</h3>
               <PropsTable props={tabsTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">TabsContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">TabsContent</h3>
               <PropsTable props={tabsContentProps} />
             </div>
           </div>

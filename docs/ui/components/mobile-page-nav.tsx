@@ -23,17 +23,17 @@ export function MobilePageNav({ currentPath }: MobilePageNavProps) {
   if (!prev && !next) return null
 
   return (
-    <div class="fixed bottom-6 left-18 right-4 z-[10000] sm:hidden flex items-center justify-end gap-2">
+    <div className="fixed bottom-6 left-18 right-4 z-[10000] sm:hidden flex items-center justify-end gap-2">
       {prev && (
-        <a href={prev.href} class={navLinkClass} aria-label={`Previous: ${prev.title}`}>
-          <ChevronLeftIcon size="sm" class="shrink-0" />
-          <span class="flex-1 text-center text-xs truncate">{prev.title}</span>
+        <a href={prev.href} className={navLinkClass} aria-label={`Previous: ${prev.title}`}>
+          <ChevronLeftIcon size="sm" className="shrink-0" />
+          <span className="flex-1 text-center text-xs truncate">{prev.title}</span>
         </a>
       )}
       {next && (
-        <a href={next.href} class={navLinkClass} aria-label={`Next: ${next.title}`}>
-          <span class="flex-1 text-center text-xs truncate">{next.title}</span>
-          <ChevronRightIcon size="sm" class="shrink-0" />
+        <a href={next.href} className={navLinkClass} aria-label={`Next: ${next.title}`}>
+          <span className="flex-1 text-center text-xs truncate">{next.title}</span>
+          <ChevronRightIcon size="sm" className="shrink-0" />
         </a>
       )}
     </div>

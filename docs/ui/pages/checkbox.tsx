@@ -49,7 +49,7 @@ const [checked, setChecked] = createSignal(false)
 />
 <p>{checked() ? 'Checked' : 'Unchecked'}</p>`
 
-const withLabelCode = `<label class="flex items-center gap-2">
+const withLabelCode = `<label className="flex items-center gap-2">
   <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
   <span>Accept terms and conditions</span>
 </label>`
@@ -78,7 +78,7 @@ const checkboxProps: PropDefinition[] = [
 export function CheckboxPage() {
   return (
     <DocPage slug="checkbox" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Checkbox"
           description="A control that allows the user to toggle between checked and unchecked states."
@@ -102,16 +102,16 @@ export function CheckboxPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Checked State" code={checkedCode}>
-              <div class="flex gap-4">
+              <div className="flex gap-4">
                 <Checkbox />
                 <Checkbox checked={true} />
               </div>
             </Example>
 
             <Example title="Disabled" code={disabledCode}>
-              <div class="flex gap-4">
+              <div className="flex gap-4">
                 <Checkbox disabled={true} />
                 <Checkbox checked={true} disabled={true} />
               </div>

@@ -83,9 +83,9 @@ function Badge({
   const classes = `${baseClasses} ${variantClasses[variant]} ${className}`
 
   if (asChild) {
-    return <Slot class={classes} {...props}>{children}</Slot>
+    return <Slot className={classes} {...props}>{children}</Slot>
   }
-  return <span data-slot="badge" class={classes} {...props}>{children}</span>
+  return <span data-slot="badge" className={classes} {...props}>{children}</span>
 }
 
 export { Badge }

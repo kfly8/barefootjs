@@ -13,7 +13,7 @@
  *
  * @example With label
  * ```tsx
- * <label class="flex items-center gap-2">
+ * <label className="flex items-center gap-2">
  *   <Switch checked={darkMode} onCheckedChange={setDarkMode} />
  *   Dark mode
  * </label>
@@ -96,10 +96,10 @@ function Switch({
       role="switch"
       aria-checked={checked}
       disabled={disabled}
-      class={trackClasses}
+      className={trackClasses}
       onClick={() => onCheckedChange?.(!checked)}
     >
-      <span data-slot="switch-thumb" class={thumbClasses} />
+      <span data-slot="switch-thumb" className={thumbClasses} />
     </button>
   )
 }

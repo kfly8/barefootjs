@@ -30,21 +30,21 @@ export function MobileHeader() {
   })
 
   return (
-    <header class="sm:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div class="px-4 h-14 flex items-center justify-between">
+    <header className="sm:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <div className="px-4 h-14 flex items-center justify-between">
         <a
           href="/"
-          class="flex items-center text-foreground no-underline"
+          className="flex items-center text-foreground no-underline"
           aria-label="Barefoot.js Home"
         >
           <LogoIcon />
         </a>
 
-        <div class="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
             data-mobile-search
             type="button"
-            class="p-2 text-foreground hover:bg-accent rounded-md transition-colors"
+            className="p-2 text-foreground hover:bg-accent rounded-md transition-colors"
             aria-label="Search"
           >
             <SearchIcon size="md" />
@@ -53,7 +53,7 @@ export function MobileHeader() {
             href="https://github.com/kfly8/barefootjs"
             target="_blank"
             rel="noopener noreferrer"
-            class="p-2 text-foreground hover:bg-accent rounded-md transition-colors"
+            className="p-2 text-foreground hover:bg-accent rounded-md transition-colors"
             aria-label="View on GitHub"
           >
             <GitHubIcon size="md" />

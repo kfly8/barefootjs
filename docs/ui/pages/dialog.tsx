@@ -111,12 +111,12 @@ const formCode = `const [open, setOpen] = createSignal(false)
       Make changes to your profile here.
     </DialogDescription>
   </DialogHeader>
-  <div class="grid gap-4 py-4">
-    <div class="grid grid-cols-4 items-center gap-4">
-      <label for="name" class="text-right text-sm font-medium">
+  <div className="grid gap-4 py-4">
+    <div className="grid grid-cols-4 items-center gap-4">
+      <label for="name" className="text-right text-sm font-medium">
         Name
       </label>
-      <input id="name" type="text" class="col-span-3 ..." />
+      <input id="name" type="text" className="col-span-3 ..." />
     </div>
   </div>
   <DialogFooter>
@@ -205,7 +205,7 @@ const dialogCloseProps: PropDefinition[] = [
 export function DialogPage() {
   return (
     <DocPage slug="dialog" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Dialog"
           description="A modal dialog that displays content in a layer above the page. Supports ESC key, overlay click, focus trap, and scroll lock."
@@ -214,7 +214,7 @@ export function DialogPage() {
 
         {/* Preview */}
         <Example title="" code={`<DialogContent open={open()} onClose={() => setOpen(false)}>...</DialogContent>`}>
-          <div class="flex gap-4">
+          <div className="flex gap-4">
             <DialogBasicDemo />
           </div>
         </Example>
@@ -231,19 +231,19 @@ export function DialogPage() {
 
         {/* Features */}
         <Section id="features" title="Features">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
-            <li><strong class="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
-            <li><strong class="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
-            <li><strong class="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
-            <li><strong class="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-            <li><strong class="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
+            <li><strong className="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
+            <li><strong className="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
+            <li><strong className="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
+            <li><strong className="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+            <li><strong className="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
           </ul>
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic Dialog" code={basicCode}>
               <DialogBasicDemo />
             </Example>
@@ -256,40 +256,40 @@ export function DialogPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
-            <li><strong class="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
-            <li><strong class="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
-            <li><strong class="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-            <li><strong class="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
+            <li><strong className="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
+            <li><strong className="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
+            <li><strong className="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
+            <li><strong className="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
               <PropsTable props={dialogTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>
               <PropsTable props={dialogOverlayProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogContent</h3>
               <PropsTable props={dialogContentProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogTitle</h3>
               <PropsTable props={dialogTitleProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogDescription</h3>
               <PropsTable props={dialogDescriptionProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DialogClose</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogClose</h3>
               <PropsTable props={dialogCloseProps} />
             </div>
           </div>

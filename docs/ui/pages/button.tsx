@@ -94,7 +94,7 @@ export function ButtonPage() {
 
   return (
     <DocPage slug="button" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Button"
           description="Displays a button or a component that looks like a button."
@@ -106,7 +106,7 @@ import { PlusIcon } from "@/components/ui/icon"
 
 function ButtonExample() {
   return (
-    <div class="flex flex-wrap items-center gap-2 md:flex-row">
+    <div className="flex flex-wrap items-center gap-2 md:flex-row">
       <Button variant="outline">Button</Button>
       <Button variant="outline" size="icon" aria-label="Submit">
           <PlusIcon />
@@ -115,7 +115,7 @@ function ButtonExample() {
   )
 }
           `}>
-          <div class="flex flex-wrap items-center gap-2 md:flex-row">
+          <div className="flex flex-wrap items-center gap-2 md:flex-row">
             <Button variant="outline">Button</Button>
             <Button variant="outline" size="icon" aria-label="Submit">
                 <PlusIcon />
@@ -128,7 +128,7 @@ function ButtonExample() {
         </Section>
 
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Default" code={`<Button variant="default">Default</Button>`} showLineNumbers={false}>
               <Button variant="default">Default</Button>
             </Example>

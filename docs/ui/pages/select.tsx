@@ -113,7 +113,7 @@ const selectProps: PropDefinition[] = [
 export function SelectPage() {
   return (
     <DocPage slug="select" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Select"
           description="Displays a select dropdown for choosing from a list of options."
@@ -137,28 +137,28 @@ export function SelectPage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic Select" code={`<Select options={options} selectPlaceholder="Select an option..." />`}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <Select options={basicOptions} selectPlaceholder="Select an option..." />
               </div>
             </Example>
 
             <Example title="Disabled" code={disabledCode}>
-              <div class="flex flex-col gap-2 max-w-sm">
+              <div className="flex flex-col gap-2 max-w-sm">
                 <Select selectDisabled options={basicOptions} selectPlaceholder="Disabled select" />
                 <Select options={disabledOptionsExample} selectPlaceholder="With disabled option" />
               </div>
             </Example>
 
             <Example title="Value Binding" code={bindingCode}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <SelectBindingDemo />
               </div>
             </Example>
 
             <Example title="Focus State" code={`<Select onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />`}>
-              <div class="max-w-sm">
+              <div className="max-w-sm">
                 <SelectFocusDemo />
               </div>
             </Example>

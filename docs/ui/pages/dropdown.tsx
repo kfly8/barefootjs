@@ -143,7 +143,7 @@ const disabledCode = `<Dropdown>
 </Dropdown>`
 
 const transformCode = `// Dropdown works correctly inside CSS transformed containers
-<div class="transform scale-100 translate-x-0">
+<div className="transform scale-100 translate-x-0">
   <Dropdown>
     <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
       {selectedLabel() || <DropdownLabel>Select option</DropdownLabel>}
@@ -226,7 +226,7 @@ const dropdownLabelProps: PropDefinition[] = [
 export function DropdownPage() {
   return (
     <DocPage slug="dropdown" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Dropdown"
           description="A select-like dropdown menu for choosing from a list of options."
@@ -235,7 +235,7 @@ export function DropdownPage() {
 
         {/* Preview */}
         <Example title="" code={`<Dropdown><DropdownTrigger>...</DropdownTrigger><DropdownContent>...</DropdownContent></Dropdown>`}>
-          <div class="flex gap-4">
+          <div className="flex gap-4">
             <DropdownBasicDemo />
           </div>
         </Example>
@@ -252,18 +252,18 @@ export function DropdownPage() {
 
         {/* Features */}
         <Section id="features" title="Features">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Props-based state</strong> - Parent controls open/selected state with signals</li>
-            <li><strong class="text-foreground">ESC key to close</strong> - Press Escape to close the dropdown</li>
-            <li><strong class="text-foreground">Click to select</strong> - Click an item to select it</li>
-            <li><strong class="text-foreground">Accessibility</strong> - role="combobox", role="listbox", role="option", aria-expanded, aria-selected</li>
-            <li><strong class="text-foreground">Visual feedback</strong> - Selected item shows checkmark</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Props-based state</strong> - Parent controls open/selected state with signals</li>
+            <li><strong className="text-foreground">ESC key to close</strong> - Press Escape to close the dropdown</li>
+            <li><strong className="text-foreground">Click to select</strong> - Click an item to select it</li>
+            <li><strong className="text-foreground">Accessibility</strong> - role="combobox", role="listbox", role="option", aria-expanded, aria-selected</li>
+            <li><strong className="text-foreground">Visual feedback</strong> - Selected item shows checkmark</li>
           </ul>
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic Dropdown" code={basicCode}>
               <DropdownBasicDemo />
             </Example>
@@ -277,17 +277,17 @@ export function DropdownPage() {
             </Example>
 
             <Example title="With CSS Transform" code={transformCode}>
-              <div class="space-y-4">
-                <p class="text-sm text-muted-foreground">Dropdown inside a scaled container:</p>
-                <div class="transform scale-100 bg-muted p-4 rounded-lg" data-transform-container>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Dropdown inside a scaled container:</p>
+                <div className="transform scale-100 bg-muted p-4 rounded-lg" data-transform-container>
                   <DropdownWithTransformDemo />
                 </div>
-                <p class="text-sm text-muted-foreground">Dropdown inside a rotated container:</p>
-                <div class="transform rotate-0 bg-muted p-4 rounded-lg" data-transform-container-rotate>
+                <p className="text-sm text-muted-foreground">Dropdown inside a rotated container:</p>
+                <div className="transform rotate-0 bg-muted p-4 rounded-lg" data-transform-container-rotate>
                   <DropdownWithTransformDemo />
                 </div>
-                <p class="text-sm text-muted-foreground">Dropdown inside a translated container:</p>
-                <div class="transform translate-x-4 bg-muted p-4 rounded-lg" data-transform-container-translate>
+                <p className="text-sm text-muted-foreground">Dropdown inside a translated container:</p>
+                <div className="transform translate-x-4 bg-muted p-4 rounded-lg" data-transform-container-translate>
                   <DropdownWithTransformDemo />
                 </div>
               </div>
@@ -297,32 +297,32 @@ export function DropdownPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate, Home/End to jump, Enter/Space to select</li>
-            <li><strong class="text-foreground">Focus Return</strong> - Focus returns to trigger after selection</li>
-            <li><strong class="text-foreground">ESC to Close</strong> - Press Escape to close the dropdown</li>
-            <li><strong class="text-foreground">ARIA</strong> - role="combobox" on trigger, role="listbox" on content, role="option" on items</li>
-            <li><strong class="text-foreground">State Attributes</strong> - aria-expanded, aria-haspopup, aria-selected, aria-disabled</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate, Home/End to jump, Enter/Space to select</li>
+            <li><strong className="text-foreground">Focus Return</strong> - Focus returns to trigger after selection</li>
+            <li><strong className="text-foreground">ESC to Close</strong> - Press Escape to close the dropdown</li>
+            <li><strong className="text-foreground">ARIA</strong> - role="combobox" on trigger, role="listbox" on content, role="option" on items</li>
+            <li><strong className="text-foreground">State Attributes</strong> - aria-expanded, aria-haspopup, aria-selected, aria-disabled</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownTrigger</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownTrigger</h3>
               <PropsTable props={dropdownTriggerProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownContent</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownContent</h3>
               <PropsTable props={dropdownContentProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownItem</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownItem</h3>
               <PropsTable props={dropdownItemProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">DropdownLabel</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownLabel</h3>
               <PropsTable props={dropdownLabelProps} />
             </div>
           </div>

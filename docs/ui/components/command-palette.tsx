@@ -211,27 +211,27 @@ export function CommandPalette() {
       <div
         data-command-overlay
         data-open="false"
-        class="fixed inset-0 z-dialog bg-black/50 transition-opacity duration-150 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
+        className="fixed inset-0 z-dialog bg-black/50 transition-opacity duration-150 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
       />
 
       {/* Palette */}
       <div
         data-command-palette
         data-open="false"
-        class="fixed left-1/2 top-[15%] z-dialog w-full max-w-lg -translate-x-1/2 transition-all duration-150 data-[open=false]:opacity-0 data-[open=false]:scale-95 data-[open=false]:pointer-events-none"
+        className="fixed left-1/2 top-[15%] z-dialog w-full max-w-lg -translate-x-1/2 transition-all duration-150 data-[open=false]:opacity-0 data-[open=false]:scale-95 data-[open=false]:pointer-events-none"
       >
-        <div class="mx-4 sm:mx-0 overflow-hidden rounded-lg border border-border bg-background shadow-2xl">
+        <div className="mx-4 sm:mx-0 overflow-hidden rounded-lg border border-border bg-background shadow-2xl">
           {/* Search input */}
-          <div class="flex items-center gap-2 border-b border-border px-3">
-            <SearchIcon size="sm" class="text-muted-foreground" />
+          <div className="flex items-center gap-2 border-b border-border px-3">
+            <SearchIcon size="sm" className="text-muted-foreground" />
             <input
               data-command-input
               type="text"
               placeholder="Search pages..."
-              class="flex-1 bg-transparent border-none py-3 text-sm outline-none placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent border-none py-3 text-sm outline-none placeholder:text-muted-foreground"
               autocomplete="off"
             />
-            <kbd class="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
               ESC
             </kbd>
           </div>
@@ -239,11 +239,11 @@ export function CommandPalette() {
           {/* Results list */}
           <div
             data-command-list
-            class="max-h-72 overflow-y-auto p-2"
+            className="max-h-72 overflow-y-auto p-2"
           >
             {/* Get Started */}
-            <div data-command-category data-category-name="Get Started" class="mb-2">
-              <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            <div data-command-category data-category-name="Get Started" className="mb-2">
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                 Get Started
               </div>
               {getStartedItems.map(item => (
@@ -254,7 +254,7 @@ export function CommandPalette() {
                   data-title={item.title}
                   data-category={item.category}
                   data-selected="false"
-                  class="hidden:hidden flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent data-[selected=true]:bg-accent"
+                  className="hidden:hidden flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent data-[selected=true]:bg-accent"
                 >
                   {item.title}
                 </div>
@@ -262,8 +262,8 @@ export function CommandPalette() {
             </div>
 
             {/* Components */}
-            <div data-command-category data-category-name="Components" class="mb-2">
-              <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            <div data-command-category data-category-name="Components" className="mb-2">
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                 Components
               </div>
               {componentItems.map(item => (
@@ -274,7 +274,7 @@ export function CommandPalette() {
                   data-title={item.title}
                   data-category={item.category}
                   data-selected="false"
-                  class="hidden:hidden flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent data-[selected=true]:bg-accent"
+                  className="hidden:hidden flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent data-[selected=true]:bg-accent"
                 >
                   {item.title}
                 </div>
@@ -282,8 +282,8 @@ export function CommandPalette() {
             </div>
 
             {/* Forms */}
-            <div data-command-category data-category-name="Forms" class="mb-2">
-              <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            <div data-command-category data-category-name="Forms" className="mb-2">
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                 Forms
               </div>
               {formItems.map(item => (
@@ -294,7 +294,7 @@ export function CommandPalette() {
                   data-title={item.title}
                   data-category={item.category}
                   data-selected="false"
-                  class="hidden:hidden flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent data-[selected=true]:bg-accent"
+                  className="hidden:hidden flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent data-[selected=true]:bg-accent"
                 >
                   {item.title}
                 </div>
@@ -302,7 +302,7 @@ export function CommandPalette() {
             </div>
 
             {/* No results */}
-            <div data-no-results hidden class="py-6 text-center text-sm text-muted-foreground">
+            <div data-no-results hidden className="py-6 text-center text-sm text-muted-foreground">
               No results found.
             </div>
           </div>

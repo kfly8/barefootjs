@@ -46,7 +46,7 @@ export function DropdownBasicDemo() {
   }
 
   return (
-    <div class="relative inline-block">
+    <div className="relative inline-block">
       <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
         {displayLabel()}
       </DropdownTrigger>
@@ -111,7 +111,7 @@ export function DropdownWithDefaultDemo() {
   }
 
   return (
-    <div class="relative inline-block">
+    <div className="relative inline-block">
       <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
         {displayLabel()}
       </DropdownTrigger>
@@ -156,7 +156,7 @@ export function DropdownDisabledDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div class="relative inline-block">
+    <div className="relative inline-block">
       <DropdownTrigger open={open()} onClick={() => setOpen(!open())} disabled>
         <DropdownLabel>Disabled</DropdownLabel>
       </DropdownTrigger>
@@ -197,7 +197,7 @@ export function DropdownWithTransformDemo() {
   }
 
   return (
-    <div class="relative inline-block">
+    <div className="relative inline-block">
       <DropdownTrigger open={open()} onClick={() => setOpen(!open())}>
         {displayLabel()}
       </DropdownTrigger>

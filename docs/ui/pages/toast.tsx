@@ -58,7 +58,7 @@ export default function Page() {
       <button onClick={showToast}>Show Toast</button>
       <ToastProvider position="bottom-right">
         <Toast open={open()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Notification</ToastTitle>
             <ToastDescription>This is a toast message.</ToastDescription>
           </div>
@@ -79,7 +79,7 @@ const showToast = () => {
 <Button onClick={showToast}>Show Toast</Button>
 <ToastProvider position="bottom-right">
   <Toast open={open()}>
-    <div class="flex-1">
+    <div className="flex-1">
       <ToastTitle>Notification</ToastTitle>
       <ToastDescription>This is a basic toast message.</ToastDescription>
     </div>
@@ -88,7 +88,7 @@ const showToast = () => {
 </ToastProvider>`
 
 const successCode = `<Toast variant="success" open={open()}>
-  <div class="flex-1">
+  <div className="flex-1">
     <ToastTitle>Success</ToastTitle>
     <ToastDescription>Your changes have been saved.</ToastDescription>
   </div>
@@ -96,7 +96,7 @@ const successCode = `<Toast variant="success" open={open()}>
 </Toast>`
 
 const errorCode = `<Toast variant="error" open={open()}>
-  <div class="flex-1">
+  <div className="flex-1">
     <ToastTitle>Error</ToastTitle>
     <ToastDescription>Something went wrong. Please try again.</ToastDescription>
   </div>
@@ -104,11 +104,11 @@ const errorCode = `<Toast variant="error" open={open()}>
 </Toast>`
 
 const withActionCode = `<Toast open={open()}>
-  <div class="flex-1">
+  <div className="flex-1">
     <ToastTitle>Item deleted</ToastTitle>
     <ToastDescription>The item has been removed from your list.</ToastDescription>
   </div>
-  <div class="flex gap-2">
+  <div className="flex gap-2">
     <ToastAction altText="Undo deletion" onClick={handleUndo}>
       Undo
     </ToastAction>
@@ -186,7 +186,7 @@ const toastActionProps: PropDefinition[] = [
 export function ToastPage() {
   return (
     <DocPage slug="toast" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Toast"
           description="A non-blocking notification that displays brief messages to users. Supports auto-dismiss, multiple variants, and action buttons."
@@ -195,7 +195,7 @@ export function ToastPage() {
 
         {/* Preview */}
         <Example title="" code={`<Toast variant="success" open={open()}>...</Toast>`}>
-          <div class="flex gap-4">
+          <div className="flex gap-4">
             <ToastVariantsDemo />
           </div>
         </Example>
@@ -212,20 +212,20 @@ export function ToastPage() {
 
         {/* Features */}
         <Section id="features" title="Features">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Auto-dismiss</strong> - Toasts automatically disappear after a timeout</li>
-            <li><strong class="text-foreground">Manual dismiss</strong> - Close button to dismiss immediately</li>
-            <li><strong class="text-foreground">Variants</strong> - default, success, error, warning, info</li>
-            <li><strong class="text-foreground">Position options</strong> - top-right, top-left, bottom-right, bottom-left</li>
-            <li><strong class="text-foreground">Action buttons</strong> - Optional action button for undo/retry operations</li>
-            <li><strong class="text-foreground">Accessibility</strong> - role="status", aria-live="polite" (assertive for errors)</li>
-            <li><strong class="text-foreground">Stackable</strong> - Multiple toasts can be displayed simultaneously</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Auto-dismiss</strong> - Toasts automatically disappear after a timeout</li>
+            <li><strong className="text-foreground">Manual dismiss</strong> - Close button to dismiss immediately</li>
+            <li><strong className="text-foreground">Variants</strong> - default, success, error, warning, info</li>
+            <li><strong className="text-foreground">Position options</strong> - top-right, top-left, bottom-right, bottom-left</li>
+            <li><strong className="text-foreground">Action buttons</strong> - Optional action button for undo/retry operations</li>
+            <li><strong className="text-foreground">Accessibility</strong> - role="status", aria-live="polite" (assertive for errors)</li>
+            <li><strong className="text-foreground">Stackable</strong> - Multiple toasts can be displayed simultaneously</li>
           </ul>
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Basic Toast" code={basicCode}>
               <ToastBasicDemo />
             </Example>
@@ -258,40 +258,40 @@ export function ToastPage() {
 
         {/* Accessibility */}
         <Section id="accessibility" title="Accessibility">
-          <ul class="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong class="text-foreground">Live Regions</strong> - role="status" with aria-live="polite" for non-critical toasts</li>
-            <li><strong class="text-foreground">Assertive Alerts</strong> - Error toasts use aria-live="assertive" for immediate announcement</li>
-            <li><strong class="text-foreground">Action Accessibility</strong> - Action buttons include altText for screen reader descriptions</li>
-            <li><strong class="text-foreground">Close Button</strong> - Close button has aria-label="Close" for screen readers</li>
-            <li><strong class="text-foreground">Timing</strong> - Toasts auto-dismiss with sufficient time for users to read</li>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong className="text-foreground">Live Regions</strong> - role="status" with aria-live="polite" for non-critical toasts</li>
+            <li><strong className="text-foreground">Assertive Alerts</strong> - Error toasts use aria-live="assertive" for immediate announcement</li>
+            <li><strong className="text-foreground">Action Accessibility</strong> - Action buttons include altText for screen reader descriptions</li>
+            <li><strong className="text-foreground">Close Button</strong> - Close button has aria-label="Close" for screen readers</li>
+            <li><strong className="text-foreground">Timing</strong> - Toasts auto-dismiss with sufficient time for users to read</li>
           </ul>
         </Section>
 
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div class="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">ToastProvider</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">ToastProvider</h3>
               <PropsTable props={toastProviderProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">Toast</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">Toast</h3>
               <PropsTable props={toastProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">ToastTitle</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">ToastTitle</h3>
               <PropsTable props={toastTitleProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">ToastDescription</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">ToastDescription</h3>
               <PropsTable props={toastDescriptionProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">ToastClose</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">ToastClose</h3>
               <PropsTable props={toastCloseProps} />
             </div>
             <div>
-              <h3 class="text-lg font-medium text-foreground mb-4">ToastAction</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">ToastAction</h3>
               <PropsTable props={toastActionProps} />
             </div>
           </div>

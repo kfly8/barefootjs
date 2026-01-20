@@ -190,8 +190,12 @@ export class HonoAdapter implements TemplateAdapter {
       this.hasEventHandlers(ir.root)
 
     // Build props parameter
+    // Convert 'class' to 'className' (React convention, avoids JS reserved word)
     const propsParams = ir.metadata.propsParams
-      .map((p: ParamInfo) => (p.defaultValue ? `${p.name} = ${p.defaultValue}` : p.name))
+      .map((p: ParamInfo) => {
+        const paramName = p.name === 'class' ? 'className' : p.name
+        return p.defaultValue ? `${paramName} = ${p.defaultValue}` : paramName
+      })
       .join(', ')
 
     const restPropsName = ir.metadata.restPropsName
@@ -628,8 +632,7 @@ export class HonoAdapter implements TemplateAdapter {
     const parts: string[] = []
 
     for (const attr of element.attrs) {
-      // Convert 'class' to 'className' for JSX
-      const attrName = attr.name === 'class' ? 'className' : attr.name
+      const attrName = attr.name
 
       if (attr.name === '...') {
         // Spread attribute

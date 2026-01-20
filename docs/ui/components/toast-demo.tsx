@@ -67,7 +67,7 @@ export function ToastBasicDemo() {
       <Button onClick={show}>Show Toast</Button>
       <ToastProvider position="bottom-right">
         <Toast animationState={state()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Notification</ToastTitle>
             <ToastDescription>This is a basic toast message.</ToastDescription>
           </div>
@@ -110,7 +110,7 @@ export function ToastSuccessDemo() {
       <Button variant="outline" onClick={show}>Show Success</Button>
       <ToastProvider position="bottom-right">
         <Toast variant="success" animationState={state()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Success</ToastTitle>
             <ToastDescription>Your changes have been saved.</ToastDescription>
           </div>
@@ -153,7 +153,7 @@ export function ToastErrorDemo() {
       <Button variant="destructive" onClick={show}>Show Error</Button>
       <ToastProvider position="bottom-right">
         <Toast variant="error" animationState={state()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Error</ToastTitle>
             <ToastDescription>Something went wrong. Please try again.</ToastDescription>
           </div>
@@ -196,7 +196,7 @@ export function ToastWarningDemo() {
       <Button variant="outline" onClick={show}>Show Warning</Button>
       <ToastProvider position="bottom-right">
         <Toast variant="warning" animationState={state()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Warning</ToastTitle>
             <ToastDescription>Please review your input before proceeding.</ToastDescription>
           </div>
@@ -239,7 +239,7 @@ export function ToastInfoDemo() {
       <Button variant="outline" onClick={show}>Show Info</Button>
       <ToastProvider position="bottom-right">
         <Toast variant="info" animationState={state()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Info</ToastTitle>
             <ToastDescription>Here is some useful information.</ToastDescription>
           </div>
@@ -288,11 +288,11 @@ export function ToastWithActionDemo() {
       <Button onClick={show}>Show Toast with Action</Button>
       <ToastProvider position="bottom-right">
         <Toast animationState={state()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Item deleted</ToastTitle>
             <ToastDescription>The item has been removed from your list.</ToastDescription>
           </div>
-          <div class="flex gap-2">
+          <div className="flex gap-2">
             <ToastAction altText="Undo deletion" onClick={handleUndo}>
               Undo
             </ToastAction>
@@ -368,35 +368,35 @@ export function ToastVariantsDemo() {
       <Button onClick={showAll}>Show All Variants</Button>
       <ToastProvider position="bottom-right">
         <Toast variant="default" animationState={defaultState()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Default</ToastTitle>
             <ToastDescription>This is a default toast.</ToastDescription>
           </div>
           <ToastClose onClick={() => dismissToast(setDefaultState, defaultState, defaultTimerRef)} />
         </Toast>
         <Toast variant="success" animationState={successState()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Success</ToastTitle>
             <ToastDescription>Operation completed successfully.</ToastDescription>
           </div>
           <ToastClose onClick={() => dismissToast(setSuccessState, successState, successTimerRef)} />
         </Toast>
         <Toast variant="error" animationState={errorState()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Error</ToastTitle>
             <ToastDescription>An error occurred.</ToastDescription>
           </div>
           <ToastClose onClick={() => dismissToast(setErrorState, errorState, errorTimerRef)} />
         </Toast>
         <Toast variant="warning" animationState={warningState()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Warning</ToastTitle>
             <ToastDescription>Please be careful.</ToastDescription>
           </div>
           <ToastClose onClick={() => dismissToast(setWarningState, warningState, warningTimerRef)} />
         </Toast>
         <Toast variant="info" animationState={infoState()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Info</ToastTitle>
             <ToastDescription>Here is some information.</ToastDescription>
           </div>

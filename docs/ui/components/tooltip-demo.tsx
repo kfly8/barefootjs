@@ -15,7 +15,7 @@ import { Button } from '@ui/components/ui/button'
 export function TooltipBasicDemo() {
   return (
     <Tooltip content="This is a tooltip" id="tooltip-basic">
-      <span class="underline decoration-dotted cursor-help">
+      <span className="underline decoration-dotted cursor-help">
         Hover me
       </span>
     </Tooltip>
@@ -83,7 +83,7 @@ export function TooltipLeftDemo() {
 export function TooltipDelayDemo() {
   return (
     <Tooltip content="This tooltip has a 700ms delay" delayDuration={700} id="tooltip-delay">
-      <span class="underline decoration-dotted cursor-help">
+      <span className="underline decoration-dotted cursor-help">
         Hover me (700ms delay)
       </span>
     </Tooltip>
@@ -96,7 +96,7 @@ export function TooltipDelayDemo() {
 export function TooltipNoDelayDemo() {
   return (
     <Tooltip content="This tooltip appears immediately" delayDuration={0} id="tooltip-no-delay">
-      <span class="underline decoration-dotted cursor-help">
+      <span className="underline decoration-dotted cursor-help">
         Hover me (no delay)
       </span>
     </Tooltip>

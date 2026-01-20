@@ -88,7 +88,7 @@ function Accordion({
   children,
 }: AccordionProps) {
   return (
-    <div data-slot="accordion" class={`${accordionClasses} ${className}`}>
+    <div data-slot="accordion" className={`${accordionClasses} ${className}`}>
       {children}
     </div>
   )
@@ -130,7 +130,7 @@ function AccordionItem({
       data-slot="accordion-item"
       data-state={open ? 'open' : 'closed'}
       data-value={value}
-      class={`${accordionItemClasses} ${className}`}
+      className={`${accordionItemClasses} ${className}`}
     >
       {children}
     </div>
@@ -205,10 +205,10 @@ function AccordionTrigger({
   const iconClasses = `text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal ${open ? 'rotate-180' : ''}`
 
   return (
-    <h3 class="flex">
+    <h3 className="flex">
       <button
         data-slot="accordion-trigger"
-        class={classes}
+        className={classes}
         disabled={disabled}
         aria-expanded={open}
         aria-disabled={disabled || undefined}
@@ -216,7 +216,7 @@ function AccordionTrigger({
         onKeyDown={handleKeyDown}
       >
         {children}
-        <ChevronDownIcon size="sm" class={iconClasses} />
+        <ChevronDownIcon size="sm" className={iconClasses} />
       </button>
     </h3>
   )
@@ -252,10 +252,10 @@ function AccordionContent({
       data-slot="accordion-content"
       role="region"
       data-state={open ? 'open' : 'closed'}
-      class={classes}
+      className={classes}
     >
-      <div class={accordionContentInnerClasses}>
-        <div class={`pt-0 pb-4 ${className}`}>
+      <div className={accordionContentInnerClasses}>
+        <div className={`pt-0 pb-4 ${className}`}>
           {children}
         </div>
       </div>

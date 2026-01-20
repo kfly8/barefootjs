@@ -96,22 +96,22 @@ export function TableOfContents({ items }: TableOfContentsProps) {
 
   // Show on lg screens (1024px+) - sticky positioning within flex layout
   return (
-    <nav class="hidden lg:block sticky top-[94px] w-56 h-fit max-h-[calc(100vh-6rem)] overflow-y-auto shrink-0" aria-label="Table of contents">
-      <div class="space-y-2">
-        <p class="text-sm font-medium text-foreground">On This Page</p>
-        <div class="relative">
+    <nav className="hidden lg:block sticky top-[94px] w-56 h-fit max-h-[calc(100vh-6rem)] overflow-y-auto shrink-0" aria-label="Table of contents">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">On This Page</p>
+        <div className="relative">
           {/* Animated active indicator - slides along the left border line */}
           <div
             data-toc-indicator
-            class="absolute w-0.5 bg-primary transition-transform duration-100 ease-out z-10"
+            className="absolute w-0.5 bg-primary transition-transform duration-100 ease-out z-10"
             style={`height: ${ITEM_HEIGHT}px; left: 0;`}
           />
-          <ul class="list-none m-0 p-0 text-sm">
+          <ul className="list-none m-0 p-0 text-sm">
             {items.map(item => (
-              <li key={item.id} class="list-none m-0 p-0">
+              <li key={item.id} className="list-none m-0 p-0">
                 <a
                   href={`#${item.id}`}
-                  class={`block py-1 pl-3 border-0 border-l border-solid border-border transition-colors no-underline ${
+                  className={`block py-1 pl-3 border-0 border-l border-solid border-border transition-colors no-underline ${
                     item.branch ? 'ml-2' : ''
                   } ${
                     activeId() === item.id

@@ -84,7 +84,7 @@ interface DropdownProps {
  */
 function Dropdown({ class: className = '', children }: DropdownProps) {
   return (
-    <div data-slot="dropdown" class={`${dropdownClasses} ${className}`}>
+    <div data-slot="dropdown" className={`${dropdownClasses} ${className}`}>
       {children}
     </div>
   )
@@ -130,11 +130,11 @@ function DropdownTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       disabled={disabled}
-      class={`${dropdownTriggerBaseClasses} ${className}`}
+      className={`${dropdownTriggerBaseClasses} ${className}`}
       onClick={onClick}
     >
-      <span class="truncate">{children}</span>
-      <ChevronDownIcon size="sm" class={iconClasses} />
+      <span className="truncate">{children}</span>
+      <ChevronDownIcon size="sm" className={iconClasses} />
     </button>
   )
 }
@@ -218,7 +218,7 @@ function DropdownContent({
       data-state={open ? 'open' : 'closed'}
       role="listbox"
       tabindex={-1}
-      class={`${dropdownContentBaseClasses} ${stateClasses} ${className}`}
+      className={`${dropdownContentBaseClasses} ${stateClasses} ${className}`}
       onKeyDown={handleKeyDown}
     >
       {children}
@@ -280,11 +280,11 @@ function DropdownItem({
       aria-selected={selected}
       aria-disabled={disabled || undefined}
       tabindex={disabled ? -1 : 0}
-      class={`${dropdownItemBaseClasses} ${stateClasses} ${className}`}
+      className={`${dropdownItemBaseClasses} ${stateClasses} ${className}`}
       onClick={handleClick}
     >
-      {selected && <CheckIcon size="sm" class="absolute left-2" />}
-      <span class={selected ? 'pl-6' : ''}>{children}</span>
+      {selected && <CheckIcon size="sm" className="absolute left-2" />}
+      <span className={selected ? 'pl-6' : ''}>{children}</span>
     </div>
   )
 }
@@ -306,7 +306,7 @@ interface DropdownLabelProps {
  */
 function DropdownLabel({ class: className = '', children }: DropdownLabelProps) {
   return (
-    <span data-slot="dropdown-label" class={`${dropdownLabelClasses} ${className}`}>
+    <span data-slot="dropdown-label" className={`${dropdownLabelClasses} ${className}`}>
       {children}
     </span>
   )

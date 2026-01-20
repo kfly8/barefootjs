@@ -86,7 +86,7 @@ function Tabs({
   children,
 }: TabsProps) {
   return (
-    <div data-slot="tabs" data-value={value || defaultValue} class={`${tabsClasses} ${className}`}>
+    <div data-slot="tabs" data-value={value || defaultValue} className={`${tabsClasses} ${className}`}>
       {children}
     </div>
   )
@@ -112,7 +112,7 @@ function TabsList({
   children,
 }: TabsListProps) {
   return (
-    <div data-slot="tabs-list" role="tablist" class={`${tabsListClasses} ${className}`}>
+    <div data-slot="tabs-list" role="tablist" className={`${tabsListClasses} ${className}`}>
       {children}
     </div>
   )
@@ -200,7 +200,7 @@ function TabsTrigger({
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
       tabindex={selected ? 0 : -1}
-      class={classes}
+      className={classes}
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
@@ -245,7 +245,7 @@ function TabsContent({
       tabindex={0}
       data-state={selected ? 'active' : 'inactive'}
       data-value={value}
-      class={classes}
+      className={classes}
     >
       {children}
     </div>

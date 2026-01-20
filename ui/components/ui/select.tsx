@@ -115,7 +115,7 @@ function Select({
   return (
     <select
       data-slot="select"
-      class={classes}
+      className={classes}
       value={value}
       disabled={disabled}
       aria-invalid={error || undefined}

@@ -55,7 +55,7 @@ const badgeProps: PropDefinition[] = [
 export function BadgePage() {
   return (
     <DocPage slug="badge" toc={tocItems}>
-      <div class="space-y-12">
+      <div className="space-y-12">
         <PageHeader
           title="Badge"
           description="Displays a badge or a component that looks like a badge."
@@ -79,7 +79,7 @@ export function BadgePage() {
 
         {/* Examples */}
         <Section id="examples" title="Examples">
-          <div class="space-y-8">
+          <div className="space-y-8">
             <Example title="Variants" code={variantCode}>
               <Badge variant="default">Default</Badge>
               <Badge variant="secondary">Secondary</Badge>

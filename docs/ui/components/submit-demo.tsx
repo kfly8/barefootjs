@@ -54,9 +54,9 @@ export function BasicSubmitDemo() {
   }
 
   return (
-    <div class="space-y-4">
-      <div class="space-y-2">
-        <label class="text-sm text-muted-foreground">Email *</label>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">Email *</label>
         <Input
           inputType="email"
           inputValue={email()}
@@ -65,19 +65,19 @@ export function BasicSubmitDemo() {
           inputPlaceholder="Enter your email"
           inputDisabled={loading()}
         />
-        <p class="error-message text-sm text-destructive min-h-5">{error()}</p>
+        <p className="error-message text-sm text-destructive min-h-5">{error()}</p>
       </div>
 
       <Button
         onClick={handleSubmit}
         disabled={!isValid() || loading()}
       >
-        <span class="button-text">{loading() ? 'Submitting...' : 'Subscribe'}</span>
+        <span className="button-text">{loading() ? 'Submitting...' : 'Subscribe'}</span>
       </Button>
 
       <ToastProvider position="bottom-right">
         <Toast variant="success" open={success()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Success</ToastTitle>
             <ToastDescription>You have been subscribed successfully!</ToastDescription>
           </div>
@@ -137,9 +137,9 @@ export function NetworkErrorDemo() {
   }
 
   return (
-    <div class="space-y-4">
-      <div class="space-y-2">
-        <label class="text-sm text-muted-foreground">Message *</label>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">Message *</label>
         <Input
           inputValue={message()}
           onInput={(e) => setMessage(e.target.value)}
@@ -147,30 +147,30 @@ export function NetworkErrorDemo() {
           inputPlaceholder="Enter your message"
           inputDisabled={loading()}
         />
-        <p class="validation-error text-sm text-destructive min-h-5">{validationError()}</p>
+        <p className="validation-error text-sm text-destructive min-h-5">{validationError()}</p>
       </div>
 
       <Button
         onClick={handleSubmit}
         disabled={!isValid() || loading()}
       >
-        <span class="button-text">{loading() ? 'Sending...' : 'Send Message'}</span>
+        <span className="button-text">{loading() ? 'Sending...' : 'Send Message'}</span>
       </Button>
 
       <ToastProvider position="bottom-right">
         <Toast variant="success" open={success()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Success</ToastTitle>
             <ToastDescription>Message sent successfully!</ToastDescription>
           </div>
           <ToastClose onClick={() => setSuccess(false)} />
         </Toast>
         <Toast variant="error" open={errorMsg() !== ''}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Error</ToastTitle>
-            <ToastDescription class="error-description">{errorMsg()}</ToastDescription>
+            <ToastDescription className="error-description">{errorMsg()}</ToastDescription>
           </div>
-          <div class="flex gap-2">
+          <div className="flex gap-2">
             <ToastAction altText="Retry sending" onClick={handleRetry}>
               Retry
             </ToastAction>
@@ -224,9 +224,9 @@ export function ServerValidationDemo() {
   }
 
   return (
-    <div class="space-y-4">
-      <div class="space-y-2">
-        <label class="text-sm text-muted-foreground">Email *</label>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">Email *</label>
         <Input
           inputType="email"
           inputValue={email()}
@@ -238,13 +238,13 @@ export function ServerValidationDemo() {
           inputPlaceholder="Enter your email"
           inputDisabled={loading()}
         />
-        <p class="client-error text-sm text-destructive min-h-5">{clientError()}</p>
+        <p className="client-error text-sm text-destructive min-h-5">{clientError()}</p>
         {serverError() !== '' ? (
-          <p class="server-error text-sm text-destructive">{serverError()}</p>
+          <p className="server-error text-sm text-destructive">{serverError()}</p>
         ) : null}
       </div>
 
-      <p class="text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Try "taken@example.com" to see server validation error
       </p>
 
@@ -252,12 +252,12 @@ export function ServerValidationDemo() {
         onClick={handleSubmit}
         disabled={!isValid() || loading()}
       >
-        <span class="button-text">{loading() ? 'Registering...' : 'Register'}</span>
+        <span className="button-text">{loading() ? 'Registering...' : 'Register'}</span>
       </Button>
 
       <ToastProvider position="bottom-right">
         <Toast variant="success" open={success()}>
-          <div class="flex-1">
+          <div className="flex-1">
             <ToastTitle>Success</ToastTitle>
             <ToastDescription>Registration successful!</ToastDescription>
           </div>

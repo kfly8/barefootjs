@@ -10,10 +10,10 @@
  * @example Basic usage
  * ```tsx
  * // Slot merges its props with the child element
- * <Slot class="custom-class" data-active="true">
+ * <Slot className="custom-class" data-active="true">
  *   <a href="/home">Home</a>
  * </Slot>
- * // Renders: <a href="/home" class="custom-class" data-active="true">Home</a>
+ * // Renders: <a href="/home" className="custom-class" data-active="true">Home</a>
  * ```
  *
  * @example asChild pattern (used by Button, Badge, etc.)
@@ -22,20 +22,20 @@
  * <Button asChild>
  *   <a href="/home">Go Home</a>
  * </Button>
- * // Renders: <a href="/home" class="btn-classes...">Go Home</a>
+ * // Renders: <a href="/home" className="btn-classes...">Go Home</a>
  *
  * // Without asChild, renders a button element
  * <Button>Click me</Button>
- * // Renders: <button class="btn-classes...">Click me</button>
+ * // Renders: <button className="btn-classes...">Click me</button>
  * ```
  *
  * @example Class merging
  * ```tsx
  * // Classes from Slot and child are merged
- * <Slot class="slot-class">
- *   <div class="child-class">Content</div>
+ * <Slot className="slot-class">
+ *   <div className="child-class">Content</div>
  * </Slot>
- * // Renders: <div class="slot-class child-class">Content</div>
+ * // Renders: <div className="slot-class child-class">Content</div>
  * ```
  */
 
@@ -76,7 +76,7 @@ function Slot({ children, class: className, ...props }: SlotProps) {
 
     // Use JSX syntax - compiler will call jsx() from jsxImportSource
     const mergedClass = [className, childClass].filter(Boolean).join(' ')
-    return <Tag {...childProps} {...props} class={mergedClass || undefined}>{childChildren}</Tag>
+    return <Tag {...childProps} {...props} className={mergedClass || undefined}>{childChildren}</Tag>
   }
 
   // Fallback: use Fragment to avoid DOM structure change
