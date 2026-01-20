@@ -12,10 +12,6 @@ import { renderer } from './renderer'
 import Counter from '@/components/Counter'
 import Toggle from '@/components/Toggle'
 import TodoApp from '@/components/TodoApp'
-import Dashboard from '@/components/Dashboard'
-import Game from '@/components/Game'
-import FizzBuzzCounter from '@/components/FizzBuzzCounter'
-import { AsyncUserList } from './components/AsyncUserList'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
 const app = new Hono()
@@ -50,15 +46,9 @@ app.get('/', (c) => {
       <nav>
         <ul>
           <li><a href="/counter">Counter</a></li>
-          <li><a href="/fizzbuzz">Conditional Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
           <li><a href="/todos">Todo (SSR + API)</a></li>
-          <li><a href="/dashboard">Dashboard (All widgets)</a></li>
-          <li><a href="/dashboard/counter-only">Dashboard (Counter only)</a></li>
-          <li><a href="/dashboard/message-only">Dashboard (Message only)</a></li>
-          <li><a href="/async">Async User List (Suspense)</a></li>
           <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
-          <li><a href="/game">Game (100x100 Grid Benchmark)</a></li>
         </ul>
       </nav>
     </div>
@@ -70,21 +60,6 @@ app.get('/counter', (c) => {
     <div>
       <h1>Counter Example</h1>
       <Counter />
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-app.get('/fizzbuzz', (c) => {
-  return c.render(
-    <div>
-      <h1>Conditional Counter</h1>
-      <p>Demonstrates conditional element switching:</p>
-      <ul>
-        <li>Toggle to switch between simple and detailed view</li>
-        <li>Detailed view shows count and doubled value</li>
-      </ul>
-      <FizzBuzzCounter />
       <p><a href="/">← Back</a></p>
     </div>
   )
@@ -114,49 +89,6 @@ app.get('/todos', (c) => {
   )
 })
 
-// Dashboard with feature flags - all widgets
-app.get('/dashboard', (c) => {
-  return c.render(
-    <div>
-      <Dashboard showCounter={true} showMessage={true} initialCount={10} message="Hello from server!" />
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Dashboard - counter widget only
-app.get('/dashboard/counter-only', (c) => {
-  return c.render(
-    <div>
-      <Dashboard showCounter={true} showMessage={false} initialCount={5} />
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Dashboard - message widget only
-app.get('/dashboard/message-only', (c) => {
-  return c.render(
-    <div>
-      <Dashboard showCounter={false} showMessage={true} message="Custom message!" />
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Async User List with Suspense (streaming)
-app.get('/async', (c) => {
-  return c.render(
-    <div>
-      <h1>Async Data Fetching with Suspense</h1>
-      <Suspense fallback={<p class="loading">Loading users...</p>}>
-        <AsyncUserList />
-      </Suspense>
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
 // Async Counter with Suspense + BarefootJS (streaming + interactivity)
 app.get('/async-counter', (c) => {
   return c.render(
@@ -165,16 +97,6 @@ app.get('/async-counter', (c) => {
       <Suspense fallback={<p class="loading">Loading counter...</p>}>
         <AsyncCounterWrapper />
       </Suspense>
-      <p><a href="/">← Back</a></p>
-    </div>
-  )
-})
-
-// Game (100x100 Grid Benchmark)
-app.get('/game', (c) => {
-  return c.render(
-    <div>
-      <Game />
       <p><a href="/">← Back</a></p>
     </div>
   )
