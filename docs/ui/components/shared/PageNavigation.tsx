@@ -61,7 +61,6 @@ export const componentOrder = [
   { slug: 'button', title: 'Button' },
   { slug: 'card', title: 'Card' },
   { slug: 'checkbox', title: 'Checkbox' },
-  { slug: 'counter', title: 'Counter' },
   { slug: 'dialog', title: 'Dialog' },
   { slug: 'dropdown', title: 'Dropdown' },
   { slug: 'input', title: 'Input' },
