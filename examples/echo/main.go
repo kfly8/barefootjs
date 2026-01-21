@@ -160,6 +160,7 @@ func renderPageWithScripts(componentName string, props interface{}, childPropsSc
 	buf.WriteString(componentName)
 	buf.WriteString(` - BarefootJS + Echo</title>
     <link rel="stylesheet" href="/shared/styles/components.css">
+    <link rel="stylesheet" href="/shared/styles/todo-app.css">
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
     </style>
@@ -292,12 +293,8 @@ func todosHandler(c echo.Context) error {
 	props.Todos = currentTodos  // For client hydration (JSON)
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
-	props.AddTodoForm = AddTodoFormProps{
-		ScopeID: props.ScopeID + "_slot_5", // parent_slotId format for client hydration
-		NewText: "",                        // signal initial value
-	}
 
-	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "", []string{"AddTodoForm", "TodoItem"}))
+	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "", []string{"TodoItem"}))
 }
 
 // Todo API handlers

@@ -81,6 +81,30 @@ export function findScope(
 // --- find ---
 
 /**
+ * Check if an element belongs directly to a scope (not in a nested scope).
+ * Returns true if the element's nearest scope is the given scope or the element itself.
+ */
+function belongsToScope(element: Element, scope: Element): boolean {
+  const nearestScope = element.closest('[data-bf-scope]')
+  return nearestScope === scope || nearestScope === element
+}
+
+/**
+ * Find the first matching element in a NodeList that belongs to the given scope.
+ */
+function findFirstInScope(
+  matches: NodeListOf<Element>,
+  scope: Element
+): Element | null {
+  for (const element of matches) {
+    if (belongsToScope(element, scope)) {
+      return element
+    }
+  }
+  return null
+}
+
+/**
  * Find an element within a scope.
  * Checks if the scope element itself matches first, then searches descendants.
  * Excludes elements that are inside nested scopes.
@@ -99,37 +123,21 @@ export function find(
   if (scope.matches?.(selector)) return scope
 
   // Search descendants, excluding nested scopes
-  const found = scope.querySelector(selector)
-  if (found) {
-    // Check if the found element is inside a nested scope
-    const nearestScope = found.closest('[data-bf-scope]')
-    // Only return if the element's nearest scope is our scope (or is the element itself)
-    if (nearestScope === scope || nearestScope === found) {
-      return found
-    }
-    // Element is in a nested scope, don't return it
-  }
+  const found = findFirstInScope(scope.querySelectorAll(selector), scope)
+  if (found) return found
 
   // For fragment roots, elements may be in sibling scope elements
-  // Search siblings that share the EXACT SAME scope ID (not just prefix)
-  // This is for fragment roots where multiple elements share one scope ID
+  // Search siblings that share the EXACT SAME scope ID
   const scopeId = (scope as HTMLElement).dataset?.bfScope
   if (scopeId) {
     const parent = scope.parentElement
     if (parent) {
-      // Find sibling elements with the exact same scope ID (fragment roots)
-      const siblings = Array.from(parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`))
+      const siblings = parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`)
       for (const sibling of siblings) {
         if (sibling === scope) continue
         if (sibling.matches?.(selector)) return sibling
-        const siblingFound = sibling.querySelector(selector)
-        if (siblingFound) {
-          // Check if the found element is inside a nested scope within the sibling
-          const nearestScopeInSibling = siblingFound.closest('[data-bf-scope]')
-          if (nearestScopeInSibling === sibling || nearestScopeInSibling === siblingFound) {
-            return siblingFound
-          }
-        }
+        const siblingFound = findFirstInScope(sibling.querySelectorAll(selector), sibling)
+        if (siblingFound) return siblingFound
       }
     }
   }

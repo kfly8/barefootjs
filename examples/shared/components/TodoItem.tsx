@@ -2,6 +2,7 @@
 /**
  * TodoItem Component
  * Displays and edits individual todo items
+ * Follows TodoMVC HTML structure and styling conventions
  */
 
 type Todo = {
@@ -21,27 +22,26 @@ type Props = {
 
 function TodoItem({ todo, onToggle, onDelete, onStartEdit, onFinishEdit }: Props) {
   return (
-    <li className={todo.done ? 'todo-item done' : 'todo-item'}>
-      {todo.editing ? (
+    <li className={todo.done ? (todo.editing ? 'completed editing' : 'completed') : (todo.editing ? 'editing' : '')}>
+      <div className="view">
         <input
-          type="text"
-          className="todo-input"
-          value={todo.text}
-          autofocus
-          onBlur={(e) => onFinishEdit(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && onFinishEdit(e.target.value)}
+          className="toggle"
+          type="checkbox"
+          checked={todo.done}
+          onChange={() => onToggle()}
         />
-      ) : (
-        <span className="todo-text" onClick={() => onStartEdit()}>
+        <label onDoubleClick={() => onStartEdit()}>
           {todo.text}
-        </span>
-      )}
-      <button className="toggle-btn" onClick={() => onToggle()}>
-        {todo.done ? 'Undo' : 'Done'}
-      </button>
-      <button className="delete-btn" onClick={() => onDelete()}>
-        Delete
-      </button>
+        </label>
+        <button className="destroy" onClick={() => onDelete()}></button>
+      </div>
+      <input
+        className="edit"
+        value={todo.text}
+        autofocus
+        onBlur={(e) => onFinishEdit(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && onFinishEdit(e.target.value)}
+      />
     </li>
   )
 }
