@@ -266,6 +266,7 @@ function buildMetadata(
     imports: ctx.imports,
     localFunctions: ctx.localFunctions,
     localConstants: ctx.localConstants,
+    imperativeStatements: ctx.imperativeStatements,
   }
 }
 

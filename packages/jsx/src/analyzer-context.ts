@@ -12,6 +12,7 @@ import type {
   ImportInfo,
   FunctionInfo,
   ConstantInfo,
+  ImperativeStatement,
   TypeDefinition,
   TypeInfo,
   CompilerError,
@@ -36,6 +37,7 @@ export interface AnalyzerContext {
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
   typeDefinitions: TypeDefinition[]
+  imperativeStatements: ImperativeStatement[]
 
   // Props
   propsType: TypeInfo | null
@@ -71,6 +73,7 @@ export function createAnalyzerContext(
     localFunctions: [],
     localConstants: [],
     typeDefinitions: [],
+    imperativeStatements: [],
 
     propsType: null,
     propsParams: [],

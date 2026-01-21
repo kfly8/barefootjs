@@ -6,7 +6,7 @@
  */
 
 import ts from 'typescript'
-import type { ImportSpecifier, TypeInfo, ParamInfo } from './types'
+import type { ImportSpecifier, TypeInfo, ParamInfo, ImperativeStatement } from './types'
 import {
   type AnalyzerContext,
   createAnalyzerContext,
@@ -213,6 +213,39 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
       // Don't recurse into createEffect body to avoid collecting inner variables
       return
     }
+    // Non-effect expression statements (e.g., IIFEs, function calls)
+    collectImperativeStatement(node, ctx, 'expression')
+    return
+  }
+
+  // If statements
+  if (ts.isIfStatement(node)) {
+    collectImperativeStatement(node, ctx, 'if')
+    return
+  }
+
+  // For statements
+  if (ts.isForStatement(node) || ts.isForInStatement(node) || ts.isForOfStatement(node)) {
+    collectImperativeStatement(node, ctx, 'for')
+    return
+  }
+
+  // While/Do-while statements
+  if (ts.isWhileStatement(node) || ts.isDoStatement(node)) {
+    collectImperativeStatement(node, ctx, 'while')
+    return
+  }
+
+  // Switch statements
+  if (ts.isSwitchStatement(node)) {
+    collectImperativeStatement(node, ctx, 'switch')
+    return
+  }
+
+  // Try-catch statements
+  if (ts.isTryStatement(node)) {
+    collectImperativeStatement(node, ctx, 'try')
+    return
   }
 
   // Function declarations inside component
@@ -490,6 +523,22 @@ function collectFunction(
     body,
     returnType,
     containsJsx,
+    loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
+  })
+}
+
+// =============================================================================
+// Imperative Statement Collection
+// =============================================================================
+
+function collectImperativeStatement(
+  node: ts.Statement,
+  ctx: AnalyzerContext,
+  kind: ImperativeStatement['kind']
+): void {
+  ctx.imperativeStatements.push({
+    code: node.getText(ctx.sourceFile),
+    kind,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   })
 }

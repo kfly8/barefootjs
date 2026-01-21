@@ -279,6 +279,12 @@ export interface ConstantInfo {
   loc: SourceLocation
 }
 
+export interface ImperativeStatement {
+  code: string
+  kind: 'if' | 'for' | 'while' | 'expression' | 'switch' | 'try' | 'other'
+  loc: SourceLocation
+}
+
 export interface TypeDefinition {
   kind: 'interface' | 'type'
   name: string
@@ -299,6 +305,7 @@ export interface IRMetadata {
   imports: ImportInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
+  imperativeStatements: ImperativeStatement[]
 }
 
 // =============================================================================

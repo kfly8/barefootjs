@@ -17,6 +17,7 @@ import type {
   FunctionInfo,
   ConstantInfo,
   ParamInfo,
+  ImperativeStatement,
 } from './types'
 import { isBooleanAttr } from './html-constants'
 
@@ -53,6 +54,7 @@ interface ClientJsContext {
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
   propsParams: ParamInfo[]
+  imperativeStatements: ImperativeStatement[]
 
   // Collected elements
   interactiveElements: InteractiveElement[]
@@ -192,6 +194,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     localFunctions: ir.metadata.localFunctions,
     localConstants: ir.metadata.localConstants,
     propsParams: ir.metadata.propsParams,
+    imperativeStatements: ir.metadata.imperativeStatements || [],
 
     interactiveElements: [],
     dynamicElements: [],
@@ -209,6 +212,7 @@ function needsClientJs(ctx: ClientJsContext): boolean {
     ctx.signals.length > 0 ||
     ctx.memos.length > 0 ||
     ctx.effects.length > 0 ||
+    ctx.imperativeStatements.length > 0 ||
     ctx.interactiveElements.length > 0 ||
     ctx.dynamicElements.length > 0 ||
     ctx.conditionalElements.length > 0 ||
@@ -1610,6 +1614,16 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   for (const effect of ctx.effects) {
     const jsBody = stripTypeScriptSyntax(effect.body)
     lines.push(`  createEffect(${jsBody})`)
+  }
+
+  // Imperative statements (if, for, while, etc.)
+  if (ctx.imperativeStatements.length > 0) {
+    lines.push('')
+    lines.push(`  // Top-level imperative code`)
+    for (const stmt of ctx.imperativeStatements) {
+      const jsCode = stripTypeScriptSyntax(stmt.code)
+      lines.push(`  ${jsCode}`)
+    }
   }
 
   // Child component inits with props

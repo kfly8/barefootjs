@@ -358,6 +358,196 @@ describe('Compiler', () => {
     })
   })
 
+  describe('imperative statements', () => {
+    test('extracts if statements', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          if (typeof window !== 'undefined') {
+            console.log('Client side!')
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      expect(ctx.imperativeStatements).toHaveLength(1)
+      expect(ctx.imperativeStatements[0].kind).toBe('if')
+      expect(ctx.imperativeStatements[0].code).toContain("typeof window !== 'undefined'")
+    })
+
+    test('extracts for loops', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          for (let i = 0; i < 10; i++) {
+            console.log(i)
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      expect(ctx.imperativeStatements).toHaveLength(1)
+      expect(ctx.imperativeStatements[0].kind).toBe('for')
+      expect(ctx.imperativeStatements[0].code).toContain('for (let i = 0;')
+    })
+
+    test('extracts while loops', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          let x = 0
+          while (x < 5) {
+            x++
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      // Should have 1 imperative statement (while loop)
+      // Note: "let x = 0" is treated as a constant, not imperative
+      expect(ctx.imperativeStatements).toHaveLength(1)
+      expect(ctx.imperativeStatements[0].kind).toBe('while')
+    })
+
+    test('extracts IIFE expressions', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          (function() {
+            console.log('IIFE executed')
+          })()
+          return <div>Hello</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      expect(ctx.imperativeStatements).toHaveLength(1)
+      expect(ctx.imperativeStatements[0].kind).toBe('expression')
+      expect(ctx.imperativeStatements[0].code).toContain('IIFE executed')
+    })
+
+    test('extracts switch statements', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          const env = 'production'
+          switch (env) {
+            case 'development':
+              console.log('dev')
+              break
+            default:
+              console.log('prod')
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      expect(ctx.imperativeStatements).toHaveLength(1)
+      expect(ctx.imperativeStatements[0].kind).toBe('switch')
+    })
+
+    test('extracts try-catch statements', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          try {
+            JSON.parse('invalid')
+          } catch (e) {
+            console.error(e)
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      expect(ctx.imperativeStatements).toHaveLength(1)
+      expect(ctx.imperativeStatements[0].kind).toBe('try')
+    })
+
+    test('includes imperative statements in client JS (Issue #218)', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          if (typeof window !== 'undefined') {
+            console.log('Component mounted')
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Component.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should include the if statement in client JS
+      expect(clientJs?.content).toContain("if (typeof window !== 'undefined')")
+      expect(clientJs?.content).toContain("console.log('Component mounted')")
+    })
+
+    test('includes multiple imperative statements in order', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          if (typeof window !== 'undefined') {
+            console.log('First')
+          }
+          for (let i = 0; i < 3; i++) {
+            console.log(i)
+          }
+          return <div>Hello</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Component.tsx', { adapter })
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Both statements should be present
+      expect(clientJs?.content).toContain("if (typeof window !== 'undefined')")
+      expect(clientJs?.content).toContain('for (let i = 0;')
+    })
+
+    test('does not extract statements from nested functions', () => {
+      const source = `
+        'use client'
+
+        export function Component() {
+          const handleClick = () => {
+            if (true) {
+              console.log('nested')
+            }
+          }
+          return <button onClick={handleClick}>Click</button>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Component.tsx')
+
+      // Should not extract the if statement from inside the arrow function
+      expect(ctx.imperativeStatements).toHaveLength(0)
+    })
+  })
+
   describe('boolean attributes', () => {
     test('isBooleanAttr identifies known boolean attributes', () => {
       expect(isBooleanAttr('checked')).toBe(true)
