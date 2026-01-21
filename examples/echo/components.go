@@ -164,6 +164,7 @@ type TodoAppProps struct {
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
 	Filter interface{} `json:"filter"`
+	HashListenerAdded bool `json:"hashListenerAdded"`
 	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
 	DoneCount    int              `json:"doneCount"` // Pre-computed done count
 }
@@ -181,5 +182,6 @@ func NewTodoAppProps(in TodoAppInput) TodoAppProps {
 		Todos: nil,
 		NewText: "",
 		Filter: nil,
+		HashListenerAdded: false,
 	}
 }

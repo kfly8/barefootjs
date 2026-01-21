@@ -7,7 +7,7 @@
  * Follows TodoMVC HTML structure and styling conventions
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/dom'
 import TodoItem from './TodoItem'
 
 type Todo = {
@@ -38,17 +38,25 @@ function TodoApp({ initialTodos = [] }: Props) {
     return 'all'
   }
 
-  // Read initial filter from hash on client-side
-  if (typeof window !== 'undefined') {
-    const initialFilter = getFilterFromHash()
-    if (initialFilter !== 'all') {
-      setFilter(initialFilter)
+  // Track if hash listener has been initialized (to prevent duplicate listeners)
+  const [hashListenerAdded, setHashListenerAdded] = createSignal(false)
+
+  // Initialize filter from URL hash on mount
+  createEffect(() => {
+    // Read current hash and update filter
+    const hashFilter = getFilterFromHash()
+    if (hashFilter !== filter()) {
+      setFilter(hashFilter)
     }
-    // Listen for hash changes
-    window.addEventListener('hashchange', () => {
-      setFilter(getFilterFromHash())
-    })
-  }
+
+    // Add hashchange listener only once
+    if (!hashListenerAdded() && typeof window !== 'undefined') {
+      setHashListenerAdded(true)
+      window.addEventListener('hashchange', () => {
+        setFilter(getFilterFromHash())
+      })
+    }
+  })
 
   const handleAdd = async () => {
     const text = newText().trim()
