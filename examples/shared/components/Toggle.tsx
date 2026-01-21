@@ -11,7 +11,7 @@ type ToggleItemProps = {
 function ToggleItem({ label, defaultOn = false }: ToggleItemProps) {
   const [on, setOn] = createSignal(defaultOn)
   return (
-    <div class="toggle-item" style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
+    <div className="toggle-item" style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
       <span style="min-width: 120px;">{label}</span>
       <button
         onClick={() => setOn(!on())}
@@ -30,7 +30,7 @@ type ToggleProps = {
 // Settings panel with multiple toggles
 function Toggle({ toggleItems }: ToggleProps) {
   return (
-    <div class="settings-panel" style="padding: 16px; border: 1px solid #ddd; border-radius: 8px;">
+    <div className="settings-panel" style="padding: 16px; border: 1px solid #ddd; border-radius: 8px;">
       <h3 style="margin-top: 0;">Settings</h3>
       {toggleItems.map((item) => (
         <ToggleItem label={item.label} defaultOn={item.defaultOn} />

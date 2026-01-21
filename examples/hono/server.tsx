@@ -94,7 +94,7 @@ app.get('/async-counter', (c) => {
   return c.render(
     <div>
       <h1>Async Counter with Suspense + BarefootJS</h1>
-      <Suspense fallback={<p class="loading">Loading counter...</p>}>
+      <Suspense fallback={<p className="loading">Loading counter...</p>}>
         <AsyncCounterWrapper />
       </Suspense>
       <p><a href="/">← Back</a></p>

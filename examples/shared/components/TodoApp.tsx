@@ -94,13 +94,13 @@ function TodoApp({ initialTodos = [] }: Props) {
     <div>
       <h1>BarefootJS Todo (SSR + API)</h1>
 
-      <p class="status">
-        Done: <span class="count">{todos().filter(t => t.done).length}</span> / <span class="total">{todos().length}</span>
+      <p className="status">
+        Done: <span className="count">{todos().filter(t => t.done).length}</span> / <span className="total">{todos().length}</span>
       </p>
 
       <AddTodoForm onAdd={handleAdd} />
 
-      <ul class="todo-list">
+      <ul className="todo-list">
         {todos().map(todo => (
           <TodoItem
             key={todo.id}

@@ -22,16 +22,16 @@ function AddTodoForm({ onAdd }: Props) {
   }
 
   return (
-    <div class="add-form">
+    <div className="add-form">
       <input
         type="text"
-        class="new-todo-input"
+        className="new-todo-input"
         placeholder="Enter new todo..."
         value={newText()}
         onInput={(e) => setNewText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && handleAdd()}
       />
-      <button class="add-btn" onClick={() => handleAdd()}>
+      <button className="add-btn" onClick={() => handleAdd()}>
         Add
       </button>
     </div>

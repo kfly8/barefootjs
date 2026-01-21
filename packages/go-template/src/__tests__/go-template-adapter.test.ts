@@ -62,6 +62,23 @@ describe('GoTemplateAdapter', () => {
       expect(result).toBe('<div class="container" id="main"></div>')
     })
 
+    test('converts className to class attribute', () => {
+      const element: IRElement = {
+        type: 'element',
+        tag: 'div',
+        attrs: [{ name: 'className', value: 'container', dynamic: false, isLiteral: true, loc }],
+        events: [],
+        ref: null,
+        children: [],
+        slotId: null,
+        needsScope: false,
+        loc,
+      }
+
+      const result = adapter.renderElement(element)
+      expect(result).toBe('<div class="container"></div>')
+    })
+
     test('renders element with dynamic attribute', () => {
       const element: IRElement = {
         type: 'element',
