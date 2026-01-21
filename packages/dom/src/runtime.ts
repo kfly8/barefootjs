@@ -82,11 +82,12 @@ export function findScope(
 
 /**
  * Check if an element belongs directly to a scope (not in a nested scope).
- * Returns true if the element's nearest scope is the given scope or the element itself.
+ * Returns true only if the element's nearest scope is exactly the given scope.
+ * Elements inside nested child scopes (which have their own data-bf-scope) return false.
  */
 function belongsToScope(element: Element, scope: Element): boolean {
   const nearestScope = element.closest('[data-bf-scope]')
-  return nearestScope === scope || nearestScope === element
+  return nearestScope === scope
 }
 
 /**

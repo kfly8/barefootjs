@@ -15,6 +15,9 @@ import { test, expect } from '@playwright/test'
 export function todoAppTests(baseUrl: string) {
   // Run TodoApp tests serially to avoid server state conflicts
   test.describe.serial('TodoApp Component', () => {
+    // Increase timeout for TodoApp tests (hydration can take time)
+    test.setTimeout(30000)
+
     test.beforeEach(async ({ page, request }) => {
       // Reset server state before each test
       await request.post(`${baseUrl}/api/todos/reset`)

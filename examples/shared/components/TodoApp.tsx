@@ -30,6 +30,25 @@ function TodoApp({ initialTodos = [] }: Props) {
   const [newText, setNewText] = createSignal('')
   const [filter, setFilter] = createSignal<Filter>('all')
 
+  // Read filter from URL hash
+  const getFilterFromHash = (): Filter => {
+    const hash = typeof window !== 'undefined' ? window.location.hash : ''
+    if (hash === '#/active') return 'active'
+    if (hash === '#/completed') return 'completed'
+    return 'all'
+  }
+
+  // Read initial filter from hash on client-side
+  if (typeof window !== 'undefined') {
+    const initialFilter = getFilterFromHash()
+    if (initialFilter !== 'all') {
+      setFilter(initialFilter)
+    }
+    // Listen for hash changes
+    window.addEventListener('hashchange', () => {
+      setFilter(getFilterFromHash())
+    })
+  }
 
   const handleAdd = async () => {
     const text = newText().trim()
@@ -117,6 +136,32 @@ function TodoApp({ initialTodos = [] }: Props) {
     setTodos(todos().filter(t => !t.done))
   }
 
+  const handleToggleAll = async () => {
+    const allDone = todos().every(t => t.done)
+    const newDoneState = !allDone
+
+    for (const todo of todos()) {
+      if (todo.done !== newDoneState) {
+        try {
+          await fetch(`/api/todos/${todo.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ done: newDoneState }),
+          })
+        } catch (err) {
+          console.error('Failed to update todo:', err)
+        }
+      }
+    }
+    setTodos(todos().map(t => ({ ...t, done: newDoneState })))
+  }
+
+  const handleFilterChange = (newFilter: Filter) => {
+    setFilter(newFilter)
+    const hash = newFilter === 'all' ? '#/' : `#/${newFilter}`
+    window.location.hash = hash
+  }
+
   return (
     <section className="todoapp">
       <header className="header">
@@ -125,12 +170,24 @@ function TodoApp({ initialTodos = [] }: Props) {
           className="new-todo"
           placeholder="What needs to be done?"
           value={newText()}
-          onInput={(e) => setNewText(e.target.value)}
+          onInput={(e) => setNewText((e.target as HTMLInputElement).value)}
           onKeyDown={handleKeyDown}
           autofocus
         />
       </header>
       <section className="main">
+        {todos().length > 0 && (
+          <>
+            <input
+              id="toggle-all"
+              className="toggle-all"
+              type="checkbox"
+              checked={todos().every(t => t.done)}
+              onChange={handleToggleAll}
+            />
+            <label for="toggle-all">Mark all as complete</label>
+          </>
+        )}
         <ul className="todo-list">
           {todos().filter(t => {
             const f = filter()
@@ -155,13 +212,13 @@ function TodoApp({ initialTodos = [] }: Props) {
         </span>
         <ul className="filters">
           <li>
-            <a className={filter() === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>All</a>
+            <a href="#/" className={filter() === 'all' ? 'selected' : ''} onClick={() => handleFilterChange('all')}>All</a>
           </li>
           <li>
-            <a className={filter() === 'active' ? 'selected' : ''} onClick={() => setFilter('active')}>Active</a>
+            <a href="#/active" className={filter() === 'active' ? 'selected' : ''} onClick={() => handleFilterChange('active')}>Active</a>
           </li>
           <li>
-            <a className={filter() === 'completed' ? 'selected' : ''} onClick={() => setFilter('completed')}>Completed</a>
+            <a href="#/completed" className={filter() === 'completed' ? 'selected' : ''} onClick={() => handleFilterChange('completed')}>Completed</a>
           </li>
         </ul>
         {todos().filter(t => t.done).length > 0 && (

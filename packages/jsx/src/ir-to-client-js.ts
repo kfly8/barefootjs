@@ -191,7 +191,9 @@ function toHtmlAttrName(jsxAttrName: string): string {
  *   Output: (e) => { e.key === 'Enter' && handleAdd() }
  */
 function wrapHandlerInBlock(handler: string): string {
-  const trimmed = handler.trim()
+  // Strip TypeScript syntax (type assertions, type annotations) from the handler
+  const stripped = stripTypeScriptSyntax(handler)
+  const trimmed = stripped.trim()
 
   // Check if it's an arrow function with expression body
   if (trimmed.startsWith('(') && trimmed.includes('=>')) {
@@ -205,7 +207,7 @@ function wrapHandlerInBlock(handler: string): string {
     }
   }
 
-  return handler
+  return trimmed
 }
 
 // =============================================================================
