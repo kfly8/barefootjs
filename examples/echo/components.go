@@ -163,10 +163,14 @@ type TodoAppProps struct {
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
-	Filter interface{} `json:"filter"`
+	Filter string `json:"filter"`
 	HashListenerAdded bool `json:"hashListenerAdded"`
-	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
-	DoneCount    int              `json:"doneCount"` // Pre-computed done count
+	TodoItems      []TodoItemProps  `json:"-"`              // For Go template (not in JSON)
+	DoneCount      int              `json:"doneCount"`      // Pre-computed done count
+	HasTodos       bool             `json:"-"`              // len(todos) > 0
+	AllDone        bool             `json:"-"`              // all todos done
+	ActiveCount    int              `json:"-"`              // count of !done
+	CompletedCount int              `json:"-"`              // count of done
 }
 
 // NewTodoAppProps creates TodoAppProps from TodoAppInput.
@@ -181,7 +185,7 @@ func NewTodoAppProps(in TodoAppInput) TodoAppProps {
 		InitialTodos: in.InitialTodos,
 		Todos: nil,
 		NewText: "",
-		Filter: nil,
+		Filter: "all",
 		HashListenerAdded: false,
 	}
 }

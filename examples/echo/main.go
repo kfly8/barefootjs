@@ -269,11 +269,14 @@ func todosHandler(c echo.Context) error {
 	copy(currentTodos, todos)
 	todoMutex.RUnlock()
 
-	// Count done todos
+	// Count done and active todos
 	doneCount := 0
+	activeCount := 0
 	for _, t := range currentTodos {
 		if t.Done {
 			doneCount++
+		} else {
+			activeCount++
 		}
 	}
 
@@ -293,6 +296,12 @@ func todosHandler(c echo.Context) error {
 	props.Todos = currentTodos  // For client hydration (JSON)
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
+
+	// Pre-computed fields for Go template
+	props.HasTodos = len(currentTodos) > 0
+	props.AllDone = len(currentTodos) > 0 && doneCount == len(currentTodos)
+	props.ActiveCount = activeCount
+	props.CompletedCount = doneCount
 
 	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "", []string{"TodoItem"}))
 }
