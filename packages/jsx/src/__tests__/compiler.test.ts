@@ -8,6 +8,7 @@ import { analyzeComponent } from '../analyzer'
 import { jsxToIR } from '../jsx-to-ir'
 import { TestAdapter } from '../adapters/test-adapter'
 import { resolve, dirname } from 'node:path'
+import { isBooleanAttr, BOOLEAN_ATTRS } from '../html-constants'
 
 // Create a shared adapter instance for tests
 const adapter = new TestAdapter()
@@ -354,6 +355,90 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
       expect(clientJs?.content).toContain('createSignal')
+    })
+  })
+
+  describe('boolean attributes', () => {
+    test('isBooleanAttr identifies known boolean attributes', () => {
+      expect(isBooleanAttr('checked')).toBe(true)
+      expect(isBooleanAttr('disabled')).toBe(true)
+      expect(isBooleanAttr('readonly')).toBe(true)
+      expect(isBooleanAttr('selected')).toBe(true)
+      expect(isBooleanAttr('required')).toBe(true)
+      expect(isBooleanAttr('hidden')).toBe(true)
+      expect(isBooleanAttr('autofocus')).toBe(true)
+      expect(isBooleanAttr('autoplay')).toBe(true)
+      expect(isBooleanAttr('controls')).toBe(true)
+      expect(isBooleanAttr('loop')).toBe(true)
+      expect(isBooleanAttr('muted')).toBe(true)
+      expect(isBooleanAttr('open')).toBe(true)
+      expect(isBooleanAttr('multiple')).toBe(true)
+      expect(isBooleanAttr('novalidate')).toBe(true)
+    })
+
+    test('isBooleanAttr is case-insensitive', () => {
+      expect(isBooleanAttr('CHECKED')).toBe(true)
+      expect(isBooleanAttr('Disabled')).toBe(true)
+    })
+
+    test('isBooleanAttr returns false for non-boolean attrs', () => {
+      expect(isBooleanAttr('class')).toBe(false)
+      expect(isBooleanAttr('id')).toBe(false)
+      expect(isBooleanAttr('value')).toBe(false)
+      expect(isBooleanAttr('type')).toBe(false)
+    })
+
+    test('BOOLEAN_ATTRS contains all expected attributes', () => {
+      expect(BOOLEAN_ATTRS.size).toBe(14)
+      expect(BOOLEAN_ATTRS.has('checked')).toBe(true)
+      expect(BOOLEAN_ATTRS.has('disabled')).toBe(true)
+    })
+
+    test('compiles dynamic boolean attribute using DOM property', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Checkbox() {
+          const [isChecked, setIsChecked] = createSignal(false)
+          return (
+            <input type="checkbox" checked={isChecked()} onChange={() => setIsChecked(!isChecked())} />
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Checkbox.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should use DOM property assignment for boolean attrs, not setAttribute
+      expect(clientJs?.content).toContain('.checked = !!')
+      expect(clientJs?.content).not.toContain("setAttribute('checked'")
+    })
+
+    test('compiles dynamic disabled attribute using DOM property', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Button() {
+          const [isLoading, setIsLoading] = createSignal(false)
+          return (
+            <button disabled={isLoading()}>Submit</button>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Button.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should use DOM property assignment for boolean attrs
+      expect(clientJs?.content).toContain('.disabled = !!')
     })
   })
 })

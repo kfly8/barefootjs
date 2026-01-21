@@ -46,6 +46,9 @@ export { generateClientJs } from './ir-to-client-js'
 // Errors
 export { ErrorCodes, createError, formatError, generateCodeFrame } from './errors'
 
+// HTML constants
+export { BOOLEAN_ATTRS, isBooleanAttr } from './html-constants'
+
 // HTML element attribute types
 export type {
   // Event types

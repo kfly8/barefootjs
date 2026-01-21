@@ -83,10 +83,10 @@ export interface HTMLBaseAttributes extends BaseEventAttributes {
   style?: string | Record<string, string | number>
   title?: string
   tabindex?: number
-  hidden?: boolean
-  draggable?: boolean
-  contenteditable?: boolean | 'inherit' | 'plaintext-only'
-  spellcheck?: boolean
+  hidden?: boolean | null
+  draggable?: boolean | null
+  contenteditable?: boolean | 'inherit' | 'plaintext-only' | null
+  spellcheck?: boolean | null
   accesskey?: string
   dir?: 'ltr' | 'rtl' | 'auto'
   lang?: string
@@ -157,13 +157,13 @@ export type HTMLAttributeAnchorTarget =
 // ============================================================================
 
 export interface ButtonHTMLAttributes extends HTMLBaseAttributes {
-  autofocus?: boolean
-  disabled?: boolean
+  autofocus?: boolean | null
+  disabled?: boolean | null
   form?: string
   formaction?: string
   formenctype?: HTMLAttributeFormEnctype
   formmethod?: HTMLAttributeFormMethod
-  formnovalidate?: boolean
+  formnovalidate?: boolean | null
   formtarget?: HTMLAttributeAnchorTarget
   name?: string
   type?: 'submit' | 'reset' | 'button'
@@ -189,15 +189,15 @@ export interface InputHTMLAttributes extends HTMLBaseAttributes {
   accept?: string
   alt?: string
   autocomplete?: string
-  autofocus?: boolean
+  autofocus?: boolean | null
   capture?: boolean | 'user' | 'environment'
-  checked?: boolean
-  disabled?: boolean
+  checked?: boolean | null
+  disabled?: boolean | null
   form?: string
   formaction?: string
   formenctype?: HTMLAttributeFormEnctype
   formmethod?: HTMLAttributeFormMethod
-  formnovalidate?: boolean
+  formnovalidate?: boolean | null
   formtarget?: HTMLAttributeAnchorTarget
   height?: number | string
   list?: string
@@ -205,12 +205,12 @@ export interface InputHTMLAttributes extends HTMLBaseAttributes {
   maxlength?: number
   min?: number | string
   minlength?: number
-  multiple?: boolean
+  multiple?: boolean | null
   name?: string
   pattern?: string
   placeholder?: string
-  readonly?: boolean
-  required?: boolean
+  readonly?: boolean | null
+  required?: boolean | null
   size?: number
   src?: string
   step?: number | string
@@ -234,16 +234,16 @@ export interface InputHTMLAttributes extends HTMLBaseAttributes {
 
 export interface TextareaHTMLAttributes extends HTMLBaseAttributes {
   autocomplete?: string
-  autofocus?: boolean
+  autofocus?: boolean | null
   cols?: number
-  disabled?: boolean
+  disabled?: boolean | null
   form?: string
   maxlength?: number
   minlength?: number
   name?: string
   placeholder?: string
-  readonly?: boolean
-  required?: boolean
+  readonly?: boolean | null
+  required?: boolean | null
   rows?: number
   value?: string
   wrap?: 'hard' | 'soft' | 'off'
@@ -264,12 +264,12 @@ export interface TextareaHTMLAttributes extends HTMLBaseAttributes {
 
 export interface SelectHTMLAttributes extends HTMLBaseAttributes {
   autocomplete?: string
-  autofocus?: boolean
-  disabled?: boolean
+  autofocus?: boolean | null
+  disabled?: boolean | null
   form?: string
-  multiple?: boolean
+  multiple?: boolean | null
   name?: string
-  required?: boolean
+  required?: boolean | null
   size?: number
   value?: string | ReadonlyArray<string>
 
@@ -344,8 +344,8 @@ export interface LabelHTMLAttributes extends HTMLBaseAttributes {
 // ============================================================================
 
 export interface OptionHTMLAttributes extends HTMLBaseAttributes {
-  disabled?: boolean
+  disabled?: boolean | null
   label?: string
-  selected?: boolean
+  selected?: boolean | null
   value?: string | ReadonlyArray<string> | number
 }
