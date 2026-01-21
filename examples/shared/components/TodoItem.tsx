@@ -21,25 +21,25 @@ type Props = {
 
 function TodoItem({ todo, onToggle, onDelete, onStartEdit, onFinishEdit }: Props) {
   return (
-    <li class={todo.done ? 'todo-item done' : 'todo-item'}>
+    <li className={todo.done ? 'todo-item done' : 'todo-item'}>
       {todo.editing ? (
         <input
           type="text"
-          class="todo-input"
+          className="todo-input"
           value={todo.text}
           autofocus
           onBlur={(e) => onFinishEdit(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && onFinishEdit(e.target.value)}
         />
       ) : (
-        <span class="todo-text" onClick={() => onStartEdit()}>
+        <span className="todo-text" onClick={() => onStartEdit()}>
           {todo.text}
         </span>
       )}
-      <button class="toggle-btn" onClick={() => onToggle()}>
+      <button className="toggle-btn" onClick={() => onToggle()}>
         {todo.done ? 'Undo' : 'Done'}
       </button>
-      <button class="delete-btn" onClick={() => onDelete()}>
+      <button className="delete-btn" onClick={() => onDelete()}>
         Delete
       </button>
     </li>

@@ -632,7 +632,8 @@ export class HonoAdapter implements TemplateAdapter {
     const parts: string[] = []
 
     for (const attr of element.attrs) {
-      const attrName = attr.name
+      // Convert JSX className to HTML class attribute
+      const attrName = attr.name === 'className' ? 'class' : attr.name
 
       if (attr.name === '...') {
         // Spread attribute

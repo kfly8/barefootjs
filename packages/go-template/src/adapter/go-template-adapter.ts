@@ -840,13 +840,16 @@ export class GoTemplateAdapter extends BaseAdapter {
         continue
       }
 
+      // Convert JSX className to HTML class attribute
+      const attrName = attr.name === 'className' ? 'class' : attr.name
+
       if (attr.value === null) {
         // Boolean attribute
-        parts.push(attr.name)
+        parts.push(attrName)
       } else if (typeof attr.value === 'object' && attr.value.type === 'template-literal') {
         // Template literal with structured ternaries
         const output = this.renderTemplateLiteral(attr.value)
-        parts.push(`${attr.name}="${output}"`)
+        parts.push(`${attrName}="${output}"`)
       } else if (attr.dynamic) {
         const value = attr.value as string
         // Check for ternary operator: cond ? 'a' : 'b'
@@ -854,13 +857,13 @@ export class GoTemplateAdapter extends BaseAdapter {
         if (ternaryMatch) {
           const [, condition, trueVal, falseVal] = ternaryMatch
           const goCond = this.convertConditionToGo(condition)
-          parts.push(`${attr.name}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
+          parts.push(`${attrName}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
         } else {
           const goValue = this.convertExpressionToGo(value)
-          parts.push(`${attr.name}="{{${goValue}}}"`)
+          parts.push(`${attrName}="{{${goValue}}}"`)
         }
       } else {
-        parts.push(`${attr.name}="${attr.value}"`)
+        parts.push(`${attrName}="${attr.value}"`)
       }
     }
 
