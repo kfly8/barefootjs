@@ -19,7 +19,7 @@ import type {
   IRTemplateLiteral,
   TypeInfo,
 } from '@barefootjs/jsx'
-import { BaseAdapter, type AdapterOutput } from '@barefootjs/jsx'
+import { BaseAdapter, type AdapterOutput, isBooleanAttr } from '@barefootjs/jsx'
 
 export interface GoTemplateAdapterOptions {
   /** Go package name for generated types (default: 'components') */
@@ -852,15 +852,21 @@ export class GoTemplateAdapter extends BaseAdapter {
         parts.push(`${attrName}="${output}"`)
       } else if (attr.dynamic) {
         const value = attr.value as string
-        // Check for ternary operator: cond ? 'a' : 'b'
-        const ternaryMatch = value.match(/^(.+?)\s*\?\s*['"](.+?)['"]\s*:\s*['"](.+?)['"]$/)
-        if (ternaryMatch) {
-          const [, condition, trueVal, falseVal] = ternaryMatch
-          const goCond = this.convertConditionToGo(condition)
-          parts.push(`${attrName}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
+        if (isBooleanAttr(attrName)) {
+          // Boolean attrs: render attr name only when truthy, omit when falsy
+          const goCond = this.convertConditionToGo(value)
+          parts.push(`{{if ${goCond}}}${attrName}{{end}}`)
         } else {
-          const goValue = this.convertExpressionToGo(value)
-          parts.push(`${attrName}="{{${goValue}}}"`)
+          // Check for ternary operator: cond ? 'a' : 'b'
+          const ternaryMatch = value.match(/^(.+?)\s*\?\s*['"](.+?)['"]\s*:\s*['"](.+?)['"]$/)
+          if (ternaryMatch) {
+            const [, condition, trueVal, falseVal] = ternaryMatch
+            const goCond = this.convertConditionToGo(condition)
+            parts.push(`${attrName}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
+          } else {
+            const goValue = this.convertExpressionToGo(value)
+            parts.push(`${attrName}="{{${goValue}}}"`)
+          }
         }
       } else {
         parts.push(`${attrName}="${attr.value}"`)

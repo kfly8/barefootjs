@@ -18,6 +18,7 @@ import type {
   ConstantInfo,
   ParamInfo,
 } from './types'
+import { isBooleanAttr } from './html-constants'
 
 /**
  * Convert an attribute value to a string expression.
@@ -1350,6 +1351,10 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
         if (attr.attrName === 'value') {
           lines.push(`      const __val = String(${attr.expression})`)
           lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
+        } else if (isBooleanAttr(attr.attrName)) {
+          // Boolean attributes: set property directly (checked, disabled, etc.)
+          // true → sets property to true, false → sets to false (removes attribute effect)
+          lines.push(`      _${slotId}.${attr.attrName} = !!(${attr.expression})`)
         } else {
           lines.push(`      _${slotId}.setAttribute('${attr.attrName}', String(${attr.expression}))`)
         }

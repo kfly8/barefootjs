@@ -18,6 +18,7 @@ import {
   type ParamInfo,
   type AdapterOutput,
   type TemplateAdapter,
+  isBooleanAttr,
 } from '@barefootjs/jsx'
 
 export interface HonoAdapterOptions {
@@ -647,7 +648,12 @@ export class HonoAdapter implements TemplateAdapter {
         parts.push(`${attrName}={${output}}`)
       } else if (attr.dynamic) {
         // Dynamic attribute
-        parts.push(`${attrName}={${attr.value}}`)
+        if (isBooleanAttr(attrName)) {
+          // Boolean attrs: pass undefined when falsy so Hono omits the attribute
+          parts.push(`${attrName}={${attr.value} || undefined}`)
+        } else {
+          parts.push(`${attrName}={${attr.value}}`)
+        }
       } else {
         // Static attribute
         parts.push(`${attrName}="${attr.value}"`)
