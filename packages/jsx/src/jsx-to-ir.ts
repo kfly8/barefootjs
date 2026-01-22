@@ -292,13 +292,22 @@ function transformChildren(
 ): IRNode[] {
   const result: IRNode[] = []
 
-  for (const child of children) {
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+
+    // Skip empty JSX expressions (comments only, no expression content)
+    // Note: @client directive is now detected in prefix style within transformExpression()
+    if (ts.isJsxExpression(child) && !child.expression) {
+      continue
+    }
+
     const transformed = transformNode(child, ctx)
     if (transformed) {
       // Skip empty text nodes
       if (transformed.type === 'text' && transformed.value.trim() === '') {
         continue
       }
+
       result.push(transformed)
     }
   }
@@ -337,14 +346,34 @@ function transformExpression(
 
   const expr = node.expression
 
+  // Check for @client directive in prefix style: {/* @client */ expr}
+  // getFullText() includes leading trivia (comments, whitespace)
+  const fullText = node.getFullText(ctx.sourceFile)
+  const isClientOnly = fullText.includes('@client')
+
   // Ternary expression: {cond ? a : b}
   if (ts.isConditionalExpression(expr)) {
-    return transformConditional(expr, ctx)
+    const result = transformConditional(expr, ctx)
+    if (isClientOnly) {
+      result.clientOnly = true
+      // Ensure slotId is assigned for client-only expressions
+      if (!result.slotId) {
+        result.slotId = generateSlotId(ctx)
+      }
+    }
+    return result
   }
 
   // Logical AND: {cond && <Component />}
   if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
-    return transformLogicalAnd(expr, ctx)
+    const result = transformLogicalAnd(expr, ctx)
+    if (isClientOnly) {
+      result.clientOnly = true
+      if (!result.slotId) {
+        result.slotId = generateSlotId(ctx)
+      }
+    }
+    return result
   }
 
   // Array map: {items.map(item => <li>{item}</li>)}
@@ -355,7 +384,9 @@ function transformExpression(
   // Regular expression
   const exprText = expr.getText(ctx.sourceFile)
   const reactive = isReactiveExpression(exprText, ctx)
-  const slotId = reactive ? generateSlotId(ctx) : null
+  // @client expressions always need slotId and are treated as reactive for client-side evaluation
+  const needsSlot = reactive || isClientOnly
+  const slotId = needsSlot ? generateSlotId(ctx) : null
 
   return {
     type: 'expression',
@@ -363,6 +394,7 @@ function transformExpression(
     typeInfo: inferExpressionType(expr, ctx),
     reactive,
     slotId,
+    clientOnly: isClientOnly || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }

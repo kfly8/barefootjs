@@ -18,8 +18,11 @@ import type {
   IRSlot,
   IRTemplateLiteral,
   TypeInfo,
+  CompilerError,
+  SourceLocation,
 } from '@barefootjs/jsx'
 import { BaseAdapter, type AdapterOutput, isBooleanAttr } from '@barefootjs/jsx'
+import { parseExpression, isSupported, type ParsedExpr } from './expression-parser'
 
 export interface GoTemplateAdapterOptions {
   /** Go package name for generated types (default: 'components') */
@@ -33,6 +36,7 @@ export class GoTemplateAdapter extends BaseAdapter {
   private componentName: string = ''
   private options: Required<GoTemplateAdapterOptions>
   private inLoop: boolean = false
+  private errors: CompilerError[] = []
 
   constructor(options: GoTemplateAdapterOptions = {}) {
     super()
@@ -43,10 +47,16 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
+    this.errors = []
 
     const templateBody = this.renderNode(ir.root)
     const template = `{{define "${this.componentName}"}}\n${templateBody}\n{{end}}\n`
     const types = this.generateTypes(ir)
+
+    // Merge collected errors into IR errors
+    if (this.errors.length > 0) {
+      ir.errors.push(...this.errors)
+    }
 
     return {
       template,
@@ -556,6 +566,15 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderExpression(expr: IRExpression): string {
+    // Handle @client directive - render comment marker for client-side evaluation
+    // The expression will be evaluated in ClientJS via updateClientMarker()
+    if (expr.clientOnly) {
+      if (expr.slotId) {
+        return `{{bfComment "client:${expr.slotId}"}}`
+      }
+      return ''
+    }
+
     const goExpr = this.convertExpressionToGo(expr.expr)
 
     if (expr.reactive && expr.slotId) {
@@ -565,53 +584,258 @@ export class GoTemplateAdapter extends BaseAdapter {
     return `{{${goExpr}}}`
   }
 
-  private convertExpressionToGo(jsExpr: string): string {
-    let expr = jsExpr.trim()
+  /**
+   * Render a client-only conditional as comment markers.
+   * Used when @client directive is applied to an unsupported conditional.
+   * The condition is evaluated on the client side via insert().
+   */
+  private renderClientOnlyConditional(cond: IRConditional): string {
+    if (cond.slotId) {
+      // Render comment markers (empty initially, client will populate)
+      return `{{bfComment "cond-start:${cond.slotId}"}}{{bfComment "cond-end:${cond.slotId}"}}`
+    }
+    return ''
+  }
 
-    // Handle null/undefined
-    if (expr === 'null' || expr === 'undefined') {
+  /**
+   * Render a ParsedExpr to Go template syntax.
+   */
+  private renderParsedExpr(expr: ParsedExpr): string {
+    switch (expr.kind) {
+      case 'identifier':
+        return `.${this.capitalizeFieldName(expr.name)}`
+
+      case 'literal':
+        if (expr.literalType === 'string') {
+          return `"${expr.value}"`
+        }
+        if (expr.literalType === 'null') {
+          return '""'
+        }
+        return String(expr.value)
+
+      case 'call': {
+        // Handle signal calls: count() -> .Count
+        if (expr.callee.kind === 'identifier' && expr.args.length === 0) {
+          return `.${this.capitalizeFieldName(expr.callee.name)}`
+        }
+        // Handle method calls on objects: items().length is handled by member
+        // For other calls, render callee and args
+        const callee = this.renderParsedExpr(expr.callee)
+        if (expr.args.length === 0) {
+          return callee
+        }
+        // Function calls with args - this is unusual in templates
+        const args = expr.args.map(a => this.renderParsedExpr(a)).join(' ')
+        return `${callee} ${args}`
+      }
+
+      case 'member': {
+        const obj = this.renderParsedExpr(expr.object)
+        // Handle .length -> len
+        if (expr.property === 'length') {
+          // If object already starts with . (like .Items), use "len .Items"
+          if (obj.startsWith('.')) {
+            return `len ${obj}`
+          }
+          return `len ${obj}`
+        }
+        // Normal property access: .User.Name
+        return `${obj}.${this.capitalizeFieldName(expr.property)}`
+      }
+
+      case 'binary': {
+        const left = this.renderParsedExpr(expr.left)
+        const right = this.renderParsedExpr(expr.right)
+
+        // Comparison operators -> Go template functions
+        switch (expr.op) {
+          case '===':
+          case '==':
+            return `eq ${left} ${right}`
+          case '!==':
+          case '!=':
+            return `ne ${left} ${right}`
+          case '>':
+            return `gt ${left} ${right}`
+          case '<':
+            return `lt ${left} ${right}`
+          case '>=':
+            return `ge ${left} ${right}`
+          case '<=':
+            return `le ${left} ${right}`
+
+          // Arithmetic operators -> runtime functions
+          case '+':
+            return `bf_add ${left} ${right}`
+          case '-':
+            return `bf_sub ${left} ${right}`
+          case '*':
+            return `bf_mul ${left} ${right}`
+          case '/':
+            return `bf_div ${left} ${right}`
+          case '%':
+            return `bf_mod ${left} ${right}`
+
+          default:
+            return `${left} ${expr.op} ${right}`
+        }
+      }
+
+      case 'unary': {
+        const arg = this.renderParsedExpr(expr.argument)
+        if (expr.op === '!') {
+          return `not ${arg}`
+        }
+        if (expr.op === '-') {
+          return `bf_neg ${arg}`
+        }
+        return arg
+      }
+
+      case 'logical': {
+        const left = this.renderParsedExpr(expr.left)
+        const right = this.renderParsedExpr(expr.right)
+        // Wrap in parentheses if needed for complex expressions
+        const wrapLeft = this.needsParens(expr.left) ? `(${left})` : left
+        const wrapRight = this.needsParens(expr.right) ? `(${right})` : right
+        if (expr.op === '&&') {
+          return `and ${wrapLeft} ${wrapRight}`
+        }
+        return `or ${wrapLeft} ${wrapRight}`
+      }
+
+      case 'conditional': {
+        const test = this.renderParsedExpr(expr.test)
+        // Nested conditionals already return complete {{if}}...{{end}} blocks
+        // Literals return bare text (used within attributes)
+        const consequent = this.renderConditionalBranch(expr.consequent)
+        const alternate = this.renderConditionalBranch(expr.alternate)
+        return `{{if ${test}}}${consequent}{{else}}${alternate}{{end}}`
+      }
+
+      case 'template-literal': {
+        let result = ''
+        for (const part of expr.parts) {
+          if (part.type === 'string') {
+            result += part.value
+          } else {
+            const partExpr = this.renderParsedExpr(part.expr)
+            result += `{{${partExpr}}}`
+          }
+        }
+        return result
+      }
+
+      case 'unsupported':
+        // This should not happen if isSupported was checked
+        return `[UNSUPPORTED: ${expr.raw}]`
+    }
+  }
+
+  /**
+   * Check if expression needs parentheses when used in and/or.
+   */
+  private needsParens(expr: ParsedExpr): boolean {
+    return expr.kind === 'logical' || expr.kind === 'unary' || expr.kind === 'conditional'
+  }
+
+  /**
+   * Render a branch of a conditional expression.
+   * String literals render as bare text (no quotes).
+   * Nested conditionals render as complete {{if}}...{{end}} blocks.
+   */
+  private renderConditionalBranch(expr: ParsedExpr): string {
+    if (expr.kind === 'literal' && expr.literalType === 'string') {
+      // String literals return as bare text
+      return String(expr.value)
+    }
+    if (expr.kind === 'conditional') {
+      // Nested ternary renders as complete Go template block
+      const test = this.renderParsedExpr(expr.test)
+      const consequent = this.renderConditionalBranch(expr.consequent)
+      const alternate = this.renderConditionalBranch(expr.alternate)
+      return `{{if ${test}}}${consequent}{{else}}${alternate}{{end}}`
+    }
+    // Other expressions render normally with {{...}} wrapper
+    return `{{${this.renderParsedExpr(expr)}}}`
+  }
+
+  /**
+   * Check if a ParsedExpr renders to a Go template function call that needs parentheses.
+   * In Go templates, function calls like `len .X` or `bf_add .A .B` need parentheses
+   * when used as arguments to comparison operators (eq, gt, lt, etc.).
+   */
+  private needsParensInGoTemplate(expr: ParsedExpr): boolean {
+    switch (expr.kind) {
+      case 'member':
+        // .length becomes `len .X` which is a function call
+        return expr.property === 'length'
+
+      case 'binary':
+        // Arithmetic operators become function calls (bf_add, bf_sub, etc.)
+        return ['+', '-', '*', '/', '%'].includes(expr.op)
+
+      case 'unary':
+        // Negation becomes `bf_neg .X`
+        return expr.op === '-'
+
+      default:
+        return false
+    }
+  }
+
+  /**
+   * Convert a JS expression to Go template syntax.
+   */
+  private convertExpressionToGo(jsExpr: string): string {
+    const trimmed = jsExpr.trim()
+
+    // Handle null/undefined specially
+    if (trimmed === 'null' || trimmed === 'undefined') {
       return '""'
     }
 
-    // Handle string literals - keep as is but use printf
-    if ((expr.startsWith("'") && expr.endsWith("'")) ||
-        (expr.startsWith('"') && expr.endsWith('"'))) {
-      return `print ${expr.replace(/'/g, '"')}`
+    const parsed = parseExpression(trimmed)
+    const support = isSupported(parsed)
+
+    if (!support.supported) {
+      // Log error and return Go template comment (safe for parsing)
+      this.errors.push({
+        code: 'BF101',
+        severity: 'error',
+        message: `Expression not supported: ${trimmed}`,
+        loc: this.makeLoc(),
+        suggestion: {
+          message: support.reason
+            ? `${support.reason}\n\nOptions:\n1. Use @client directive for client-side evaluation\n2. Pre-compute the value in Go code`
+            : 'Options:\n1. Use @client directive for client-side evaluation\n2. Pre-compute the value in Go code',
+        },
+      })
+      // Return empty string - Go template comments must be separate actions
+      return `""`
     }
 
-    // Handle filter().length pattern: todos().filter(t => t.done).length -> .DoneCount
-    // This requires server-side pre-computation
-    const filterLengthMatch = expr.match(/(\w+)\(\)\.filter\([^)]+\)\.length/)
-    if (filterLengthMatch) {
-      // Convert to a pre-computed field name
-      // todos().filter(t => t.done).length -> .DoneCount
-      return '.DoneCount'
+    return this.renderParsedExpr(parsed)
+  }
+
+  /**
+   * Create a source location for error reporting.
+   */
+  private makeLoc(): SourceLocation {
+    return {
+      file: this.componentName + '.tsx',
+      start: { line: 1, column: 0 },
+      end: { line: 1, column: 0 },
     }
-
-    // Handle function calls like count() -> .Count
-    expr = expr.replace(/(\w+)\(\)/g, (_, name) => {
-      return `.${this.capitalizeFieldName(name)}`
-    })
-
-    // Handle property access like user.name -> .User.Name
-    expr = expr.replace(/(?<!\.)\b([a-z]\w*)\.(\w+)/g, (_, obj, prop) => {
-      return `.${this.capitalizeFieldName(obj)}.${this.capitalizeFieldName(prop)}`
-    })
-
-    // Handle simple identifiers like count -> .Count
-    expr = expr.replace(/^([a-z]\w*)$/, (_, name) => {
-      return `.${this.capitalizeFieldName(name)}`
-    })
-
-    // Handle .length -> len
-    expr = expr.replace(/(\.\w+)\.length/g, (_, prefix) => {
-      return `len ${prefix}`
-    })
-
-    return expr
   }
 
   renderConditional(cond: IRConditional): string {
+    // Handle @client directive - render as template with data-bf-client attribute
+    if (cond.clientOnly) {
+      return this.renderClientOnlyConditional(cond)
+    }
+
     const goCondition = this.convertConditionToGo(cond.condition)
     const whenTrue = this.renderNode(cond.whenTrue)
 
@@ -662,111 +886,145 @@ export class GoTemplateAdapter extends BaseAdapter {
     return result
   }
 
+  /**
+   * Convert a JS condition to Go template condition syntax.
+   */
   private convertConditionToGo(jsCondition: string): string {
-    let cond = jsCondition.trim()
+    const trimmed = jsCondition.trim()
+    const parsed = parseExpression(trimmed)
+    const support = isSupported(parsed)
 
-    // Handle complex logical expressions with && and ||
-    if (cond.includes('&&') || cond.includes('||')) {
-      return this.convertLogicalExpression(cond)
+    if (!support.supported) {
+      this.errors.push({
+        code: 'BF102',
+        severity: 'error',
+        message: `Condition not supported: ${trimmed}`,
+        loc: this.makeLoc(),
+        suggestion: {
+          message: support.reason
+            ? `${support.reason}\n\nOptions:\n1. Use @client directive for client-side evaluation\n2. Pre-compute the value in Go code`
+            : 'Expression contains unsupported syntax',
+        },
+      })
+      // Return false - Go template comments must be separate actions
+      return `false`
     }
 
-    // Handle negation: !showCounter -> not .ShowCounter
-    if (cond.startsWith('!')) {
-      const inner = cond.slice(1).trim()
-      const innerGo = this.convertConditionToGo(inner)
-      return `not ${innerGo}`
-    }
-
-    // Handle boolean expressions with comparisons
-    cond = cond.replace(/(\w+)\s*===?\s*(\w+)/g, (_, left, right) => {
-      const leftGo = this.convertExpressionToGo(left)
-      const rightGo = right === 'true' || right === 'false' ? right : this.convertExpressionToGo(right)
-      return `eq ${leftGo} ${rightGo}`
-    })
-
-    cond = cond.replace(/(\w+)\s*!==?\s*(\w+)/g, (_, left, right) => {
-      const leftGo = this.convertExpressionToGo(left)
-      const rightGo = right === 'true' || right === 'false' ? right : this.convertExpressionToGo(right)
-      return `ne ${leftGo} ${rightGo}`
-    })
-
-    cond = cond.replace(/(\w+)\s*>\s*(\w+)/g, (_, left, right) => {
-      const leftGo = this.convertExpressionToGo(left)
-      const rightGo = this.convertExpressionToGo(right)
-      return `gt ${leftGo} ${rightGo}`
-    })
-
-    cond = cond.replace(/(\w+)\s*<\s*(\w+)/g, (_, left, right) => {
-      const leftGo = this.convertExpressionToGo(left)
-      const rightGo = this.convertExpressionToGo(right)
-      return `lt ${leftGo} ${rightGo}`
-    })
-
-    cond = cond.replace(/(\w+)\s*>=\s*(\w+)/g, (_, left, right) => {
-      const leftGo = this.convertExpressionToGo(left)
-      const rightGo = this.convertExpressionToGo(right)
-      return `ge ${leftGo} ${rightGo}`
-    })
-
-    cond = cond.replace(/(\w+)\s*<=\s*(\w+)/g, (_, left, right) => {
-      const leftGo = this.convertExpressionToGo(left)
-      const rightGo = this.convertExpressionToGo(right)
-      return `le ${leftGo} ${rightGo}`
-    })
-
-    // If no operators matched, convert as expression (truthy check)
-    if (!cond.includes(' ')) {
-      cond = this.convertExpressionToGo(cond)
-    }
-
-    return cond
+    return this.renderConditionExpr(parsed)
   }
 
-  private convertLogicalExpression(expr: string): string {
-    // Split by && (AND) first, then handle || (OR)
-    // Handle: !showCounter && !showMessage
+  /**
+   * Render a ParsedExpr as a Go template condition.
+   */
+  private renderConditionExpr(expr: ParsedExpr): string {
+    switch (expr.kind) {
+      case 'identifier':
+        return `.${this.capitalizeFieldName(expr.name)}`
 
-    // Check for && (AND)
-    if (expr.includes('&&')) {
-      const parts = expr.split('&&').map(p => p.trim())
-      const goParts = parts.map(p => {
-        const converted = this.convertConditionToGo(p)
-        // Wrap in parentheses if it's a function call like 'not .X'
-        if (converted.startsWith('not ') || converted.startsWith('and ') || converted.startsWith('or ')) {
-          return `(${converted})`
+      case 'literal':
+        if (expr.literalType === 'string') {
+          return `"${expr.value}"`
         }
-        return converted
-      })
-      // Build nested and: and (a) (b)
-      if (goParts.length === 2) {
-        return `and ${goParts[0]} ${goParts[1]}`
-      }
-      return goParts.reduce((acc, part) => {
-        if (!acc) return part
-        return `and (${acc}) ${part}`
-      }, '')
-    }
-
-    // Check for || (OR)
-    if (expr.includes('||')) {
-      const parts = expr.split('||').map(p => p.trim())
-      const goParts = parts.map(p => {
-        const converted = this.convertConditionToGo(p)
-        if (converted.startsWith('not ') || converted.startsWith('and ') || converted.startsWith('or ')) {
-          return `(${converted})`
+        if (expr.literalType === 'null') {
+          return '""'
         }
-        return converted
-      })
-      if (goParts.length === 2) {
-        return `or ${goParts[0]} ${goParts[1]}`
-      }
-      return goParts.reduce((acc, part) => {
-        if (!acc) return part
-        return `or (${acc}) ${part}`
-      }, '')
-    }
+        return String(expr.value)
 
-    return this.convertConditionToGo(expr)
+      case 'call': {
+        // Signal call: count() -> .Count
+        if (expr.callee.kind === 'identifier' && expr.args.length === 0) {
+          return `.${this.capitalizeFieldName(expr.callee.name)}`
+        }
+        return this.renderParsedExpr(expr)
+      }
+
+      case 'member': {
+        const obj = this.renderConditionExpr(expr.object)
+        if (expr.property === 'length') {
+          return `len ${obj}`
+        }
+        return `${obj}.${this.capitalizeFieldName(expr.property)}`
+      }
+
+      case 'binary': {
+        // Check if left operand needs parentheses (e.g., function calls in Go template)
+        const leftNeedsParens = this.needsParensInGoTemplate(expr.left)
+        let left = this.renderConditionExpr(expr.left)
+        if (leftNeedsParens) {
+          left = `(${left})`
+        }
+
+        const rightNeedsParens = this.needsParensInGoTemplate(expr.right)
+        let right = this.renderConditionExpr(expr.right)
+        if (rightNeedsParens) {
+          right = `(${right})`
+        }
+
+        switch (expr.op) {
+          case '===':
+          case '==':
+            return `eq ${left} ${right}`
+          case '!==':
+          case '!=':
+            return `ne ${left} ${right}`
+          case '>':
+            return `gt ${left} ${right}`
+          case '<':
+            return `lt ${left} ${right}`
+          case '>=':
+            return `ge ${left} ${right}`
+          case '<=':
+            return `le ${left} ${right}`
+          // Arithmetic in conditions
+          case '+':
+            return `bf_add ${left} ${right}`
+          case '-':
+            return `bf_sub ${left} ${right}`
+          case '*':
+            return `bf_mul ${left} ${right}`
+          case '/':
+            return `bf_div ${left} ${right}`
+          default:
+            return `${left} ${expr.op} ${right}`
+        }
+      }
+
+      case 'unary': {
+        const arg = this.renderConditionExpr(expr.argument)
+        if (expr.op === '!') {
+          return `not ${arg}`
+        }
+        if (expr.op === '-') {
+          return `bf_neg ${arg}`
+        }
+        return arg
+      }
+
+      case 'logical': {
+        const left = this.renderConditionExpr(expr.left)
+        const right = this.renderConditionExpr(expr.right)
+        // Wrap in parentheses if needed
+        const wrapLeft = this.needsParens(expr.left) ? `(${left})` : left
+        const wrapRight = this.needsParens(expr.right) ? `(${right})` : right
+        if (expr.op === '&&') {
+          return `and ${wrapLeft} ${wrapRight}`
+        }
+        return `or ${wrapLeft} ${wrapRight}`
+      }
+
+      case 'conditional': {
+        // Ternary in condition: (cond ? a : b) is unusual but handle it
+        const test = this.renderConditionExpr(expr.test)
+        return test // Just return the test part for condition context
+      }
+
+      case 'template-literal':
+        // Template literals as conditions are unusual
+        return this.renderParsedExpr(expr)
+
+      case 'unsupported':
+        return expr.raw
+    }
   }
 
   renderLoop(loop: IRLoop): string {
@@ -857,12 +1115,12 @@ export class GoTemplateAdapter extends BaseAdapter {
           const goCond = this.convertConditionToGo(value)
           parts.push(`{{if ${goCond}}}${attrName}{{end}}`)
         } else {
-          // Check for ternary operator: cond ? 'a' : 'b'
-          const ternaryMatch = value.match(/^(.+?)\s*\?\s*['"](.+?)['"]\s*:\s*['"](.+?)['"]$/)
-          if (ternaryMatch) {
-            const [, condition, trueVal, falseVal] = ternaryMatch
-            const goCond = this.convertConditionToGo(condition)
-            parts.push(`${attrName}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
+          // Check for ternary/conditional expressions using the parser
+          const parsed = parseExpression(value.trim())
+          if (parsed.kind === 'conditional') {
+            // Conditional expressions return complete Go template syntax
+            const goValue = this.renderParsedExpr(parsed)
+            parts.push(`${attrName}="${goValue}"`)
           } else {
             const goValue = this.convertExpressionToGo(value)
             parts.push(`${attrName}="{{${goValue}}}"`)

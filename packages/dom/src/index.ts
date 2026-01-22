@@ -38,6 +38,7 @@ export {
   registerComponent,
   getComponentInit,
   initChild,
+  updateClientMarker,
   type ComponentInitFn,
   type BranchConfig,
 } from './runtime'

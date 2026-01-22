@@ -63,6 +63,8 @@ interface ClientJsContext {
   childInits: ChildInit[]
   reactiveProps: ReactiveComponentProp[]
   reactiveAttrs: ReactiveAttribute[]
+  clientOnlyElements: ClientOnlyElement[]
+  clientOnlyConditionals: ClientOnlyConditional[]
 }
 
 interface InteractiveElement {
@@ -135,6 +137,20 @@ interface ReactiveAttribute {
   expression: string
 }
 
+interface ClientOnlyElement {
+  slotId: string
+  expression: string
+}
+
+interface ClientOnlyConditional {
+  slotId: string
+  condition: string
+  whenTrueHtml: string
+  whenFalseHtml: string
+  whenTrueEvents: ConditionalBranchEvent[]
+  whenFalseEvents: ConditionalBranchEvent[]
+}
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -201,6 +217,8 @@ function createContext(ir: ComponentIR): ClientJsContext {
     childInits: [],
     reactiveProps: [],
     reactiveAttrs: [],
+    clientOnlyElements: [],
+    clientOnlyConditionals: [],
   }
 }
 
@@ -215,7 +233,9 @@ function needsClientJs(ctx: ClientJsContext): boolean {
     ctx.loopElements.length > 0 ||
     ctx.refElements.length > 0 ||
     ctx.childInits.length > 0 ||
-    ctx.reactiveAttrs.length > 0
+    ctx.reactiveAttrs.length > 0 ||
+    ctx.clientOnlyElements.length > 0 ||
+    ctx.clientOnlyConditionals.length > 0
   )
 }
 
@@ -233,7 +253,14 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
       break
 
     case 'expression':
-      if (node.reactive && node.slotId) {
+      if (node.clientOnly && node.slotId) {
+        // Client-only: uses comment marker, evaluated via updateClientMarker()
+        ctx.clientOnlyElements.push({
+          slotId: node.slotId,
+          expression: node.expr,
+        })
+      } else if (node.reactive && node.slotId) {
+        // Normal reactive: uses <span data-bf>
         ctx.dynamicElements.push({
           slotId: node.slotId,
           expression: node.expr,
@@ -243,7 +270,20 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
       break
 
     case 'conditional':
-      if (node.reactive && node.slotId) {
+      if (node.clientOnly && node.slotId) {
+        // Client-only conditional: uses comment markers, evaluated on client via insert()
+        const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
+        const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
+        ctx.clientOnlyConditionals.push({
+          slotId: node.slotId,
+          condition: node.condition,
+          whenTrueHtml: irToHtmlTemplate(node.whenTrue),
+          whenFalseHtml: irToHtmlTemplate(node.whenFalse),
+          whenTrueEvents,
+          whenFalseEvents,
+        })
+      } else if (node.reactive && node.slotId) {
+        // Normal reactive conditional: server renders initial state
         // Collect events from each branch for use with insert()
         const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
         const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
@@ -901,6 +941,20 @@ function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
     extractTemplateIdentifiers(elem.whenFalseHtml, used)
   }
 
+  // From client-only conditionals - same as regular conditionals
+  for (const elem of ctx.clientOnlyConditionals) {
+    extractIdentifiers(elem.condition, used)
+    extractTemplateIdentifiers(elem.whenTrueHtml, used)
+    extractTemplateIdentifiers(elem.whenFalseHtml, used)
+    // Also extract from event handlers in branches
+    for (const event of elem.whenTrueEvents) {
+      extractIdentifiers(event.handler, used)
+    }
+    for (const event of elem.whenFalseEvents) {
+      extractIdentifiers(event.handler, used)
+    }
+  }
+
   // From loops
   for (const elem of ctx.loopElements) {
     extractIdentifiers(elem.array, used)
@@ -1127,7 +1181,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   const name = ctx.componentName
 
   // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild } from '@barefootjs/dom'`)
+  lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
   lines.push('')
 
   // Init function
@@ -1331,6 +1385,16 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     lines.push('')
   }
 
+  // Client-only expression updates (comment marker based)
+  // These expressions are evaluated only on the client side via updateClientMarker()
+  for (const elem of ctx.clientOnlyElements) {
+    lines.push(`  // @client: ${elem.slotId}`)
+    lines.push(`  createEffect(() => {`)
+    lines.push(`    updateClientMarker(__scope, '${elem.slotId}', ${elem.expression})`)
+    lines.push(`  })`)
+    lines.push('')
+  }
+
   // Reactive attribute updates
   if (ctx.reactiveAttrs.length > 0) {
     // Group by slot to update multiple attrs together
@@ -1401,6 +1465,49 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     lines.push(`  }, {`)
 
     // Generate whenFalse branch config
+    lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
+    lines.push(`    bindEvents: (__branchScope) => {`)
+    generateBindEvents(elem.whenFalseEvents)
+    lines.push(`    }`)
+    lines.push(`  })`)
+    lines.push('')
+  }
+
+  // Client-only conditional updates (comment marker based)
+  // These conditionals are not rendered by the server, only evaluated on client via insert()
+  for (const elem of ctx.clientOnlyConditionals) {
+    // Add data-bf-cond to template root elements so insert() can find them after DOM swap
+    const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
+    const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
+
+    // Helper to generate bindEvents function body for a branch
+    const generateBindEvents = (events: ConditionalBranchEvent[]) => {
+      // Group events by slotId to avoid duplicate variable declarations
+      const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
+      for (const event of events) {
+        if (!eventsBySlot.has(event.slotId)) {
+          eventsBySlot.set(event.slotId, [])
+        }
+        eventsBySlot.get(event.slotId)!.push(event)
+      }
+
+      for (const [slotId, slotEvents] of eventsBySlot) {
+        lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
+        for (const event of slotEvents) {
+          // Wrap handler in block to prevent accidental return false (which prevents default)
+          const wrappedHandler = wrapHandlerInBlock(event.handler)
+          lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${wrappedHandler}`)
+        }
+      }
+    }
+
+    lines.push(`  // @client conditional: ${elem.slotId}`)
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
+    lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
+    lines.push(`    bindEvents: (__branchScope) => {`)
+    generateBindEvents(elem.whenTrueEvents)
+    lines.push(`    }`)
+    lines.push(`  }, {`)
     lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
     generateBindEvents(elem.whenFalseEvents)
