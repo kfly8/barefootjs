@@ -5,8 +5,6 @@
  * Inspired by SolidJS signals.
  */
 
-// --- Types ---
-
 export type Signal<T> = [
   /** Get current value (registers dependency when called inside effect) */
   () => T,
@@ -18,20 +16,16 @@ export type CleanupFn = () => void
 export type EffectFn = () => void | CleanupFn
 export type Memo<T> = () => T
 
-// --- Internal State ---
-
 type EffectContext = {
   fn: EffectFn
   cleanup: CleanupFn | null
   dependencies: Set<Set<EffectContext>>
 }
 
-let currentEffect: EffectContext | null = null
+let Owner: EffectContext | null = null
+let Listener: EffectContext | null = null
 let effectDepth = 0
-let isTracking = true
 const MAX_EFFECT_RUNS = 100
-
-// --- createSignal ---
 
 /**
  * Create a reactive value
@@ -50,9 +44,9 @@ export function createSignal<T>(initialValue: T): Signal<T> {
   const subscribers = new Set<EffectContext>()
 
   const get = () => {
-    if (currentEffect && isTracking) {
-      subscribers.add(currentEffect)
-      currentEffect.dependencies.add(subscribers)
+    if (Listener) {
+      subscribers.add(Listener)
+      Listener.dependencies.add(subscribers)
     }
     return value
   }
@@ -76,8 +70,6 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 
   return [get, set]
 }
-
-// --- createEffect ---
 
 /**
  * Side effect that runs automatically when signals change
@@ -122,8 +114,10 @@ function runEffect(effect: EffectContext): void {
   }
   effect.dependencies.clear()
 
-  const prevEffect = currentEffect
-  currentEffect = effect
+  const prevOwner = Owner
+  const prevListener = Listener
+  Owner = effect
+  Listener = effect
 
   try {
     const result = effect.fn()
@@ -131,12 +125,11 @@ function runEffect(effect: EffectContext): void {
       effect.cleanup = result
     }
   } finally {
-    currentEffect = prevEffect
+    Owner = prevOwner
+    Listener = prevListener
     effectDepth--
   }
 }
-
-// --- onCleanup ---
 
 /**
  * Register cleanup function for effects
@@ -150,8 +143,8 @@ function runEffect(effect: EffectContext): void {
  * })
  */
 export function onCleanup(fn: CleanupFn): void {
-  if (currentEffect) {
-    const effect = currentEffect
+  if (Owner) {
+    const effect = Owner
     const prevCleanup = effect.cleanup
     effect.cleanup = () => {
       if (prevCleanup) prevCleanup()
@@ -160,7 +153,27 @@ export function onCleanup(fn: CleanupFn): void {
   }
 }
 
-// --- onMount ---
+/**
+ * Run a function without tracking signal dependencies
+ *
+ * @param fn - Function to run without tracking
+ * @returns The return value of fn
+ *
+ * @example
+ * createEffect(() => {
+ *   const value = untrack(() => someSignal()) // won't re-run when someSignal changes
+ *   console.log(value)
+ * })
+ */
+export function untrack<T>(fn: () => T): T {
+  const prevListener = Listener
+  Listener = null
+  try {
+    return fn()
+  } finally {
+    Listener = prevListener
+  }
+}
 
 /**
  * Run a function once when the component mounts
@@ -177,18 +190,8 @@ export function onCleanup(fn: CleanupFn): void {
  * })
  */
 export function onMount(fn: () => void): void {
-  createEffect(() => {
-    const prevTracking = isTracking
-    isTracking = false
-    try {
-      fn()
-    } finally {
-      isTracking = prevTracking
-    }
-  })
+  createEffect(() => untrack(fn))
 }
-
-// --- createMemo ---
 
 /**
  * Create a memoized computed value
