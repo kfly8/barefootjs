@@ -687,7 +687,23 @@ describe('GoTemplateAdapter', () => {
   })
 
   describe('@client directive', () => {
-    test('renders client-only expression as template element', () => {
+    test('renders client-only expression as comment marker', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: "todos().every(t => t.done)",
+        typeInfo: null,
+        reactive: false,
+        slotId: 'slot_5',
+        loc,
+        clientOnly: true,
+      }
+
+      const result = adapter.renderExpression(expr)
+      // New implementation: renders comment marker instead of template element
+      expect(result).toBe('{{bfComment "client:slot_5"}}')
+    })
+
+    test('renders client-only expression without slotId as empty string', () => {
       const expr: IRExpression = {
         type: 'expression',
         expr: "todos().every(t => t.done)",
@@ -699,11 +715,40 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderExpression(expr)
-      expect(result).toContain('<template data-bf-client=')
-      expect(result).toContain('todos().every(t =&gt; t.done)')
+      expect(result).toBe('')
     })
 
-    test('renders client-only conditional as template element', () => {
+    test('renders client-only conditional as comment markers', () => {
+      // Client-only conditionals use comment markers for insert() on client side
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'todos().every(t => t.done)',
+        conditionType: null,
+        reactive: false,
+        whenTrue: {
+          type: 'element',
+          tag: 'span',
+          attrs: [],
+          events: [],
+          ref: null,
+          children: [{ type: 'text', value: 'All done!', loc }],
+          slotId: null,
+          needsScope: false,
+          loc,
+        },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: 'slot_3',
+        loc,
+        clientOnly: true,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toContain('{{bfComment "cond-start:slot_3"}}')
+      expect(result).toContain('{{bfComment "cond-end:slot_3"}}')
+    })
+
+    test('renders empty for client-only conditional without slotId', () => {
+      // Client-only conditionals without slotId return empty string
       const cond: IRConditional = {
         type: 'conditional',
         condition: 'todos().every(t => t.done)',
@@ -727,8 +772,7 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderConditional(cond)
-      expect(result).toContain('<template data-bf-client=')
-      expect(result).toContain('<span>All done!</span>')
+      expect(result).toBe('')
     })
   })
 })

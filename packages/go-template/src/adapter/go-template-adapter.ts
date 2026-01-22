@@ -566,9 +566,13 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderExpression(expr: IRExpression): string {
-    // Handle @client directive - render as template with data-bf-client attribute
+    // Handle @client directive - render comment marker for client-side evaluation
+    // The expression will be evaluated in ClientJS via updateClientMarker()
     if (expr.clientOnly) {
-      return this.renderClientOnlyExpression(expr)
+      if (expr.slotId) {
+        return `{{bfComment "client:${expr.slotId}"}}`
+      }
+      return ''
     }
 
     const goExpr = this.convertExpressionToGo(expr.expr)
@@ -581,36 +585,16 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   /**
-   * Render a client-only expression as a template element.
-   * Used when @client directive is applied to an unsupported expression.
-   */
-  private renderClientOnlyExpression(expr: IRExpression): string {
-    // Escape the expression for HTML attribute
-    const escapedExpr = this.escapeForAttribute(expr.expr)
-    return `<template data-bf-client="${escapedExpr}"></template>`
-  }
-
-  /**
-   * Escape a string for use in an HTML attribute.
-   */
-  private escapeForAttribute(str: string): string {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-  }
-
-  /**
-   * Render a client-only conditional as a template element.
+   * Render a client-only conditional as comment markers.
    * Used when @client directive is applied to an unsupported conditional.
+   * The condition is evaluated on the client side via insert().
    */
   private renderClientOnlyConditional(cond: IRConditional): string {
-    const whenTrue = this.renderNode(cond.whenTrue)
-    const escapedCondition = this.escapeForAttribute(cond.condition)
-    // Render the whenTrue content inside a template element
-    // The client JS will evaluate the condition and show/hide accordingly
-    return `<template data-bf-client="${escapedCondition}">${whenTrue}</template>`
+    if (cond.slotId) {
+      // Render comment markers (empty initially, client will populate)
+      return `{{bfComment "cond-start:${cond.slotId}"}}{{bfComment "cond-end:${cond.slotId}"}}`
+    }
+    return ''
   }
 
   /**
