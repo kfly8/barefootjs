@@ -252,11 +252,15 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
     ctx.jsxReturn = node
   }
 
-  // Skip recursion into function bodies (arrow functions, function expressions)
+  // Skip recursion into function bodies (arrow functions, function expressions, function declarations)
   // to avoid collecting inner local variables
   ts.forEachChild(node, (child) => {
-    // Don't recurse into arrow functions or function expressions
-    if (ts.isArrowFunction(child) || ts.isFunctionExpression(child)) {
+    // Don't recurse into function bodies - their variables are function-scoped
+    if (
+      ts.isArrowFunction(child) ||
+      ts.isFunctionExpression(child) ||
+      ts.isFunctionDeclaration(child)
+    ) {
       return
     }
     visitComponentBody(child, ctx)

@@ -77,6 +77,32 @@ describe('Compiler', () => {
       expect(ctx.memos[0].name).toBe('doubled')
       expect(ctx.memos[0].computation).toBe('() => count() * 2')
     })
+
+    test('does not collect variables from nested function declarations', () => {
+      const source = `
+        'use client'
+
+        export function FilterList() {
+          const topLevelConst = 'visible'
+
+          function getInitialFilter() {
+            const hash = window.location.hash
+            return hash ? hash.slice(1) : 'all'
+          }
+
+          return <div>{topLevelConst}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'FilterList.tsx')
+
+      // Should collect top-level const
+      expect(ctx.localConstants.some((c) => c.name === 'topLevelConst')).toBe(
+        true
+      )
+      // Should NOT collect variables from nested function declaration
+      expect(ctx.localConstants.some((c) => c.name === 'hash')).toBe(false)
+    })
   })
 
   describe('jsxToIR', () => {
