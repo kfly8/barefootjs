@@ -86,6 +86,17 @@ export function findScope(
  * Elements inside nested child scopes (which have their own data-bf-scope) return false.
  */
 function belongsToScope(element: Element, scope: Element): boolean {
+  // If the element has its own scope, it belongs to that scope (child component slot)
+  // Check if it's the element we're looking for by verifying it's within the parent scope
+  const elementScope = (element as HTMLElement).dataset?.bfScope
+  if (elementScope) {
+    // Element has its own scope - check if it's directly within the parent scope
+    // by comparing the scope element's ancestor chain
+    const parentScope = element.parentElement?.closest('[data-bf-scope]')
+    return parentScope === scope || scope.contains(element)
+  }
+
+  // Element doesn't have its own scope - use original logic
   const nearestScope = element.closest('[data-bf-scope]')
   return nearestScope === scope
 }
