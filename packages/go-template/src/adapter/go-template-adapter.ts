@@ -793,7 +793,7 @@ export class GoTemplateAdapter extends BaseAdapter {
     const support = isSupported(parsed)
 
     if (!support.supported) {
-      // Log error and return placeholder
+      // Log error and return Go template comment (safe for parsing)
       this.errors.push({
         code: 'BF101',
         severity: 'error',
@@ -805,7 +805,8 @@ export class GoTemplateAdapter extends BaseAdapter {
             : 'Options:\n1. Use @client directive for client-side evaluation\n2. Pre-compute the value in Go code',
         },
       })
-      return `[UNSUPPORTED: ${trimmed}]`
+      // Return empty string - Go template comments must be separate actions
+      return `""`
     }
 
     return this.renderParsedExpr(parsed)
@@ -898,7 +899,8 @@ export class GoTemplateAdapter extends BaseAdapter {
             : 'Expression contains unsupported syntax',
         },
       })
-      return `[UNSUPPORTED: ${trimmed}]`
+      // Return false - Go template comments must be separate actions
+      return `false`
     }
 
     return this.renderConditionExpr(parsed)
