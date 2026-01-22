@@ -291,14 +291,38 @@ function transformChildren(
   ctx: TransformContext
 ): IRNode[] {
   const result: IRNode[] = []
+  let nextIsClientOnly = false
 
-  for (const child of children) {
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+
+    // Check for @client directive comment: {/* @client */}
+    if (ts.isJsxExpression(child) && !child.expression) {
+      // Empty JSX expression - check for @client comment
+      const commentText = child.getText(ctx.sourceFile)
+      if (commentText.includes('@client')) {
+        nextIsClientOnly = true
+        continue
+      }
+    }
+
     const transformed = transformNode(child, ctx)
     if (transformed) {
       // Skip empty text nodes
       if (transformed.type === 'text' && transformed.value.trim() === '') {
         continue
       }
+
+      // Apply @client flag if the previous sibling was @client comment
+      if (nextIsClientOnly) {
+        if (transformed.type === 'expression') {
+          transformed.clientOnly = true
+        } else if (transformed.type === 'conditional') {
+          transformed.clientOnly = true
+        }
+        nextIsClientOnly = false
+      }
+
       result.push(transformed)
     }
   }

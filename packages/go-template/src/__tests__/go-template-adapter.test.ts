@@ -482,4 +482,198 @@ describe('GoTemplateAdapter', () => {
       expect(types).toContain('Label string')
     })
   })
+
+  describe('expression conversion improvements', () => {
+    test('converts string literal comparison', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: "filter() === 'all'",
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'All', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toBe('{{if eq .Filter "all"}}All{{end}}')
+    })
+
+    test('converts numeric comparison', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'count() > 0',
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'Has items', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toBe('{{if gt .Count 0}}Has items{{end}}')
+    })
+
+    test('converts .length to len', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().length',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe('{{len .Items}}')
+    })
+
+    test('converts .length in condition', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'todos().length > 0',
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'Has todos', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toBe('{{if gt (len .Todos) 0}}Has todos{{end}}')
+    })
+
+    test('converts logical AND', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'isLoggedIn() && isAdmin()',
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'Admin', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toBe('{{if and .IsLoggedIn .IsAdmin}}Admin{{end}}')
+    })
+
+    test('converts negation', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: '!isLoading()',
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'Loaded', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toBe('{{if not .IsLoading}}Loaded{{end}}')
+    })
+  })
+
+  describe('error handling', () => {
+    test('reports error for unsupported filter() expression', () => {
+      const ir: ComponentIR = {
+        version: '0.1',
+        metadata: {
+          componentName: 'Test',
+          hasDefaultExport: false,
+          typeDefinitions: [],
+          propsType: null,
+          propsParams: [],
+          restPropsName: null,
+          signals: [],
+          memos: [],
+          effects: [],
+          imports: [],
+          localFunctions: [],
+          localConstants: [],
+        },
+        root: {
+          type: 'element',
+          tag: 'div',
+          attrs: [],
+          events: [],
+          ref: null,
+          children: [
+            {
+              type: 'conditional',
+              condition: 'todos().filter(t => t.done).length > 0',
+              conditionType: null,
+              reactive: false,
+              whenTrue: { type: 'text', value: 'Has done', loc },
+              whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+              slotId: null,
+              loc,
+            },
+          ],
+          slotId: null,
+          needsScope: false,
+          loc,
+        },
+        errors: [],
+      }
+
+      const result = adapter.generate(ir)
+
+      // Should have errors in the IR
+      expect(ir.errors.length).toBeGreaterThan(0)
+      expect(ir.errors[0].code).toBe('BF102')
+      expect(ir.errors[0].message).toContain('filter')
+    })
+  })
+
+  describe('@client directive', () => {
+    test('renders client-only expression as template element', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: "todos().every(t => t.done)",
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+        clientOnly: true,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toContain('<template data-bf-client=')
+      expect(result).toContain('todos().every(t =&gt; t.done)')
+    })
+
+    test('renders client-only conditional as template element', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'todos().every(t => t.done)',
+        conditionType: null,
+        reactive: false,
+        whenTrue: {
+          type: 'element',
+          tag: 'span',
+          attrs: [],
+          events: [],
+          ref: null,
+          children: [{ type: 'text', value: 'All done!', loc }],
+          slotId: null,
+          needsScope: false,
+          loc,
+        },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+        clientOnly: true,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toContain('<template data-bf-client=')
+      expect(result).toContain('<span>All done!</span>')
+    })
+  })
 })

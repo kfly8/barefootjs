@@ -106,6 +106,8 @@ export interface IRExpression {
   reactive: boolean
   slotId: string | null
   loc: SourceLocation
+  /** When true, expression should be evaluated on client side only */
+  clientOnly?: boolean
 }
 
 export interface IRConditional {
@@ -117,6 +119,8 @@ export interface IRConditional {
   whenFalse: IRNode
   slotId: string | null
   loc: SourceLocation
+  /** When true, condition should be evaluated on client side only */
+  clientOnly?: boolean
 }
 
 /**
