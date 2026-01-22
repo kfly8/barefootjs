@@ -479,9 +479,12 @@ export function insert(
 ): void {
   if (!scope) return
 
-  // Check if this is a fragment conditional (uses comment markers)
+  // Check if either branch uses fragment conditional (comment markers)
+  // Both branches need to be checked because SSR may render either branch
   const sampleTrue = whenTrue.template()
-  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`)
+  const sampleFalse = whenFalse.template()
+  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`) ||
+                         sampleFalse.includes(`<!--bf-cond-start:${id}-->`)
 
   let prevCond: boolean | undefined
 
@@ -515,6 +518,11 @@ export function insert(
             updateElementConditional(scope, id, html)
           }
         }
+      } else if (isFragmentCond) {
+        // For @client fragment conditionals, SSR renders only comment markers.
+        // We need to insert the actual content on first run.
+        const html = branch.template()
+        updateFragmentConditional(scope, id, html)
       }
 
       // Bind events to the (possibly updated) SSR element

@@ -204,7 +204,7 @@ function TodoApp({ initialTodos = [] }: Props) {
       </section>
       <footer className="footer">
         <span className="todo-count">
-          <strong>{todos().filter(t => !t.done).length}</strong> {todos().filter(t => !t.done).length === 1 ? 'item' : 'items'} left
+          <strong>{/* @client */ todos().filter(t => !t.done).length}</strong> {/* @client */ todos().filter(t => !t.done).length === 1 ? 'item' : 'items'} left
         </span>
         <ul className="filters">
           <li>
@@ -217,7 +217,7 @@ function TodoApp({ initialTodos = [] }: Props) {
             <a href="#/completed" className={filter() === 'completed' ? 'selected' : ''} onClick={() => handleFilterChange('completed')}>Completed</a>
           </li>
         </ul>
-        {todos().filter(t => t.done).length > 0 && (
+        {/* @client */ todos().filter(t => t.done).length > 0 && (
           <button className="clear-completed" onClick={handleClearCompleted}>
             Clear completed
           </button>
