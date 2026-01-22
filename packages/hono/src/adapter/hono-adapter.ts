@@ -510,6 +510,10 @@ export class HonoAdapter implements TemplateAdapter {
     if (expr.expr === 'null' || expr.expr === 'undefined') {
       return 'null'
     }
+    // Handle @client directive - render comment marker for client-side evaluation
+    if (expr.clientOnly && expr.slotId) {
+      return `{bfComment("client:${expr.slotId}")}`
+    }
     // Wrap reactive expressions in a span with slot marker for client JS to find
     if (expr.reactive && expr.slotId) {
       return `<span data-bf="${expr.slotId}">{${expr.expr}}</span>`
@@ -538,6 +542,11 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   renderConditional(cond: IRConditional): string {
+    // Handle @client directive - render comment markers for client-side evaluation
+    if (cond.clientOnly && cond.slotId) {
+      return `{bfComment("cond-start:${cond.slotId}")}{bfComment("cond-end:${cond.slotId}")}`
+    }
+
     const whenTrue = this.renderNodeRaw(cond.whenTrue)
     let whenFalse = this.renderNodeRaw(cond.whenFalse)
 

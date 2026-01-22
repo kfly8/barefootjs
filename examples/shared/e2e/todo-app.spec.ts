@@ -43,9 +43,9 @@ export function todoAppTests(baseUrl: string) {
     })
 
     test('displays active count', async ({ page }) => {
-      // Check active counter shows 2 items left (Write tests is done)
-      await expect(page.locator('.todo-count')).toContainText('2')
-      await expect(page.locator('.todo-count')).toContainText('items left')
+      // Check active counter shows "2 items left" (plural, with proper spacing)
+      // This verifies: 1) count is correct, 2) plural form "items", 3) space between number and text
+      await expect(page.locator('.todo-count')).toContainText('2 items left')
     })
 
     test('adds a new todo', async ({ page }) => {
@@ -70,8 +70,8 @@ export function todoAppTests(baseUrl: string) {
       // Wait for item to have completed class
       await expect(page.locator('.todo-list li').first()).toHaveClass(/completed/)
 
-      // Active count should decrease
-      await expect(page.locator('.todo-count')).toContainText('1')
+      // Active count should decrease and show singular form "1 item left" (with proper spacing)
+      await expect(page.locator('.todo-count')).toContainText('1 item left')
     })
 
     test('toggles todo back to not done', async ({ page }) => {

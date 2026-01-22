@@ -188,7 +188,7 @@ function TodoApp({ initialTodos = [] }: Props) {
       </section>
       <footer className="footer">
         <span className="todo-count">
-          <strong>{/* @client */ todos().filter(t => !t.done).length}</strong> {/* @client */ todos().filter(t => !t.done).length === 1 ? 'item' : 'items'} left
+          <strong>{/* @client */ todos().filter(t => !t.done).length}</strong>{' '}{/* @client */ todos().filter(t => !t.done).length === 1 ? 'item' : 'items'} left
         </span>
         <ul className="filters">
           <li>

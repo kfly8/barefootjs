@@ -648,11 +648,11 @@ export function initChild(
 // --- updateClientMarker ---
 
 /**
- * Update text content after a client marker comment.
+ * Update text content for a client marker.
  * Used for @client directive expressions that are evaluated only on the client side.
  *
- * The server renders: <!--bf-client:slot_X-->
- * This function finds the marker and inserts/updates a text node after it.
+ * Expects comment marker format: <!--bf-client:slot_X-->
+ * Both GoTemplateAdapter and HonoAdapter output this format for @client directives.
  *
  * A zero-width space (\u200B) is used as a prefix to mark text nodes managed by @client.
  * This allows distinguishing managed text nodes from other content.
