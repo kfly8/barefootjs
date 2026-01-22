@@ -96,6 +96,61 @@ describe('GoTemplateAdapter', () => {
       expect(result).toBe('<div class="{{.ClassName}}"></div>')
     })
 
+    test('renders simple ternary in attribute', () => {
+      const element: IRElement = {
+        type: 'element',
+        tag: 'div',
+        attrs: [
+          {
+            name: 'class',
+            value: "isActive ? 'active' : ''",
+            dynamic: true,
+            isLiteral: false,
+            loc,
+          },
+        ],
+        events: [],
+        ref: null,
+        children: [],
+        slotId: null,
+        needsScope: false,
+        loc,
+      }
+
+      const result = adapter.renderElement(element)
+      expect(result).toBe('<div class="{{if .IsActive}}active{{else}}{{end}}"></div>')
+    })
+
+    test('renders nested ternary in class attribute', () => {
+      // Bug fix: PR #222 - nested ternary was generating broken Go template
+      // Input: todo.done ? (todo.editing ? 'completed editing' : 'completed') : (todo.editing ? 'editing' : '')
+      const element: IRElement = {
+        type: 'element',
+        tag: 'li',
+        attrs: [
+          {
+            name: 'class',
+            value:
+              "todo.done ? (todo.editing ? 'completed editing' : 'completed') : (todo.editing ? 'editing' : '')",
+            dynamic: true,
+            isLiteral: false,
+            loc,
+          },
+        ],
+        events: [],
+        ref: null,
+        children: [],
+        slotId: null,
+        needsScope: false,
+        loc,
+      }
+
+      const result = adapter.renderElement(element)
+      expect(result).toBe(
+        '<li class="{{if .Todo.Done}}{{if .Todo.Editing}}completed editing{{else}}completed{{end}}{{else}}{{if .Todo.Editing}}editing{{else}}{{end}}{{end}}"></li>'
+      )
+    })
+
     test('renders element with scope marker', () => {
       const element: IRElement = {
         type: 'element',

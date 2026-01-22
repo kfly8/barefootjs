@@ -723,9 +723,11 @@ export class GoTemplateAdapter extends BaseAdapter {
 
       case 'conditional': {
         const test = this.renderParsedExpr(expr.test)
-        const consequent = this.renderParsedExpr(expr.consequent)
-        const alternate = this.renderParsedExpr(expr.alternate)
-        return `if ${test}}}${consequent}{{else}}${alternate}{{`
+        // Nested conditionals already return complete {{if}}...{{end}} blocks
+        // Literals return bare text (used within attributes)
+        const consequent = this.renderConditionalBranch(expr.consequent)
+        const alternate = this.renderConditionalBranch(expr.alternate)
+        return `{{if ${test}}}${consequent}{{else}}${alternate}{{end}}`
       }
 
       case 'template-literal': {
@@ -752,6 +754,27 @@ export class GoTemplateAdapter extends BaseAdapter {
    */
   private needsParens(expr: ParsedExpr): boolean {
     return expr.kind === 'logical' || expr.kind === 'unary' || expr.kind === 'conditional'
+  }
+
+  /**
+   * Render a branch of a conditional expression.
+   * String literals render as bare text (no quotes).
+   * Nested conditionals render as complete {{if}}...{{end}} blocks.
+   */
+  private renderConditionalBranch(expr: ParsedExpr): string {
+    if (expr.kind === 'literal' && expr.literalType === 'string') {
+      // String literals return as bare text
+      return String(expr.value)
+    }
+    if (expr.kind === 'conditional') {
+      // Nested ternary renders as complete Go template block
+      const test = this.renderParsedExpr(expr.test)
+      const consequent = this.renderConditionalBranch(expr.consequent)
+      const alternate = this.renderConditionalBranch(expr.alternate)
+      return `{{if ${test}}}${consequent}{{else}}${alternate}{{end}}`
+    }
+    // Other expressions render normally with {{...}} wrapper
+    return `{{${this.renderParsedExpr(expr)}}}`
   }
 
   /**
@@ -1108,12 +1131,12 @@ export class GoTemplateAdapter extends BaseAdapter {
           const goCond = this.convertConditionToGo(value)
           parts.push(`{{if ${goCond}}}${attrName}{{end}}`)
         } else {
-          // Check for ternary operator: cond ? 'a' : 'b'
-          const ternaryMatch = value.match(/^(.+?)\s*\?\s*['"](.+?)['"]\s*:\s*['"](.+?)['"]$/)
-          if (ternaryMatch) {
-            const [, condition, trueVal, falseVal] = ternaryMatch
-            const goCond = this.convertConditionToGo(condition)
-            parts.push(`${attrName}="{{if ${goCond}}}${trueVal}{{else}}${falseVal}{{end}}"`)
+          // Check for ternary/conditional expressions using the parser
+          const parsed = parseExpression(value.trim())
+          if (parsed.kind === 'conditional') {
+            // Conditional expressions return complete Go template syntax
+            const goValue = this.renderParsedExpr(parsed)
+            parts.push(`${attrName}="${goValue}"`)
           } else {
             const goValue = this.convertExpressionToGo(value)
             parts.push(`${attrName}="{{${goValue}}}"`)
