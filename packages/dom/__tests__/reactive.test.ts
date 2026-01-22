@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { createSignal, createMemo, createEffect, onCleanup } from '../src/reactive'
+import { createSignal, createMemo, createEffect, onCleanup, onMount } from '../src/reactive'
 
 describe('createSignal', () => {
   test('returns initial value', () => {
@@ -350,5 +350,47 @@ describe('createEffect', () => {
 
     setLastName('Smith')
     expect(results).toEqual(['John Doe', 'Jane Doe', 'Jane Smith'])
+  })
+})
+
+describe('onMount', () => {
+  test('runs once on mount', () => {
+    let runCount = 0
+    onMount(() => {
+      runCount++
+    })
+    expect(runCount).toBe(1)
+  })
+
+  test('does not re-run when signals change', () => {
+    let runCount = 0
+    const [count, setCount] = createSignal(0)
+
+    onMount(() => {
+      runCount++
+      // Reading signal inside onMount should NOT create a dependency
+      count()
+    })
+
+    expect(runCount).toBe(1)
+    setCount(1)
+    expect(runCount).toBe(1) // should still be 1, not re-run
+    setCount(2)
+    expect(runCount).toBe(1)
+  })
+
+  test('onCleanup can be registered inside onMount', () => {
+    const events: string[] = []
+
+    onMount(() => {
+      events.push('mount')
+      onCleanup(() => {
+        events.push('cleanup')
+      })
+    })
+
+    expect(events).toEqual(['mount'])
+    // onCleanup is registered for when the effect is cleaned up
+    // In a real component lifecycle, this would be called on unmount
   })
 })

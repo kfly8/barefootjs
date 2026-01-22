@@ -1127,7 +1127,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   const name = ctx.componentName
 
   // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild } from '@barefootjs/dom'`)
+  lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild } from '@barefootjs/dom'`)
   lines.push('')
 
   // Init function

@@ -28,6 +28,7 @@ type EffectContext = {
 
 let currentEffect: EffectContext | null = null
 let effectDepth = 0
+let isTracking = true
 const MAX_EFFECT_RUNS = 100
 
 // --- createSignal ---
@@ -49,7 +50,7 @@ export function createSignal<T>(initialValue: T): Signal<T> {
   const subscribers = new Set<EffectContext>()
 
   const get = () => {
-    if (currentEffect) {
+    if (currentEffect && isTracking) {
       subscribers.add(currentEffect)
       currentEffect.dependencies.add(subscribers)
     }
@@ -157,6 +158,34 @@ export function onCleanup(fn: CleanupFn): void {
       fn()
     }
   }
+}
+
+// --- onMount ---
+
+/**
+ * Run a function once when the component mounts
+ *
+ * Thin wrapper around createEffect for one-time mount code.
+ * The function runs immediately and does not track any dependencies.
+ *
+ * @param fn - Function to run on mount
+ *
+ * @example
+ * onMount(() => {
+ *   console.log('Component mounted!')
+ *   onCleanup(() => console.log('Component unmounted!'))
+ * })
+ */
+export function onMount(fn: () => void): void {
+  createEffect(() => {
+    const prevTracking = isTracking
+    isTracking = false
+    try {
+      fn()
+    } finally {
+      isTracking = prevTracking
+    }
+  })
 }
 
 // --- createMemo ---
