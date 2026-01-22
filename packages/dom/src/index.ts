@@ -3,6 +3,8 @@ export {
   createEffect,
   createMemo,
   onCleanup,
+  onMount,
+  untrack,
   type Signal,
   type Memo,
   type CleanupFn,
