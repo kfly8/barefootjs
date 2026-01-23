@@ -18,7 +18,6 @@ const components = [
   '../shared/components/Counter.tsx',
   '../shared/components/Toggle.tsx',
   '../shared/components/TodoItem.tsx',
-  '../shared/components/AddTodoForm.tsx',
   '../shared/components/TodoApp.tsx',
 ]
 
@@ -298,7 +297,6 @@ type Todo struct {
     /(type TodoAppProps struct \{[\s\S]*?)(^\})/m,
     `$1	TodoItems    []TodoItemProps  \`json:"-"\`         // For Go template (not in JSON)
 	DoneCount    int              \`json:"doneCount"\` // Pre-computed done count
-	AddTodoForm  AddTodoFormProps \`json:"addTodoForm"\`
 $2`
   )
 

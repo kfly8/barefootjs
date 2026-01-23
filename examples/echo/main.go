@@ -114,9 +114,9 @@ func indexHandler(c echo.Context) error {
     <h1>BarefootJS + Echo Example</h1>
     <p>This example demonstrates server-side rendering with Go Echo and BarefootJS.</p>
     <ul>
-        <li><a href="/counter">Counter Component</a></li>
-        <li><a href="/toggle">Toggle Component</a></li>
-        <li><a href="/todos">TodoApp Component</a></li>
+        <li><a href="/counter">Counter</a></li>
+        <li><a href="/toggle">Toggle</a></li>
+        <li><a href="/todos">Todo (SSR + API)</a></li>
     </ul>
 </body>
 </html>
@@ -160,6 +160,7 @@ func renderPageWithScripts(componentName string, props interface{}, childPropsSc
 	buf.WriteString(componentName)
 	buf.WriteString(` - BarefootJS + Echo</title>
     <link rel="stylesheet" href="/shared/styles/components.css">
+    <link rel="stylesheet" href="/shared/styles/todo-app.css">
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
     </style>
@@ -292,12 +293,51 @@ func todosHandler(c echo.Context) error {
 	props.Todos = currentTodos  // For client hydration (JSON)
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
-	props.AddTodoForm = AddTodoFormProps{
-		ScopeID: props.ScopeID + "_slot_5", // parent_slotId format for client hydration
-		NewText: "",                        // signal initial value
+
+	return c.HTML(http.StatusOK, renderTodoAppPage(props))
+}
+
+// renderTodoAppPage renders TodoApp without the component heading (follows TodoMVC styling)
+func renderTodoAppPage(props TodoAppProps) string {
+	t := loadTemplates()
+
+	scopeID := props.ScopeID
+	propsJSON := "{}"
+	if jsonBytes, err := json.Marshal(props); err == nil {
+		propsJSON = string(jsonBytes)
 	}
 
-	return c.HTML(http.StatusOK, renderPageWithScripts("TodoApp", props, "", []string{"AddTodoForm", "TodoItem"}))
+	var buf strings.Builder
+
+	buf.WriteString(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TodoMVC - BarefootJS</title>
+    <link rel="stylesheet" href="/shared/styles/components.css">
+    <link rel="stylesheet" href="/shared/styles/todo-app.css">
+</head>
+<body>
+    <div id="app">`)
+
+	t.ExecuteTemplate(&buf, "TodoApp", props)
+
+	if scopeID != "" {
+		buf.WriteString(`<script type="application/json" data-bf-props="`)
+		buf.WriteString(scopeID)
+		buf.WriteString(`">`)
+		buf.WriteString(propsJSON)
+		buf.WriteString(`</script>`)
+	}
+
+	buf.WriteString(`</div>
+    <p><a href="/">← Back</a></p>
+    <script type="module" src="/static/client/TodoItem.client.js"></script>
+    <script type="module" src="/static/client/TodoApp.client.js"></script>
+</body>
+</html>`)
+
+	return buf.String()
 }
 
 // Todo API handlers

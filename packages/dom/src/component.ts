@@ -81,7 +81,10 @@ export function createComponent(
     initFn(0, element, props)
   }
 
-  // 6. Store props and register update function for element reuse in reconcileList
+  // 6. Mark element as initialized
+  element.setAttribute('data-bf-init', 'true')
+
+  // 7. Store props and register update function for element reuse in reconcileList
   propsMap.set(element, props)
   registerPropsUpdate(element, name, props)
 

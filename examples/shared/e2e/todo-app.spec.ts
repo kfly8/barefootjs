@@ -2,6 +2,7 @@
  * Shared TodoApp Component E2E Tests
  *
  * Exports test functions that can be imported by adapter examples.
+ * Tests follow TodoMVC HTML structure conventions.
  */
 
 import { test, expect } from '@playwright/test'
@@ -14,105 +15,172 @@ import { test, expect } from '@playwright/test'
 export function todoAppTests(baseUrl: string) {
   // Run TodoApp tests serially to avoid server state conflicts
   test.describe.serial('TodoApp Component', () => {
+    // Increase timeout for TodoApp tests (hydration can take time)
+    test.setTimeout(30000)
+
     test.beforeEach(async ({ page, request }) => {
       // Reset server state before each test
       await request.post(`${baseUrl}/api/todos/reset`)
       await page.goto(`${baseUrl}/todos`)
-      // Wait for todos to be loaded
-      await page.waitForSelector('li')
+      // Wait for todoapp to be loaded
+      await page.waitForSelector('.todoapp')
+      await page.waitForSelector('.todo-list li', { timeout: 10000 })
+      // Wait for TodoItem components to be fully hydrated with event handlers bound
+      // SSR renders as data-bf-scope="TodoApp_xxx_slot_N", hydrated renders as data-bf-scope="TodoItem_xxx"
+      // data-bf-init indicates the component's init function has run and events are bound
+      await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
     })
 
     test('displays initial todos', async ({ page }) => {
-      // Check page title (use #app h1 to avoid conflict with page header)
-      await expect(page.locator('#app h1')).toContainText('BarefootJS Todo')
+      // Check page title
+      await expect(page.locator('.todoapp h1')).toContainText('todos')
 
       // Check initial todos are displayed
-      await expect(page.locator('li')).toHaveCount(3)
-      await expect(page.locator('li').nth(0)).toContainText('Setup project')
-      await expect(page.locator('li').nth(1)).toContainText('Create components')
-      await expect(page.locator('li').nth(2)).toContainText('Write tests')
+      await expect(page.locator('.todo-list li')).toHaveCount(3)
+      await expect(page.locator('.todo-list li').nth(0)).toContainText('Setup project')
+      await expect(page.locator('.todo-list li').nth(1)).toContainText('Create components')
+      await expect(page.locator('.todo-list li').nth(2)).toContainText('Write tests')
     })
 
-    test('displays done count', async ({ page }) => {
-      // Check done counter shows 1/3 (Write tests is done)
-      await expect(page.locator('text=Done:')).toContainText('1')
-      await expect(page.locator('text=/ 3')).toBeVisible()
+    test('displays active count', async ({ page }) => {
+      // Check active counter shows "2 items left" (plural, with proper spacing)
+      // This verifies: 1) count is correct, 2) plural form "items", 3) space between number and text
+      await expect(page.locator('.todo-count')).toContainText('2 items left')
     })
 
     test('adds a new todo', async ({ page }) => {
-      const initialCount = await page.locator('li').count()
+      const initialCount = await page.locator('.todo-list li').count()
 
-      // Type new todo text
-      await page.fill('input[placeholder="Enter new todo..."]', 'New task from Playwright')
-
-      // Click Add button
-      await page.click('button:has-text("Add")')
+      // Type new todo text and press Enter
+      await page.fill('input.new-todo', 'New task from Playwright')
+      await page.press('input.new-todo', 'Enter')
 
       // Wait for new item to appear
-      await expect(page.locator('li')).toHaveCount(initialCount + 1)
+      await expect(page.locator('.todo-list li')).toHaveCount(initialCount + 1)
 
       // Verify new todo is in the list
-      await expect(page.locator('li').last()).toContainText('New task from Playwright')
+      await expect(page.locator('.todo-list li').last()).toContainText('New task from Playwright')
     })
 
-    test('toggles todo done state', async ({ page }) => {
-      // Find first "Done" button and click it
-      const doneButton = page.locator('button:has-text("Done")').first()
-      await doneButton.click()
+    test('toggles todo done state with checkbox', async ({ page }) => {
+      // Find first checkbox and click it (force: true because TodoMVC CSS hides checkbox with opacity: 0)
+      const checkbox = page.locator('.todo-list li').first().locator('input.toggle')
+      await checkbox.click({ force: true })
 
-      // Wait for button to change to "Undo"
-      await expect(page.locator('li').first().locator('button:has-text("Undo")')).toBeVisible()
+      // Wait for item to have completed class
+      await expect(page.locator('.todo-list li').first()).toHaveClass(/completed/)
 
-      // Done count should increase
-      await expect(page.locator('text=Done:')).toContainText('2')
+      // Active count should decrease and show singular form "1 item left" (with proper spacing)
+      await expect(page.locator('.todo-count')).toContainText('1 item left')
     })
 
     test('toggles todo back to not done', async ({ page }) => {
-      // Find "Undo" button (Write tests is already done) and click it
-      const undoButton = page.locator('button:has-text("Undo")').first()
-      await undoButton.click()
+      // Find "Write tests" which is already completed (third item) and click its checkbox
+      // force: true because TodoMVC CSS hides checkbox with opacity: 0
+      const completedCheckbox = page.locator('.todo-list li').nth(2).locator('input.toggle')
+      await completedCheckbox.click({ force: true })
 
-      // Wait for button to change back to "Done"
-      await expect(page.locator('li').nth(2).locator('button:has-text("Done")')).toBeVisible()
+      // Wait for item to not have completed class
+      await expect(page.locator('.todo-list li').nth(2)).not.toHaveClass(/completed/)
 
-      // Done count should decrease
-      await expect(page.locator('text=Done:')).toContainText('0')
+      // Active count should increase to 3
+      await expect(page.locator('.todo-count')).toContainText('3')
     })
 
-    test('enters edit mode on text click', async ({ page }) => {
-      // Click on todo text to enter edit mode
-      await page.click('text=Setup project')
+    test('enters edit mode on double-click', async ({ page }) => {
+      // Double-click on todo label to enter edit mode
+      await page.dblclick('.todo-list li:first-child label')
 
-      // Should show input field
-      await expect(page.locator('input[value="Setup project"]')).toBeVisible()
+      // Should show editing class and edit input
+      await expect(page.locator('.todo-list li').first()).toHaveClass(/editing/)
+      await expect(page.locator('.todo-list li:first-child input.edit')).toBeVisible()
     })
 
     test('edits todo text', async ({ page }) => {
-      // Click on todo text to enter edit mode
-      await page.click('text=Setup project')
+      // Double-click on todo label to enter edit mode
+      await page.dblclick('.todo-list li:first-child label')
 
       // Clear and type new text
-      const input = page.locator('input[value="Setup project"]')
+      const input = page.locator('.todo-list li:first-child input.edit')
       await input.fill('Updated project setup')
 
       // Press Enter to save
       await input.press('Enter')
 
       // Verify text is updated
-      await expect(page.locator('li').first()).toContainText('Updated project setup')
+      await expect(page.locator('.todo-list li').first()).toContainText('Updated project setup')
     })
 
     test('deletes a todo', async ({ page }) => {
-      const initialCount = await page.locator('li').count()
+      const initialCount = await page.locator('.todo-list li').count()
 
-      // Click first Delete button
-      await page.locator('button:has-text("Delete")').first().click()
+      // Hover over first item to show destroy button
+      await page.hover('.todo-list li:first-child')
+
+      // Click destroy button
+      await page.locator('.todo-list li:first-child button.destroy').click()
 
       // Wait for item to be removed
-      await expect(page.locator('li')).toHaveCount(initialCount - 1)
+      await expect(page.locator('.todo-list li')).toHaveCount(initialCount - 1)
 
       // First todo should no longer be "Setup project"
-      await expect(page.locator('li').first()).not.toContainText('Setup project')
+      await expect(page.locator('.todo-list li').first()).not.toContainText('Setup project')
+    })
+
+    test('filters todos - All', async ({ page }) => {
+      // Click All filter
+      await page.click('.filters a:has-text("All")')
+
+      // Should show all 3 todos
+      await expect(page.locator('.todo-list li')).toHaveCount(3)
+
+      // All filter should be selected
+      await expect(page.locator('.filters a:has-text("All")')).toHaveClass(/selected/)
+    })
+
+    test('filters todos - Active', async ({ page }) => {
+      // Click Active filter
+      await page.click('.filters a:has-text("Active")')
+
+      // Should show only 2 active todos (Setup project, Create components)
+      await expect(page.locator('.todo-list li')).toHaveCount(2)
+
+      // Active filter should be selected
+      await expect(page.locator('.filters a:has-text("Active")')).toHaveClass(/selected/)
+
+      // Should not show completed todo
+      await expect(page.locator('.todo-list li')).not.toContainText(['Write tests'])
+    })
+
+    test('filters todos - Completed', async ({ page }) => {
+      // Click Completed filter
+      await page.click('.filters a:has-text("Completed")')
+
+      // Should show only 1 completed todo (Write tests)
+      await expect(page.locator('.todo-list li')).toHaveCount(1)
+
+      // Completed filter should be selected
+      await expect(page.locator('.filters a:has-text("Completed")')).toHaveClass(/selected/)
+
+      // Should only show completed todo
+      await expect(page.locator('.todo-list li').first()).toContainText('Write tests')
+    })
+
+    test('clears completed todos', async ({ page }) => {
+      // Clear completed button should be visible (Write tests is done)
+      await expect(page.locator('.clear-completed')).toBeVisible()
+
+      // Click clear completed
+      await page.click('.clear-completed')
+
+      // Should now have 2 todos
+      await expect(page.locator('.todo-list li')).toHaveCount(2)
+
+      // "Write tests" should be removed
+      await expect(page.locator('.todo-list li')).not.toContainText(['Write tests'])
+
+      // Clear completed button should be hidden (no more completed todos)
+      await expect(page.locator('.clear-completed')).not.toBeVisible()
     })
   })
 }

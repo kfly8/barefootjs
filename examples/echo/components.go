@@ -151,33 +151,6 @@ func NewTodoItemProps(in TodoItemInput) TodoItemProps {
 	}
 }
 
-// AddTodoFormInput is the user-facing input type.
-type AddTodoFormInput struct {
-	ScopeID string // Optional: if empty, random ID is generated
-	OnAdd interface{}
-}
-
-// AddTodoFormProps is the props type for the AddTodoForm component.
-type AddTodoFormProps struct {
-	ScopeID string `json:"scopeID"`
-	OnAdd interface{} `json:"onAdd"`
-	NewText string `json:"newText"`
-}
-
-// NewAddTodoFormProps creates AddTodoFormProps from AddTodoFormInput.
-func NewAddTodoFormProps(in AddTodoFormInput) AddTodoFormProps {
-	scopeID := in.ScopeID
-	if scopeID == "" {
-		scopeID = "AddTodoForm_" + randomID(6)
-	}
-
-	return AddTodoFormProps{
-		ScopeID: scopeID,
-		OnAdd: in.OnAdd,
-		NewText: "",
-	}
-}
-
 // TodoAppInput is the user-facing input type.
 type TodoAppInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
@@ -189,9 +162,10 @@ type TodoAppProps struct {
 	ScopeID string `json:"scopeID"`
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
+	NewText string `json:"newText"`
+	Filter interface{} `json:"filter"`
 	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
 	DoneCount    int              `json:"doneCount"` // Pre-computed done count
-	AddTodoForm  AddTodoFormProps `json:"addTodoForm"`
 }
 
 // NewTodoAppProps creates TodoAppProps from TodoAppInput.
@@ -205,5 +179,7 @@ func NewTodoAppProps(in TodoAppInput) TodoAppProps {
 		ScopeID: scopeID,
 		InitialTodos: in.InitialTodos,
 		Todos: nil,
+		NewText: "",
+		Filter: nil,
 	}
 }

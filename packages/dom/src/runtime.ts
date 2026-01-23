@@ -81,6 +81,42 @@ export function findScope(
 // --- find ---
 
 /**
+ * Check if an element belongs directly to a scope (not in a nested scope).
+ * Returns true only if the element's nearest scope is exactly the given scope.
+ * Elements inside nested child scopes (which have their own data-bf-scope) return false.
+ */
+function belongsToScope(element: Element, scope: Element): boolean {
+  // If the element has its own scope, it belongs to that scope (child component slot)
+  // Check if it's the element we're looking for by verifying it's within the parent scope
+  const elementScope = (element as HTMLElement).dataset?.bfScope
+  if (elementScope) {
+    // Element has its own scope - check if it's directly within the parent scope
+    // by comparing the scope element's ancestor chain
+    const parentScope = element.parentElement?.closest('[data-bf-scope]')
+    return parentScope === scope || scope.contains(element)
+  }
+
+  // Element doesn't have its own scope - use original logic
+  const nearestScope = element.closest('[data-bf-scope]')
+  return nearestScope === scope
+}
+
+/**
+ * Find the first matching element in a NodeList that belongs to the given scope.
+ */
+function findFirstInScope(
+  matches: NodeListOf<Element>,
+  scope: Element
+): Element | null {
+  for (const element of matches) {
+    if (belongsToScope(element, scope)) {
+      return element
+    }
+  }
+  return null
+}
+
+/**
  * Find an element within a scope.
  * Checks if the scope element itself matches first, then searches descendants.
  * Excludes elements that are inside nested scopes.
@@ -99,37 +135,21 @@ export function find(
   if (scope.matches?.(selector)) return scope
 
   // Search descendants, excluding nested scopes
-  const found = scope.querySelector(selector)
-  if (found) {
-    // Check if the found element is inside a nested scope
-    const nearestScope = found.closest('[data-bf-scope]')
-    // Only return if the element's nearest scope is our scope (or is the element itself)
-    if (nearestScope === scope || nearestScope === found) {
-      return found
-    }
-    // Element is in a nested scope, don't return it
-  }
+  const found = findFirstInScope(scope.querySelectorAll(selector), scope)
+  if (found) return found
 
   // For fragment roots, elements may be in sibling scope elements
-  // Search siblings that share the EXACT SAME scope ID (not just prefix)
-  // This is for fragment roots where multiple elements share one scope ID
+  // Search siblings that share the EXACT SAME scope ID
   const scopeId = (scope as HTMLElement).dataset?.bfScope
   if (scopeId) {
     const parent = scope.parentElement
     if (parent) {
-      // Find sibling elements with the exact same scope ID (fragment roots)
-      const siblings = Array.from(parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`))
+      const siblings = parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`)
       for (const sibling of siblings) {
         if (sibling === scope) continue
         if (sibling.matches?.(selector)) return sibling
-        const siblingFound = sibling.querySelector(selector)
-        if (siblingFound) {
-          // Check if the found element is inside a nested scope within the sibling
-          const nearestScopeInSibling = siblingFound.closest('[data-bf-scope]')
-          if (nearestScopeInSibling === sibling || nearestScopeInSibling === siblingFound) {
-            return siblingFound
-          }
-        }
+        const siblingFound = findFirstInScope(sibling.querySelectorAll(selector), sibling)
+        if (siblingFound) return siblingFound
       }
     }
   }
@@ -470,9 +490,12 @@ export function insert(
 ): void {
   if (!scope) return
 
-  // Check if this is a fragment conditional (uses comment markers)
+  // Check if either branch uses fragment conditional (comment markers)
+  // Both branches need to be checked because SSR may render either branch
   const sampleTrue = whenTrue.template()
-  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`)
+  const sampleFalse = whenFalse.template()
+  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`) ||
+                         sampleFalse.includes(`<!--bf-cond-start:${id}-->`)
 
   let prevCond: boolean | undefined
 
@@ -506,6 +529,11 @@ export function insert(
             updateElementConditional(scope, id, html)
           }
         }
+      } else if (isFragmentCond) {
+        // For @client fragment conditionals, SSR renders only comment markers.
+        // We need to insert the actual content on first run.
+        const html = branch.template()
+        updateFragmentConditional(scope, id, html)
       }
 
       // Bind events to the (possibly updated) SSR element
@@ -631,11 +659,11 @@ export function initChild(
 // --- updateClientMarker ---
 
 /**
- * Update text content after a client marker comment.
+ * Update text content for a client marker.
  * Used for @client directive expressions that are evaluated only on the client side.
  *
- * The server renders: <!--bf-client:slot_X-->
- * This function finds the marker and inserts/updates a text node after it.
+ * Expects comment marker format: <!--bf-client:slot_X-->
+ * Both GoTemplateAdapter and HonoAdapter output this format for @client directives.
  *
  * A zero-width space (\u200B) is used as a prefix to mark text nodes managed by @client.
  * This allows distinguishing managed text nodes from other content.

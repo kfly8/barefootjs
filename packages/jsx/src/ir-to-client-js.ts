@@ -156,6 +156,33 @@ interface ClientOnlyConditional {
 // =============================================================================
 
 /**
+ * Map of JSX event names to DOM event property names.
+ * JSX uses React-style naming (e.g., onDoubleClick) which gets converted to
+ * lowercase (doubleclick), but some DOM events have different names (dblclick).
+ */
+const jsxToDomEventMap: Record<string, string> = {
+  doubleclick: 'dblclick',
+}
+
+/**
+ * Convert JSX-derived event name to DOM event property name.
+ * Example: 'doubleclick' → 'ondblclick'
+ */
+function toDomEventProp(eventName: string): string {
+  const mappedName = jsxToDomEventMap[eventName] ?? eventName
+  return `on${mappedName}`
+}
+
+/**
+ * Convert JSX attribute name to HTML attribute name.
+ * Handles React-style naming conventions (e.g., className → class).
+ */
+function toHtmlAttrName(jsxAttrName: string): string {
+  if (jsxAttrName === 'className') return 'class'
+  return jsxAttrName
+}
+
+/**
  * Wrap arrow function handler in block to prevent accidental return false.
  * Returning false from a DOM event handler prevents default behavior.
  *
@@ -164,7 +191,9 @@ interface ClientOnlyConditional {
  *   Output: (e) => { e.key === 'Enter' && handleAdd() }
  */
 function wrapHandlerInBlock(handler: string): string {
-  const trimmed = handler.trim()
+  // Strip TypeScript syntax (type assertions, type annotations) from the handler
+  const stripped = stripTypeScriptSyntax(handler)
+  const trimmed = stripped.trim()
 
   // Check if it's an arrow function with expression body
   if (trimmed.startsWith('(') && trimmed.includes('=>')) {
@@ -178,7 +207,7 @@ function wrapHandlerInBlock(handler: string): string {
     }
   }
 
-  return handler
+  return trimmed
 }
 
 // =============================================================================
@@ -640,9 +669,13 @@ function irToHtmlTemplate(node: IRNode): string {
       const attrParts = node.attrs
         .map((a) => {
           if (a.name === '...') return ''
-          if (a.value === null) return a.name
-          if (a.dynamic) return `${a.name}="\${${a.value}}"`
-          return `${a.name}="${a.value}"`
+          const attrName = toHtmlAttrName(a.name)
+          if (a.value === null) return attrName
+          if (a.dynamic && isBooleanAttr(attrName)) {
+            return `\${${a.value} ? '${attrName}' : ''}`
+          }
+          if (a.dynamic) return `${attrName}="\${${a.value}}"`
+          return `${attrName}="${a.value}"`
         })
         .filter(Boolean)
 
@@ -745,13 +778,17 @@ function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
     case 'element': {
       const attrParts = node.attrs
         .map((a) => {
-          if (a.name === '...') return '' // Skip spread for now
-          if (a.name === 'key') return '' // Key is handled separately
-          if (a.value === null) return a.name
+          if (a.name === '...') return ''
+          if (a.name === 'key') return ''
+          const attrName = toHtmlAttrName(a.name)
+          if (a.value === null) return attrName
           const valueStr = attrValueToString(a.value)
-          if (a.dynamic && valueStr) return `${a.name}="\${${transformExpr(valueStr)}}"`
-          if (valueStr) return `${a.name}="${valueStr}"`
-          return a.name
+          if (a.dynamic && valueStr && isBooleanAttr(attrName)) {
+            return `\${${transformExpr(valueStr)} ? '${attrName}' : ''}`
+          }
+          if (a.dynamic && valueStr) return `${attrName}="\${${transformExpr(valueStr)}}"`
+          if (valueStr) return `${attrName}="${valueStr}"`
+          return attrName
         })
         .filter(Boolean)
 
@@ -1410,17 +1447,16 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
       lines.push(`  createEffect(() => {`)
       lines.push(`    if (_${slotId}) {`)
       for (const attr of attrs) {
-        // Use DOM property for 'value' attribute (setAttribute doesn't update after user input)
-        // Add guard to only update when value differs - prevents interference with browser input handling
-        if (attr.attrName === 'value') {
+        const htmlAttrName = toHtmlAttrName(attr.attrName)
+        if (htmlAttrName === 'value') {
+          // Use DOM property for 'value' (setAttribute doesn't update after user input)
           lines.push(`      const __val = String(${attr.expression})`)
           lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
-        } else if (isBooleanAttr(attr.attrName)) {
+        } else if (isBooleanAttr(htmlAttrName)) {
           // Boolean attributes: set property directly (checked, disabled, etc.)
-          // true → sets property to true, false → sets to false (removes attribute effect)
-          lines.push(`      _${slotId}.${attr.attrName} = !!(${attr.expression})`)
+          lines.push(`      _${slotId}.${htmlAttrName} = !!(${attr.expression})`)
         } else {
-          lines.push(`      _${slotId}.setAttribute('${attr.attrName}', String(${attr.expression}))`)
+          lines.push(`      _${slotId}.setAttribute('${htmlAttrName}', String(${attr.expression}))`)
         }
       }
       lines.push(`    }`)
@@ -1451,7 +1487,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
         for (const event of slotEvents) {
           // Wrap handler in block to prevent accidental return false (which prevents default)
           const wrappedHandler = wrapHandlerInBlock(event.handler)
-          lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${wrappedHandler}`)
+          lines.push(`      if (_${slotId}) _${slotId}.${toDomEventProp(event.eventName)} = ${wrappedHandler}`)
         }
       }
     }
@@ -1587,7 +1623,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
       }
 
       for (const [eventName, events] of eventsByName) {
-        lines.push(`  if (_${elem.slotId}) _${elem.slotId}.on${eventName} = (e) => {`)
+        lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${toDomEventProp(eventName)} = (e) => {`)
         lines.push(`    const target = e.target`)
         for (const ev of events) {
           lines.push(`    const ${ev.childSlotId}El = target.closest('[data-bf="${ev.childSlotId}"]')`)
@@ -1641,7 +1677,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     if (conditionalSlotIds.has(elem.slotId)) continue
 
     for (const event of elem.events) {
-      const eventProp = `on${event.name}`
+      const eventProp = toDomEventProp(event.name)
       // Wrap handler in block to prevent accidental return false (which prevents default)
       const wrappedHandler = wrapHandlerInBlock(event.handler)
       if (elem.slotId === '__scope') {
