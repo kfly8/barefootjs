@@ -169,6 +169,12 @@ export interface IRLoop {
    * Example: todos.filter(t => !t.done).map(...) stores { param: 't', expr: '!t.done' }
    */
   filterPredicate?: { param: string; expr: string }
+
+  /**
+   * When true, loop should be evaluated on client side only.
+   * SSR adapters should skip rendering and output placeholder markers.
+   */
+  clientOnly?: boolean
 }
 
 export interface IRComponent {

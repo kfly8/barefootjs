@@ -595,6 +595,11 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   renderLoop(loop: IRLoop): string {
+    // clientOnly loops should not be rendered at SSR time
+    if (loop.clientOnly) {
+      return ''
+    }
+
     const indexParam = loop.index ? `, ${loop.index}` : ''
     const children = this.renderChildren(loop.children)
 

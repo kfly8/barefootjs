@@ -378,7 +378,7 @@ function transformExpression(
 
   // Array map: {items.map(item => <li>{item}</li>)}
   if (ts.isCallExpression(expr) && isMapCall(expr)) {
-    return transformMapCall(expr, ctx)
+    return transformMapCall(expr, ctx, isClientOnly)
   }
 
   // Regular expression
@@ -533,7 +533,8 @@ function extractFilterPredicate(
 
 function transformMapCall(
   node: ts.CallExpression,
-  ctx: TransformContext
+  ctx: TransformContext,
+  isClientOnly = false
 ): IRLoop {
   const propAccess = node.expression as ts.PropertyAccessExpression
 
@@ -639,6 +640,7 @@ function transformMapCall(
     isStaticArray,
     childComponent,
     filterPredicate,
+    clientOnly: isClientOnly || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }

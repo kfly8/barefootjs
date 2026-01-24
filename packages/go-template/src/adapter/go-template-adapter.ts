@@ -1208,6 +1208,11 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderLoop(loop: IRLoop): string {
+    // clientOnly loops should not be rendered at SSR time
+    if (loop.clientOnly) {
+      return ''
+    }
+
     let goArray = this.convertExpressionToGo(loop.array)
     const param = loop.param
     const index = loop.index || '_'
