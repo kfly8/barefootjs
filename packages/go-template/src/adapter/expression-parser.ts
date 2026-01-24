@@ -22,6 +22,9 @@ export type ParsedExpr =
   | { kind: 'conditional'; test: ParsedExpr; consequent: ParsedExpr; alternate: ParsedExpr }
   | { kind: 'logical'; op: '&&' | '||'; left: ParsedExpr; right: ParsedExpr }
   | { kind: 'template-literal'; parts: TemplatePart[] }
+  | { kind: 'arrow-fn'; param: string; body: ParsedExpr }
+  | { kind: 'higher-order'; method: 'filter' | 'every' | 'some'; object: ParsedExpr; param: string; predicate: ParsedExpr }
+  | { kind: 'filter-length'; object: ParsedExpr; param: string; predicate: ParsedExpr }
   | { kind: 'unsupported'; raw: string; reason: string }
 
 export type TemplatePart =
@@ -37,7 +40,8 @@ export type SupportLevel =
   | 'L2' // Member access and .length: user.name, items().length
   | 'L3' // Comparison operators: count() > 0, filter() === 'all'
   | 'L4' // Logical operators: a && b, !isLoading()
-  | 'L5_UNSUPPORTED' // Higher-order functions: items().filter(), items().every()
+  | 'L5' // Higher-order functions with simple predicates: items().filter(x => !x.done).length
+  | 'L5_UNSUPPORTED' // Higher-order functions with complex predicates
 
 export interface SupportResult {
   supported: boolean
@@ -122,6 +126,21 @@ function convertNode(node: ts.Node, raw: string): ParsedExpr {
   if (ts.isCallExpression(node)) {
     const callee = convertNode(node.expression, raw)
     const args = node.arguments.map(arg => convertNode(arg, raw))
+
+    // Detect higher-order methods: arr.filter(x => pred), arr.every(x => pred), arr.some(x => pred)
+    if (callee.kind === 'member' && ['filter', 'every', 'some'].includes(callee.property)) {
+      if (args.length === 1 && args[0].kind === 'arrow-fn') {
+        const arrowFn = args[0] as { kind: 'arrow-fn'; param: string; body: ParsedExpr }
+        return {
+          kind: 'higher-order',
+          method: callee.property as 'filter' | 'every' | 'some',
+          object: callee.object,
+          param: arrowFn.param,
+          predicate: arrowFn.body,
+        }
+      }
+    }
+
     return { kind: 'call', callee, args }
   }
 
@@ -129,6 +148,17 @@ function convertNode(node: ts.Node, raw: string): ParsedExpr {
   if (ts.isPropertyAccessExpression(node)) {
     const object = convertNode(node.expression, raw)
     const property = node.name.text
+
+    // Detect filter-length pattern: arr.filter(x => pred).length
+    if (property === 'length' && object.kind === 'higher-order' && object.method === 'filter') {
+      return {
+        kind: 'filter-length',
+        object: object.object,
+        param: object.param,
+        predicate: object.predicate,
+      }
+    }
+
     return { kind: 'member', object, property, computed: false }
   }
 
@@ -208,9 +238,25 @@ function convertNode(node: ts.Node, raw: string): ParsedExpr {
     return { kind: 'literal', value: node.text, literalType: 'string' }
   }
 
-  // Arrow function (unsupported in SSR)
+  // Arrow function: x => expr
   if (ts.isArrowFunction(node)) {
-    return { kind: 'unsupported', raw, reason: 'Arrow functions cannot be evaluated at SSR time' }
+    // Only support single parameter without destructuring
+    if (node.parameters.length !== 1) {
+      return { kind: 'unsupported', raw, reason: 'Only single parameter arrow functions are supported' }
+    }
+    const param = node.parameters[0]
+    if (!ts.isIdentifier(param.name)) {
+      return { kind: 'unsupported', raw, reason: 'Destructuring parameters are not supported' }
+    }
+    const paramName = param.name.text
+
+    // Only expression body is supported (not block body)
+    if (ts.isBlock(node.body)) {
+      return { kind: 'unsupported', raw, reason: 'Block body arrow functions are not supported' }
+    }
+
+    const body = convertNode(node.body, raw)
+    return { kind: 'arrow-fn', param: paramName, body }
   }
 
   // Function expression (unsupported)
@@ -283,6 +329,53 @@ function checkSupport(expr: ParsedExpr): SupportResult {
     case 'literal':
       return { supported: true, level: 'L1' }
 
+    case 'arrow-fn': {
+      // Arrow functions are only supported as arguments to higher-order methods
+      // They shouldn't appear standalone in supported contexts
+      return { supported: false, reason: 'Standalone arrow functions are not supported' }
+    }
+
+    case 'higher-order': {
+      // Check if predicate uses L1-L4 features
+      const predSupport = checkSupport(expr.predicate)
+      if (!predSupport.supported) {
+        return {
+          supported: false,
+          level: 'L5_UNSUPPORTED',
+          reason: `Higher-order method '${expr.method}()' with complex predicate. ${predSupport.reason || 'Simplify the predicate.'}`,
+        }
+      }
+      // Nested higher-order (e.g., arr.filter(...).filter(...)) is not supported
+      if (containsHigherOrder(expr.predicate)) {
+        return {
+          supported: false,
+          level: 'L5_UNSUPPORTED',
+          reason: `Nested higher-order methods are not supported. Use @client directive.`,
+        }
+      }
+      return { supported: true, level: 'L5' }
+    }
+
+    case 'filter-length': {
+      // Check if predicate uses L1-L4 features
+      const predSupport = checkSupport(expr.predicate)
+      if (!predSupport.supported) {
+        return {
+          supported: false,
+          level: 'L5_UNSUPPORTED',
+          reason: `filter().length with complex predicate. ${predSupport.reason || 'Simplify the predicate.'}`,
+        }
+      }
+      if (containsHigherOrder(expr.predicate)) {
+        return {
+          supported: false,
+          level: 'L5_UNSUPPORTED',
+          reason: `Nested higher-order methods are not supported. Use @client directive.`,
+        }
+      }
+      return { supported: true, level: 'L5' }
+    }
+
     case 'call': {
       // Check if callee is supported
       const calleeSupport = checkSupport(expr.callee)
@@ -291,6 +384,7 @@ function checkSupport(expr: ParsedExpr): SupportResult {
       }
 
       // Check for higher-order array methods: items().filter(...)
+      // This handles the case where the pattern wasn't recognized as higher-order
       if (expr.callee.kind === 'member') {
         const methodName = expr.callee.property
         if (UNSUPPORTED_METHODS.has(methodName)) {
@@ -399,6 +493,33 @@ function checkSupport(expr: ParsedExpr): SupportResult {
   }
 }
 
+/**
+ * Check if expression contains any higher-order method calls.
+ */
+function containsHigherOrder(expr: ParsedExpr): boolean {
+  switch (expr.kind) {
+    case 'higher-order':
+    case 'filter-length':
+      return true
+    case 'call':
+      return expr.args.some(containsHigherOrder) || containsHigherOrder(expr.callee)
+    case 'member':
+      return containsHigherOrder(expr.object)
+    case 'binary':
+      return containsHigherOrder(expr.left) || containsHigherOrder(expr.right)
+    case 'unary':
+      return containsHigherOrder(expr.argument)
+    case 'logical':
+      return containsHigherOrder(expr.left) || containsHigherOrder(expr.right)
+    case 'conditional':
+      return containsHigherOrder(expr.test) || containsHigherOrder(expr.consequent) || containsHigherOrder(expr.alternate)
+    case 'arrow-fn':
+      return containsHigherOrder(expr.body)
+    default:
+      return false
+  }
+}
+
 // =============================================================================
 // Debug Helper
 // =============================================================================
@@ -430,6 +551,12 @@ export function exprToString(expr: ParsedExpr): string {
       return '`' + expr.parts.map(p =>
         p.type === 'string' ? p.value : `\${${exprToString(p.expr)}}`
       ).join('') + '`'
+    case 'arrow-fn':
+      return `${expr.param} => ${exprToString(expr.body)}`
+    case 'higher-order':
+      return `${exprToString(expr.object)}.${expr.method}(${expr.param} => ${exprToString(expr.predicate)})`
+    case 'filter-length':
+      return `${exprToString(expr.object)}.filter(${expr.param} => ${exprToString(expr.predicate)}).length`
     case 'unsupported':
       return `[UNSUPPORTED: ${expr.raw}]`
   }

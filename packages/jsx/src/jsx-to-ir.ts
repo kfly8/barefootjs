@@ -492,12 +492,59 @@ function isMapCall(node: ts.CallExpression): boolean {
   return node.expression.name.text === 'map'
 }
 
+/**
+ * Check if a node is a filter() call.
+ * Returns the filter's array expression and callback if it's a filter call.
+ */
+function isFilterCall(node: ts.Expression): { array: ts.Expression; callback: ts.Expression } | null {
+  if (!ts.isCallExpression(node)) return null
+  if (!ts.isPropertyAccessExpression(node.expression)) return null
+  if (node.expression.name.text !== 'filter') return null
+  if (node.arguments.length !== 1) return null
+
+  return {
+    array: node.expression.expression,
+    callback: node.arguments[0],
+  }
+}
+
+/**
+ * Extract filter predicate info from an arrow function.
+ */
+function extractFilterPredicate(
+  callback: ts.Expression,
+  ctx: TransformContext
+): { param: string; expr: string } | null {
+  if (!ts.isArrowFunction(callback)) return null
+  if (callback.parameters.length < 1) return null
+
+  const firstParam = callback.parameters[0]
+  if (!ts.isIdentifier(firstParam.name)) return null
+
+  const param = firstParam.name.getText(ctx.sourceFile)
+  const expr = callback.body.getText(ctx.sourceFile)
+
+  return { param, expr }
+}
+
 function transformMapCall(
   node: ts.CallExpression,
   ctx: TransformContext
 ): IRLoop {
   const propAccess = node.expression as ts.PropertyAccessExpression
-  const array = propAccess.expression.getText(ctx.sourceFile)
+
+  // Check for filter().map() pattern
+  const filterInfo = isFilterCall(propAccess.expression)
+  let array: string
+  let filterPredicate: { param: string; expr: string } | undefined
+
+  if (filterInfo) {
+    // It's a filter().map() pattern - use the inner array
+    array = filterInfo.array.getText(ctx.sourceFile)
+    filterPredicate = extractFilterPredicate(filterInfo.callback, ctx) ?? undefined
+  } else {
+    array = propAccess.expression.getText(ctx.sourceFile)
+  }
 
   // Get callback function
   const callback = node.arguments[0]
@@ -587,6 +634,7 @@ function transformMapCall(
     slotId: null,
     isStaticArray,
     childComponent,
+    filterPredicate,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }

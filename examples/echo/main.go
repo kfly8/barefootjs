@@ -22,6 +22,23 @@ var bfFuncMap = template.FuncMap{
 	"bfComment": func(key string) template.HTML {
 		return template.HTML("<!--bf-" + key + "-->")
 	},
+	// Arithmetic functions for higher-order method rendering
+	"bf_add": func(a, b int) int { return a + b },
+	"bf_sub": func(a, b int) int { return a - b },
+	"bf_mul": func(a, b int) int { return a * b },
+	"bf_div": func(a, b int) int {
+		if b == 0 {
+			return 0
+		}
+		return a / b
+	},
+	"bf_mod": func(a, b int) int {
+		if b == 0 {
+			return 0
+		}
+		return a % b
+	},
+	"bf_neg": func(a int) int { return -a },
 }
 
 // loadTemplates loads all templates with BarefootJS functions registered

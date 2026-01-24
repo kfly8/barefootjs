@@ -162,6 +162,13 @@ export interface IRLoop {
    * This enables proper parent-to-child prop passing (including event handlers).
    */
   childComponent?: IRLoopChildComponent
+
+  /**
+   * Filter predicate for filter().map() pattern.
+   * When present, the loop renders with an if-condition wrapping each iteration.
+   * Example: todos.filter(t => !t.done).map(...) stores { param: 't', expr: '!t.done' }
+   */
+  filterPredicate?: { param: string; expr: string }
 }
 
 export interface IRComponent {

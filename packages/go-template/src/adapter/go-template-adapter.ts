@@ -37,6 +37,7 @@ export class GoTemplateAdapter extends BaseAdapter {
   private options: Required<GoTemplateAdapterOptions>
   private inLoop: boolean = false
   private errors: CompilerError[] = []
+  private higherOrderCounter: number = 0
 
   constructor(options: GoTemplateAdapterOptions = {}) {
     super()
@@ -48,6 +49,7 @@ export class GoTemplateAdapter extends BaseAdapter {
   generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
     this.errors = []
+    this.higherOrderCounter = 0
 
     const templateBody = this.renderNode(ir.root)
     const template = `{{define "${this.componentName}"}}\n${templateBody}\n{{end}}\n`
@@ -575,6 +577,19 @@ export class GoTemplateAdapter extends BaseAdapter {
       return ''
     }
 
+    // Check if this is a higher-order expression that renders to multiple Go template actions
+    const parsed = parseExpression(expr.expr.trim())
+    const isMultiAction = parsed.kind === 'filter-length' || parsed.kind === 'higher-order'
+
+    if (isMultiAction) {
+      // higher-order patterns render to multiple {{...}} actions, don't wrap again
+      const goExpr = this.renderParsedExpr(parsed)
+      if (expr.reactive && expr.slotId) {
+        return `<span ${this.renderSlotMarker(expr.slotId)}>${goExpr}</span>`
+      }
+      return goExpr
+    }
+
     const goExpr = this.convertExpressionToGo(expr.expr)
 
     if (expr.reactive && expr.slotId) {
@@ -727,10 +742,163 @@ export class GoTemplateAdapter extends BaseAdapter {
         return result
       }
 
+      case 'arrow-fn':
+        // Arrow functions shouldn't appear standalone in rendering
+        return `[ARROW-FN: ${expr.param} => ...]`
+
+      case 'filter-length': {
+        // {{$c0 := 0}}{{range .Todos}}{{if not .Done}}{{$c0 = bf_add $c0 1}}{{end}}{{end}}{{$c0}}
+        const counter = this.higherOrderCounter++
+        const varName = `$c${counter}`
+        const arrayExpr = this.renderParsedExpr(expr.object)
+        const predCond = this.renderPredicateCondition(expr.predicate, expr.param)
+        return `{{${varName} := 0}}{{range ${arrayExpr}}}{{if ${predCond}}}{{${varName} = bf_add ${varName} 1}}{{end}}{{end}}{{${varName}}}`
+      }
+
+      case 'higher-order': {
+        const counter = this.higherOrderCounter++
+        const arrayExpr = this.renderParsedExpr(expr.object)
+        const predCond = this.renderPredicateCondition(expr.predicate, expr.param)
+
+        if (expr.method === 'every') {
+          // {{$ok0 := true}}{{range .Todos}}{{if not (predicate)}}{{$ok0 = false}}{{end}}{{end}}{{$ok0}}
+          const varName = `$ok${counter}`
+          return `{{${varName} := true}}{{range ${arrayExpr}}}{{if not (${predCond})}}{{${varName} = false}}{{end}}{{end}}{{${varName}}}`
+        }
+
+        if (expr.method === 'some') {
+          // {{$f0 := false}}{{range .Todos}}{{if (predicate)}}{{$f0 = true}}{{end}}{{end}}{{$f0}}
+          const varName = `$f${counter}`
+          return `{{${varName} := false}}{{range ${arrayExpr}}}{{if ${predCond}}}{{${varName} = true}}{{end}}{{end}}{{${varName}}}`
+        }
+
+        // filter without .length - return the array expression with a comment
+        // This case shouldn't typically happen in templates (filter is usually followed by .length or .map)
+        return `[FILTER: ${arrayExpr}.filter(...)]`
+      }
+
       case 'unsupported':
         // This should not happen if isSupported was checked
         return `[UNSUPPORTED: ${expr.raw}]`
     }
+  }
+
+  /**
+   * Render a predicate expression for use in Go template {{if}} conditions.
+   * Substitutes the loop parameter (e.g., 't' in 't.done') with dot notation.
+   */
+  private renderPredicateCondition(pred: ParsedExpr, param: string): string {
+    return this.renderPredicateExpr(pred, param)
+  }
+
+  /**
+   * Recursively render a predicate expression, substituting param references.
+   */
+  private renderPredicateExpr(expr: ParsedExpr, param: string): string {
+    switch (expr.kind) {
+      case 'identifier':
+        // If identifier matches the param, it's a direct reference (shouldn't happen in normal predicates)
+        if (expr.name === param) {
+          return '.'
+        }
+        return `.${this.capitalizeFieldName(expr.name)}`
+
+      case 'literal':
+        if (expr.literalType === 'string') {
+          return `"${expr.value}"`
+        }
+        if (expr.literalType === 'null') {
+          return '""'
+        }
+        return String(expr.value)
+
+      case 'member': {
+        // t.done -> .Done
+        if (expr.object.kind === 'identifier' && expr.object.name === param) {
+          return `.${this.capitalizeFieldName(expr.property)}`
+        }
+        // Nested member access: t.user.name -> .User.Name
+        const obj = this.renderPredicateExpr(expr.object, param)
+        return `${obj}.${this.capitalizeFieldName(expr.property)}`
+      }
+
+      case 'call': {
+        // Handle calls like t.isDone() -> .IsDone
+        if (expr.callee.kind === 'member' && expr.callee.object.kind === 'identifier' && expr.callee.object.name === param) {
+          return `.${this.capitalizeFieldName(expr.callee.property)}`
+        }
+        // Signal calls: count() -> .Count
+        if (expr.callee.kind === 'identifier' && expr.args.length === 0) {
+          return `.${this.capitalizeFieldName(expr.callee.name)}`
+        }
+        const callee = this.renderPredicateExpr(expr.callee, param)
+        return callee
+      }
+
+      case 'unary': {
+        const arg = this.renderPredicateExpr(expr.argument, param)
+        if (expr.op === '!') {
+          return `not ${arg}`
+        }
+        if (expr.op === '-') {
+          return `bf_neg ${arg}`
+        }
+        return arg
+      }
+
+      case 'binary': {
+        const left = this.renderPredicateExpr(expr.left, param)
+        const right = this.renderPredicateExpr(expr.right, param)
+
+        switch (expr.op) {
+          case '===':
+          case '==':
+            return `eq ${left} ${right}`
+          case '!==':
+          case '!=':
+            return `ne ${left} ${right}`
+          case '>':
+            return `gt ${left} ${right}`
+          case '<':
+            return `lt ${left} ${right}`
+          case '>=':
+            return `ge ${left} ${right}`
+          case '<=':
+            return `le ${left} ${right}`
+          case '+':
+            return `bf_add ${left} ${right}`
+          case '-':
+            return `bf_sub ${left} ${right}`
+          case '*':
+            return `bf_mul ${left} ${right}`
+          case '/':
+            return `bf_div ${left} ${right}`
+          default:
+            return `${left} ${expr.op} ${right}`
+        }
+      }
+
+      case 'logical': {
+        const left = this.renderPredicateExpr(expr.left, param)
+        const right = this.renderPredicateExpr(expr.right, param)
+        const wrapLeft = this.needsParensInPredicate(expr.left) ? `(${left})` : left
+        const wrapRight = this.needsParensInPredicate(expr.right) ? `(${right})` : right
+        if (expr.op === '&&') {
+          return `and ${wrapLeft} ${wrapRight}`
+        }
+        return `or ${wrapLeft} ${wrapRight}`
+      }
+
+      default:
+        return `[UNSUPPORTED-PREDICATE]`
+    }
+  }
+
+  /**
+   * Check if expression needs parentheses in predicate context.
+   */
+  private needsParensInPredicate(expr: ParsedExpr): boolean {
+    return expr.kind === 'logical' || expr.kind === 'unary'
   }
 
   /**
@@ -1022,6 +1190,18 @@ export class GoTemplateAdapter extends BaseAdapter {
         // Template literals as conditions are unusual
         return this.renderParsedExpr(expr)
 
+      case 'arrow-fn':
+        // Arrow functions shouldn't appear in conditions
+        return '[ARROW-FN]'
+
+      case 'higher-order':
+        // Higher-order methods in conditions need special handling
+        return this.renderParsedExpr(expr)
+
+      case 'filter-length':
+        // filter().length in conditions need special handling
+        return this.renderParsedExpr(expr)
+
       case 'unsupported':
         return expr.raw
     }
@@ -1044,7 +1224,37 @@ export class GoTemplateAdapter extends BaseAdapter {
     const children = this.renderChildren(loop.children)
     this.inLoop = false
 
+    // Handle filter().map() pattern by adding if-condition
+    if (loop.filterPredicate) {
+      const filterCond = this.renderFilterCondition(loop.filterPredicate.expr, loop.filterPredicate.param, param)
+      return `{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}`
+    }
+
     return `{{range $${index}, $${param} := ${goArray}}}${children}{{end}}`
+  }
+
+  /**
+   * Render a filter condition expression to Go template syntax.
+   * Substitutes the filter param (e.g., 't' in '!t.done') with the loop variable (e.g., '$todo').
+   */
+  private renderFilterCondition(expr: string, filterParam: string, _loopVar: string): string {
+    const parsed = parseExpression(expr)
+    const support = isSupported(parsed)
+
+    if (!support.supported) {
+      this.errors.push({
+        code: 'BF103',
+        severity: 'error',
+        message: `Filter predicate not supported: ${expr}`,
+        loc: this.makeLoc(),
+        suggestion: {
+          message: support.reason || 'Use simpler predicate or @client directive',
+        },
+      })
+      return 'false'
+    }
+
+    return this.renderPredicateCondition(parsed, filterParam)
   }
 
   /**
