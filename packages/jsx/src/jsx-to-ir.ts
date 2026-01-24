@@ -518,6 +518,10 @@ function extractFilterPredicate(
   if (!ts.isArrowFunction(callback)) return null
   if (callback.parameters.length < 1) return null
 
+  // Block body arrow functions are not supported for SSR
+  // e.g., filter(t => { const f = filter(); ... })
+  if (ts.isBlock(callback.body)) return null
+
   const firstParam = callback.parameters[0]
   if (!ts.isIdentifier(firstParam.name)) return null
 
