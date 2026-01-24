@@ -11,40 +11,15 @@ import (
 	"strings"
 	"sync"
 
+	bf "github.com/barefootjs/runtime/bf"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-// bfFuncMap contains BarefootJS template functions
-var bfFuncMap = template.FuncMap{
-	// bfComment outputs an HTML comment with "bf-" prefix.
-	// Example: {{bfComment "cond-start:slot_2"}} outputs <!--bf-cond-start:slot_2-->
-	"bfComment": func(key string) template.HTML {
-		return template.HTML("<!--bf-" + key + "-->")
-	},
-	// Arithmetic functions for higher-order method rendering
-	"bf_add": func(a, b int) int { return a + b },
-	"bf_sub": func(a, b int) int { return a - b },
-	"bf_mul": func(a, b int) int { return a * b },
-	"bf_div": func(a, b int) int {
-		if b == 0 {
-			return 0
-		}
-		return a / b
-	},
-	"bf_mod": func(a, b int) int {
-		if b == 0 {
-			return 0
-		}
-		return a % b
-	},
-	"bf_neg": func(a int) int { return -a },
-}
-
 // loadTemplates loads all templates with BarefootJS functions registered
 func loadTemplates() *template.Template {
 	return template.Must(
-		template.New("").Funcs(bfFuncMap).ParseGlob("dist/templates/*.tmpl"),
+		template.New("").Funcs(bf.FuncMap()).ParseGlob("dist/templates/*.tmpl"),
 	)
 }
 
