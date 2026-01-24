@@ -185,7 +185,7 @@ function TodoApp({ initialTodos = [] }: Props) {
           </>
         )}
         <ul className="todo-list">
-          {todos().filter(t => {
+          {/* @client */ todos().filter(t => {
             const f = filter()
             if (f === 'active') return !t.done
             if (f === 'completed') return t.done
