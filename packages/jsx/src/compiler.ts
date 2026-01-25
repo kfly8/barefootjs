@@ -157,7 +157,7 @@ function compileMultipleComponentsSync(
       imports: importLines.join('\n'),
       types: typeLines.join('\n'),
       component: componentLines.join('\n'),
-      clientJs: generateClientJs(componentIR) || undefined,
+      clientJs: generateClientJs(componentIR, componentNames) || undefined,
     })
   }
 

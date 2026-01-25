@@ -214,7 +214,7 @@ function wrapHandlerInBlock(handler: string): string {
 // Main Entry Point
 // =============================================================================
 
-export function generateClientJs(ir: ComponentIR): string {
+export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
   const ctx = createContext(ir)
 
   // Collect all interactive/dynamic elements from IR
@@ -225,7 +225,7 @@ export function generateClientJs(ir: ComponentIR): string {
     return ''
   }
 
-  return generateInitFunction(ir, ctx)
+  return generateInitFunction(ir, ctx, siblingComponents)
 }
 
 function createContext(ir: ComponentIR): ClientJsContext {
@@ -1213,7 +1213,7 @@ function detectPropsWithPropertyAccess(
 // Init Function Generation
 // =============================================================================
 
-function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
+function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingComponents?: string[]): string {
   const lines: string[] = []
   const name = ctx.componentName
 
@@ -1221,6 +1221,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
 
   // Add child component imports for loops with createComponent
+  // Skip siblings (components in the same file)
+  const siblingSet = new Set(siblingComponents || [])
   const childComponentNames = new Set<string>()
   for (const loop of ctx.loopElements) {
     if (loop.childComponent) {
@@ -1228,7 +1230,9 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
     }
   }
   for (const childName of childComponentNames) {
-    lines.push(`import './__CHILD_COMPONENT_${childName}_FILENAME__'`)
+    if (!siblingSet.has(childName)) {
+      lines.push(`import './__CHILD_COMPONENT_${childName}_FILENAME__'`)
+    }
   }
 
   lines.push('')
