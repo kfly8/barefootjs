@@ -637,7 +637,7 @@ describe('GoTemplateAdapter', () => {
   })
 
   describe('higher-order methods SSR support', () => {
-    test('renders filter().length as range+if+counter', () => {
+    test('renders filter().length using bf_filter function', () => {
       const expr: IRExpression = {
         type: 'expression',
         expr: 'todos().filter(t => !t.done).length',
@@ -648,15 +648,11 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderExpression(expr)
-      // Should render as: {{$c0 := 0}}{{range .Todos}}{{if not .Done}}{{$c0 = bf_add $c0 1}}{{end}}{{end}}{{$c0}}
-      expect(result).toContain('{{$c0 := 0}}')
-      expect(result).toContain('{{range .Todos}}')
-      expect(result).toContain('{{if not .Done}}')
-      expect(result).toContain('{{$c0 = bf_add $c0 1}}')
-      expect(result).toContain('{{$c0}}')
+      // Should render as: {{len (bf_filter .Todos "Done" false)}}
+      expect(result).toBe('{{len (bf_filter .Todos "Done" false)}}')
     })
 
-    test('renders every() as range+if+flag', () => {
+    test('renders every() using bf_every function', () => {
       const expr: IRExpression = {
         type: 'expression',
         expr: 'todos().every(t => t.done)',
@@ -667,15 +663,11 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderExpression(expr)
-      // Should render as: {{$ok0 := true}}{{range .Todos}}{{if not (.Done)}}{{$ok0 = false}}{{end}}{{end}}{{$ok0}}
-      expect(result).toContain('{{$ok')
-      expect(result).toContain(':= true}}')
-      expect(result).toContain('{{range .Todos}}')
-      expect(result).toContain('{{if not')
-      expect(result).toContain('= false}}')
+      // Should render as: {{bf_every .Todos "Done"}}
+      expect(result).toBe('{{bf_every .Todos "Done"}}')
     })
 
-    test('renders some() as range+if+flag', () => {
+    test('renders some() using bf_some function', () => {
       const expr: IRExpression = {
         type: 'expression',
         expr: 'todos().some(t => t.important)',
@@ -686,12 +678,8 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderExpression(expr)
-      // Should render as: {{$f0 := false}}{{range .Todos}}{{if .Important}}{{$f0 = true}}{{end}}{{end}}{{$f0}}
-      expect(result).toContain('{{$f')
-      expect(result).toContain(':= false}}')
-      expect(result).toContain('{{range .Todos}}')
-      expect(result).toContain('.Important')
-      expect(result).toContain('= true}}')
+      // Should render as: {{bf_some .Todos "Important"}}
+      expect(result).toBe('{{bf_some .Todos "Important"}}')
     })
 
     test('renders filter().length in condition', () => {

@@ -188,12 +188,16 @@ describe('expression-parser', () => {
       }
     })
 
-    test('parses filter().length into filter-length kind', () => {
+    test('parses filter().length into member kind with higher-order object', () => {
       const result = parseExpression('todos().filter(t => !t.done).length')
-      expect(result.kind).toBe('filter-length')
-      if (result.kind === 'filter-length') {
-        expect(result.param).toBe('t')
-        expect(result.predicate.kind).toBe('unary')
+      expect(result.kind).toBe('member')
+      if (result.kind === 'member') {
+        expect(result.property).toBe('length')
+        expect(result.object.kind).toBe('higher-order')
+        if (result.object.kind === 'higher-order') {
+          expect(result.object.method).toBe('filter')
+          expect(result.object.param).toBe('t')
+        }
       }
     })
   })
@@ -276,11 +280,13 @@ describe('expression-parser', () => {
       expect(result.level).toBe('L5')
     })
 
-    test('L5: filter().length IS supported', () => {
+    test('filter().length IS supported (as member with higher-order object)', () => {
       const expr = parseExpression('items().filter(x => !x.done).length')
       const result = isSupported(expr)
       expect(result.supported).toBe(true)
-      expect(result.level).toBe('L5')
+      // Returns L2 because it's parsed as member access; the higher-order
+      // object is handled during rendering by go-template-adapter
+      expect(result.level).toBe('L2')
     })
 
     test('L5: map() is NOT supported', () => {
