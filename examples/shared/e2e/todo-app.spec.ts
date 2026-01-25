@@ -166,6 +166,44 @@ export function todoAppTests(baseUrl: string) {
       await expect(page.locator('.todo-list li').first()).toContainText('Write tests')
     })
 
+    test('filters on direct URL access - #/active', async ({ page, request }) => {
+      // Reset server state
+      await request.post(`${baseUrl}/api/todos/reset`)
+
+      // Navigate directly to /todos#/active
+      await page.goto(`${baseUrl}/todos#/active`)
+      await page.waitForSelector('.todoapp')
+      await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
+
+      // Should show only 2 active todos (not the completed one)
+      await expect(page.locator('.todo-list li')).toHaveCount(2)
+
+      // Active filter should be selected
+      await expect(page.locator('.filters a:has-text("Active")')).toHaveClass(/selected/)
+
+      // Should not show completed todo "Write tests"
+      await expect(page.locator('.todo-list li')).not.toContainText(['Write tests'])
+    })
+
+    test('filters on direct URL access - #/completed', async ({ page, request }) => {
+      // Reset server state
+      await request.post(`${baseUrl}/api/todos/reset`)
+
+      // Navigate directly to /todos#/completed
+      await page.goto(`${baseUrl}/todos#/completed`)
+      await page.waitForSelector('.todoapp')
+      await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
+
+      // Should show only 1 completed todo
+      await expect(page.locator('.todo-list li')).toHaveCount(1)
+
+      // Completed filter should be selected
+      await expect(page.locator('.filters a:has-text("Completed")')).toHaveClass(/selected/)
+
+      // Should only show completed todo
+      await expect(page.locator('.todo-list li').first()).toContainText('Write tests')
+    })
+
     test('clears completed todos', async ({ page }) => {
       // Clear completed button should be visible (Write tests is done)
       await expect(page.locator('.clear-completed')).toBeVisible()

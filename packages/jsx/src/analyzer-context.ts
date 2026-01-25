@@ -9,6 +9,7 @@ import type {
   SignalInfo,
   MemoInfo,
   EffectInfo,
+  OnMountInfo,
   ImportInfo,
   FunctionInfo,
   ConstantInfo,
@@ -32,6 +33,7 @@ export interface AnalyzerContext {
   signals: SignalInfo[]
   memos: MemoInfo[]
   effects: EffectInfo[]
+  onMounts: OnMountInfo[]
   imports: ImportInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
@@ -67,6 +69,7 @@ export function createAnalyzerContext(
     signals: [],
     memos: [],
     effects: [],
+    onMounts: [],
     imports: [],
     localFunctions: [],
     localConstants: [],

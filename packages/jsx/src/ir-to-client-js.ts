@@ -14,6 +14,7 @@ import type {
   SignalInfo,
   MemoInfo,
   EffectInfo,
+  OnMountInfo,
   FunctionInfo,
   ConstantInfo,
   ParamInfo,
@@ -50,6 +51,7 @@ interface ClientJsContext {
   signals: SignalInfo[]
   memos: MemoInfo[]
   effects: EffectInfo[]
+  onMounts: OnMountInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
   propsParams: ParamInfo[]
@@ -234,6 +236,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     signals: ir.metadata.signals,
     memos: ir.metadata.memos,
     effects: ir.metadata.effects,
+    onMounts: ir.metadata.onMounts,
     localFunctions: ir.metadata.localFunctions,
     localConstants: ir.metadata.localConstants,
     propsParams: ir.metadata.propsParams,
@@ -256,6 +259,7 @@ function needsClientJs(ctx: ClientJsContext): boolean {
     ctx.signals.length > 0 ||
     ctx.memos.length > 0 ||
     ctx.effects.length > 0 ||
+    ctx.onMounts.length > 0 ||
     ctx.interactiveElements.length > 0 ||
     ctx.dynamicElements.length > 0 ||
     ctx.conditionalElements.length > 0 ||
@@ -1017,6 +1021,11 @@ function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
     extractIdentifiers(effect.body, used)
   }
 
+  // From onMount bodies
+  for (const onMount of ctx.onMounts) {
+    extractIdentifiers(onMount.body, used)
+  }
+
   // From ref callbacks
   for (const elem of ctx.refElements) {
     extractIdentifiers(elem.callback, used)
@@ -1769,6 +1778,12 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   for (const effect of ctx.effects) {
     const jsBody = stripTypeScriptSyntax(effect.body)
     lines.push(`  createEffect(${jsBody})`)
+  }
+
+  // onMount calls
+  for (const onMount of ctx.onMounts) {
+    const jsBody = stripTypeScriptSyntax(onMount.body)
+    lines.push(`  onMount(${jsBody})`)
   }
 
   // Child component inits with props

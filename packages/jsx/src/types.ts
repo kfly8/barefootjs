@@ -266,6 +266,11 @@ export interface EffectInfo {
   loc: SourceLocation
 }
 
+export interface OnMountInfo {
+  body: string
+  loc: SourceLocation
+}
+
 export interface ImportInfo {
   source: string
   specifiers: ImportSpecifier[]
@@ -313,6 +318,7 @@ export interface IRMetadata {
   signals: SignalInfo[]
   memos: MemoInfo[]
   effects: EffectInfo[]
+  onMounts: OnMountInfo[]
   imports: ImportInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
