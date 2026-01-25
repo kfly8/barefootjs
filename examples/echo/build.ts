@@ -178,7 +178,7 @@ for (const componentPath of components) {
         errors: [],
       }
 
-      let clientJs = generateClientJs(ir)
+      let clientJs = generateClientJs(ir, allComponentNames)
       if (clientJs) {
         // Replace @barefootjs/dom import with relative path to barefoot.js
         clientJs = clientJs.replace(
