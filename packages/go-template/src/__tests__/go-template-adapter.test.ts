@@ -13,6 +13,7 @@ import type {
   IRComponent,
   IRSlot,
 } from '@barefootjs/jsx'
+import { parseExpression } from '@barefootjs/jsx'
 
 // Helper to create minimal source location
 const loc = {
@@ -701,6 +702,7 @@ describe('GoTemplateAdapter', () => {
     })
 
     test('renders loop with filterPredicate as range+if', () => {
+      const predicateExpr = '!t.done'
       const loop: IRLoop = {
         type: 'loop',
         array: 'todos',
@@ -712,7 +714,11 @@ describe('GoTemplateAdapter', () => {
         children: [{ type: 'text', value: 'Item', loc }],
         slotId: null,
         isStaticArray: true,
-        filterPredicate: { param: 't', expr: '!t.done' },
+        filterPredicate: {
+          param: 't',
+          predicate: parseExpression(predicateExpr),
+          raw: predicateExpr,
+        },
         loc,
       }
 

@@ -185,7 +185,6 @@ function TodoAppSSR({ initialTodos = [] }: Props) {
           </>
         )}
         <ul className="todo-list">
-          {/* @client - complex filter predicate requires client-side evaluation */}
           {todos().filter(t => {
             const f = filter()
             if (f === 'active') return !t.done

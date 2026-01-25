@@ -4,6 +4,8 @@
  * JSX-independent intermediate representation for multi-backend support.
  */
 
+import type { ParsedExpr } from './expression-parser'
+
 // =============================================================================
 // Source Location (for Error Reporting)
 // =============================================================================
@@ -166,9 +168,13 @@ export interface IRLoop {
   /**
    * Filter predicate for filter().map() pattern.
    * When present, the loop renders with an if-condition wrapping each iteration.
-   * Example: todos.filter(t => !t.done).map(...) stores { param: 't', expr: '!t.done' }
+   * Example: todos.filter(t => !t.done).map(...) stores { param: 't', predicate: ParsedExpr, raw: '!t.done' }
    */
-  filterPredicate?: { param: string; expr: string }
+  filterPredicate?: {
+    param: string
+    predicate: ParsedExpr
+    raw: string  // Original string for error messages
+  }
 
   /**
    * When true, loop should be evaluated on client side only.

@@ -1,9 +1,9 @@
 /**
- * Expression Parser for GoTemplateAdapter
+ * Expression Parser for BarefootJS
  *
  * Parses JavaScript expressions into a structured AST-like representation
  * using TypeScript Compiler API. This enables proper support detection
- * and conversion to Go template syntax.
+ * and conversion to backend template syntax.
  */
 
 import ts from 'typescript'
@@ -302,7 +302,7 @@ function getUnaryOperatorString(op: ts.PrefixUnaryOperator): string {
 // =============================================================================
 
 /**
- * Check if a parsed expression is supported for Go template conversion.
+ * Check if a parsed expression is supported for SSR template conversion.
  */
 export function isSupported(expr: ParsedExpr): SupportResult {
   return checkSupport(expr)

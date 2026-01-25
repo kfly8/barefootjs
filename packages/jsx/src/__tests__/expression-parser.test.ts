@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { parseExpression, isSupported, exprToString } from '../adapter/expression-parser'
+import { parseExpression, isSupported, exprToString } from '../expression-parser'
 
 describe('expression-parser', () => {
   describe('parseExpression', () => {

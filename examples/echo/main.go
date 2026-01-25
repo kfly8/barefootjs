@@ -109,7 +109,8 @@ func indexHandler(c echo.Context) error {
     <ul>
         <li><a href="/counter">Counter</a></li>
         <li><a href="/toggle">Toggle</a></li>
-        <li><a href="/todos">Todo (SSR + API)</a></li>
+        <li><a href="/todos">Todo (@client)</a></li>
+        <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
     </ul>
 </body>
 </html>

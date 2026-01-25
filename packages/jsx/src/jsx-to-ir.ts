@@ -24,6 +24,7 @@ import type {
   TypeInfo,
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
+import { parseExpression, isSupported, type ParsedExpr } from './expression-parser'
 
 // =============================================================================
 // Transform Context
@@ -510,11 +511,12 @@ function isFilterCall(node: ts.Expression): { array: ts.Expression; callback: ts
 
 /**
  * Extract filter predicate info from an arrow function.
+ * Performs early parsing to get ParsedExpr AST.
  */
 function extractFilterPredicate(
   callback: ts.Expression,
   ctx: TransformContext
-): { param: string; expr: string } | null {
+): { param: string; predicate: ParsedExpr; raw: string } | null {
   if (!ts.isArrowFunction(callback)) return null
   if (callback.parameters.length < 1) return null
 
@@ -526,9 +528,16 @@ function extractFilterPredicate(
   if (!ts.isIdentifier(firstParam.name)) return null
 
   const param = firstParam.name.getText(ctx.sourceFile)
-  const expr = callback.body.getText(ctx.sourceFile)
+  const raw = callback.body.getText(ctx.sourceFile)
+  const predicate = parseExpression(raw)
 
-  return { param, expr }
+  // Check if predicate is supported for SSR
+  const support = isSupported(predicate)
+  if (!support.supported) {
+    return null  // Fallback to clientOnly
+  }
+
+  return { param, predicate, raw }
 }
 
 function transformMapCall(
@@ -541,7 +550,7 @@ function transformMapCall(
   // Check for filter().map() pattern
   const filterInfo = isFilterCall(propAccess.expression)
   let array: string
-  let filterPredicate: { param: string; expr: string } | undefined
+  let filterPredicate: { param: string; predicate: ParsedExpr; raw: string } | undefined
 
   if (filterInfo) {
     const predicate = extractFilterPredicate(filterInfo.callback, ctx)

@@ -20,9 +20,9 @@ import type {
   TypeInfo,
   CompilerError,
   SourceLocation,
+  ParsedExpr,
 } from '@barefootjs/jsx'
-import { BaseAdapter, type AdapterOutput, isBooleanAttr } from '@barefootjs/jsx'
-import { parseExpression, isSupported, type ParsedExpr } from './expression-parser'
+import { BaseAdapter, type AdapterOutput, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
 export interface GoTemplateAdapterOptions {
   /** Go package name for generated types (default: 'components') */
@@ -1244,35 +1244,14 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     // Handle filter().map() pattern by adding if-condition
     if (loop.filterPredicate) {
-      const filterCond = this.renderFilterCondition(loop.filterPredicate.expr, loop.filterPredicate.param, param)
+      const filterCond = this.renderPredicateCondition(
+        loop.filterPredicate.predicate,
+        loop.filterPredicate.param
+      )
       return `{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}`
     }
 
     return `{{range $${index}, $${param} := ${goArray}}}${children}{{end}}`
-  }
-
-  /**
-   * Render a filter condition expression to Go template syntax.
-   * Substitutes the filter param (e.g., 't' in '!t.done') with the loop variable (e.g., '$todo').
-   */
-  private renderFilterCondition(expr: string, filterParam: string, _loopVar: string): string {
-    const parsed = parseExpression(expr)
-    const support = isSupported(parsed)
-
-    if (!support.supported) {
-      this.errors.push({
-        code: 'BF103',
-        severity: 'error',
-        message: `Filter predicate not supported: ${expr}`,
-        loc: this.makeLoc(),
-        suggestion: {
-          message: support.reason || 'Use simpler predicate or @client directive',
-        },
-      })
-      return 'false'
-    }
-
-    return this.renderPredicateCondition(parsed, filterParam)
   }
 
   /**
