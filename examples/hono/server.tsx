@@ -12,6 +12,7 @@ import { renderer } from './renderer'
 import Counter from '@/components/Counter'
 import Toggle from '@/components/Toggle'
 import TodoApp from '@/components/TodoApp'
+import TodoAppSSR from '@/components/TodoAppSSR'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
 const app = new Hono()
@@ -47,7 +48,8 @@ app.get('/', (c) => {
         <ul>
           <li><a href="/counter">Counter</a></li>
           <li><a href="/toggle">Toggle</a></li>
-          <li><a href="/todos">Todo (SSR + API)</a></li>
+          <li><a href="/todos">Todo (@client)</a></li>
+          <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
           <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
         </ul>
       </nav>
@@ -84,6 +86,15 @@ app.get('/todos', (c) => {
   return c.render(
     <div id="app">
       <TodoApp initialTodos={todos} />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+app.get('/todos-ssr', (c) => {
+  return c.render(
+    <div id="app">
+      <TodoAppSSR initialTodos={todos} />
       <p><a href="/">← Back</a></p>
     </div>
   )

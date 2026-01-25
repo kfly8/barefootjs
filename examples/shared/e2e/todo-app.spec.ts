@@ -11,8 +11,9 @@ import { test, expect } from '@playwright/test'
  * Run TodoApp component E2E tests.
  *
  * @param baseUrl - The base URL of the server (e.g., 'http://localhost:3001')
+ * @param todosPath - The path to the todos page (default: '/todos')
  */
-export function todoAppTests(baseUrl: string) {
+export function todoAppTests(baseUrl: string, todosPath: string = '/todos') {
   // Run TodoApp tests serially to avoid server state conflicts
   test.describe.serial('TodoApp Component', () => {
     // Increase timeout for TodoApp tests (hydration can take time)
@@ -21,7 +22,7 @@ export function todoAppTests(baseUrl: string) {
     test.beforeEach(async ({ page, request }) => {
       // Reset server state before each test
       await request.post(`${baseUrl}/api/todos/reset`)
-      await page.goto(`${baseUrl}/todos`)
+      await page.goto(`${baseUrl}${todosPath}`)
       // Wait for todoapp to be loaded
       await page.waitForSelector('.todoapp')
       await page.waitForSelector('.todo-list li', { timeout: 10000 })
@@ -171,7 +172,7 @@ export function todoAppTests(baseUrl: string) {
       await request.post(`${baseUrl}/api/todos/reset`)
 
       // Navigate directly to /todos#/active
-      await page.goto(`${baseUrl}/todos#/active`)
+      await page.goto(`${baseUrl}${todosPath}#/active`)
       await page.waitForSelector('.todoapp')
       await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
 
@@ -190,7 +191,7 @@ export function todoAppTests(baseUrl: string) {
       await request.post(`${baseUrl}/api/todos/reset`)
 
       // Navigate directly to /todos#/completed
-      await page.goto(`${baseUrl}/todos#/completed`)
+      await page.goto(`${baseUrl}${todosPath}#/completed`)
       await page.waitForSelector('.todoapp')
       await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
 
