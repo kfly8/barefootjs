@@ -544,9 +544,16 @@ function transformMapCall(
   let filterPredicate: { param: string; expr: string } | undefined
 
   if (filterInfo) {
-    // It's a filter().map() pattern - use the inner array
-    array = filterInfo.array.getText(ctx.sourceFile)
-    filterPredicate = extractFilterPredicate(filterInfo.callback, ctx) ?? undefined
+    const predicate = extractFilterPredicate(filterInfo.callback, ctx)
+    if (isClientOnly || !predicate) {
+      // @client or block body: keep filter() in array for client evaluation
+      array = propAccess.expression.getText(ctx.sourceFile)
+      filterPredicate = undefined
+    } else {
+      // SSR with simple predicate: decompose for server-side filtering
+      array = filterInfo.array.getText(ctx.sourceFile)
+      filterPredicate = predicate
+    }
   } else {
     array = propAccess.expression.getText(ctx.sourceFile)
   }

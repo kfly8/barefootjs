@@ -1219,6 +1219,18 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
 
   // Imports
   lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
+
+  // Add child component imports for loops with createComponent
+  const childComponentNames = new Set<string>()
+  for (const loop of ctx.loopElements) {
+    if (loop.childComponent) {
+      childComponentNames.add(loop.childComponent.name)
+    }
+  }
+  for (const childName of childComponentNames) {
+    lines.push(`import './__CHILD_COMPONENT_${childName}_FILENAME__'`)
+  }
+
   lines.push('')
 
   // Init function

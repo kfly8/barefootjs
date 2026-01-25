@@ -162,4 +162,28 @@ for (const entryPath of componentFiles) {
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/components/manifest.json')
 
+// Replace child component placeholders in client JS files
+for (const [componentName, entry] of Object.entries(manifest)) {
+  if (!entry.clientJs || componentName === '__barefoot__') continue
+  const clientJsPath = resolve(DIST_COMPONENTS_DIR, entry.clientJs.replace('components/', ''))
+  let content = await Bun.file(clientJsPath).text()
+
+  // Replace __CHILD_COMPONENT_{name}_FILENAME__ placeholders
+  let hasChanges = false
+  content = content.replace(/__CHILD_COMPONENT_(\w+)_FILENAME__/g, (match, childName) => {
+    const childEntry = manifest[childName]
+    if (childEntry?.clientJs) {
+      hasChanges = true
+      return childEntry.clientJs.replace('components/', '')
+    }
+    console.warn(`Warning: Child component ${childName} not found in manifest`)
+    return match
+  })
+
+  if (hasChanges) {
+    await Bun.write(clientJsPath, content)
+    console.log(`Updated child imports: dist/components/${entry.clientJs.replace('components/', '')}`)
+  }
+}
+
 console.log('\nBuild complete!')
