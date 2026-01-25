@@ -24,7 +24,6 @@ export type ParsedExpr =
   | { kind: 'template-literal'; parts: TemplatePart[] }
   | { kind: 'arrow-fn'; param: string; body: ParsedExpr }
   | { kind: 'higher-order'; method: 'filter' | 'every' | 'some'; object: ParsedExpr; param: string; predicate: ParsedExpr }
-  | { kind: 'filter-length'; object: ParsedExpr; param: string; predicate: ParsedExpr }
   | { kind: 'unsupported'; raw: string; reason: string }
 
 export type TemplatePart =
@@ -149,16 +148,7 @@ function convertNode(node: ts.Node, raw: string): ParsedExpr {
     const object = convertNode(node.expression, raw)
     const property = node.name.text
 
-    // Detect filter-length pattern: arr.filter(x => pred).length
-    if (property === 'length' && object.kind === 'higher-order' && object.method === 'filter') {
-      return {
-        kind: 'filter-length',
-        object: object.object,
-        param: object.param,
-        predicate: object.predicate,
-      }
-    }
-
+    // Return as normal member - filter.length is handled in adapter
     return { kind: 'member', object, property, computed: false }
   }
 
@@ -356,25 +346,6 @@ function checkSupport(expr: ParsedExpr): SupportResult {
       return { supported: true, level: 'L5' }
     }
 
-    case 'filter-length': {
-      // Check if predicate uses L1-L4 features
-      const predSupport = checkSupport(expr.predicate)
-      if (!predSupport.supported) {
-        return {
-          supported: false,
-          level: 'L5_UNSUPPORTED',
-          reason: `filter().length with complex predicate. ${predSupport.reason || 'Simplify the predicate.'}`,
-        }
-      }
-      if (containsHigherOrder(expr.predicate)) {
-        return {
-          supported: false,
-          level: 'L5_UNSUPPORTED',
-          reason: `Nested higher-order methods are not supported. Use @client directive.`,
-        }
-      }
-      return { supported: true, level: 'L5' }
-    }
 
     case 'call': {
       // Check if callee is supported
@@ -499,7 +470,6 @@ function checkSupport(expr: ParsedExpr): SupportResult {
 function containsHigherOrder(expr: ParsedExpr): boolean {
   switch (expr.kind) {
     case 'higher-order':
-    case 'filter-length':
       return true
     case 'call':
       return expr.args.some(containsHigherOrder) || containsHigherOrder(expr.callee)
@@ -555,8 +525,6 @@ export function exprToString(expr: ParsedExpr): string {
       return `${expr.param} => ${exprToString(expr.body)}`
     case 'higher-order':
       return `${exprToString(expr.object)}.${expr.method}(${expr.param} => ${exprToString(expr.predicate)})`
-    case 'filter-length':
-      return `${exprToString(expr.object)}.filter(${expr.param} => ${exprToString(expr.predicate)}).length`
     case 'unsupported':
       return `[UNSUPPORTED: ${expr.raw}]`
   }

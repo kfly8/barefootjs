@@ -19,6 +19,7 @@ const components = [
   '../shared/components/Toggle.tsx',
   '../shared/components/TodoItem.tsx',
   '../shared/components/TodoApp.tsx',
+  '../shared/components/TodoAppSSR.tsx',
 ]
 
 // Output directories
@@ -297,6 +298,26 @@ type Todo struct {
   // Find the closing brace of TodoAppProps and insert fields before it
   combinedContent = combinedContent.replace(
     /(type TodoAppProps struct \{[\s\S]*?)(^\})/m,
+    `$1	TodoItems    []TodoItemProps  \`json:"-"\`         // For Go template (not in JSON)
+	DoneCount    int              \`json:"doneCount"\` // Pre-computed done count
+$2`
+  )
+
+  // 7. Fix TodoAppSSRProps and TodoAppProps: Filter interface{} -> Filter string
+  combinedContent = combinedContent.replace(
+    /(Filter) interface\{\} (`json:"filter"`)/g,
+    '$1 string $2'
+  )
+
+  // 7b. Fix Filter initial value: nil -> ""
+  combinedContent = combinedContent.replace(
+    /Filter: nil,/g,
+    'Filter: "all",'
+  )
+
+  // 8. Add extra fields to TodoAppSSRProps (before closing brace)
+  combinedContent = combinedContent.replace(
+    /(type TodoAppSSRProps struct \{[\s\S]*?)(^\})/m,
     `$1	TodoItems    []TodoItemProps  \`json:"-"\`         // For Go template (not in JSON)
 	DoneCount    int              \`json:"doneCount"\` // Pre-computed done count
 $2`

@@ -163,7 +163,7 @@ type TodoAppProps struct {
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
-	Filter interface{} `json:"filter"`
+	Filter string `json:"filter"`
 	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
 	DoneCount    int              `json:"doneCount"` // Pre-computed done count
 }
@@ -180,6 +180,39 @@ func NewTodoAppProps(in TodoAppInput) TodoAppProps {
 		InitialTodos: in.InitialTodos,
 		Todos: nil,
 		NewText: "",
-		Filter: nil,
+		Filter: "all",
+	}
+}
+
+// TodoAppSSRInput is the user-facing input type.
+type TodoAppSSRInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+	InitialTodos []Todo
+}
+
+// TodoAppSSRProps is the props type for the TodoAppSSR component.
+type TodoAppSSRProps struct {
+	ScopeID string `json:"scopeID"`
+	InitialTodos []Todo `json:"initialTodos"`
+	Todos []Todo `json:"todos"`
+	NewText string `json:"newText"`
+	Filter string `json:"filter"`
+	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
+	DoneCount    int              `json:"doneCount"` // Pre-computed done count
+}
+
+// NewTodoAppSSRProps creates TodoAppSSRProps from TodoAppSSRInput.
+func NewTodoAppSSRProps(in TodoAppSSRInput) TodoAppSSRProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "TodoAppSSR_" + randomID(6)
+	}
+
+	return TodoAppSSRProps{
+		ScopeID: scopeID,
+		InitialTodos: in.InitialTodos,
+		Todos: nil,
+		NewText: "",
+		Filter: "all",
 	}
 }

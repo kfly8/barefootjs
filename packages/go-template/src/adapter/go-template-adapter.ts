@@ -37,7 +37,6 @@ export class GoTemplateAdapter extends BaseAdapter {
   private options: Required<GoTemplateAdapterOptions>
   private inLoop: boolean = false
   private errors: CompilerError[] = []
-  private higherOrderCounter: number = 0
 
   constructor(options: GoTemplateAdapterOptions = {}) {
     super()
@@ -49,7 +48,6 @@ export class GoTemplateAdapter extends BaseAdapter {
   generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
     this.errors = []
-    this.higherOrderCounter = 0
 
     const templateBody = this.renderNode(ir.root)
     const template = `{{define "${this.componentName}"}}\n${templateBody}\n{{end}}\n`
@@ -577,19 +575,6 @@ export class GoTemplateAdapter extends BaseAdapter {
       return ''
     }
 
-    // Check if this is a higher-order expression that renders to multiple Go template actions
-    const parsed = parseExpression(expr.expr.trim())
-    const isMultiAction = parsed.kind === 'filter-length' || parsed.kind === 'higher-order'
-
-    if (isMultiAction) {
-      // higher-order patterns render to multiple {{...}} actions, don't wrap again
-      const goExpr = this.renderParsedExpr(parsed)
-      if (expr.reactive && expr.slotId) {
-        return `<span ${this.renderSlotMarker(expr.slotId)}>${goExpr}</span>`
-      }
-      return goExpr
-    }
-
     const goExpr = this.convertExpressionToGo(expr.expr)
 
     if (expr.reactive && expr.slotId) {
@@ -646,6 +631,16 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
 
       case 'member': {
+        // Handle .length with higher-order filter → len (bf_filter ...)
+        if (expr.property === 'length' && expr.object.kind === 'higher-order' && expr.object.method === 'filter') {
+          const { field, negated } = this.extractFieldPredicate(expr.object.predicate, expr.object.param)
+          if (field) {
+            const arrayExpr = this.renderParsedExpr(expr.object.object)
+            const value = negated ? 'false' : 'true'
+            return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+          }
+        }
+
         const obj = this.renderParsedExpr(expr.object)
         // Handle .length -> len
         if (expr.property === 'length') {
@@ -746,41 +741,53 @@ export class GoTemplateAdapter extends BaseAdapter {
         // Arrow functions shouldn't appear standalone in rendering
         return `[ARROW-FN: ${expr.param} => ...]`
 
-      case 'filter-length': {
-        // {{$c0 := 0}}{{range .Todos}}{{if not .Done}}{{$c0 = bf_add $c0 1}}{{end}}{{end}}{{$c0}}
-        const counter = this.higherOrderCounter++
-        const varName = `$c${counter}`
-        const arrayExpr = this.renderParsedExpr(expr.object)
-        const predCond = this.renderPredicateCondition(expr.predicate, expr.param)
-        return `{{${varName} := 0}}{{range ${arrayExpr}}}{{if ${predCond}}}{{${varName} = bf_add ${varName} 1}}{{end}}{{end}}{{${varName}}}`
-      }
-
       case 'higher-order': {
-        const counter = this.higherOrderCounter++
-        const arrayExpr = this.renderParsedExpr(expr.object)
-        const predCond = this.renderPredicateCondition(expr.predicate, expr.param)
+        const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
+        if (!field) {
+          // Field extraction failed → unsupported
+          return `[UNSUPPORTED: ${expr.method}]`
+        }
+
+        const arrayExpr = this.renderParsedExpr(expr.object) // Recursive for chaining
 
         if (expr.method === 'every') {
-          // {{$ok0 := true}}{{range .Todos}}{{if not (predicate)}}{{$ok0 = false}}{{end}}{{end}}{{$ok0}}
-          const varName = `$ok${counter}`
-          return `{{${varName} := true}}{{range ${arrayExpr}}}{{if not (${predCond})}}{{${varName} = false}}{{end}}{{end}}{{${varName}}}`
+          return `bf_every ${arrayExpr} "${field}"`
         }
-
         if (expr.method === 'some') {
-          // {{$f0 := false}}{{range .Todos}}{{if (predicate)}}{{$f0 = true}}{{end}}{{end}}{{$f0}}
-          const varName = `$f${counter}`
-          return `{{${varName} := false}}{{range ${arrayExpr}}}{{if ${predCond}}}{{${varName} = true}}{{end}}{{end}}{{${varName}}}`
+          return `bf_some ${arrayExpr} "${field}"`
+        }
+        if (expr.method === 'filter') {
+          const value = negated ? 'false' : 'true'
+          return `bf_filter ${arrayExpr} "${field}" ${value}`
         }
 
-        // filter without .length - return the array expression with a comment
-        // This case shouldn't typically happen in templates (filter is usually followed by .length or .map)
-        return `[FILTER: ${arrayExpr}.filter(...)]`
+        return `[UNSUPPORTED: ${expr.method}]`
       }
 
       case 'unsupported':
         // This should not happen if isSupported was checked
         return `[UNSUPPORTED: ${expr.raw}]`
     }
+  }
+
+  /**
+   * Extract field name and negation from a simple predicate.
+   * t => t.done → { field: "Done", negated: false }
+   * t => !t.done → { field: "Done", negated: true }
+   */
+  private extractFieldPredicate(pred: ParsedExpr, param: string): { field: string | null; negated: boolean } {
+    // t.done
+    if (pred.kind === 'member' && pred.object.kind === 'identifier' && pred.object.name === param) {
+      return { field: this.capitalizeFieldName(pred.property), negated: false }
+    }
+    // !t.done
+    if (pred.kind === 'unary' && pred.op === '!' && pred.argument.kind === 'member') {
+      const mem = pred.argument
+      if (mem.object.kind === 'identifier' && mem.object.name === param) {
+        return { field: this.capitalizeFieldName(mem.property), negated: true }
+      }
+    }
+    return { field: null, negated: false }
   }
 
   /**
@@ -1107,6 +1114,16 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
 
       case 'member': {
+        // Handle .length with higher-order filter → len (bf_filter ...)
+        if (expr.property === 'length' && expr.object.kind === 'higher-order' && expr.object.method === 'filter') {
+          const { field, negated } = this.extractFieldPredicate(expr.object.predicate, expr.object.param)
+          if (field) {
+            const arrayExpr = this.renderConditionExpr(expr.object.object)
+            const value = negated ? 'false' : 'true'
+            return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+          }
+        }
+
         const obj = this.renderConditionExpr(expr.object)
         if (expr.property === 'length') {
           return `len ${obj}`
@@ -1196,10 +1213,6 @@ export class GoTemplateAdapter extends BaseAdapter {
 
       case 'higher-order':
         // Higher-order methods in conditions need special handling
-        return this.renderParsedExpr(expr)
-
-      case 'filter-length':
-        // filter().length in conditions need special handling
         return this.renderParsedExpr(expr)
 
       case 'unsupported':
