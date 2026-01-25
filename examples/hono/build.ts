@@ -39,12 +39,6 @@ function hasUseClientDirective(content: string): boolean {
   return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
 }
 
-// Generate short hash from content
-function generateHash(content: string): string {
-  const hash = Bun.hash(content)
-  return hash.toString(16).slice(0, 8)
-}
-
 // Discover all component files from both local and shared directories
 const localComponents = (await readdir(COMPONENTS_DIR))
   .filter(f => f.endsWith('.tsx'))
@@ -74,15 +68,6 @@ const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = 
   '__barefoot__': { markedTemplate: '', clientJs: `components/${barefootFileName}` }
 }
 
-// Create HonoAdapter with script collection enabled
-const adapter = new HonoAdapter({
-  injectScriptCollection: true,
-  clientJsBasePath: '/static/components/',
-  barefootJsPath: '/static/components/barefoot.js',
-  clientJsFilenamePlaceholder: '__CLIENT_JS_FILENAME__',
-  componentIdPlaceholder: '__COMPONENT_ID__',
-})
-
 // Compile each component
 for (const entryPath of componentFiles) {
   // Check if file has "use client" directive
@@ -90,6 +75,19 @@ for (const entryPath of componentFiles) {
   if (!hasUseClientDirective(sourceContent)) {
     continue // Skip server-only components
   }
+
+  // Extract base file name from entry path
+  const baseFileName = entryPath.split('/').pop()!
+  const baseNameNoExt = baseFileName.replace('.tsx', '')
+  const clientJsFilename = `${baseNameNoExt}.client.js`
+
+  // Create HonoAdapter with script collection enabled (per-file for correct clientJsFilename)
+  const adapter = new HonoAdapter({
+    injectScriptCollection: true,
+    clientJsBasePath: '/static/components/',
+    barefootJsPath: '/static/components/barefoot.js',
+    clientJsFilename,
+  })
 
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
@@ -102,10 +100,6 @@ for (const entryPath of componentFiles) {
     }
     continue
   }
-
-  // Extract base file name from entry path
-  const baseFileName = entryPath.split('/').pop()!
-  const baseNameNoExt = baseFileName.replace('.tsx', '')
 
   // Process each output file
   let markedJsxContent = ''
@@ -124,27 +118,17 @@ for (const entryPath of componentFiles) {
     continue
   }
 
-  // Write Client JS with hash
+  // Write Client JS
   const hasClientJs = clientJsContent.length > 0
-  let clientJsFilename = ''
 
   if (hasClientJs) {
-    const hash = generateHash(clientJsContent)
-    clientJsFilename = `${baseNameNoExt}-${hash}.js`
     await Bun.write(resolve(DIST_COMPONENTS_DIR, clientJsFilename), clientJsContent)
     console.log(`Generated: dist/components/${clientJsFilename}`)
   }
 
-  // Write Marked Template with placeholders replaced
+  // Write Marked Template
   if (markedJsxContent) {
-    let finalContent = markedJsxContent
-    if (hasClientJs) {
-      // Replace placeholders with actual values
-      finalContent = finalContent
-        .replace(/__CLIENT_JS_FILENAME__/g, clientJsFilename)
-        .replace(/__COMPONENT_ID__/g, baseNameNoExt)
-    }
-    await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), finalContent)
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), markedJsxContent)
     console.log(`Generated: dist/components/${baseFileName}`)
   }
 
@@ -161,29 +145,5 @@ for (const entryPath of componentFiles) {
 // Output manifest (in components/ alongside the Marked JSX files)
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/components/manifest.json')
-
-// Replace child component placeholders in client JS files
-for (const [componentName, entry] of Object.entries(manifest)) {
-  if (!entry.clientJs || componentName === '__barefoot__') continue
-  const clientJsPath = resolve(DIST_COMPONENTS_DIR, entry.clientJs.replace('components/', ''))
-  let content = await Bun.file(clientJsPath).text()
-
-  // Replace __CHILD_COMPONENT_{name}_FILENAME__ placeholders
-  let hasChanges = false
-  content = content.replace(/__CHILD_COMPONENT_(\w+)_FILENAME__/g, (match, childName) => {
-    const childEntry = manifest[childName]
-    if (childEntry?.clientJs) {
-      hasChanges = true
-      return childEntry.clientJs.replace('components/', '')
-    }
-    console.warn(`Warning: Child component ${childName} not found in manifest`)
-    return match
-  })
-
-  if (hasChanges) {
-    await Bun.write(clientJsPath, content)
-    console.log(`Updated child imports: dist/components/${entry.clientJs.replace('components/', '')}`)
-  }
-}
 
 console.log('\nBuild complete!')

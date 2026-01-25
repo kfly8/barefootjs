@@ -1231,7 +1231,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   }
   for (const childName of childComponentNames) {
     if (!siblingSet.has(childName)) {
-      lines.push(`import './__CHILD_COMPONENT_${childName}_FILENAME__'`)
+      lines.push(`import './${childName}.client.js'`)
     }
   }
 
