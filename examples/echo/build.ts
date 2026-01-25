@@ -6,7 +6,7 @@
 
 import { analyzeComponent, listExportedComponents, jsxToIR, generateClientJs, type ComponentIR } from '@barefootjs/jsx'
 import { GoTemplateAdapter } from '@barefootjs/go-template'
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
@@ -207,6 +207,28 @@ for (const componentPath of components) {
   }
 
   console.log(`✓ ${componentPath}`)
+}
+
+// Replace child component placeholders in client JS files
+const clientFiles = readdirSync(clientDir).filter(f => f.endsWith('.client.js'))
+for (const clientFile of clientFiles) {
+  const clientPath = resolve(clientDir, clientFile)
+  let content = readFileSync(clientPath, 'utf-8')
+
+  let hasChanges = false
+  content = content.replace(/__CHILD_COMPONENT_(\w+)_FILENAME__/g, (match, childName) => {
+    const childFileName = `${childName}.client.js`
+    if (clientFiles.includes(childFileName)) {
+      hasChanges = true
+      return childFileName
+    }
+    console.warn(`Warning: Child component ${childName} not found`)
+    return match
+  })
+
+  if (hasChanges) {
+    writeFileSync(clientPath, content)
+  }
 }
 
 // Write combined components.go with all types
