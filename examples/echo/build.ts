@@ -105,7 +105,11 @@ for (const componentPath of components) {
     }
 
     // Generate template
-    const output = adapter.generate(ir)
+    // Skip script registration for non-default-export components
+    // (they are bundled in the main component's .client.js file)
+    const output = adapter.generate(ir, {
+      skipScriptRegistration: !ctx.hasDefaultExport
+    })
     templateParts.push(output.template)
 
     // Collect types for allTypeParts (will be combined later)

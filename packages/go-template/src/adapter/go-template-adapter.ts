@@ -23,7 +23,7 @@ import type {
   ParsedExpr,
   ParsedStatement,
 } from '@barefootjs/jsx'
-import { BaseAdapter, type AdapterOutput, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
+import { BaseAdapter, type AdapterOutput, type AdapterGenerateOptions, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
 export interface GoTemplateAdapterOptions {
   /** Go package name for generated types (default: 'components') */
@@ -46,14 +46,21 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
   }
 
-  generate(ir: ComponentIR): AdapterOutput {
+  /**
+   * Generate template output for a component.
+   * @param ir - The component IR
+   * @param options - Generation options
+   */
+  generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput {
     this.componentName = ir.metadata.componentName
     this.errors = []
 
     const templateBody = this.renderNode(ir.root)
 
-    // Generate script registration code at template start
-    const scriptRegistrations = this.generateScriptRegistrations(ir)
+    // Generate script registration code at template start (unless skipped)
+    const scriptRegistrations = options?.skipScriptRegistration
+      ? ''
+      : this.generateScriptRegistrations(ir)
 
     const template = `{{define "${this.componentName}"}}\n${scriptRegistrations}${templateBody}\n{{end}}\n`
     const types = this.generateTypes(ir)
@@ -88,7 +95,12 @@ export class GoTemplateAdapter extends BaseAdapter {
     if (ir.metadata.onMounts.length > 0) return true
 
     // Check for events in the IR tree
-    return this.hasEventsInTree(ir.root)
+    if (this.hasEventsInTree(ir.root)) return true
+
+    // Check for child components (they need parent's hydration)
+    if (this.findChildComponentNames(ir.root).size > 0) return true
+
+    return false
   }
 
   /**
@@ -176,13 +188,8 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Register barefoot.js runtime first
     registrations.push(`{{.Scripts.Register "/static/client/barefoot.js"}}`)
 
-    // Find child components and register their scripts
-    const childComponents = this.findChildComponentNames(ir.root)
-    for (const childName of childComponents) {
-      registrations.push(`{{.Scripts.Register "/static/client/${childName}.client.js"}}`)
-    }
-
     // Register this component's script
+    // Note: Child component code is bundled in the parent's .client.js file
     registrations.push(`{{.Scripts.Register "/static/client/${ir.metadata.componentName}.client.js"}}`)
 
     // Wrap in nil check to safely handle cases where Scripts is not set
