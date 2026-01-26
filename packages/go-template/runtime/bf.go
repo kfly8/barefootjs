@@ -3,6 +3,7 @@
 package bf
 
 import (
+	"encoding/json"
 	"html/template"
 	"reflect"
 	"strconv"
@@ -44,6 +45,9 @@ func FuncMap() template.FuncMap {
 
 		// Comment marker (for hydration)
 		"bfComment": Comment,
+
+		// Script collection
+		"bfScripts": BfScripts,
 	}
 }
 
@@ -336,6 +340,306 @@ func capitalize(s string) string {
 // The "bf-" prefix is automatically added.
 func Comment(content string) template.HTML {
 	return template.HTML("<!--bf-" + content + "-->")
+}
+
+// =============================================================================
+// Script Collection
+// =============================================================================
+
+// ScriptCollector collects client scripts with deduplication.
+// It preserves insertion order for deterministic output.
+type ScriptCollector struct {
+	scripts map[string]bool
+	order   []string
+}
+
+// NewScriptCollector creates a new ScriptCollector.
+func NewScriptCollector() *ScriptCollector {
+	return &ScriptCollector{
+		scripts: make(map[string]bool),
+		order:   []string{},
+	}
+}
+
+// Register adds a script source to the collection.
+// Duplicate scripts are ignored (only first registration counts).
+func (sc *ScriptCollector) Register(src string) string {
+	if sc.scripts[src] {
+		return "" // Already registered
+	}
+	sc.scripts[src] = true
+	sc.order = append(sc.order, src)
+	return "" // Return empty string for template use
+}
+
+// Scripts returns all registered scripts in insertion order.
+func (sc *ScriptCollector) Scripts() []string {
+	return sc.order
+}
+
+// BfScripts generates script tags for all registered scripts.
+// Returns HTML safe for embedding in templates.
+func BfScripts(collector *ScriptCollector) template.HTML {
+	if collector == nil {
+		return ""
+	}
+	var result strings.Builder
+	for _, src := range collector.Scripts() {
+		result.WriteString(`<script type="module" src="`)
+		result.WriteString(src)
+		result.WriteString(`"></script>`)
+		result.WriteString("\n")
+	}
+	return template.HTML(result.String())
+}
+
+// =============================================================================
+// Component Renderer
+// =============================================================================
+
+// RenderContext contains all data needed to render a component page.
+// The layout function receives this context to build the final HTML.
+type RenderContext struct {
+	// ComponentName is the template name being rendered
+	ComponentName string
+
+	// Props is the component props (for layout to access if needed)
+	Props interface{}
+
+	// ComponentHTML is the rendered component template output
+	ComponentHTML template.HTML
+
+	// PropsScripts contains JSON script tags for hydration (main + children)
+	PropsScripts template.HTML
+
+	// Scripts contains the collected JS script tags
+	Scripts template.HTML
+
+	// Title is the page title (defaults to "{ComponentName} - BarefootJS")
+	Title string
+
+	// Heading is the page heading. Empty string means no heading.
+	Heading string
+
+	// Extra holds additional user-defined data for the layout
+	Extra map[string]interface{}
+}
+
+// LayoutFunc renders the final HTML page given the render context.
+type LayoutFunc func(ctx *RenderContext) string
+
+// Renderer renders BarefootJS components with a customizable layout.
+type Renderer struct {
+	templates *template.Template
+	layout    LayoutFunc
+}
+
+// NewRenderer creates a Renderer with the given templates and layout function.
+//
+// Example usage:
+//
+//	renderer := bf.NewRenderer(templates, func(ctx *bf.RenderContext) string {
+//	    return fmt.Sprintf(`<!DOCTYPE html>
+//	<html>
+//	<head><title>%s</title></head>
+//	<body>%s%s%s</body>
+//	</html>`, ctx.Title, ctx.ComponentHTML, ctx.PropsScripts, ctx.Scripts)
+//	})
+func NewRenderer(tmpl *template.Template, layout LayoutFunc) *Renderer {
+	return &Renderer{
+		templates: tmpl,
+		layout:    layout,
+	}
+}
+
+// RenderOptions configures a single render call.
+type RenderOptions struct {
+	// ComponentName is the template name to render (required)
+	ComponentName string
+
+	// Props is the component props (must be a pointer to struct with Scripts field)
+	Props interface{}
+
+	// Title is the page title. If empty, defaults to "{ComponentName} - BarefootJS"
+	Title string
+
+	// Heading is the page heading. If empty, no heading is shown.
+	Heading string
+
+	// Extra holds additional data to pass to the layout
+	Extra map[string]interface{}
+}
+
+// Render renders a component to a full HTML page using the configured layout.
+// Child component props are automatically detected (any slice field with ScopeID/Scripts).
+func (r *Renderer) Render(opts RenderOptions) string {
+	// Create script collector and inject into props
+	collector := NewScriptCollector()
+	setScriptsField(opts.Props, collector)
+
+	// Auto-detect and process child component props
+	childSlices := findChildComponentSlices(opts.Props)
+	for _, slice := range childSlices {
+		setScriptsOnSlice(slice, collector)
+	}
+
+	// Render the component template
+	var componentBuf strings.Builder
+	r.templates.ExecuteTemplate(&componentBuf, opts.ComponentName, opts.Props)
+
+	// Build props scripts (main + children)
+	var propsScriptsBuf strings.Builder
+	scopeID := getStringField(opts.Props, "ScopeID")
+	if scopeID != "" {
+		propsJSON, _ := json.Marshal(opts.Props)
+		propsScriptsBuf.WriteString(`<script type="application/json" data-bf-props="`)
+		propsScriptsBuf.WriteString(scopeID)
+		propsScriptsBuf.WriteString(`">`)
+		propsScriptsBuf.Write(propsJSON)
+		propsScriptsBuf.WriteString(`</script>`)
+	}
+	for _, slice := range childSlices {
+		propsScriptsBuf.WriteString(buildChildPropsScripts(slice))
+	}
+
+	// Determine title (default: "{ComponentName} - BarefootJS")
+	title := opts.Title
+	if title == "" {
+		title = opts.ComponentName + " - BarefootJS"
+	}
+
+	// Heading (empty means no heading)
+	heading := opts.Heading
+
+	// Build render context
+	ctx := &RenderContext{
+		ComponentName: opts.ComponentName,
+		Props:         opts.Props,
+		ComponentHTML: template.HTML(componentBuf.String()),
+		PropsScripts:  template.HTML(propsScriptsBuf.String()),
+		Scripts:       BfScripts(collector),
+		Title:         title,
+		Heading:       heading,
+		Extra:         opts.Extra,
+	}
+
+	return r.layout(ctx)
+}
+
+// setScriptsField sets the Scripts field on a struct using reflection.
+func setScriptsField(v interface{}, collector *ScriptCollector) {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return
+	}
+	field := val.FieldByName("Scripts")
+	if field.IsValid() && field.CanSet() {
+		field.Set(reflect.ValueOf(collector))
+	}
+}
+
+// getStringField extracts a string field from a struct using reflection.
+func getStringField(v interface{}, fieldName string) string {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return ""
+	}
+	field := val.FieldByName(fieldName)
+	if !field.IsValid() || field.Kind() != reflect.String {
+		return ""
+	}
+	return field.String()
+}
+
+// findChildComponentSlices finds slice fields containing child component props.
+// Child props are identified by having ScopeID and Scripts fields.
+func findChildComponentSlices(props interface{}) []interface{} {
+	var result []interface{}
+
+	val := reflect.ValueOf(props)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return result
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		if field.Kind() != reflect.Slice || field.Len() == 0 {
+			continue
+		}
+
+		elem := field.Index(0)
+		if elem.Kind() == reflect.Ptr {
+			elem = elem.Elem()
+		}
+		if elem.Kind() != reflect.Struct {
+			continue
+		}
+
+		hasScopeID := elem.FieldByName("ScopeID").IsValid()
+		hasScripts := elem.FieldByName("Scripts").IsValid()
+
+		if hasScopeID && hasScripts {
+			result = append(result, field.Interface())
+		}
+	}
+
+	return result
+}
+
+// setScriptsOnSlice sets Scripts on all items in a slice.
+func setScriptsOnSlice(slice interface{}, collector *ScriptCollector) {
+	val := reflect.ValueOf(slice)
+	if val.Kind() != reflect.Slice {
+		return
+	}
+	for i := 0; i < val.Len(); i++ {
+		item := val.Index(i)
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Struct {
+			field := item.FieldByName("Scripts")
+			if field.IsValid() && field.CanSet() {
+				field.Set(reflect.ValueOf(collector))
+			}
+		}
+	}
+}
+
+// buildChildPropsScripts generates JSON script tags for child component props.
+func buildChildPropsScripts(slice interface{}) string {
+	val := reflect.ValueOf(slice)
+	if val.Kind() != reflect.Slice {
+		return ""
+	}
+
+	var buf strings.Builder
+	for i := 0; i < val.Len(); i++ {
+		item := val.Index(i).Interface()
+		scopeID := getStringField(item, "ScopeID")
+		if scopeID == "" {
+			continue
+		}
+		jsonBytes, err := json.Marshal(item)
+		if err != nil {
+			continue
+		}
+		buf.WriteString(`<script type="application/json" data-bf-props="`)
+		buf.WriteString(scopeID)
+		buf.WriteString(`">`)
+		buf.Write(jsonBytes)
+		buf.WriteString(`</script>`)
+	}
+	return buf.String()
 }
 
 // =============================================================================
