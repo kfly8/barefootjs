@@ -23,7 +23,7 @@ import type {
   ParsedExpr,
   ParsedStatement,
 } from '@barefootjs/jsx'
-import { BaseAdapter, type AdapterOutput, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
+import { BaseAdapter, type AdapterOutput, type AdapterGenerateOptions, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
 export interface GoTemplateAdapterOptions {
   /** Go package name for generated types (default: 'components') */
@@ -46,12 +46,23 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
   }
 
-  generate(ir: ComponentIR): AdapterOutput {
+  /**
+   * Generate template output for a component.
+   * @param ir - The component IR
+   * @param options - Generation options
+   */
+  generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput {
     this.componentName = ir.metadata.componentName
     this.errors = []
 
     const templateBody = this.renderNode(ir.root)
-    const template = `{{define "${this.componentName}"}}\n${templateBody}\n{{end}}\n`
+
+    // Generate script registration code at template start (unless skipped)
+    const scriptRegistrations = options?.skipScriptRegistration
+      ? ''
+      : this.generateScriptRegistrations(ir)
+
+    const template = `{{define "${this.componentName}"}}\n${scriptRegistrations}${templateBody}\n{{end}}\n`
     const types = this.generateTypes(ir)
 
     // Merge collected errors into IR errors
@@ -66,11 +77,134 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * Check if a component has client interactivity (needs client JS).
+   * A component has client interactivity if it has:
+   * - Signals (reactive state)
+   * - Effects (side effects)
+   * - Events on elements
+   */
+  private hasClientInteractivity(ir: ComponentIR): boolean {
+    // Check for signals
+    if (ir.metadata.signals.length > 0) return true
+
+    // Check for effects
+    if (ir.metadata.effects.length > 0) return true
+
+    // Check for onMounts
+    if (ir.metadata.onMounts.length > 0) return true
+
+    // Check for events in the IR tree
+    if (this.hasEventsInTree(ir.root)) return true
+
+    // Check for child components (they need parent's hydration)
+    if (this.findChildComponentNames(ir.root).size > 0) return true
+
+    return false
+  }
+
+  /**
+   * Recursively check if any element in the tree has events.
+   */
+  private hasEventsInTree(node: IRNode): boolean {
+    if (node.type === 'element') {
+      const element = node as IRElement
+      if (element.events.length > 0) return true
+      for (const child of element.children) {
+        if (this.hasEventsInTree(child)) return true
+      }
+    } else if (node.type === 'fragment') {
+      const fragment = node as IRFragment
+      for (const child of fragment.children) {
+        if (this.hasEventsInTree(child)) return true
+      }
+    } else if (node.type === 'conditional') {
+      const cond = node as IRConditional
+      if (this.hasEventsInTree(cond.whenTrue)) return true
+      if (cond.whenFalse && this.hasEventsInTree(cond.whenFalse)) return true
+    } else if (node.type === 'loop') {
+      const loop = node as IRLoop
+      for (const child of loop.children) {
+        if (this.hasEventsInTree(child)) return true
+      }
+    }
+    return false
+  }
+
+  /**
+   * Find all child component names used in the IR tree.
+   */
+  private findChildComponentNames(node: IRNode): Set<string> {
+    const names = new Set<string>()
+    this.collectChildComponentNames(node, names)
+    return names
+  }
+
+  private collectChildComponentNames(node: IRNode, names: Set<string>): void {
+    if (node.type === 'component') {
+      const comp = node as IRComponent
+      names.add(comp.name)
+    } else if (node.type === 'element') {
+      const element = node as IRElement
+      for (const child of element.children) {
+        this.collectChildComponentNames(child, names)
+      }
+    } else if (node.type === 'fragment') {
+      const fragment = node as IRFragment
+      for (const child of fragment.children) {
+        this.collectChildComponentNames(child, names)
+      }
+    } else if (node.type === 'conditional') {
+      const cond = node as IRConditional
+      this.collectChildComponentNames(cond.whenTrue, names)
+      if (cond.whenFalse) {
+        this.collectChildComponentNames(cond.whenFalse, names)
+      }
+    } else if (node.type === 'loop') {
+      const loop = node as IRLoop
+      for (const child of loop.children) {
+        this.collectChildComponentNames(child, names)
+      }
+    }
+  }
+
+  /**
+   * Generate script registration code for the template.
+   * Scripts are registered at the beginning of the template.
+   * Uses .Scripts which is available on all Props structs.
+   * The same ScriptCollector should be shared across parent and child props.
+   * Wrapped in {{if .Scripts}} to safely handle nil Scripts.
+   */
+  private generateScriptRegistrations(ir: ComponentIR): string {
+    // Check if this component has client interactivity
+    const hasInteractivity = this.hasClientInteractivity(ir)
+
+    if (!hasInteractivity) {
+      return ''
+    }
+
+    const registrations: string[] = []
+
+    // Register barefoot.js runtime first
+    registrations.push(`{{.Scripts.Register "/static/client/barefoot.js"}}`)
+
+    // Register this component's script
+    // Note: Child component code is bundled in the parent's .client.js file
+    registrations.push(`{{.Scripts.Register "/static/client/${ir.metadata.componentName}.client.js"}}`)
+
+    // Wrap in nil check to safely handle cases where Scripts is not set
+    return `{{if .Scripts}}${registrations.join('')}{{end}}\n`
+  }
+
   generateTypes(ir: ComponentIR): string | null {
     const lines: string[] = []
     lines.push(`package ${this.options.packageName}`)
     lines.push('')
-    lines.push('import "math/rand"')
+    lines.push('import (')
+    lines.push('\t"math/rand"')
+    lines.push('')
+    lines.push('\tbf "github.com/barefootjs/runtime/bf"')
+    lines.push(')')
     lines.push('')
 
     const componentName = ir.metadata.componentName
@@ -137,6 +271,9 @@ export class GoTemplateAdapter extends BaseAdapter {
     lines.push(`// ${propsTypeName} is the props type for the ${componentName} component.`)
     lines.push(`type ${propsTypeName} struct {`)
     lines.push('\tScopeID string `json:"scopeID"`')
+
+    // Add Scripts field for dynamic script collection
+    lines.push('\tScripts *bf.ScriptCollector `json:"-"`')
 
     // Collect nested component array field names to skip from propsParams
     const nestedArrayFields = new Set(nestedComponents.map(n => `${n.name}s`))

@@ -20,12 +20,17 @@ export interface AdapterOutput {
   extension: string
 }
 
+export interface AdapterGenerateOptions {
+  /** Skip script registration (for child components bundled in parent's .client.js) */
+  skipScriptRegistration?: boolean
+}
+
 export interface TemplateAdapter {
   name: string
   extension: string
 
   // Main entry point - generates complete template from IR
-  generate(ir: ComponentIR): AdapterOutput
+  generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput
 
   // Node rendering
   renderNode(node: IRNode): string
@@ -49,7 +54,7 @@ export abstract class BaseAdapter implements TemplateAdapter {
   abstract name: string
   abstract extension: string
 
-  abstract generate(ir: ComponentIR): AdapterOutput
+  abstract generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput
   abstract renderNode(node: IRNode): string
   abstract renderElement(element: IRElement): string
   abstract renderExpression(expr: IRExpression): string

@@ -6,9 +6,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
-	"reflect"
 	"strconv"
-	"strings"
 	"sync"
 
 	bf "github.com/barefootjs/runtime/bf"
@@ -21,6 +19,46 @@ func loadTemplates() *template.Template {
 	return template.Must(
 		template.New("").Funcs(bf.FuncMap()).ParseGlob("dist/templates/*.tmpl"),
 	)
+}
+
+// EchoRenderer adapts bf.Renderer to Echo's Renderer interface
+type EchoRenderer struct {
+	bf *bf.Renderer
+}
+
+func (r *EchoRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	opts := data.(bf.RenderOptions)
+	opts.ComponentName = name
+	_, err := w.Write([]byte(r.bf.Render(opts)))
+	return err
+}
+
+// defaultLayout renders the standard HTML page structure
+func defaultLayout(ctx *bf.RenderContext) string {
+	headingStyle := ""
+	headingHTML := ""
+	if ctx.Heading != "" {
+		headingStyle = `
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    </style>`
+		headingHTML = fmt.Sprintf(`
+    <h1>%s</h1>`, ctx.Heading)
+	}
+
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+    <title>%s</title>
+    <link rel="stylesheet" href="/shared/styles/components.css">
+    <link rel="stylesheet" href="/shared/styles/todo-app.css">%s
+</head>
+<body>%s
+    <div id="app">%s%s</div>
+    <p><a href="/">← Back</a></p>
+    %s
+</body>
+</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Scripts)
 }
 
 // In-memory todo storage
@@ -46,15 +84,6 @@ func resetTodos() {
 	}
 }
 
-// Template renderer for Echo
-type TemplateRenderer struct {
-	templates *template.Template
-}
-
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
-}
-
 func main() {
 	e := echo.New()
 
@@ -62,11 +91,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Load templates with BarefootJS functions
-	t := &TemplateRenderer{
-		templates: loadTemplates(),
-	}
-	e.Renderer = t
+	// Renderer
+	e.Renderer = &EchoRenderer{bf: bf.NewRenderer(loadTemplates(), defaultLayout)}
 
 	// Routes
 	e.GET("/", indexHandler)
@@ -119,106 +145,11 @@ func indexHandler(c echo.Context) error {
 
 func counterHandler(c echo.Context) error {
 	props := NewCounterProps(CounterInput{Initial: 0})
-
-	// Wrap the component in a full HTML page
-	return c.HTML(http.StatusOK, renderPage("Counter", props))
-}
-
-func renderPage(componentName string, props interface{}) string {
-	return renderPageWithScripts(componentName, props, "", nil)
-}
-
-// renderPageWithScripts renders a component in a full HTML page with hydration scripts.
-// childPropsScripts contains additional props script tags for child components.
-// childComponents lists component names that need their client scripts loaded before the parent.
-func renderPageWithScripts(componentName string, props interface{}, childPropsScripts string, childComponents []string) string {
-	t := loadTemplates()
-
-	// Get ScopeID from props using reflection
-	scopeID := getField(props, "ScopeID")
-
-	// Serialize props to JSON for client hydration
-	propsJSON := "{}"
-	if jsonBytes, err := json.Marshal(props); err == nil {
-		propsJSON = string(jsonBytes)
-	}
-
-	var buf strings.Builder
-
-	// Write page header
-	buf.WriteString(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>`)
-	buf.WriteString(componentName)
-	buf.WriteString(` - BarefootJS + Echo</title>
-    <link rel="stylesheet" href="/shared/styles/components.css">
-    <link rel="stylesheet" href="/shared/styles/todo-app.css">
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    </style>
-</head>
-<body>
-    <h1>`)
-	buf.WriteString(componentName)
-	buf.WriteString(` Component</h1>
-    <div id="app">`)
-
-	// Render the component template
-	t.ExecuteTemplate(&buf, componentName, props)
-
-	// Add props JSON for client hydration
-	if scopeID != "" {
-		buf.WriteString(`<script type="application/json" data-bf-props="`)
-		buf.WriteString(scopeID)
-		buf.WriteString(`">`)
-		buf.WriteString(propsJSON)
-		buf.WriteString(`</script>`)
-	}
-
-	// Add child component props scripts if provided
-	buf.WriteString(childPropsScripts)
-
-	buf.WriteString(`</div>
-    <p><a href="/">← Back to index</a></p>
-`)
-
-	// Add child component scripts first (they need to be registered before parent)
-	for _, child := range childComponents {
-		buf.WriteString(`    <script type="module" src="/static/client/`)
-		buf.WriteString(child)
-		buf.WriteString(`.client.js"></script>
-`)
-	}
-
-	// Add main component script
-	buf.WriteString(`    <script type="module" src="/static/client/`)
-	buf.WriteString(componentName)
-	buf.WriteString(`.client.js"></script>
-</body>
-</html>`)
-
-	return buf.String()
-}
-
-// getField extracts a string field from a struct using reflection
-func getField(v interface{}, field string) string {
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
-	if val.Kind() != reflect.Struct {
-		return ""
-	}
-	f := val.FieldByName(field)
-	if !f.IsValid() {
-		return ""
-	}
-	if f.Kind() == reflect.String {
-		return f.String()
-	}
-	return ""
+	return c.Render(http.StatusOK, "Counter", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Counter - BarefootJS",
+		Heading: "Counter Component",
+	})
 }
 
 func toggleHandler(c echo.Context) error {
@@ -230,31 +161,11 @@ func toggleHandler(c echo.Context) error {
 		},
 	})
 
-	childPropsScripts := buildChildPropsScripts(props.ToggleItems)
-
-	return c.HTML(http.StatusOK, renderPageWithScripts("Toggle", props, childPropsScripts, []string{"Toggle"}))
-}
-
-// buildChildPropsScripts generates props script tags for a slice of child components.
-// Each element must have ScopeID field for client hydration.
-func buildChildPropsScripts[T any](items []T) string {
-	var buf strings.Builder
-	for _, item := range items {
-		scopeID := getField(item, "ScopeID")
-		if scopeID == "" {
-			continue
-		}
-		jsonBytes, err := json.Marshal(item)
-		if err != nil {
-			continue
-		}
-		buf.WriteString(`<script type="application/json" data-bf-props="`)
-		buf.WriteString(scopeID)
-		buf.WriteString(`">`)
-		buf.Write(jsonBytes)
-		buf.WriteString(`</script>`)
-	}
-	return buf.String()
+	return c.Render(http.StatusOK, "Toggle", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Toggle - BarefootJS",
+		Heading: "Toggle Component",
+	})
 }
 
 func todosHandler(c echo.Context) error {
@@ -288,50 +199,10 @@ func todosHandler(c echo.Context) error {
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
 
-	return c.HTML(http.StatusOK, renderTodoAppPage(props))
-}
-
-// renderTodoAppPage renders TodoApp without the component heading (follows TodoMVC styling)
-func renderTodoAppPage(props TodoAppProps) string {
-	t := loadTemplates()
-
-	scopeID := props.ScopeID
-	propsJSON := "{}"
-	if jsonBytes, err := json.Marshal(props); err == nil {
-		propsJSON = string(jsonBytes)
-	}
-
-	var buf strings.Builder
-
-	buf.WriteString(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>TodoMVC - BarefootJS</title>
-    <link rel="stylesheet" href="/shared/styles/components.css">
-    <link rel="stylesheet" href="/shared/styles/todo-app.css">
-</head>
-<body>
-    <div id="app">`)
-
-	t.ExecuteTemplate(&buf, "TodoApp", props)
-
-	if scopeID != "" {
-		buf.WriteString(`<script type="application/json" data-bf-props="`)
-		buf.WriteString(scopeID)
-		buf.WriteString(`">`)
-		buf.WriteString(propsJSON)
-		buf.WriteString(`</script>`)
-	}
-
-	buf.WriteString(`</div>
-    <p><a href="/">← Back</a></p>
-    <script type="module" src="/static/client/TodoItem.client.js"></script>
-    <script type="module" src="/static/client/TodoApp.client.js"></script>
-</body>
-</html>`)
-
-	return buf.String()
+	return c.Render(http.StatusOK, "TodoApp", bf.RenderOptions{
+		Props: &props,
+		Title: "TodoMVC - BarefootJS",
+	})
 }
 
 func todosSSRHandler(c echo.Context) error {
@@ -365,50 +236,10 @@ func todosSSRHandler(c echo.Context) error {
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
 
-	return c.HTML(http.StatusOK, renderTodoAppSSRPage(props))
-}
-
-// renderTodoAppSSRPage renders TodoAppSSR without the component heading
-func renderTodoAppSSRPage(props TodoAppSSRProps) string {
-	t := loadTemplates()
-
-	scopeID := props.ScopeID
-	propsJSON := "{}"
-	if jsonBytes, err := json.Marshal(props); err == nil {
-		propsJSON = string(jsonBytes)
-	}
-
-	var buf strings.Builder
-
-	buf.WriteString(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>TodoMVC SSR - BarefootJS</title>
-    <link rel="stylesheet" href="/shared/styles/components.css">
-    <link rel="stylesheet" href="/shared/styles/todo-app.css">
-</head>
-<body>
-    <div id="app">`)
-
-	t.ExecuteTemplate(&buf, "TodoAppSSR", props)
-
-	if scopeID != "" {
-		buf.WriteString(`<script type="application/json" data-bf-props="`)
-		buf.WriteString(scopeID)
-		buf.WriteString(`">`)
-		buf.WriteString(propsJSON)
-		buf.WriteString(`</script>`)
-	}
-
-	buf.WriteString(`</div>
-    <p><a href="/">← Back</a></p>
-    <script type="module" src="/static/client/TodoItem.client.js"></script>
-    <script type="module" src="/static/client/TodoAppSSR.client.js"></script>
-</body>
-</html>`)
-
-	return buf.String()
+	return c.Render(http.StatusOK, "TodoAppSSR", bf.RenderOptions{
+		Props: &props,
+		Title: "TodoMVC SSR - BarefootJS",
+	})
 }
 
 // Todo API handlers

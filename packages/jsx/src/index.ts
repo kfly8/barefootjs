@@ -38,7 +38,7 @@ export { jsxToIR } from './jsx-to-ir'
 
 // Adapters
 export { BaseAdapter } from './adapters/interface'
-export type { TemplateAdapter, AdapterOutput } from './adapters/interface'
+export type { TemplateAdapter, AdapterOutput, AdapterGenerateOptions } from './adapters/interface'
 
 // Client JS Generator
 export { generateClientJs } from './ir-to-client-js'
