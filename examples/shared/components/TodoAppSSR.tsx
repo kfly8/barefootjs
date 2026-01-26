@@ -1,10 +1,10 @@
 "use client"
 
 /**
- * BarefootJS TodoApp with SSR
+ * BarefootJS TodoApp without @client markers
  *
- * Main component - renders initial todos from server, then uses API for updates
- * Follows TodoMVC HTML structure and styling conventions
+ * This version tests rendering without @client comment markers.
+ * Used to verify higher-order function handling.
  */
 
 import { createSignal, onMount } from '@barefootjs/dom'
@@ -23,7 +23,7 @@ type Props = {
   initialTodos?: Array<{ id: number; text: string; done: boolean }>
 }
 
-function TodoApp({ initialTodos = [] }: Props) {
+function TodoAppSSR({ initialTodos = [] }: Props) {
   const [todos, setTodos] = createSignal<Todo[]>(
     initialTodos.map(t => ({ ...t, editing: false }))
   )
@@ -178,14 +178,14 @@ function TodoApp({ initialTodos = [] }: Props) {
               id="toggle-all"
               className="toggle-all"
               type="checkbox"
-              checked={/* @client */ todos().every(t => t.done)}
+              checked={todos().every(t => t.done)}
               onChange={handleToggleAll}
             />
             <label for="toggle-all">Mark all as complete</label>
           </>
         )}
         <ul className="todo-list">
-          {/* @client */ todos().filter(t => {
+          {todos().filter(t => {
             const f = filter()
             if (f === 'active') return !t.done
             if (f === 'completed') return t.done
@@ -204,7 +204,7 @@ function TodoApp({ initialTodos = [] }: Props) {
       </section>
       <footer className="footer">
         <span className="todo-count">
-          <strong>{/* @client */ todos().filter(t => !t.done).length}</strong>{' '}{/* @client */ todos().filter(t => !t.done).length === 1 ? 'item' : 'items'} left
+          <strong>{todos().filter(t => !t.done).length}</strong>{' '}{todos().filter(t => !t.done).length === 1 ? 'item' : 'items'} left
         </span>
         <ul className="filters">
           <li>
@@ -217,7 +217,7 @@ function TodoApp({ initialTodos = [] }: Props) {
             <a href="#/completed" className={filter() === 'completed' ? 'selected' : ''} onClick={() => handleFilterChange('completed')}>Completed</a>
           </li>
         </ul>
-        {/* @client */ todos().filter(t => t.done).length > 0 && (
+        {todos().filter(t => t.done).length > 0 && (
           <button className="clear-completed" onClick={handleClearCompleted}>
             Clear completed
           </button>
@@ -227,4 +227,4 @@ function TodoApp({ initialTodos = [] }: Props) {
   )
 }
 
-export default TodoApp
+export default TodoAppSSR

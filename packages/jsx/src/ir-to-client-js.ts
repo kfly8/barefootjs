@@ -14,6 +14,7 @@ import type {
   SignalInfo,
   MemoInfo,
   EffectInfo,
+  OnMountInfo,
   FunctionInfo,
   ConstantInfo,
   ParamInfo,
@@ -50,6 +51,7 @@ interface ClientJsContext {
   signals: SignalInfo[]
   memos: MemoInfo[]
   effects: EffectInfo[]
+  onMounts: OnMountInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
   propsParams: ParamInfo[]
@@ -214,7 +216,7 @@ function wrapHandlerInBlock(handler: string): string {
 // Main Entry Point
 // =============================================================================
 
-export function generateClientJs(ir: ComponentIR): string {
+export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
   const ctx = createContext(ir)
 
   // Collect all interactive/dynamic elements from IR
@@ -225,7 +227,7 @@ export function generateClientJs(ir: ComponentIR): string {
     return ''
   }
 
-  return generateInitFunction(ir, ctx)
+  return generateInitFunction(ir, ctx, siblingComponents)
 }
 
 function createContext(ir: ComponentIR): ClientJsContext {
@@ -234,6 +236,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     signals: ir.metadata.signals,
     memos: ir.metadata.memos,
     effects: ir.metadata.effects,
+    onMounts: ir.metadata.onMounts,
     localFunctions: ir.metadata.localFunctions,
     localConstants: ir.metadata.localConstants,
     propsParams: ir.metadata.propsParams,
@@ -256,6 +259,7 @@ function needsClientJs(ctx: ClientJsContext): boolean {
     ctx.signals.length > 0 ||
     ctx.memos.length > 0 ||
     ctx.effects.length > 0 ||
+    ctx.onMounts.length > 0 ||
     ctx.interactiveElements.length > 0 ||
     ctx.dynamicElements.length > 0 ||
     ctx.conditionalElements.length > 0 ||
@@ -1017,6 +1021,11 @@ function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
     extractIdentifiers(effect.body, used)
   }
 
+  // From onMount bodies
+  for (const onMount of ctx.onMounts) {
+    extractIdentifiers(onMount.body, used)
+  }
+
   // From ref callbacks
   for (const elem of ctx.refElements) {
     extractIdentifiers(elem.callback, used)
@@ -1213,12 +1222,28 @@ function detectPropsWithPropertyAccess(
 // Init Function Generation
 // =============================================================================
 
-function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
+function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingComponents?: string[]): string {
   const lines: string[] = []
   const name = ctx.componentName
 
   // Imports
   lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
+
+  // Add child component imports for loops with createComponent
+  // Skip siblings (components in the same file)
+  const siblingSet = new Set(siblingComponents || [])
+  const childComponentNames = new Set<string>()
+  for (const loop of ctx.loopElements) {
+    if (loop.childComponent) {
+      childComponentNames.add(loop.childComponent.name)
+    }
+  }
+  for (const childName of childComponentNames) {
+    if (!siblingSet.has(childName)) {
+      lines.push(`import './${childName}.client.js'`)
+    }
+  }
+
   lines.push('')
 
   // Init function
@@ -1753,6 +1778,12 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext): string {
   for (const effect of ctx.effects) {
     const jsBody = stripTypeScriptSyntax(effect.body)
     lines.push(`  createEffect(${jsBody})`)
+  }
+
+  // onMount calls
+  for (const onMount of ctx.onMounts) {
+    const jsBody = stripTypeScriptSyntax(onMount.body)
+    lines.push(`  onMount(${jsBody})`)
   }
 
   // Child component inits with props

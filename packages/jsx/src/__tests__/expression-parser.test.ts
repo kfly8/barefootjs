@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { parseExpression, isSupported, exprToString } from '../adapter/expression-parser'
+import { parseExpression, isSupported, exprToString } from '../expression-parser'
 
 describe('expression-parser', () => {
   describe('parseExpression', () => {
@@ -151,11 +151,53 @@ describe('expression-parser', () => {
       }
     })
 
-    test('parses arrow function as unsupported', () => {
+    test('parses arrow function with single param and expression body', () => {
       const result = parseExpression('x => x + 1')
-      expect(result.kind).toBe('unsupported')
-      if (result.kind === 'unsupported') {
-        expect(result.reason).toContain('Arrow functions')
+      expect(result.kind).toBe('arrow-fn')
+      if (result.kind === 'arrow-fn') {
+        expect(result.param).toBe('x')
+        expect(result.body.kind).toBe('binary')
+      }
+    })
+
+    test('parses filter() call into higher-order kind', () => {
+      const result = parseExpression('todos().filter(t => !t.done)')
+      expect(result.kind).toBe('higher-order')
+      if (result.kind === 'higher-order') {
+        expect(result.method).toBe('filter')
+        expect(result.param).toBe('t')
+        expect(result.predicate.kind).toBe('unary')
+      }
+    })
+
+    test('parses every() call into higher-order kind', () => {
+      const result = parseExpression('todos().every(t => t.done)')
+      expect(result.kind).toBe('higher-order')
+      if (result.kind === 'higher-order') {
+        expect(result.method).toBe('every')
+        expect(result.param).toBe('t')
+      }
+    })
+
+    test('parses some() call into higher-order kind', () => {
+      const result = parseExpression('todos().some(t => t.important)')
+      expect(result.kind).toBe('higher-order')
+      if (result.kind === 'higher-order') {
+        expect(result.method).toBe('some')
+        expect(result.param).toBe('t')
+      }
+    })
+
+    test('parses filter().length into member kind with higher-order object', () => {
+      const result = parseExpression('todos().filter(t => !t.done).length')
+      expect(result.kind).toBe('member')
+      if (result.kind === 'member') {
+        expect(result.property).toBe('length')
+        expect(result.object.kind).toBe('higher-order')
+        if (result.object.kind === 'higher-order') {
+          expect(result.object.method).toBe('filter')
+          expect(result.object.param).toBe('t')
+        }
       }
     })
   })
@@ -217,20 +259,34 @@ describe('expression-parser', () => {
       expect(result.level).toBe('L4')
     })
 
-    test('L5: filter() is NOT supported', () => {
+    test('L5: filter() with simple predicate IS supported', () => {
       const expr = parseExpression('items().filter(x => x.done)')
       const result = isSupported(expr)
-      expect(result.supported).toBe(false)
-      expect(result.level).toBe('L5_UNSUPPORTED')
-      expect(result.reason).toContain('filter')
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
     })
 
-    test('L5: every() is NOT supported', () => {
+    test('L5: every() with simple predicate IS supported', () => {
       const expr = parseExpression('items().every(x => x.done)')
       const result = isSupported(expr)
-      expect(result.supported).toBe(false)
-      expect(result.level).toBe('L5_UNSUPPORTED')
-      expect(result.reason).toContain('every')
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
+    })
+
+    test('L5: some() with simple predicate IS supported', () => {
+      const expr = parseExpression('items().some(x => !x.done)')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
+    })
+
+    test('filter().length IS supported (as member with higher-order object)', () => {
+      const expr = parseExpression('items().filter(x => !x.done).length')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      // Returns L2 because it's parsed as member access; the higher-order
+      // object is handled during rendering by go-template-adapter
+      expect(result.level).toBe('L2')
     })
 
     test('L5: map() is NOT supported', () => {
@@ -241,11 +297,20 @@ describe('expression-parser', () => {
       expect(result.reason).toContain('map')
     })
 
-    test('arrow functions are NOT supported', () => {
+    test('standalone arrow functions are NOT supported', () => {
       const expr = parseExpression('x => x + 1')
       const result = isSupported(expr)
       expect(result.supported).toBe(false)
-      expect(result.reason).toContain('Arrow functions')
+      expect(result.reason).toContain('Standalone arrow functions')
+    })
+
+    test('nested higher-order methods are NOT supported', () => {
+      // This would be: items().filter(x => x.items.filter(y => y.done).length > 0)
+      // For now, test a simpler case that triggers nested detection
+      const expr = parseExpression('items().filter(x => x.items().filter(y => y.done).length > 0)')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(false)
+      expect(result.level).toBe('L5_UNSUPPORTED')
     })
   })
 
@@ -268,6 +333,21 @@ describe('expression-parser', () => {
     test('converts member access to string', () => {
       const expr = parseExpression('user.name')
       expect(exprToString(expr)).toBe('user.name')
+    })
+
+    test('converts arrow function to string', () => {
+      const expr = parseExpression('x => x + 1')
+      expect(exprToString(expr)).toBe('x => x + 1')
+    })
+
+    test('converts higher-order to string', () => {
+      const expr = parseExpression('todos().filter(t => !t.done)')
+      expect(exprToString(expr)).toBe('todos().filter(t => !t.done)')
+    })
+
+    test('converts filter-length to string', () => {
+      const expr = parseExpression('todos().filter(t => !t.done).length')
+      expect(exprToString(expr)).toBe('todos().filter(t => !t.done).length')
     })
   })
 })

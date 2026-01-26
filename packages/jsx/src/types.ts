@@ -4,6 +4,8 @@
  * JSX-independent intermediate representation for multi-backend support.
  */
 
+import type { ParsedExpr } from './expression-parser'
+
 // =============================================================================
 // Source Location (for Error Reporting)
 // =============================================================================
@@ -162,6 +164,23 @@ export interface IRLoop {
    * This enables proper parent-to-child prop passing (including event handlers).
    */
   childComponent?: IRLoopChildComponent
+
+  /**
+   * Filter predicate for filter().map() pattern.
+   * When present, the loop renders with an if-condition wrapping each iteration.
+   * Example: todos.filter(t => !t.done).map(...) stores { param: 't', predicate: ParsedExpr, raw: '!t.done' }
+   */
+  filterPredicate?: {
+    param: string
+    predicate: ParsedExpr
+    raw: string  // Original string for error messages
+  }
+
+  /**
+   * When true, loop should be evaluated on client side only.
+   * SSR adapters should skip rendering and output placeholder markers.
+   */
+  clientOnly?: boolean
 }
 
 export interface IRComponent {
@@ -253,6 +272,11 @@ export interface EffectInfo {
   loc: SourceLocation
 }
 
+export interface OnMountInfo {
+  body: string
+  loc: SourceLocation
+}
+
 export interface ImportInfo {
   source: string
   specifiers: ImportSpecifier[]
@@ -300,6 +324,7 @@ export interface IRMetadata {
   signals: SignalInfo[]
   memos: MemoInfo[]
   effects: EffectInfo[]
+  onMounts: OnMountInfo[]
   imports: ImportInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]

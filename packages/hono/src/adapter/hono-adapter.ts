@@ -41,16 +41,11 @@ export interface HonoAdapterOptions {
   barefootJsPath?: string
 
   /**
-   * Placeholder for client JS filename. Will be replaced by build script.
-   * Default: '__CLIENT_JS_FILENAME__'
+   * Client JS filename (without path). When set, all components use this filename.
+   * When not set, uses `{componentName}.client.js`.
+   * Useful for files with multiple components that share a single client JS file.
    */
-  clientJsFilenamePlaceholder?: string
-
-  /**
-   * Component identifier placeholder. Will be replaced by build script.
-   * Default: '__COMPONENT_ID__'
-   */
-  componentIdPlaceholder?: string
+  clientJsFilename?: string
 }
 
 export class HonoAdapter implements TemplateAdapter {
@@ -65,8 +60,7 @@ export class HonoAdapter implements TemplateAdapter {
       injectScriptCollection: options.injectScriptCollection ?? false,
       clientJsBasePath: options.clientJsBasePath ?? '/static/components/',
       barefootJsPath: options.barefootJsPath ?? '/static/components/barefoot.js',
-      clientJsFilenamePlaceholder: options.clientJsFilenamePlaceholder ?? '__CLIENT_JS_FILENAME__',
-      componentIdPlaceholder: options.componentIdPlaceholder ?? '__COMPONENT_ID__',
+      clientJsFilename: options.clientJsFilename,
     }
   }
 
@@ -300,8 +294,9 @@ export class HonoAdapter implements TemplateAdapter {
   private generateScriptCollectionCode(): string {
     const barefootSrc = this.options.barefootJsPath
     const clientJsBasePath = this.options.clientJsBasePath
-    const clientJsPlaceholder = this.options.clientJsFilenamePlaceholder
-    const componentIdPlaceholder = this.options.componentIdPlaceholder
+    const clientJsFilename = this.options.clientJsFilename || `${this.componentName}.client.js`
+    // Use filename without extension as component ID for deduplication
+    const componentId = clientJsFilename.replace(/\.client\.js$/, '')
 
     return `
   // Script collection for client JS hydration (Suspense-aware)
@@ -309,7 +304,7 @@ export class HonoAdapter implements TemplateAdapter {
   let __shouldOutputBarefoot = false
   let __shouldOutputThis = false
   const __barefootSrc = '${barefootSrc}'
-  const __thisSrc = '${clientJsBasePath}${clientJsPlaceholder}'
+  const __thisSrc = '${clientJsBasePath}${clientJsFilename}'
   try {
     const __c = useRequestContext()
     const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
@@ -317,14 +312,14 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Check if we need to output each script (not already output)
     __shouldOutputBarefoot = !__outputScripts.has('__barefoot__')
-    __shouldOutputThis = !__outputScripts.has('${componentIdPlaceholder}')
+    __shouldOutputThis = !__outputScripts.has('${componentId}')
 
     if (__scriptsRendered) {
       // BfScripts already rendered (e.g., inside Suspense boundary)
       // Output scripts inline and mark as output
       __shouldOutputInline = true
       if (__shouldOutputBarefoot) __outputScripts.add('__barefoot__')
-      if (__shouldOutputThis) __outputScripts.add('${componentIdPlaceholder}')
+      if (__shouldOutputThis) __outputScripts.add('${componentId}')
     } else {
       // BfScripts not yet rendered - collect for deferred rendering
       const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
@@ -333,7 +328,7 @@ export class HonoAdapter implements TemplateAdapter {
         __scripts.push({ src: __barefootSrc })
       }
       if (__shouldOutputThis) {
-        __outputScripts.add('${componentIdPlaceholder}')
+        __outputScripts.add('${componentId}')
         __scripts.push({ src: __thisSrc })
       }
       __c.set('bfCollectedScripts', __scripts)
@@ -595,6 +590,11 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   renderLoop(loop: IRLoop): string {
+    // clientOnly loops should not be rendered at SSR time
+    if (loop.clientOnly) {
+      return ''
+    }
+
     const indexParam = loop.index ? `, ${loop.index}` : ''
     const children = this.renderChildren(loop.children)
 

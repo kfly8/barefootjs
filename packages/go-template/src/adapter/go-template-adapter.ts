@@ -20,9 +20,9 @@ import type {
   TypeInfo,
   CompilerError,
   SourceLocation,
+  ParsedExpr,
 } from '@barefootjs/jsx'
-import { BaseAdapter, type AdapterOutput, isBooleanAttr } from '@barefootjs/jsx'
-import { parseExpression, isSupported, type ParsedExpr } from './expression-parser'
+import { BaseAdapter, type AdapterOutput, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
 export interface GoTemplateAdapterOptions {
   /** Go package name for generated types (default: 'components') */
@@ -631,6 +631,16 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
 
       case 'member': {
+        // Handle .length with higher-order filter → len (bf_filter ...)
+        if (expr.property === 'length' && expr.object.kind === 'higher-order' && expr.object.method === 'filter') {
+          const { field, negated } = this.extractFieldPredicate(expr.object.predicate, expr.object.param)
+          if (field) {
+            const arrayExpr = this.renderParsedExpr(expr.object.object)
+            const value = negated ? 'false' : 'true'
+            return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+          }
+        }
+
         const obj = this.renderParsedExpr(expr.object)
         // Handle .length -> len
         if (expr.property === 'length') {
@@ -727,10 +737,175 @@ export class GoTemplateAdapter extends BaseAdapter {
         return result
       }
 
+      case 'arrow-fn':
+        // Arrow functions shouldn't appear standalone in rendering
+        return `[ARROW-FN: ${expr.param} => ...]`
+
+      case 'higher-order': {
+        const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
+        if (!field) {
+          // Field extraction failed → unsupported
+          return `[UNSUPPORTED: ${expr.method}]`
+        }
+
+        const arrayExpr = this.renderParsedExpr(expr.object) // Recursive for chaining
+
+        if (expr.method === 'every') {
+          return `bf_every ${arrayExpr} "${field}"`
+        }
+        if (expr.method === 'some') {
+          return `bf_some ${arrayExpr} "${field}"`
+        }
+        if (expr.method === 'filter') {
+          const value = negated ? 'false' : 'true'
+          return `bf_filter ${arrayExpr} "${field}" ${value}`
+        }
+
+        return `[UNSUPPORTED: ${expr.method}]`
+      }
+
       case 'unsupported':
         // This should not happen if isSupported was checked
         return `[UNSUPPORTED: ${expr.raw}]`
     }
+  }
+
+  /**
+   * Extract field name and negation from a simple predicate.
+   * t => t.done → { field: "Done", negated: false }
+   * t => !t.done → { field: "Done", negated: true }
+   */
+  private extractFieldPredicate(pred: ParsedExpr, param: string): { field: string | null; negated: boolean } {
+    // t.done
+    if (pred.kind === 'member' && pred.object.kind === 'identifier' && pred.object.name === param) {
+      return { field: this.capitalizeFieldName(pred.property), negated: false }
+    }
+    // !t.done
+    if (pred.kind === 'unary' && pred.op === '!' && pred.argument.kind === 'member') {
+      const mem = pred.argument
+      if (mem.object.kind === 'identifier' && mem.object.name === param) {
+        return { field: this.capitalizeFieldName(mem.property), negated: true }
+      }
+    }
+    return { field: null, negated: false }
+  }
+
+  /**
+   * Render a predicate expression for use in Go template {{if}} conditions.
+   * Substitutes the loop parameter (e.g., 't' in 't.done') with dot notation.
+   */
+  private renderPredicateCondition(pred: ParsedExpr, param: string): string {
+    return this.renderPredicateExpr(pred, param)
+  }
+
+  /**
+   * Recursively render a predicate expression, substituting param references.
+   */
+  private renderPredicateExpr(expr: ParsedExpr, param: string): string {
+    switch (expr.kind) {
+      case 'identifier':
+        // If identifier matches the param, it's a direct reference (shouldn't happen in normal predicates)
+        if (expr.name === param) {
+          return '.'
+        }
+        return `.${this.capitalizeFieldName(expr.name)}`
+
+      case 'literal':
+        if (expr.literalType === 'string') {
+          return `"${expr.value}"`
+        }
+        if (expr.literalType === 'null') {
+          return '""'
+        }
+        return String(expr.value)
+
+      case 'member': {
+        // t.done -> .Done
+        if (expr.object.kind === 'identifier' && expr.object.name === param) {
+          return `.${this.capitalizeFieldName(expr.property)}`
+        }
+        // Nested member access: t.user.name -> .User.Name
+        const obj = this.renderPredicateExpr(expr.object, param)
+        return `${obj}.${this.capitalizeFieldName(expr.property)}`
+      }
+
+      case 'call': {
+        // Handle calls like t.isDone() -> .IsDone
+        if (expr.callee.kind === 'member' && expr.callee.object.kind === 'identifier' && expr.callee.object.name === param) {
+          return `.${this.capitalizeFieldName(expr.callee.property)}`
+        }
+        // Signal calls: count() -> .Count
+        if (expr.callee.kind === 'identifier' && expr.args.length === 0) {
+          return `.${this.capitalizeFieldName(expr.callee.name)}`
+        }
+        const callee = this.renderPredicateExpr(expr.callee, param)
+        return callee
+      }
+
+      case 'unary': {
+        const arg = this.renderPredicateExpr(expr.argument, param)
+        if (expr.op === '!') {
+          return `not ${arg}`
+        }
+        if (expr.op === '-') {
+          return `bf_neg ${arg}`
+        }
+        return arg
+      }
+
+      case 'binary': {
+        const left = this.renderPredicateExpr(expr.left, param)
+        const right = this.renderPredicateExpr(expr.right, param)
+
+        switch (expr.op) {
+          case '===':
+          case '==':
+            return `eq ${left} ${right}`
+          case '!==':
+          case '!=':
+            return `ne ${left} ${right}`
+          case '>':
+            return `gt ${left} ${right}`
+          case '<':
+            return `lt ${left} ${right}`
+          case '>=':
+            return `ge ${left} ${right}`
+          case '<=':
+            return `le ${left} ${right}`
+          case '+':
+            return `bf_add ${left} ${right}`
+          case '-':
+            return `bf_sub ${left} ${right}`
+          case '*':
+            return `bf_mul ${left} ${right}`
+          case '/':
+            return `bf_div ${left} ${right}`
+          default:
+            return `${left} ${expr.op} ${right}`
+        }
+      }
+
+      case 'logical': {
+        const left = this.renderPredicateExpr(expr.left, param)
+        const right = this.renderPredicateExpr(expr.right, param)
+        const wrapLeft = this.needsParensInPredicate(expr.left) ? `(${left})` : left
+        const wrapRight = this.needsParensInPredicate(expr.right) ? `(${right})` : right
+        if (expr.op === '&&') {
+          return `and ${wrapLeft} ${wrapRight}`
+        }
+        return `or ${wrapLeft} ${wrapRight}`
+      }
+
+      default:
+        return `[UNSUPPORTED-PREDICATE]`
+    }
+  }
+
+  /**
+   * Check if expression needs parentheses in predicate context.
+   */
+  private needsParensInPredicate(expr: ParsedExpr): boolean {
+    return expr.kind === 'logical' || expr.kind === 'unary'
   }
 
   /**
@@ -939,6 +1114,16 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
 
       case 'member': {
+        // Handle .length with higher-order filter → len (bf_filter ...)
+        if (expr.property === 'length' && expr.object.kind === 'higher-order' && expr.object.method === 'filter') {
+          const { field, negated } = this.extractFieldPredicate(expr.object.predicate, expr.object.param)
+          if (field) {
+            const arrayExpr = this.renderConditionExpr(expr.object.object)
+            const value = negated ? 'false' : 'true'
+            return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+          }
+        }
+
         const obj = this.renderConditionExpr(expr.object)
         if (expr.property === 'length') {
           return `len ${obj}`
@@ -1022,12 +1207,25 @@ export class GoTemplateAdapter extends BaseAdapter {
         // Template literals as conditions are unusual
         return this.renderParsedExpr(expr)
 
+      case 'arrow-fn':
+        // Arrow functions shouldn't appear in conditions
+        return '[ARROW-FN]'
+
+      case 'higher-order':
+        // Higher-order methods in conditions need special handling
+        return this.renderParsedExpr(expr)
+
       case 'unsupported':
         return expr.raw
     }
   }
 
   renderLoop(loop: IRLoop): string {
+    // clientOnly loops should not be rendered at SSR time
+    if (loop.clientOnly) {
+      return ''
+    }
+
     let goArray = this.convertExpressionToGo(loop.array)
     const param = loop.param
     const index = loop.index || '_'
@@ -1043,6 +1241,15 @@ export class GoTemplateAdapter extends BaseAdapter {
     this.inLoop = true
     const children = this.renderChildren(loop.children)
     this.inLoop = false
+
+    // Handle filter().map() pattern by adding if-condition
+    if (loop.filterPredicate) {
+      const filterCond = this.renderPredicateCondition(
+        loop.filterPredicate.predicate,
+        loop.filterPredicate.param
+      )
+      return `{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}`
+    }
 
     return `{{range $${index}, $${param} := ${goArray}}}${children}{{end}}`
   }

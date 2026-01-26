@@ -46,6 +46,10 @@ export { generateClientJs } from './ir-to-client-js'
 // Errors
 export { ErrorCodes, createError, formatError, generateCodeFrame } from './errors'
 
+// Expression Parser
+export { parseExpression, isSupported, exprToString } from './expression-parser'
+export type { ParsedExpr, SupportLevel, SupportResult, TemplatePart } from './expression-parser'
+
 // HTML constants
 export { BOOLEAN_ATTRS, isBooleanAttr } from './html-constants'
 

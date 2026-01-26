@@ -157,7 +157,7 @@ function compileMultipleComponentsSync(
       imports: importLines.join('\n'),
       types: typeLines.join('\n'),
       component: componentLines.join('\n'),
-      clientJs: generateClientJs(componentIR) || undefined,
+      clientJs: generateClientJs(componentIR, componentNames) || undefined,
     })
   }
 
@@ -263,6 +263,7 @@ function buildMetadata(
     signals: ctx.signals,
     memos: ctx.memos,
     effects: ctx.effects,
+    onMounts: ctx.onMounts,
     imports: ctx.imports,
     localFunctions: ctx.localFunctions,
     localConstants: ctx.localConstants,

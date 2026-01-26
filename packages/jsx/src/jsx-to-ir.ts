@@ -24,6 +24,7 @@ import type {
   TypeInfo,
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
+import { parseExpression, isSupported, type ParsedExpr } from './expression-parser'
 
 // =============================================================================
 // Transform Context
@@ -378,7 +379,7 @@ function transformExpression(
 
   // Array map: {items.map(item => <li>{item}</li>)}
   if (ts.isCallExpression(expr) && isMapCall(expr)) {
-    return transformMapCall(expr, ctx)
+    return transformMapCall(expr, ctx, isClientOnly)
   }
 
   // Regular expression
@@ -492,12 +493,79 @@ function isMapCall(node: ts.CallExpression): boolean {
   return node.expression.name.text === 'map'
 }
 
+/**
+ * Check if a node is a filter() call.
+ * Returns the filter's array expression and callback if it's a filter call.
+ */
+function isFilterCall(node: ts.Expression): { array: ts.Expression; callback: ts.Expression } | null {
+  if (!ts.isCallExpression(node)) return null
+  if (!ts.isPropertyAccessExpression(node.expression)) return null
+  if (node.expression.name.text !== 'filter') return null
+  if (node.arguments.length !== 1) return null
+
+  return {
+    array: node.expression.expression,
+    callback: node.arguments[0],
+  }
+}
+
+/**
+ * Extract filter predicate info from an arrow function.
+ * Performs early parsing to get ParsedExpr AST.
+ */
+function extractFilterPredicate(
+  callback: ts.Expression,
+  ctx: TransformContext
+): { param: string; predicate: ParsedExpr; raw: string } | null {
+  if (!ts.isArrowFunction(callback)) return null
+  if (callback.parameters.length < 1) return null
+
+  // Block body arrow functions are not supported for SSR
+  // e.g., filter(t => { const f = filter(); ... })
+  if (ts.isBlock(callback.body)) return null
+
+  const firstParam = callback.parameters[0]
+  if (!ts.isIdentifier(firstParam.name)) return null
+
+  const param = firstParam.name.getText(ctx.sourceFile)
+  const raw = callback.body.getText(ctx.sourceFile)
+  const predicate = parseExpression(raw)
+
+  // Check if predicate is supported for SSR
+  const support = isSupported(predicate)
+  if (!support.supported) {
+    return null  // Fallback to clientOnly
+  }
+
+  return { param, predicate, raw }
+}
+
 function transformMapCall(
   node: ts.CallExpression,
-  ctx: TransformContext
+  ctx: TransformContext,
+  isClientOnly = false
 ): IRLoop {
   const propAccess = node.expression as ts.PropertyAccessExpression
-  const array = propAccess.expression.getText(ctx.sourceFile)
+
+  // Check for filter().map() pattern
+  const filterInfo = isFilterCall(propAccess.expression)
+  let array: string
+  let filterPredicate: { param: string; predicate: ParsedExpr; raw: string } | undefined
+
+  if (filterInfo) {
+    const predicate = extractFilterPredicate(filterInfo.callback, ctx)
+    if (isClientOnly || !predicate) {
+      // @client or block body: keep filter() in array for client evaluation
+      array = propAccess.expression.getText(ctx.sourceFile)
+      filterPredicate = undefined
+    } else {
+      // SSR with simple predicate: decompose for server-side filtering
+      array = filterInfo.array.getText(ctx.sourceFile)
+      filterPredicate = predicate
+    }
+  } else {
+    array = propAccess.expression.getText(ctx.sourceFile)
+  }
 
   // Get callback function
   const callback = node.arguments[0]
@@ -587,6 +655,8 @@ function transformMapCall(
     slotId: null,
     isStaticArray,
     childComponent,
+    filterPredicate,
+    clientOnly: isClientOnly || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }

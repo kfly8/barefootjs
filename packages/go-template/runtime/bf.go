@@ -37,6 +37,11 @@ func FuncMap() template.FuncMap {
 		"bf_first":    First,
 		"bf_last":     Last,
 
+		// Higher-order Array Methods
+		"bf_every":  Every,
+		"bf_some":   Some,
+		"bf_filter": Filter,
+
 		// Comment marker (for hydration)
 		"bfComment": Comment,
 	}
@@ -211,6 +216,116 @@ func First(items any) any {
 // Last returns the last element of a slice, or nil if empty.
 func Last(items any) any {
 	return At(items, -1)
+}
+
+// =============================================================================
+// Higher-order Array Methods
+// =============================================================================
+
+// Every returns true if all items have the specified field set to true.
+// Mirrors JavaScript's Array.prototype.every(item => item.field).
+func Every(items any, field string) bool {
+	v := reflect.ValueOf(items)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return false
+	}
+
+	capitalizedField := capitalize(field)
+	for i := 0; i < v.Len(); i++ {
+		item := v.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		fieldVal := item.FieldByName(capitalizedField)
+		if !fieldVal.IsValid() {
+			return false
+		}
+		if fieldVal.Kind() == reflect.Bool && !fieldVal.Bool() {
+			return false
+		}
+	}
+	return true
+}
+
+// Some returns true if at least one item has the specified field set to true.
+// Mirrors JavaScript's Array.prototype.some(item => item.field).
+func Some(items any, field string) bool {
+	v := reflect.ValueOf(items)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return false
+	}
+
+	capitalizedField := capitalize(field)
+	for i := 0; i < v.Len(); i++ {
+		item := v.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		fieldVal := item.FieldByName(capitalizedField)
+		if fieldVal.IsValid() && fieldVal.Kind() == reflect.Bool && fieldVal.Bool() {
+			return true
+		}
+	}
+	return false
+}
+
+// Filter returns items where item.field == value.
+// Mirrors JavaScript's Array.prototype.filter(item => item.field === value).
+// Returns []any to allow chaining with other bf_* functions.
+func Filter(items any, field string, value any) []any {
+	v := reflect.ValueOf(items)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return nil
+	}
+
+	capitalizedField := capitalize(field)
+	var result []any
+
+	for i := 0; i < v.Len(); i++ {
+		item := v.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		fieldVal := item.FieldByName(capitalizedField)
+		if !fieldVal.IsValid() {
+			continue
+		}
+
+		// Compare field value with target value
+		if reflect.DeepEqual(fieldVal.Interface(), value) {
+			result = append(result, v.Index(i).Interface())
+		}
+	}
+	return result
+}
+
+// capitalize uppercases the first character of a string.
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 // =============================================================================

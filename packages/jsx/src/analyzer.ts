@@ -213,6 +213,11 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
       // Don't recurse into createEffect body to avoid collecting inner variables
       return
     }
+    if (isOnMountCall(node.expression)) {
+      collectOnMount(node.expression as ts.CallExpression, ctx)
+      // Don't recurse into onMount body to avoid collecting inner variables
+      return
+    }
   }
 
   // Function declarations inside component
@@ -377,6 +382,26 @@ function collectEffect(node: ts.CallExpression, ctx: AnalyzerContext): void {
   ctx.effects.push({
     body,
     deps,
+    loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
+  })
+}
+
+// =============================================================================
+// onMount Detection & Collection
+// =============================================================================
+
+function isOnMountCall(node: ts.Expression): boolean {
+  if (!ts.isCallExpression(node)) return false
+  return (
+    ts.isIdentifier(node.expression) && node.expression.text === 'onMount'
+  )
+}
+
+function collectOnMount(node: ts.CallExpression, ctx: AnalyzerContext): void {
+  const body = node.arguments[0]?.getText(ctx.sourceFile) || ''
+
+  ctx.onMounts.push({
+    body,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   })
 }

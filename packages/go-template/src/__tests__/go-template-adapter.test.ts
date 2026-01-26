@@ -13,6 +13,7 @@ import type {
   IRComponent,
   IRSlot,
 } from '@barefootjs/jsx'
+import { parseExpression } from '@barefootjs/jsx'
 
 // Helper to create minimal source location
 const loc = {
@@ -307,6 +308,7 @@ describe('GoTemplateAdapter', () => {
         key: null,
         children: [{ type: 'text', value: 'Item', loc }],
         slotId: null,
+        isStaticArray: true,
         loc,
       }
 
@@ -325,6 +327,7 @@ describe('GoTemplateAdapter', () => {
         key: null,
         children: [{ type: 'text', value: 'Item', loc }],
         slotId: null,
+        isStaticArray: true,
         loc,
       }
 
@@ -634,55 +637,97 @@ describe('GoTemplateAdapter', () => {
     })
   })
 
-  describe('error handling', () => {
-    test('reports error for unsupported filter() expression', () => {
-      const ir: ComponentIR = {
-        version: '0.1',
-        metadata: {
-          componentName: 'Test',
-          hasDefaultExport: false,
-          typeDefinitions: [],
-          propsType: null,
-          propsParams: [],
-          restPropsName: null,
-          signals: [],
-          memos: [],
-          effects: [],
-          imports: [],
-          localFunctions: [],
-          localConstants: [],
-        },
-        root: {
-          type: 'element',
-          tag: 'div',
-          attrs: [],
-          events: [],
-          ref: null,
-          children: [
-            {
-              type: 'conditional',
-              condition: 'todos().filter(t => t.done).length > 0',
-              conditionType: null,
-              reactive: false,
-              whenTrue: { type: 'text', value: 'Has done', loc },
-              whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
-              slotId: null,
-              loc,
-            },
-          ],
-          slotId: null,
-          needsScope: false,
-          loc,
-        },
-        errors: [],
+  describe('higher-order methods SSR support', () => {
+    test('renders filter().length using bf_filter function', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'todos().filter(t => !t.done).length',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
       }
 
-      const result = adapter.generate(ir)
+      const result = adapter.renderExpression(expr)
+      // Should render as: {{len (bf_filter .Todos "Done" false)}}
+      expect(result).toBe('{{len (bf_filter .Todos "Done" false)}}')
+    })
 
-      // Should have errors in the IR
-      expect(ir.errors.length).toBeGreaterThan(0)
-      expect(ir.errors[0].code).toBe('BF102')
-      expect(ir.errors[0].message).toContain('filter')
+    test('renders every() using bf_every function', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'todos().every(t => t.done)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      // Should render as: {{bf_every .Todos "Done"}}
+      expect(result).toBe('{{bf_every .Todos "Done"}}')
+    })
+
+    test('renders some() using bf_some function', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'todos().some(t => t.important)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      // Should render as: {{bf_some .Todos "Important"}}
+      expect(result).toBe('{{bf_some .Todos "Important"}}')
+    })
+
+    test('renders filter().length in condition', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'todos().filter(t => !t.done).length > 0',
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'Has incomplete', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      // filter().length > 0 should be supported now
+      expect(result).toContain('{{if gt')
+      expect(result).toContain('Has incomplete')
+    })
+
+    test('renders loop with filterPredicate as range+if', () => {
+      const predicateExpr = '!t.done'
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'todos',
+        arrayType: null,
+        itemType: null,
+        param: 'todo',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'Item', loc }],
+        slotId: null,
+        isStaticArray: true,
+        filterPredicate: {
+          param: 't',
+          predicate: parseExpression(predicateExpr),
+          raw: predicateExpr,
+        },
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      // Should render as: {{range $_, $todo := .Todos}}{{if not .Done}}Item{{end}}{{end}}
+      expect(result).toContain('{{range')
+      expect(result).toContain('{{if not .Done}}')
+      expect(result).toContain('Item')
+      expect(result).toContain('{{end}}{{end}}')
     })
   })
 

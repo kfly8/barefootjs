@@ -1,8 +1,13 @@
 module github.com/kfly8/barefootjs/examples/echo
 
-go 1.21
+go 1.25.6
 
-require github.com/labstack/echo/v4 v4.12.0
+require (
+	github.com/barefootjs/runtime/bf v0.0.0
+	github.com/labstack/echo/v4 v4.12.0
+)
+
+replace github.com/barefootjs/runtime/bf => ../../packages/go-template/runtime
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect

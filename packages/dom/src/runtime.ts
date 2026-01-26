@@ -85,18 +85,25 @@ export function findScope(
  * Returns true only if the element's nearest scope is exactly the given scope.
  * Elements inside nested child scopes (which have their own data-bf-scope) return false.
  */
-function belongsToScope(element: Element, scope: Element): boolean {
-  // If the element has its own scope, it belongs to that scope (child component slot)
-  // Check if it's the element we're looking for by verifying it's within the parent scope
+function belongsToScope(
+  element: Element,
+  scope: Element,
+  isLookingForScope = false
+): boolean {
+  // If element has its own scope, it's a component root
   const elementScope = (element as HTMLElement).dataset?.bfScope
   if (elementScope) {
-    // Element has its own scope - check if it's directly within the parent scope
-    // by comparing the scope element's ancestor chain
-    const parentScope = element.parentElement?.closest('[data-bf-scope]')
-    return parentScope === scope || scope.contains(element)
+    // When looking for child scope elements (data-bf-scope selectors),
+    // include them if they are within the scope (at any depth)
+    if (isLookingForScope) {
+      return scope.contains(element)
+    }
+    // When looking for slot elements (data-bf selectors),
+    // exclude component roots to prevent slot ID collision
+    return false
   }
 
-  // Element doesn't have its own scope - use original logic
+  // Element doesn't have its own scope - check if nearest scope matches
   const nearestScope = element.closest('[data-bf-scope]')
   return nearestScope === scope
 }
@@ -106,10 +113,11 @@ function belongsToScope(element: Element, scope: Element): boolean {
  */
 function findFirstInScope(
   matches: NodeListOf<Element>,
-  scope: Element
+  scope: Element,
+  isLookingForScope = false
 ): Element | null {
   for (const element of matches) {
-    if (belongsToScope(element, scope)) {
+    if (belongsToScope(element, scope, isLookingForScope)) {
       return element
     }
   }
@@ -134,8 +142,16 @@ export function find(
   // Check if scope itself matches
   if (scope.matches?.(selector)) return scope
 
-  // Search descendants, excluding nested scopes
-  const found = findFirstInScope(scope.querySelectorAll(selector), scope)
+  // Detect if we're looking for scope elements (child components)
+  // vs slot elements (internal structure)
+  const isLookingForScope = selector.includes('data-bf-scope')
+
+  // Search descendants, excluding nested scopes for slot searches
+  const found = findFirstInScope(
+    scope.querySelectorAll(selector),
+    scope,
+    isLookingForScope
+  )
   if (found) return found
 
   // For fragment roots, elements may be in sibling scope elements
@@ -148,7 +164,11 @@ export function find(
       for (const sibling of siblings) {
         if (sibling === scope) continue
         if (sibling.matches?.(selector)) return sibling
-        const siblingFound = findFirstInScope(sibling.querySelectorAll(selector), sibling)
+        const siblingFound = findFirstInScope(
+          sibling.querySelectorAll(selector),
+          sibling,
+          isLookingForScope
+        )
         if (siblingFound) return siblingFound
       }
     }
