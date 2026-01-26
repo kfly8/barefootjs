@@ -21,6 +21,7 @@ import type {
   CompilerError,
   SourceLocation,
   ParsedExpr,
+  ParsedStatement,
 } from '@barefootjs/jsx'
 import { BaseAdapter, type AdapterOutput, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
@@ -632,22 +633,16 @@ export class GoTemplateAdapter extends BaseAdapter {
 
       case 'member': {
         // Handle .length with higher-order filter → len (bf_filter ...)
-        if (expr.property === 'length' && expr.object.kind === 'higher-order' && expr.object.method === 'filter') {
-          const { field, negated } = this.extractFieldPredicate(expr.object.predicate, expr.object.param)
-          if (field) {
-            const arrayExpr = this.renderParsedExpr(expr.object.object)
-            const value = negated ? 'false' : 'true'
-            return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+        if (expr.property === 'length' && expr.object.kind === 'higher-order') {
+          const result = this.renderFilterLengthExpr(expr.object, e => this.renderParsedExpr(e))
+          if (result) {
+            return result
           }
         }
 
         const obj = this.renderParsedExpr(expr.object)
         // Handle .length -> len
         if (expr.property === 'length') {
-          // If object already starts with . (like .Items), use "len .Items"
-          if (obj.startsWith('.')) {
-            return `len ${obj}`
-          }
           return `len ${obj}`
         }
         // Normal property access: .User.Name
@@ -742,26 +737,8 @@ export class GoTemplateAdapter extends BaseAdapter {
         return `[ARROW-FN: ${expr.param} => ...]`
 
       case 'higher-order': {
-        const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
-        if (!field) {
-          // Field extraction failed → unsupported
-          return `[UNSUPPORTED: ${expr.method}]`
-        }
-
-        const arrayExpr = this.renderParsedExpr(expr.object) // Recursive for chaining
-
-        if (expr.method === 'every') {
-          return `bf_every ${arrayExpr} "${field}"`
-        }
-        if (expr.method === 'some') {
-          return `bf_some ${arrayExpr} "${field}"`
-        }
-        if (expr.method === 'filter') {
-          const value = negated ? 'false' : 'true'
-          return `bf_filter ${arrayExpr} "${field}" ${value}`
-        }
-
-        return `[UNSUPPORTED: ${expr.method}]`
+        const result = this.renderHigherOrderExpr(expr, e => this.renderParsedExpr(e))
+        return result ?? `[UNSUPPORTED: ${expr.method}]`
       }
 
       case 'unsupported':
@@ -791,24 +768,293 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   /**
+   * Render a higher-order expression (filter, every, some) to Go template.
+   * Returns null if the expression is not supported.
+   *
+   * @param expr - The higher-order expression
+   * @param renderArray - Function to render the array expression (allows recursion via different methods)
+   */
+  private renderHigherOrderExpr(
+    expr: Extract<ParsedExpr, { kind: 'higher-order' }>,
+    renderArray: (e: ParsedExpr) => string
+  ): string | null {
+    const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
+    if (!field) {
+      return null
+    }
+
+    const arrayExpr = renderArray(expr.object)
+
+    if (expr.method === 'every') {
+      return `bf_every ${arrayExpr} "${field}"`
+    }
+    if (expr.method === 'some') {
+      return `bf_some ${arrayExpr} "${field}"`
+    }
+    if (expr.method === 'filter') {
+      const value = negated ? 'false' : 'true'
+      return `bf_filter ${arrayExpr} "${field}" ${value}`
+    }
+
+    return null
+  }
+
+  /**
+   * Render .length on a filter higher-order expression.
+   * e.g., todos().filter(t => !t.done).length → len (bf_filter .Todos "Done" false)
+   *
+   * @param filterExpr - The filter higher-order expression
+   * @param renderArray - Function to render the array expression
+   */
+  private renderFilterLengthExpr(
+    filterExpr: Extract<ParsedExpr, { kind: 'higher-order' }>,
+    renderArray: (e: ParsedExpr) => string
+  ): string | null {
+    if (filterExpr.method !== 'filter') {
+      return null
+    }
+
+    const { field, negated } = this.extractFieldPredicate(filterExpr.predicate, filterExpr.param)
+    if (!field) {
+      return null
+    }
+
+    const arrayExpr = renderArray(filterExpr.object)
+    const value = negated ? 'false' : 'true'
+    return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+  }
+
+  /**
    * Render a predicate expression for use in Go template {{if}} conditions.
    * Substitutes the loop parameter (e.g., 't' in 't.done') with dot notation.
    */
   private renderPredicateCondition(pred: ParsedExpr, param: string): string {
-    return this.renderPredicateExpr(pred, param)
+    return this.renderFilterExpr(pred, param)
   }
 
   /**
-   * Recursively render a predicate expression, substituting param references.
+   * Check if expression needs parentheses when used in and/or.
    */
-  private renderPredicateExpr(expr: ParsedExpr, param: string): string {
+  private needsParens(expr: ParsedExpr): boolean {
+    return expr.kind === 'logical' || expr.kind === 'unary' || expr.kind === 'conditional'
+  }
+
+  // =============================================================================
+  // Block Body Condition Rendering
+  // =============================================================================
+
+  /**
+   * Render block body filter into a single Go template condition.
+   *
+   * Example block body:
+   * ```
+   * filter(t => {
+   *   const f = filter()
+   *   if (f === 'active') return !t.done
+   *   if (f === 'completed') return t.done
+   *   return true
+   * })
+   * ```
+   *
+   * Becomes:
+   * ```
+   * or (and (eq $.Filter "active") (not .Done))
+   *    (and (eq $.Filter "completed") .Done)
+   *    (and (ne $.Filter "active") (ne $.Filter "completed"))
+   * ```
+   */
+  private renderBlockBodyCondition(
+    statements: ParsedStatement[],
+    param: string
+  ): string {
+    // Build a map of local variables to their signal sources
+    // e.g., { f: 'filter' } when we see `const f = filter()`
+    const localVarMap = new Map<string, string>()
+
+    // Collect all return paths through the block body
+    const paths = this.collectReturnPaths(statements, [], localVarMap, param)
+
+    if (paths.length === 0) {
+      // No return paths found, default to true
+      return 'true'
+    }
+
+    if (paths.length === 1) {
+      // Single path: render conditions with AND, then check result
+      const path = paths[0]
+      return this.buildSinglePathCondition(path, param, localVarMap)
+    }
+
+    // Multiple paths: build OR condition
+    return this.buildOrCondition(paths, param, localVarMap)
+  }
+
+  /**
+   * Recursively collect all return paths through the statements.
+   * Returns an array of ReturnPath objects.
+   */
+  private collectReturnPaths(
+    statements: ParsedStatement[],
+    currentConditions: ParsedExpr[],
+    localVarMap: Map<string, string>,
+    param: string
+  ): Array<{ conditions: ParsedExpr[]; result: ParsedExpr }> {
+    const paths: Array<{ conditions: ParsedExpr[]; result: ParsedExpr }> = []
+
+    for (const stmt of statements) {
+      if (stmt.kind === 'var-decl') {
+        // Track local variable to signal mapping
+        // e.g., const f = filter() -> f maps to 'filter'
+        if (stmt.init.kind === 'call' && stmt.init.callee.kind === 'identifier') {
+          localVarMap.set(stmt.name, stmt.init.callee.name)
+        }
+      } else if (stmt.kind === 'return') {
+        // This is a return path
+        paths.push({
+          conditions: [...currentConditions],
+          result: stmt.value
+        })
+        // After a return, subsequent statements in this branch are unreachable
+        break
+      } else if (stmt.kind === 'if') {
+        // If statement: collect paths from both branches
+        const thenConditions = [...currentConditions, stmt.condition]
+        const thenPaths = this.collectReturnPaths(stmt.consequent, thenConditions, localVarMap, param)
+        paths.push(...thenPaths)
+
+        if (stmt.alternate) {
+          // Negate the condition for the else branch
+          const negatedCondition: ParsedExpr = { kind: 'unary', op: '!', argument: stmt.condition }
+          const elseConditions = [...currentConditions, negatedCondition]
+          const elsePaths = this.collectReturnPaths(stmt.alternate, elseConditions, localVarMap, param)
+          paths.push(...elsePaths)
+        } else {
+          // No else branch: implicit fall-through (continue to next statement)
+          // Need to track the negated condition for subsequent statements
+          const negatedCondition: ParsedExpr = { kind: 'unary', op: '!', argument: stmt.condition }
+          currentConditions.push(negatedCondition)
+        }
+      }
+    }
+
+    return paths
+  }
+
+  /**
+   * Build a condition for a single return path.
+   */
+  private buildSinglePathCondition(
+    path: { conditions: ParsedExpr[]; result: ParsedExpr },
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    // If result is a literal boolean
+    if (path.result.kind === 'literal' && path.result.literalType === 'boolean') {
+      if (path.result.value === true) {
+        // Return true: the conditions themselves determine visibility
+        if (path.conditions.length === 0) {
+          return 'true'
+        }
+        return this.renderConditionsAnd(path.conditions, param, localVarMap)
+      } else {
+        // Return false: this path should NOT match
+        return 'false'
+      }
+    }
+
+    // Non-boolean result: combine conditions AND result
+    if (path.conditions.length === 0) {
+      return this.renderFilterExpr(path.result, param, localVarMap)
+    }
+
+    const condPart = this.renderConditionsAnd(path.conditions, param, localVarMap)
+    const resultPart = this.renderFilterExpr(path.result, param, localVarMap)
+    return `and (${condPart}) (${resultPart})`
+  }
+
+  /**
+   * Build an OR condition from multiple return paths.
+   */
+  private buildOrCondition(
+    paths: Array<{ conditions: ParsedExpr[]; result: ParsedExpr }>,
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    const parts: string[] = []
+
+    for (const path of paths) {
+      // Skip paths that always return false
+      if (path.result.kind === 'literal' && path.result.literalType === 'boolean' && path.result.value === false) {
+        continue
+      }
+
+      const pathCond = this.buildSinglePathCondition(path, param, localVarMap)
+      if (pathCond !== 'false') {
+        parts.push(pathCond)
+      }
+    }
+
+    if (parts.length === 0) {
+      return 'false'
+    }
+    if (parts.length === 1) {
+      return parts[0]
+    }
+
+    // Wrap each part in parentheses for clarity
+    return `or ${parts.map(p => `(${p})`).join(' ')}`
+  }
+
+  /**
+   * Render multiple conditions combined with AND.
+   */
+  private renderConditionsAnd(
+    conditions: ParsedExpr[],
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    if (conditions.length === 0) {
+      return 'true'
+    }
+    if (conditions.length === 1) {
+      return this.renderFilterExpr(conditions[0], param, localVarMap)
+    }
+
+    const parts = conditions.map(c => this.renderFilterExpr(c, param, localVarMap))
+    // Build nested and: and (a) (and (b) (c))
+    let result = parts[parts.length - 1]
+    for (let i = parts.length - 2; i >= 0; i--) {
+      result = `and (${parts[i]}) (${result})`
+    }
+    return result
+  }
+
+  /**
+   * Unified method for rendering filter predicate expressions.
+   * Used for both expression body (t => !t.done) and block body filters.
+   *
+   * @param expr - The parsed expression to render
+   * @param param - The loop parameter name (e.g., 't' in filter(t => ...))
+   * @param localVarMap - Optional map of local variables to signal names (for block body)
+   */
+  private renderFilterExpr(
+    expr: ParsedExpr,
+    param: string,
+    localVarMap: Map<string, string> = new Map()
+  ): string {
     switch (expr.kind) {
-      case 'identifier':
-        // If identifier matches the param, it's a direct reference (shouldn't happen in normal predicates)
+      case 'identifier': {
+        // Check if it's the loop param
         if (expr.name === param) {
           return '.'
         }
+        // Check if it's a local variable mapped to a signal
+        const signal = localVarMap.get(expr.name)
+        if (signal) {
+          return `$.${this.capitalizeFieldName(signal)}`
+        }
         return `.${this.capitalizeFieldName(expr.name)}`
+      }
 
       case 'literal':
         if (expr.literalType === 'string') {
@@ -824,8 +1070,8 @@ export class GoTemplateAdapter extends BaseAdapter {
         if (expr.object.kind === 'identifier' && expr.object.name === param) {
           return `.${this.capitalizeFieldName(expr.property)}`
         }
-        // Nested member access: t.user.name -> .User.Name
-        const obj = this.renderPredicateExpr(expr.object, param)
+        // Nested member access or local var.prop
+        const obj = this.renderFilterExpr(expr.object, param, localVarMap)
         return `${obj}.${this.capitalizeFieldName(expr.property)}`
       }
 
@@ -834,18 +1080,19 @@ export class GoTemplateAdapter extends BaseAdapter {
         if (expr.callee.kind === 'member' && expr.callee.object.kind === 'identifier' && expr.callee.object.name === param) {
           return `.${this.capitalizeFieldName(expr.callee.property)}`
         }
-        // Signal calls: count() -> .Count
+        // Signal calls: filter() -> $.Filter
         if (expr.callee.kind === 'identifier' && expr.args.length === 0) {
-          return `.${this.capitalizeFieldName(expr.callee.name)}`
+          return `$.${this.capitalizeFieldName(expr.callee.name)}`
         }
-        const callee = this.renderPredicateExpr(expr.callee, param)
-        return callee
+        return this.renderFilterExpr(expr.callee, param, localVarMap)
       }
 
       case 'unary': {
-        const arg = this.renderPredicateExpr(expr.argument, param)
+        const arg = this.renderFilterExpr(expr.argument, param, localVarMap)
         if (expr.op === '!') {
-          return `not ${arg}`
+          // Wrap in parens if arg is a function call (eq, ne, gt, etc.) for Go template syntax
+          const needsParens = this.isGoFunctionCall(expr.argument)
+          return needsParens ? `not (${arg})` : `not ${arg}`
         }
         if (expr.op === '-') {
           return `bf_neg ${arg}`
@@ -854,8 +1101,8 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
 
       case 'binary': {
-        const left = this.renderPredicateExpr(expr.left, param)
-        const right = this.renderPredicateExpr(expr.right, param)
+        const left = this.renderFilterExpr(expr.left, param, localVarMap)
+        const right = this.renderFilterExpr(expr.right, param, localVarMap)
 
         switch (expr.op) {
           case '===':
@@ -886,33 +1133,40 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
 
       case 'logical': {
-        const left = this.renderPredicateExpr(expr.left, param)
-        const right = this.renderPredicateExpr(expr.right, param)
-        const wrapLeft = this.needsParensInPredicate(expr.left) ? `(${left})` : left
-        const wrapRight = this.needsParensInPredicate(expr.right) ? `(${right})` : right
+        const left = this.renderFilterExpr(expr.left, param, localVarMap)
+        const right = this.renderFilterExpr(expr.right, param, localVarMap)
         if (expr.op === '&&') {
-          return `and ${wrapLeft} ${wrapRight}`
+          return `and (${left}) (${right})`
         }
-        return `or ${wrapLeft} ${wrapRight}`
+        return `or (${left}) (${right})`
       }
 
       default:
-        return `[UNSUPPORTED-PREDICATE]`
+        return '[UNSUPPORTED-FILTER-EXPR]'
     }
   }
 
   /**
-   * Check if expression needs parentheses in predicate context.
+   * Check if a ParsedExpr will render as a Go template function call.
+   * Used to determine if parentheses are needed around the expression.
    */
-  private needsParensInPredicate(expr: ParsedExpr): boolean {
-    return expr.kind === 'logical' || expr.kind === 'unary'
-  }
-
-  /**
-   * Check if expression needs parentheses when used in and/or.
-   */
-  private needsParens(expr: ParsedExpr): boolean {
-    return expr.kind === 'logical' || expr.kind === 'unary' || expr.kind === 'conditional'
+  private isGoFunctionCall(expr: ParsedExpr): boolean {
+    switch (expr.kind) {
+      case 'binary':
+        // Comparison operators become function calls (eq, ne, gt, lt, etc.)
+        return ['===', '==', '!==', '!=', '>', '<', '>=', '<='].includes(expr.op)
+      case 'logical':
+        // Logical operators become function calls (and, or)
+        return true
+      case 'unary':
+        // Unary operators become function calls (not, bf_neg)
+        return true
+      case 'member':
+        // .length becomes len function call
+        return expr.property === 'length'
+      default:
+        return false
+    }
   }
 
   /**
@@ -1115,12 +1369,10 @@ export class GoTemplateAdapter extends BaseAdapter {
 
       case 'member': {
         // Handle .length with higher-order filter → len (bf_filter ...)
-        if (expr.property === 'length' && expr.object.kind === 'higher-order' && expr.object.method === 'filter') {
-          const { field, negated } = this.extractFieldPredicate(expr.object.predicate, expr.object.param)
-          if (field) {
-            const arrayExpr = this.renderConditionExpr(expr.object.object)
-            const value = negated ? 'false' : 'true'
-            return `len (bf_filter ${arrayExpr} "${field}" ${value})`
+        if (expr.property === 'length' && expr.object.kind === 'higher-order') {
+          const result = this.renderFilterLengthExpr(expr.object, e => this.renderConditionExpr(e))
+          if (result) {
+            return result
           }
         }
 
@@ -1244,10 +1496,25 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     // Handle filter().map() pattern by adding if-condition
     if (loop.filterPredicate) {
-      const filterCond = this.renderPredicateCondition(
-        loop.filterPredicate.predicate,
-        loop.filterPredicate.param
-      )
+      let filterCond: string
+
+      if (loop.filterPredicate.blockBody) {
+        // Block body: collect return paths and build OR condition
+        filterCond = this.renderBlockBodyCondition(
+          loop.filterPredicate.blockBody,
+          loop.filterPredicate.param
+        )
+      } else if (loop.filterPredicate.predicate) {
+        // Expression body: render predicate directly
+        filterCond = this.renderPredicateCondition(
+          loop.filterPredicate.predicate,
+          loop.filterPredicate.param
+        )
+      } else {
+        // Fallback: always true
+        filterCond = 'true'
+      }
+
       return `{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}`
     }
 

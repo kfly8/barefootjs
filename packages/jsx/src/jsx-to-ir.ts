@@ -24,7 +24,7 @@ import type {
   TypeInfo,
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
-import { parseExpression, isSupported, type ParsedExpr } from './expression-parser'
+import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
 
 // =============================================================================
 // Transform Context
@@ -510,24 +510,46 @@ function isFilterCall(node: ts.Expression): { array: ts.Expression; callback: ts
 }
 
 /**
+ * Result type for extractFilterPredicate.
+ * Either has an expression body (predicate) or block body (blockBody).
+ */
+type FilterPredicateResult = {
+  param: string
+  predicate?: ParsedExpr        // Expression body
+  blockBody?: ParsedStatement[] // Block body
+  raw: string
+}
+
+/**
  * Extract filter predicate info from an arrow function.
- * Performs early parsing to get ParsedExpr AST.
+ * Performs early parsing to get ParsedExpr AST (expression body)
+ * or ParsedStatement[] (block body).
  */
 function extractFilterPredicate(
   callback: ts.Expression,
   ctx: TransformContext
-): { param: string; predicate: ParsedExpr; raw: string } | null {
+): FilterPredicateResult | null {
   if (!ts.isArrowFunction(callback)) return null
   if (callback.parameters.length < 1) return null
-
-  // Block body arrow functions are not supported for SSR
-  // e.g., filter(t => { const f = filter(); ... })
-  if (ts.isBlock(callback.body)) return null
 
   const firstParam = callback.parameters[0]
   if (!ts.isIdentifier(firstParam.name)) return null
 
   const param = firstParam.name.getText(ctx.sourceFile)
+
+  // Block body arrow functions: filter(t => { const f = filter(); ... })
+  if (ts.isBlock(callback.body)) {
+    const raw = callback.body.getText(ctx.sourceFile)
+    const statements = parseBlockBody(callback.body, ctx.sourceFile)
+    if (!statements) {
+      return null  // Fallback to clientOnly
+    }
+    // TODO: Check if all statements are supported for SSR
+    // For now, if parseBlockBody succeeds, we assume it's supported
+    return { param, blockBody: statements, raw }
+  }
+
+  // Expression body: filter(t => !t.done)
   const raw = callback.body.getText(ctx.sourceFile)
   const predicate = parseExpression(raw)
 
@@ -550,18 +572,18 @@ function transformMapCall(
   // Check for filter().map() pattern
   const filterInfo = isFilterCall(propAccess.expression)
   let array: string
-  let filterPredicate: { param: string; predicate: ParsedExpr; raw: string } | undefined
+  let filterPredicate: FilterPredicateResult | undefined
 
   if (filterInfo) {
-    const predicate = extractFilterPredicate(filterInfo.callback, ctx)
-    if (isClientOnly || !predicate) {
-      // @client or block body: keep filter() in array for client evaluation
+    const extracted = extractFilterPredicate(filterInfo.callback, ctx)
+    if (isClientOnly || !extracted) {
+      // @client or unsupported: keep filter() in array for client evaluation
       array = propAccess.expression.getText(ctx.sourceFile)
       filterPredicate = undefined
     } else {
-      // SSR with simple predicate: decompose for server-side filtering
+      // SSR with supported predicate (expression or block body)
       array = filterInfo.array.getText(ctx.sourceFile)
-      filterPredicate = predicate
+      filterPredicate = extracted
     }
   } else {
     array = propAccess.expression.getText(ctx.sourceFile)
