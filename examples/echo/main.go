@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
 	bf "github.com/barefootjs/runtime/bf"
@@ -22,54 +21,44 @@ func loadTemplates() *template.Template {
 	)
 }
 
-// renderer is the global component renderer with the default layout
-var renderer = bf.NewRenderer(loadTemplates(), defaultLayout)
+// EchoRenderer adapts bf.Renderer to Echo's Renderer interface
+type EchoRenderer struct {
+	bf *bf.Renderer
+}
+
+func (r *EchoRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	opts := data.(bf.RenderOptions)
+	opts.ComponentName = name
+	_, err := w.Write([]byte(r.bf.Render(opts)))
+	return err
+}
 
 // defaultLayout renders the standard HTML page structure
 func defaultLayout(ctx *bf.RenderContext) string {
-	var buf strings.Builder
-
-	buf.WriteString(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>`)
-	buf.WriteString(ctx.Title)
-	buf.WriteString(`</title>
-    <link rel="stylesheet" href="/shared/styles/components.css">
-    <link rel="stylesheet" href="/shared/styles/todo-app.css">`)
-
+	headingStyle := ""
+	headingHTML := ""
 	if ctx.Heading != "" {
-		buf.WriteString(`
+		headingStyle = `
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    </style>`)
+    </style>`
+		headingHTML = fmt.Sprintf(`
+    <h1>%s</h1>`, ctx.Heading)
 	}
 
-	buf.WriteString(`
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+    <title>%s</title>
+    <link rel="stylesheet" href="/shared/styles/components.css">
+    <link rel="stylesheet" href="/shared/styles/todo-app.css">%s
 </head>
-<body>`)
-
-	if ctx.Heading != "" {
-		buf.WriteString(`
-    <h1>`)
-		buf.WriteString(ctx.Heading)
-		buf.WriteString(`</h1>`)
-	}
-
-	buf.WriteString(`
-    <div id="app">`)
-	buf.WriteString(string(ctx.ComponentHTML))
-	buf.WriteString(string(ctx.PropsScripts))
-	buf.WriteString(`</div>
+<body>%s
+    <div id="app">%s%s</div>
     <p><a href="/">← Back</a></p>
-    `)
-	buf.WriteString(string(ctx.Scripts))
-	buf.WriteString(`
+    %s
 </body>
-</html>`)
-
-	return buf.String()
+</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Scripts)
 }
 
 // In-memory todo storage
@@ -95,15 +84,6 @@ func resetTodos() {
 	}
 }
 
-// Template renderer for Echo
-type TemplateRenderer struct {
-	templates *template.Template
-}
-
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
-}
-
 func main() {
 	e := echo.New()
 
@@ -111,11 +91,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Load templates with BarefootJS functions
-	t := &TemplateRenderer{
-		templates: loadTemplates(),
-	}
-	e.Renderer = t
+	// Renderer
+	e.Renderer = &EchoRenderer{bf: bf.NewRenderer(loadTemplates(), defaultLayout)}
 
 	// Routes
 	e.GET("/", indexHandler)
@@ -168,12 +145,11 @@ func indexHandler(c echo.Context) error {
 
 func counterHandler(c echo.Context) error {
 	props := NewCounterProps(CounterInput{Initial: 0})
-	return c.HTML(http.StatusOK, renderer.Render(bf.RenderOptions{
-		ComponentName: "Counter",
-		Props:         &props,
-		Title:         "Counter - BarefootJS",
-		Heading:       "Counter Component",
-	}))
+	return c.Render(http.StatusOK, "Counter", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Counter - BarefootJS",
+		Heading: "Counter Component",
+	})
 }
 
 func toggleHandler(c echo.Context) error {
@@ -185,12 +161,11 @@ func toggleHandler(c echo.Context) error {
 		},
 	})
 
-	return c.HTML(http.StatusOK, renderer.Render(bf.RenderOptions{
-		ComponentName: "Toggle",
-		Props:         &props,
-		Title:         "Toggle - BarefootJS",
-		Heading:       "Toggle Component",
-	}))
+	return c.Render(http.StatusOK, "Toggle", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Toggle - BarefootJS",
+		Heading: "Toggle Component",
+	})
 }
 
 func todosHandler(c echo.Context) error {
@@ -224,12 +199,10 @@ func todosHandler(c echo.Context) error {
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
 
-	return c.HTML(http.StatusOK, renderer.Render(bf.RenderOptions{
-		ComponentName: "TodoApp",
-		Props:         &props,
-		Title:         "TodoMVC - BarefootJS",
-		Heading:       "", // TodoMVC header inside component
-	}))
+	return c.Render(http.StatusOK, "TodoApp", bf.RenderOptions{
+		Props: &props,
+		Title: "TodoMVC - BarefootJS",
+	})
 }
 
 func todosSSRHandler(c echo.Context) error {
@@ -263,12 +236,10 @@ func todosSSRHandler(c echo.Context) error {
 	props.TodoItems = todoItems // For Go template (not in JSON)
 	props.DoneCount = doneCount
 
-	return c.HTML(http.StatusOK, renderer.Render(bf.RenderOptions{
-		ComponentName: "TodoAppSSR",
-		Props:         &props,
-		Title:         "TodoMVC SSR - BarefootJS",
-		Heading:       "",
-	}))
+	return c.Render(http.StatusOK, "TodoAppSSR", bf.RenderOptions{
+		Props: &props,
+		Title: "TodoMVC SSR - BarefootJS",
+	})
 }
 
 // Todo API handlers
