@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'bun:test'
-import { parseExpression, isSupported, exprToString } from '../expression-parser'
+import ts from 'typescript'
+import { parseExpression, isSupported, exprToString, parseBlockBody } from '../expression-parser'
 
 describe('expression-parser', () => {
   describe('parseExpression', () => {
@@ -348,6 +349,128 @@ describe('expression-parser', () => {
     test('converts filter-length to string', () => {
       const expr = parseExpression('todos().filter(t => !t.done).length')
       expect(exprToString(expr)).toBe('todos().filter(t => !t.done).length')
+    })
+  })
+
+  describe('parseBlockBody', () => {
+    function parseBlock(code: string) {
+      const sourceFile = ts.createSourceFile(
+        'test.ts',
+        `(t => ${code})`,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TSX
+      )
+      const exprStmt = sourceFile.statements[0] as ts.ExpressionStatement
+      const paren = exprStmt.expression as ts.ParenthesizedExpression
+      const arrow = paren.expression as ts.ArrowFunction
+      const block = arrow.body as ts.Block
+      return parseBlockBody(block, sourceFile)
+    }
+
+    test('parses simple return statement', () => {
+      const result = parseBlock('{ return true }')
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(1)
+      expect(result![0].kind).toBe('return')
+      if (result![0].kind === 'return') {
+        expect(result![0].value.kind).toBe('literal')
+      }
+    })
+
+    test('parses variable declaration with signal call', () => {
+      const result = parseBlock('{ const f = filter(); return f }')
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(2)
+      expect(result![0].kind).toBe('var-decl')
+      if (result![0].kind === 'var-decl') {
+        expect(result![0].name).toBe('f')
+        expect(result![0].init.kind).toBe('call')
+      }
+    })
+
+    test('parses if statement without else', () => {
+      const result = parseBlock('{ if (f === "active") return !t.done; return true }')
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(2)
+      expect(result![0].kind).toBe('if')
+      if (result![0].kind === 'if') {
+        expect(result![0].condition.kind).toBe('binary')
+        expect(result![0].consequent.length).toBe(1)
+        expect(result![0].alternate).toBeUndefined()
+      }
+    })
+
+    test('parses if-else statement', () => {
+      const result = parseBlock('{ if (f === "active") return !t.done; else return true }')
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(1)
+      expect(result![0].kind).toBe('if')
+      if (result![0].kind === 'if') {
+        expect(result![0].consequent.length).toBe(1)
+        expect(result![0].alternate).toBeDefined()
+        expect(result![0].alternate!.length).toBe(1)
+      }
+    })
+
+    test('parses if-else if-else chain', () => {
+      const result = parseBlock(`{
+        if (f === "active") return !t.done
+        else if (f === "completed") return t.done
+        else return true
+      }`)
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(1)
+      expect(result![0].kind).toBe('if')
+      if (result![0].kind === 'if') {
+        // First if condition
+        expect(result![0].condition.kind).toBe('binary')
+        // else if is represented as alternate containing another if
+        expect(result![0].alternate).toBeDefined()
+        expect(result![0].alternate!.length).toBe(1)
+        expect(result![0].alternate![0].kind).toBe('if')
+      }
+    })
+
+    test('parses nested if statements', () => {
+      const result = parseBlock(`{
+        if (showCompleted) {
+          if (t.done) return true
+          return false
+        }
+        return true
+      }`)
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(2)
+      expect(result![0].kind).toBe('if')
+      if (result![0].kind === 'if') {
+        expect(result![0].consequent.length).toBe(2)
+      }
+    })
+
+    test('parses TodoApp filter pattern', () => {
+      const result = parseBlock(`{
+        const f = filter()
+        if (f === 'active') return !t.done
+        if (f === 'completed') return t.done
+        return true
+      }`)
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(4)
+      expect(result![0].kind).toBe('var-decl')
+      expect(result![1].kind).toBe('if')
+      expect(result![2].kind).toBe('if')
+      expect(result![3].kind).toBe('return')
+    })
+
+    test('returns null for unsupported statements (for loop)', () => {
+      const result = parseBlock('{ for (let i = 0; i < 10; i++) {} return true }')
+      expect(result).toBeNull()
+    })
+
+    test('returns null for unsupported statements (while loop)', () => {
+      const result = parseBlock('{ while (true) {} return true }')
+      expect(result).toBeNull()
     })
   })
 })

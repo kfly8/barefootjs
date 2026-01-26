@@ -21,6 +21,7 @@ import type {
   CompilerError,
   SourceLocation,
   ParsedExpr,
+  ParsedStatement,
 } from '@barefootjs/jsx'
 import { BaseAdapter, type AdapterOutput, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
@@ -915,6 +916,319 @@ export class GoTemplateAdapter extends BaseAdapter {
     return expr.kind === 'logical' || expr.kind === 'unary' || expr.kind === 'conditional'
   }
 
+  // =============================================================================
+  // Block Body Condition Rendering
+  // =============================================================================
+
+  /**
+   * Render block body filter into a single Go template condition.
+   *
+   * Example block body:
+   * ```
+   * filter(t => {
+   *   const f = filter()
+   *   if (f === 'active') return !t.done
+   *   if (f === 'completed') return t.done
+   *   return true
+   * })
+   * ```
+   *
+   * Becomes:
+   * ```
+   * or (and (eq $.Filter "active") (not .Done))
+   *    (and (eq $.Filter "completed") .Done)
+   *    (and (ne $.Filter "active") (ne $.Filter "completed"))
+   * ```
+   */
+  private renderBlockBodyCondition(
+    statements: ParsedStatement[],
+    param: string
+  ): string {
+    // Build a map of local variables to their signal sources
+    // e.g., { f: 'filter' } when we see `const f = filter()`
+    const localVarMap = new Map<string, string>()
+
+    // Collect all return paths through the block body
+    const paths = this.collectReturnPaths(statements, [], localVarMap, param)
+
+    if (paths.length === 0) {
+      // No return paths found, default to true
+      return 'true'
+    }
+
+    if (paths.length === 1) {
+      // Single path: render conditions with AND, then check result
+      const path = paths[0]
+      return this.buildSinglePathCondition(path, param, localVarMap)
+    }
+
+    // Multiple paths: build OR condition
+    return this.buildOrCondition(paths, param, localVarMap)
+  }
+
+  /**
+   * Recursively collect all return paths through the statements.
+   * Returns an array of ReturnPath objects.
+   */
+  private collectReturnPaths(
+    statements: ParsedStatement[],
+    currentConditions: ParsedExpr[],
+    localVarMap: Map<string, string>,
+    param: string
+  ): Array<{ conditions: ParsedExpr[]; result: ParsedExpr }> {
+    const paths: Array<{ conditions: ParsedExpr[]; result: ParsedExpr }> = []
+
+    for (const stmt of statements) {
+      if (stmt.kind === 'var-decl') {
+        // Track local variable to signal mapping
+        // e.g., const f = filter() -> f maps to 'filter'
+        if (stmt.init.kind === 'call' && stmt.init.callee.kind === 'identifier') {
+          localVarMap.set(stmt.name, stmt.init.callee.name)
+        }
+      } else if (stmt.kind === 'return') {
+        // This is a return path
+        paths.push({
+          conditions: [...currentConditions],
+          result: stmt.value
+        })
+        // After a return, subsequent statements in this branch are unreachable
+        break
+      } else if (stmt.kind === 'if') {
+        // If statement: collect paths from both branches
+        const thenConditions = [...currentConditions, stmt.condition]
+        const thenPaths = this.collectReturnPaths(stmt.consequent, thenConditions, localVarMap, param)
+        paths.push(...thenPaths)
+
+        if (stmt.alternate) {
+          // Negate the condition for the else branch
+          const negatedCondition: ParsedExpr = { kind: 'unary', op: '!', argument: stmt.condition }
+          const elseConditions = [...currentConditions, negatedCondition]
+          const elsePaths = this.collectReturnPaths(stmt.alternate, elseConditions, localVarMap, param)
+          paths.push(...elsePaths)
+        } else {
+          // No else branch: implicit fall-through (continue to next statement)
+          // Need to track the negated condition for subsequent statements
+          const negatedCondition: ParsedExpr = { kind: 'unary', op: '!', argument: stmt.condition }
+          currentConditions.push(negatedCondition)
+        }
+      }
+    }
+
+    return paths
+  }
+
+  /**
+   * Build a condition for a single return path.
+   */
+  private buildSinglePathCondition(
+    path: { conditions: ParsedExpr[]; result: ParsedExpr },
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    // If result is a literal boolean
+    if (path.result.kind === 'literal' && path.result.literalType === 'boolean') {
+      if (path.result.value === true) {
+        // Return true: the conditions themselves determine visibility
+        if (path.conditions.length === 0) {
+          return 'true'
+        }
+        return this.renderConditionsAnd(path.conditions, param, localVarMap)
+      } else {
+        // Return false: this path should NOT match
+        return 'false'
+      }
+    }
+
+    // Non-boolean result: combine conditions AND result
+    if (path.conditions.length === 0) {
+      return this.renderBlockExpr(path.result, param, localVarMap)
+    }
+
+    const condPart = this.renderConditionsAnd(path.conditions, param, localVarMap)
+    const resultPart = this.renderBlockExpr(path.result, param, localVarMap)
+    return `and (${condPart}) (${resultPart})`
+  }
+
+  /**
+   * Build an OR condition from multiple return paths.
+   */
+  private buildOrCondition(
+    paths: Array<{ conditions: ParsedExpr[]; result: ParsedExpr }>,
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    const parts: string[] = []
+
+    for (const path of paths) {
+      // Skip paths that always return false
+      if (path.result.kind === 'literal' && path.result.literalType === 'boolean' && path.result.value === false) {
+        continue
+      }
+
+      const pathCond = this.buildSinglePathCondition(path, param, localVarMap)
+      if (pathCond !== 'false') {
+        parts.push(pathCond)
+      }
+    }
+
+    if (parts.length === 0) {
+      return 'false'
+    }
+    if (parts.length === 1) {
+      return parts[0]
+    }
+
+    // Wrap each part in parentheses for clarity
+    return `or ${parts.map(p => `(${p})`).join(' ')}`
+  }
+
+  /**
+   * Render multiple conditions combined with AND.
+   */
+  private renderConditionsAnd(
+    conditions: ParsedExpr[],
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    if (conditions.length === 0) {
+      return 'true'
+    }
+    if (conditions.length === 1) {
+      return this.renderBlockExpr(conditions[0], param, localVarMap)
+    }
+
+    const parts = conditions.map(c => this.renderBlockExpr(c, param, localVarMap))
+    // Build nested and: and (a) (and (b) (c))
+    let result = parts[parts.length - 1]
+    for (let i = parts.length - 2; i >= 0; i--) {
+      result = `and (${parts[i]}) (${result})`
+    }
+    return result
+  }
+
+  /**
+   * Render a ParsedExpr in block body context, substituting local variables.
+   */
+  private renderBlockExpr(
+    expr: ParsedExpr,
+    param: string,
+    localVarMap: Map<string, string>
+  ): string {
+    switch (expr.kind) {
+      case 'identifier': {
+        // Check if it's the loop param
+        if (expr.name === param) {
+          return '.'
+        }
+        // Check if it's a local variable mapped to a signal
+        const signal = localVarMap.get(expr.name)
+        if (signal) {
+          return `$.${this.capitalizeFieldName(signal)}`
+        }
+        return `.${this.capitalizeFieldName(expr.name)}`
+      }
+
+      case 'literal':
+        if (expr.literalType === 'string') {
+          return `"${expr.value}"`
+        }
+        if (expr.literalType === 'null') {
+          return '""'
+        }
+        return String(expr.value)
+
+      case 'member': {
+        // t.done -> .Done
+        if (expr.object.kind === 'identifier' && expr.object.name === param) {
+          return `.${this.capitalizeFieldName(expr.property)}`
+        }
+        // Local var.prop -> $.Signal.Prop (rare case)
+        const obj = this.renderBlockExpr(expr.object, param, localVarMap)
+        return `${obj}.${this.capitalizeFieldName(expr.property)}`
+      }
+
+      case 'call': {
+        // signal() -> $.Signal
+        if (expr.callee.kind === 'identifier' && expr.args.length === 0) {
+          return `$.${this.capitalizeFieldName(expr.callee.name)}`
+        }
+        return this.renderBlockExpr(expr.callee, param, localVarMap)
+      }
+
+      case 'unary': {
+        const arg = this.renderBlockExpr(expr.argument, param, localVarMap)
+        if (expr.op === '!') {
+          // Wrap in parens if arg is a function call (eq, ne, gt, etc.) for Go template syntax
+          const needsParens = this.isGoFunctionCall(expr.argument)
+          return needsParens ? `not (${arg})` : `not ${arg}`
+        }
+        if (expr.op === '-') {
+          return `bf_neg ${arg}`
+        }
+        return arg
+      }
+
+      case 'binary': {
+        const left = this.renderBlockExpr(expr.left, param, localVarMap)
+        const right = this.renderBlockExpr(expr.right, param, localVarMap)
+
+        switch (expr.op) {
+          case '===':
+          case '==':
+            return `eq ${left} ${right}`
+          case '!==':
+          case '!=':
+            return `ne ${left} ${right}`
+          case '>':
+            return `gt ${left} ${right}`
+          case '<':
+            return `lt ${left} ${right}`
+          case '>=':
+            return `ge ${left} ${right}`
+          case '<=':
+            return `le ${left} ${right}`
+          default:
+            return `${left} ${expr.op} ${right}`
+        }
+      }
+
+      case 'logical': {
+        const left = this.renderBlockExpr(expr.left, param, localVarMap)
+        const right = this.renderBlockExpr(expr.right, param, localVarMap)
+        if (expr.op === '&&') {
+          return `and (${left}) (${right})`
+        }
+        return `or (${left}) (${right})`
+      }
+
+      default:
+        return '[UNSUPPORTED-BLOCK-EXPR]'
+    }
+  }
+
+  /**
+   * Check if a ParsedExpr will render as a Go template function call.
+   * Used to determine if parentheses are needed around the expression.
+   */
+  private isGoFunctionCall(expr: ParsedExpr): boolean {
+    switch (expr.kind) {
+      case 'binary':
+        // Comparison operators become function calls (eq, ne, gt, lt, etc.)
+        return ['===', '==', '!==', '!=', '>', '<', '>=', '<='].includes(expr.op)
+      case 'logical':
+        // Logical operators become function calls (and, or)
+        return true
+      case 'unary':
+        // Unary operators become function calls (not, bf_neg)
+        return true
+      case 'member':
+        // .length becomes len function call
+        return expr.property === 'length'
+      default:
+        return false
+    }
+  }
+
   /**
    * Render a branch of a conditional expression.
    * String literals render as bare text (no quotes).
@@ -1244,10 +1558,25 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     // Handle filter().map() pattern by adding if-condition
     if (loop.filterPredicate) {
-      const filterCond = this.renderPredicateCondition(
-        loop.filterPredicate.predicate,
-        loop.filterPredicate.param
-      )
+      let filterCond: string
+
+      if (loop.filterPredicate.blockBody) {
+        // Block body: collect return paths and build OR condition
+        filterCond = this.renderBlockBodyCondition(
+          loop.filterPredicate.blockBody,
+          loop.filterPredicate.param
+        )
+      } else if (loop.filterPredicate.predicate) {
+        // Expression body: render predicate directly
+        filterCond = this.renderPredicateCondition(
+          loop.filterPredicate.predicate,
+          loop.filterPredicate.param
+        )
+      } else {
+        // Fallback: always true
+        filterCond = 'true'
+      }
+
       return `{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}`
     }
 

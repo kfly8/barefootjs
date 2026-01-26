@@ -120,6 +120,10 @@ interface LoopElement {
   childEvents: LoopChildEvent[] // Detailed event info for delegation
   childComponent?: IRLoopChildComponent // For createComponent-based rendering
   isStaticArray: boolean // True if array is a static prop (not a signal)
+  filterPredicate?: {
+    param: string
+    raw: string  // Original filter predicate expression or block body
+  }
 }
 
 interface RefElement {
@@ -366,6 +370,10 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
           childEvents,
           childComponent: node.childComponent,
           isStaticArray: node.isStaticArray,
+          filterPredicate: node.filterPredicate ? {
+            param: node.filterPredicate.param,
+            raw: node.filterPredicate.raw,
+          } : undefined,
         })
       }
       // Don't traverse into loop children for interactive elements collection
@@ -1622,15 +1630,25 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
       const keyExpr = elem.key || '__idx'
       const indexParam = elem.index || '__idx'
 
+      // Apply filter predicate if present
+      const filterExpr = elem.filterPredicate
+        ? `${elem.array}.filter(${elem.filterPredicate.param} => ${elem.filterPredicate.raw})`
+        : elem.array
+
       lines.push(`  createEffect(() => {`)
-      lines.push(`    reconcileList(_${elem.slotId}, ${elem.array}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
+      lines.push(`    reconcileList(_${elem.slotId}, ${filterExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
       lines.push(`      createComponent('${name}', ${propsExpr}, ${keyExpr})`)
       lines.push(`    )`)
       lines.push(`  })`)
     } else {
       // Template string-based rendering (original implementation)
+      // Apply filter predicate if present
+      const filterExprTemplate = elem.filterPredicate
+        ? `${elem.array}.filter(${elem.filterPredicate.param} => ${elem.filterPredicate.raw})`
+        : elem.array
+
       lines.push(`  createEffect(() => {`)
-      lines.push(`    const __arr = ${elem.array}`)
+      lines.push(`    const __arr = ${filterExprTemplate}`)
       lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}) => \`${elem.template}\`)`)
       lines.push(`  })`)
     }

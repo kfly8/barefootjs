@@ -4,7 +4,7 @@
  * JSX-independent intermediate representation for multi-backend support.
  */
 
-import type { ParsedExpr } from './expression-parser'
+import type { ParsedExpr, ParsedStatement } from './expression-parser'
 
 // =============================================================================
 // Source Location (for Error Reporting)
@@ -169,10 +169,15 @@ export interface IRLoop {
    * Filter predicate for filter().map() pattern.
    * When present, the loop renders with an if-condition wrapping each iteration.
    * Example: todos.filter(t => !t.done).map(...) stores { param: 't', predicate: ParsedExpr, raw: '!t.done' }
+   *
+   * For block-body filters like:
+   *   filter(t => { const f = filter(); if (f === 'active') return !t.done; return true })
+   * The blockBody field contains the parsed statements.
    */
   filterPredicate?: {
     param: string
-    predicate: ParsedExpr
+    predicate?: ParsedExpr        // Expression body
+    blockBody?: ParsedStatement[] // Block body (mutually exclusive with predicate)
     raw: string  // Original string for error messages
   }
 

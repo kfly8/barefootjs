@@ -13,7 +13,8 @@ import type {
   IRComponent,
   IRSlot,
 } from '@barefootjs/jsx'
-import { parseExpression } from '@barefootjs/jsx'
+import { parseExpression, parseBlockBody } from '@barefootjs/jsx'
+import ts from 'typescript'
 
 // Helper to create minimal source location
 const loc = {
@@ -818,6 +819,136 @@ describe('GoTemplateAdapter', () => {
 
       const result = adapter.renderConditional(cond)
       expect(result).toBe('')
+    })
+  })
+
+  describe('block body filter rendering', () => {
+    // Helper to parse block body from code string
+    function parseBlock(code: string) {
+      const sourceFile = ts.createSourceFile(
+        'test.ts',
+        `(t => ${code})`,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TSX
+      )
+      const exprStmt = sourceFile.statements[0] as ts.ExpressionStatement
+      const paren = exprStmt.expression as ts.ParenthesizedExpression
+      const arrow = paren.expression as ts.ArrowFunction
+      const block = arrow.body as ts.Block
+      return parseBlockBody(block, sourceFile)
+    }
+
+    test('renders loop with simple block body filter', () => {
+      // filter(t => { return !t.done })
+      const blockBody = parseBlock('{ return !t.done }')
+      expect(blockBody).not.toBeNull()
+
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'todos',
+        arrayType: null,
+        itemType: null,
+        param: 'todo',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'Item', loc }],
+        slotId: null,
+        isStaticArray: true,
+        filterPredicate: {
+          param: 't',
+          blockBody: blockBody!,
+          raw: '{ return !t.done }',
+        },
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      // Should render as: {{range $_, $todo := .Todos}}{{if not .Done}}Item{{end}}{{end}}
+      expect(result).toContain('{{range')
+      expect(result).toContain('not .Done')
+      expect(result).toContain('Item')
+    })
+
+    test('renders loop with variable declaration and simple if', () => {
+      // filter(t => { const f = filter(); if (f === 'active') return !t.done; return true })
+      const blockBody = parseBlock(`{
+        const f = filter()
+        if (f === 'active') return !t.done
+        return true
+      }`)
+      expect(blockBody).not.toBeNull()
+
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'todos',
+        arrayType: null,
+        itemType: null,
+        param: 'todo',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'TodoItem', loc }],
+        slotId: null,
+        isStaticArray: true,
+        filterPredicate: {
+          param: 't',
+          blockBody: blockBody!,
+          raw: 'block body',
+        },
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      // Should contain filter condition and negated !t.done
+      expect(result).toContain('{{range')
+      expect(result).toContain('{{if')
+      expect(result).toContain('$.Filter') // local var f maps to $.Filter
+      expect(result).toContain('TodoItem')
+    })
+
+    test('renders loop with TodoApp filter pattern', () => {
+      // The classic TodoApp filter pattern:
+      // filter(t => {
+      //   const f = filter()
+      //   if (f === 'active') return !t.done
+      //   if (f === 'completed') return t.done
+      //   return true
+      // })
+      const blockBody = parseBlock(`{
+        const f = filter()
+        if (f === 'active') return !t.done
+        if (f === 'completed') return t.done
+        return true
+      }`)
+      expect(blockBody).not.toBeNull()
+
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'todos',
+        arrayType: null,
+        itemType: null,
+        param: 'todo',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'TodoItem', loc }],
+        slotId: null,
+        isStaticArray: true,
+        filterPredicate: {
+          param: 't',
+          blockBody: blockBody!,
+          raw: 'block body',
+        },
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      // Should have condition that handles all three cases
+      expect(result).toContain('{{range')
+      expect(result).toContain('{{if')
+      expect(result).toContain('$.Filter')
+      expect(result).toContain('active')
+      expect(result).toContain('completed')
+      expect(result).toContain('TodoItem')
     })
   })
 })
