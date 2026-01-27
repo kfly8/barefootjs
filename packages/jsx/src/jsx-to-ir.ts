@@ -202,13 +202,17 @@ function transformComponentElement(
   // Assign slotId if component has:
   // - event handler props (onClick, etc.)
   // - reactive props (function calls like selected={isSelected()})
+  // - dynamic props (JSX expressions like className={iconClasses})
   const hasEventHandlers = props.some(
     (p) => p.name.startsWith('on') && p.name.length > 2
   )
   const hasReactiveProps = props.some(
     (p) => !p.name.startsWith('on') && p.value.endsWith('()')
   )
-  const slotId = hasEventHandlers || hasReactiveProps ? generateSlotId(ctx) : null
+  const hasDynamicProps = props.some(
+    (p) => !p.name.startsWith('on') && p.dynamic
+  )
+  const slotId = hasEventHandlers || hasReactiveProps || hasDynamicProps ? generateSlotId(ctx) : null
 
   return {
     type: 'component',
@@ -232,13 +236,17 @@ function transformSelfClosingComponent(
   // Assign slotId if component has:
   // - event handler props (onClick, etc.)
   // - reactive props (function calls like selected={isSelected()})
+  // - dynamic props (JSX expressions like className={iconClasses})
   const hasEventHandlers = props.some(
     (p) => p.name.startsWith('on') && p.name.length > 2
   )
   const hasReactiveProps = props.some(
     (p) => !p.name.startsWith('on') && p.value.endsWith('()')
   )
-  const slotId = hasEventHandlers || hasReactiveProps ? generateSlotId(ctx) : null
+  const hasDynamicProps = props.some(
+    (p) => !p.name.startsWith('on') && p.dynamic
+  )
+  const slotId = hasEventHandlers || hasReactiveProps || hasDynamicProps ? generateSlotId(ctx) : null
 
   return {
     type: 'component',
@@ -1071,6 +1079,10 @@ function hasReactiveAttributes(attrs: IRAttribute[], ctx: TransformContext): boo
         if (pattern.test(valueToCheck)) {
           return true
         }
+      }
+      // Check for props references (props.xxx may be reactive when passed as getters from parent)
+      if (/\bprops\.\w+/.test(valueToCheck)) {
+        return true
       }
     }
   }

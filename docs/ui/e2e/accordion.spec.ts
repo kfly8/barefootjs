@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Accordion Documentation Page', () => {
+test.describe('Accordion Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/accordion')
   })
@@ -212,8 +211,7 @@ test.describe.skip('Accordion Documentation Page', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Accordion Link', () => {
+test.describe('Home Page - Accordion Link', () => {
   test('displays Accordion component link', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('a[href="/docs/components/accordion"]')).toBeVisible()
@@ -228,8 +226,7 @@ test.describe.skip('Home Page - Accordion Link', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Accordion Keyboard Navigation', () => {
+test.describe('Accordion Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/accordion')
   })

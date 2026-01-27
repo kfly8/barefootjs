@@ -139,12 +139,14 @@ export function find(
 ): Element | null {
   if (!scope) return null
 
-  // Check if scope itself matches
-  if (scope.matches?.(selector)) return scope
-
   // Detect if we're looking for scope elements (child components)
   // vs slot elements (internal structure)
   const isLookingForScope = selector.includes('data-bf-scope')
+
+  // Check if scope itself matches - but not when looking for child scope elements
+  // When looking for child scope elements, we always want descendants, not self
+  // (e.g., AccordionTrigger's scope may match [data-bf-scope$="_slot_0"] but we want ChevronDownIcon inside)
+  if (!isLookingForScope && scope.matches?.(selector)) return scope
 
   // Search descendants, excluding nested scopes for slot searches
   const found = findFirstInScope(
