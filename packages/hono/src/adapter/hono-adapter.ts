@@ -231,9 +231,9 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Generate scope ID
     if (hasClientInteractivity) {
-      // Interactive components: use __bfScope if it contains _slot_ (means parent passes event handlers)
-      // Otherwise, generate unique ID for independent hydration
-      lines.push(`  const __scopeId = (__bfScope?.includes('_slot_') ? __bfScope : null) || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
+      // Interactive components always generate their own unique ID with component name prefix
+      // This ensures client JS query `[data-bf-scope^="ComponentName_"]` matches
+      lines.push(`  const __scopeId = __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
     } else {
       // Non-interactive components can inherit parent's scope or use fallback
       lines.push(`  const __scopeId = __bfScope || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
