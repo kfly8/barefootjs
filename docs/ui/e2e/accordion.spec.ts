@@ -12,7 +12,8 @@ test.describe('Accordion Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=barefoot add accordion').first()).toBeVisible()
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
   test.describe('Accordion Rendering', () => {
@@ -210,13 +211,14 @@ test.describe('Accordion Documentation Page', () => {
 test.describe('Home Page - Accordion Link', () => {
   test('displays Accordion component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/accordion"]').first()).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/accordion"] h2').first()).toContainText('Accordion')
+    const accordionCard = page.getByRole('link', { name: 'Accordion A vertically stacked' })
+    await expect(accordionCard).toBeVisible()
+    await expect(accordionCard.locator('h2')).toContainText('Accordion')
   })
 
   test('navigates to Accordion page on click', async ({ page }) => {
     await page.goto('/')
-    await page.locator('a[href="/docs/components/accordion"]').first().click()
+    await page.getByRole('link', { name: 'Accordion A vertically stacked' }).click()
     await expect(page).toHaveURL('/docs/components/accordion')
     await expect(page.locator('h1')).toContainText('Accordion')
   })
