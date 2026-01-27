@@ -260,7 +260,7 @@ function AccordionContent({
     <div
       data-slot="accordion-content"
       role="region"
-      data-state={open ? 'open' : 'closed'}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
       className={`${accordionContentBaseClasses} ${(props.open ?? false) ? accordionContentOpenClasses : accordionContentClosedClasses}`}
     >
       <div className={accordionContentInnerClasses}>
