@@ -69,8 +69,7 @@ test.describe('Checkbox Documentation Page', () => {
       await expect(status).toContainText('Unchecked')
     })
 
-    test.skip('toggles to checked state on first click', async ({ page }) => {
-      // Skip: controlled mode checkbox click not working
+    test('toggles to checked state on first click', async ({ page }) => {
       const bindingSection = page.locator('div[data-bf-scope^="CheckboxBindingDemo_"]').first()
       const checkbox = bindingSection.locator('button[role="checkbox"]')
       const status = page.locator('.checked-status')
@@ -95,8 +94,7 @@ test.describe('Checkbox Documentation Page', () => {
       await expect(status).toContainText('Not accepted')
     })
 
-    test.skip('toggles to accepted on first click', async ({ page }) => {
-      // Skip: controlled mode checkbox click not working
+    test('toggles to accepted on first click', async ({ page }) => {
       const labelExample = page.locator('div[data-bf-scope^="CheckboxWithLabelDemo_"]').first()
       const checkbox = labelExample.locator('button[role="checkbox"]')
       const status = page.locator('.terms-status')

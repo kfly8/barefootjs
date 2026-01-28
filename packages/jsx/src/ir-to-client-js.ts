@@ -1329,7 +1329,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   // Imports
   lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
 
-  // Add child component imports for loops with createComponent
+  // Add child component imports for loops with createComponent and initChild calls
   // Skip siblings (components in the same file)
   const siblingSet = new Set(siblingComponents || [])
   const childComponentNames = new Set<string>()
@@ -1338,9 +1338,13 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
       childComponentNames.add(loop.childComponent.name)
     }
   }
+  for (const child of ctx.childInits) {
+    childComponentNames.add(child.name)
+  }
+  // Use placeholder format that will be resolved by build.ts
   for (const childName of childComponentNames) {
     if (!siblingSet.has(childName)) {
-      lines.push(`import './${childName}.client.js'`)
+      lines.push(`import '/* @bf-child:${childName} */'`)
     }
   }
 
