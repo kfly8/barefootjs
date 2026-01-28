@@ -640,33 +640,13 @@ export type ComponentInitFn = (
 const componentRegistry = new Map<string, ComponentInitFn>()
 
 /**
- * Pending child initializations queue.
- * When initChild is called before the child component's script loads,
- * the initialization is queued here and processed when the component registers.
- */
-const pendingChildInits = new Map<string, Array<{ scope: Element; props: Record<string, unknown> }>>()
-
-/**
  * Register a component's init function for parent initialization.
- * Also processes any pending initChild calls that were queued before
- * this component's script loaded.
  *
  * @param name - Component name (e.g., 'Counter', 'AddTodoForm')
  * @param init - Init function that takes (idx, scope, props)
  */
 export function registerComponent(name: string, init: ComponentInitFn): void {
   componentRegistry.set(name, init)
-
-  // Process any pending initChild calls for this component
-  const pending = pendingChildInits.get(name)
-  if (pending) {
-    pendingChildInits.delete(name)
-    for (const { scope, props } of pending) {
-      if (!scope.hasAttribute('data-bf-init')) {
-        init(0, scope, props)
-      }
-    }
-  }
 }
 
 /**
@@ -684,9 +664,6 @@ export function getComponentInit(name: string): ComponentInitFn | undefined {
  * Initialize a child component with props from parent.
  * Used by parent components to pass function props (like onAdd) to children.
  *
- * If the child component's script hasn't loaded yet, the initialization is
- * queued and will be processed when the component registers via registerComponent().
- *
  * @param name - Child component name
  * @param childScope - The child's scope element (found by parent)
  * @param props - Props to pass to the child (including function props)
@@ -696,20 +673,12 @@ export function initChild(
   childScope: Element | null,
   props: Record<string, unknown> = {}
 ): void {
-  if (!childScope) return
-
   const init = componentRegistry.get(name)
-  if (init) {
-    // Component already registered - initialize immediately
-    if (!childScope.hasAttribute('data-bf-init')) {
-      init(0, childScope, props)
-    }
-  } else {
-    // Component not yet registered - queue for later
-    if (!pendingChildInits.has(name)) {
-      pendingChildInits.set(name, [])
-    }
-    pendingChildInits.get(name)!.push({ scope: childScope, props })
+  if (!init || !childScope) return
+
+  // Only initialize if not already initialized
+  if (!childScope.hasAttribute('data-bf-init')) {
+    init(0, childScope, props)
   }
 }
 
