@@ -60,13 +60,15 @@ export function UIComponentsSection() {
   return (
     <section className="py-24 px-6 sm:px-12 border-t border-border">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-          Ready-to-use UI Components
-        </h2>
-        <p className="text-muted-foreground mb-12 max-w-2xl">
-          Beautiful, accessible components built with Barefoot.js.
-          Copy and paste into your project.
-        </p>
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+            Ready-to-use UI Components
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Beautiful, accessible components built with Barefoot.js.
+            Copy and paste into your project.
+          </p>
+        </div>
 
         {/* Practical UI Examples using shadcn/ui style classes */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -230,7 +232,7 @@ export function UIComponentsSection() {
           </div>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-12 text-center">
           <a
             href="https://ui.barefootjs.dev"
             className="btn-secondary inline-flex"
