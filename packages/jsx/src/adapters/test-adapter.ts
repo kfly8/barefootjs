@@ -177,7 +177,6 @@ export class TestAdapter extends BaseAdapter {
     for (const constant of ir.metadata.localConstants) {
       const value = constant.value.trim()
       const isArrowFunc =
-        value.startsWith('(') ||
         value.startsWith('async (') ||
         value.startsWith('function') ||
         /^\w+\s*=>/.test(value) ||

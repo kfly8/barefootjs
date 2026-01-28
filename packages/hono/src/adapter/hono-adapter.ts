@@ -427,7 +427,6 @@ export class HonoAdapter implements TemplateAdapter {
       const value = constant.value.trim()
       // Check if it's an arrow function or function expression
       const isArrowFunc =
-        value.startsWith('(') ||
         value.startsWith('async (') ||
         value.startsWith('async(') ||
         value.startsWith('function') ||
