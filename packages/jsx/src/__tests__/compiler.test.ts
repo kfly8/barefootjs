@@ -497,4 +497,63 @@ describe('Compiler', () => {
       expect(clientJs?.content).toContain('.disabled = !!')
     })
   })
+
+  describe('local constants arrow function detection', () => {
+    test('type cast expression starting with ( should NOT become arrow function stub', () => {
+      // Issue #212: Type casts like "(array as Type).method()" were incorrectly
+      // treated as arrow functions because they start with "("
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        const iconNames = ['chevron', 'arrow'] as const
+        type IconName = typeof iconNames[number]
+
+        export function Icon({ name }: { name: IconName }) {
+          const [active, setActive] = createSignal(false)
+          const linecap = (iconNames as readonly string[]).includes(name) ? 'butt' : 'round'
+          return (
+            <svg stroke-linecap={linecap} onClick={() => setActive(true)}>
+              <path d="M0 0" />
+            </svg>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Icon.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should NOT convert type cast to arrow function stub
+      expect(clientJs?.content).not.toContain('const linecap = () => {}')
+    })
+
+    test('grouped expression starting with ( should NOT become arrow function stub', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Calculator() {
+          const [count, setCount] = createSignal(0)
+          const a = 2
+          const b = 3
+          const result = (a + b) * count()
+          return (
+            <div onClick={() => setCount(n => n + 1)}>{result}</div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Calculator.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should NOT convert grouped expression to arrow function stub
+      expect(clientJs?.content).not.toContain('const result = () => {}')
+    })
+  })
 })
