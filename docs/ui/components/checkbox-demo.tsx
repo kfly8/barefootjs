@@ -10,10 +10,26 @@ import { createSignal } from '@barefootjs/dom'
 import { Checkbox } from '@ui/components/ui/checkbox'
 
 /**
- * Binding example showing state synchronization
+ * Simple uncontrolled checkbox demo
+ * No external state management needed
+ */
+export function CheckboxUncontrolledDemo() {
+  return (
+    <div className="flex flex-col gap-4">
+      <label className="flex items-center gap-2 cursor-pointer">
+        <Checkbox />
+        <span className="text-sm">Click me (uncontrolled)</span>
+      </label>
+    </div>
+  )
+}
+
+/**
+ * Binding example showing state synchronization (controlled mode)
  */
 export function CheckboxBindingDemo() {
   const [checked, setChecked] = createSignal(false)
+
   return (
     <div className="space-y-2">
       <Checkbox

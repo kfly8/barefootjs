@@ -3,7 +3,7 @@
  */
 
 import { Checkbox } from '@/components/ui/checkbox'
-import { CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/checkbox-demo'
+import { CheckboxUncontrolledDemo, CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/checkbox-demo'
 import {
   DocPage,
   PageHeader,
@@ -21,7 +21,8 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'checked-state', title: 'Checked State', branch: 'start' },
+  { id: 'uncontrolled', title: 'Uncontrolled', branch: 'start' },
+  { id: 'checked-state', title: 'Checked State', branch: 'child' },
   { id: 'disabled', title: 'Disabled', branch: 'child' },
   { id: 'state-binding', title: 'State Binding', branch: 'child' },
   { id: 'with-label', title: 'With Label', branch: 'end' },
@@ -29,6 +30,26 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
+const uncontrolledCode = `"use client"
+
+import { Checkbox } from '@/components/ui/checkbox'
+
+// No external state needed - checkbox manages its own state
+function CheckboxUncontrolled() {
+  return (
+    <div className="flex flex-col gap-4">
+      <label className="flex items-center gap-2 cursor-pointer">
+        <Checkbox />
+        <span className="text-sm">Click me (uncontrolled)</span>
+      </label>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <Checkbox defaultChecked />
+        <span className="text-sm">Initially checked (defaultChecked)</span>
+      </label>
+    </div>
+  )
+}`
+
 const checkedCode = `"use client"
 
 import { Checkbox } from '@/components/ui/checkbox'
@@ -95,10 +116,15 @@ function CheckboxWithLabel() {
 // Props definition
 const checkboxProps: PropDefinition[] = [
   {
-    name: 'checked',
+    name: 'defaultChecked',
     type: 'boolean',
     defaultValue: 'false',
-    description: 'The controlled checked state of the checkbox.',
+    description: 'The initial checked state for uncontrolled mode.',
+  },
+  {
+    name: 'checked',
+    type: 'boolean',
+    description: 'The controlled checked state of the checkbox. When provided, the component is in controlled mode.',
   },
   {
     name: 'disabled',
@@ -138,6 +164,10 @@ export function CheckboxPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
+            <Example title="Uncontrolled" code={uncontrolledCode}>
+              <CheckboxUncontrolledDemo />
+            </Example>
+
             <Example title="Checked State" code={checkedCode}>
               <div className="flex gap-4">
                 <Checkbox />
