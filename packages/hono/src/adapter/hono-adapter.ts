@@ -180,9 +180,23 @@ export class HonoAdapter implements TemplateAdapter {
   private generateComponent(ir: ComponentIR): string {
     const name = ir.metadata.componentName
     const propsTypeName = this.getPropsTypeName(ir)
-    const hasClientInteractivity = ir.metadata.signals.length > 0 ||
+
+    // Check if component has client-side features (signals, memos, event handlers)
+    const hasClientFeatures =
+      ir.metadata.signals.length > 0 ||
       ir.metadata.memos.length > 0 ||
       this.hasEventHandlers(ir.root)
+
+    // Validate: components with client features must have "use client" directive
+    if (hasClientFeatures && !ir.metadata.isClientComponent) {
+      throw new Error(
+        `Component "${name}" has client-side features (signals, memos, or event handlers) ` +
+        `but is not marked as a client component. Add "use client" directive at the top of the file.`
+      )
+    }
+
+    // A component is a client component only if it has "use client" directive
+    const hasClientInteractivity = ir.metadata.isClientComponent
 
     // Build props parameter
     // Convert 'class' to 'className' (React convention, avoids JS reserved word)
@@ -217,7 +231,12 @@ export class HonoAdapter implements TemplateAdapter {
     const signalInits = this.generateSignalInitializers(ir)
 
     // Generate JSX body
-    const jsxBody = this.renderNode(ir.root)
+    // Pass isRootOfClientComponent flag when the root is a component and this is a client component
+    // This ensures the child component receives __instanceId instead of __bfScope
+    const isRootComponent = ir.root.type === 'component'
+    const jsxBody = this.renderNode(ir.root, {
+      isRootOfClientComponent: hasClientInteractivity && isRootComponent
+    })
 
     // Generate props serialization for hydration (for components with props)
     const propsToSerialize = ir.metadata.propsParams.filter(p => {
@@ -449,7 +468,7 @@ export class HonoAdapter implements TemplateAdapter {
   // Node Rendering
   // ===========================================================================
 
-  renderNode(node: IRNode): string {
+  renderNode(node: IRNode, ctx?: { isRootOfClientComponent?: boolean }): string {
     switch (node.type) {
       case 'element':
         return this.renderElement(node)
@@ -462,7 +481,7 @@ export class HonoAdapter implements TemplateAdapter {
       case 'loop':
         return this.renderLoop(node)
       case 'component':
-        return this.renderComponent(node)
+        return this.renderComponent(node, ctx)
       case 'fragment':
         return this.renderFragment(node)
       case 'slot':
@@ -601,21 +620,24 @@ export class HonoAdapter implements TemplateAdapter {
     return `{${loop.array}.map((${loop.param}${indexParam}) => ${children})}`
   }
 
-  renderComponent(comp: IRComponent): string {
+  renderComponent(comp: IRComponent, ctx?: { isRootOfClientComponent?: boolean }): string {
     const props = this.renderComponentProps(comp)
     const children = this.renderChildren(comp.children)
 
-    // For components with event handlers, pass a unique scope ID
-    // so the parent's client JS can find and attach handlers
-    // The component's root element will have data-bf-scope={this unique ID}
+    // Determine how to pass scope to child component
+    // Always pass __instanceId so child client components use parent's scope
+    // Client components check __instanceId first, ignoring __bfScope
     let scopeAttr: string
-    if (comp.slotId) {
-      // Generate a unique scope ID for this component instance
-      // Format: ParentName_slotX to ensure uniqueness
-      scopeAttr = ` __bfScope={\`\${__scopeId}_${comp.slotId}\`}`
+    if (ctx?.isRootOfClientComponent) {
+      // Root component of a client component: pass parent's scope directly
+      scopeAttr = ' __instanceId={__scopeId}'
+    } else if (comp.slotId) {
+      // Components with slotId need unique scope with slot suffix
+      // Format: ParentName_slotX for client JS matching
+      scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}`
     } else {
       // Non-interactive components inherit parent's scope
-      scopeAttr = ' __bfScope={__scopeId}'
+      scopeAttr = ' __instanceId={__scopeId}'
     }
 
     if (children) {
