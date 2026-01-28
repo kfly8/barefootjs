@@ -256,6 +256,7 @@ function buildMetadata(
   return {
     componentName: ctx.componentName || 'Unknown',
     hasDefaultExport: ctx.hasDefaultExport,
+    isClientComponent: ctx.hasUseClientDirective,
     typeDefinitions: ctx.typeDefinitions,
     propsType: ctx.propsType,
     propsParams: ctx.propsParams,
