@@ -76,7 +76,8 @@ export function reconcileList<T>(
       container,
       items,
       getKey,
-      renderItem as (item: T, index: number) => HTMLElement
+      renderItem as (item: T, index: number) => HTMLElement,
+      testResult
     )
   } else {
     reconcileListTemplates(
@@ -98,7 +99,8 @@ function reconcileListElements<T>(
   container: HTMLElement,
   items: T[],
   getKey: ((item: T, index: number) => string) | null,
-  renderItem: (item: T, index: number) => HTMLElement
+  renderItem: (item: T, index: number) => HTMLElement,
+  firstElement?: HTMLElement
 ): void {
   // Build key -> element map from existing children
   const existingByKey = new Map<string, HTMLElement>()
@@ -116,6 +118,9 @@ function reconcileListElements<T>(
     const item = items[i]
     const key = getKey ? getKey(item, i) : String(i)
 
+    // Reuse firstElement for index 0 to avoid duplicate component creation
+    const createEl = () => (i === 0 && firstElement) ? firstElement : renderItem(item, i)
+
     if (existingByKey.has(key)) {
       // An element with this key already exists
       const existingEl = existingByKey.get(key)!
@@ -125,7 +130,7 @@ function reconcileListElements<T>(
       // SSR elements have data-bf-scope but no data-bf-init
       if (existingEl.dataset.bfScope && !existingEl.hasAttribute('data-bf-init')) {
         // For SSR elements, create new element with proper initialization
-        const newEl = renderItem(item, i)
+        const newEl = createEl()
         if (!newEl.dataset.key) {
           newEl.setAttribute('data-key', key)
         }
@@ -139,13 +144,13 @@ function reconcileListElements<T>(
         if (hasFocus) {
           // Preserve existing element to maintain focus state
           // Create temp element to get new DOM state
-          const tempEl = renderItem(item, i)
+          const tempEl = createEl()
           syncElementState(existingEl, tempEl)
           fragment.appendChild(existingEl)
         } else {
           // No focus to preserve - use the temp element directly
           // This ensures correct events are bound (via scheduled init)
-          const tempEl = renderItem(item, i)
+          const tempEl = createEl()
           if (!tempEl.dataset.key) {
             tempEl.setAttribute('data-key', key)
           }
@@ -154,7 +159,7 @@ function reconcileListElements<T>(
       }
     } else {
       // Create new element via renderItem (which calls createComponent)
-      const el = renderItem(item, i)
+      const el = createEl()
       // Ensure key is set (createComponent should set it, but ensure)
       if (!el.dataset.key) {
         el.setAttribute('data-key', key)
