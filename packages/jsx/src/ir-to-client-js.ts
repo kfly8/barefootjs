@@ -546,9 +546,7 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
 }
 
 /**
- * Check if an expression references signal getters, memos, or props.
- * Props are considered reactive because they may be passed as getter functions
- * from parent components.
+ * Check if an expression references signal getters or memos.
  */
 function isReactiveExpression(expr: string, ctx: ClientJsContext): boolean {
   // Check for signal getter calls like `open()`, `count()`
@@ -570,16 +568,6 @@ function isReactiveExpression(expr: string, ctx: ClientJsContext): boolean {
   // Check for props references (props.xxx may be reactive when passed as getters from parent)
   if (/\bprops\.\w+/.test(expr)) {
     return true
-  }
-
-  // Check for props parameter variable references
-  // Props variables (e.g., `checked` from `{ checked }` destructuring) may be
-  // passed as getter functions from parent, so they need reactive handling
-  for (const prop of ctx.propsParams) {
-    const pattern = new RegExp(`\\b${prop.name}\\b`)
-    if (pattern.test(expr)) {
-      return true
-    }
   }
 
   return false
@@ -1339,7 +1327,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   const name = ctx.componentName
 
   // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker, unwrap } from '@barefootjs/dom'`)
+  lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
 
   // Add child component imports for loops with createComponent
   // Skip siblings (components in the same file)
@@ -1573,39 +1561,6 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     lines.push('')
   }
 
-  // Helper: Replace props variable references with unwrap(props.xxx)
-  // This ensures reactive props passed as getters are properly evaluated
-  const wrapPropsWithUnwrap = (expr: string): string => {
-    // Protect single/double quoted string literals from replacement
-    // (but NOT template literals - we want to replace inside ${} expressions)
-    const stringLiterals: string[] = []
-    let result = expr.replace(/(['"])(?:\\.|[^\\])*?\1/g, (match) => {
-      stringLiterals.push(match)
-      return `__STRING_LITERAL_${stringLiterals.length - 1}__`
-    })
-
-    for (const propName of neededProps) {
-      // Match the prop variable name as a whole word (not inside another word)
-      const propPattern = new RegExp(`\\b${propName}\\b`, 'g')
-      if (propPattern.test(result)) {
-        // Find default value for this prop
-        const prop = ctx.propsParams.find((p) => p.name === propName)
-        const defaultVal = prop?.defaultValue
-        // Replace with unwrap(props.xxx) ?? defaultVal
-        const replacement = defaultVal
-          ? `(unwrap(props.${propName}) ?? ${defaultVal})`
-          : `unwrap(props.${propName})`
-        // Reset lastIndex since we're testing and replacing
-        propPattern.lastIndex = 0
-        result = result.replace(propPattern, replacement)
-      }
-    }
-
-    // Restore string literals
-    result = result.replace(/__STRING_LITERAL_(\d+)__/g, (_, idx) => stringLiterals[parseInt(idx)])
-    return result
-  }
-
   // Reactive attribute updates
   if (ctx.reactiveAttrs.length > 0) {
     // Group by slot to update multiple attrs together
@@ -1622,17 +1577,15 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
       lines.push(`    if (_${slotId}) {`)
       for (const attr of attrs) {
         const htmlAttrName = toHtmlAttrName(attr.attrName)
-        // Wrap props references with unwrap() for reactive prop handling
-        const wrappedExpr = wrapPropsWithUnwrap(attr.expression)
         if (htmlAttrName === 'value') {
           // Use DOM property for 'value' (setAttribute doesn't update after user input)
-          lines.push(`      const __val = String(${wrappedExpr})`)
+          lines.push(`      const __val = String(${attr.expression})`)
           lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
         } else if (isBooleanAttr(htmlAttrName)) {
           // Boolean attributes: set property directly (checked, disabled, etc.)
-          lines.push(`      _${slotId}.${htmlAttrName} = !!(${wrappedExpr})`)
+          lines.push(`      _${slotId}.${htmlAttrName} = !!(${attr.expression})`)
         } else {
-          lines.push(`      _${slotId}.setAttribute('${htmlAttrName}', String(${wrappedExpr}))`)
+          lines.push(`      _${slotId}.setAttribute('${htmlAttrName}', String(${attr.expression}))`)
         }
       }
       lines.push(`    }`)
@@ -1669,9 +1622,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     }
 
     // Generate whenTrue branch config
-    // Wrap props references with unwrap() for reactive prop handling
-    const wrappedCondition = wrapPropsWithUnwrap(elem.condition)
-    lines.push(`  insert(__scope, '${elem.slotId}', () => ${wrappedCondition}, {`)
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
     generateBindEvents(elem.whenTrueEvents)
@@ -1716,9 +1667,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     }
 
     lines.push(`  // @client conditional: ${elem.slotId}`)
-    // Wrap props references with unwrap() for reactive prop handling
-    const wrappedCondition = wrapPropsWithUnwrap(elem.condition)
-    lines.push(`  insert(__scope, '${elem.slotId}', () => ${wrappedCondition}, {`)
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
     generateBindEvents(elem.whenTrueEvents)
