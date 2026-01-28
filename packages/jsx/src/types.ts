@@ -322,6 +322,8 @@ export interface TypeDefinition {
 export interface IRMetadata {
   componentName: string
   hasDefaultExport: boolean
+  /** Whether this component is from a "use client" file */
+  isClientComponent: boolean
   typeDefinitions: TypeDefinition[]
   propsType: TypeInfo | null
   propsParams: ParamInfo[]

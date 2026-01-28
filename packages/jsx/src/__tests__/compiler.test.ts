@@ -320,6 +320,36 @@ describe('Compiler', () => {
       expect(ir).toBeDefined()
       expect(ir?.content).toContain('"version": "0.1"')
     })
+
+    test('inlines local constants in child component props getter', () => {
+      // Local constants referenced in child component props should be
+      // inlined in the getter for reactivity (SolidJS-style)
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function AccordionItem() {
+          const [open, setOpen] = createSignal(false)
+          const iconClasses = \`transition \${open() ? 'rotate-180' : ''}\`
+
+          return (
+            <div>
+              <button onClick={() => setOpen(!open())}>Toggle</button>
+              <ChevronIcon className={iconClasses} />
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'AccordionItem.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should use getter syntax with inlined constant value for reactivity
+      expect(clientJs?.content).toContain('get className() { return `transition ${open() ?')
+    })
   })
 
   describe('real components', () => {

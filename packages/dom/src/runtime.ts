@@ -139,20 +139,26 @@ export function find(
 ): Element | null {
   if (!scope) return null
 
-  // Check if scope itself matches
-  if (scope.matches?.(selector)) return scope
-
   // Detect if we're looking for scope elements (child components)
   // vs slot elements (internal structure)
   const isLookingForScope = selector.includes('data-bf-scope')
 
+  // For non-scope selectors, check if scope itself matches first
+  if (!isLookingForScope && scope.matches?.(selector)) return scope
+
   // Search descendants, excluding nested scopes for slot searches
+  // For scope selectors, prioritize finding child scope elements
   const found = findFirstInScope(
     scope.querySelectorAll(selector),
     scope,
     isLookingForScope
   )
   if (found) return found
+
+  // For scope selectors, if no descendant found, check if scope itself matches
+  // This handles cases where the component root IS the slot element (e.g., ButtonDemo)
+  // Only falls back to self-match when no child was found (child priority)
+  if (isLookingForScope && scope.matches?.(selector)) return scope
 
   // For fragment roots, elements may be in sibling scope elements
   // Search siblings that share the EXACT SAME scope ID

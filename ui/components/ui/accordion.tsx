@@ -204,6 +204,12 @@ function AccordionTrigger({
   const classes = `${accordionTriggerBaseClasses} ${accordionTriggerFocusClasses} ${className}`
   const iconClasses = `text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal ${open ? 'rotate-180' : ''}`
 
+  // Handle click with stopPropagation to prevent bubbling to parent scope element
+  const handleClick = (e: Event) => {
+    e.stopPropagation()
+    onClick?.()
+  }
+
   return (
     <h3 className="flex">
       <button
@@ -212,7 +218,7 @@ function AccordionTrigger({
         disabled={disabled}
         aria-expanded={open}
         aria-disabled={disabled || undefined}
-        onClick={onClick}
+        onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
         {children}
@@ -244,15 +250,18 @@ function AccordionContent({
   open = false,
   children,
 }: AccordionContentProps) {
-  const stateClasses = open ? accordionContentOpenClasses : accordionContentClosedClasses
-  const classes = `${accordionContentBaseClasses} ${stateClasses}`
+  // Create props object for reactive class updates
+  // The compiler detects props.open usage and generates createEffect for client-side updates
+  // Note: The 'props' constant is intentionally skipped in client JS generation
+  //       since the function parameter already provides props
+  const props = { open, class: className, children } as AccordionContentProps
 
   return (
     <div
       data-slot="accordion-content"
       role="region"
-      data-state={open ? 'open' : 'closed'}
-      className={classes}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
+      className={`${accordionContentBaseClasses} ${(props.open ?? false) ? accordionContentOpenClasses : accordionContentClosedClasses}`}
     >
       <div className={accordionContentInnerClasses}>
         <div className={`pt-0 pb-4 ${className}`}>

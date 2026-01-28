@@ -64,6 +64,7 @@ interface ClientJsContext {
   refElements: RefElement[]
   childInits: ChildInit[]
   reactiveProps: ReactiveComponentProp[]
+  reactiveChildProps: ReactiveChildProp[]
   reactiveAttrs: ReactiveAttribute[]
   clientOnlyElements: ClientOnlyElement[]
   clientOnlyConditionals: ClientOnlyConditional[]
@@ -80,6 +81,19 @@ interface ReactiveComponentProp {
   propName: string
   expression: string
   componentName: string
+}
+
+/**
+ * Reactive prop for a child component.
+ * These are props that depend on parent's props and need
+ * createEffect to update the child component's DOM attributes.
+ */
+interface ReactiveChildProp {
+  componentName: string
+  slotId: string | null
+  propName: string // The prop name (e.g., 'className')
+  attrName: string // The DOM attribute name (e.g., 'class')
+  expression: string // The expanded expression (with props.xxx references)
 }
 
 interface DynamicElement {
@@ -252,6 +266,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     refElements: [],
     childInits: [],
     reactiveProps: [],
+    reactiveChildProps: [],
     reactiveAttrs: [],
     clientOnlyElements: [],
     clientOnlyConditionals: [],
@@ -442,8 +457,26 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         if (isEventHandler) {
           propsForInit.push(`${prop.name}: ${prop.value}`)
         } else if (prop.dynamic) {
-          // Dynamic props wrapped in getters for reactivity
-          propsForInit.push(`${prop.name}: () => ${prop.value}`)
+          // Dynamic props wrapped in getters for reactivity (SolidJS-style)
+          // Expand constant references and replace prop references with props.xxx pattern
+          const expandedValue = expandDynamicPropValue(prop.value, ctx)
+          propsForInit.push(`get ${prop.name}() { return ${expandedValue} }`)
+
+          // If the expanded value references props OR reactive expressions (signals/memos),
+          // add to reactiveChildProps so we can generate createEffect to update the child's DOM attribute
+          const hasPropsRef = expandedValue.includes('props.')
+          const hasReactiveExpr = isReactiveExpression(expandedValue, ctx)
+          if (hasPropsRef || hasReactiveExpr) {
+            // Map prop name to DOM attribute name
+            const attrName = prop.name === 'className' ? 'class' : prop.name
+            ctx.reactiveChildProps.push({
+              componentName: node.name,
+              slotId: node.slotId,
+              propName: prop.name,
+              attrName,
+              expression: expandedValue,
+            })
+          }
         } else if (prop.isLiteral) {
           // String literal from JSX attribute (e.g., value="account")
           propsForInit.push(`${prop.name}: ${JSON.stringify(prop.value)}`)
@@ -530,6 +563,11 @@ function isReactiveExpression(expr: string, ctx: ClientJsContext): boolean {
     if (pattern.test(expr)) {
       return true
     }
+  }
+
+  // Check for props references (props.xxx may be reactive when passed as getters from parent)
+  if (/\bprops\.\w+/.test(expr)) {
+    return true
   }
 
   return false
@@ -1050,6 +1088,16 @@ function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
     extractIdentifiers(constant.value, used)
   }
 
+  // From child component props (e.g., initChild('Icon', scope, { className: () => iconClasses }))
+  for (const child of ctx.childInits) {
+    extractIdentifiers(child.propsExpr, used)
+  }
+
+  // From reactive attributes (attributes that depend on props/signals/memos)
+  for (const attr of ctx.reactiveAttrs) {
+    extractIdentifiers(attr.expression, used)
+  }
+
   return used
 }
 
@@ -1129,6 +1177,50 @@ function isKeywordOrGlobal(id: string): boolean {
     'clearInterval',
   ])
   return skip.has(id)
+}
+
+/**
+ * Expand a dynamic prop value for use in getter.
+ * If the value is a simple identifier that matches a local constant,
+ * expand the constant's value and replace prop references with props.xxx pattern.
+ *
+ * Example:
+ *   Input: iconClasses (constant = `...${open ? 'rotate-180' : ''}`)
+ *   where open is a prop with default = false
+ *
+ *   Output: `...${(props.open ?? false) ? 'rotate-180' : ''}`
+ */
+function expandDynamicPropValue(value: string, ctx: ClientJsContext): string {
+  const trimmedValue = value.trim()
+
+  // Check if value is a simple identifier that matches a local constant
+  const constant = ctx.localConstants.find((c) => c.name === trimmedValue)
+  if (constant) {
+    // Expand the constant's value and replace prop references
+    return replacePropReferences(constant.value, ctx)
+  }
+
+  // Not a simple constant reference, but still expand prop references
+  return replacePropReferences(value, ctx)
+}
+
+/**
+ * Replace prop references in an expression with props.xxx accessor pattern.
+ * This ensures props are accessed via the getter when used in child component props.
+ */
+function replacePropReferences(expr: string, ctx: ClientJsContext): string {
+  let result = expr
+
+  for (const prop of ctx.propsParams) {
+    // Match word boundary to avoid partial matches
+    const pattern = new RegExp(`\\b${prop.name}\\b`, 'g')
+    const replacement = prop.defaultValue
+      ? `(props.${prop.name} ?? ${prop.defaultValue})`
+      : `props.${prop.name}`
+    result = result.replace(pattern, replacement)
+  }
+
+  return result
 }
 
 /**
@@ -1283,7 +1375,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     // Include constant if it's used (regardless of whether it depends on reactive data)
     if (usedIdentifiers.has(constant.name)) {
       // Skip arrow functions - they're handled separately as event handlers
-      if (!constant.value.trim().includes('=>')) {
+      // Skip constants named 'props' - the function parameter already provides props
+      if (!constant.value.trim().includes('=>') && constant.name !== 'props') {
         neededConstants.push(constant)
         outputConstants.add(constant.name)
 
@@ -1787,6 +1880,49 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     lines.push(`  })`)
   }
 
+  // Reactive child component props
+  // Update child component's DOM attributes when parent's props change
+  if (ctx.reactiveChildProps.length > 0) {
+    lines.push('')
+    lines.push(`  // Reactive child component props`)
+    lines.push(`  createEffect(() => {`)
+
+    // Group by component to update multiple props together
+    const propsByComponent = new Map<string, typeof ctx.reactiveChildProps>()
+    for (const prop of ctx.reactiveChildProps) {
+      const key = `${prop.componentName}_${prop.slotId ?? '__scope'}`
+      if (!propsByComponent.has(key)) {
+        propsByComponent.set(key, [])
+      }
+      propsByComponent.get(key)!.push(prop)
+    }
+
+    for (const [, props] of propsByComponent) {
+      const first = props[0]
+      // Use slotId for unique variable name to avoid collisions when same component appears multiple times
+      const varSuffix = first.slotId ? first.slotId.replace(/-/g, '_') : first.componentName
+      const varName = `__${first.componentName}_${varSuffix}El`
+      // Find the child component's root element using data-bf-scope
+      // The child component's data-bf-scope ends with the slot ID (e.g., "_slot_2")
+      const selectorBase = first.slotId
+        ? `find(__scope, '[data-bf-scope$="_${first.slotId}"]')`
+        : `find(__scope, '[data-bf-scope^="${first.componentName}_"]')`
+      lines.push(`    const ${varName} = ${selectorBase}`)
+      lines.push(`    if (${varName}) {`)
+      for (const prop of props) {
+        if (prop.attrName === 'class') {
+          // Use setAttribute for class to support both HTML and SVG elements
+          lines.push(`      ${varName}.setAttribute('class', ${prop.expression})`)
+        } else {
+          lines.push(`      ${varName}.setAttribute('${prop.attrName}', ${prop.expression})`)
+        }
+      }
+      lines.push(`    }`)
+    }
+
+    lines.push(`  })`)
+  }
+
   // Ref callbacks
   for (const elem of ctx.refElements) {
     lines.push(`  if (_${elem.slotId}) (${elem.callback})(_${elem.slotId})`)
@@ -1892,6 +2028,13 @@ function generateElementRefs(ctx: ClientJsContext): string {
   // Reactive props also need component slot refs
   for (const prop of ctx.reactiveProps) {
     componentSlots.add(prop.slotId)
+  }
+
+  // Child component slots need refs for initChild()
+  for (const child of ctx.childInits) {
+    if (child.slotId) {
+      componentSlots.add(child.slotId)
+    }
   }
 
   if (regularSlots.size === 0 && componentSlots.size === 0) return ''

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Accordion Documentation Page', () => {
+test.describe('Accordion Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/accordion')
   })
@@ -13,11 +12,8 @@ test.describe.skip('Accordion Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add accordion')).toBeVisible()
-  })
-
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
   test.describe('Accordion Rendering', () => {
@@ -115,7 +111,7 @@ test.describe.skip('Accordion Documentation Page', () => {
     test('content expands with animation and JS state syncs', async ({ page }) => {
       const accordion = page.locator('[data-bf-scope^="AccordionSingleOpenDemo_"]').first()
       const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
-      const secondContent = accordion.locator('[data-bf-scope^="AccordionContent_"]').nth(1)
+      const secondContent = accordion.locator('[data-slot="accordion-content"]').nth(1)
 
       // Initially closed
       await expect(secondContent).toHaveAttribute('data-state', 'closed')
@@ -133,7 +129,7 @@ test.describe.skip('Accordion Documentation Page', () => {
     test('content collapses with animation and JS state syncs', async ({ page }) => {
       const accordion = page.locator('[data-bf-scope^="AccordionSingleOpenDemo_"]').first()
       const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
-      const firstContent = accordion.locator('[data-bf-scope^="AccordionContent_"]').first()
+      const firstContent = accordion.locator('[data-slot="accordion-content"]').first()
 
       // Initially open
       await expect(firstContent).toHaveAttribute('data-state', 'open')
@@ -151,7 +147,7 @@ test.describe.skip('Accordion Documentation Page', () => {
     test('rapid clicks result in correct final state', async ({ page }) => {
       const accordion = page.locator('[data-bf-scope^="AccordionSingleOpenDemo_"]').first()
       const firstTrigger = accordion.locator('button:has-text("Is it accessible?")')
-      const firstContent = accordion.locator('[data-bf-scope^="AccordionContent_"]').first()
+      const firstContent = accordion.locator('[data-slot="accordion-content"]').first()
 
       // Initially open
       await expect(firstContent).toHaveAttribute('data-state', 'open')
@@ -168,8 +164,8 @@ test.describe.skip('Accordion Documentation Page', () => {
 
     test('multiple accordion items animate independently', async ({ page }) => {
       const accordion = page.locator('[data-bf-scope^="AccordionMultipleOpenDemo_"]').first()
-      const firstContent = accordion.locator('[data-bf-scope^="AccordionContent_"]').first()
-      const secondContent = accordion.locator('[data-bf-scope^="AccordionContent_"]').nth(1)
+      const firstContent = accordion.locator('[data-slot="accordion-content"]').first()
+      const secondContent = accordion.locator('[data-slot="accordion-content"]').nth(1)
       const secondTrigger = accordion.locator('button:has-text("Second Item")')
 
       // First is open, second is closed
@@ -212,24 +208,23 @@ test.describe.skip('Accordion Documentation Page', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Accordion Link', () => {
+test.describe('Home Page - Accordion Link', () => {
   test('displays Accordion component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/accordion"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/accordion"] h2')).toContainText('Accordion')
+    const accordionCard = page.getByRole('link', { name: 'Accordion A vertically stacked' })
+    await expect(accordionCard).toBeVisible()
+    await expect(accordionCard.locator('h2')).toContainText('Accordion')
   })
 
   test('navigates to Accordion page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/components/accordion"]')
+    await page.getByRole('link', { name: 'Accordion A vertically stacked' }).click()
     await expect(page).toHaveURL('/docs/components/accordion')
     await expect(page.locator('h1')).toContainText('Accordion')
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Accordion Keyboard Navigation', () => {
+test.describe('Accordion Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/accordion')
   })
