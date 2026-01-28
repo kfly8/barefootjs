@@ -6,50 +6,48 @@
 
 const fiveFeatures = [
   {
-    number: '1',
+    num: '01',
     title: 'Backend Freedom',
-    description: 'Go, Rust, Node... compile TSX to any backend',
+    description: 'Go, Rust, Node... your choice',
   },
   {
-    number: '2',
+    num: '02',
     title: 'Selective Hydration',
-    description: '"use client" marks interactive components',
+    description: 'JS only where needed',
   },
   {
-    number: '3',
+    num: '03',
     title: 'Signals',
-    description: 'createSignal() for fine-grained reactivity',
+    description: 'Fine-grained reactivity',
   },
   {
-    number: '4',
+    num: '04',
     title: 'Zero VDOM',
-    description: 'Direct DOM updates, no diffing overhead',
+    description: 'Direct DOM updates',
   },
   {
-    number: '5',
-    title: 'Type-safe TSX',
-    description: 'Full TypeScript support for components',
+    num: '05',
+    title: 'Type-safe',
+    description: 'TSX + TypeScript',
   },
 ]
 
 export function FiveFeaturesSection() {
   return (
-    <section className="py-24 px-6 sm:px-12 border-t border-border">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-12">
-          Five Features
-        </h2>
-
-        <div className="grid gap-6">
+    <section className="py-32 px-6 sm:px-12 border-t border-border">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border">
           {fiveFeatures.map((feature) => (
-            <div className="flex items-start gap-6">
-              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center text-lg font-bold text-white bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)] rounded-full">
-                {feature.number}
-              </div>
-              <div className="pt-1">
-                <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
-                <p className="text-muted-foreground mt-1">{feature.description}</p>
-              </div>
+            <div className="bg-background p-6 sm:p-8 flex flex-col">
+              <span className="text-xs font-mono text-[var(--gradient-start)] tracking-wider mb-4">
+                {feature.num}
+              </span>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
