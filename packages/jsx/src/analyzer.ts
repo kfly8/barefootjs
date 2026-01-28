@@ -9,6 +9,7 @@ import ts from 'typescript'
 import type { ImportSpecifier, TypeInfo, ParamInfo } from './types'
 import {
   type AnalyzerContext,
+  type ConditionalReturn,
   createAnalyzerContext,
   getSourceLocation,
   typeNodeToTypeInfo,
@@ -225,6 +226,23 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
     collectFunction(node, ctx, false)
   }
 
+  // If statement with JSX return (early return pattern)
+  if (ts.isIfStatement(node)) {
+    const jsxReturn = findJsxReturnInBlock(node.thenStatement)
+    if (jsxReturn) {
+      const scopeVars = collectScopeVariables(node.thenStatement, ctx)
+      ctx.conditionalReturns.push({
+        condition: node.expression,
+        jsxReturn,
+        scopeVariables: scopeVars,
+        ifStatement: node,
+      })
+      // Don't set ctx.jsxReturn here - let the final return be processed normally
+      // Don't recurse into the if block since we've already captured it
+      return
+    }
+  }
+
   // Return statement with JSX
   if (ts.isReturnStatement(node) && node.expression) {
     if (
@@ -270,6 +288,65 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
     }
     visitComponentBody(child, ctx)
   })
+}
+
+/**
+ * Find a JSX return statement in an if block.
+ */
+function findJsxReturnInBlock(
+  node: ts.Statement
+): ts.JsxElement | ts.JsxFragment | ts.JsxSelfClosingElement | null {
+  // Block statement: if (cond) { ... return <jsx> }
+  if (ts.isBlock(node)) {
+    for (const stmt of node.statements) {
+      if (ts.isReturnStatement(stmt) && stmt.expression) {
+        const jsx = extractJsxFromExpression(stmt.expression)
+        if (jsx) return jsx
+      }
+    }
+  }
+  // Single statement: if (cond) return <jsx>
+  if (ts.isReturnStatement(node) && node.expression) {
+    return extractJsxFromExpression(node.expression)
+  }
+  return null
+}
+
+/**
+ * Extract JSX element from an expression, handling parenthesized expressions.
+ */
+function extractJsxFromExpression(
+  expr: ts.Expression
+): ts.JsxElement | ts.JsxFragment | ts.JsxSelfClosingElement | null {
+  if (ts.isJsxElement(expr) || ts.isJsxFragment(expr) || ts.isJsxSelfClosingElement(expr)) {
+    return expr
+  }
+  if (ts.isParenthesizedExpression(expr)) {
+    return extractJsxFromExpression(expr.expression)
+  }
+  return null
+}
+
+/**
+ * Collect variable declarations from an if block scope.
+ */
+function collectScopeVariables(
+  node: ts.Statement,
+  ctx: AnalyzerContext
+): ts.VariableDeclaration[] {
+  const variables: ts.VariableDeclaration[] = []
+
+  if (ts.isBlock(node)) {
+    for (const stmt of node.statements) {
+      if (ts.isVariableStatement(stmt)) {
+        for (const decl of stmt.declarationList.declarations) {
+          variables.push(decl)
+        }
+      }
+    }
+  }
+
+  return variables
 }
 
 // =============================================================================

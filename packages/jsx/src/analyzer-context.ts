@@ -20,6 +20,20 @@ import type {
   ParamInfo,
 } from './types'
 
+/**
+ * Represents an if statement with a JSX return in a component function.
+ */
+export interface ConditionalReturn {
+  /** The condition expression node */
+  condition: ts.Expression
+  /** The JSX return statement found in the if block */
+  jsxReturn: ts.JsxElement | ts.JsxFragment | ts.JsxSelfClosingElement
+  /** Variables declared in the if block scope */
+  scopeVariables: ts.VariableDeclaration[]
+  /** The original if statement node */
+  ifStatement: ts.IfStatement
+}
+
 export interface AnalyzerContext {
   sourceFile: ts.SourceFile
   filePath: string
@@ -46,6 +60,9 @@ export interface AnalyzerContext {
 
   // JSX return
   jsxReturn: ts.JsxElement | ts.JsxFragment | ts.JsxSelfClosingElement | null
+
+  // Conditional returns (if statements with JSX returns)
+  conditionalReturns: ConditionalReturn[]
 
   // Errors
   errors: CompilerError[]
@@ -80,6 +97,7 @@ export function createAnalyzerContext(
     restPropsName: null,
 
     jsxReturn: null,
+    conditionalReturns: [],
 
     errors: [],
 

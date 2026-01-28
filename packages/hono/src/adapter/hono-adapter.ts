@@ -14,6 +14,7 @@ import {
   type IRLoop,
   type IRComponent,
   type IRFragment,
+  type IRIfStatement,
   type IRTemplateLiteral,
   type ParamInfo,
   type AdapterOutput,
@@ -230,11 +231,14 @@ export class HonoAdapter implements TemplateAdapter {
     // Generate signal initializers for SSR
     const signalInits = this.generateSignalInitializers(ir)
 
-    // Generate JSX body
+    // Check if root is an if-statement (early return pattern)
+    const isIfStatement = ir.root.type === 'if-statement'
+
+    // Generate JSX body (for non-if-statement roots)
     // Pass isRootOfClientComponent flag when the root is a component and this is a client component
     // This ensures the child component receives __instanceId instead of __bfScope
     const isRootComponent = ir.root.type === 'component'
-    const jsxBody = this.renderNode(ir.root, {
+    const jsxBody = isIfStatement ? '' : this.renderNode(ir.root, {
       isRootOfClientComponent: hasClientInteractivity && isRootComponent
     })
 
@@ -279,6 +283,14 @@ export class HonoAdapter implements TemplateAdapter {
     }
 
     lines.push('')
+
+    // Handle if-statement roots (early return pattern)
+    if (isIfStatement) {
+      const ifCode = this.renderIfStatement(ir.root as IRIfStatement, hasPropsToSerialize)
+      lines.push(ifCode)
+      lines.push(`}`)
+      return lines.join('\n')
+    }
 
     // Wrap JSX with fragment to include props script and inline scripts if needed
     const needsInlineScripts = this.options.injectScriptCollection && hasClientInteractivity
@@ -486,6 +498,10 @@ export class HonoAdapter implements TemplateAdapter {
         return this.renderFragment(node)
       case 'slot':
         return '{children}'
+      case 'if-statement':
+        // If-statements are rendered at the component level, not inline
+        // This case shouldn't normally be hit, but return empty for safety
+        return ''
       default:
         return ''
     }
@@ -623,6 +639,65 @@ export class HonoAdapter implements TemplateAdapter {
 
   private renderChildrenInLoop(children: IRNode[]): string {
     return children.map((child) => this.renderNode(child, { isInsideLoop: true })).join('')
+  }
+
+  /**
+   * Render an if-statement chain as function-level code.
+   * This is used for components with early return patterns.
+   */
+  renderIfStatement(ifStmt: IRIfStatement, hasPropsToSerialize: boolean): string {
+    const lines: string[] = []
+
+    // Generate scope variables declared in this if block
+    for (const v of ifStmt.scopeVariables) {
+      lines.push(`    const ${v.name} = ${v.initializer}`)
+    }
+
+    // Render the consequent (then branch) JSX
+    const consequent = this.renderNode(ifStmt.consequent)
+
+    // Build the if statement
+    lines.unshift(`  if (${ifStmt.condition}) {`)
+    lines.push(`    return (`)
+    lines.push(`      ${consequent}`)
+    lines.push(`    )`)
+    lines.push(`  }`)
+
+    // Handle the alternate (else branch)
+    if (ifStmt.alternate) {
+      if (ifStmt.alternate.type === 'if-statement') {
+        // else if chain - recursively render
+        const elseIfCode = this.renderIfStatement(ifStmt.alternate as IRIfStatement, hasPropsToSerialize)
+        // Replace the leading 'if' with 'else if'
+        lines.push(elseIfCode.replace(/^\s*if/, '  else if'))
+      } else {
+        // Final else branch with regular JSX
+        const alternate = this.renderNode(ifStmt.alternate)
+        if (hasPropsToSerialize) {
+          lines.push(`  return (`)
+          lines.push(`    <>`)
+          lines.push(`      ${alternate}`)
+          lines.push(`      {Object.keys(__hydrateProps).length > 0 && (`)
+          lines.push(`        <script`)
+          lines.push(`          type="application/json"`)
+          lines.push(`          data-bf-props={__scopeId}`)
+          lines.push(`          dangerouslySetInnerHTML={{ __html: JSON.stringify(__hydrateProps) }}`)
+          lines.push(`        />`)
+          lines.push(`      )}`)
+          lines.push(`    </>`)
+          lines.push(`  )`)
+        } else {
+          lines.push(`  return (`)
+          lines.push(`    ${alternate}`)
+          lines.push(`  )`)
+        }
+      }
+    } else {
+      // No alternate - return null
+      lines.push(`  return null`)
+    }
+
+    return lines.join('\n')
   }
 
   renderComponent(comp: IRComponent, ctx?: { isRootOfClientComponent?: boolean; isInsideLoop?: boolean }): string {

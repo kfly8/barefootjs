@@ -21,6 +21,7 @@ export type {
   IRComponent,
   IRFragment,
   IRSlot,
+  IRIfStatement,
   IRMetadata,
   IRTemplateLiteral,
   IRTemplatePart,
