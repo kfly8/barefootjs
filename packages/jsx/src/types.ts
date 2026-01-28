@@ -82,6 +82,7 @@ export type IRNode =
   | IRComponent
   | IRSlot
   | IRFragment
+  | IRIfStatement
 
 export interface IRElement {
   type: 'element'
@@ -208,6 +209,23 @@ export interface IRSlot {
 export interface IRFragment {
   type: 'fragment'
   children: IRNode[]
+  loc: SourceLocation
+}
+
+/**
+ * If statement node for component-level conditional returns.
+ * Preserves if-else structure from source code (early returns).
+ */
+export interface IRIfStatement {
+  type: 'if-statement'
+  /** The condition expression (e.g., "name === 'github'") */
+  condition: string
+  /** The JSX return in the then branch */
+  consequent: IRNode
+  /** The else branch: either another IRIfStatement (else if) or IRNode (final else) */
+  alternate: IRNode | null
+  /** Variables declared in the if block scope */
+  scopeVariables: Array<{ name: string; initializer: string }>
   loc: SourceLocation
 }
 

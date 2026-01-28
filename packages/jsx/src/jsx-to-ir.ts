@@ -15,6 +15,7 @@ import type {
   IRLoopChildComponent,
   IRComponent,
   IRFragment,
+  IRIfStatement,
   IRAttribute,
   IREvent,
   IRProp,
@@ -57,6 +58,13 @@ function generateSlotId(ctx: TransformContext): string {
 // =============================================================================
 
 export function jsxToIR(analyzer: AnalyzerContext): IRNode | null {
+  // If there are conditional returns (if statements with JSX returns),
+  // build an if-statement chain instead of a single node
+  if (analyzer.conditionalReturns.length > 0) {
+    const ctx = createTransformContext(analyzer)
+    return buildIfStatementChain(analyzer, ctx)
+  }
+
   if (!analyzer.jsxReturn) return null
 
   const ctx = createTransformContext(analyzer)
@@ -1146,4 +1154,74 @@ function inferExpressionType(
 ): TypeInfo | null {
   // TODO: Implement type inference from expression
   return null
+}
+
+// =============================================================================
+// If Statement Chain Building
+// =============================================================================
+
+/**
+ * Build a chain of IRIfStatement nodes from conditional returns.
+ * The chain is built in reverse order, starting with the final return
+ * and working backwards through the if statements.
+ */
+function buildIfStatementChain(
+  analyzer: AnalyzerContext,
+  ctx: TransformContext
+): IRIfStatement {
+  const conditionalReturns = analyzer.conditionalReturns
+
+  // Start with the final return (else case) if it exists
+  let alternate: IRNode | null = null
+  if (analyzer.jsxReturn) {
+    alternate = transformNode(analyzer.jsxReturn, ctx)
+  }
+
+  // Build the if-else chain from the last conditional to the first
+  for (let i = conditionalReturns.length - 1; i >= 0; i--) {
+    const condReturn = conditionalReturns[i]
+
+    // Get the condition text
+    const condition = condReturn.condition.getText(analyzer.sourceFile)
+
+    // Transform the JSX return in the then branch
+    const consequent = transformNode(condReturn.jsxReturn, ctx)
+    if (!consequent) {
+      continue
+    }
+
+    // Collect scope variables with their initializers
+    const scopeVariables: Array<{ name: string; initializer: string }> = []
+    for (const decl of condReturn.scopeVariables) {
+      if (ts.isIdentifier(decl.name) && decl.initializer) {
+        scopeVariables.push({
+          name: decl.name.text,
+          initializer: decl.initializer.getText(analyzer.sourceFile),
+        })
+      }
+    }
+
+    // Get source location
+    const loc = getSourceLocation(
+      condReturn.ifStatement,
+      analyzer.sourceFile,
+      analyzer.filePath
+    )
+
+    // Create the if statement node
+    const ifStmt: IRIfStatement = {
+      type: 'if-statement',
+      condition,
+      consequent,
+      alternate,
+      scopeVariables,
+      loc,
+    }
+
+    // This becomes the alternate for the next iteration (earlier if statement)
+    alternate = ifStmt
+  }
+
+  // The final result should be an IRIfStatement (the first if in the chain)
+  return alternate as IRIfStatement
 }
