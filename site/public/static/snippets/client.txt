@@ -1,0 +1,12 @@
+// Counter.client.js
+import { createSignal, hydrate } from '@barefootjs/dom'
+
+hydrate('Counter', (el) => {
+  const [count, setCount] = createSignal(0)
+
+  el.querySelector('[data-bf="slot_0"]')
+    .addEventListener('click', () => {
+      setCount(c => c + 1)
+      el.textContent = `Count: ${count()}`
+    })
+})
