@@ -722,8 +722,9 @@ export class HonoAdapter implements TemplateAdapter {
       // Root component without slotId: pass parent's scope directly
       scopeAttr = ' __instanceId={__scopeId}'
     } else {
-      // Non-interactive components inherit parent's scope
-      scopeAttr = ' __instanceId={__scopeId}'
+      // Components without reactive props generate their own scope ID
+      // Pass __bfScope as context for debugging/nesting, but let child generate unique ID
+      scopeAttr = ' __bfScope={__scopeId}'
     }
 
     if (children) {
