@@ -70,7 +70,7 @@ test.describe('Checkbox Documentation Page', () => {
     })
 
     test.skip('toggles to checked state on first click', async ({ page }) => {
-      // Skip: controlled mode checkbox click not working in CI
+      // Skip: controlled mode checkbox click not working
       const bindingSection = page.locator('div[data-bf-scope^="CheckboxBindingDemo_"]').first()
       const checkbox = bindingSection.locator('button[role="checkbox"]')
       const status = page.locator('.checked-status')
@@ -96,7 +96,7 @@ test.describe('Checkbox Documentation Page', () => {
     })
 
     test.skip('toggles to accepted on first click', async ({ page }) => {
-      // Skip: controlled mode checkbox click not working in CI
+      // Skip: controlled mode checkbox click not working
       const labelExample = page.locator('div[data-bf-scope^="CheckboxWithLabelDemo_"]').first()
       const checkbox = labelExample.locator('button[role="checkbox"]')
       const status = page.locator('.terms-status')
