@@ -90,6 +90,16 @@ The Client JS automatically finds elements with `data-bf` markers and hydrates t
 
 ---
 
+## Acknowledgements
+
+This project is inspired by and built with:
+
+- [SolidJS](https://www.solidjs.com/) - Fine-grained reactivity model and Signal API design
+- [shadcn/ui](https://ui.shadcn.com/) - UI component design system (docs/ui)
+- [Hono](https://hono.dev/) - JSX runtime for server-side rendering
+
+---
+
 ## License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
