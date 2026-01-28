@@ -8,7 +8,8 @@
     "packages/*",
     "examples/*",
     "ui",
-    "docs/ui"
+    "docs/ui",
+    "site"
   ],
   "scripts": {
     "test": "bun test --cwd . packages/",
