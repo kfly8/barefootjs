@@ -1,0 +1,6 @@
+{{/* Go Template */}}
+<button data-bf-scope="Counter" data-bf="slot_0">
+  Count: {{ .Count }}
+</button>
+
+// + Counter.client.js (2.1kb)

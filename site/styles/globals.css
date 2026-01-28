@@ -233,118 +233,106 @@ html.theme-transition * {
   }
 }
 
-/* Terminal Demo */
-.terminal-container {
-  background: var(--code-bg);
+/* Code Comparison Demo */
+.code-comparison {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  background: var(--code-bg);
 }
 
-.terminal-tabs {
+@media (max-width: 768px) {
+  .code-comparison {
+    grid-template-columns: 1fr;
+  }
+  .code-arrow {
+    transform: rotate(90deg);
+    padding: 0.5rem 0;
+  }
+}
+
+.code-panel {
   display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.code-panel .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
   background: var(--secondary);
 }
 
-.terminal-tab {
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--muted-foreground);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.terminal-tab:hover {
-  color: var(--foreground);
-}
-
-.terminal-tab.active {
-  color: var(--foreground);
-  border-bottom-color: var(--gradient-start);
-}
-
-.terminal-content {
-  padding: 1rem;
-  min-height: 320px;
-  max-height: 400px;
-  overflow-y: auto;
-  line-height: 1.6;
-}
-
-.terminal-line {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.terminal-line.command {
-  color: var(--gradient-start);
-  font-weight: 500;
-}
-
-.terminal-line.title {
-  color: var(--muted-foreground);
-  font-weight: 600;
-}
-
-.terminal-cursor {
-  display: inline-block;
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  50% { opacity: 0; }
-}
-
-.terminal-demo {
-  padding: 1rem;
-  border-top: 1px solid var(--border);
-  background: var(--secondary);
-}
-
-.demo-label {
+.code-label {
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--muted-foreground);
-  margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.demo-content {
+.code-filename {
+  font-size: 0.75rem;
+  color: var(--foreground);
+}
+
+.code-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.code-tab {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.code-tab:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.code-tab.active {
+  color: var(--foreground);
+  background: var(--background);
+  border-color: var(--border);
+}
+
+.code-panel .code-content {
+  flex: 1;
+  padding: 1rem;
+  margin: 0;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--foreground);
+  min-height: 240px;
+}
+
+.code-arrow {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.demo-count {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--foreground);
-  min-width: 2rem;
-  text-align: center;
-}
-
-.demo-button {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--primary-foreground);
-  background: var(--gradient-start);
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.demo-button:hover {
-  opacity: 0.9;
+  justify-content: center;
+  padding: 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 /* Shiki */
