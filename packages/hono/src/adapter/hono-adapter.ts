@@ -468,7 +468,7 @@ export class HonoAdapter implements TemplateAdapter {
   // Node Rendering
   // ===========================================================================
 
-  renderNode(node: IRNode, ctx?: { isRootOfClientComponent?: boolean }): string {
+  renderNode(node: IRNode, ctx?: { isRootOfClientComponent?: boolean; isInsideLoop?: boolean }): string {
     switch (node.type) {
       case 'element':
         return this.renderElement(node)
@@ -615,26 +615,38 @@ export class HonoAdapter implements TemplateAdapter {
     }
 
     const indexParam = loop.index ? `, ${loop.index}` : ''
-    const children = this.renderChildren(loop.children)
+    // Render children with isInsideLoop flag so components generate their own scope IDs
+    const children = this.renderChildrenInLoop(loop.children)
 
     return `{${loop.array}.map((${loop.param}${indexParam}) => ${children})}`
   }
 
-  renderComponent(comp: IRComponent, ctx?: { isRootOfClientComponent?: boolean }): string {
+  private renderChildrenInLoop(children: IRNode[]): string {
+    return children.map((child) => this.renderNode(child, { isInsideLoop: true })).join('')
+  }
+
+  renderComponent(comp: IRComponent, ctx?: { isRootOfClientComponent?: boolean; isInsideLoop?: boolean }): string {
     const props = this.renderComponentProps(comp)
     const children = this.renderChildren(comp.children)
 
     // Determine how to pass scope to child component
-    // Always pass __instanceId so child client components use parent's scope
-    // Client components check __instanceId first, ignoring __bfScope
     let scopeAttr: string
-    if (ctx?.isRootOfClientComponent) {
-      // Root component of a client component: pass parent's scope directly
-      scopeAttr = ' __instanceId={__scopeId}'
+    if (ctx?.isInsideLoop) {
+      // Components inside loops should generate their own unique scope IDs
+      // Pass __bfScope so they use it as fallback but generate unique IDs
+      // This ensures each loop iteration has a distinct component instance
+      if (comp.slotId) {
+        scopeAttr = ` __bfScope={\`\${__scopeId}_${comp.slotId}\`}`
+      } else {
+        scopeAttr = ' __bfScope={__scopeId}'
+      }
     } else if (comp.slotId) {
       // Components with slotId need unique scope with slot suffix
       // Format: ParentName_slotX for client JS matching
       scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}`
+    } else if (ctx?.isRootOfClientComponent) {
+      // Root component without slotId: pass parent's scope directly
+      scopeAttr = ' __instanceId={__scopeId}'
     } else {
       // Non-interactive components inherit parent's scope
       scopeAttr = ' __instanceId={__scopeId}'
