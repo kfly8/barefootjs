@@ -1,20 +1,29 @@
 "use client"
 
+import { createSignal, createMemo } from '@barefootjs/dom'
+
 /**
  * Checkbox Component
  *
  * An accessible checkbox with custom styling.
+ * Supports both controlled and uncontrolled modes.
  * Inspired by shadcn/ui with CSS variable theming support.
  *
- * @example Basic usage
+ * @example Uncontrolled (internal state)
+ * ```tsx
+ * <Checkbox />
+ * <Checkbox defaultChecked />
+ * ```
+ *
+ * @example Controlled (external state)
  * ```tsx
  * <Checkbox checked={isChecked} onCheckedChange={setIsChecked} />
  * ```
  *
- * @example With label (using external label)
+ * @example With label
  * ```tsx
  * <label className="flex items-center gap-2">
- *   <Checkbox checked={agreed} onCheckedChange={setAgreed} />
+ *   <Checkbox />
  *   I agree to the terms
  * </label>
  * ```
@@ -45,8 +54,12 @@ const checkedClasses = 'bg-primary text-primary-foreground border-primary'
  */
 interface CheckboxProps {
   /**
-   * Whether the checkbox is checked.
+   * Default checked state (for uncontrolled mode).
    * @default false
+   */
+  defaultChecked?: boolean
+  /**
+   * Controlled checked state. When provided, component is in controlled mode.
    */
   checked?: boolean
   /**
@@ -71,37 +84,66 @@ interface CheckboxProps {
 
 /**
  * Checkbox component with custom styling.
+ * Supports both controlled and uncontrolled modes.
  *
- * @param props.checked - Whether checked
+ * @param props.defaultChecked - Initial value for uncontrolled mode
+ * @param props.checked - Controlled checked state
  * @param props.disabled - Whether disabled
  * @param props.error - Whether in error state
  * @param props.onCheckedChange - Callback when checked state changes
  */
 function Checkbox({
   class: className = '',
-  checked = false,
+  defaultChecked = false,
+  checked,
   disabled = false,
   error = false,
   onCheckedChange,
 }: CheckboxProps) {
-  const stateClasses = checked ? checkedClasses : uncheckedClasses
-  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${className}`
+  // Internal state for uncontrolled mode
+  const [internalChecked, setInternalChecked] = createSignal(defaultChecked)
+
+  // Determine current checked state: use external if provided, otherwise internal
+  const isChecked = createMemo(() => checked !== undefined ? checked : internalChecked())
+
+  // Classes computed inline to avoid variable ordering issues
+  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${isChecked() ? checkedClasses : uncheckedClasses} ${className} grid place-content-center`
+
+  // Click handler that works for both controlled and uncontrolled modes
+  const handleClick = (e: MouseEvent) => {
+    const target = e.currentTarget as HTMLElement
+    const currentChecked = target.getAttribute('aria-checked') === 'true'
+    const newValue = !currentChecked
+
+    // Update internal state in uncontrolled mode
+    if (checked === undefined) {
+      setInternalChecked(newValue)
+    }
+
+    // Notify parent if callback provided (works for both modes)
+    // Check scope element for callback (parent sets callback there during hydration)
+    const scope = target.closest('[data-bf-scope]')
+    // @ts-ignore - oncheckedChange is set by parent during hydration
+    const scopeCallback = scope?.oncheckedChange
+    const handler = onCheckedChange || scopeCallback
+    handler?.(newValue)
+  }
 
   return (
     <button
       data-slot="checkbox"
-      data-state={checked ? 'checked' : 'unchecked'}
+      data-state={isChecked() ? 'checked' : 'unchecked'}
       role="checkbox"
-      aria-checked={checked}
+      aria-checked={isChecked()}
       aria-invalid={error || undefined}
       disabled={disabled}
       className={classes}
-      onClick={() => onCheckedChange?.(!checked)}
+      onClick={handleClick}
     >
-      {checked && (
+      {isChecked() && (
         <svg
           data-slot="checkbox-indicator"
-          className="size-4 text-current"
+          className="size-3.5 text-current"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
