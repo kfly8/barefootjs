@@ -27,9 +27,6 @@ interface MenuCategory {
   defaultOpen?: boolean
 }
 
-// Map of component hrefs that have preview available
-const previewHrefs = new Set(['/docs/components/button', '/docs/components/badge'])
-
 // Menu configuration
 const menuData: MenuCategory[] = [
   {
@@ -88,20 +85,14 @@ export function SidebarItem({ title, href, isActive = false }: SidebarItemProps)
   const baseClass = 'block py-1.5 px-3 text-sm rounded-md transition-colors no-underline'
   const activeClass = 'bg-accent text-foreground font-medium'
   const inactiveClass = 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-  const hasPreview = previewHrefs.has(href)
 
   return (
-    <span
-      className="block"
-      data-preview-href={hasPreview ? href : undefined}
+    <a
+      href={href}
+      className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
     >
-      <a
-        href={href}
-        className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
-      >
-        {title}
-      </a>
-    </span>
+      {title}
+    </a>
   )
 }
 

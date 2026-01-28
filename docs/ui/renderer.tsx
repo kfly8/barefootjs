@@ -21,7 +21,6 @@ declare module 'hono' {
 import { BfScripts } from '../../packages/hono/src/scripts'
 import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
 import { SidebarMenu } from '@/components/sidebar-menu'
-import { SidebarPreview } from '@/components/sidebar-preview'
 import { Header } from '@/components/header'
 import { MobileHeader } from '@/components/mobile-header'
 import { MobileMenu } from '@/components/mobile-menu'
@@ -118,7 +117,6 @@ export const renderer = jsxRenderer(
             <MobilePageNav currentPath={currentPath} />
             <CommandPalette />
             <SidebarMenu currentPath={currentPath} />
-            <SidebarPreview />
             <div className="sm:pl-56">
               <main className="max-w-[1000px] mx-auto px-0 sm:px-4">
                 {children}
