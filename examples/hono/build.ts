@@ -10,7 +10,7 @@
 import { compileJSX } from '@barefootjs/jsx'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, basename, relative } from 'node:path'
 
 const ROOT_DIR = dirname(import.meta.path)
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
@@ -145,5 +145,53 @@ for (const entryPath of componentFiles) {
 // Output manifest (in components/ alongside the Marked JSX files)
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/components/manifest.json')
+
+// Compute relative path from one file to another
+function computeRelativePath(from: string, to: string): string {
+  const fromDir = dirname(from)
+  const toDir = dirname(to)
+  const toFile = basename(to)
+
+  if (fromDir === toDir) {
+    return `./${toFile}`
+  }
+
+  const rel = relative(fromDir, toDir)
+  return `./${rel}/${toFile}`
+}
+
+// Resolve placeholder imports in client JS files
+async function resolveChildImports(manifestData: typeof manifest): Promise<void> {
+  const placeholderRegex = /import '\/\* @bf-child:(\w+) \*\/'/g
+
+  for (const entry of Object.values(manifestData)) {
+    if (!entry.clientJs) continue
+
+    const clientJsPath = entry.clientJs
+    const filePath = resolve(DIST_DIR, clientJsPath)
+    let content = await Bun.file(filePath).text()
+
+    let hasChanges = false
+    content = content.replace(placeholderRegex, (_, childName) => {
+      const childEntry = manifestData[childName]
+      if (!childEntry?.clientJs) {
+        // No client JS - remove import line entirely
+        hasChanges = true
+        return ''
+      }
+      const relativePath = computeRelativePath(clientJsPath, childEntry.clientJs)
+      hasChanges = true
+      return `import '${relativePath}'`
+    })
+
+    if (hasChanges) {
+      await Bun.write(filePath, content)
+      console.log(`Resolved imports: ${clientJsPath}`)
+    }
+  }
+}
+
+// Resolve child component import placeholders
+await resolveChildImports(manifest)
 
 console.log('\nBuild complete!')
