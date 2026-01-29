@@ -53,31 +53,23 @@ async function CodeComparisonDemo() {
         <div class="code-content">${sourceHtml}</div>
       </div>
 
-      <!-- Compile Button (Center) -->
-      <div class="compile-section" id="compile-section">
-        <button class="compile-btn" id="compile-btn">
-          <span class="compile-icon">→</span>
-          <span class="compile-text">Compile</span>
-        </button>
-      </div>
+      <!-- Resizer -->
+      <div class="resizer" id="resizer"></div>
 
       <!-- Output Panel (Right) -->
       <div class="code-panel output-panel" id="output-panel">
         <div class="code-header">
           <div class="code-tabs">
-            <button class="code-tab" data-output="template" id="tab-template">Template</button>
+            <button class="code-tab active" data-output="template" id="tab-template">Template</button>
             <button class="code-tab" data-output="client" id="tab-client">client.js</button>
           </div>
-          <div class="backend-tabs" id="backend-tabs" style="display: none;">
-            <button class="backend-tab active" data-backend="hono" id="btn-hono">Hono</button>
-            <button class="backend-tab" data-backend="echo" id="btn-echo">Echo</button>
-          </div>
+          <select class="backend-select" id="backend-select">
+            <option value="hono" selected>Hono</option>
+            <option value="echo">Echo</option>
+          </select>
         </div>
         <div class="code-content" id="output-content">
-          <div class="output-placeholder" id="output-placeholder">
-            <span>Click Compile to generate output</span>
-          </div>
-          <div class="output-code" id="output-hono" style="display: none;">${honoHtml}</div>
+          <div class="output-code" id="output-hono">${honoHtml}</div>
           <div class="output-code" id="output-echo" style="display: none;">${echoHtml}</div>
           <div class="output-code" id="output-client" style="display: none;">${clientHtml}</div>
         </div>
@@ -85,21 +77,13 @@ async function CodeComparisonDemo() {
 
       <script>
         (function() {
-          var sourcePanel = document.getElementById('source-panel');
-          var outputPanel = document.getElementById('output-panel');
-          var compileBtn = document.getElementById('compile-btn');
-          var compileSection = document.getElementById('compile-section');
-          var placeholder = document.getElementById('output-placeholder');
-          var backendTabs = document.getElementById('backend-tabs');
+          var backendSelect = document.getElementById('backend-select');
           var outputHono = document.getElementById('output-hono');
           var outputEcho = document.getElementById('output-echo');
           var outputClient = document.getElementById('output-client');
           var tabTemplate = document.getElementById('tab-template');
           var tabClient = document.getElementById('tab-client');
-          var btnHono = document.getElementById('btn-hono');
-          var btnEcho = document.getElementById('btn-echo');
 
-          var compiled = false;
           var currentOutput = 'template';
           var currentBackend = 'hono';
 
@@ -109,36 +93,19 @@ async function CodeComparisonDemo() {
             outputClient.style.display = 'none';
 
             if (currentOutput === 'template') {
-              backendTabs.style.display = 'flex';
+              backendSelect.style.display = 'block';
               if (currentBackend === 'hono') {
                 outputHono.style.display = 'block';
               } else {
                 outputEcho.style.display = 'block';
               }
             } else {
-              backendTabs.style.display = 'none';
+              backendSelect.style.display = 'none';
               outputClient.style.display = 'block';
             }
           }
 
-          function compile() {
-            if (compiled) return;
-            compiled = true;
-
-            // Add compiled class for width transition
-            document.getElementById('code-demo').classList.add('compiled');
-            compileBtn.classList.add('compiled');
-            compileBtn.disabled = true;
-
-            // Show output
-            placeholder.style.display = 'none';
-            tabTemplate.classList.add('active');
-            currentOutput = 'template';
-            updateOutputDisplay();
-          }
-
           function switchOutput(type) {
-            if (!compiled) return;
             currentOutput = type;
             tabTemplate.classList.toggle('active', type === 'template');
             tabClient.classList.toggle('active', type === 'client');
@@ -147,16 +114,71 @@ async function CodeComparisonDemo() {
 
           function switchBackend(backend) {
             currentBackend = backend;
-            btnHono.classList.toggle('active', backend === 'hono');
-            btnEcho.classList.toggle('active', backend === 'echo');
             updateOutputDisplay();
           }
 
-          compileBtn.addEventListener('click', compile);
           tabTemplate.addEventListener('click', function() { switchOutput('template'); });
           tabClient.addEventListener('click', function() { switchOutput('client'); });
-          btnHono.addEventListener('click', function() { switchBackend('hono'); });
-          btnEcho.addEventListener('click', function() { switchBackend('echo'); });
+          backendSelect.addEventListener('change', function() { switchBackend(this.value); });
+
+          // Resizer functionality
+          var resizer = document.getElementById('resizer');
+          var sourcePanel = document.getElementById('source-panel');
+          var outputPanel = document.getElementById('output-panel');
+          var codeDemo = document.getElementById('code-demo');
+
+          var isResizing = false;
+          var minWidth = 120;
+          var blurThreshold = 180;
+
+          function updateBlurState() {
+            var outputWidth = outputPanel.getBoundingClientRect().width;
+            if (outputWidth <= blurThreshold) {
+              outputPanel.classList.add('blurred');
+            } else {
+              outputPanel.classList.remove('blurred');
+            }
+          }
+
+          // Initial blur state
+          setTimeout(updateBlurState, 100);
+
+          resizer.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            resizer.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+          });
+
+          document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+
+            var containerRect = codeDemo.getBoundingClientRect();
+            var containerWidth = containerRect.width;
+            var offsetX = e.clientX - containerRect.left;
+
+            var maxWidth = containerWidth - minWidth - 1;
+
+            var newSourceWidth = Math.max(minWidth, Math.min(maxWidth, offsetX));
+            var newOutputWidth = containerWidth - newSourceWidth - 1;
+
+            sourcePanel.style.flex = 'none';
+            sourcePanel.style.width = newSourceWidth + 'px';
+            outputPanel.style.flex = 'none';
+            outputPanel.style.width = newOutputWidth + 'px';
+
+            updateBlurState();
+          });
+
+          document.addEventListener('mouseup', function() {
+            if (isResizing) {
+              isResizing = false;
+              resizer.classList.remove('dragging');
+              document.body.style.cursor = '';
+              document.body.style.userSelect = '';
+            }
+          });
         })();
       </script>
     </div>

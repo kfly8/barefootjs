@@ -1,8 +1,8 @@
 // Hono JSX Template
-export function Counter() {
+export function Counter({ count = 0 }) {
   return (
-    <button data-bf-scope="Counter" data-bf="slot_0">
-      Count: 0
+    <button data-bf-scope="Counter" data-bf="slot_1">
+      Count: <span data-bf="slot_0">{count}</span>
     </button>
   )
 }

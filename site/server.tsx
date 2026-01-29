@@ -21,4 +21,4 @@ app.use('/static/*', serveStatic({
   rewriteRequestPath: (path) => path.replace('/static', ''),
 }))
 
-export default { port: 3003, fetch: app.fetch }
+export default { port: 3001, fetch: app.fetch }

@@ -1,12 +1,21 @@
 // Counter.client.js
-import { createSignal, hydrate } from '@barefootjs/dom'
+import { createSignal, createEffect, findScope, find, hydrate, registerComponent } from '@barefootjs/dom'
 
-hydrate('Counter', (el) => {
-  const [count, setCount] = createSignal(0)
+export function initCounter(__instanceIndex, __parentScope, props = {}) {
+  const __scope = findScope('Counter', __instanceIndex, __parentScope)
+  if (!__scope) return
 
-  el.querySelector('[data-bf="slot_0"]')
-    .addEventListener('click', () => {
-      setCount(c => c + 1)
-      el.textContent = `Count: ${count()}`
-    })
-})
+  const [count, setCount] = createSignal(props.count ?? 0)
+
+  const _slot_0 = find(__scope, '[data-bf="slot_0"]')
+  const _slot_1 = find(__scope, '[data-bf="slot_1"]')
+
+  createEffect(() => {
+    if (_slot_0) _slot_0.textContent = String(count())
+  })
+
+  if (_slot_1) _slot_1.onclick = () => setCount(c => c + 1)
+}
+
+registerComponent('Counter', initCounter)
+hydrate('Counter', (props, idx, scope) => initCounter(idx, scope, props))
