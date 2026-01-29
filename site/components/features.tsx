@@ -36,9 +36,9 @@ export function FiveFeaturesSection() {
   return (
     <section className="py-32 px-6 sm:px-12 border-t border-border">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border">
+        <div className="flex flex-wrap">
           {fiveFeatures.map((feature) => (
-            <div className="bg-background p-6 sm:p-8 flex flex-col">
+            <div className="w-full sm:w-1/2 md:w-1/3 lg:w-1/5 p-6 sm:p-8 flex flex-col border-b border-border lg:border-b-0 lg:border-r last:border-r-0 sm:[&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:[&:nth-child(3n)]:border-r-0 lg:[&:nth-child(3n)]:border-r">
               <span className="text-xs font-mono text-[var(--gradient-start)] tracking-wider mb-4">
                 {feature.num}
               </span>

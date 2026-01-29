@@ -5,7 +5,6 @@
  */
 
 import { Logo } from './ui/logo'
-import { GitHubIcon } from './ui/icons'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
 export function Header() {
@@ -31,7 +30,7 @@ export function Header() {
               href="/docs/core"
               className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50"
             >
-              core
+              docs
             </a>
             <a
               href="/components"
@@ -42,17 +41,8 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Right section: GitHub + Theme */}
+        {/* Right section: Theme */}
         <div className="flex items-center gap-3">
-          <a
-            href="https://github.com/kfly8/barefootjs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-border bg-background text-foreground hover:bg-accent transition-colors"
-            aria-label="View on GitHub"
-          >
-            <GitHubIcon />
-          </a>
           <ThemeSwitcher />
         </div>
       </div>

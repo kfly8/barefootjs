@@ -132,7 +132,13 @@ async function CodeComparisonDemo() {
           var blurThreshold = 180;
 
           function updateBlurState() {
+            var sourceWidth = sourcePanel.getBoundingClientRect().width;
             var outputWidth = outputPanel.getBoundingClientRect().width;
+            if (sourceWidth <= blurThreshold) {
+              sourcePanel.classList.add('blurred');
+            } else {
+              sourcePanel.classList.remove('blurred');
+            }
             if (outputWidth <= blurThreshold) {
               outputPanel.classList.add('blurred');
             } else {
@@ -191,8 +197,8 @@ export async function Hero() {
   const codeDemo = await CodeComparisonDemo()
 
   return (
-    <section className="h-screen flex items-center px-6 sm:px-12">
-      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+    <section className="min-h-screen flex items-center px-6 sm:px-12 pt-20 pb-12">
+      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 items-center">
         {/* Left: Headline */}
         <div>
           <h1 className="fade-in text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-6">
@@ -219,7 +225,7 @@ export async function Hero() {
         </div>
 
         {/* Right: Code Comparison Demo */}
-        <div className="fade-in-3">
+        <div className="fade-in-3 min-w-0 overflow-hidden">
           {codeDemo}
         </div>
       </div>
