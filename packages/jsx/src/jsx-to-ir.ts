@@ -207,20 +207,10 @@ function transformComponentElement(
   const props = processComponentProps(node.openingElement.attributes, ctx)
   const children = transformChildren(node.children, ctx)
 
-  // Assign slotId if component has:
-  // - event handler props (onClick, etc.)
-  // - reactive props (function calls like selected={isSelected()})
-  // - dynamic props (JSX expressions like className={iconClasses})
-  const hasEventHandlers = props.some(
-    (p) => p.name.startsWith('on') && p.name.length > 2
-  )
-  const hasReactiveProps = props.some(
-    (p) => !p.name.startsWith('on') && p.value.endsWith('()')
-  )
-  const hasDynamicProps = props.some(
-    (p) => !p.name.startsWith('on') && p.dynamic
-  )
-  const slotId = hasEventHandlers || hasReactiveProps || hasDynamicProps ? generateSlotId(ctx) : null
+  // Always assign slotId to child components.
+  // Even if no reactive props are passed from parent, the child may have internal state
+  // (createSignal, createMemo) that requires hydration via findScope().
+  const slotId = generateSlotId(ctx)
 
   return {
     type: 'component',
@@ -241,20 +231,10 @@ function transformSelfClosingComponent(
 ): IRComponent {
   const props = processComponentProps(node.attributes, ctx)
 
-  // Assign slotId if component has:
-  // - event handler props (onClick, etc.)
-  // - reactive props (function calls like selected={isSelected()})
-  // - dynamic props (JSX expressions like className={iconClasses})
-  const hasEventHandlers = props.some(
-    (p) => p.name.startsWith('on') && p.name.length > 2
-  )
-  const hasReactiveProps = props.some(
-    (p) => !p.name.startsWith('on') && p.value.endsWith('()')
-  )
-  const hasDynamicProps = props.some(
-    (p) => !p.name.startsWith('on') && p.dynamic
-  )
-  const slotId = hasEventHandlers || hasReactiveProps || hasDynamicProps ? generateSlotId(ctx) : null
+  // Always assign slotId to child components.
+  // Even if no reactive props are passed from parent, the child may have internal state
+  // (createSignal, createMemo) that requires hydration via findScope().
+  const slotId = generateSlotId(ctx)
 
   return {
     type: 'component',
