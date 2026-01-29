@@ -2,8 +2,12 @@
  * Checkbox Documentation Page
  */
 
-import { Checkbox } from '@/components/ui/checkbox'
-import { CheckboxUncontrolledDemo, CheckboxBindingDemo, CheckboxWithLabelDemo } from '@/components/checkbox-demo'
+import {
+  CheckboxWithTextDemo,
+  CheckboxDisabledDemo,
+  CheckboxFormDemo,
+  CheckboxTermsDemo,
+} from '@/components/checkbox-demo'
 import {
   DocPage,
   PageHeader,
@@ -21,95 +25,89 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'uncontrolled', title: 'Uncontrolled', branch: 'start' },
-  { id: 'checked-state', title: 'Checked State', branch: 'child' },
+  { id: 'with-text', title: 'With Text', branch: 'start' },
   { id: 'disabled', title: 'Disabled', branch: 'child' },
-  { id: 'state-binding', title: 'State Binding', branch: 'child' },
-  { id: 'with-label', title: 'With Label', branch: 'end' },
+  { id: 'form', title: 'Form', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const uncontrolledCode = `"use client"
+const withTextCode = `"use client"
 
-import { Checkbox } from '@/components/ui/checkbox'
+import { Checkbox } from "@/components/ui/checkbox"
 
-// No external state needed - checkbox manages its own state
-function CheckboxUncontrolled() {
+export function CheckboxWithText() {
   return (
-    <div className="flex flex-col gap-4">
-      <label className="flex items-center gap-2 cursor-pointer">
-        <Checkbox />
-        <span className="text-sm">Click me (uncontrolled)</span>
-      </label>
-      <label className="flex items-center gap-2 cursor-pointer">
-        <Checkbox defaultChecked />
-        <span className="text-sm">Initially checked (defaultChecked)</span>
-      </label>
-    </div>
-  )
-}`
-
-const checkedCode = `"use client"
-
-import { Checkbox } from '@/components/ui/checkbox'
-
-function CheckboxChecked() {
-  return (
-    <div className="flex gap-4">
-      <Checkbox />
-      <Checkbox checked />
+    <div className="items-top flex space-x-2">
+      <Checkbox id="terms1" />
+      <div className="grid gap-1.5 leading-none">
+        <label
+          htmlFor="terms1"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Accept terms and conditions
+        </label>
+        <p className="text-sm text-muted-foreground">
+          You agree to our Terms of Service and Privacy Policy.
+        </p>
+      </div>
     </div>
   )
 }`
 
 const disabledCode = `"use client"
 
-import { Checkbox } from '@/components/ui/checkbox'
+import { Checkbox } from "@/components/ui/checkbox"
 
-function CheckboxDisabled() {
+export function CheckboxDisabled() {
   return (
-    <div className="flex gap-4">
-      <Checkbox disabled />
-      <Checkbox checked disabled />
+    <div className="flex items-center space-x-2">
+      <Checkbox id="terms2" disabled />
+      <label
+        htmlFor="terms2"
+        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >
+        Accept terms and conditions
+      </label>
     </div>
   )
 }`
 
-const bindingCode = `"use client"
+const formCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
-import { Checkbox } from '@/components/ui/checkbox'
+import { createSignal } from "@barefootjs/dom"
+import { Checkbox } from "@/components/ui/checkbox"
 
-function CheckboxBinding() {
-  const [checked, setChecked] = createSignal(false)
+export function CheckboxForm() {
+  const [mobile, setMobile] = createSignal(false)
+  const [desktop, setDesktop] = createSignal(true)
+  const [email, setEmail] = createSignal(false)
 
   return (
-    <div className="flex items-center gap-4">
-      <Checkbox
-        checked={checked()}
-        onCheckedChange={setChecked}
-      />
-      <span className="text-sm text-muted-foreground">
-        {checked() ? 'Checked' : 'Unchecked'}
-      </span>
+    <div className="space-y-4">
+      <div className="space-y-4">
+        <h4 className="text-sm font-medium leading-none">Sidebar</h4>
+        <p className="text-sm text-muted-foreground">
+          Select the items you want to display in the sidebar.
+        </p>
+        <div className="flex flex-col space-y-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <Checkbox checked={mobile()} onCheckedChange={setMobile} />
+            <span className="text-sm font-medium leading-none">Mobile</span>
+          </label>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <Checkbox checked={desktop()} onCheckedChange={setDesktop} />
+            <span className="text-sm font-medium leading-none">Desktop</span>
+          </label>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <Checkbox checked={email()} onCheckedChange={setEmail} />
+            <span className="text-sm font-medium leading-none">
+              Email notifications
+            </span>
+          </label>
+        </div>
+      </div>
     </div>
-  )
-}`
-
-const withLabelCode = `"use client"
-
-import { createSignal } from '@barefootjs/dom'
-import { Checkbox } from '@/components/ui/checkbox'
-
-function CheckboxWithLabel() {
-  const [accepted, setAccepted] = createSignal(false)
-
-  return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
-      <span className="text-sm">Accept terms and conditions</span>
-    </label>
   )
 }`
 
@@ -147,13 +145,13 @@ export function CheckboxPage() {
       <div className="space-y-12">
         <PageHeader
           title="Checkbox"
-          description="A control that allows the user to toggle between checked and unchecked states."
+          description="A control that allows the user to toggle between checked and not checked."
           {...getNavLinks('checkbox')}
         />
 
         {/* Preview */}
         <Example title="" code={`<Checkbox />`}>
-          <Checkbox />
+          <CheckboxTermsDemo />
         </Example>
 
         {/* Installation */}
@@ -164,30 +162,16 @@ export function CheckboxPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Uncontrolled" code={uncontrolledCode}>
-              <CheckboxUncontrolledDemo />
-            </Example>
-
-            <Example title="Checked State" code={checkedCode}>
-              <div className="flex gap-4">
-                <Checkbox />
-                <Checkbox checked={true} />
-              </div>
+            <Example title="With Text" code={withTextCode}>
+              <CheckboxWithTextDemo />
             </Example>
 
             <Example title="Disabled" code={disabledCode}>
-              <div className="flex gap-4">
-                <Checkbox disabled={true} />
-                <Checkbox checked={true} disabled={true} />
-              </div>
+              <CheckboxDisabledDemo />
             </Example>
 
-            <Example title="State Binding" code={bindingCode}>
-              <CheckboxBindingDemo />
-            </Example>
-
-            <Example title="With Label" code={withLabelCode}>
-              <CheckboxWithLabelDemo />
+            <Example title="Form" code={formCode}>
+              <CheckboxFormDemo />
             </Example>
           </div>
         </Section>
