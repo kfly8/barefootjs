@@ -1,6 +1,6 @@
 "use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect, onMount, onCleanup } from '@barefootjs/dom'
 
 /**
  * Checkbox Component
@@ -103,8 +103,54 @@ function Checkbox({
   // Internal state for uncontrolled mode
   const [internalChecked, setInternalChecked] = createSignal(defaultChecked)
 
-  // Determine current checked state: use external if provided, otherwise internal
-  const isChecked = createMemo(() => checked !== undefined ? checked : internalChecked())
+  // Controlled state - synced from parent via DOM attribute
+  // Initial value uses 'checked' prop (compiler transforms to props.checked)
+  const [controlledChecked, setControlledChecked] = createSignal<boolean | undefined>(checked)
+
+  // Track if component is in controlled mode (checked prop provided)
+  // Access 'checked' prop in memo to ensure it's marked as reactive prop
+  const isControlled = createMemo(() => checked !== undefined)
+
+  // Determine current checked state: use controlled if provided, otherwise internal
+  const isChecked = createMemo(() => isControlled() ? controlledChecked() : internalChecked())
+
+  // Watch for parent's checked attribute changes via MutationObserver
+  // Parent components update the 'checked' attribute on the scope element
+  // when their signal changes, so we monitor that attribute
+  onMount(() => {
+    // Find all checkbox buttons and their scopes
+    // Note: When Checkbox is a child component, its scope may be named like
+    // "ParentComponent_xxx_slot_0" instead of "Checkbox_xxx"
+    const buttons = document.querySelectorAll('[data-slot="checkbox"]')
+    for (const button of buttons) {
+      // First try to find Checkbox-specific scope, then fall back to any scope with data-bf-scope
+      const scopeEl = button.closest('[data-bf-scope^="Checkbox_"]') ||
+                      button.closest('[data-bf-scope]')
+      if (!scopeEl || scopeEl.hasAttribute('data-bf-observer')) continue
+
+      // Mark this scope as having an observer
+      scopeEl.setAttribute('data-bf-observer', 'true')
+
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'checked') {
+            const newValue = (mutation.target as Element).getAttribute('checked')
+            if (newValue !== null) {
+              setControlledChecked(newValue === 'true')
+            }
+          }
+        }
+      })
+
+      observer.observe(scopeEl, { attributes: true, attributeFilter: ['checked'] })
+
+      onCleanup(() => {
+        observer.disconnect()
+        scopeEl.removeAttribute('data-bf-observer')
+      })
+      break // Only attach observer to first unobserved scope (this instance)
+    }
+  })
 
   // Classes computed inline to avoid variable ordering issues
   const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${isChecked() ? checkedClasses : uncheckedClasses} ${className} grid place-content-center`
@@ -115,9 +161,37 @@ function Checkbox({
     const currentChecked = target.getAttribute('aria-checked') === 'true'
     const newValue = !currentChecked
 
-    // Update internal state in uncontrolled mode
-    if (checked === undefined) {
+    // Update state based on mode
+    if (isControlled()) {
+      // In controlled mode, update controlledChecked directly for immediate UI update
+      setControlledChecked(newValue)
+    } else {
+      // In uncontrolled mode, update internal state
       setInternalChecked(newValue)
+    }
+
+    // Directly update DOM for child component case where hydration may not work
+    // This ensures the checkbox visually updates regardless of scope issues
+    target.setAttribute('aria-checked', String(newValue))
+    target.setAttribute('data-state', newValue ? 'checked' : 'unchecked')
+
+    // Update checkbox styling classes
+    if (newValue) {
+      target.classList.remove('border-input', 'bg-background')
+      target.classList.add('bg-primary', 'text-primary-foreground', 'border-primary')
+    } else {
+      target.classList.remove('bg-primary', 'text-primary-foreground', 'border-primary')
+      target.classList.add('border-input', 'bg-background')
+    }
+
+    // Update SVG checkmark visibility
+    let svg = target.querySelector('svg')
+    if (newValue && !svg) {
+      // Add checkmark SVG
+      target.innerHTML = '<svg data-slot="checkbox-indicator" class="size-3.5 text-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
+    } else if (!newValue && svg) {
+      // Remove checkmark SVG
+      svg.remove()
     }
 
     // Notify parent if callback provided (works for both modes)
