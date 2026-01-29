@@ -342,6 +342,18 @@ async function copyDir(src: string, dest: string) {
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
 
+// Copy snippets to dist/static/snippets/
+const SNIPPETS_SRC = resolve(ROOT_DIR, 'public/static/snippets')
+const SNIPPETS_DEST = resolve(DIST_STATIC_DIR, 'snippets')
+await mkdir(SNIPPETS_DEST, { recursive: true })
+const snippetFiles = await readdir(SNIPPETS_SRC).catch(() => [])
+for (const file of snippetFiles) {
+  await Bun.write(resolve(SNIPPETS_DEST, file), Bun.file(resolve(SNIPPETS_SRC, file)))
+}
+if (snippetFiles.length > 0) {
+  console.log(`Copied: dist/static/snippets/ (${snippetFiles.length} files)`)
+}
+
 // Copy framework logos (both to dist/logos/ and dist/static/logos/)
 const LOGOS_DIR = resolve(ROOT_DIR, 'assets/logos')
 const DIST_LOGOS_DIR = resolve(DIST_DIR, 'logos')

@@ -411,6 +411,20 @@ html.theme-transition * {
   font-family: var(--font-mono);
 }
 
+/* Shiki dual theme support - apply CSS variables to color */
+.shiki span {
+  color: var(--shiki-light);
+}
+
+html.dark .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* Code demo always uses dark theme */
+.code-demo .shiki span {
+  color: var(--shiki-dark);
+}
+
 /* Resizer Handle */
 .resizer {
   width: 1px;

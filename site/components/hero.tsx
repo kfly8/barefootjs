@@ -2,38 +2,30 @@
  * Hero section with code comparison demo
  */
 
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { createHighlighter } from 'shiki'
-
-// Cache highlighter instance
-let highlighterPromise: ReturnType<typeof createHighlighter> | null = null
-
-async function getHighlighter() {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighter({
-      themes: ['github-dark'],
-      langs: ['tsx', 'javascript', 'html'],
-    })
-  }
-  return highlighterPromise
-}
+import { useRequestContext } from 'hono/jsx-renderer'
+import { highlight, initHighlighter } from './shared/highlighter'
 
 async function highlightCode(code: string, lang: 'tsx' | 'javascript' | 'html') {
-  const highlighter = await getHighlighter()
-  return highlighter.codeToHtml(code, {
-    lang,
-    theme: 'github-dark',
-  })
+  await initHighlighter()
+  const html = highlight(code, lang)
+  // Wrap in shiki structure for consistent styling
+  return `<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0"><code>${html}</code></pre>`
 }
 
-async function CodeComparisonDemo() {
-  // Load code snippets from static files
-  const snippetsDir = join(process.cwd(), 'public/static/snippets')
-  const sourceCode = readFileSync(join(snippetsDir, 'source.txt'), 'utf-8').trim()
-  const honoOutput = readFileSync(join(snippetsDir, 'hono.txt'), 'utf-8').trim()
-  const echoOutput = readFileSync(join(snippetsDir, 'echo.txt'), 'utf-8').trim()
-  const clientCode = readFileSync(join(snippetsDir, 'client.txt'), 'utf-8').trim()
+async function CodeComparisonDemo(baseUrl: string) {
+  // Load code snippets from static files via fetch (Workers-compatible)
+  const snippetsBase = `${baseUrl}/static/snippets`
+  const [sourceRes, honoRes, echoRes, clientRes] = await Promise.all([
+    fetch(`${snippetsBase}/source.txt`),
+    fetch(`${snippetsBase}/hono.txt`),
+    fetch(`${snippetsBase}/echo.txt`),
+    fetch(`${snippetsBase}/client.txt`),
+  ])
+
+  const sourceCode = (await sourceRes.text()).trim()
+  const honoOutput = (await honoRes.text()).trim()
+  const echoOutput = (await echoRes.text()).trim()
+  const clientCode = (await clientRes.text()).trim()
 
   // Highlight all code snippets
   const sourceHtml = await highlightCode(sourceCode, 'tsx')
@@ -194,7 +186,10 @@ async function CodeComparisonDemo() {
 }
 
 export async function Hero() {
-  const codeDemo = await CodeComparisonDemo()
+  const c = useRequestContext()
+  const url = new URL(c.req.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  const codeDemo = await CodeComparisonDemo(baseUrl)
 
   return (
     <section className="min-h-screen flex items-center px-6 sm:px-12 pt-20 pb-12">

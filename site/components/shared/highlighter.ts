@@ -15,6 +15,8 @@ import githubDark from '@shikijs/themes/github-dark'
 // Fine-grained language imports
 import langTsx from '@shikijs/langs/tsx'
 import langTypescript from '@shikijs/langs/typescript'
+import langJavascript from '@shikijs/langs/javascript'
+import langHtml from '@shikijs/langs/html'
 import langBash from '@shikijs/langs/bash'
 
 let highlighter: HighlighterCore | null = null
@@ -31,7 +33,7 @@ export async function initHighlighter(): Promise<void> {
 
   highlighter = await createHighlighterCore({
     themes: [githubLight, githubDark],
-    langs: [langTsx, langTypescript, langBash],
+    langs: [langTsx, langTypescript, langJavascript, langHtml, langBash],
     engine: createJavaScriptRegexEngine(),
   })
 }
@@ -47,7 +49,7 @@ export function highlight(code: string, lang: string = 'tsx'): string {
 
   const langMap: Record<string, string> = {
     ts: 'typescript',
-    js: 'typescript',
+    js: 'javascript',
     jsx: 'tsx',
     sh: 'bash',
     shell: 'bash',
