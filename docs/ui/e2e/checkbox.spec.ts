@@ -55,28 +55,6 @@ test.describe('Checkbox Documentation Page', () => {
     })
   })
 
-  test.describe('With Text', () => {
-    test('displays with text example', async ({ page }) => {
-      await expect(page.locator('h3:has-text("With Text")')).toBeVisible()
-      await expect(page.locator('[data-bf-scope^="CheckboxWithTextDemo_"]:not([data-slot])').first()).toBeVisible()
-    })
-
-    test('shows label and description', async ({ page }) => {
-      const section = page.locator('[data-bf-scope^="CheckboxWithTextDemo_"]:not([data-slot])').first()
-      await expect(section.locator('text=Accept terms and conditions')).toBeVisible()
-      await expect(section.locator('text=You agree to our Terms')).toBeVisible()
-    })
-
-    test('toggles on click', async ({ page }) => {
-      const section = page.locator('[data-bf-scope^="CheckboxWithTextDemo_"]:not([data-slot])').first()
-      const checkbox = section.locator('button[role="checkbox"]')
-
-      await expect(checkbox).toHaveAttribute('aria-checked', 'false')
-      await checkbox.dispatchEvent('click')
-      await expect(checkbox).toHaveAttribute('aria-checked', 'true')
-    })
-  })
-
   test.describe('Disabled', () => {
     test('displays disabled example', async ({ page }) => {
       await expect(page.locator('h3:has-text("Disabled")')).toBeVisible()
@@ -132,6 +110,32 @@ test.describe('Checkbox Documentation Page', () => {
       await checkboxes.first().dispatchEvent('click')
       await expect(selectedText).toContainText('Mobile')
       await expect(selectedText).toContainText('Desktop')
+    })
+  })
+
+  test.describe('Email List', () => {
+    test('displays email list example', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Email List")')).toBeVisible()
+      const section = page.locator('[data-bf-scope^="CheckboxEmailListDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+    })
+
+    test('shows select all checkbox and items', async ({ page }) => {
+      const section = page.locator('[data-bf-scope^="CheckboxEmailListDemo_"]:not([data-slot])').first()
+      await expect(section.locator('text=Select all')).toBeVisible()
+      await expect(section.locator('text=Meeting tomorrow')).toBeVisible()
+    })
+
+    test('can select individual emails', async ({ page }) => {
+      const section = page.locator('[data-bf-scope^="CheckboxEmailListDemo_"]:not([data-slot])').first()
+      const checkboxes = section.locator('button[role="checkbox"]')
+
+      // First checkbox is "select all", second is first email
+      const firstEmailCheckbox = checkboxes.nth(1)
+      await firstEmailCheckbox.dispatchEvent('click')
+
+      // Should show "1 selected"
+      await expect(section.locator('text=1 selected')).toBeVisible()
     })
   })
 

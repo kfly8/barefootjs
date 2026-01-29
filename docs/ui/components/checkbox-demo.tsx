@@ -10,32 +10,12 @@ import { createSignal } from '@barefootjs/dom'
 import { Checkbox } from '@ui/components/ui/checkbox'
 
 /**
- * Basic checkbox with text label and description
- * Shows how to pair checkbox with descriptive text
- */
-export function CheckboxWithTextDemo() {
-  return (
-    <label className="items-top flex space-x-2 cursor-pointer">
-      <Checkbox />
-      <div className="grid gap-1.5 leading-none">
-        <span className="text-sm font-medium leading-none">
-          Accept terms and conditions
-        </span>
-        <p className="text-sm text-muted-foreground">
-          You agree to our Terms of Service and Privacy Policy.
-        </p>
-      </div>
-    </label>
-  )
-}
-
-/**
  * Disabled checkbox example
- * Shows disabled state with label
+ * Shows disabled state
  */
 export function CheckboxDisabledDemo() {
   return (
-    <div className="flex items-center space-x-2 opacity-50 cursor-not-allowed">
+    <div className="flex items-center space-x-2 opacity-50">
       <Checkbox disabled />
       <span className="text-sm font-medium leading-none">
         Accept terms and conditions
@@ -60,28 +40,28 @@ export function CheckboxFormDemo() {
         <p className="text-sm text-muted-foreground">
           Select the items you want to display in the sidebar.
         </p>
-        <div className="flex flex-col space-y-2">
-          <label className="flex items-center space-x-2 cursor-pointer">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center space-x-2">
             <Checkbox
               checked={mobile()}
               onCheckedChange={setMobile}
             />
             <span className="text-sm font-medium leading-none">Mobile</span>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer">
+          </div>
+          <div className="flex items-center space-x-2">
             <Checkbox
               checked={desktop()}
               onCheckedChange={setDesktop}
             />
             <span className="text-sm font-medium leading-none">Desktop</span>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer">
+          </div>
+          <div className="flex items-center space-x-2">
             <Checkbox
               checked={email()}
               onCheckedChange={setEmail}
             />
             <span className="text-sm font-medium leading-none">Email notifications</span>
-          </label>
+          </div>
         </div>
       </div>
       <div className="text-sm text-muted-foreground pt-2 border-t">
@@ -100,7 +80,7 @@ export function CheckboxTermsDemo() {
 
   return (
     <div className="space-y-4">
-      <label className="items-top flex space-x-2 cursor-pointer">
+      <div className="items-top flex space-x-2">
         <Checkbox
           checked={accepted()}
           onCheckedChange={setAccepted}
@@ -113,13 +93,76 @@ export function CheckboxTermsDemo() {
             By checking this box, you agree to our Terms of Service.
           </p>
         </div>
-      </label>
+      </div>
       <button
         className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
         disabled={!accepted()}
       >
         Continue
       </button>
+    </div>
+  )
+}
+
+/**
+ * Email list with bulk selection
+ * Common pattern for selecting items in a list
+ */
+export function CheckboxEmailListDemo() {
+  const [email1, setEmail1] = createSignal(false)
+  const [email2, setEmail2] = createSignal(false)
+  const [email3, setEmail3] = createSignal(false)
+
+  const selectedCount = () => [email1(), email2(), email3()].filter(Boolean).length
+  const isAllSelected = () => selectedCount() === 3
+
+  const toggleAll = (checked: boolean) => {
+    setEmail1(checked)
+    setEmail2(checked)
+    setEmail3(checked)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={isAllSelected()}
+            onCheckedChange={toggleAll}
+          />
+          <span className="text-sm text-muted-foreground">
+            {selectedCount() > 0 ? `${selectedCount()} selected` : 'Select all'}
+          </span>
+        </div>
+        {selectedCount() > 0 && (
+          <span className="text-sm text-primary">
+            Mark as read
+          </span>
+        )}
+      </div>
+      <div className="border rounded-md divide-y">
+        <div className="flex items-center space-x-3 p-3 bg-muted/50">
+          <Checkbox checked={email1()} onCheckedChange={setEmail1} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm truncate font-medium">Meeting tomorrow</p>
+            <p className="text-xs text-muted-foreground truncate">boss@example.com</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3 p-3">
+          <Checkbox checked={email2()} onCheckedChange={setEmail2} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm truncate">Project update</p>
+            <p className="text-xs text-muted-foreground truncate">team@example.com</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3 p-3 bg-muted/50">
+          <Checkbox checked={email3()} onCheckedChange={setEmail3} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm truncate font-medium">Invoice #1234</p>
+            <p className="text-xs text-muted-foreground truncate">billing@example.com</p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
