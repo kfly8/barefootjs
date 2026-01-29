@@ -186,12 +186,12 @@ export function CheckboxPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Disabled" code={disabledCode}>
-              <CheckboxDisabledDemo />
-            </Example>
-
             <Example title="Form" code={formCode}>
               <CheckboxFormDemo />
+            </Example>
+
+            <Example title="Disabled" code={disabledCode}>
+              <CheckboxDisabledDemo />
             </Example>
 
             <Example title="Email List" code={emailListCode}>

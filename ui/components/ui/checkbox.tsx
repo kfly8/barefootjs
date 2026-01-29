@@ -1,6 +1,6 @@
 "use client"
 
-import { createSignal, createMemo, createEffect, onMount, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/dom'
 
 /**
  * Checkbox Component
@@ -43,11 +43,18 @@ const focusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50'
 // Error state classes
 const errorClasses = 'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
 
-// Unchecked state classes
-const uncheckedClasses = 'border-input dark:bg-input/30 bg-background'
-
-// Checked state classes
-const checkedClasses = 'bg-primary text-primary-foreground border-primary'
+// State classes using data-state attribute selectors for reactivity
+// When data-state changes, CSS automatically applies correct styles
+const stateClasses = [
+  // Unchecked state
+  '[&[data-state=unchecked]]:border-input',
+  'dark:[&[data-state=unchecked]]:bg-input/30',
+  '[&[data-state=unchecked]]:bg-background',
+  // Checked state
+  '[&[data-state=checked]]:bg-primary',
+  '[&[data-state=checked]]:text-primary-foreground',
+  '[&[data-state=checked]]:border-primary',
+].join(' ')
 
 /**
  * Props for the Checkbox component.
@@ -114,46 +121,26 @@ function Checkbox({
   // Determine current checked state: use controlled if provided, otherwise internal
   const isChecked = createMemo(() => isControlled() ? controlledChecked() : internalChecked())
 
-  // Watch for parent's checked attribute changes via MutationObserver
-  // Parent components update the 'checked' attribute on the scope element
-  // when their signal changes, so we monitor that attribute
-  onMount(() => {
-    // Find all checkbox buttons and their scopes
-    // Note: When Checkbox is a child component, its scope may be named like
-    // "ParentComponent_xxx_slot_0" instead of "Checkbox_xxx"
-    const buttons = document.querySelectorAll('[data-slot="checkbox"]')
-    for (const button of buttons) {
-      // First try to find Checkbox-specific scope, then fall back to any scope with data-bf-scope
-      const scopeEl = button.closest('[data-bf-scope^="Checkbox_"]') ||
-                      button.closest('[data-bf-scope]')
-      if (!scopeEl || scopeEl.hasAttribute('data-bf-observer')) continue
+  // Helper function to update checkbox UI (visual state)
+  // Note: CSS classes are now handled by data-state attribute selectors
+  const updateCheckboxUI = (target: HTMLElement, newValue: boolean) => {
+    // Update ARIA and data attributes (CSS reacts to data-state changes)
+    target.setAttribute('aria-checked', String(newValue))
+    target.setAttribute('data-state', newValue ? 'checked' : 'unchecked')
 
-      // Mark this scope as having an observer
-      scopeEl.setAttribute('data-bf-observer', 'true')
-
-      const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'checked') {
-            const newValue = (mutation.target as Element).getAttribute('checked')
-            if (newValue !== null) {
-              setControlledChecked(newValue === 'true')
-            }
-          }
-        }
-      })
-
-      observer.observe(scopeEl, { attributes: true, attributeFilter: ['checked'] })
-
-      onCleanup(() => {
-        observer.disconnect()
-        scopeEl.removeAttribute('data-bf-observer')
-      })
-      break // Only attach observer to first unobserved scope (this instance)
+    // Update SVG checkmark visibility
+    const svg = target.querySelector('svg')
+    if (newValue && !svg) {
+      // Add checkmark SVG
+      target.innerHTML = '<svg data-slot="checkbox-indicator" class="size-3.5 text-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
+    } else if (!newValue && svg) {
+      // Remove checkmark SVG
+      svg.remove()
     }
-  })
+  }
 
-  // Classes computed inline to avoid variable ordering issues
-  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${isChecked() ? checkedClasses : uncheckedClasses} ${className} grid place-content-center`
+  // Classes - state styling handled by data-state attribute selectors
+  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${className} grid place-content-center`
 
   // Click handler that works for both controlled and uncontrolled modes
   const handleClick = (e: MouseEvent) => {
@@ -170,29 +157,8 @@ function Checkbox({
       setInternalChecked(newValue)
     }
 
-    // Directly update DOM for child component case where hydration may not work
-    // This ensures the checkbox visually updates regardless of scope issues
-    target.setAttribute('aria-checked', String(newValue))
-    target.setAttribute('data-state', newValue ? 'checked' : 'unchecked')
-
-    // Update checkbox styling classes
-    if (newValue) {
-      target.classList.remove('border-input', 'bg-background')
-      target.classList.add('bg-primary', 'text-primary-foreground', 'border-primary')
-    } else {
-      target.classList.remove('bg-primary', 'text-primary-foreground', 'border-primary')
-      target.classList.add('border-input', 'bg-background')
-    }
-
-    // Update SVG checkmark visibility
-    let svg = target.querySelector('svg')
-    if (newValue && !svg) {
-      // Add checkmark SVG
-      target.innerHTML = '<svg data-slot="checkbox-indicator" class="size-3.5 text-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
-    } else if (!newValue && svg) {
-      // Remove checkmark SVG
-      svg.remove()
-    }
+    // Update the UI visually
+    updateCheckboxUI(target, newValue)
 
     // Notify parent if callback provided (works for both modes)
     // Check scope element for callback (parent sets callback there during hydration)
@@ -202,6 +168,50 @@ function Checkbox({
     const handler = onCheckedChange || scopeCallback
     handler?.(newValue)
   }
+
+  // Sync with parent's checked prop changes via MutationObserver
+  // Parent component sets 'checked' attribute on scope element when state changes
+  // This is the most reliable way to detect controlled state changes
+  createEffect(() => {
+    // This effect runs once during initialization
+    // We set up MutationObserver to watch for 'checked' attribute changes
+    // The observer is scoped to the button's parent scope element
+
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      // Find all checkbox buttons that haven't been set up yet
+      const buttons = document.querySelectorAll('[data-slot="checkbox"]:not([data-bf-observer-setup])')
+
+      buttons.forEach(button => {
+        // Find the closest scope element (could be Checkbox_ or parent_slot_N)
+        const scope = button.closest('[data-bf-scope]')
+        if (!scope) return
+
+        // Mark as set up
+        button.setAttribute('data-bf-observer-setup', 'true')
+
+        // Create observer for this specific scope
+        // Note: Using 'check' + 'ed' to prevent compiler from transforming string
+        const checkedAttr = 'check' + 'ed'
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type === 'attributes' && mutation.attributeName === checkedAttr) {
+              const newValue = scope.getAttribute(checkedAttr)
+              const isCheckedNow = newValue === 'true'
+
+              // Update internal state
+              setControlledChecked(isCheckedNow)
+
+              // Update UI directly
+              updateCheckboxUI(button as HTMLElement, isCheckedNow)
+            }
+          }
+        })
+
+        observer.observe(scope, { attributes: true, attributeFilter: [checkedAttr] })
+      })
+    })
+  })
 
   return (
     <button

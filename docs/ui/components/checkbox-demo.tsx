@@ -6,7 +6,7 @@
  * Based on shadcn/ui patterns for practical use cases.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/dom'
 import { Checkbox } from '@ui/components/ui/checkbox'
 
 /**
@@ -78,6 +78,11 @@ export function CheckboxFormDemo() {
 export function CheckboxTermsDemo() {
   const [accepted, setAccepted] = createSignal(false)
 
+  // Handle label click to toggle checkbox
+  const handleLabelClick = () => {
+    setAccepted(!accepted())
+  }
+
   return (
     <div className="space-y-4">
       <div className="items-top flex space-x-2">
@@ -85,7 +90,10 @@ export function CheckboxTermsDemo() {
           checked={accepted()}
           onCheckedChange={setAccepted}
         />
-        <div className="grid gap-1.5 leading-none">
+        <div
+          className="grid gap-1.5 leading-none cursor-pointer select-none"
+          onClick={handleLabelClick}
+        >
           <span className="text-sm font-medium leading-none">
             I agree to the terms and conditions
           </span>
@@ -109,12 +117,16 @@ export function CheckboxTermsDemo() {
  * Common pattern for selecting items in a list
  */
 export function CheckboxEmailListDemo() {
+  // Use individual signals for each email (BarefootJS requires direct signal getter calls for reactivity)
   const [email1, setEmail1] = createSignal(false)
   const [email2, setEmail2] = createSignal(false)
   const [email3, setEmail3] = createSignal(false)
 
-  const selectedCount = () => [email1(), email2(), email3()].filter(Boolean).length
-  const isAllSelected = () => selectedCount() === 3
+  const selectedCount = createMemo(() => [email1(), email2(), email3()].filter(Boolean).length)
+  const isAllSelected = createMemo(() => selectedCount() === 3)
+  const selectionLabel = createMemo(() =>
+    selectedCount() > 0 ? `${selectedCount()} selected` : 'Select all'
+  )
 
   const toggleAll = (checked: boolean) => {
     setEmail1(checked)
@@ -131,7 +143,7 @@ export function CheckboxEmailListDemo() {
             onCheckedChange={toggleAll}
           />
           <span className="text-sm text-muted-foreground">
-            {selectedCount() > 0 ? `${selectedCount()} selected` : 'Select all'}
+            {selectionLabel()}
           </span>
         </div>
         {selectedCount() > 0 && (

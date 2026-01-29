@@ -53,6 +53,23 @@ test.describe('Checkbox Documentation Page', () => {
       await checkbox.dispatchEvent('click')
       await expect(button).toBeEnabled()
     })
+
+    test('clicking label shows checkmark SVG in checkbox', async ({ page }) => {
+      const section = page.locator('[data-bf-scope^="CheckboxTermsDemo_"]:not([data-slot])').first()
+      const checkbox = section.locator('button[role="checkbox"]')
+      const label = section.locator('text=I agree to the terms and conditions')
+
+      // Initially no checkmark
+      await expect(checkbox.locator('svg')).not.toBeVisible()
+
+      // Click the label (which triggers setAccepted via handleLabelClick)
+      await label.click()
+
+      // Checkbox should show checkmark SVG
+      await expect(checkbox.locator('svg')).toBeVisible()
+      await expect(checkbox).toHaveAttribute('data-state', 'checked')
+      await expect(checkbox).toHaveAttribute('aria-checked', 'true')
+    })
   })
 
   test.describe('Disabled', () => {
@@ -136,6 +153,25 @@ test.describe('Checkbox Documentation Page', () => {
 
       // Should show "1 selected"
       await expect(section.locator('text=1 selected')).toBeVisible()
+    })
+
+    test('select all shows checkmark SVG in all email checkboxes', async ({ page }) => {
+      const section = page.locator('[data-bf-scope^="CheckboxEmailListDemo_"]:not([data-slot])').first()
+      const checkboxes = section.locator('button[role="checkbox"]')
+
+      // Click "Select all" checkbox (first one)
+      const selectAllCheckbox = checkboxes.first()
+      await selectAllCheckbox.dispatchEvent('click')
+
+      // Should show "3 selected"
+      await expect(section.locator('text=3 selected')).toBeVisible()
+
+      // All 4 checkboxes should have checkmark SVG (select all + 3 emails)
+      for (let i = 0; i < 4; i++) {
+        const checkbox = checkboxes.nth(i)
+        await expect(checkbox.locator('svg')).toBeVisible()
+        await expect(checkbox).toHaveAttribute('data-state', 'checked')
+      }
     })
   })
 
