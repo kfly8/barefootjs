@@ -43,19 +43,6 @@ JSX Source
 
 ## Transformation Rules
 
-📊 **[View Full Specification (TSV)](spec.tsv)**
-
-The TSV contains all transformation rules with:
-- **id**: Unique specification ID (e.g., JSX-001, ATTR-010)
-- **category**: Feature category
-- **input_pattern**: Input JSX pattern
-- **expected_output**: Expected transformation result
-- **output_type**: Type of transformation (see Output Type Legend below)
-- **status**: Implementation status (✅ Implemented, ⚠️ Partial, ❌ OOS)
-- **notes**: Additional notes
-
-Tests for each spec ID are in `packages/jsx/__tests__/spec/` directory.
-
 ### Categories
 
 | Prefix | Category | Description |
