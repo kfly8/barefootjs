@@ -2,8 +2,8 @@
  * Hero section with code comparison demo
  */
 
-import { useRequestContext } from 'hono/jsx-renderer'
 import { highlight, initHighlighter } from './shared/highlighter'
+import { SOURCE_CODE, HONO_OUTPUT, ECHO_OUTPUT, CLIENT_CODE } from './shared/snippets'
 
 async function highlightCode(code: string, lang: 'tsx' | 'javascript' | 'html') {
   await initHighlighter()
@@ -12,26 +12,14 @@ async function highlightCode(code: string, lang: 'tsx' | 'javascript' | 'html') 
   return `<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0"><code>${html}</code></pre>`
 }
 
-async function CodeComparisonDemo(baseUrl: string) {
-  // Load code snippets from static files via fetch (Workers-compatible)
-  const snippetsBase = `${baseUrl}/static/snippets`
-  const [sourceRes, honoRes, echoRes, clientRes] = await Promise.all([
-    fetch(`${snippetsBase}/source.txt`),
-    fetch(`${snippetsBase}/hono.txt`),
-    fetch(`${snippetsBase}/echo.txt`),
-    fetch(`${snippetsBase}/client.txt`),
-  ])
-
-  const sourceCode = (await sourceRes.text()).trim()
-  const honoOutput = (await honoRes.text()).trim()
-  const echoOutput = (await echoRes.text()).trim()
-  const clientCode = (await clientRes.text()).trim()
+async function CodeComparisonDemo() {
+  // Code snippets are embedded as module (Workers-compatible)
 
   // Highlight all code snippets
-  const sourceHtml = await highlightCode(sourceCode, 'tsx')
-  const honoHtml = await highlightCode(honoOutput, 'tsx')
-  const echoHtml = await highlightCode(echoOutput, 'html')
-  const clientHtml = await highlightCode(clientCode, 'javascript')
+  const sourceHtml = await highlightCode(SOURCE_CODE, 'tsx')
+  const honoHtml = await highlightCode(HONO_OUTPUT, 'tsx')
+  const echoHtml = await highlightCode(ECHO_OUTPUT, 'html')
+  const clientHtml = await highlightCode(CLIENT_CODE, 'javascript')
 
   const html = `
     <div class="code-demo" id="code-demo">
@@ -186,10 +174,7 @@ async function CodeComparisonDemo(baseUrl: string) {
 }
 
 export async function Hero() {
-  const c = useRequestContext()
-  const url = new URL(c.req.url)
-  const baseUrl = `${url.protocol}//${url.host}`
-  const codeDemo = await CodeComparisonDemo(baseUrl)
+  const codeDemo = await CodeComparisonDemo()
 
   return (
     <section className="min-h-screen flex items-center px-6 sm:px-12 pt-20 pb-12">
