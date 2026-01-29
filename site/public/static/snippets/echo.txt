@@ -1,0 +1,4 @@
+{{/* Go Template */}}
+<button data-bf-scope="Counter" data-bf="slot_1">
+  Count: <span data-bf="slot_0">{{ .Count }}</span>
+</button>

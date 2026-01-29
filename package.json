@@ -8,7 +8,8 @@
     "packages/*",
     "examples/*",
     "ui",
-    "docs/ui"
+    "docs/ui",
+    "site"
   ],
   "scripts": {
     "test": "bun test --cwd . packages/",
@@ -20,5 +21,8 @@
     "@types/bun": "latest",
     "happy-dom": "^20.0.11",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "shiki": "^3.21.0"
   }
 }
