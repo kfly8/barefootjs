@@ -1532,16 +1532,19 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
 
   // Dynamic text updates
   for (const elem of ctx.dynamicElements) {
+    // Replace prop references with props.xxx to maintain reactivity
+    // This ensures props passed as getters are re-evaluated on each effect run
+    const expr = replacePropReferences(elem.expression, ctx)
     if (elem.insideConditional) {
       // For elements inside conditionals, find() dynamically since DOM may be swapped
       lines.push(`  createEffect(() => {`)
       lines.push(`    const __el = find(__scope, '[data-bf="${elem.slotId}"]')`)
-      lines.push(`    const __val = ${elem.expression}`)
+      lines.push(`    const __val = ${expr}`)
       lines.push(`    if (__el) __el.textContent = String(__val)`)
       lines.push(`  })`)
     } else {
       lines.push(`  createEffect(() => {`)
-      lines.push(`    const __val = ${elem.expression}`)
+      lines.push(`    const __val = ${expr}`)
       lines.push(`    if (_${elem.slotId}) _${elem.slotId}.textContent = String(__val)`)
       lines.push(`  })`)
     }
