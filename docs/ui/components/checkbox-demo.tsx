@@ -114,10 +114,9 @@ export function CheckboxTermsDemo() {
 
 /**
  * Email list with bulk selection
- * Common pattern for selecting items in a list
+ * Gmail-like pattern for selecting items in a list
  */
 export function CheckboxEmailListDemo() {
-  // Use individual signals for each email (BarefootJS requires direct signal getter calls for reactivity)
   const [email1, setEmail1] = createSignal(false)
   const [email2, setEmail2] = createSignal(false)
   const [email3, setEmail3] = createSignal(false)
@@ -135,9 +134,9 @@ export function CheckboxEmailListDemo() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+    <div className="w-full max-w-2xl">
+      <div className="flex items-center justify-between px-3 py-2 border-b">
+        <div className="flex items-center gap-3">
           <Checkbox
             checked={isAllSelected()}
             onCheckedChange={toggleAll}
@@ -147,32 +146,29 @@ export function CheckboxEmailListDemo() {
           </span>
         </div>
         {selectedCount() > 0 && (
-          <span className="text-sm text-primary">
+          <span className="text-sm text-primary cursor-pointer hover:underline">
             Mark as read
           </span>
         )}
       </div>
-      <div className="border rounded-md divide-y">
-        <div className="flex items-center space-x-3 p-3 bg-muted/50">
+      <div className="divide-y border-x border-b rounded-b-md">
+        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
           <Checkbox checked={email1()} onCheckedChange={setEmail1} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm truncate font-medium">Meeting tomorrow</p>
-            <p className="text-xs text-muted-foreground truncate">boss@example.com</p>
-          </div>
+          <span className="text-sm font-medium w-32 truncate">John Smith</span>
+          <span className="text-sm truncate flex-1">Meeting tomorrow - Let's discuss the Q4 planning</span>
+          <span className="text-xs text-muted-foreground shrink-0">10:30 AM</span>
         </div>
-        <div className="flex items-center space-x-3 p-3">
+        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
           <Checkbox checked={email2()} onCheckedChange={setEmail2} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm truncate">Project update</p>
-            <p className="text-xs text-muted-foreground truncate">team@example.com</p>
-          </div>
+          <span className="text-sm w-32 truncate">Dev Team</span>
+          <span className="text-sm text-muted-foreground truncate flex-1">Project update - Sprint review notes attached</span>
+          <span className="text-xs text-muted-foreground shrink-0">9:15 AM</span>
         </div>
-        <div className="flex items-center space-x-3 p-3 bg-muted/50">
+        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
           <Checkbox checked={email3()} onCheckedChange={setEmail3} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm truncate font-medium">Invoice #1234</p>
-            <p className="text-xs text-muted-foreground truncate">billing@example.com</p>
-          </div>
+          <span className="text-sm font-medium w-32 truncate">Billing Dept</span>
+          <span className="text-sm truncate flex-1">Invoice #1234 - Payment due in 30 days</span>
+          <span className="text-xs text-muted-foreground shrink-0">Yesterday</span>
         </div>
       </div>
     </div>
