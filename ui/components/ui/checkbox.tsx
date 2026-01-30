@@ -1,6 +1,6 @@
 "use client"
 
-import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/dom'
 
 /**
  * Checkbox Component
@@ -168,50 +168,6 @@ function Checkbox({
     const handler = onCheckedChange || scopeCallback
     handler?.(newValue)
   }
-
-  // Sync with parent's checked prop changes via MutationObserver
-  // Parent component sets 'checked' attribute on scope element when state changes
-  // This is the most reliable way to detect controlled state changes
-  createEffect(() => {
-    // This effect runs once during initialization
-    // We set up MutationObserver to watch for 'checked' attribute changes
-    // The observer is scoped to the button's parent scope element
-
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
-      // Find all checkbox buttons that haven't been set up yet
-      const buttons = document.querySelectorAll('[data-slot="checkbox"]:not([data-bf-observer-setup])')
-
-      buttons.forEach(button => {
-        // Find the closest scope element (could be Checkbox_ or parent_slot_N)
-        const scope = button.closest('[data-bf-scope]')
-        if (!scope) return
-
-        // Mark as set up
-        button.setAttribute('data-bf-observer-setup', 'true')
-
-        // Create observer for this specific scope
-        // Note: Using 'check' + 'ed' to prevent compiler from transforming string
-        const checkedAttr = 'check' + 'ed'
-        const observer = new MutationObserver((mutations) => {
-          for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.attributeName === checkedAttr) {
-              const newValue = scope.getAttribute(checkedAttr)
-              const isCheckedNow = newValue === 'true'
-
-              // Update internal state
-              setControlledChecked(isCheckedNow)
-
-              // Update UI directly
-              updateCheckboxUI(button as HTMLElement, isCheckedNow)
-            }
-          }
-        })
-
-        observer.observe(scope, { attributes: true, attributeFilter: [checkedAttr] })
-      })
-    })
-  })
 
   return (
     <button

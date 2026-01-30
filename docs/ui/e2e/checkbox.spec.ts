@@ -161,7 +161,7 @@ test.describe('Checkbox Documentation Page', () => {
 
       // Click "Select all" checkbox (first one)
       const selectAllCheckbox = checkboxes.first()
-      await selectAllCheckbox.dispatchEvent('click')
+      await selectAllCheckbox.click()
 
       // Should show "3 selected"
       await expect(section.locator('text=3 selected')).toBeVisible()

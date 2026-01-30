@@ -199,8 +199,9 @@ export function hydrate(
 ): void {
   const doHydrate = () => {
     // Only select uninitialized elements (skip already hydrated ones)
+    // Also skip child components (data-bf-child) - they are initialized by parent via initChild
     const scopeEls = document.querySelectorAll(
-      `[data-bf-scope^="${name}_"]:not([data-bf-init])`
+      `[data-bf-scope^="${name}_"]:not([data-bf-init]):not([data-bf-child])`
     )
 
     // Track initialized scope IDs to avoid duplicate initialization

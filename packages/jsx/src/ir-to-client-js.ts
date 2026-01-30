@@ -1305,6 +1305,61 @@ function valueReferencesReactiveData(
 }
 
 /**
+ * Check if a signal is initialized from a prop value (controlled signal pattern).
+ * Returns the prop name if the signal's initial value references a prop, null otherwise.
+ *
+ * Detects patterns like:
+ *   const [controlledChecked, setControlledChecked] = createSignal(props.checked)
+ *   const [controlledValue, setControlledValue] = createSignal(value)
+ *
+ * These signals need a createEffect to sync with parent's prop changes.
+ *
+ * Note: Props starting with "default" (e.g., defaultChecked, defaultValue) are
+ * excluded as they are initial values, not controlled props.
+ */
+function getControlledPropName(
+  signal: SignalInfo,
+  propsParams: ParamInfo[]
+): string | null {
+  const initialValue = signal.initialValue.trim()
+
+  // Helper to check if prop is a "default*" prop (initial value, not controlled)
+  const isDefaultProp = (propName: string) => propName.startsWith('default')
+
+  // Pattern 1: Direct props.X reference
+  // e.g., props.checked
+  const propsMatch = initialValue.match(/^props\.(\w+)$/)
+  if (propsMatch) {
+    const propName = propsMatch[1]
+    // Verify it's actually a prop and not a default* prop
+    if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
+      return propName
+    }
+  }
+
+  // Pattern 2: Simple prop name (will be a prop parameter)
+  // e.g., checked in createSignal(checked)
+  // Note: This only matches simple identifiers, not function calls
+  if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(initialValue)) {
+    if (propsParams.some((p) => p.name === initialValue) && !isDefaultProp(initialValue)) {
+      return initialValue
+    }
+  }
+
+  // Pattern 3: Prop with nullish coalescing
+  // e.g., checked ?? false, value ?? ""
+  const nullishMatch = initialValue.match(/^(\w+)\s*\?\?\s*.+$/)
+  if (nullishMatch) {
+    const propName = nullishMatch[1]
+    if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
+      return propName
+    }
+  }
+
+  return null
+}
+
+/**
  * Detect props that are used with property access (e.g., highlightedCommands.pnpm).
  * These props need a default value of {} to avoid "cannot read properties of undefined".
  */
@@ -1549,10 +1604,30 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   }
 
   // 3. Signal declarations (after constants they may depend on)
+  // Track controlled signals for effect generation
+  const controlledSignals: Array<{ signal: SignalInfo; propName: string }> = []
+
   for (const signal of ctx.signals) {
-    let initialValue = signal.initialValue.startsWith('props.')
-      ? `props.${signal.initialValue.slice(6)} ?? ${inferDefaultValue(signal.type)}`
-      : `props.${signal.getter} ?? ${signal.initialValue}`
+    // Check if this signal is initialized from a prop (controlled component pattern)
+    const controlledPropName = getControlledPropName(signal, ctx.propsParams)
+    if (controlledPropName) {
+      controlledSignals.push({ signal, propName: controlledPropName })
+    }
+
+    // Determine initial value for the signal
+    let initialValue: string
+    if (signal.initialValue.startsWith('props.')) {
+      // Already prefixed with props.
+      initialValue = `${signal.initialValue} ?? ${inferDefaultValue(signal.type)}`
+    } else if (controlledPropName) {
+      // Signal is initialized from a prop - use props.propName accessor
+      const prop = ctx.propsParams.find(p => p.name === controlledPropName)
+      const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
+      initialValue = `props.${controlledPropName} ?? ${defaultVal}`
+    } else {
+      // Not a prop reference - use literal initial value
+      initialValue = signal.initialValue
+    }
 
     // Replace reactive prop refs in initial value with props.xxx
     for (const propName of reactiveProps) {
@@ -1562,6 +1637,20 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     }
 
     lines.push(`  const [${signal.getter}, ${signal.setter}] = createSignal(${initialValue})`)
+  }
+
+  // Generate sync effects for controlled signals
+  // This ensures parent prop changes are reflected in the internal signal
+  for (const { signal, propName } of controlledSignals) {
+    const prop = ctx.propsParams.find(p => p.name === propName)
+    const accessor = prop?.defaultValue
+      ? `(props.${propName} ?? ${prop.defaultValue})`
+      : `props.${propName}`
+    lines.push(`  // AUTO-GENERATED: Sync controlled prop '${propName}' to internal signal`)
+    lines.push(`  createEffect(() => {`)
+    lines.push(`    const __val = ${accessor}`)
+    lines.push(`    if (__val !== undefined) ${signal.setter}(__val)`)
+    lines.push(`  })`)
   }
 
   // 4. Memo declarations
