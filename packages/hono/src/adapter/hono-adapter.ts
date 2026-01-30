@@ -55,6 +55,7 @@ export class HonoAdapter implements TemplateAdapter {
 
   private componentName: string = ''
   private options: HonoAdapterOptions
+  private isClientComponent: boolean = false
 
   constructor(options: HonoAdapterOptions = {}) {
     this.options = {
@@ -67,6 +68,7 @@ export class HonoAdapter implements TemplateAdapter {
 
   generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
+    this.isClientComponent = ir.metadata.isClientComponent
 
     const imports = this.generateImports(ir)
     const types = this.generateTypes(ir)
@@ -709,8 +711,13 @@ export class HonoAdapter implements TemplateAdapter {
     // Determine how to pass scope to child component
     let scopeAttr: string
     // Mark child components with slotId for parent-first hydration
-    const bfChildAttr = comp.slotId ? ' __bfChild={true}' : ''
-    if (ctx?.isInsideLoop) {
+    // Only add __bfChild when parent is a client component (will call initChild)
+    const bfChildAttr = (comp.slotId && this.isClientComponent) ? ' __bfChild={true}' : ''
+    if (ctx?.isRootOfClientComponent) {
+      // Root component: pass parent's scope directly (no slot suffix)
+      // This ensures findScope('ComponentName', ...) matches the correct element
+      scopeAttr = ' __instanceId={__scopeId}'
+    } else if (ctx?.isInsideLoop) {
       // Components inside loops should generate their own unique scope IDs
       // Pass __bfScope so they use it as fallback but generate unique IDs
       // This ensures each loop iteration has a distinct component instance
@@ -723,9 +730,6 @@ export class HonoAdapter implements TemplateAdapter {
       // Components with slotId need unique scope with slot suffix
       // Format: ParentName_slotX for client JS matching
       scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}${bfChildAttr}`
-    } else if (ctx?.isRootOfClientComponent) {
-      // Root component without slotId: pass parent's scope directly
-      scopeAttr = ' __instanceId={__scopeId}'
     } else {
       // Non-interactive components inherit parent's scope
       scopeAttr = ' __instanceId={__scopeId}'

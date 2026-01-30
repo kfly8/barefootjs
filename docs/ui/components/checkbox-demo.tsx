@@ -115,22 +115,41 @@ export function CheckboxTermsDemo() {
 /**
  * Email list with bulk selection
  * Gmail-like pattern for selecting items in a list
+ * Uses array-based signal with immutable updates for reactivity
  */
-export function CheckboxEmailListDemo() {
-  const [email1, setEmail1] = createSignal(false)
-  const [email2, setEmail2] = createSignal(false)
-  const [email3, setEmail3] = createSignal(false)
 
-  const selectedCount = createMemo(() => [email1(), email2(), email3()].filter(Boolean).length)
-  const isAllSelected = createMemo(() => selectedCount() === 3)
+interface Email {
+  id: number
+  from: string
+  subject: string
+  time: string
+  unread: boolean
+}
+
+const emails: Email[] = [
+  { id: 0, from: 'John Smith', subject: 'Meeting tomorrow - Let\'s discuss the Q4 planning', time: '10:30 AM', unread: true },
+  { id: 1, from: 'Dev Team', subject: 'Project update - Sprint review notes attached', time: '9:15 AM', unread: false },
+  { id: 2, from: 'Billing Dept', subject: 'Invoice #1234 - Payment due in 30 days', time: 'Yesterday', unread: true },
+]
+
+export function CheckboxEmailListDemo() {
+  // Array-based state management with immutable updates
+  const [checked, setChecked] = createSignal<boolean[]>(emails.map(() => false))
+
+  const selectedCount = createMemo(() => checked().filter(Boolean).length)
+  const isAllSelected = createMemo(() => selectedCount() === emails.length)
   const selectionLabel = createMemo(() =>
     selectedCount() > 0 ? `${selectedCount()} selected` : 'Select all'
   )
 
-  const toggleAll = (checked: boolean) => {
-    setEmail1(checked)
-    setEmail2(checked)
-    setEmail3(checked)
+  // Immutable update pattern for toggling individual email
+  const toggleEmail = (index: number) => {
+    setChecked(prev => prev.map((v, i) => i === index ? !v : v))
+  }
+
+  // Immutable update pattern for toggling all emails
+  const toggleAll = (value: boolean) => {
+    setChecked(prev => prev.map(() => value))
   }
 
   return (
@@ -152,24 +171,14 @@ export function CheckboxEmailListDemo() {
         )}
       </div>
       <div className="divide-y border-x border-b rounded-b-md">
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
-          <Checkbox checked={email1()} onCheckedChange={setEmail1} />
-          <span className="text-sm font-medium w-32 truncate">John Smith</span>
-          <span className="text-sm truncate flex-1">Meeting tomorrow - Let's discuss the Q4 planning</span>
-          <span className="text-xs text-muted-foreground shrink-0">10:30 AM</span>
-        </div>
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
-          <Checkbox checked={email2()} onCheckedChange={setEmail2} />
-          <span className="text-sm w-32 truncate">Dev Team</span>
-          <span className="text-sm text-muted-foreground truncate flex-1">Project update - Sprint review notes attached</span>
-          <span className="text-xs text-muted-foreground shrink-0">9:15 AM</span>
-        </div>
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
-          <Checkbox checked={email3()} onCheckedChange={setEmail3} />
-          <span className="text-sm font-medium w-32 truncate">Billing Dept</span>
-          <span className="text-sm truncate flex-1">Invoice #1234 - Payment due in 30 days</span>
-          <span className="text-xs text-muted-foreground shrink-0">Yesterday</span>
-        </div>
+        {emails.map((email) => (
+          <div key={email.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
+            <Checkbox checked={checked()[email.id]} onCheckedChange={() => toggleEmail(email.id)} />
+            <span className={`text-sm w-32 truncate ${email.unread ? 'font-medium' : ''}`}>{email.from}</span>
+            <span className={`text-sm truncate flex-1 ${email.unread ? '' : 'text-muted-foreground'}`}>{email.subject}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{email.time}</span>
+          </div>
+        ))}
       </div>
     </div>
   )

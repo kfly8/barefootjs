@@ -1596,7 +1596,12 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
 
   // 2. Generate early constants (no signal/memo dependencies)
   for (const constant of earlyConstants) {
-    const jsValue = stripTypeScriptSyntax(constant.value)
+    let jsValue = stripTypeScriptSyntax(constant.value)
+    // Replace reactive props with props.xxx accessor
+    // Reactive props are not destructured, so direct references must use props.xxx
+    for (const propName of reactiveProps) {
+      jsValue = jsValue.replace(new RegExp(`\\b${propName}\\b`, 'g'), `props.${propName}`)
+    }
     lines.push(`  const ${constant.name} = ${jsValue}`)
   }
   if (earlyConstants.length > 0) {
@@ -1669,7 +1674,11 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
 
   // 5. Generate late constants (depend on signals/memos)
   for (const constant of lateConstants) {
-    const jsValue = stripTypeScriptSyntax(constant.value)
+    let jsValue = stripTypeScriptSyntax(constant.value)
+    // Replace reactive props with props.xxx accessor
+    for (const propName of reactiveProps) {
+      jsValue = jsValue.replace(new RegExp(`\\b${propName}\\b`, 'g'), `props.${propName}`)
+    }
     lines.push(`  const ${constant.name} = ${jsValue}`)
   }
 
