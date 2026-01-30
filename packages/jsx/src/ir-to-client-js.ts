@@ -133,6 +133,7 @@ interface LoopElement {
   childEventHandlers: string[] // Event handlers from child elements (for identifier extraction)
   childEvents: LoopChildEvent[] // Detailed event info for delegation
   childComponent?: IRLoopChildComponent // For createComponent-based rendering
+  nestedComponents?: IRLoopChildComponent[] // For nested components in static arrays
   isStaticArray: boolean // True if array is a static prop (not a signal)
   filterPredicate?: {
     param: string
@@ -384,6 +385,7 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
           childEventHandlers: childHandlers,
           childEvents,
           childComponent: node.childComponent,
+          nestedComponents: node.nestedComponents,
           isStaticArray: node.isStaticArray,
           filterPredicate: node.filterPredicate ? {
             param: node.filterPredicate.param,
@@ -1917,6 +1919,40 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
         lines.push(`  }`)
         lines.push('')
       }
+
+      // Initialize nested components (wrapped in elements like <div><Checkbox /></div>)
+      if (elem.nestedComponents && elem.nestedComponents.length > 0) {
+        for (const comp of elem.nestedComponents) {
+          const propsEntries = comp.props.map((p) => {
+            if (p.isEventHandler) {
+              return `${p.name}: ${p.value}`
+            } else if (p.isLiteral) {
+              return `${p.name}: ${JSON.stringify(p.value)}`
+            } else {
+              return `get ${p.name}() { return ${p.value} }`
+            }
+          })
+          const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
+
+          // Use slotId-based selector to match actual scope (e.g., "ParentName_xxx_slot_N")
+          const selector = comp.slotId
+            ? `[data-bf-scope$="_${comp.slotId}"]:not([data-bf-init])`
+            : `[data-bf-scope^="${comp.name}_"]:not([data-bf-init])`
+
+          lines.push(`  // Initialize nested ${comp.name} in static array`)
+          lines.push(`  if (_${elem.slotId}) {`)
+          lines.push(`    ${elem.array}.forEach((${elem.param}, __idx) => {`)
+          lines.push(`      const __iterEl = _${elem.slotId}.children[__idx]`)
+          lines.push(`      if (__iterEl) {`)
+          lines.push(`        const __compEl = __iterEl.querySelector('${selector}')`)
+          lines.push(`        if (__compEl) initChild('${comp.name}', __compEl, ${propsExpr})`)
+          lines.push(`      }`)
+          lines.push(`    })`)
+          lines.push(`  }`)
+          lines.push('')
+        }
+      }
+
       continue
     }
 

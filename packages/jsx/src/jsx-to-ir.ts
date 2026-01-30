@@ -642,6 +642,7 @@ function transformMapCall(
     const comp = children[0] as IRComponent
     childComponent = {
       name: comp.name,
+      slotId: comp.slotId,
       props: comp.props
         .filter((p) => p.name !== 'key') // key is handled separately
         .map((p) => ({
@@ -659,6 +660,12 @@ function transformMapCall(
   // Only signal and memo arrays need reconcileList for dynamic DOM updates
   const isStaticArray = !isSignalOrMemoArray(array, ctx)
 
+  // For static arrays without direct childComponent, collect nested components
+  // This enables hydrating components wrapped in elements (e.g., <div><Checkbox /></div>)
+  const nestedComponents = (!childComponent && isStaticArray)
+    ? collectNestedComponents(children)
+    : undefined
+
   return {
     type: 'loop',
     array,
@@ -673,10 +680,46 @@ function transformMapCall(
     slotId: null,
     isStaticArray,
     childComponent,
+    nestedComponents,
     filterPredicate,
     clientOnly: isClientOnly || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
+}
+
+/**
+ * Recursively collect all components nested within loop children.
+ * Used for static array hydration when components are wrapped in elements.
+ */
+function collectNestedComponents(nodes: IRNode[]): IRLoopChildComponent[] {
+  const result: IRLoopChildComponent[] = []
+
+  function traverse(node: IRNode): void {
+    if (node.type === 'component') {
+      result.push({
+        name: node.name,
+        slotId: node.slotId,
+        props: node.props
+          .filter(p => p.name !== 'key')
+          .map(p => ({
+            name: p.name,
+            value: p.value,
+            dynamic: p.dynamic,
+            isLiteral: p.isLiteral,
+            isEventHandler: p.name.startsWith('on') && p.name.length > 2,
+          })),
+      })
+    }
+    if (node.type === 'element' && node.children) {
+      node.children.forEach(traverse)
+    }
+    if (node.type === 'fragment' && node.children) {
+      node.children.forEach(traverse)
+    }
+  }
+
+  nodes.forEach(traverse)
+  return result
 }
 
 // =============================================================================
