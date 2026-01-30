@@ -226,3 +226,74 @@ func NewTodoAppSSRProps(in TodoAppSSRInput) TodoAppSSRProps {
 		Filter: "all",
 	}
 }
+
+// ReactiveChildInput is the user-facing input type.
+type ReactiveChildInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+	Value interface{}
+	Label interface{}
+	OnIncrement interface{}
+}
+
+// ReactiveChildProps is the props type for the ReactiveChild component.
+type ReactiveChildProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Value interface{} `json:"value"`
+	Label interface{} `json:"label"`
+	OnIncrement interface{} `json:"onIncrement"`
+}
+
+// NewReactiveChildProps creates ReactiveChildProps from ReactiveChildInput.
+func NewReactiveChildProps(in ReactiveChildInput) ReactiveChildProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "ReactiveChild_" + randomID(6)
+	}
+
+	return ReactiveChildProps{
+		ScopeID: scopeID,
+		Value: in.Value,
+		Label: in.Label,
+		OnIncrement: in.OnIncrement,
+	}
+}
+
+// ReactivePropsInput is the user-facing input type.
+type ReactivePropsInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+}
+
+// ReactivePropsProps is the props type for the ReactiveProps component.
+type ReactivePropsProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Count int `json:"count"`
+	Doubled int `json:"doubled"`
+	ReactiveChildA ReactiveChildProps  `json:"-"` // For Go template (Child A)
+	ReactiveChildB ReactiveChildProps  `json:"-"` // For Go template (Child B)
+}
+
+// NewReactivePropsProps creates ReactivePropsProps from ReactivePropsInput.
+func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "ReactiveProps_" + randomID(6)
+	}
+
+	return ReactivePropsProps{
+		ScopeID: scopeID,
+		Count:   0,
+		Doubled: 0,
+		ReactiveChildA: NewReactiveChildProps(ReactiveChildInput{
+			ScopeID: scopeID + "_slot_6",
+			Value:   0,
+			Label:   "Child A",
+		}),
+		ReactiveChildB: NewReactiveChildProps(ReactiveChildInput{
+			ScopeID: scopeID + "_slot_7",
+			Value:   0,
+			Label:   "Child B (doubled)",
+		}),
+	}
+}

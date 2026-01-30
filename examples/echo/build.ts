@@ -20,6 +20,7 @@ const components = [
   '../shared/components/TodoItem.tsx',
   '../shared/components/TodoApp.tsx',
   '../shared/components/TodoAppSSR.tsx',
+  '../shared/components/ReactiveProps.tsx',
 ]
 
 // Output directories
@@ -181,7 +182,20 @@ for (const componentPath of components) {
   const templateFileName = componentPath.split('/').pop()?.replace('.tsx', adapter.extension)
   const templatePath = resolve(templatesDir, templateFileName!)
   mkdirSync(dirname(templatePath), { recursive: true })
-  writeFileSync(templatePath, templateParts.join('\n'))
+  let templateContent = templateParts.join('\n')
+
+  // Post-process: Fix ReactiveProps template to use separate child references
+  // The Go template adapter generates {{template "ReactiveChild" .ReactiveChild}} twice,
+  // but we need distinct references for Child A and Child B
+  if (templateFileName === 'ReactiveProps.tmpl') {
+    // Replace the two identical child references with distinct ones
+    templateContent = templateContent.replace(
+      /\{\{template "ReactiveChild" \.ReactiveChild\}\}\{\{template "ReactiveChild" \.ReactiveChild\}\}/g,
+      '{{template "ReactiveChild" .ReactiveChildA}}{{template "ReactiveChild" .ReactiveChildB}}'
+    )
+  }
+
+  writeFileSync(templatePath, templateContent)
   console.log(`  Template: ${templateFileName}`)
 
   // Generate client JS for the main component (default export) and any local components
@@ -281,6 +295,33 @@ if (allTypeParts.length > 0) {
 
   // Clean up multiple empty lines
   combinedContent = combinedContent.replace(/\n{3,}/g, '\n\n').trim()
+
+  // Post-process: Add ReactiveChildA/B fields to ReactivePropsProps
+  // The Go template adapter doesn't handle multiple child components with different props
+  combinedContent = combinedContent.replace(
+    /(type ReactivePropsProps struct \{[\s\S]*?)(Doubled int `json:"doubled"`)/,
+    '$1$2\n\tReactiveChildA ReactiveChildProps  `json:"-"` // For Go template (Child A)\n\tReactiveChildB ReactiveChildProps  `json:"-"` // For Go template (Child B)'
+  )
+
+  // Post-process: Update NewReactivePropsProps to initialize child props
+  combinedContent = combinedContent.replace(
+    /(return ReactivePropsProps\{\s*ScopeID: scopeID,\s*Count: 0,\s*Doubled: 0 \* 2,\s*\})/,
+    `return ReactivePropsProps{
+		ScopeID: scopeID,
+		Count:   0,
+		Doubled: 0,
+		ReactiveChildA: NewReactiveChildProps(ReactiveChildInput{
+			ScopeID: scopeID + "_slot_6",
+			Value:   0,
+			Label:   "Child A",
+		}),
+		ReactiveChildB: NewReactiveChildProps(ReactiveChildInput{
+			ScopeID: scopeID + "_slot_7",
+			Value:   0,
+			Label:   "Child B (doubled)",
+		}),
+	}`
+  )
 
   // Manual types that cannot be auto-generated from components
   // These are application-specific types used by TodoApp
