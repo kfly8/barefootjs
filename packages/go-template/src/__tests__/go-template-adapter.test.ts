@@ -354,6 +354,53 @@ describe('GoTemplateAdapter', () => {
       // Outside of loops, components are referenced via .ComponentName
       expect(result).toBe('{{template "Button" .Button}}')
     })
+
+    test('renders component with slotId using unique field name', () => {
+      const comp: IRComponent = {
+        type: 'component',
+        name: 'ReactiveChild',
+        props: [
+          { name: 'value', value: 'count()', dynamic: true, isLiteral: false, loc },
+          { name: 'label', value: 'Child A', dynamic: false, isLiteral: true, loc },
+        ],
+        propsType: null,
+        children: [],
+        template: '',
+        slotId: 'slot_6',
+        loc,
+      }
+
+      const result = adapter.renderComponent(comp)
+      // With slotId, use unique field name: ComponentName + Slot + number
+      expect(result).toBe('{{template "ReactiveChild" .ReactiveChildSlot6}}')
+    })
+
+    test('renders different components with different slotIds', () => {
+      const comp1: IRComponent = {
+        type: 'component',
+        name: 'ReactiveChild',
+        props: [],
+        propsType: null,
+        children: [],
+        template: '',
+        slotId: 'slot_6',
+        loc,
+      }
+
+      const comp2: IRComponent = {
+        type: 'component',
+        name: 'ReactiveChild',
+        props: [],
+        propsType: null,
+        children: [],
+        template: '',
+        slotId: 'slot_7',
+        loc,
+      }
+
+      expect(adapter.renderComponent(comp1)).toBe('{{template "ReactiveChild" .ReactiveChildSlot6}}')
+      expect(adapter.renderComponent(comp2)).toBe('{{template "ReactiveChild" .ReactiveChildSlot7}}')
+    })
   })
 
   describe('generate', () => {
@@ -539,6 +586,97 @@ describe('GoTemplateAdapter', () => {
       expect(types).toContain('package views')
       expect(types).toContain('type ButtonProps struct')
       expect(types).toContain('Label string')
+    })
+
+    test('generates fields for multiple static child components with slotId', () => {
+      // Parent component with two child components having different slotIds
+      const ir: ComponentIR = {
+        version: '0.1',
+        metadata: {
+          componentName: 'ReactiveProps',
+          hasDefaultExport: true,
+          isClientComponent: true,
+          typeDefinitions: [],
+          propsType: null,
+          propsParams: [],
+          restPropsName: null,
+          signals: [
+            {
+              getter: 'count',
+              setter: 'setCount',
+              initialValue: '0',
+              type: { kind: 'primitive', raw: 'number', primitive: 'number' },
+              loc,
+            },
+          ],
+          memos: [
+            {
+              name: 'doubled',
+              computation: '() => count() * 2',
+              deps: ['count'],
+              type: { kind: 'primitive', raw: 'number', primitive: 'number' },
+            },
+          ],
+          effects: [],
+          onMounts: [],
+          imports: [],
+          localFunctions: [],
+          localConstants: [],
+        },
+        root: {
+          type: 'element',
+          tag: 'div',
+          attrs: [],
+          events: [],
+          ref: null,
+          needsScope: true,
+          slotId: null,
+          loc,
+          children: [
+            {
+              type: 'component',
+              name: 'ReactiveChild',
+              props: [
+                { name: 'value', value: 'count()', dynamic: true, isLiteral: false, loc },
+                { name: 'label', value: 'Child A', dynamic: false, isLiteral: true, loc },
+              ],
+              propsType: null,
+              children: [],
+              template: '',
+              slotId: 'slot_6',
+              loc,
+            },
+            {
+              type: 'component',
+              name: 'ReactiveChild',
+              props: [
+                { name: 'value', value: 'doubled()', dynamic: true, isLiteral: false, loc },
+                { name: 'label', value: 'Child B (doubled)', dynamic: false, isLiteral: true, loc },
+              ],
+              propsType: null,
+              children: [],
+              template: '',
+              slotId: 'slot_7',
+              loc,
+            },
+          ],
+        },
+        errors: [],
+      }
+
+      const types = adapter.generateTypes(ir)
+
+      // Props struct should have fields for each child instance
+      expect(types).toContain('ReactiveChildSlot6 ReactiveChildProps `json:"-"`')
+      expect(types).toContain('ReactiveChildSlot7 ReactiveChildProps `json:"-"`')
+
+      // NewReactivePropsProps should initialize each child
+      expect(types).toContain('ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{')
+      expect(types).toContain('ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{')
+      expect(types).toContain('ScopeID: scopeID + "_slot_6"')
+      expect(types).toContain('ScopeID: scopeID + "_slot_7"')
+      expect(types).toContain('Label: "Child A"')
+      expect(types).toContain('Label: "Child B (doubled)"')
     })
   })
 

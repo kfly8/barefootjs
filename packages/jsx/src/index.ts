@@ -25,6 +25,7 @@ export type {
   IRMetadata,
   IRTemplateLiteral,
   IRTemplatePart,
+  IRProp,
   ParamInfo,
   TypeInfo,
   SourceLocation,

@@ -17,6 +17,7 @@ import type {
   IRFragment,
   IRSlot,
   IRTemplateLiteral,
+  IRProp,
   TypeInfo,
   CompilerError,
   SourceLocation,
@@ -319,6 +320,12 @@ export class GoTemplateAdapter extends BaseAdapter {
       lines.push(`\t${nested.name}s []${nested.name}Props \`json:"${jsonTag}"\``)
     }
 
+    // Add fields for static child component instances
+    const staticChildren = this.collectStaticChildInstances(ir.root)
+    for (const child of staticChildren) {
+      lines.push(`\t${child.fieldName} ${child.name}Props \`json:"-"\``)
+    }
+
     lines.push('}')
     lines.push('')
   }
@@ -388,6 +395,22 @@ export class GoTemplateAdapter extends BaseAdapter {
       lines.push(`\t\t${fieldName}: ${memoValue},`)
     }
 
+    // Add static child component instances
+    const staticChildren = this.collectStaticChildInstances(ir.root)
+    for (const child of staticChildren) {
+      lines.push(`\t\t${child.fieldName}: New${child.name}Props(${child.name}Input{`)
+      lines.push(`\t\t\tScopeID: scopeID + "_${child.slotId}",`)
+      // Add prop values
+      for (const prop of child.props) {
+        if (prop.isLiteral) {
+          lines.push(`\t\t\t${this.capitalizeFieldName(prop.name)}: ${this.goLiteral(prop.value)},`)
+        }
+        // Note: Dynamic props (reactive) are handled differently in the template
+        // At NewProps time, we use the parent's initial signal value
+      }
+      lines.push(`\t\t}),`)
+    }
+
     lines.push('\t}')
     lines.push('}')
   }
@@ -435,6 +458,74 @@ export class GoTemplateAdapter extends BaseAdapter {
       this.collectNestedComponents(cond.whenTrue, result)
       if (cond.whenFalse) {
         this.collectNestedComponents(cond.whenFalse, result)
+      }
+    }
+  }
+
+  /**
+   * Collect all static child component instances from the IR tree.
+   * Excludes components inside loops (which are handled by nestedComponents).
+   *
+   * Each instance is identified by:
+   * - name: Component name (e.g., "ReactiveChild")
+   * - slotId: Unique slot ID (e.g., "slot_6")
+   * - props: Component props
+   * - fieldName: Go field name (e.g., "ReactiveChildSlot6")
+   */
+  private collectStaticChildInstances(node: IRNode): Array<{
+    name: string
+    slotId: string
+    props: IRProp[]
+    fieldName: string
+  }> {
+    const result: Array<{
+      name: string
+      slotId: string
+      props: IRProp[]
+      fieldName: string
+    }> = []
+    this.collectStaticChildInstancesRecursive(node, result, false)
+    return result
+  }
+
+  private collectStaticChildInstancesRecursive(
+    node: IRNode,
+    result: Array<{ name: string; slotId: string; props: IRProp[]; fieldName: string }>,
+    inLoop: boolean
+  ): void {
+    if (node.type === 'component') {
+      const comp = node as IRComponent
+      // Skip components inside loops (handled by nestedComponents)
+      if (!inLoop && comp.slotId) {
+        const suffix = comp.slotId.replace('slot_', 'Slot')
+        result.push({
+          name: comp.name,
+          slotId: comp.slotId,
+          props: comp.props,
+          fieldName: `${comp.name}${suffix}`,
+        })
+      }
+    } else if (node.type === 'loop') {
+      const loop = node as IRLoop
+      // Mark children as inside loop
+      for (const child of loop.children) {
+        this.collectStaticChildInstancesRecursive(child, result, true)
+      }
+    } else if (node.type === 'element') {
+      const element = node as IRElement
+      for (const child of element.children) {
+        this.collectStaticChildInstancesRecursive(child, result, inLoop)
+      }
+    } else if (node.type === 'fragment') {
+      const fragment = node as IRFragment
+      for (const child of fragment.children) {
+        this.collectStaticChildInstancesRecursive(child, result, inLoop)
+      }
+    } else if (node.type === 'conditional') {
+      const cond = node as IRConditional
+      this.collectStaticChildInstancesRecursive(cond.whenTrue, result, inLoop)
+      if (cond.whenFalse) {
+        this.collectStaticChildInstancesRecursive(cond.whenFalse, result, inLoop)
       }
     }
   }
@@ -653,6 +744,26 @@ export class GoTemplateAdapter extends BaseAdapter {
   private capitalizeFieldName(name: string): string {
     if (!name) return name
     return name.charAt(0).toUpperCase() + name.slice(1)
+  }
+
+  /**
+   * Convert a JavaScript literal value to Go literal syntax.
+   */
+  private goLiteral(value: string): string {
+    // Boolean
+    if (value === 'true' || value === 'false') return value
+    // Number
+    if (/^-?\d+(\.\d+)?$/.test(value)) return value
+    // String with single quotes -> Go double quotes
+    if (value.startsWith("'") && value.endsWith("'")) {
+      return `"${value.slice(1, -1)}"`
+    }
+    // String with double quotes -> keep as is
+    if (value.startsWith('"') && value.endsWith('"')) {
+      return value
+    }
+    // Default: wrap in quotes
+    return `"${value}"`
   }
 
   renderNode(node: IRNode): string {
@@ -1686,7 +1797,12 @@ export class GoTemplateAdapter extends BaseAdapter {
       // Loop children: dot becomes loop item (already has correct props)
       return `{{template "${comp.name}" .}}`
     }
-    // Static children: access via .ChildName field
+    // Static children with slotId: use unique field name based on slotId
+    if (comp.slotId) {
+      const suffix = comp.slotId.replace('slot_', 'Slot')
+      return `{{template "${comp.name}" .${comp.name}${suffix}}}`
+    }
+    // Static children without slotId: fallback to .ComponentName
     return `{{template "${comp.name}" .${comp.name}}}`
   }
 

@@ -270,8 +270,8 @@ type ReactivePropsProps struct {
 	Scripts *bf.ScriptCollector `json:"-"`
 	Count int `json:"count"`
 	Doubled int `json:"doubled"`
-	ReactiveChildA ReactiveChildProps  `json:"-"` // For Go template (Child A)
-	ReactiveChildB ReactiveChildProps  `json:"-"` // For Go template (Child B)
+	ReactiveChildSlot6 ReactiveChildProps `json:"-"`
+	ReactiveChildSlot7 ReactiveChildProps `json:"-"`
 }
 
 // NewReactivePropsProps creates ReactivePropsProps from ReactivePropsInput.
@@ -283,17 +283,15 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 
 	return ReactivePropsProps{
 		ScopeID: scopeID,
-		Count:   0,
-		Doubled: 0,
-		ReactiveChildA: NewReactiveChildProps(ReactiveChildInput{
+		Count: 0,
+		Doubled: 0 * 2,
+		ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{
 			ScopeID: scopeID + "_slot_6",
-			Value:   0,
-			Label:   "Child A",
+			Label: "Child A",
 		}),
-		ReactiveChildB: NewReactiveChildProps(ReactiveChildInput{
+		ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{
 			ScopeID: scopeID + "_slot_7",
-			Value:   0,
-			Label:   "Child B (doubled)",
+			Label: "Child B (doubled)",
 		}),
 	}
 }
