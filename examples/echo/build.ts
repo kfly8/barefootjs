@@ -20,6 +20,7 @@ const components = [
   '../shared/components/TodoItem.tsx',
   '../shared/components/TodoApp.tsx',
   '../shared/components/TodoAppSSR.tsx',
+  '../shared/components/ReactiveProps.tsx',
 ]
 
 // Output directories

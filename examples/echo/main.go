@@ -100,6 +100,7 @@ func main() {
 	e.GET("/toggle", toggleHandler)
 	e.GET("/todos", todosHandler)
 	e.GET("/todos-ssr", todosSSRHandler)
+	e.GET("/reactive-props", reactivePropsHandler)
 
 	// Todo API endpoints
 	e.GET("/api/todos", getTodosAPI)
@@ -137,6 +138,7 @@ func indexHandler(c echo.Context) error {
         <li><a href="/toggle">Toggle</a></li>
         <li><a href="/todos">Todo (@client)</a></li>
         <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
+        <li><a href="/reactive-props">Reactive Props (Reactivity Model Test)</a></li>
     </ul>
 </body>
 </html>
@@ -202,6 +204,15 @@ func todosHandler(c echo.Context) error {
 	return c.Render(http.StatusOK, "TodoApp", bf.RenderOptions{
 		Props: &props,
 		Title: "TodoMVC - BarefootJS",
+	})
+}
+
+func reactivePropsHandler(c echo.Context) error {
+	props := NewReactivePropsProps(ReactivePropsInput{})
+	return c.Render(http.StatusOK, "ReactiveProps", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Reactive Props - BarefootJS",
+		Heading: "Reactive Props Test",
 	})
 }
 
