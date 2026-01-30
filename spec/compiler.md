@@ -41,20 +41,124 @@ JSX Source
 
 ---
 
+## Reactivity Model
+
+BarefootJS uses SolidJS-style fine-grained reactivity with automatic dependency tracking.
+
+### Signals
+
+Signals follow the SolidJS pattern - **getter function calls**:
+
+```tsx
+const [count, setCount] = createSignal(0)
+
+// Read: call getter function
+count()           // ✅ Correct - returns current value
+
+// Write: call setter function
+setCount(5)       // Direct value
+setCount(n => n + 1)  // Updater function
+```
+
+**Key difference from React:**
+
+| BarefootJS (SolidJS-style) | React |
+|----------------------------|-------|
+| `count()` - function call | `count` - direct variable |
+| Automatic dependency tracking | Manual `[deps]` array |
+| Fine-grained updates | Component re-render |
+
+### Props Access
+
+Props use **destructuring at definition** but may need **getter calls at usage**:
+
+```tsx
+// ✅ Destructuring at component definition is OK
+function Counter({ initial, onChange }: Props) {
+  const [count, setCount] = createSignal(initial)
+  // ...
+}
+```
+
+**Compiler transformation for child component props:**
+
+```tsx
+// Parent component
+<Counter value={count()} onChange={handleChange} />
+
+// Generated client JS (getter-based for reactive props)
+const propsForInit = {
+  get value() { return count() },  // Dynamic: wrapped as getter
+  onChange: handleChange           // Callback: passed directly
+}
+```
+
+### Props Access Patterns
+
+| Pattern | Behavior | Use Case |
+|---------|----------|----------|
+| `props.value` | Direct access (may be getter) | In event handlers |
+| `props.value()` | Explicit getter call | When prop is reactive |
+| `const { value } = props` | Destructure once | Static props only |
+
+**⚠️ Important:** Destructuring reactive props breaks reactivity:
+
+```tsx
+// ❌ BAD: Loses reactivity (value captured once)
+function Child({ value }: Props) {
+  const captured = value  // If parent passes count(), this is stale
+  return <p>{captured}</p>
+}
+
+// ✅ GOOD: Maintains reactivity
+function Child(props: Props) {
+  return <p>{props.value()}</p>  // Re-evaluates on each access
+}
+
+// ✅ ALSO GOOD: Use in effect
+function Child({ value }: Props) {
+  const [local, setLocal] = createSignal(value)
+  // value is used as initial value, local signal is reactive
+  return <p>{local()}</p>
+}
+```
+
+### Comparison with SolidJS and React
+
+| Aspect | BarefootJS | SolidJS | React |
+|--------|-----------|---------|-------|
+| Signal access | `count()` | `count()` | `count` (useState) |
+| Props access | Getter-based | Getter-based | Direct access |
+| Destructuring props | ⚠️ Careful | ⚠️ Careful | ✅ Safe |
+| Dependency tracking | Automatic | Automatic | Manual arrays |
+| Rendering | Server template + Client hydration | All in JS | All in JS |
+
+### Memos
+
+Derived values use `createMemo`:
+
+```tsx
+const doubled = createMemo(() => count() * 2)
+
+// Usage: also a getter call
+doubled()  // Returns computed value
+```
+
+### Effects
+
+Side effects use `createEffect`:
+
+```tsx
+createEffect(() => {
+  // Runs when any accessed signal changes
+  console.log('Count is:', count())
+  localStorage.setItem('count', count().toString())
+})
+```
+
+---
+
 ## Transformation Rules
-
-📊 **[View Full Specification (TSV)](spec.tsv)**
-
-The TSV contains all transformation rules with:
-- **id**: Unique specification ID (e.g., JSX-001, ATTR-010)
-- **category**: Feature category
-- **input_pattern**: Input JSX pattern
-- **expected_output**: Expected transformation result
-- **output_type**: Type of transformation (see Output Type Legend below)
-- **status**: Implementation status (✅ Implemented, ⚠️ Partial, ❌ OOS)
-- **notes**: Additional notes
-
-Tests for each spec ID are in `packages/jsx/__tests__/spec/` directory.
 
 ### Categories
 
