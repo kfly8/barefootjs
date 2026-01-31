@@ -83,16 +83,15 @@ test.describe('Reactivity Patterns', () => {
 
   test.describe('Uncontrolled Mode (Internal State)', () => {
     test('uncontrolled checkbox uses internal signal', async ({ page }) => {
-      await page.goto('/docs/components/checkbox#disabled')
+      await page.goto('/docs/components/checkbox#basic')
 
-      // The disabled checkbox section has an uncontrolled checkbox
-      const section = page.locator('[data-bf-scope^="CheckboxDisabledDemo_"]:not([data-slot])').first()
-      const checkbox = section.locator('[data-slot="checkbox"]')
+      // The basic checkbox section has uncontrolled checkboxes
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
+      const checkboxes = section.locator('[data-slot="checkbox"]')
 
-      // This checkbox is disabled, so we can't interact with it
-      // Just verify it renders in unchecked state
-      await expect(checkbox).toHaveAttribute('aria-checked', 'false')
-      await expect(checkbox).toBeDisabled()
+      // Third checkbox is disabled - verify it renders in unchecked state
+      await expect(checkboxes.nth(2)).toHaveAttribute('aria-checked', 'false')
+      await expect(checkboxes.nth(2)).toBeDisabled()
     })
   })
 
