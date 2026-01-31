@@ -3,6 +3,7 @@
  */
 
 import {
+  CheckboxUncontrolledDemo,
   CheckboxDisabledDemo,
   CheckboxFormDemo,
   CheckboxTermsDemo,
@@ -25,7 +26,8 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'disabled', title: 'Disabled', branch: 'start' },
+  { id: 'uncontrolled', title: 'Uncontrolled', branch: 'start' },
+  { id: 'disabled', title: 'Disabled', branch: 'child' },
   { id: 'form', title: 'Form', branch: 'child' },
   { id: 'email-list', title: 'Email List', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
@@ -66,6 +68,29 @@ export function CheckboxTermsDemo() {
       >
         Continue
       </button>
+    </div>
+  )
+}`
+
+const uncontrolledCode = `"use client"
+
+import { Checkbox } from "@/components/ui/checkbox"
+
+export function CheckboxUncontrolledDemo() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2">
+        <Checkbox />
+        <span className="text-sm font-medium leading-none">
+          Remember me
+        </span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Checkbox defaultChecked />
+        <span className="text-sm font-medium leading-none">
+          Subscribe to newsletter (checked by default)
+        </span>
+      </div>
     </div>
   )
 }`
@@ -234,6 +259,10 @@ export function CheckboxPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
+            <Example title="Uncontrolled" code={uncontrolledCode}>
+              <CheckboxUncontrolledDemo />
+            </Example>
+
             <Example title="Form" code={formCode}>
               <CheckboxFormDemo />
             </Example>

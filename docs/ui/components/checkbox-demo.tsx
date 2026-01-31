@@ -10,6 +10,29 @@ import { createSignal, createMemo } from '@barefootjs/dom'
 import { Checkbox } from '@ui/components/ui/checkbox'
 
 /**
+ * Uncontrolled checkbox example
+ * Uses internal state management with optional defaultChecked
+ */
+export function CheckboxUncontrolledDemo() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2">
+        <Checkbox />
+        <span className="text-sm font-medium leading-none">
+          Remember me
+        </span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Checkbox defaultChecked />
+        <span className="text-sm font-medium leading-none">
+          Subscribe to newsletter (checked by default)
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/**
  * Disabled checkbox example
  * Shows disabled state
  */
