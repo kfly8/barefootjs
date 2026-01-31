@@ -714,9 +714,14 @@ export class HonoAdapter implements TemplateAdapter {
     // Only add __bfChild when parent is a client component (will call initChild)
     const bfChildAttr = (comp.slotId && this.isClientComponent) ? ' __bfChild={true}' : ''
     if (ctx?.isRootOfClientComponent) {
-      // Root component: pass parent's scope directly (no slot suffix)
-      // This ensures findScope('ComponentName', ...) matches the correct element
-      scopeAttr = ' __instanceId={__scopeId}'
+      // Root component: if it has a slotId, include it so client JS can find it
+      // with [data-bf-scope$="_slot_X"] selector. Otherwise pass parent's scope directly.
+      // Note: Do NOT add __bfChild here - the root is the main hydration target, not a child.
+      if (comp.slotId) {
+        scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}`
+      } else {
+        scopeAttr = ' __instanceId={__scopeId}'
+      }
     } else if (ctx?.isInsideLoop) {
       // Components inside loops should generate their own unique scope IDs
       // Pass __bfScope so they use it as fallback but generate unique IDs
