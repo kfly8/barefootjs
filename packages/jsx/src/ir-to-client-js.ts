@@ -1910,10 +1910,9 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${elem.slotId}) {`)
         lines.push(`    const __childScopes = _${elem.slotId}.querySelectorAll('[data-bf-scope^="${name}_"]:not([data-bf-init])')`)
-        lines.push(`    __childScopes.forEach((childScope) => {`)
-        lines.push(`      const __instanceId = childScope.dataset.bfScope`)
-        // Match props from the array by scopeID
-        lines.push(`      const __childProps = ${elem.array}.find(item => item.scopeID === __instanceId) || {}`)
+        // Use index-based matching since SSR renders elements in array order
+        lines.push(`    __childScopes.forEach((childScope, __idx) => {`)
+        lines.push(`      const __childProps = ${elem.array}[__idx] || {}`)
         lines.push(`      initChild('${name}', childScope, __childProps)`)
         lines.push(`    })`)
         lines.push(`  }`)
