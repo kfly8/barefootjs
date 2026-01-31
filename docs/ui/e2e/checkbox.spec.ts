@@ -74,27 +74,39 @@ test.describe('Checkbox Documentation Page', () => {
     })
   })
 
-  test.describe('Uncontrolled', () => {
-    test('displays uncontrolled example', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Uncontrolled")')).toBeVisible()
-      const section = page.locator('[data-bf-scope^="CheckboxUncontrolledDemo_"]:not([data-slot])').first()
+  test.describe('Basic', () => {
+    test('displays basic example', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Basic")')).toBeVisible()
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
       await expect(section).toBeVisible()
     })
 
+    test('has three checkboxes', async ({ page }) => {
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
+      const checkboxes = section.locator('button[role="checkbox"]')
+      await expect(checkboxes).toHaveCount(3)
+    })
+
     test('first checkbox starts unchecked', async ({ page }) => {
-      const section = page.locator('[data-bf-scope^="CheckboxUncontrolledDemo_"]:not([data-slot])').first()
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
       const checkboxes = section.locator('button[role="checkbox"]')
       await expect(checkboxes.first()).toHaveAttribute('aria-checked', 'false')
     })
 
     test('second checkbox starts checked (defaultChecked)', async ({ page }) => {
-      const section = page.locator('[data-bf-scope^="CheckboxUncontrolledDemo_"]:not([data-slot])').first()
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
       const checkboxes = section.locator('button[role="checkbox"]')
       await expect(checkboxes.nth(1)).toHaveAttribute('aria-checked', 'true')
     })
 
+    test('third checkbox is disabled', async ({ page }) => {
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
+      const checkboxes = section.locator('button[role="checkbox"]')
+      await expect(checkboxes.nth(2)).toBeDisabled()
+    })
+
     test('clicking toggles checkbox state', async ({ page }) => {
-      const section = page.locator('[data-bf-scope^="CheckboxUncontrolledDemo_"]:not([data-slot])').first()
+      const section = page.locator('[data-bf-scope^="CheckboxBasicDemo_"]:not([data-slot])').first()
       const checkbox = section.locator('button[role="checkbox"]').first()
 
       // Initially unchecked
@@ -107,19 +119,6 @@ test.describe('Checkbox Documentation Page', () => {
       // Click to uncheck
       await checkbox.click()
       await expect(checkbox).toHaveAttribute('aria-checked', 'false')
-    })
-  })
-
-  test.describe('Disabled', () => {
-    test('displays disabled example', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Disabled")')).toBeVisible()
-      await expect(page.locator('[data-bf-scope^="CheckboxDisabledDemo_"]:not([data-slot])').first()).toBeVisible()
-    })
-
-    test('checkbox is disabled', async ({ page }) => {
-      const section = page.locator('[data-bf-scope^="CheckboxDisabledDemo_"]:not([data-slot])').first()
-      const checkbox = section.locator('button[role="checkbox"]')
-      await expect(checkbox).toBeDisabled()
     })
   })
 

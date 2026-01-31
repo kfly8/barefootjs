@@ -3,8 +3,7 @@
  */
 
 import {
-  CheckboxUncontrolledDemo,
-  CheckboxDisabledDemo,
+  CheckboxBasicDemo,
   CheckboxFormDemo,
   CheckboxTermsDemo,
   CheckboxEmailListDemo,
@@ -26,8 +25,7 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
-  { id: 'uncontrolled', title: 'Uncontrolled', branch: 'start' },
-  { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
   { id: 'form', title: 'Form', branch: 'child' },
   { id: 'email-list', title: 'Email List', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
@@ -72,13 +70,11 @@ export function CheckboxTermsDemo() {
   )
 }`
 
-const uncontrolledCode = `"use client"
+const basicCode = `import { Checkbox } from "@/components/ui/checkbox"
 
-import { Checkbox } from "@/components/ui/checkbox"
-
-export function CheckboxUncontrolledDemo() {
+export function CheckboxBasicDemo() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center space-x-2">
         <Checkbox />
         <span className="text-sm font-medium leading-none">
@@ -88,24 +84,15 @@ export function CheckboxUncontrolledDemo() {
       <div className="flex items-center space-x-2">
         <Checkbox defaultChecked />
         <span className="text-sm font-medium leading-none">
-          Subscribe to newsletter (checked by default)
+          Subscribe to newsletter
         </span>
       </div>
-    </div>
-  )
-}`
-
-const disabledCode = `"use client"
-
-import { Checkbox } from "@/components/ui/checkbox"
-
-export function CheckboxDisabledDemo() {
-  return (
-    <div className="flex items-center space-x-2 opacity-50">
-      <Checkbox disabled />
-      <span className="text-sm font-medium leading-none">
-        Accept terms and conditions
-      </span>
+      <div className="flex items-center space-x-2 opacity-50">
+        <Checkbox disabled />
+        <span className="text-sm font-medium leading-none">
+          Unavailable option
+        </span>
+      </div>
     </div>
   )
 }`
@@ -259,16 +246,12 @@ export function CheckboxPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Uncontrolled" code={uncontrolledCode}>
-              <CheckboxUncontrolledDemo />
+            <Example title="Basic" code={basicCode}>
+              <CheckboxBasicDemo />
             </Example>
 
             <Example title="Form" code={formCode}>
               <CheckboxFormDemo />
-            </Example>
-
-            <Example title="Disabled" code={disabledCode}>
-              <CheckboxDisabledDemo />
             </Example>
 
             <Example title="Email List" code={emailListCode}>
