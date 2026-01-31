@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Card Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/components/card')
+    // Use domcontentloaded to avoid waiting for external images (unsplash, dicebear)
+    await page.goto('/docs/components/card', { waitUntil: 'domcontentloaded' })
   })
 
   test('displays page header', async ({ page }) => {
