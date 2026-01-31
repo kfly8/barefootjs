@@ -131,6 +131,7 @@ export interface IRConditional {
  */
 export interface IRLoopChildComponent {
   name: string
+  slotId: string | null // Slot ID for querySelector targeting
   props: Array<{
     name: string
     value: string // Expression (can use loop variables)
@@ -165,6 +166,13 @@ export interface IRLoop {
    * This enables proper parent-to-child prop passing (including event handlers).
    */
   childComponent?: IRLoopChildComponent
+
+  /**
+   * When the loop body contains nested components (wrapped in elements),
+   * store their info here for static array hydration.
+   * This enables initializing components that are not direct children of the loop.
+   */
+  nestedComponents?: IRLoopChildComponent[]
 
   /**
    * Filter predicate for filter().map() pattern.

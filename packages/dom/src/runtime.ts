@@ -199,8 +199,9 @@ export function hydrate(
 ): void {
   const doHydrate = () => {
     // Only select uninitialized elements (skip already hydrated ones)
+    // Also skip child components (data-bf-child) - they are initialized by parent via initChild
     const scopeEls = document.querySelectorAll(
-      `[data-bf-scope^="${name}_"]:not([data-bf-init])`
+      `[data-bf-scope^="${name}_"]:not([data-bf-init]):not([data-bf-child])`
     )
 
     // Track initialized scope IDs to avoid duplicate initialization
@@ -640,13 +641,31 @@ export type ComponentInitFn = (
 const componentRegistry = new Map<string, ComponentInitFn>()
 
 /**
+ * Queue of pending child initializations waiting for components to register.
+ * Key: component name, Value: array of pending init requests
+ */
+const pendingChildInits = new Map<string, Array<{ scope: Element; props: Record<string, unknown> }>>()
+
+/**
  * Register a component's init function for parent initialization.
+ * Also processes any pending child initializations for this component.
  *
  * @param name - Component name (e.g., 'Counter', 'AddTodoForm')
  * @param init - Init function that takes (idx, scope, props)
  */
 export function registerComponent(name: string, init: ComponentInitFn): void {
   componentRegistry.set(name, init)
+
+  // Process any pending child initializations for this component
+  const pending = pendingChildInits.get(name)
+  if (pending) {
+    for (const { scope, props } of pending) {
+      if (!scope.hasAttribute('data-bf-init')) {
+        init(0, scope, props)
+      }
+    }
+    pendingChildInits.delete(name)
+  }
 }
 
 /**
@@ -664,6 +683,10 @@ export function getComponentInit(name: string): ComponentInitFn | undefined {
  * Initialize a child component with props from parent.
  * Used by parent components to pass function props (like onAdd) to children.
  *
+ * If the child component's script hasn't loaded yet (component not registered),
+ * queues the initialization request. When the component registers via
+ * registerComponent(), pending initializations are processed synchronously.
+ *
  * @param name - Child component name
  * @param childScope - The child's scope element (found by parent)
  * @param props - Props to pass to the child (including function props)
@@ -673,8 +696,18 @@ export function initChild(
   childScope: Element | null,
   props: Record<string, unknown> = {}
 ): void {
+  if (!childScope) return
+
   const init = componentRegistry.get(name)
-  if (!init || !childScope) return
+  if (!init) {
+    // Component not registered yet - queue initialization for when it registers
+    // This handles cases where parent script loads before child script
+    if (!pendingChildInits.has(name)) {
+      pendingChildInits.set(name, [])
+    }
+    pendingChildInits.get(name)!.push({ scope: childScope, props })
+    return
+  }
 
   // Only initialize if not already initialized
   if (!childScope.hasAttribute('data-bf-init')) {

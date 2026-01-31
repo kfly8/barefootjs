@@ -286,7 +286,227 @@ error[BF001]: 'use client' directive required for components with createSignal
 
 ---
 
+## Reactivity Model
+
+This section documents the current reactive behavior of the compiler.
+
+### Overview
+
+Barefoot.js uses **fine-grained reactivity** similar to SolidJS:
+- Components execute **once** (not on every render like React)
+- Reactivity flows through **signal getter calls** and **property access**
+- JSX expressions are wrapped in `createEffect` for reactive updates
+
+---
+
+### Reactivity Classification
+
+| Pattern | Reactive? | Reason |
+|---------|-----------|--------|
+| `count()` (signal getter) | Yes | Signal call detected |
+| `doubled()` (memo call) | Yes | Memo call detected |
+| `props.count` | Yes | Props reference |
+| `count` (destructured prop) | Yes* | Props parameter (*see caveats) |
+| `"static string"` | No | Literal value |
+| `CONSTANT` (no reactive deps) | No | Pure constant |
+| `classes` (depends on signal) | Yes | Transitive dependency |
+
+---
+
+### Props Access Patterns
+
+#### Pattern A: Destructured Props
+
+```tsx
+// Source
+function Counter({ count }: { count: number }) {
+  return <div>{count}</div>
+}
+
+// Generated Client JS
+const count = props.count  // Captured ONCE at hydration
+createEffect(() => {
+  if (_slot_0) _slot_0.textContent = String(count)
+})
+```
+
+**Behavior**: Value captured at hydration. Does NOT update when parent changes.
+
+#### Pattern B: Direct Props Access
+
+```tsx
+// Source
+function Counter(props: { count: number }) {
+  return <div>{props.count}</div>
+}
+
+// Generated Client JS
+createEffect(() => {
+  if (_slot_0) _slot_0.textContent = String(props.count)
+})
+```
+
+**Behavior**: Accessed inside effect. Updates when parent passes new value via getter.
+
+#### Pattern C: Props in Memo/Effect
+
+```tsx
+// Source
+function Checkbox({ checked }: { checked?: boolean }) {
+  const isControlled = createMemo(() => checked !== undefined)
+}
+
+// Generated Client JS (auto-transformed)
+const isControlled = createMemo(() => props.checked !== undefined)
+```
+
+**Behavior**: Props in memo/effect are **implicitly transformed** to `props.xxx`.
+
+#### Pattern D: Props Passed to Child
+
+```tsx
+// Parent
+function Parent() {
+  const [value, setValue] = createSignal(false)
+  return <Checkbox checked={value()} />
+}
+
+// Generated: getter for reactivity
+initChild('Checkbox', _slot_0, {
+  get checked() { return value() }
+})
+```
+
+**Behavior**: Dynamic props wrapped in getters for SolidJS-style reactivity.
+
+---
+
+### Context-Dependent Behavior Summary
+
+| Context | Pattern | Reactive? | Transformation |
+|---------|---------|-----------|----------------|
+| **JSX expression** | `{count()}` | Yes | Wrapped in `createEffect` |
+| **JSX expression** | `{count}` (prop) | Yes | Wrapped in `createEffect` |
+| **Memo body** | `checked` (prop) | Yes | Auto-transformed to `props.checked` |
+| **Effect body** | `checked` (prop) | Yes | Auto-transformed to `props.checked` |
+| **Destructuring** | `{ count }` | No* | Captured once at hydration |
+| **Child props** | `<C val={x()}/>` | Yes | Getter: `get val() { return x() }` |
+| **Constant def** | `const c = x()` | No | Evaluated once (late if depends on signal) |
+
+\* In JSX context, destructured props are still reactive because they're in `createEffect`.
+
+---
+
+### Comparison with SolidJS and React
+
+#### SolidJS
+
+| Aspect | SolidJS | Barefoot.js |
+|--------|---------|-------------|
+| Component execution | Once | Once (hydration) |
+| Props access style | Always `props.xxx` | Destructured or `props.xxx` |
+| Reactivity trigger | Signal getter call | Signal getter call |
+| Prop reactivity | Via proxy/getters | Via getters (child) or effects (JSX) |
+
+**Key Difference**: SolidJS **discourages destructuring props**. Barefoot.js allows it but with caveats.
+
+```tsx
+// SolidJS - idiomatic
+function Counter(props) {
+  return <div>{props.count}</div>  // Always reactive
+}
+
+// Barefoot.js - works but has edge cases
+function Counter({ count }) {
+  return <div>{count}</div>  // Reactive in JSX, static elsewhere
+}
+```
+
+#### React
+
+| Aspect | React | Barefoot.js |
+|--------|-------|-------------|
+| Component execution | Every render | Once (hydration) |
+| Props access | Any style works | Style affects reactivity |
+| State update | Re-renders component | Triggers effects only |
+
+**Key Difference**: React re-runs the entire component. Barefoot.js runs once and updates via effects.
+
+```tsx
+// React - props always fresh
+function Counter({ count }) {
+  console.log(count)  // Fresh on every render
+  return <div>{count}</div>
+}
+
+// Barefoot.js - props captured once
+function Counter({ count }) {
+  console.log(count)  // Only logs INITIAL value
+  return <div>{count}</div>  // JSX updates via effect
+}
+```
+
+---
+
+### Known Inconsistencies
+
+#### 1. Destructuring vs Direct Access
+
+```tsx
+// BROKEN: count captured at hydration
+function Checkbox({ checked }) {
+  const isControlled = checked !== undefined  // Always initial value
+}
+
+// WORKS: auto-transformed in memo
+function Checkbox({ checked }) {
+  const isControlled = createMemo(() => checked !== undefined)
+  // Transformed to: props.checked !== undefined
+}
+```
+
+#### 2. Implicit Transformation in Memo/Effect
+
+The compiler **silently** transforms prop references in memo/effect bodies:
+- `checked` → `props.checked`
+- This is **not visible** in source code
+
+#### 3. Constant Ordering
+
+```tsx
+const classes = `btn ${isActive() && 'on'}`  // Uses memo
+const isActive = createMemo(() => selected() === id)
+```
+
+Compiler must detect dependency and reorder. This is fragile.
+
+---
+
+### Underlying Principle
+
+**Reactivity flows through function calls and property access, not variable capture.**
+
+| Access Pattern | Reactive? | Why |
+|----------------|-----------|-----|
+| `signal()` | Yes | Function call re-evaluated in effect |
+| `props.xxx` | Potentially | Property access can use getter |
+| `const x = signal()` | No | Value captured at definition |
+| `const x = props.xxx` | No | Value captured at definition |
+
+---
+
+### Recommendations (Future)
+
+1. **Option A**: Disallow destructuring props (SolidJS-style)
+2. **Option B**: Auto-transform ALL prop references to `props.xxx`
+3. **Option C**: Add lint rule for reactive prop patterns
+
+---
+
 ## Open Questions
 
 1. **Type inference depth** - How deeply to resolve types like `Pick<T, K>`?
 2. **Source maps** - Generate source maps for Client JS debugging?
+3. **Reactivity model** - Should destructuring be disallowed or auto-transformed?
+4. **Implicit transformation** - Should memo/effect prop transformation be explicit?
+5. **Constant ordering** - How to handle dependencies more robustly?

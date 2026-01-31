@@ -6,8 +6,8 @@
 
 import { analyzeComponent, listExportedComponents, jsxToIR, generateClientJs, type ComponentIR } from '@barefootjs/jsx'
 import { GoTemplateAdapter } from '@barefootjs/go-template'
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'node:fs'
+import { resolve, dirname, basename, relative } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 
@@ -385,5 +385,54 @@ ${combinedContent}
   writeFileSync(resolve(projectRoot, 'components.go'), componentsGoContent)
   console.log('✓ components.go')
 }
+
+// Compute relative path from one file to another
+function computeRelativePath(from: string, to: string): string {
+  const fromDir = dirname(from)
+  const toDir = dirname(to)
+  const toFile = basename(to)
+
+  if (fromDir === toDir) {
+    return `./${toFile}`
+  }
+
+  const rel = relative(fromDir, toDir)
+  return `./${rel}/${toFile}`
+}
+
+// Resolve placeholder imports in client JS files
+function resolveChildImports(): void {
+  const placeholderRegex = /import '\/\* @bf-child:(\w+) \*\/'/g
+
+  // Get all client JS files
+  const clientFiles = readdirSync(clientDir).filter(f => f.endsWith('.client.js'))
+
+  for (const file of clientFiles) {
+    const filePath = resolve(clientDir, file)
+    let content = readFileSync(filePath, 'utf-8')
+
+    let hasChanges = false
+    content = content.replace(placeholderRegex, (_, childName) => {
+      // Check if child client JS exists
+      const childClientJs = `${childName}.client.js`
+      const childPath = resolve(clientDir, childClientJs)
+      if (!existsSync(childPath)) {
+        // No client JS - remove import line entirely
+        hasChanges = true
+        return ''
+      }
+      hasChanges = true
+      return `import './${childClientJs}'`
+    })
+
+    if (hasChanges) {
+      writeFileSync(filePath, content)
+      console.log(`Resolved imports: client/${file}`)
+    }
+  }
+}
+
+// Resolve child component import placeholders
+resolveChildImports()
 
 console.log('\nDone!')

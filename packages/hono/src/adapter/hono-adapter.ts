@@ -55,6 +55,7 @@ export class HonoAdapter implements TemplateAdapter {
 
   private componentName: string = ''
   private options: HonoAdapterOptions
+  private isClientComponent: boolean = false
 
   constructor(options: HonoAdapterOptions = {}) {
     this.options = {
@@ -67,6 +68,7 @@ export class HonoAdapter implements TemplateAdapter {
 
   generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
+    this.isClientComponent = ir.metadata.isClientComponent
 
     const imports = this.generateImports(ir)
     const types = this.generateTypes(ir)
@@ -160,6 +162,7 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push(`type ${this.componentName}PropsWithHydration = ${propsTypeName} & {`)
       lines.push('  __instanceId?: string')
       lines.push('  __bfScope?: string')
+      lines.push('  __bfChild?: boolean')
       lines.push('  "data-key"?: string | number')
       lines.push('}')
     }
@@ -212,7 +215,7 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Build full destructure with hydration props
     // Rest props must be at the end in TypeScript
-    const hydrationProps = '__instanceId, __bfScope, "data-key": __dataKey'
+    const hydrationProps = '__instanceId, __bfScope, __bfChild, "data-key": __dataKey'
     const parts: string[] = []
     if (propsParams) {
       parts.push(propsParams)
@@ -226,7 +229,7 @@ export class HonoAdapter implements TemplateAdapter {
     // Props type annotation
     const typeAnnotation = propsTypeName
       ? `: ${name}PropsWithHydration`
-      : ': { __instanceId?: string; __bfScope?: string }'
+      : ': { __instanceId?: string; __bfScope?: string; __bfChild?: boolean }'
 
     // Generate signal initializers for SSR
     const signalInits = this.generateSignalInitializers(ir)
@@ -518,6 +521,8 @@ export class HonoAdapter implements TemplateAdapter {
       hydrationAttrs += ' data-bf-scope={__scopeId}'
       // Add data-key for list reconciliation (only on root elements with scope)
       hydrationAttrs += ' {...(__dataKey !== undefined ? { "data-key": __dataKey } : {})}'
+      // Mark as child component if __bfChild is true (for parent-first hydration)
+      hydrationAttrs += ' {...(__bfChild ? { "data-bf-child": "" } : {})}'
     }
     if (element.slotId) {
       hydrationAttrs += ` data-bf="${element.slotId}"`
@@ -587,9 +592,9 @@ export class HonoAdapter implements TemplateAdapter {
     // If reactive, wrap with markers
     if (cond.slotId) {
       const trueWithMarker = this.wrapWithCondMarker(cond.whenTrue, whenTrue, cond.slotId)
-      // For null false branch, use fragment with comment markers
+      // For null false branch, render comment markers so client can insert content later
       const falseWithMarker = cond.whenFalse.type === 'expression' && cond.whenFalse.expr === 'null'
-        ? 'null'
+        ? `<>{bfComment("cond-start:${cond.slotId}")}{bfComment("cond-end:${cond.slotId}")}</>`
         : this.wrapWithCondMarker(cond.whenFalse, whenFalse, cond.slotId)
 
       return `{${cond.condition} ? ${trueWithMarker} : ${falseWithMarker}}`
@@ -705,22 +710,31 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Determine how to pass scope to child component
     let scopeAttr: string
-    if (ctx?.isInsideLoop) {
+    // Mark child components with slotId for parent-first hydration
+    // Only add __bfChild when parent is a client component (will call initChild)
+    const bfChildAttr = (comp.slotId && this.isClientComponent) ? ' __bfChild={true}' : ''
+    if (ctx?.isRootOfClientComponent) {
+      // Root component: if it has a slotId, include it so client JS can find it
+      // with [data-bf-scope$="_slot_X"] selector. Otherwise pass parent's scope directly.
+      // Note: Do NOT add __bfChild here - the root is the main hydration target, not a child.
+      if (comp.slotId) {
+        scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}`
+      } else {
+        scopeAttr = ' __instanceId={__scopeId}'
+      }
+    } else if (ctx?.isInsideLoop) {
       // Components inside loops should generate their own unique scope IDs
       // Pass __bfScope so they use it as fallback but generate unique IDs
       // This ensures each loop iteration has a distinct component instance
       if (comp.slotId) {
-        scopeAttr = ` __bfScope={\`\${__scopeId}_${comp.slotId}\`}`
+        scopeAttr = ` __bfScope={\`\${__scopeId}_${comp.slotId}\`}${bfChildAttr}`
       } else {
         scopeAttr = ' __bfScope={__scopeId}'
       }
     } else if (comp.slotId) {
       // Components with slotId need unique scope with slot suffix
       // Format: ParentName_slotX for client JS matching
-      scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}`
-    } else if (ctx?.isRootOfClientComponent) {
-      // Root component without slotId: pass parent's scope directly
-      scopeAttr = ' __instanceId={__scopeId}'
+      scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}${bfChildAttr}`
     } else {
       // Non-interactive components inherit parent's scope
       scopeAttr = ' __instanceId={__scopeId}'
