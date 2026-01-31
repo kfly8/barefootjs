@@ -1522,10 +1522,14 @@ export class GoTemplateAdapter extends BaseAdapter {
       let result = `{{if ${goCondition}}}${whenTrueWrapped}`
 
       if (cond.whenFalse) {
-        // Skip null/undefined branches
+        // Handle null/undefined branches with empty comment markers for client hydration
         if (cond.whenFalse.type === 'expression') {
           const exprNode = cond.whenFalse as IRExpression
-          if (exprNode.expr !== 'null' && exprNode.expr !== 'undefined') {
+          if (exprNode.expr === 'null' || exprNode.expr === 'undefined') {
+            // Output empty comment markers so client can insert content later
+            const emptyMarkers = `{{bfComment "cond-start:${cond.slotId}"}}{{bfComment "cond-end:${cond.slotId}"}}`
+            result += `{{else}}${emptyMarkers}`
+          } else {
             const whenFalse = this.renderNode(cond.whenFalse)
             const whenFalseWrapped = this.wrapWithCondMarker(whenFalse, cond.slotId)
             result += `{{else}}${whenFalseWrapped}`
