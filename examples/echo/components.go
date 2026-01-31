@@ -295,3 +295,28 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 		}),
 	}
 }
+
+// FormInput is the user-facing input type.
+type FormInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+}
+
+// FormProps is the props type for the Form component.
+type FormProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Accepted bool `json:"accepted"`
+}
+
+// NewFormProps creates FormProps from FormInput.
+func NewFormProps(in FormInput) FormProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "Form_" + randomID(6)
+	}
+
+	return FormProps{
+		ScopeID: scopeID,
+		Accepted: false,
+	}
+}

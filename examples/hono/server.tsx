@@ -14,6 +14,7 @@ import Toggle from '@/components/Toggle'
 import TodoApp from '@/components/TodoApp'
 import TodoAppSSR from '@/components/TodoAppSSR'
 import ReactiveProps from '@/components/ReactiveProps'
+import Form from '@/components/Form'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
 const app = new Hono()
@@ -53,6 +54,7 @@ app.get('/', (c) => {
           <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
           <li><a href="/async-counter">Async Counter (Suspense + BarefootJS)</a></li>
           <li><a href="/reactive-props">Reactive Props (Reactivity Model Test)</a></li>
+          <li><a href="/form">Form (Checkbox + Button)</a></li>
         </ul>
       </nav>
     </div>
@@ -108,6 +110,17 @@ app.get('/reactive-props', (c) => {
     <div>
       <h1>Reactive Props Test</h1>
       <ReactiveProps />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Form example (checkbox + button interaction)
+app.get('/form', (c) => {
+  return c.render(
+    <div>
+      <h1>Form Example</h1>
+      <Form />
       <p><a href="/">← Back</a></p>
     </div>
   )

@@ -101,6 +101,7 @@ func main() {
 	e.GET("/todos", todosHandler)
 	e.GET("/todos-ssr", todosSSRHandler)
 	e.GET("/reactive-props", reactivePropsHandler)
+	e.GET("/form", formHandler)
 
 	// Todo API endpoints
 	e.GET("/api/todos", getTodosAPI)
@@ -139,6 +140,7 @@ func indexHandler(c echo.Context) error {
         <li><a href="/todos">Todo (@client)</a></li>
         <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
         <li><a href="/reactive-props">Reactive Props (Reactivity Model Test)</a></li>
+        <li><a href="/form">Form (Checkbox + Button)</a></li>
     </ul>
 </body>
 </html>
@@ -213,6 +215,15 @@ func reactivePropsHandler(c echo.Context) error {
 		Props:   &props,
 		Title:   "Reactive Props - BarefootJS",
 		Heading: "Reactive Props Test",
+	})
+}
+
+func formHandler(c echo.Context) error {
+	props := NewFormProps(FormInput{})
+	return c.Render(http.StatusOK, "Form", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Form - BarefootJS",
+		Heading: "Form Example",
 	})
 }
 
