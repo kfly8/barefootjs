@@ -49,7 +49,7 @@ export function CheckboxTermsDemo() {
       <div className="items-top flex space-x-2">
         <Checkbox checked={accepted()} onCheckedChange={setAccepted} />
         <div
-          className="grid gap-1.5 leading-none cursor-pointer"
+          className="grid gap-1.5 leading-none cursor-pointer select-none"
           onClick={handleLabelClick}
         >
           <span className="text-sm font-medium leading-none">
@@ -61,7 +61,7 @@ export function CheckboxTermsDemo() {
         </div>
       </div>
       <button
-        className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm disabled:opacity-50"
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
         disabled={!accepted()}
       >
         Continue
@@ -97,22 +97,24 @@ export function CheckboxFormDemo() {
 
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-medium leading-none">Sidebar</h4>
-      <p className="text-sm text-muted-foreground">
-        Select the items you want to display in the sidebar.
-      </p>
-      <div className="flex flex-col space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox checked={mobile()} onCheckedChange={setMobile} />
-          <span className="text-sm font-medium leading-none">Mobile</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox checked={desktop()} onCheckedChange={setDesktop} />
-          <span className="text-sm font-medium leading-none">Desktop</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox checked={email()} onCheckedChange={setEmail} />
-          <span className="text-sm font-medium leading-none">Email notifications</span>
+      <div className="space-y-4">
+        <h4 className="text-sm font-medium leading-none">Sidebar</h4>
+        <p className="text-sm text-muted-foreground">
+          Select the items you want to display in the sidebar.
+        </p>
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox checked={mobile()} onCheckedChange={setMobile} />
+            <span className="text-sm font-medium leading-none">Mobile</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox checked={desktop()} onCheckedChange={setDesktop} />
+            <span className="text-sm font-medium leading-none">Desktop</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox checked={email()} onCheckedChange={setEmail} />
+            <span className="text-sm font-medium leading-none">Email notifications</span>
+          </div>
         </div>
       </div>
       <div className="text-sm text-muted-foreground pt-2 border-t">
@@ -128,23 +130,30 @@ const emailListCode = `"use client"
 import { createSignal, createMemo } from "@barefootjs/dom"
 import { Checkbox } from "@/components/ui/checkbox"
 
-export function CheckboxEmailListDemo() {
-  const [email1, setEmail1] = createSignal(false)
-  const [email2, setEmail2] = createSignal(false)
-  const [email3, setEmail3] = createSignal(false)
+const emails = [
+  { id: 0, from: 'John Smith', subject: 'Meeting tomorrow - Let\\'s discuss the Q4 planning', time: '10:30 AM', unread: true },
+  { id: 1, from: 'Dev Team', subject: 'Project update - Sprint review notes attached', time: '9:15 AM', unread: false },
+  { id: 2, from: 'Billing Dept', subject: 'Invoice #1234 - Payment due in 30 days', time: 'Yesterday', unread: true },
+]
 
-  const selectedCount = createMemo(() =>
-    [email1(), email2(), email3()].filter(Boolean).length
-  )
-  const isAllSelected = createMemo(() => selectedCount() === 3)
+export function CheckboxEmailListDemo() {
+  // Array-based state management with immutable updates
+  const [checked, setChecked] = createSignal(emails.map(() => false))
+
+  const selectedCount = createMemo(() => checked().filter(Boolean).length)
+  const isAllSelected = createMemo(() => selectedCount() === emails.length)
   const selectionLabel = createMemo(() =>
     selectedCount() > 0 ? \`\${selectedCount()} selected\` : 'Select all'
   )
 
-  const toggleAll = (checked: boolean) => {
-    setEmail1(checked)
-    setEmail2(checked)
-    setEmail3(checked)
+  // Immutable update pattern for toggling individual email
+  const toggleEmail = (index: number) => {
+    setChecked(prev => prev.map((v, i) => i === index ? !v : v))
+  }
+
+  // Immutable update pattern for toggling all emails
+  const toggleAll = (value: boolean) => {
+    setChecked(prev => prev.map(() => value))
   }
 
   return (
@@ -161,24 +170,14 @@ export function CheckboxEmailListDemo() {
         )}
       </div>
       <div className="divide-y border-x border-b rounded-b-md">
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50">
-          <Checkbox checked={email1()} onCheckedChange={setEmail1} />
-          <span className="text-sm font-medium w-32 truncate">John Smith</span>
-          <span className="text-sm truncate flex-1">Meeting tomorrow - Let's discuss the Q4 planning</span>
-          <span className="text-xs text-muted-foreground">10:30 AM</span>
-        </div>
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50">
-          <Checkbox checked={email2()} onCheckedChange={setEmail2} />
-          <span className="text-sm w-32 truncate">Dev Team</span>
-          <span className="text-sm text-muted-foreground truncate flex-1">Project update - Sprint review notes</span>
-          <span className="text-xs text-muted-foreground">9:15 AM</span>
-        </div>
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50">
-          <Checkbox checked={email3()} onCheckedChange={setEmail3} />
-          <span className="text-sm font-medium w-32 truncate">Billing Dept</span>
-          <span className="text-sm truncate flex-1">Invoice #1234 - Payment due in 30 days</span>
-          <span className="text-xs text-muted-foreground">Yesterday</span>
-        </div>
+        {emails.map((email) => (
+          <div key={email.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
+            <Checkbox checked={checked()[email.id]} onCheckedChange={() => toggleEmail(email.id)} />
+            <span className={\`text-sm w-32 truncate \${email.unread ? 'font-medium' : ''}\`}>{email.from}</span>
+            <span className={\`text-sm truncate flex-1 \${email.unread ? '' : 'text-muted-foreground'}\`}>{email.subject}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{email.time}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
