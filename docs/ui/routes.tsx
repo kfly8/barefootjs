@@ -22,6 +22,7 @@ import { DropdownPage } from './pages/dropdown'
 import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+import { PortalPage } from './pages/portal'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -36,6 +37,7 @@ const components = [
   { name: 'Card', path: '/docs/components/card', description: 'Displays a card with header, content, and footer.' },
   { name: 'Checkbox', path: '/docs/components/checkbox', description: 'A control that allows the user to toggle between checked and unchecked states.' },
   { name: 'Input', path: '/docs/components/input', description: 'Displays an input field for user text entry.' },
+  { name: 'Portal', path: '/docs/components/portal', description: 'Renders children into a different part of the DOM tree.' },
   { name: 'Switch', path: '/docs/components/switch', description: 'A control that allows the user to toggle between checked and not checked.' },
   { name: 'Accordion', path: '/docs/components/accordion', description: 'A vertically stacked set of interactive headings that each reveal content.' },
   { name: 'Tabs', path: '/docs/components/tabs', description: 'A set of layered sections of content displayed one at a time.' },
@@ -170,6 +172,11 @@ export function createApp() {
   // Select documentation
   app.get('/docs/components/select', (c) => {
     return c.render(<SelectPage />)
+  })
+
+  // Portal documentation
+  app.get('/docs/components/portal', (c) => {
+    return c.render(<PortalPage />)
   })
 
   // Controlled Input pattern documentation
