@@ -139,8 +139,6 @@ func indexHandler(c echo.Context) error {
         <li><a href="/toggle">Toggle</a></li>
         <li><a href="/todos">Todo (@client)</a></li>
         <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
-        <li><a href="/reactive-props">Reactive Props (Reactivity Model Test)</a></li>
-        <li><a href="/form">Form (Checkbox + Button)</a></li>
     </ul>
 </body>
 </html>
