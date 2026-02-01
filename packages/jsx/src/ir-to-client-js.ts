@@ -1211,8 +1211,18 @@ function expandDynamicPropValue(value: string, ctx: ClientJsContext): string {
 /**
  * Replace prop references in an expression with props.xxx accessor pattern.
  * This ensures props are accessed via the getter when used in child component props.
+ *
+ * Note: When using SolidJS-style props (propsObjectName is set), the source code
+ * already uses props.xxx pattern, so we skip the transformation to avoid
+ * double-wrapping (props.xxx -> props.props.xxx).
  */
 function replacePropReferences(expr: string, ctx: ClientJsContext): string {
+  // If using SolidJS-style props object pattern, skip transformation
+  // because the source already uses props.xxx syntax
+  if (ctx.propsObjectName) {
+    return expr
+  }
+
   let result = expr
 
   for (const prop of ctx.propsParams) {

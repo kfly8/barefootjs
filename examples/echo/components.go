@@ -296,6 +296,103 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 	}
 }
 
+// PropsStyleChildInput is the user-facing input type.
+type PropsStyleChildInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+	Value int
+	Label string
+}
+
+// PropsStyleChildProps is the props type for the PropsStyleChild component.
+type PropsStyleChildProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Value int `json:"value"`
+	Label string `json:"label"`
+	DisplayValue interface{} `json:"displayValue"`
+}
+
+// NewPropsStyleChildProps creates PropsStyleChildProps from PropsStyleChildInput.
+func NewPropsStyleChildProps(in PropsStyleChildInput) PropsStyleChildProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "PropsStyleChild_" + randomID(6)
+	}
+
+	return PropsStyleChildProps{
+		ScopeID: scopeID,
+		Value: in.Value,
+		Label: in.Label,
+		DisplayValue: 0,
+	}
+}
+
+// DestructuredStyleChildInput is the user-facing input type.
+type DestructuredStyleChildInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+	Value interface{}
+	Label interface{}
+}
+
+// DestructuredStyleChildProps is the props type for the DestructuredStyleChild component.
+type DestructuredStyleChildProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Value interface{} `json:"value"`
+	Label interface{} `json:"label"`
+	DisplayValue interface{} `json:"displayValue"`
+}
+
+// NewDestructuredStyleChildProps creates DestructuredStyleChildProps from DestructuredStyleChildInput.
+func NewDestructuredStyleChildProps(in DestructuredStyleChildInput) DestructuredStyleChildProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "DestructuredStyleChild_" + randomID(6)
+	}
+
+	return DestructuredStyleChildProps{
+		ScopeID: scopeID,
+		Value: in.Value,
+		Label: in.Label,
+		DisplayValue: 0,
+	}
+}
+
+// PropsReactivityComparisonInput is the user-facing input type.
+type PropsReactivityComparisonInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+}
+
+// PropsReactivityComparisonProps is the props type for the PropsReactivityComparison component.
+type PropsReactivityComparisonProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Count int `json:"count"`
+	PropsStyleChildSlot4 PropsStyleChildProps `json:"-"`
+	DestructuredStyleChildSlot5 DestructuredStyleChildProps `json:"-"`
+}
+
+// NewPropsReactivityComparisonProps creates PropsReactivityComparisonProps from PropsReactivityComparisonInput.
+func NewPropsReactivityComparisonProps(in PropsReactivityComparisonInput) PropsReactivityComparisonProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "PropsReactivityComparison_" + randomID(6)
+	}
+
+	return PropsReactivityComparisonProps{
+		ScopeID: scopeID,
+		Count: 1,
+		PropsStyleChildSlot4: NewPropsStyleChildProps(PropsStyleChildInput{
+			ScopeID: scopeID + "_slot_4",
+			Label: "Props Style",
+		}),
+		DestructuredStyleChildSlot5: NewDestructuredStyleChildProps(DestructuredStyleChildInput{
+			ScopeID: scopeID + "_slot_5",
+			Label: "Destructured",
+		}),
+	}
+}
+
 // FormInput is the user-facing input type.
 type FormInput struct {
 	ScopeID string // Optional: if empty, random ID is generated

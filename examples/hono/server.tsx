@@ -13,7 +13,7 @@ import Counter from '@/components/Counter'
 import Toggle from '@/components/Toggle'
 import TodoApp from '@/components/TodoApp'
 import TodoAppSSR from '@/components/TodoAppSSR'
-import ReactiveProps from '@/components/ReactiveProps'
+import ReactiveProps, { PropsReactivityComparison } from '@/components/ReactiveProps'
 import Form from '@/components/Form'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 
@@ -108,6 +108,18 @@ app.get('/reactive-props', (c) => {
     <div>
       <h1>Reactive Props Test</h1>
       <ReactiveProps />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Props Reactivity Comparison test page
+// Demonstrates difference between props.xxx (reactive) and destructured (not reactive)
+app.get('/props-reactivity', (c) => {
+  return c.render(
+    <div>
+      <h1>Props Reactivity Comparison</h1>
+      <PropsReactivityComparison />
       <p><a href="/">← Back</a></p>
     </div>
   )
