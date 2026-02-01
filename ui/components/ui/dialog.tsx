@@ -128,18 +128,13 @@ interface DialogOverlayProps {
  * @param props.open - Whether visible
  * @param props.onClick - Click handler to close
  */
-function DialogOverlay({
-  class: className = '',
-  open = false,
-  onClick,
-}: DialogOverlayProps) {
-  const stateClasses = open ? dialogOverlayOpenClasses : dialogOverlayClosedClasses
+function DialogOverlay(props: DialogOverlayProps) {
   return (
     <div
       data-slot="dialog-overlay"
-      data-state={open ? 'open' : 'closed'}
-      className={`${dialogOverlayBaseClasses} ${stateClasses} ${className}`}
-      onClick={onClick}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
+      className={`${dialogOverlayBaseClasses} ${(props.open ?? false) ? dialogOverlayOpenClasses : dialogOverlayClosedClasses} ${props.class ?? ''}`}
+      onClick={props.onClick}
     />
   )
 }
@@ -170,17 +165,10 @@ interface DialogContentProps {
  * @param props.ariaLabelledby - ID of title for accessibility
  * @param props.ariaDescribedby - ID of description for accessibility
  */
-function DialogContent({
-  class: className = '',
-  open = false,
-  onClose,
-  children,
-  ariaLabelledby,
-  ariaDescribedby,
-}: DialogContentProps) {
+function DialogContent(props: DialogContentProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && onClose) {
-      onClose()
+    if (e.key === 'Escape' && props.onClose) {
+      props.onClose()
       return
     }
 
@@ -208,7 +196,7 @@ function DialogContent({
   }
 
   const handleFocusOnOpen = (el: HTMLElement) => {
-    if (open && el) {
+    if ((props.open ?? false) && el) {
       const focusableElements = el.querySelectorAll(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
       )
@@ -217,22 +205,20 @@ function DialogContent({
     }
   }
 
-  const stateClasses = open ? dialogContentOpenClasses : dialogContentClosedClasses
-
   return (
     <div
       data-slot="dialog-content"
-      data-state={open ? 'open' : 'closed'}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={ariaLabelledby}
-      aria-describedby={ariaDescribedby}
+      aria-labelledby={props.ariaLabelledby}
+      aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${dialogContentBaseClasses} ${stateClasses} ${className}`}
+      className={`${dialogContentBaseClasses} ${(props.open ?? false) ? dialogContentOpenClasses : dialogContentClosedClasses} ${props.class ?? ''}`}
       onKeyDown={handleKeyDown}
       ref={handleFocusOnOpen}
     >
-      {children}
+      {props.children}
     </div>
   )
 }
