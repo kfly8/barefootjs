@@ -39,6 +39,7 @@ export class GoTemplateAdapter extends BaseAdapter {
   private options: Required<GoTemplateAdapterOptions>
   private inLoop: boolean = false
   private errors: CompilerError[] = []
+  private propsObjectName: string | null = null
 
   constructor(options: GoTemplateAdapterOptions = {}) {
     super()
@@ -55,6 +56,7 @@ export class GoTemplateAdapter extends BaseAdapter {
   generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput {
     this.componentName = ir.metadata.componentName
     this.errors = []
+    this.propsObjectName = ir.metadata.propsObjectName
 
     const templateBody = this.renderNode(ir.root)
 
@@ -404,9 +406,18 @@ export class GoTemplateAdapter extends BaseAdapter {
       for (const prop of child.props) {
         if (prop.isLiteral) {
           lines.push(`\t\t\t${this.capitalizeFieldName(prop.name)}: ${this.goLiteral(prop.value)},`)
+        } else {
+          // Dynamic prop - resolve to parent's initial signal/memo value
+          const resolvedValue = this.resolveDynamicPropValue(
+            prop.value,
+            ir.metadata.signals,
+            ir.metadata.memos,
+            ir.metadata.propsParams
+          )
+          if (resolvedValue !== null) {
+            lines.push(`\t\t\t${this.capitalizeFieldName(prop.name)}: ${resolvedValue},`)
+          }
         }
-        // Note: Dynamic props (reactive) are handled differently in the template
-        // At NewProps time, we use the parent's initial signal value
       }
       lines.push(`\t\t}),`)
     }
@@ -647,8 +658,40 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   /**
+   * Resolve dynamic prop value (e.g., signal/memo getter calls) to Go initial value.
+   * Handles expressions like `count()` → signal's initial value
+   */
+  private resolveDynamicPropValue(
+    expr: string,
+    signals: { getter: string; setter: string; initialValue: string; type: TypeInfo }[],
+    memos: { name: string; computation: string; deps: string[] }[],
+    propsParams: { name: string }[]
+  ): string | null {
+    // Match signal/memo getter calls like count(), doubled()
+    const getterMatch = expr.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\(\)$/)
+    if (getterMatch) {
+      const getterName = getterMatch[1]
+
+      // Check if it's a signal
+      const signal = signals.find(s => s.getter === getterName)
+      if (signal) {
+        return this.convertInitialValue(signal.initialValue, signal.type, propsParams)
+      }
+
+      // Check if it's a memo
+      const memo = memos.find(m => m.name === getterName)
+      if (memo) {
+        return this.computeMemoInitialValue(memo, signals, propsParams)
+      }
+    }
+
+    return null
+  }
+
+  /**
    * Compute the initial value for a memo based on its computation and signal initial values.
    * Handles simple cases like `() => count() * 2` → `in.Initial * 2`
+   * Also handles props.xxx patterns like `() => props.value * 10` → `in.Value * 10`
    */
   private computeMemoInitialValue(
     memo: { name: string; computation: string; deps: string[] },
@@ -669,6 +712,17 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
     }
 
+    // Pattern: () => props.xxx * N (for SolidJS-style props object)
+    const propsArithmeticMatch = computation.match(/\(\)\s*=>\s*props\.(\w+)\s*([*+\-/])\s*(\d+)/)
+    if (propsArithmeticMatch) {
+      const [, propName, operator, operand] = propsArithmeticMatch
+      // Check if this prop is in propsParams (passed from parent)
+      const param = propsParams.find(p => p.name === propName)
+      if (param) {
+        return `in.${this.capitalizeFieldName(propName)} ${operator} ${operand}`
+      }
+    }
+
     // Pattern: () => dep() (just return the signal value)
     const simpleMatch = computation.match(/\(\)\s*=>\s*(\w+)\(\)$/)
     if (simpleMatch) {
@@ -676,6 +730,37 @@ export class GoTemplateAdapter extends BaseAdapter {
       const signal = signals.find(s => s.getter === depName)
       if (signal) {
         return this.getSignalInitialValueAsGo(signal.initialValue, propsParams)
+      }
+    }
+
+    // Pattern: () => props.xxx (just return the prop value)
+    const propsSimpleMatch = computation.match(/\(\)\s*=>\s*props\.(\w+)$/)
+    if (propsSimpleMatch) {
+      const [, propName] = propsSimpleMatch
+      const param = propsParams.find(p => p.name === propName)
+      if (param) {
+        return `in.${this.capitalizeFieldName(propName)}`
+      }
+    }
+
+    // Pattern: () => varName * N (for destructured props like { value })
+    const varArithmeticMatch = computation.match(/\(\)\s*=>\s*(\w+)\s*([*+\-/])\s*(\d+)/)
+    if (varArithmeticMatch) {
+      const [, varName, operator, operand] = varArithmeticMatch
+      // Check if this is a destructured prop (not a signal getter)
+      const param = propsParams.find(p => p.name === varName)
+      if (param) {
+        return `in.${this.capitalizeFieldName(varName)} ${operator} ${operand}`
+      }
+    }
+
+    // Pattern: () => varName (just return the prop value for destructured props)
+    const varSimpleMatch = computation.match(/\(\)\s*=>\s*(\w+)$/)
+    if (varSimpleMatch) {
+      const [, varName] = varSimpleMatch
+      const param = propsParams.find(p => p.name === varName)
+      if (param) {
+        return `in.${this.capitalizeFieldName(varName)}`
       }
     }
 
@@ -886,6 +971,13 @@ export class GoTemplateAdapter extends BaseAdapter {
           if (result) {
             return result
           }
+        }
+
+        // Handle SolidJS-style props pattern: props.xxx -> .Xxx
+        // When object is the propsObjectName (e.g., "props"), skip the object part
+        // and directly access the property on the root context
+        if (expr.object.kind === 'identifier' && this.propsObjectName && expr.object.name === this.propsObjectName) {
+          return `.${this.capitalizeFieldName(expr.property)}`
         }
 
         const obj = this.renderParsedExpr(expr.object)

@@ -287,10 +287,12 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 		Doubled: 0 * 2,
 		ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{
 			ScopeID: scopeID + "_slot_6",
+			Value: 0,
 			Label: "Child A",
 		}),
 		ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{
 			ScopeID: scopeID + "_slot_7",
+			Value: 0 * 2,
 			Label: "Child B (doubled)",
 		}),
 	}
@@ -323,23 +325,23 @@ func NewPropsStyleChildProps(in PropsStyleChildInput) PropsStyleChildProps {
 		ScopeID: scopeID,
 		Value: in.Value,
 		Label: in.Label,
-		DisplayValue: 0,
+		DisplayValue: in.Value * 10,
 	}
 }
 
 // DestructuredStyleChildInput is the user-facing input type.
 type DestructuredStyleChildInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	Value interface{}
-	Label interface{}
+	Value int
+	Label string
 }
 
 // DestructuredStyleChildProps is the props type for the DestructuredStyleChild component.
 type DestructuredStyleChildProps struct {
 	ScopeID string `json:"scopeID"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	Value interface{} `json:"value"`
-	Label interface{} `json:"label"`
+	Value int `json:"value"`
+	Label string `json:"label"`
 	DisplayValue interface{} `json:"displayValue"`
 }
 
@@ -354,7 +356,7 @@ func NewDestructuredStyleChildProps(in DestructuredStyleChildInput) Destructured
 		ScopeID: scopeID,
 		Value: in.Value,
 		Label: in.Label,
-		DisplayValue: 0,
+		DisplayValue: in.Value * 10,
 	}
 }
 
@@ -384,10 +386,12 @@ func NewPropsReactivityComparisonProps(in PropsReactivityComparisonInput) PropsR
 		Count: 1,
 		PropsStyleChildSlot4: NewPropsStyleChildProps(PropsStyleChildInput{
 			ScopeID: scopeID + "_slot_4",
+			Value: 1,
 			Label: "Props Style",
 		}),
 		DestructuredStyleChildSlot5: NewDestructuredStyleChildProps(DestructuredStyleChildInput{
 			ScopeID: scopeID + "_slot_5",
+			Value: 1,
 			Label: "Destructured",
 		}),
 	}
