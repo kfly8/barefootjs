@@ -3,43 +3,38 @@
 /**
  * Portal Demo Components
  *
- * Demonstrates the createPortal-like behavior using direct DOM manipulation.
- * The actual createPortal utility from @barefootjs/dom works the same way.
+ * Demonstrates the createPortal utility from @barefootjs/dom.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal, createPortal } from '@barefootjs/dom'
 
 /**
  * Basic portal demo - shows content rendering at document.body
  */
 export function PortalBasicDemo() {
   const [open, setOpen] = createSignal(false)
-  const state = { el: null }
+  const state = { portal: null }
 
   const showPortal = () => {
-    if (state.el) {
-      state.el.remove()
+    if (state.portal) {
+      state.portal.unmount()
     }
 
-    const el = document.createElement('div')
-    el.setAttribute('data-portal-content', '')
-    el.className = 'fixed bottom-4 right-4 bg-background border border-border rounded-lg p-4 shadow-lg z-50'
-    el.innerHTML = `
-      <p class="text-sm text-foreground mb-2">Portal content at document.body</p>
-      <button data-portal-close class="text-sm text-primary hover:underline">Close</button>
-    `
+    state.portal = createPortal(`
+      <div data-portal-content class="fixed bottom-4 right-4 bg-background border border-border rounded-lg p-4 shadow-lg z-50">
+        <p class="text-sm text-foreground mb-2">Portal content at document.body</p>
+        <button data-portal-close class="text-sm text-primary hover:underline">Close</button>
+      </div>
+    `)
 
-    document.body.appendChild(el)
-    state.el = el
-
-    el.querySelector('[data-portal-close]')?.addEventListener('click', hidePortal)
+    state.portal.element.querySelector('[data-portal-close]')?.addEventListener('click', hidePortal)
     setOpen(true)
   }
 
   const hidePortal = () => {
-    if (state.el) {
-      state.el.remove()
-      state.el = null
+    if (state.portal) {
+      state.portal.unmount()
+      state.portal = null
     }
     setOpen(false)
   }
@@ -63,34 +58,31 @@ export function PortalBasicDemo() {
  */
 export function PortalCustomContainerDemo() {
   const [open, setOpen] = createSignal(false)
-  const state = { el: null, container: null }
+  const state = { portal: null, container: null }
 
   const showPortal = () => {
     if (!state.container) return
 
-    if (state.el) {
-      state.el.remove()
+    if (state.portal) {
+      state.portal.unmount()
     }
 
-    const el = document.createElement('div')
-    el.setAttribute('data-portal-content', '')
-    el.className = 'bg-accent text-accent-foreground p-3 rounded-md text-sm'
-    el.textContent = 'Rendered inside custom container'
-
-    state.container.appendChild(el)
-    state.el = el
+    state.portal = createPortal(
+      `<div data-portal-content class="bg-accent text-accent-foreground p-3 rounded-md text-sm">Rendered inside custom container</div>`,
+      state.container
+    )
     setOpen(true)
   }
 
   const hidePortal = () => {
-    if (state.el) {
-      state.el.remove()
-      state.el = null
+    if (state.portal) {
+      state.portal.unmount()
+      state.portal = null
     }
     setOpen(false)
   }
 
-  const setContainerRef = (el: HTMLElement) => {
+  const setContainerRef = (el) => {
     state.container = el
   }
 
