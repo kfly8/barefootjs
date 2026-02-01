@@ -66,19 +66,21 @@ function Portal({ children, container }: PortalProps) {
   })
 
   // Render children into the wrapper
-  return (
-    <div ref={(el: HTMLElement) => {
-      // Move content to portal wrapper on mount
-      onMount(() => {
-        if (el && el.parentNode) {
-          while (el.firstChild) {
-            wrapper.appendChild(el.firstChild)
-          }
-          // Hide the original container
-          el.style.display = 'none'
+  const handleRef = (el: HTMLElement) => {
+    // Move content to portal wrapper on mount
+    onMount(() => {
+      if (el && el.parentNode) {
+        while (el.firstChild) {
+          wrapper.appendChild(el.firstChild)
         }
-      })
-    }}>
+        // Hide the original container
+        el.style.display = 'none'
+      }
+    })
+  }
+
+  return (
+    <div ref={handleRef}>
       {children}
     </div>
   )
