@@ -353,6 +353,8 @@ export interface IRMetadata {
   typeDefinitions: TypeDefinition[]
   propsType: TypeInfo | null
   propsParams: ParamInfo[]
+  /** Name of the props object parameter (e.g., 'props' in `function Component(props: Props)`) */
+  propsObjectName: string | null
   restPropsName: string | null
   signals: SignalInfo[]
   memos: MemoInfo[]

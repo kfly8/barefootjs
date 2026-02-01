@@ -260,6 +260,7 @@ function buildMetadata(
     typeDefinitions: ctx.typeDefinitions,
     propsType: ctx.propsType,
     propsParams: ctx.propsParams,
+    propsObjectName: ctx.propsObjectName,
     restPropsName: ctx.restPropsName,
     signals: ctx.signals,
     memos: ctx.memos,

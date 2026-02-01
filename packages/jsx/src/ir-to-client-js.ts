@@ -55,6 +55,7 @@ interface ClientJsContext {
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
   propsParams: ParamInfo[]
+  propsObjectName: string | null
 
   // Collected elements
   interactiveElements: InteractiveElement[]
@@ -259,6 +260,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     localFunctions: ir.metadata.localFunctions,
     localConstants: ir.metadata.localConstants,
     propsParams: ir.metadata.propsParams,
+    propsObjectName: ir.metadata.propsObjectName,
 
     interactiveElements: [],
     dynamicElements: [],
@@ -1480,7 +1482,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   // =========================================================================
 
   // 1. Generate props extractions (needed before constants that depend on them)
-  if (neededProps.size > 0) {
+  // Skip this step for SolidJS-style props object pattern - source code uses props.xxx directly
+  if (neededProps.size > 0 && !ctx.propsObjectName) {
     for (const propName of neededProps) {
       const prop = ctx.propsParams.find((p) => p.name === propName)
       const defaultVal = prop?.defaultValue
