@@ -64,6 +64,7 @@ export const componentOrder = [
   { slug: 'dialog', title: 'Dialog' },
   { slug: 'dropdown', title: 'Dropdown' },
   { slug: 'input', title: 'Input' },
+  { slug: 'portal', title: 'Portal' },
   { slug: 'select', title: 'Select' },
   { slug: 'switch', title: 'Switch' },
   { slug: 'tabs', title: 'Tabs' },

@@ -1396,8 +1396,29 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   const lines: string[] = []
   const name = ctx.componentName
 
-  // Imports
-  lines.push(`import { createSignal, createMemo, createEffect, onCleanup, onMount, findScope, find, hydrate, cond, insert, reconcileList, createComponent, registerComponent, registerTemplate, initChild, updateClientMarker } from '@barefootjs/dom'`)
+  // Standard imports from @barefootjs/dom
+  const standardImports = [
+    'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
+    'findScope', 'find', 'hydrate', 'cond', 'insert', 'reconcileList',
+    'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker'
+  ]
+
+  // Collect user-defined imports from @barefootjs/dom
+  const userDomImports: string[] = []
+  for (const imp of _ir.metadata.imports) {
+    if (imp.source === '@barefootjs/dom' && !imp.isTypeOnly) {
+      for (const spec of imp.specifiers) {
+        const importName = spec.alias || spec.name
+        if (!spec.isDefault && !spec.isNamespace && !standardImports.includes(importName)) {
+          userDomImports.push(spec.alias ? `${spec.name} as ${spec.alias}` : spec.name)
+        }
+      }
+    }
+  }
+
+  // Merge standard and user-defined imports
+  const allImports = [...standardImports, ...userDomImports]
+  lines.push(`import { ${allImports.join(', ')} } from '@barefootjs/dom'`)
 
   // Add child component imports for loops with createComponent and initChild calls
   // Skip siblings (components in the same file)
