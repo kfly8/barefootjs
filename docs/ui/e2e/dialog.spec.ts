@@ -61,8 +61,8 @@ test.describe('Dialog Documentation Page', () => {
       const dialog = basicDemo.locator('[role="dialog"]')
       await expect(dialog).toBeVisible()
 
-      // Focus on dialog to ensure ESC key is captured
-      await dialog.focus()
+      // Dialog should auto-focus after opening
+      await expect(dialog).toBeFocused()
 
       // Press ESC to close dialog
       await page.keyboard.press('Escape')
@@ -150,8 +150,10 @@ test.describe('Dialog Documentation Page', () => {
       await trigger.click()
       await expect(dialog).toBeVisible()
 
-      // Focus on dialog and press ESC to close
-      await dialog.focus()
+      // Dialog should auto-focus after opening
+      await expect(dialog).toBeFocused()
+
+      // Press ESC to close
       await page.keyboard.press('Escape')
 
       // Dialog should fade out (opacity becomes 0)
