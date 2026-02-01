@@ -498,6 +498,36 @@ describe('Compiler', () => {
     })
   })
 
+  describe('map with index parameter', () => {
+    test('includes index parameter in reconcileList callback', () => {
+      const source = `
+        'use client'
+        import { createMemo } from '@barefootjs/dom'
+
+        export function List() {
+          const items = createMemo(() => ['a', 'b', 'c'])
+          return (
+            <div>
+              {items().map((item, i) => (
+                <div key={i} className={\`item-\${i}\`}>{item}</div>
+              ))}
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+
+      // Should include index param in callback (not just item without index)
+      expect(clientJs?.content).toContain('(item, i) => `')
+    })
+  })
+
   describe('local constants arrow function detection', () => {
     test('type cast expression starting with ( should NOT become arrow function stub', () => {
       // Issue #212: Type casts like "(array as Type).method()" were incorrectly
