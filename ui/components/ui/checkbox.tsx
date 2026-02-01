@@ -93,32 +93,32 @@ interface CheckboxProps {
  * Checkbox component with custom styling.
  * Supports both controlled and uncontrolled modes.
  *
- * Uses SolidJS-style props object access to maintain reactivity.
- * Destructuring props loses reactivity; props.xxx maintains it.
- *
  * @param props.defaultChecked - Initial value for uncontrolled mode
  * @param props.checked - Controlled checked state
  * @param props.disabled - Whether disabled
  * @param props.error - Whether in error state
  * @param props.onCheckedChange - Callback when checked state changes
  */
-function Checkbox(props: CheckboxProps) {
-  // Extract static props (default values applied at definition)
-  const className = props.class ?? ''
-  const defaultChecked = props.defaultChecked ?? false
-  const disabled = props.disabled ?? false
-  const error = props.error ?? false
-
+function Checkbox({
+  class: className = '',
+  defaultChecked = false,
+  checked,
+  disabled = false,
+  error = false,
+  onCheckedChange,
+}: CheckboxProps) {
   // Internal state for uncontrolled mode
   const [internalChecked, setInternalChecked] = createSignal(defaultChecked)
 
   // Controlled state - synced from parent via DOM attribute
-  // Initial value uses props.checked to maintain reactivity
-  const [controlledChecked, setControlledChecked] = createSignal<boolean | undefined>(props.checked)
+  // When parent passes checked={value()}, the compiler generates a sync effect
+  // that updates this signal when the parent's value changes
+  const [controlledChecked, setControlledChecked] = createSignal<boolean | undefined>(checked)
 
   // Track if component is in controlled mode (checked prop provided)
-  // Use props.checked directly to maintain reactivity when parent updates
-  const isControlled = createMemo(() => props.checked !== undefined)
+  // Note: This captures the initial checked value. For dynamic mode switching,
+  // use props object pattern instead of destructuring.
+  const isControlled = createMemo(() => checked !== undefined)
 
   // Determine current checked state: use controlled if provided, otherwise internal
   const isChecked = createMemo(() => isControlled() ? controlledChecked() : internalChecked())
@@ -167,7 +167,7 @@ function Checkbox(props: CheckboxProps) {
     const scope = target.closest('[data-bf-scope]')
     // @ts-ignore - oncheckedChange is set by parent during hydration
     const scopeCallback = scope?.oncheckedChange
-    const handler = props.onCheckedChange || scopeCallback
+    const handler = onCheckedChange || scopeCallback
     handler?.(newValue)
   }
 
