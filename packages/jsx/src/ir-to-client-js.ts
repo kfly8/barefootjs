@@ -1225,43 +1225,6 @@ function replacePropReferences(expr: string, ctx: ClientJsContext): string {
   return result
 }
 
-/**
- * Find props used in an expression that are not already prefixed with `props.`
- * Used to detect which props are used in reactive contexts (memos, effects).
- */
-function findPropsInExpression(expr: string, propsParams: ParamInfo[]): string[] {
-  const found: string[] = []
-  for (const param of propsParams) {
-    // Match prop name as identifier, not already props.xxx
-    const regex = new RegExp(`(?<!props\\.)\\b${param.name}\\b`, 'g')
-    if (regex.test(expr)) {
-      found.push(param.name)
-    }
-  }
-  return found
-}
-
-/**
- * Replace prop references with props.xxx format for reactive contexts.
- * Includes default value handling.
- *
- * Note: We use lookbehind to avoid replacing already-prefixed props.xxx
- * We don't use lookahead for ":" because it incorrectly excludes
- * ternary operator cases like "checked : internalChecked()"
- */
-function replacePropsWithAccessor(
-  expr: string,
-  propName: string,
-  defaultVal: string | undefined
-): string {
-  const replacement = defaultVal
-    ? `(props.${propName} ?? ${defaultVal})`
-    : `props.${propName}`
-  return expr.replace(
-    new RegExp(`(?<!props\\.)\\b${propName}\\b`, 'g'),
-    replacement
-  )
-}
 
 /**
  * Check if a value references reactive data (props, signals, or memos).
@@ -1496,22 +1459,6 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     }
   }
 
-  // Collect props used in reactive contexts (memos, effects)
-  // These props should NOT be destructured - they must be accessed via props.xxx
-  // to maintain reactivity when props change
-  const reactiveProps = new Set<string>()
-
-  for (const memo of ctx.memos) {
-    for (const propName of findPropsInExpression(memo.computation, ctx.propsParams)) {
-      reactiveProps.add(propName)
-    }
-  }
-
-  for (const effect of ctx.effects) {
-    for (const propName of findPropsInExpression(effect.body, ctx.propsParams)) {
-      reactiveProps.add(propName)
-    }
-  }
 
   // Detect props that are used with property access (e.g., highlightedCommands.pnpm)
   // These need a default value of {} to avoid "cannot read properties of undefined"
@@ -1535,9 +1482,6 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   // 1. Generate props extractions (needed before constants that depend on them)
   if (neededProps.size > 0) {
     for (const propName of neededProps) {
-      // Skip props used in reactive contexts - they'll be accessed via props.xxx
-      if (reactiveProps.has(propName)) continue
-
       const prop = ctx.propsParams.find((p) => p.name === propName)
       const defaultVal = prop?.defaultValue
       if (defaultVal) {
@@ -1598,12 +1542,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
 
   // 2. Generate early constants (no signal/memo dependencies)
   for (const constant of earlyConstants) {
-    let jsValue = stripTypeScriptSyntax(constant.value)
-    // Replace reactive props with props.xxx accessor
-    // Reactive props are not destructured, so direct references must use props.xxx
-    for (const propName of reactiveProps) {
-      jsValue = jsValue.replace(new RegExp(`\\b${propName}\\b`, 'g'), `props.${propName}`)
-    }
+    const jsValue = stripTypeScriptSyntax(constant.value)
     lines.push(`  const ${constant.name} = ${jsValue}`)
   }
   if (earlyConstants.length > 0) {
@@ -1636,13 +1575,6 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
       initialValue = signal.initialValue
     }
 
-    // Replace reactive prop refs in initial value with props.xxx
-    for (const propName of reactiveProps) {
-      const prop = ctx.propsParams.find(p => p.name === propName)
-      const defaultVal = prop?.defaultValue
-      initialValue = replacePropsWithAccessor(initialValue, propName, defaultVal)
-    }
-
     lines.push(`  const [${signal.getter}, ${signal.setter}] = createSignal(${initialValue})`)
   }
 
@@ -1662,25 +1594,13 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
 
   // 4. Memo declarations
   for (const memo of ctx.memos) {
-    let jsComputation = stripTypeScriptSyntax(memo.computation)
-
-    // Replace prop refs with props.xxx for reactive props
-    for (const propName of reactiveProps) {
-      const prop = ctx.propsParams.find(p => p.name === propName)
-      const defaultVal = prop?.defaultValue
-      jsComputation = replacePropsWithAccessor(jsComputation, propName, defaultVal)
-    }
-
+    const jsComputation = stripTypeScriptSyntax(memo.computation)
     lines.push(`  const ${memo.name} = createMemo(${jsComputation})`)
   }
 
   // 5. Generate late constants (depend on signals/memos)
   for (const constant of lateConstants) {
-    let jsValue = stripTypeScriptSyntax(constant.value)
-    // Replace reactive props with props.xxx accessor
-    for (const propName of reactiveProps) {
-      jsValue = jsValue.replace(new RegExp(`\\b${propName}\\b`, 'g'), `props.${propName}`)
-    }
+    const jsValue = stripTypeScriptSyntax(constant.value)
     lines.push(`  const ${constant.name} = ${jsValue}`)
   }
 
@@ -2183,15 +2103,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
 
   // User-defined effects
   for (const effect of ctx.effects) {
-    let jsBody = stripTypeScriptSyntax(effect.body)
-
-    // Replace prop refs with props.xxx for reactive props
-    for (const propName of reactiveProps) {
-      const prop = ctx.propsParams.find(p => p.name === propName)
-      const defaultVal = prop?.defaultValue
-      jsBody = replacePropsWithAccessor(jsBody, propName, defaultVal)
-    }
-
+    const jsBody = stripTypeScriptSyntax(effect.body)
     lines.push(`  createEffect(${jsBody})`)
   }
 
