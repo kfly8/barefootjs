@@ -67,6 +67,16 @@ for (const componentPath of components) {
   const typeParts: string[] = []
   let mainComponentIR: ComponentIR | null = null
 
+  // Find the default export component name (used as scriptBaseName for non-default exports)
+  let defaultExportName: string | null = null
+  for (const name of allComponentNames) {
+    const ctx = analyzeComponent(source, componentPath, name)
+    if (ctx.hasDefaultExport) {
+      defaultExportName = name
+      break
+    }
+  }
+
   for (const targetComponentName of allComponentNames) {
     // Analyze each component
     const ctx = analyzeComponent(source, componentPath, targetComponentName)
@@ -122,10 +132,10 @@ for (const componentPath of components) {
     }
 
     // Generate template
-    // Skip script registration for non-default-export components
-    // (they are bundled in the main component's .client.js file)
+    // For non-default exports, use the default export's name for script registration
+    // (all components in a file share the same .client.js file named after the default export)
     const output = adapter.generate(ir, {
-      skipScriptRegistration: !ctx.hasDefaultExport
+      scriptBaseName: ctx.hasDefaultExport ? undefined : (defaultExportName || undefined)
     })
     templateParts.push(output.template)
 

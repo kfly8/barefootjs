@@ -23,6 +23,8 @@ export interface AdapterOutput {
 export interface AdapterGenerateOptions {
   /** Skip script registration (for child components bundled in parent's .client.js) */
   skipScriptRegistration?: boolean
+  /** Base name for script registration (for non-default exports sharing parent's .client.js) */
+  scriptBaseName?: string
 }
 
 export interface TemplateAdapter {

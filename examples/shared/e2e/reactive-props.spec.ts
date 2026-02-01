@@ -132,10 +132,6 @@ export function reactivePropsTests(baseUrl: string) {
    * - destructured props: loses reactivity (captures initial value)
    */
   test.describe('Props Reactivity Comparison', () => {
-    // Skip on echo (Go template) - child component hydration not yet implemented
-    // See: https://github.com/kfly8/barefootjs/issues/247
-    test.skip(() => baseUrl.includes(':8080'), 'Skip on echo - child hydration not implemented (#247)')
-
     test.beforeEach(async ({ page }) => {
       await page.goto(`${baseUrl}/props-reactivity`)
     })
