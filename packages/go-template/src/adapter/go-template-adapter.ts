@@ -63,7 +63,7 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Generate script registration code at template start (unless skipped)
     const scriptRegistrations = options?.skipScriptRegistration
       ? ''
-      : this.generateScriptRegistrations(ir)
+      : this.generateScriptRegistrations(ir, options?.scriptBaseName)
 
     const template = `{{define "${this.componentName}"}}\n${scriptRegistrations}${templateBody}\n{{end}}\n`
     const types = this.generateTypes(ir)
@@ -178,7 +178,7 @@ export class GoTemplateAdapter extends BaseAdapter {
    * The same ScriptCollector should be shared across parent and child props.
    * Wrapped in {{if .Scripts}} to safely handle nil Scripts.
    */
-  private generateScriptRegistrations(ir: ComponentIR): string {
+  private generateScriptRegistrations(ir: ComponentIR, scriptBaseName?: string): string {
     // Check if this component has client interactivity
     const hasInteractivity = this.hasClientInteractivity(ir)
 
@@ -192,8 +192,9 @@ export class GoTemplateAdapter extends BaseAdapter {
     registrations.push(`{{.Scripts.Register "/static/client/barefoot.js"}}`)
 
     // Register this component's script
-    // Note: Child component code is bundled in the parent's .client.js file
-    registrations.push(`{{.Scripts.Register "/static/client/${ir.metadata.componentName}.client.js"}}`)
+    // Use scriptBaseName if provided (for non-default exports sharing parent's .client.js)
+    const scriptName = scriptBaseName || ir.metadata.componentName
+    registrations.push(`{{.Scripts.Register "/static/client/${scriptName}.client.js"}}`)
 
     // Wrap in nil check to safely handle cases where Scripts is not set
     return `{{if .Scripts}}${registrations.join('')}{{end}}\n`
@@ -1971,7 +1972,8 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderScopeMarker(instanceIdExpr: string): string {
-    return `data-bf-scope="{{${instanceIdExpr}}}"`
+    // Include bfIsChild to mark child components for parent-first hydration
+    return `data-bf-scope="{{${instanceIdExpr}}}" {{bfIsChild ${instanceIdExpr}}}`
   }
 
   renderSlotMarker(slotId: string): string {

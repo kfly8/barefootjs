@@ -48,7 +48,20 @@ func FuncMap() template.FuncMap {
 
 		// Script collection
 		"bfScripts": BfScripts,
+
+		// Child component marker
+		"bfIsChild": IsChild,
 	}
+}
+
+// IsChild returns "data-bf-child" if the scopeID indicates a child component.
+// Child components have scopeIDs that contain "_slot_" (e.g., "Parent_abc123_slot_4").
+// This marker tells the hydration system to skip auto-hydration and let the parent initialize.
+func IsChild(scopeID string) template.HTMLAttr {
+	if strings.Contains(scopeID, "_slot_") {
+		return template.HTMLAttr("data-bf-child")
+	}
+	return ""
 }
 
 // =============================================================================
@@ -477,10 +490,16 @@ func (r *Renderer) Render(opts RenderOptions) string {
 	collector := NewScriptCollector()
 	setScriptsField(opts.Props, collector)
 
-	// Auto-detect and process child component props
+	// Auto-detect and process child component props (slices)
 	childSlices := findChildComponentSlices(opts.Props)
 	for _, slice := range childSlices {
 		setScriptsOnSlice(slice, collector)
+	}
+
+	// Auto-detect and process single child component props
+	singleChildren := findSingleChildComponents(opts.Props)
+	for _, child := range singleChildren {
+		setScriptsOnSingle(child, collector)
 	}
 
 	// Render the component template
@@ -500,6 +519,9 @@ func (r *Renderer) Render(opts RenderOptions) string {
 	}
 	for _, slice := range childSlices {
 		propsScriptsBuf.WriteString(buildChildPropsScripts(slice))
+	}
+	for _, child := range singleChildren {
+		propsScriptsBuf.WriteString(buildSingleChildPropsScript(child))
 	}
 
 	// Determine title (default: "{ComponentName} - BarefootJS")
@@ -639,6 +661,79 @@ func buildChildPropsScripts(slice interface{}) string {
 		buf.Write(jsonBytes)
 		buf.WriteString(`</script>`)
 	}
+	return buf.String()
+}
+
+// findSingleChildComponents finds single struct fields containing child component props.
+// Child props are identified by having ScopeID and Scripts fields.
+func findSingleChildComponents(props interface{}) []interface{} {
+	var result []interface{}
+
+	val := reflect.ValueOf(props)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return result
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+
+		// Handle pointer to struct
+		if field.Kind() == reflect.Ptr {
+			if field.IsNil() {
+				continue
+			}
+			field = field.Elem()
+		}
+
+		// Skip non-struct fields (slices handled by findChildComponentSlices)
+		if field.Kind() != reflect.Struct {
+			continue
+		}
+
+		hasScopeID := field.FieldByName("ScopeID").IsValid()
+		hasScripts := field.FieldByName("Scripts").IsValid()
+
+		if hasScopeID && hasScripts {
+			result = append(result, field.Addr().Interface())
+		}
+	}
+
+	return result
+}
+
+// setScriptsOnSingle sets Scripts on a single struct child component.
+func setScriptsOnSingle(child interface{}, collector *ScriptCollector) {
+	val := reflect.ValueOf(child)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() == reflect.Struct {
+		field := val.FieldByName("Scripts")
+		if field.IsValid() && field.CanSet() {
+			field.Set(reflect.ValueOf(collector))
+		}
+	}
+}
+
+// buildSingleChildPropsScript generates JSON script tag for a single child component.
+func buildSingleChildPropsScript(child interface{}) string {
+	scopeID := getStringField(child, "ScopeID")
+	if scopeID == "" {
+		return ""
+	}
+	jsonBytes, err := json.Marshal(child)
+	if err != nil {
+		return ""
+	}
+	var buf strings.Builder
+	buf.WriteString(`<script type="application/json" data-bf-props="`)
+	buf.WriteString(scopeID)
+	buf.WriteString(`">`)
+	buf.Write(jsonBytes)
+	buf.WriteString(`</script>`)
 	return buf.String()
 }
 
