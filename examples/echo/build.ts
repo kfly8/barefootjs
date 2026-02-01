@@ -70,9 +70,23 @@ for (const componentPath of components) {
   for (const targetComponentName of allComponentNames) {
     // Analyze each component
     const ctx = analyzeComponent(source, componentPath, targetComponentName)
-    if (ctx.errors.length > 0) {
+
+    // Separate errors and warnings
+    const errors = ctx.errors.filter(e => e.severity === 'error')
+    const warnings = ctx.errors.filter(e => e.severity === 'warning')
+
+    // Show warnings but continue
+    if (warnings.length > 0) {
+      console.warn(`Warnings compiling ${targetComponentName} in ${componentPath}:`)
+      for (const warning of warnings) {
+        console.warn(`  ${warning.message}`)
+      }
+    }
+
+    // Only skip on actual errors
+    if (errors.length > 0) {
       console.error(`Errors compiling ${targetComponentName} in ${componentPath}:`)
-      for (const error of ctx.errors) {
+      for (const error of errors) {
         console.error(`  ${error.message}`)
       }
       continue
@@ -195,7 +209,9 @@ for (const componentPath of components) {
 
     for (const targetComponentName of allComponentNames) {
       const ctx = analyzeComponent(source, componentPath, targetComponentName)
-      if (ctx.errors.length > 0) continue
+      // Skip only on actual errors (not warnings)
+      const errors = ctx.errors.filter(e => e.severity === 'error')
+      if (errors.length > 0) continue
 
       const root = jsxToIR(ctx)
       if (!root) continue

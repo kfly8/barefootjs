@@ -270,6 +270,7 @@ interface TemplateAdapter {
 | BF021 | Unsupported JSX pattern |
 | BF030 | Type inference failed |
 | BF031 | Props type mismatch |
+| BF043 | Props destructuring breaks reactivity |
 
 ### Error Format
 
@@ -283,6 +284,23 @@ error[BF001]: 'use client' directive required for components with createSignal
    |
    = help: Add 'use client' at the top of the file
 ```
+
+### Suppressing Warnings
+
+Use `@bf-ignore` comment directive to suppress specific warnings:
+
+```tsx
+// @bf-ignore props-destructuring
+function Component({ checked }: Props) {
+  // Warning suppressed for this component
+}
+```
+
+**Available rules:**
+
+| Rule ID | Error Code | Description |
+|---------|------------|-------------|
+| `props-destructuring` | BF043 | Props destructuring in function parameters |
 
 ---
 
@@ -520,4 +538,3 @@ This matches SolidJS behavior where props must be accessed via the props object 
 1. **Type inference depth** - How deeply to resolve types like `Pick<T, K>`?
 2. **Source maps** - Generate source maps for Client JS debugging?
 3. **Constant ordering** - How to handle dependencies more robustly?
-4. **Lint rule** - Add ESLint rule to warn about destructured props in reactive contexts?

@@ -139,9 +139,22 @@ for (const entryPath of componentFiles) {
     return await Bun.file(path).text()
   }, { adapter })
 
-  if (result.errors.length > 0) {
+  // Separate errors and warnings
+  const errors = result.errors.filter(e => e.severity === 'error')
+  const warnings = result.errors.filter(e => e.severity === 'warning')
+
+  // Show warnings but continue
+  if (warnings.length > 0) {
+    console.warn(`Warnings compiling ${entryPath}:`)
+    for (const warning of warnings) {
+      console.warn(`  ${warning.message}`)
+    }
+  }
+
+  // Only skip on actual errors
+  if (errors.length > 0) {
     console.error(`Errors compiling ${entryPath}:`)
-    for (const error of result.errors) {
+    for (const error of errors) {
       console.error(`  ${error.message}`)
     }
     continue
