@@ -202,34 +202,52 @@ export class HonoAdapter implements TemplateAdapter {
     // A component is a client component only if it has "use client" directive
     const hasClientInteractivity = ir.metadata.isClientComponent
 
-    // Build props parameter
-    // Convert 'class' to 'className' (React convention, avoids JS reserved word)
-    const propsParams = ir.metadata.propsParams
-      .map((p: ParamInfo) => {
-        const paramName = p.name === 'class' ? 'className' : p.name
-        return p.defaultValue ? `${paramName} = ${p.defaultValue}` : paramName
-      })
-      .join(', ')
+    // Check if component uses props object pattern (SolidJS-style)
+    const propsObjectName = ir.metadata.propsObjectName
 
-    const restPropsName = ir.metadata.restPropsName
+    // Build props parameter based on pattern
+    let fullPropsDestructure: string
+    let typeAnnotation: string
+    let propsExtraction: string | null = null
 
-    // Build full destructure with hydration props
-    // Rest props must be at the end in TypeScript
-    const hydrationProps = '__instanceId, __bfScope, __bfChild, "data-key": __dataKey'
-    const parts: string[] = []
-    if (propsParams) {
-      parts.push(propsParams)
+    if (propsObjectName) {
+      // SolidJS-style: function Component(props: Props)
+      // Accept all props as a single object, then destructure hydration props out
+      fullPropsDestructure = `__allProps`
+      typeAnnotation = propsTypeName
+        ? `: ${propsTypeName} & { __instanceId?: string; __bfScope?: string; __bfChild?: boolean; "data-key"?: string | number }`
+        : `: Record<string, unknown> & { __instanceId?: string; __bfScope?: string; __bfChild?: boolean; "data-key"?: string | number }`
+      // Extract hydration props and create the props object for component use
+      propsExtraction = `  const { __instanceId, __bfScope, __bfChild, "data-key": __dataKey, ...${propsObjectName} } = __allProps`
+    } else {
+      // Destructured props pattern (current behavior)
+      // Convert 'class' to 'className' (React convention, avoids JS reserved word)
+      const propsParams = ir.metadata.propsParams
+        .map((p: ParamInfo) => {
+          const paramName = p.name === 'class' ? 'className' : p.name
+          return p.defaultValue ? `${paramName} = ${p.defaultValue}` : paramName
+        })
+        .join(', ')
+
+      const restPropsName = ir.metadata.restPropsName
+
+      // Build full destructure with hydration props
+      // Rest props must be at the end in TypeScript
+      const hydrationProps = '__instanceId, __bfScope, __bfChild, "data-key": __dataKey'
+      const parts: string[] = []
+      if (propsParams) {
+        parts.push(propsParams)
+      }
+      parts.push(hydrationProps)
+      if (restPropsName) {
+        parts.push(`...${restPropsName}`)
+      }
+      fullPropsDestructure = `{ ${parts.join(', ')} }`
+
+      typeAnnotation = propsTypeName
+        ? `: ${name}PropsWithHydration`
+        : ': { __instanceId?: string; __bfScope?: string; __bfChild?: boolean }'
     }
-    parts.push(hydrationProps)
-    if (restPropsName) {
-      parts.push(`...${restPropsName}`)
-    }
-    const fullPropsDestructure = `{ ${parts.join(', ')} }`
-
-    // Props type annotation
-    const typeAnnotation = propsTypeName
-      ? `: ${name}PropsWithHydration`
-      : ': { __instanceId?: string; __bfScope?: string; __bfChild?: boolean }'
 
     // Generate signal initializers for SSR
     const signalInits = this.generateSignalInitializers(ir)
@@ -254,6 +272,11 @@ export class HonoAdapter implements TemplateAdapter {
 
     const lines: string[] = []
     lines.push(`export function ${name}(${fullPropsDestructure}${typeAnnotation}) {`)
+
+    // Add props extraction for SolidJS-style pattern
+    if (propsExtraction) {
+      lines.push(propsExtraction)
+    }
 
     // Generate scope ID
     if (hasClientInteractivity) {
@@ -281,7 +304,9 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push(`  const __hydrateProps: Record<string, unknown> = {}`)
       for (const p of propsToSerialize) {
         // Skip functions and JSX elements (they can't be JSON serialized)
-        lines.push(`  if (typeof ${p.name} !== 'function' && !(typeof ${p.name} === 'object' && ${p.name} !== null && 'isEscaped' in ${p.name})) __hydrateProps['${p.name}'] = ${p.name}`)
+        // Use propsObjectName.propName for SolidJS-style, direct propName for destructured
+        const propAccess = propsObjectName ? `${propsObjectName}.${p.name}` : p.name
+        lines.push(`  if (typeof ${propAccess} !== 'function' && !(typeof ${propAccess} === 'object' && ${propAccess} !== null && 'isEscaped' in ${propAccess})) __hydrateProps['${p.name}'] = ${propAccess}`)
       }
     }
 
@@ -781,7 +806,8 @@ export class HonoAdapter implements TemplateAdapter {
         // Dynamic attribute
         if (isBooleanAttr(attrName)) {
           // Boolean attrs: pass undefined when falsy so Hono omits the attribute
-          parts.push(`${attrName}={${attr.value} || undefined}`)
+          // Wrap in parentheses to avoid syntax error when value contains ?? operator
+          parts.push(`${attrName}={(${attr.value}) || undefined}`)
         } else {
           parts.push(`${attrName}={${attr.value}}`)
         }

@@ -99,24 +99,18 @@ interface CheckboxProps {
  * @param props.error - Whether in error state
  * @param props.onCheckedChange - Callback when checked state changes
  */
-function Checkbox({
-  class: className = '',
-  defaultChecked = false,
-  checked,
-  disabled = false,
-  error = false,
-  onCheckedChange,
-}: CheckboxProps) {
+function Checkbox(props: CheckboxProps) {
   // Internal state for uncontrolled mode
-  const [internalChecked, setInternalChecked] = createSignal(defaultChecked)
+  const [internalChecked, setInternalChecked] = createSignal(props.defaultChecked ?? false)
 
   // Controlled state - synced from parent via DOM attribute
-  // Initial value uses 'checked' prop (compiler transforms to props.checked)
-  const [controlledChecked, setControlledChecked] = createSignal<boolean | undefined>(checked)
+  // When parent passes checked={value()}, the compiler generates a sync effect
+  // that updates this signal when the parent's value changes
+  const [controlledChecked, setControlledChecked] = createSignal<boolean | undefined>(props.checked)
 
   // Track if component is in controlled mode (checked prop provided)
-  // Access 'checked' prop in memo to ensure it's marked as reactive prop
-  const isControlled = createMemo(() => checked !== undefined)
+  // Using props object pattern maintains reactivity when checked prop changes
+  const isControlled = createMemo(() => props.checked !== undefined)
 
   // Determine current checked state: use controlled if provided, otherwise internal
   const isChecked = createMemo(() => isControlled() ? controlledChecked() : internalChecked())
@@ -140,7 +134,7 @@ function Checkbox({
   }
 
   // Classes - state styling handled by data-state attribute selectors
-  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${className} grid place-content-center`
+  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${props.class ?? ''} grid place-content-center`
 
   // Click handler that works for both controlled and uncontrolled modes
   const handleClick = (e: MouseEvent) => {
@@ -165,7 +159,7 @@ function Checkbox({
     const scope = target.closest('[data-bf-scope]')
     // @ts-ignore - oncheckedChange is set by parent during hydration
     const scopeCallback = scope?.oncheckedChange
-    const handler = onCheckedChange || scopeCallback
+    const handler = props.onCheckedChange || scopeCallback
     handler?.(newValue)
   }
 
@@ -175,8 +169,8 @@ function Checkbox({
       data-state={isChecked() ? 'checked' : 'unchecked'}
       role="checkbox"
       aria-checked={isChecked()}
-      aria-invalid={error || undefined}
-      disabled={disabled}
+      aria-invalid={props.error || undefined}
+      disabled={props.disabled ?? false}
       className={classes}
       onClick={handleClick}
     >

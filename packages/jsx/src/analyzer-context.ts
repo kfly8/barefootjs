@@ -56,6 +56,7 @@ export interface AnalyzerContext {
   // Props
   propsType: TypeInfo | null
   propsParams: ParamInfo[]
+  propsObjectName: string | null
   restPropsName: string | null
 
   // JSX return
@@ -94,6 +95,7 @@ export function createAnalyzerContext(
 
     propsType: null,
     propsParams: [],
+    propsObjectName: null,
     restPropsName: null,
 
     jsxReturn: null,

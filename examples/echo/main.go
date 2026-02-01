@@ -101,6 +101,7 @@ func main() {
 	e.GET("/todos", todosHandler)
 	e.GET("/todos-ssr", todosSSRHandler)
 	e.GET("/reactive-props", reactivePropsHandler)
+	e.GET("/props-reactivity", propsReactivityHandler)
 	e.GET("/form", formHandler)
 
 	// Todo API endpoints
@@ -213,6 +214,15 @@ func reactivePropsHandler(c echo.Context) error {
 		Props:   &props,
 		Title:   "Reactive Props - BarefootJS",
 		Heading: "Reactive Props Test",
+	})
+}
+
+func propsReactivityHandler(c echo.Context) error {
+	props := NewPropsReactivityComparisonProps(PropsReactivityComparisonInput{})
+	return c.Render(http.StatusOK, "PropsReactivityComparison", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Props Reactivity - BarefootJS",
+		Heading: "Props Reactivity Comparison",
 	})
 }
 

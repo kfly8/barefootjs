@@ -638,7 +638,7 @@ function collectConstant(
 // =============================================================================
 
 function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): void {
-  // Destructured props: { prop1, prop2 }
+  // Pattern 1: Destructured props - { prop1, prop2 }
   if (ts.isObjectBindingPattern(param.name)) {
     for (const element of param.name.elements) {
       if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
@@ -661,10 +661,97 @@ function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): voi
     }
   }
 
+  // Pattern 2: Props object - props: Type (SolidJS-style)
+  if (ts.isIdentifier(param.name)) {
+    ctx.propsObjectName = param.name.text
+
+    // Extract properties from the type annotation
+    if (param.type) {
+      extractPropsFromType(param.type, ctx)
+    }
+  }
+
   // Get props type annotation
   if (param.type) {
     ctx.propsType = typeNodeToTypeInfo(param.type, ctx.sourceFile)
   }
+}
+
+/**
+ * Extract props parameters from a type annotation.
+ * Supports type literals and type references to local interfaces.
+ */
+function extractPropsFromType(typeNode: ts.TypeNode, ctx: AnalyzerContext): void {
+  // Type literal: { prop1: Type1; prop2?: Type2 }
+  if (ts.isTypeLiteralNode(typeNode)) {
+    extractPropsFromTypeMembers(typeNode.members, ctx)
+    return
+  }
+
+  // Type reference: PropsType or Interface name
+  if (ts.isTypeReferenceNode(typeNode)) {
+    const typeName = typeNode.typeName.getText(ctx.sourceFile)
+
+    // Find the type definition in the same file
+    const typeDecl = findTypeDeclaration(typeName, ctx.sourceFile)
+    if (typeDecl) {
+      if (ts.isInterfaceDeclaration(typeDecl)) {
+        extractPropsFromTypeMembers(typeDecl.members, ctx)
+      } else if (ts.isTypeAliasDeclaration(typeDecl) && ts.isTypeLiteralNode(typeDecl.type)) {
+        extractPropsFromTypeMembers(typeDecl.type.members, ctx)
+      }
+    }
+  }
+}
+
+/**
+ * Extract props from interface/type members.
+ */
+function extractPropsFromTypeMembers(
+  members: ts.NodeArray<ts.TypeElement>,
+  ctx: AnalyzerContext
+): void {
+  for (const member of members) {
+    if (ts.isPropertySignature(member) && member.name) {
+      const propName = member.name.getText(ctx.sourceFile)
+      const isOptional = !!member.questionToken
+      const propType = member.type
+        ? typeNodeToTypeInfo(member.type, ctx.sourceFile)
+        : { kind: 'unknown' as const, raw: 'unknown' }
+
+      ctx.propsParams.push({
+        name: propName,
+        type: propType ?? { kind: 'unknown', raw: 'unknown' },
+        optional: isOptional,
+        defaultValue: undefined,
+      })
+    }
+  }
+}
+
+/**
+ * Find a type declaration (interface or type alias) by name in the source file.
+ */
+function findTypeDeclaration(
+  typeName: string,
+  sourceFile: ts.SourceFile
+): ts.InterfaceDeclaration | ts.TypeAliasDeclaration | undefined {
+  let result: ts.InterfaceDeclaration | ts.TypeAliasDeclaration | undefined
+
+  function visit(node: ts.Node): void {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === typeName) {
+      result = node
+      return
+    }
+    if (ts.isTypeAliasDeclaration(node) && node.name.text === typeName) {
+      result = node
+      return
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  ts.forEachChild(sourceFile, visit)
+  return result
 }
 
 // =============================================================================

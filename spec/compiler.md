@@ -348,19 +348,19 @@ createEffect(() => {
 
 **Behavior**: Accessed inside effect. Updates when parent passes new value via getter.
 
-#### Pattern C: Props in Memo/Effect
+#### Pattern C: Props in Memo/Effect (SolidJS-style)
 
 ```tsx
-// Source
-function Checkbox({ checked }: { checked?: boolean }) {
-  const isControlled = createMemo(() => checked !== undefined)
+// Source - use props.xxx directly for reactivity
+function Checkbox(props: { checked?: boolean }) {
+  const isControlled = createMemo(() => props.checked !== undefined)
 }
 
-// Generated Client JS (auto-transformed)
+// Generated Client JS - preserved as-is
 const isControlled = createMemo(() => props.checked !== undefined)
 ```
 
-**Behavior**: Props in memo/effect are **implicitly transformed** to `props.xxx`.
+**Behavior**: Props accessed via `props.xxx` maintain reactivity. **No implicit transformation** - you must write `props.xxx` explicitly.
 
 #### Pattern D: Props Passed to Child
 
@@ -383,17 +383,18 @@ initChild('Checkbox', _slot_0, {
 
 ### Context-Dependent Behavior Summary
 
-| Context | Pattern | Reactive? | Transformation |
-|---------|---------|-----------|----------------|
+| Context | Pattern | Reactive? | Notes |
+|---------|---------|-----------|-------|
 | **JSX expression** | `{count()}` | Yes | Wrapped in `createEffect` |
-| **JSX expression** | `{count}` (prop) | Yes | Wrapped in `createEffect` |
-| **Memo body** | `checked` (prop) | Yes | Auto-transformed to `props.checked` |
-| **Effect body** | `checked` (prop) | Yes | Auto-transformed to `props.checked` |
-| **Destructuring** | `{ count }` | No* | Captured once at hydration |
+| **JSX expression** | `{props.value}` | Yes | Wrapped in `createEffect` |
+| **Memo body** | `props.checked` | Yes | Props accessed via object maintain reactivity |
+| **Memo body** | `checked` (destructured) | No | Value captured at definition |
+| **Effect body** | `props.checked` | Yes | Props accessed via object maintain reactivity |
+| **Effect body** | `checked` (destructured) | No | Value captured at definition |
 | **Child props** | `<C val={x()}/>` | Yes | Getter: `get val() { return x() }` |
 | **Constant def** | `const c = x()` | No | Evaluated once (late if depends on signal) |
 
-\* In JSX context, destructured props are still reactive because they're in `createEffect`.
+**Rule**: Use `props.xxx` to maintain reactivity. Destructured props capture the value once.
 
 ---
 
@@ -450,28 +451,25 @@ function Counter({ count }) {
 
 ### Known Inconsistencies
 
-#### 1. Destructuring vs Direct Access
+#### 1. Destructuring vs Direct Access (SolidJS Rule)
 
 ```tsx
-// BROKEN: count captured at hydration
+// BROKEN: value captured at hydration, loses reactivity
 function Checkbox({ checked }) {
   const isControlled = checked !== undefined  // Always initial value
+  const x = createMemo(() => checked !== undefined)  // Also broken - checked is captured
 }
 
-// WORKS: auto-transformed in memo
-function Checkbox({ checked }) {
-  const isControlled = createMemo(() => checked !== undefined)
-  // Transformed to: props.checked !== undefined
+// WORKS: use props object directly
+function Checkbox(props) {
+  const isControlled = createMemo(() => props.checked !== undefined)
+  // props.checked is reactive - updates when parent changes
 }
 ```
 
-#### 2. Implicit Transformation in Memo/Effect
+**SolidJS-style Rule**: Destructured props lose reactivity. Use `props.xxx` to maintain reactivity.
 
-The compiler **silently** transforms prop references in memo/effect bodies:
-- `checked` → `props.checked`
-- This is **not visible** in source code
-
-#### 3. Constant Ordering
+#### 2. Constant Ordering
 
 ```tsx
 const classes = `btn ${isActive() && 'on'}`  // Uses memo
@@ -495,11 +493,25 @@ Compiler must detect dependency and reorder. This is fragile.
 
 ---
 
-### Recommendations (Future)
+### Reactivity Rule (SolidJS-style)
 
-1. **Option A**: Disallow destructuring props (SolidJS-style)
-2. **Option B**: Auto-transform ALL prop references to `props.xxx`
-3. **Option C**: Add lint rule for reactive prop patterns
+**Adopted Approach**: Destructured props lose reactivity. Use `props.xxx` for reactive access.
+
+```tsx
+// ✅ GOOD: Reactive props access
+function Component(props: Props) {
+  const derived = createMemo(() => props.value * 2)  // Reactive
+  return <div>{props.name}</div>  // Reactive in JSX
+}
+
+// ❌ BAD: Loses reactivity
+function Component({ value, name }: Props) {
+  const derived = createMemo(() => value * 2)  // Captured once, not reactive
+  return <div>{name}</div>  // Still works in JSX due to createEffect wrapper
+}
+```
+
+This matches SolidJS behavior where props must be accessed via the props object to maintain reactivity.
 
 ---
 
@@ -507,6 +519,5 @@ Compiler must detect dependency and reorder. This is fragile.
 
 1. **Type inference depth** - How deeply to resolve types like `Pick<T, K>`?
 2. **Source maps** - Generate source maps for Client JS debugging?
-3. **Reactivity model** - Should destructuring be disallowed or auto-transformed?
-4. **Implicit transformation** - Should memo/effect prop transformation be explicit?
-5. **Constant ordering** - How to handle dependencies more robustly?
+3. **Constant ordering** - How to handle dependencies more robustly?
+4. **Lint rule** - Add ESLint rule to warn about destructured props in reactive contexts?
