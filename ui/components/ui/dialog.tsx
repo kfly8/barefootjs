@@ -128,15 +128,13 @@ interface DialogProps {
 function Dialog(props: DialogProps) {
   // Note: onOpenChange is part of the API for future use when Context is available
   // Currently, state management is done via props passed to child components
-  const open = () => props.open ?? props.defaultOpen ?? false
-  const className = () => props.class ?? ''
 
   return (
     <div
       data-slot="dialog"
-      data-state={open() ? 'open' : 'closed'}
-      data-dialog-open={open() ? 'true' : 'false'}
-      className={className()}
+      data-state={(props.open ?? props.defaultOpen ?? false) ? 'open' : 'closed'}
+      data-dialog-open={(props.open ?? props.defaultOpen ?? false) ? 'true' : 'false'}
+      className={props.class ?? ''}
     >
       {props.children}
     </div>
@@ -226,14 +224,11 @@ interface DialogOverlayProps {
  * @param props.onClick - Click handler to close
  */
 function DialogOverlay(props: DialogOverlayProps) {
-  const open = () => props.open ?? false
-  const className = () => props.class ?? ''
-  const stateClasses = () => open() ? dialogOverlayOpenClasses : dialogOverlayClosedClasses
   return (
     <div
       data-slot="dialog-overlay"
-      data-state={open() ? 'open' : 'closed'}
-      className={`${dialogOverlayBaseClasses} ${stateClasses()} ${className()}`}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
+      className={`${dialogOverlayBaseClasses} ${(props.open ?? false) ? dialogOverlayOpenClasses : dialogOverlayClosedClasses} ${props.class ?? ''}`}
       onClick={props.onClick}
     />
   )
@@ -269,10 +264,6 @@ interface DialogContentProps {
  * @param props.showCloseButton - Whether to show X close button (default: true)
  */
 function DialogContent(props: DialogContentProps) {
-  const open = () => props.open ?? false
-  const className = () => props.class ?? ''
-  const showCloseButton = () => props.showCloseButton ?? true
-
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && props.onClose) {
       props.onClose()
@@ -303,7 +294,7 @@ function DialogContent(props: DialogContentProps) {
   }
 
   const handleFocusOnOpen = (el: HTMLElement) => {
-    if (open() && el) {
+    if ((props.open ?? false) && el) {
       const focusableElements = el.querySelectorAll(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
       )
@@ -312,23 +303,21 @@ function DialogContent(props: DialogContentProps) {
     }
   }
 
-  const stateClasses = () => open() ? dialogContentOpenClasses : dialogContentClosedClasses
-
   return (
     <div
       data-slot="dialog-content"
-      data-state={open() ? 'open' : 'closed'}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
       role="dialog"
       aria-modal="true"
       aria-labelledby={props.ariaLabelledby}
       aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${dialogContentBaseClasses} ${stateClasses()} ${className()}`}
+      className={`${dialogContentBaseClasses} ${(props.open ?? false) ? dialogContentOpenClasses : dialogContentClosedClasses} ${props.class ?? ''}`}
       onKeyDown={handleKeyDown}
       ref={handleFocusOnOpen}
     >
       {props.children}
-      {showCloseButton() && (
+      {(props.showCloseButton ?? true) && (
         <button
           data-slot="dialog-close-button"
           type="button"
