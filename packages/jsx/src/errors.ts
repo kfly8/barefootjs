@@ -38,6 +38,7 @@ export const ErrorCodes = {
   COMPONENT_NOT_FOUND: 'BF040',
   CIRCULAR_DEPENDENCY: 'BF041',
   INVALID_COMPONENT_NAME: 'BF042',
+  PROPS_DESTRUCTURING: 'BF043',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
@@ -72,6 +73,8 @@ const errorMessages: Record<ErrorCode, string> = {
   [ErrorCodes.CIRCULAR_DEPENDENCY]: 'Circular dependency detected',
   [ErrorCodes.INVALID_COMPONENT_NAME]:
     'Component name must start with uppercase letter',
+  [ErrorCodes.PROPS_DESTRUCTURING]:
+    'Props destructuring in function parameters breaks reactivity. Use props object directly.',
 }
 
 // =============================================================================

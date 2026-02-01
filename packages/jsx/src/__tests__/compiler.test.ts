@@ -254,8 +254,8 @@ describe('Compiler', () => {
           onClick?: () => void
         }
 
-        export function Button({ onClick }: ButtonProps) {
-          return <button onClick={onClick}>Click</button>
+        export function Button(props: ButtonProps) {
+          return <button onClick={props.onClick}>Click</button>
         }
       `
 
@@ -265,8 +265,8 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      // Should extract onClick from props
-      expect(clientJs?.content).toContain('const onClick = props.onClick')
+      // Should use props.onClick directly
+      expect(clientJs?.content).toContain('props.onClick')
     })
 
     test('extracts props and props-dependent constants in client JS', () => {
@@ -280,9 +280,9 @@ describe('Compiler', () => {
           command: string
         }
 
-        export function CommandDisplay({ command }: Props) {
+        export function CommandDisplay(props: Props) {
           const [show, setShow] = createSignal(true)
-          const fullCommand = \`npx \${command}\`
+          const fullCommand = \`npx \${props.command}\`
 
           return (
             <div>
@@ -299,10 +299,8 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      // Should extract command prop
-      expect(clientJs?.content).toContain('const command = props.command')
-      // Should include fullCommand constant that depends on command prop
-      expect(clientJs?.content).toContain('const fullCommand = `npx ${command}`')
+      // Should use props.command directly in fullCommand constant
+      expect(clientJs?.content).toContain('const fullCommand = `npx ${props.command}`')
     })
 
     test('outputs IR JSON when requested', () => {
@@ -388,11 +386,11 @@ describe('Compiler', () => {
           label: string
         }
 
-        export function Counter({ initial = 0, label }: CounterProps) {
-          const [count, setCount] = createSignal(initial)
+        export function Counter(props: CounterProps) {
+          const [count, setCount] = createSignal(props.initial ?? 0)
           return (
             <button onClick={() => setCount(n => n + 1)}>
-              {label}: {count()}
+              {props.label}: {count()}
             </button>
           )
         }
@@ -539,9 +537,9 @@ describe('Compiler', () => {
         const iconNames = ['chevron', 'arrow'] as const
         type IconName = typeof iconNames[number]
 
-        export function Icon({ name }: { name: IconName }) {
+        export function Icon(props: { name: IconName }) {
           const [active, setActive] = createSignal(false)
-          const linecap = (iconNames as readonly string[]).includes(name) ? 'butt' : 'round'
+          const linecap = (iconNames as readonly string[]).includes(props.name) ? 'butt' : 'round'
           return (
             <svg stroke-linecap={linecap} onClick={() => setActive(true)}>
               <path d="M0 0" />
