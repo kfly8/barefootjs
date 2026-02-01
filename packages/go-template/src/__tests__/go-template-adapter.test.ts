@@ -295,6 +295,64 @@ describe('GoTemplateAdapter', () => {
       const result = adapter.renderConditional(cond)
       expect(result).toBe('{{if .IsLoggedIn}}Welcome{{else}}Please login{{end}}')
     })
+
+    test('renders reactive conditional with null false branch as comment markers', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'isChecked()',
+        conditionType: null,
+        reactive: true,
+        whenTrue: {
+          type: 'element',
+          tag: 'svg',
+          attrs: [],
+          events: [],
+          ref: null,
+          children: [],
+          slotId: null,
+          needsScope: false,
+          loc,
+        },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: 'slot_1',
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      // Should output empty markers for null branch (for client hydration)
+      expect(result).toContain('{{else}}')
+      expect(result).toContain('{{bfComment "cond-start:slot_1"}}')
+      expect(result).toContain('{{bfComment "cond-end:slot_1"}}')
+    })
+
+    test('renders reactive conditional with undefined false branch as comment markers', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'isChecked()',
+        conditionType: null,
+        reactive: true,
+        whenTrue: {
+          type: 'element',
+          tag: 'svg',
+          attrs: [],
+          events: [],
+          ref: null,
+          children: [],
+          slotId: null,
+          needsScope: false,
+          loc,
+        },
+        whenFalse: { type: 'expression', expr: 'undefined', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: 'slot_1',
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      // Should output empty markers for undefined branch (for client hydration)
+      expect(result).toContain('{{else}}')
+      expect(result).toContain('{{bfComment "cond-start:slot_1"}}')
+      expect(result).toContain('{{bfComment "cond-end:slot_1"}}')
+    })
   })
 
   describe('renderLoop', () => {
