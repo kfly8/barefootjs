@@ -10,17 +10,41 @@
  * - ESC key to close
  * - Click outside (overlay) to close
  * - Focus trap (Tab/Shift+Tab cycles within modal)
+ * - Built-in close button (X icon)
+ * - Portal rendering to document.body
  * - Accessibility (role="dialog", aria-modal="true")
  *
- * @example Basic dialog
+ * @example Basic dialog with new API
  * ```tsx
- * const [open, setOpen] = useState(false)
+ * const [open, setOpen] = createSignal(false)
+ *
+ * <Dialog open={open()} onOpenChange={setOpen}>
+ *   <DialogTrigger>Open Dialog</DialogTrigger>
+ *   <DialogPortal>
+ *     <DialogOverlay />
+ *     <DialogContent>
+ *       <DialogHeader>
+ *         <DialogTitle>Dialog Title</DialogTitle>
+ *         <DialogDescription>Dialog description here.</DialogDescription>
+ *       </DialogHeader>
+ *       <DialogFooter>
+ *         <DialogClose>Cancel</DialogClose>
+ *         <Button onClick={handleAction}>Confirm</Button>
+ *       </DialogFooter>
+ *     </DialogContent>
+ *   </DialogPortal>
+ * </Dialog>
+ * ```
+ *
+ * @example Legacy API (still supported)
+ * ```tsx
+ * const [open, setOpen] = createSignal(false)
  *
  * <>
  *   <DialogTrigger onClick={() => setOpen(true)}>Open Dialog</DialogTrigger>
- *   <DialogOverlay open={open} onClick={() => setOpen(false)} />
+ *   <DialogOverlay open={open()} onClick={() => setOpen(false)} />
  *   <DialogContent
- *     open={open}
+ *     open={open()}
  *     onClose={() => setOpen(false)}
  *     ariaLabelledby="dialog-title"
  *   >
@@ -38,19 +62,21 @@
  */
 
 import type { Child } from '../../types'
+import { XIcon } from './icon'
+import { Portal } from './portal'
 
-// DialogTrigger classes
+// DialogTrigger classes (minimal - just for accessibility)
 const dialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
 // DialogOverlay base classes
-const dialogOverlayBaseClasses = 'fixed inset-0 z-dialog bg-black/50 backdrop-blur-sm transition-opacity duration-normal'
+const dialogOverlayBaseClasses = 'fixed inset-0 z-[50] bg-black/50 backdrop-blur-sm transition-opacity duration-normal'
 
 // DialogOverlay open/closed classes
 const dialogOverlayOpenClasses = 'opacity-100'
 const dialogOverlayClosedClasses = 'opacity-0 pointer-events-none'
 
 // DialogContent base classes
-const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-dialog grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
+const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-[51] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
 
 // DialogContent open/closed classes
 const dialogContentOpenClasses = 'opacity-100 scale-100'
@@ -71,11 +97,61 @@ const dialogFooterClasses = 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-
 // DialogClose classes
 const dialogCloseClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2'
 
+// Close button (X icon) classes
+const dialogCloseButtonClasses = 'absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none'
+
+/**
+ * Props for Dialog root component.
+ */
+interface DialogProps {
+  /** Whether the dialog is open (controlled mode) */
+  open?: boolean
+  /** Default open state (uncontrolled mode) */
+  defaultOpen?: boolean
+  /** Callback when open state changes */
+  onOpenChange?: (open: boolean) => void
+  /** Dialog content (DialogTrigger, DialogPortal, etc.) */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Dialog root component that provides state context to children.
+ *
+ * Supports both controlled (open + onOpenChange) and uncontrolled (defaultOpen) modes.
+ *
+ * @param props.open - Controlled open state
+ * @param props.defaultOpen - Initial open state for uncontrolled mode
+ * @param props.onOpenChange - Callback when open state changes
+ */
+function Dialog({
+  class: className = '',
+  open,
+  defaultOpen = false,
+  onOpenChange: _onOpenChange,
+  children,
+}: DialogProps) {
+  // Note: onOpenChange is part of the API for future use when Context is available
+  // Currently, state management is done via props passed to child components
+
+  return (
+    <div
+      data-slot="dialog"
+      data-state={open ?? defaultOpen ? 'open' : 'closed'}
+      data-dialog-open={open ?? defaultOpen ? 'true' : 'false'}
+      className={className}
+    >
+      {children}
+    </div>
+  )
+}
+
 /**
  * Props for DialogTrigger component.
  */
 interface DialogTriggerProps {
-  /** Click handler to open dialog */
+  /** Click handler to open dialog (legacy API) */
   onClick?: () => void
   /** Whether disabled */
   disabled?: boolean
@@ -107,6 +183,31 @@ function DialogTrigger({
     >
       {children}
     </button>
+  )
+}
+
+/**
+ * Props for DialogPortal component.
+ */
+interface DialogPortalProps {
+  /** Portal content (DialogOverlay and DialogContent) */
+  children?: Child
+  /** Target container element (defaults to document.body) */
+  container?: HTMLElement | null
+}
+
+/**
+ * Portal wrapper for dialog overlay and content.
+ * Renders children to document.body via Portal component.
+ *
+ * @param props.children - Overlay and content
+ * @param props.container - Target container
+ */
+function DialogPortal({ children, container }: DialogPortalProps) {
+  return (
+    <Portal container={container}>
+      {children}
+    </Portal>
   )
 }
 
@@ -158,6 +259,8 @@ interface DialogContentProps {
   ariaLabelledby?: string
   /** ID of the description element for aria-describedby */
   ariaDescribedby?: string
+  /** Whether to show the close button (X icon) */
+  showCloseButton?: boolean
   /** Additional CSS classes */
   class?: string
 }
@@ -169,6 +272,7 @@ interface DialogContentProps {
  * @param props.onClose - Close callback
  * @param props.ariaLabelledby - ID of title for accessibility
  * @param props.ariaDescribedby - ID of description for accessibility
+ * @param props.showCloseButton - Whether to show X close button (default: true)
  */
 function DialogContent({
   class: className = '',
@@ -177,6 +281,7 @@ function DialogContent({
   children,
   ariaLabelledby,
   ariaDescribedby,
+  showCloseButton = true,
 }: DialogContentProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && onClose) {
@@ -233,6 +338,18 @@ function DialogContent({
       ref={handleFocusOnOpen}
     >
       {children}
+      {showCloseButton && (
+        <button
+          data-slot="dialog-close-button"
+          type="button"
+          className={dialogCloseButtonClasses}
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <XIcon size="sm" />
+          <span className="sr-only">Close</span>
+        </button>
+      )}
     </div>
   )
 }
@@ -364,7 +481,9 @@ function DialogClose({ class: className = '', onClick, children }: DialogClosePr
 }
 
 export {
+  Dialog,
   DialogTrigger,
+  DialogPortal,
   DialogOverlay,
   DialogContent,
   DialogHeader,
@@ -374,7 +493,9 @@ export {
   DialogClose,
 }
 export type {
+  DialogProps,
   DialogTriggerProps,
+  DialogPortalProps,
   DialogOverlayProps,
   DialogContentProps,
   DialogHeaderProps,

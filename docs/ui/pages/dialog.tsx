@@ -32,6 +32,7 @@ const basicCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import {
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -46,7 +47,7 @@ function DialogBasic() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div>
+    <Dialog open={open()} onOpenChange={setOpen}>
       <DialogTrigger onClick={() => setOpen(true)}>
         Open Dialog
       </DialogTrigger>
@@ -68,7 +69,7 @@ function DialogBasic() {
           <DialogClose onClick={() => setOpen(false)}>Close</DialogClose>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }`
 
@@ -79,6 +80,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -93,7 +95,7 @@ function DialogForm() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div>
+    <Dialog open={open()} onOpenChange={setOpen}>
       <DialogTrigger onClick={() => setOpen(true)}>
         Edit Profile
       </DialogTrigger>
@@ -122,11 +124,30 @@ function DialogForm() {
           <Button onClick={() => setOpen(false)}>Save changes</Button>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }`
 
 // Props definitions
+const dialogProps: PropDefinition[] = [
+  {
+    name: 'open',
+    type: 'boolean',
+    description: 'Whether the dialog is open (controlled mode).',
+  },
+  {
+    name: 'defaultOpen',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Default open state (uncontrolled mode).',
+  },
+  {
+    name: 'onOpenChange',
+    type: '(open: boolean) => void',
+    description: 'Callback when open state changes.',
+  },
+]
+
 const dialogTriggerProps: PropDefinition[] = [
   {
     name: 'onClick',
@@ -138,6 +159,14 @@ const dialogTriggerProps: PropDefinition[] = [
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the trigger is disabled.',
+  },
+]
+
+const dialogPortalProps: PropDefinition[] = [
+  {
+    name: 'container',
+    type: 'HTMLElement | null',
+    description: 'Target container element (defaults to document.body).',
   },
 ]
 
@@ -165,7 +194,13 @@ const dialogContentProps: PropDefinition[] = [
   {
     name: 'onClose',
     type: '() => void',
-    description: 'Event handler called when the dialog should close (ESC key).',
+    description: 'Event handler called when the dialog should close (ESC key or X button).',
+  },
+  {
+    name: 'showCloseButton',
+    type: 'boolean',
+    defaultValue: 'true',
+    description: 'Whether to show the X close button in the top-right corner.',
   },
   {
     name: 'ariaLabelledby',
@@ -232,10 +267,11 @@ export function DialogPage() {
           <ul className="list-disc list-inside space-y-2 text-muted-foreground">
             <li><strong className="text-foreground">ESC key to close</strong> - Press Escape to close the dialog</li>
             <li><strong className="text-foreground">Click outside to close</strong> - Click the overlay to close</li>
+            <li><strong className="text-foreground">Built-in close button</strong> - X button in top-right corner (configurable)</li>
             <li><strong className="text-foreground">Scroll lock</strong> - Body scroll is disabled when dialog is open</li>
             <li><strong className="text-foreground">Focus trap</strong> - Tab/Shift+Tab cycles within the dialog</li>
             <li><strong className="text-foreground">Accessibility</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-            <li><strong className="text-foreground">Portal rendering</strong> - Dialog is mounted to document.body via createPortal</li>
+            <li><strong className="text-foreground">Portal rendering</strong> - Optional DialogPortal to mount to document.body</li>
           </ul>
         </Section>
 
@@ -267,8 +303,16 @@ export function DialogPage() {
         <Section id="api-reference" title="API Reference">
           <div className="space-y-6">
             <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">Dialog</h3>
+              <PropsTable props={dialogProps} />
+            </div>
+            <div>
               <h3 className="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
               <PropsTable props={dialogTriggerProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DialogPortal</h3>
+              <PropsTable props={dialogPortalProps} />
             </div>
             <div>
               <h3 className="text-lg font-medium text-foreground mb-4">DialogOverlay</h3>

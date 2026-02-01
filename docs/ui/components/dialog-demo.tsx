@@ -8,6 +8,7 @@
 
 import { createSignal } from '@barefootjs/dom'
 import {
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -19,33 +20,16 @@ import {
 } from '@ui/components/ui/dialog'
 
 /**
- * Basic dialog demo
+ * Basic dialog demo using the new shadcn/ui-style API
  */
 export function DialogBasicDemo() {
   const [open, setOpen] = createSignal(false)
 
-  // Open dialog and schedule focus
-  const openDialog = () => {
-    setOpen(true)
-    setTimeout(() => {
-      const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
-      const dialog = scope?.querySelector('[data-dialog-content]')
-      if (dialog) (dialog as HTMLElement).focus()
-    }, 10)
-  }
-
-  // Close dialog and return focus to trigger
-  const closeDialog = () => {
-    setOpen(false)
-    setTimeout(() => {
-      const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
-      const trigger = scope?.querySelector('button')
-      if (trigger) trigger.focus()
-    }, 10)
-  }
+  const openDialog = () => setOpen(true)
+  const closeDialog = () => setOpen(false)
 
   return (
-    <div>
+    <Dialog open={open()} onOpenChange={setOpen}>
       <DialogTrigger onClick={openDialog}>
         Open Dialog
       </DialogTrigger>
@@ -59,7 +43,7 @@ export function DialogBasicDemo() {
         <DialogHeader>
           <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
           <DialogDescription id="dialog-description">
-            This is a basic dialog example. Press ESC or click outside to close.
+            This is a basic dialog example. Press ESC, click outside, or use the X button to close.
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground py-4">
@@ -69,7 +53,7 @@ export function DialogBasicDemo() {
           <DialogClose onClick={closeDialog}>Close</DialogClose>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }
 
@@ -79,15 +63,18 @@ export function DialogBasicDemo() {
 export function DialogFormDemo() {
   const [open, setOpen] = createSignal(false)
 
+  const openDialog = () => setOpen(true)
+  const closeDialog = () => setOpen(false)
+
   return (
-    <div>
-      <DialogTrigger onClick={() => setOpen(true)}>
+    <Dialog open={open()} onOpenChange={setOpen}>
+      <DialogTrigger onClick={openDialog}>
         Edit Profile
       </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+      <DialogOverlay open={open()} onClick={closeDialog} />
       <DialogContent
         open={open()}
-        onClose={() => setOpen(false)}
+        onClose={closeDialog}
         ariaLabelledby="form-dialog-title"
         ariaDescribedby="form-dialog-description"
       >
@@ -122,10 +109,10 @@ export function DialogFormDemo() {
           </div>
         </div>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <DialogTrigger onClick={() => setOpen(false)}>Save changes</DialogTrigger>
+          <DialogClose onClick={closeDialog}>Cancel</DialogClose>
+          <DialogTrigger onClick={closeDialog}>Save changes</DialogTrigger>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }
