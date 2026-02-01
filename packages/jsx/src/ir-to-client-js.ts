@@ -1993,9 +1993,10 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
         ? `${elem.array}.filter(${elem.filterPredicate.param} => ${elem.filterPredicate.raw})`
         : elem.array
 
+      const indexParamTemplate = elem.index || '__idx'
       lines.push(`  createEffect(() => {`)
       lines.push(`    const __arr = ${filterExprTemplate}`)
-      lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}) => \`${elem.template}\`)`)
+      lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
       lines.push(`  })`)
     }
     lines.push('')
