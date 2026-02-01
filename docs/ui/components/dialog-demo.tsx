@@ -29,7 +29,7 @@ export function DialogBasicDemo() {
     setOpen(true)
     setTimeout(() => {
       const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
-      const dialog = scope?.querySelector('[data-dialog-content]')
+      const dialog = scope?.querySelector('[role="dialog"]')
       if (dialog) (dialog as HTMLElement).focus()
     }, 10)
   }
