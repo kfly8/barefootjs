@@ -215,7 +215,7 @@ for (const componentPath of components) {
   if (mainComponentIR) {
     // Combine all component client JS into one file
     const clientJsParts: string[] = []
-    let importStatement = ''
+    const allImportNames = new Set<string>()
 
     for (const targetComponentName of allComponentNames) {
       const ctx = analyzeComponent(source, componentPath, targetComponentName)
@@ -256,13 +256,16 @@ for (const componentPath of components) {
           "from './barefoot.js'"
         )
 
-        // Extract import statement from first component
-        const importMatch = clientJs.match(/^import .* from '\.\/barefoot\.js'\n\n?/)
-        if (importMatch && !importStatement) {
-          importStatement = importMatch[0]
+        // Extract and merge import names from all components
+        const importMatch = clientJs.match(/^import \{ ([^}]+) \} from '\.\/barefoot\.js'/)
+        if (importMatch) {
+          const names = importMatch[1].split(',').map(n => n.trim())
+          for (const name of names) {
+            allImportNames.add(name)
+          }
         }
 
-        // Remove import statement (will add it once at the beginning)
+        // Remove import statement (will add merged import at the beginning)
         const withoutImport = clientJs.replace(/^import .* from '\.\/barefoot\.js'\n\n?/, '')
         clientJsParts.push(withoutImport)
       }
@@ -271,6 +274,9 @@ for (const componentPath of components) {
     if (clientJsParts.length > 0) {
       const componentName = componentPath.split('/').pop()?.replace('.tsx', '')
       const clientPath = resolve(clientDir, `${componentName}.client.js`)
+      // Generate merged import statement with sorted names
+      const sortedImports = [...allImportNames].sort()
+      const importStatement = `import { ${sortedImports.join(', ')} } from './barefoot.js'\n\n`
       writeFileSync(clientPath, importStatement + clientJsParts.join('\n'))
       console.log(`  Client:   ${componentName}.client.js`)
     }

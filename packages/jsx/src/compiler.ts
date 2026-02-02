@@ -195,34 +195,53 @@ function compileMultipleComponentsSync(
   // Combine client JS if any
   const clientJsOutputs = allOutputs.map(o => o.clientJs).filter(Boolean) as string[]
   if (clientJsOutputs.length > 0) {
-    // Separate imports from code to avoid duplicate imports
-    const allImports: string[] = []
+    // Separate imports from code and merge imports by source
+    const importsBySource = new Map<string, Set<string>>()
+    const otherImports: string[] = []
     const allCode: string[] = []
 
     for (const js of clientJsOutputs) {
       const lines = js.split('\n')
-      const importLines: string[] = []
       const codeLines: string[] = []
 
       for (const line of lines) {
         if (line.startsWith('import ')) {
-          importLines.push(line)
+          // Parse named imports: import { a, b } from 'source'
+          const match = line.match(/^import \{ ([^}]+) \} from ['"]([^'"]+)['"]$/)
+          if (match) {
+            const names = match[1].split(',').map(n => n.trim())
+            const source = match[2]
+            if (!importsBySource.has(source)) {
+              importsBySource.set(source, new Set())
+            }
+            const set = importsBySource.get(source)!
+            for (const name of names) {
+              set.add(name)
+            }
+          } else {
+            // Other import styles (default, namespace, etc.)
+            if (!otherImports.includes(line)) {
+              otherImports.push(line)
+            }
+          }
         } else {
           codeLines.push(line)
         }
       }
 
-      // Deduplicate imports
-      for (const imp of importLines) {
-        if (!allImports.includes(imp)) {
-          allImports.push(imp)
-        }
-      }
       allCode.push(codeLines.join('\n').trim())
     }
 
+    // Generate merged imports
+    const mergedImports: string[] = []
+    for (const [source, names] of importsBySource) {
+      const sortedNames = [...names].sort()
+      mergedImports.push(`import { ${sortedNames.join(', ')} } from '${source}'`)
+    }
+
     const combinedClientJs = [
-      ...allImports,
+      ...mergedImports,
+      ...otherImports,
       '',
       ...allCode.filter(Boolean),
     ].join('\n')

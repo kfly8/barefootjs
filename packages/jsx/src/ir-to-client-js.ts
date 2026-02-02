@@ -1392,33 +1392,53 @@ function detectPropsWithPropertyAccess(
 // Init Function Generation
 // =============================================================================
 
-function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingComponents?: string[]): string {
-  const lines: string[] = []
-  const name = ctx.componentName
+// All exports from @barefootjs/dom that may be used in generated code
+const DOM_IMPORT_CANDIDATES = [
+  'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
+  'findScope', 'find', 'hydrate', 'cond', 'insert', 'reconcileList',
+  'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
+  'createPortal'
+] as const
 
-  // Standard imports from @barefootjs/dom
-  const standardImports = [
-    'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
-    'findScope', 'find', 'hydrate', 'cond', 'insert', 'reconcileList',
-    'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker'
-  ]
+const IMPORT_PLACEHOLDER = '/* __BAREFOOTJS_DOM_IMPORTS__ */'
 
-  // Collect user-defined imports from @barefootjs/dom
-  const userDomImports: string[] = []
-  for (const imp of _ir.metadata.imports) {
+/**
+ * Detect which @barefootjs/dom functions are actually used in the generated code
+ */
+function detectUsedImports(code: string): Set<string> {
+  const used = new Set<string>()
+  for (const name of DOM_IMPORT_CANDIDATES) {
+    // Match function calls: name(
+    if (new RegExp(`\\b${name}\\s*\\(`).test(code)) {
+      used.add(name)
+    }
+  }
+  return used
+}
+
+/**
+ * Collect user-defined imports from @barefootjs/dom (preserve PR #248 behavior)
+ */
+function collectUserDomImports(ir: ComponentIR): string[] {
+  const userImports: string[] = []
+  for (const imp of ir.metadata.imports) {
     if (imp.source === '@barefootjs/dom' && !imp.isTypeOnly) {
       for (const spec of imp.specifiers) {
-        const importName = spec.alias || spec.name
-        if (!spec.isDefault && !spec.isNamespace && !standardImports.includes(importName)) {
-          userDomImports.push(spec.alias ? `${spec.name} as ${spec.alias}` : spec.name)
+        if (!spec.isDefault && !spec.isNamespace) {
+          userImports.push(spec.alias ? `${spec.name} as ${spec.alias}` : spec.name)
         }
       }
     }
   }
+  return userImports
+}
 
-  // Merge standard and user-defined imports
-  const allImports = [...standardImports, ...userDomImports]
-  lines.push(`import { ${allImports.join(', ')} } from '@barefootjs/dom'`)
+function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingComponents?: string[]): string {
+  const lines: string[] = []
+  const name = ctx.componentName
+
+  // Placeholder for imports - will be replaced with actual imports at the end
+  lines.push(IMPORT_PLACEHOLDER)
 
   // Add child component imports for loops with createComponent and initChild calls
   // Skip siblings (components in the same file)
@@ -2185,7 +2205,20 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   lines.push(`// Auto-hydrate component instances on page load`)
   lines.push(`hydrate('${name}', (props, idx, scope) => init${name}(idx, scope, props))`)
 
-  return lines.join('\n')
+  // Generate code and detect used imports
+  const generatedCode = lines.join('\n')
+  const usedImports = detectUsedImports(generatedCode)
+
+  // Add user-defined imports (preserve PR #248 behavior)
+  for (const userImport of collectUserDomImports(_ir)) {
+    usedImports.add(userImport)
+  }
+
+  // Replace placeholder with actual imports
+  const sortedImports = [...usedImports].sort()
+  const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/dom'`
+
+  return generatedCode.replace(IMPORT_PLACEHOLDER, importLine)
 }
 
 function generateElementRefs(ctx: ClientJsContext): string {
