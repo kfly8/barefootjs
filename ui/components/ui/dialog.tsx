@@ -37,20 +37,24 @@
  * ```
  */
 
+import { createEffect, onCleanup } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
 // DialogTrigger classes
 const dialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
-// DialogOverlay base classes
-const dialogOverlayBaseClasses = 'fixed inset-0 z-dialog bg-black/50 backdrop-blur-sm transition-opacity duration-normal'
+// DialogOverlay base classes (aligned with shadcn/ui)
+// Portal: element is moved to document.body during hydration
+const dialogOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/80 transition-opacity duration-200'
 
 // DialogOverlay open/closed classes
 const dialogOverlayOpenClasses = 'opacity-100'
 const dialogOverlayClosedClasses = 'opacity-0 pointer-events-none'
 
-// DialogContent base classes
-const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-dialog grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
+// DialogContent base classes (aligned with shadcn/ui)
+// Portal: element is moved to document.body during hydration
+// Note: shadcn/ui uses 'grid', we use 'flex flex-col' for scroll behavior with fixed header/footer
+const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-50 flex flex-col w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg'
 
 // DialogContent open/closed classes
 const dialogContentOpenClasses = 'opacity-100 scale-100'
@@ -89,23 +93,18 @@ interface DialogTriggerProps {
  * Button that triggers the dialog to open.
  *
  * @param props.onClick - Click handler
- * @param props.disabled - Whether disabled
+ * @param props.disabled - Whether disabled (supports reactive values)
  */
-function DialogTrigger({
-  class: className = '',
-  onClick,
-  disabled = false,
-  children,
-}: DialogTriggerProps) {
+function DialogTrigger(props: DialogTriggerProps) {
   return (
     <button
       data-slot="dialog-trigger"
       type="button"
-      className={`${dialogTriggerClasses} ${className}`}
-      disabled={disabled}
-      onClick={onClick}
+      className={`${dialogTriggerClasses} ${props.class ?? ''}`}
+      disabled={props.disabled ?? false}
+      onClick={props.onClick}
     >
-      {children}
+      {props.children}
     </button>
   )
 }
@@ -124,22 +123,26 @@ interface DialogOverlayProps {
 
 /**
  * Semi-transparent overlay behind the dialog.
+ * Portals to document.body to avoid z-index issues with fixed headers.
  *
  * @param props.open - Whether visible
  * @param props.onClick - Click handler to close
  */
-function DialogOverlay({
-  class: className = '',
-  open = false,
-  onClick,
-}: DialogOverlayProps) {
-  const stateClasses = open ? dialogOverlayOpenClasses : dialogOverlayClosedClasses
+function DialogOverlay(props: DialogOverlayProps) {
+  // Move element to document.body on mount (portal behavior)
+  const moveToBody = (el: HTMLElement) => {
+    if (el && el.parentNode !== document.body) {
+      document.body.appendChild(el)
+    }
+  }
+
   return (
     <div
       data-slot="dialog-overlay"
-      data-state={open ? 'open' : 'closed'}
-      className={`${dialogOverlayBaseClasses} ${stateClasses} ${className}`}
-      onClick={onClick}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
+      className={`${dialogOverlayBaseClasses} ${(props.open ?? false) ? dialogOverlayOpenClasses : dialogOverlayClosedClasses} ${props.class ?? ''}`}
+      onClick={props.onClick}
+      ref={moveToBody}
     />
   )
 }
@@ -164,23 +167,42 @@ interface DialogContentProps {
 
 /**
  * Main content container for the dialog.
+ * Portals to document.body to avoid z-index issues with fixed headers.
  *
  * @param props.open - Whether visible
  * @param props.onClose - Close callback
  * @param props.ariaLabelledby - ID of title for accessibility
  * @param props.ariaDescribedby - ID of description for accessibility
  */
-function DialogContent({
-  class: className = '',
-  open = false,
-  onClose,
-  children,
-  ariaLabelledby,
-  ariaDescribedby,
-}: DialogContentProps) {
+function DialogContent(props: DialogContentProps) {
+  // Use object to store ref (const object can be mutated)
+  const ref = { current: null as HTMLElement | null }
+
+  // Scroll lock: prevent body scroll when dialog is open
+  createEffect(() => {
+    if (props.open) {
+      const originalOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      onCleanup(() => {
+        document.body.style.overflow = originalOverflow
+      })
+    }
+  })
+
+  // Focus first focusable element when dialog opens
+  createEffect(() => {
+    if (props.open && ref.current) {
+      const focusableElements = ref.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0] as HTMLElement
+      setTimeout(() => firstElement?.focus(), 0)
+    }
+  })
+
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && onClose) {
-      onClose()
+    if (e.key === 'Escape' && props.onClose) {
+      props.onClose()
       return
     }
 
@@ -207,32 +229,29 @@ function DialogContent({
     }
   }
 
-  const handleFocusOnOpen = (el: HTMLElement) => {
-    if (open && el) {
-      const focusableElements = el.querySelectorAll(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      const firstElement = focusableElements[0] as HTMLElement
-      setTimeout(() => firstElement?.focus(), 0)
+  // Move element to document.body on mount (portal behavior)
+  const handleMount = (el: HTMLElement) => {
+    ref.current = el
+    // Portal: move to body
+    if (el && el.parentNode !== document.body) {
+      document.body.appendChild(el)
     }
   }
-
-  const stateClasses = open ? dialogContentOpenClasses : dialogContentClosedClasses
 
   return (
     <div
       data-slot="dialog-content"
-      data-state={open ? 'open' : 'closed'}
+      data-state={(props.open ?? false) ? 'open' : 'closed'}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={ariaLabelledby}
-      aria-describedby={ariaDescribedby}
+      aria-labelledby={props.ariaLabelledby}
+      aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${dialogContentBaseClasses} ${stateClasses} ${className}`}
+      className={`${dialogContentBaseClasses} ${(props.open ?? false) ? dialogContentOpenClasses : dialogContentClosedClasses} ${props.class ?? ''}`}
       onKeyDown={handleKeyDown}
-      ref={handleFocusOnOpen}
+      ref={handleMount}
     >
-      {children}
+      {props.children}
     </div>
   )
 }

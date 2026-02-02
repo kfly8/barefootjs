@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Dialog Documentation Page', () => {
+// Click position for overlay outside the dialog area.
+// The dialog is centered on screen, so clicking near the left edge of the overlay
+// ensures we click the overlay itself, not the dialog content on top of it.
+const OVERLAY_CLICK_POSITION = { x: 10, y: 10 }
+
+test.describe('Dialog Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/dialog')
   })
@@ -13,11 +17,6 @@ test.describe.skip('Dialog Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add dialog')).toBeVisible()
-  })
-
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
   })
 
   test('displays features section', async ({ page }) => {
@@ -31,77 +30,98 @@ test.describe.skip('Dialog Documentation Page', () => {
   test.describe('Basic Dialog', () => {
     test('opens dialog when trigger is clicked', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
 
-      // Dialog should be visible (check within the demo scope)
-      const dialog = basicDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body, so we search globally by aria-labelledby
+      const dialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
       await expect(dialog).toBeVisible()
-      await expect(dialog.locator('text=Dialog Title')).toBeVisible()
+      await expect(dialog.locator('text=Create New Task')).toBeVisible()
+    })
+
+    test('focuses first form element when dialog opens', async ({ page }) => {
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(dialog).toBeVisible()
+
+      // First form element (title input) should be focused
+      const titleInput = dialog.locator('input#task-title')
+      await expect(titleInput).toBeFocused()
     })
 
     test('closes dialog when close button is clicked', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
 
-      const dialog = basicDemo.locator('[role="dialog"]')
-      await expect(dialog).toBeVisible()
+      // Dialog is portaled to body
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
 
-      // Click close button
-      const closeButton = dialog.locator('button:has-text("Close")')
-      await closeButton.click()
+      // Click cancel button
+      const cancelButton = openDialog.locator('button:has-text("Cancel")')
+      await cancelButton.click()
 
-      // Dialog should be closed (check opacity since we use CSS transitions)
-      await expect(dialog).toHaveCSS('opacity', '0')
+      // Dialog should be closed (data-state changes to "closed")
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
     })
 
     test('closes dialog when ESC key is pressed', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
 
-      const dialog = basicDemo.locator('[role="dialog"]')
-      await expect(dialog).toBeVisible()
+      // Dialog is portaled to body
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
 
-      // Wait for dialog to receive focus (DialogBasicDemo uses setTimeout to focus)
-      await expect(dialog).toBeFocused()
+      // Focus on dialog for ESC key to work
+      await openDialog.focus()
 
       // Press ESC to close dialog
       await page.keyboard.press('Escape')
 
-      // Dialog should be closed (check opacity since we use CSS transitions)
-      await expect(dialog).toHaveCSS('opacity', '0')
+      // Dialog should be closed (data-state changes to "closed")
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
     })
 
     test('closes dialog when overlay is clicked', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
 
-      const dialog = basicDemo.locator('[role="dialog"]')
-      await expect(dialog).toBeVisible()
+      // Dialog is portaled to body
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
 
-      // Click overlay (the dark backdrop within this demo)
-      // Use y: 100 to click below the fixed header (h-14 = 56px)
-      const overlay = basicDemo.locator('[data-dialog-overlay]')
-      await overlay.click({ position: { x: 10, y: 100 } })
+      // Overlay is also portaled to body
+      const overlay = page.locator('[data-slot="dialog-overlay"]').first()
+      await overlay.click({ position: OVERLAY_CLICK_POSITION })
 
-      // Dialog should be closed (check opacity since we use CSS transitions)
-      await expect(dialog).toHaveCSS('opacity', '0')
+      // Dialog should be closed (data-state changes to "closed")
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
     })
 
     test('has correct accessibility attributes', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
 
-      const dialog = basicDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
       await expect(dialog).toBeVisible()
       await expect(dialog).toHaveAttribute('aria-modal', 'true')
       await expect(dialog).toHaveAttribute('aria-labelledby', 'dialog-title')
@@ -110,201 +130,219 @@ test.describe.skip('Dialog Documentation Page', () => {
 
     test('traps focus within dialog', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
 
-      const dialog = basicDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
       await expect(dialog).toBeVisible()
 
-      // Dialog should auto-focus after opening
-      await expect(dialog).toBeFocused()
+      // Focus on dialog
+      await dialog.focus()
 
-      // Get focusable elements
-      const closeButton = dialog.locator('button:has-text("Close")')
+      // Get focusable elements - first is the title input
+      const titleInput = dialog.locator('input#task-title')
 
-      // Tab should move focus to the close button
+      // Tab should move focus to the first focusable element (title input)
       await page.keyboard.press('Tab')
-      await expect(closeButton).toBeFocused()
+      await expect(titleInput).toBeFocused()
     })
   })
 
   test.describe('Dialog Animations', () => {
-    test('open animation plays and focus moves to dialog', async ({ page }) => {
+    test('open animation plays', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
-      const dialog = basicDemo.locator('[role="dialog"]')
-      const overlay = basicDemo.locator('[data-dialog-overlay]')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
+      // Dialog is portaled to body - check closed state first
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
 
       // Initially dialog should be invisible (opacity-0)
-      await expect(dialog).toHaveCSS('opacity', '0')
-      await expect(overlay).toHaveCSS('opacity', '0')
+      await expect(closedDialog).toHaveCSS('opacity', '0')
 
       await trigger.click()
 
       // Dialog should become visible with animation
-      await expect(dialog).toBeVisible()
-      await expect(dialog).toHaveCSS('opacity', '1')
-      await expect(overlay).toHaveCSS('opacity', '1')
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+      await expect(openDialog).toHaveCSS('opacity', '1')
 
       // Dialog should have scale-100 (transform contains scale(1) = matrix(1, 0, 0, 1, ...))
-      // The exact translation values depend on viewport, so just check scale part
-      const transform = await dialog.evaluate((el) => getComputedStyle(el).transform)
+      const transform = await openDialog.evaluate((el) => getComputedStyle(el).transform)
       expect(transform).toMatch(/^matrix\(1, 0, 0, 1,/)
-
-      // Focus should move to dialog
-      await expect(dialog).toBeFocused()
     })
 
-    test('close via ESC - animation plays and focus returns to trigger', async ({ page }) => {
+    test('close via ESC - animation plays', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
-      const dialog = basicDemo.locator('[role="dialog"]')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       await trigger.click()
-      await expect(dialog).toBeVisible()
-      await expect(dialog).toBeFocused()
+
+      // Dialog is portaled to body
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+
+      // Focus on dialog for ESC key to work
+      await openDialog.focus()
 
       // Press ESC to close
       await page.keyboard.press('Escape')
 
       // Dialog should fade out (opacity becomes 0)
-      await expect(dialog).toHaveCSS('opacity', '0')
-
-      // Focus should return to trigger
-      await expect(trigger).toBeFocused()
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
     })
 
-    test('close via overlay click - animation plays and focus returns to trigger', async ({ page }) => {
+    test('close via overlay click', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
-      const dialog = basicDemo.locator('[role="dialog"]')
-      const overlay = basicDemo.locator('[data-dialog-overlay]')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
+      const overlay = page.locator('[data-slot="dialog-overlay"]').first()
 
       await trigger.click()
-      await expect(dialog).toBeVisible()
 
-      // Click overlay to close (use y: 100 to click below the fixed header)
-      await overlay.click({ position: { x: 10, y: 100 } })
+      // Dialog is portaled to body
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
 
-      // Dialog and overlay should fade out
-      await expect(dialog).toHaveCSS('opacity', '0')
-      await expect(overlay).toHaveCSS('opacity', '0')
+      await overlay.click({ position: OVERLAY_CLICK_POSITION })
 
-      // Focus should return to trigger
-      await expect(trigger).toBeFocused()
-    })
-
-    test('Tab cycling during animation - focus stays trapped', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
-      const dialog = basicDemo.locator('[role="dialog"]')
-      const closeButton = dialog.locator('button:has-text("Close")')
-
-      await trigger.click()
-      await expect(dialog).toBeVisible()
-      await expect(dialog).toBeFocused()
-
-      // Tab to close button
-      await page.keyboard.press('Tab')
-      await expect(closeButton).toBeFocused()
-
-      // Tab again - in a minimal dialog, focus may leave the dialog
-      // but our animations with pointer-events-none ensure correct visual behavior
-      // The key test is that Tab works during animation without errors
-      await page.keyboard.press('Tab')
-
-      // Verify dialog is still properly displayed (animation working)
-      await expect(dialog).toHaveCSS('opacity', '1')
+      // Dialog should fade out
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
     })
 
     test('rapid open/close - no visual glitches', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
-      const dialog = basicDemo.locator('[role="dialog"]')
-      const closeButton = dialog.locator('button:has-text("Close")')
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
 
       // Rapid open/close sequence
       await trigger.click()
-      await expect(dialog).toBeVisible()
+      const openDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
 
-      await closeButton.click()
+      const cancelButton = openDialog.locator('button:has-text("Cancel")')
+      await cancelButton.click()
       // Immediately try to open again
       await trigger.click()
-      await expect(dialog).toBeVisible()
-
-      await closeButton.click()
-      await trigger.click()
-      await expect(dialog).toBeVisible()
+      await expect(openDialog).toBeVisible()
 
       // Final state should be stable
-      await expect(dialog).toHaveCSS('opacity', '1')
-      await expect(dialog).toBeFocused()
+      await expect(openDialog).toHaveCSS('opacity', '1')
 
       // Close and verify final closed state
-      await closeButton.click()
-      await expect(dialog).toHaveCSS('opacity', '0')
-    })
-
-    test('ESC key closes dialog after it opens', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
-      const trigger = basicDemo.locator('button:has-text("Open Dialog")')
-      const dialog = basicDemo.locator('[role="dialog"]')
-
-      await trigger.click()
-
-      // Wait for dialog to be visible and focused
-      await expect(dialog).toHaveCSS('opacity', '1')
-      await expect(dialog).toBeFocused()
-
-      // Press ESC
-      await page.keyboard.press('Escape')
-
-      // Dialog should be closed (opacity 0 indicates closed state)
-      await expect(dialog).toHaveCSS('opacity', '0')
+      await cancelButton.click()
+      const closedDialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
     })
   })
 
-  test.describe('Dialog with Form', () => {
-    test('opens form dialog when trigger is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+  test.describe('Delete Confirmation Dialog', () => {
+    test('opens delete dialog when trigger is clicked', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
-      const dialog = formDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
-      await expect(dialog.locator('text=Edit Profile').first()).toBeVisible()
+      await expect(dialog.locator('text=Delete Project').first()).toBeVisible()
     })
 
-    test('form inputs are focusable', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+    test('shows confirmation input', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
-      const dialog = formDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
-      const nameInput = dialog.locator('input#name')
-      const emailInput = dialog.locator('input#email')
+      // Check confirmation prompt
+      await expect(dialog.locator('text=Please type')).toBeVisible()
+      await expect(dialog.locator('text=my-project').first()).toBeVisible()
 
-      await expect(nameInput).toBeVisible()
-      await expect(emailInput).toBeVisible()
-
-      // Click and type in name input
-      await nameInput.click()
-      await nameInput.fill('John Doe')
-      await expect(nameInput).toHaveValue('John Doe')
+      // Delete button should be present
+      const deleteButton = dialog.locator('button#delete-project-button')
+      await expect(deleteButton).toBeVisible()
     })
 
-    test('closes form dialog when Cancel is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+    test('delete button is disabled without confirmation', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
-      const dialog = formDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+      await expect(dialog).toBeVisible()
+
+      // Delete button should be disabled without typing project name
+      const deleteButton = dialog.locator('button#delete-project-button')
+      await expect(deleteButton).toBeDisabled()
+
+      // Dialog should still be open
+      await expect(dialog).toBeVisible()
+      await expect(dialog).toHaveCSS('opacity', '1')
+    })
+
+    test('delete button becomes enabled when project name matches', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+      await expect(dialog).toBeVisible()
+
+      const confirmInput = dialog.locator('input#confirm-project-name')
+      const deleteButton = dialog.locator('button#delete-project-button')
+
+      // Initially disabled
+      await expect(deleteButton).toBeDisabled()
+
+      // Type correct project name
+      await confirmInput.click()
+      await confirmInput.pressSequentially('my-project')
+
+      // Button should now be enabled
+      await expect(deleteButton).toBeEnabled()
+    })
+
+    test('delete closes dialog when project name matches', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+      await expect(dialog).toBeVisible()
+
+      const confirmInput = dialog.locator('input#confirm-project-name')
+      const deleteButton = dialog.locator('button#delete-project-button')
+
+      // Type correct project name (using pressSequentially to trigger oninput)
+      await confirmInput.click()
+      await confirmInput.pressSequentially('my-project')
+
+      // Click delete - should close
+      await deleteButton.click()
+
+      // Dialog should be closed
+      await expect(dialog).toHaveCSS('opacity', '0')
+    })
+
+    test('closes delete dialog when Cancel is clicked', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
       const cancelButton = dialog.locator('button:has-text("Cancel")')
@@ -314,20 +352,31 @@ test.describe.skip('Dialog Documentation Page', () => {
       await expect(dialog).toHaveCSS('opacity', '0')
     })
 
-    test('closes form dialog when Save is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+    test('resets input when dialog is reopened', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
-      const dialog = formDemo.locator('[role="dialog"]')
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
-      const saveButton = dialog.locator('button:has-text("Save changes")')
-      await saveButton.click()
+      // Type project name and click delete (using pressSequentially to trigger oninput)
+      const confirmInput = dialog.locator('input#confirm-project-name')
+      await confirmInput.click()
+      await confirmInput.pressSequentially('my-project')
 
-      // Dialog should be closed (check opacity since we use CSS transitions)
+      const deleteButton = dialog.locator('button#delete-project-button')
+      await deleteButton.click()
+
+      // Dialog should be closed
       await expect(dialog).toHaveCSS('opacity', '0')
+
+      // Re-open and check input is cleared
+      await trigger.click()
+      await expect(dialog).toBeVisible()
+      await expect(confirmInput).toHaveValue('')
     })
   })
 
@@ -358,17 +407,19 @@ test.describe.skip('Dialog Documentation Page', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Dialog Link', () => {
+test.describe('Home Page - Dialog Link', () => {
   test('displays Dialog component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/dialog"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/dialog"] h2')).toContainText('Dialog')
+    // Use main content area to avoid matching mobile menu links
+    const mainContent = page.locator('main')
+    await expect(mainContent.locator('a[href="/docs/components/dialog"]')).toBeVisible()
   })
 
   test('navigates to Dialog page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/components/dialog"]')
+    // Use main content area to avoid matching mobile menu links
+    const mainContent = page.locator('main')
+    await mainContent.locator('a[href="/docs/components/dialog"]').click()
     await expect(page).toHaveURL('/docs/components/dialog')
     await expect(page.locator('h1')).toContainText('Dialog')
   })

@@ -2,7 +2,7 @@
  * Dialog Documentation Page
  */
 
-import { DialogBasicDemo, DialogFormDemo } from '@/components/dialog-demo'
+import { DialogBasicDemo, DialogFormDemo, DialogLongContentDemo } from '@/components/dialog-demo'
 import {
   DocPage,
   PageHeader,
@@ -21,8 +21,8 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
-  { id: 'basic', title: 'Basic', branch: 'start' },
-  { id: 'with-form', title: 'With Form', branch: 'end' },
+  { id: 'delete-confirmation', title: 'Delete Confirmation', branch: 'start' },
+  { id: 'long-content', title: 'Long Content', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -42,13 +42,13 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 
-function DialogBasic() {
+function CreateTaskDialog() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
       <DialogTrigger onClick={() => setOpen(true)}>
-        Open Dialog
+        Create Task
       </DialogTrigger>
       <DialogOverlay open={open()} onClick={() => setOpen(false)} />
       <DialogContent
@@ -58,26 +58,47 @@ function DialogBasic() {
         ariaDescribedby="dialog-description"
       >
         <DialogHeader>
-          <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
+          <DialogTitle id="dialog-title">Create New Task</DialogTitle>
           <DialogDescription id="dialog-description">
-            This is a basic dialog example.
+            Add a new task to your list.
           </DialogDescription>
         </DialogHeader>
-        <p>Dialog content goes here.</p>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label for="task-title" className="text-sm font-medium">
+              Title
+            </label>
+            <input
+              id="task-title"
+              type="text"
+              placeholder="Enter task title"
+              className="flex h-10 w-full rounded-md border ..."
+            />
+          </div>
+          <div className="grid gap-2">
+            <label for="task-description" className="text-sm font-medium">
+              Description
+            </label>
+            <textarea
+              id="task-description"
+              placeholder="Enter task description (optional)"
+              rows={3}
+              className="flex w-full rounded-md border ..."
+            />
+          </div>
+        </div>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Close</DialogClose>
+          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
+          <DialogTrigger onClick={() => setOpen(false)}>Create</DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>
   )
 }`
 
-const formCode = `"use client"
+const deleteCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   DialogTrigger,
   DialogOverlay,
@@ -89,37 +110,101 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 
-function DialogForm() {
+function DeleteConfirmDialog() {
+  const [open, setOpen] = createSignal(false)
+  const [confirmText, setConfirmText] = createSignal('')
+  const projectName = 'my-project'
+
+  const isConfirmed = () => confirmText() === projectName
+
+  const handleClose = () => {
+    setOpen(false)
+    setConfirmText('')
+  }
+
+  return (
+    <div>
+      <DialogTrigger onClick={() => setOpen(true)} class="bg-destructive ...">
+        Delete Project
+      </DialogTrigger>
+      <DialogOverlay open={open()} onClick={handleClose} />
+      <DialogContent open={open()} onClose={handleClose} ...>
+        <DialogHeader>
+          <DialogTitle>Delete Project</DialogTitle>
+          <DialogDescription>
+            This will permanently delete <strong>{projectName}</strong>.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <label className="text-sm text-muted-foreground">
+            Please type <strong>{projectName}</strong> to confirm.
+          </label>
+          <input
+            type="text"
+            value={confirmText()}
+            onInput={(e) => setConfirmText(e.target.value)}
+            placeholder={projectName}
+            className="mt-2 flex h-10 w-full rounded-md border ..."
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose onClick={handleClose}>Cancel</DialogClose>
+          <button
+            onClick={handleClose}
+            disabled={!isConfirmed()}
+            class="bg-destructive ..."
+          >
+            Delete Project
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </div>
+  )
+}`
+
+const longContentCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  DialogTrigger,
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
+
+function DialogLongContent() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
       <DialogTrigger onClick={() => setOpen(true)}>
-        Edit Profile
+        Open Long Content Dialog
       </DialogTrigger>
       <DialogOverlay open={open()} onClick={() => setOpen(false)} />
       <DialogContent
         open={open()}
         onClose={() => setOpen(false)}
-        ariaLabelledby="form-dialog-title"
+        ariaLabelledby="long-dialog-title"
+        ariaDescribedby="long-dialog-description"
+        class="max-h-[66vh]"
       >
-        <DialogHeader>
-          <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
-          <DialogDescription>
-            Make changes to your profile here.
+        <DialogHeader class="flex-shrink-0">
+          <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
+          <DialogDescription id="long-dialog-description">
+            Please read the following terms carefully.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" type="text" className="col-span-3" />
-          </div>
+        <div className="text-sm text-muted-foreground space-y-4 overflow-y-auto flex-1 min-h-0">
+          <p>Lorem ipsum dolor sit amet...</p>
+          {/* Multiple paragraphs - only this area scrolls */}
         </div>
-        <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <Button onClick={() => setOpen(false)}>Save changes</Button>
+        <DialogFooter class="flex-shrink-0">
+          <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
+          <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>
@@ -216,7 +301,7 @@ export function DialogPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<DialogContent open={open()} onClose={() => setOpen(false)}>...</DialogContent>`}>
+        <Example title="" code={basicCode}>
           <div className="flex gap-4">
             <DialogBasicDemo />
           </div>
@@ -242,12 +327,12 @@ export function DialogPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Basic" code={basicCode}>
-              <DialogBasicDemo />
+            <Example title="Delete Confirmation" code={deleteCode}>
+              <DialogFormDemo />
             </Example>
 
-            <Example title="With Form" code={formCode}>
-              <DialogFormDemo />
+            <Example title="Long Content" code={longContentCode}>
+              <DialogLongContentDemo />
             </Example>
           </div>
         </Section>
