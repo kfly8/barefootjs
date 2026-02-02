@@ -23,7 +23,6 @@ const tocItems: TocItem[] = [
   { id: 'examples', title: 'Examples' },
   { id: 'delete-confirmation', title: 'Delete Confirmation', branch: 'start' },
   { id: 'long-content', title: 'Long Content', branch: 'end' },
-  { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
@@ -335,17 +334,6 @@ export function DialogPage() {
               <DialogLongContentDemo />
             </Example>
           </div>
-        </Section>
-
-        {/* Accessibility */}
-        <Section id="accessibility" title="Accessibility">
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong className="text-foreground">Focus Management</strong> - Focus moves to the first focusable element when dialog opens, and returns to the trigger when closed</li>
-            <li><strong className="text-foreground">Tab Cycling</strong> - Tab/Shift+Tab cycles within the dialog content</li>
-            <li><strong className="text-foreground">Keyboard</strong> - Press ESC to close the dialog</li>
-            <li><strong className="text-foreground">ARIA</strong> - role="dialog", aria-modal="true", aria-labelledby, aria-describedby</li>
-            <li><strong className="text-foreground">Screen Readers</strong> - Dialog title and description are announced when opened</li>
-          </ul>
         </Section>
 
         {/* API Reference */}
