@@ -37,6 +37,7 @@
  * ```
  */
 
+import { createEffect, onCleanup } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
 // DialogTrigger classes
@@ -166,6 +167,17 @@ interface DialogContentProps {
  * @param props.ariaDescribedby - ID of description for accessibility
  */
 function DialogContent(props: DialogContentProps) {
+  // Scroll lock: prevent body scroll when dialog is open
+  createEffect(() => {
+    if (props.open) {
+      const originalOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      onCleanup(() => {
+        document.body.style.overflow = originalOverflow
+      })
+    }
+  })
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && props.onClose) {
       props.onClose()

@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
 
+// Click position for overlay outside the dialog area.
+// The dialog is centered on screen, so clicking near the left edge of the overlay
+// ensures we click the overlay itself, not the dialog content on top of it.
+// Using y: 100 to avoid the fixed header (h-14 = 56px).
+const OVERLAY_CLICK_POSITION = { x: 10, y: 100 }
+
 test.describe('Dialog Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/dialog')
@@ -80,9 +86,8 @@ test.describe('Dialog Documentation Page', () => {
       const dialog = basicDemo.locator('[role="dialog"]')
       await expect(dialog).toBeVisible()
 
-      // Click overlay (force click since it's fixed positioned)
       const overlay = basicDemo.locator('[data-slot="dialog-overlay"]')
-      await overlay.click({ force: true })
+      await overlay.click({ position: OVERLAY_CLICK_POSITION })
 
       // Dialog should be closed (check opacity since we use CSS transitions)
       await expect(dialog).toHaveCSS('opacity', '0')
@@ -169,8 +174,7 @@ test.describe('Dialog Documentation Page', () => {
       await trigger.click()
       await expect(dialog).toBeVisible()
 
-      // Click overlay to close (force click since it's fixed positioned)
-      await overlay.click({ force: true })
+      await overlay.click({ position: OVERLAY_CLICK_POSITION })
 
       // Dialog should fade out
       await expect(dialog).toHaveCSS('opacity', '0')
