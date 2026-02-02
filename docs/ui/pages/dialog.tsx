@@ -290,7 +290,7 @@ export function DialogPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<DialogContent open={open()} onClose={() => setOpen(false)}>...</DialogContent>`}>
+        <Example title="" code={basicCode}>
           <div className="flex gap-4">
             <DialogBasicDemo />
           </div>
