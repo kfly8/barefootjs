@@ -98,58 +98,56 @@ export function DialogBasicDemo() {
 /**
  * Delete confirmation dialog demo (GitHub-style)
  *
- * IMPORTANT: DialogContent uses portal (moves to document.body), which breaks
- * barefootjs scope-based element binding. Elements inside portaled content
- * must use direct DOM manipulation via createEffect.
+ * Uses reactive binding for form elements inside portal.
+ * Portal-aware find() enables standard event binding to work.
  *
- * Pattern for portaled content:
- * 1. Use createEffect to wait for dialog to open
- * 2. Use getElementById to find elements (they're now in document.body)
- * 3. Attach handlers manually
- * 4. Clean up handlers on close using onCleanup
+ * Note: The compiler doesn't yet support reactive `disabled` attribute binding,
+ * so we use createEffect to manually update the button's disabled state.
  */
 export function DialogFormDemo() {
   const [open, setOpen] = createSignal(false)
   const projectName = 'my-project'
 
+  const handleOpen = () => {
+    setOpen(true)
+  }
+
   const handleClose = () => {
     setOpen(false)
   }
 
-  // Setup portaled element handlers when dialog opens
+  // Portal element handlers (workaround for hydration timing)
+  // The compiler's find() is called during hydration before Portal mounts,
+  // so we need to set up handlers after the Portal is mounted.
   createEffect(() => {
     if (!open()) return
 
-    // Wait for portal to complete DOM move
     const timer = setTimeout(() => {
       const input = document.getElementById('confirm-project-name') as HTMLInputElement
-      const deleteBtn = document.getElementById('delete-project-button') as HTMLButtonElement
+      const btn = document.getElementById('delete-project-button') as HTMLButtonElement
+      if (!input || !btn) return
 
-      if (!input || !deleteBtn) return
-
-      // Clear input on open
+      // Clear input and set initial disabled state
       input.value = ''
-      deleteBtn.disabled = true
+      btn.disabled = true
 
-      // Input handler: update button disabled state
-      const handleInput = () => {
-        deleteBtn.disabled = input.value !== projectName
+      // Update disabled on input change
+      const updateDisabled = () => {
+        btn.disabled = input.value !== projectName
       }
+      input.addEventListener('input', updateDisabled)
 
-      // Delete handler: close if confirmed
-      const handleDelete = () => {
+      // Click handler for delete button
+      const handleDeleteClick = () => {
         if (input.value === projectName) {
           handleClose()
         }
       }
+      btn.addEventListener('click', handleDeleteClick)
 
-      input.addEventListener('input', handleInput)
-      deleteBtn.addEventListener('click', handleDelete)
-
-      // Cleanup when dialog closes
       onCleanup(() => {
-        input.removeEventListener('input', handleInput)
-        deleteBtn.removeEventListener('click', handleDelete)
+        input.removeEventListener('input', updateDisabled)
+        btn.removeEventListener('click', handleDeleteClick)
       })
     }, 0)
 
@@ -160,7 +158,7 @@ export function DialogFormDemo() {
     <div>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
       >
         Delete Project
@@ -194,6 +192,7 @@ export function DialogFormDemo() {
           <button
             type="button"
             id="delete-project-button"
+            disabled
             className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
           >
             Delete Project
