@@ -21,8 +21,7 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
-  { id: 'basic', title: 'Basic', branch: 'start' },
-  { id: 'with-form', title: 'With Form' },
+  { id: 'with-form', title: 'With Form', branch: 'start' },
   { id: 'long-content', title: 'Long Content', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
@@ -316,10 +315,6 @@ export function DialogPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Basic" code={basicCode}>
-              <DialogBasicDemo />
-            </Example>
-
             <Example title="With Form" code={formCode}>
               <DialogFormDemo />
             </Example>
