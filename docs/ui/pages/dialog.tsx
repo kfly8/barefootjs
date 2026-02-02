@@ -21,7 +21,7 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
-  { id: 'delete-confirm', title: 'Delete Confirmation', branch: 'start' },
+  { id: 'delete-confirmation', title: 'Delete Confirmation', branch: 'start' },
   { id: 'long-content', title: 'Long Content', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
@@ -112,43 +112,50 @@ import {
 
 function DeleteConfirmDialog() {
   const [open, setOpen] = createSignal(false)
+  const [confirmText, setConfirmText] = createSignal('')
+  const projectName = 'my-project'
+
+  const isConfirmed = () => confirmText() === projectName
+
+  const handleClose = () => {
+    setOpen(false)
+    setConfirmText('')
+  }
 
   return (
     <div>
-      <DialogTrigger
-        onClick={() => setOpen(true)}
-        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
+      <DialogTrigger onClick={() => setOpen(true)} class="bg-destructive ...">
         Delete Project
       </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
-      <DialogContent
-        open={open()}
-        onClose={() => setOpen(false)}
-        ariaLabelledby="delete-dialog-title"
-        ariaDescribedby="delete-dialog-description"
-      >
+      <DialogOverlay open={open()} onClick={handleClose} />
+      <DialogContent open={open()} onClose={handleClose} ...>
         <DialogHeader>
-          <DialogTitle id="delete-dialog-title">Delete Project</DialogTitle>
-          <DialogDescription id="delete-dialog-description">
-            Are you sure? This action cannot be undone.
+          <DialogTitle>Delete Project</DialogTitle>
+          <DialogDescription>
+            This will permanently delete <strong>{projectName}</strong>.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 text-sm text-muted-foreground">
-          <p>This will permanently delete:</p>
-          <ul className="list-disc list-inside mt-2 space-y-1">
-            <li>All project files and folders</li>
-            <li>All collaborator access</li>
-          </ul>
+        <div className="py-4">
+          <label className="text-sm text-muted-foreground">
+            Please type <strong>{projectName}</strong> to confirm.
+          </label>
+          <input
+            type="text"
+            value={confirmText()}
+            onInput={(e) => setConfirmText(e.target.value)}
+            placeholder={projectName}
+            className="mt-2 flex h-10 w-full rounded-md border ..."
+          />
         </div>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <DialogTrigger
-            onClick={() => setOpen(false)}
-            class="bg-destructive text-destructive-foreground ..."
+          <DialogClose onClick={handleClose}>Cancel</DialogClose>
+          <button
+            onClick={handleClose}
+            disabled={!isConfirmed()}
+            class="bg-destructive ..."
           >
-            Delete
-          </DialogTrigger>
+            Delete Project
+          </button>
         </DialogFooter>
       </DialogContent>
     </div>
@@ -183,7 +190,7 @@ function DialogLongContent() {
         onClose={() => setOpen(false)}
         ariaLabelledby="long-dialog-title"
         ariaDescribedby="long-dialog-description"
-        class="max-h-80"
+        class="max-h-[66vh]"
       >
         <DialogHeader class="flex-shrink-0">
           <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>

@@ -43,18 +43,18 @@ import type { Child } from '../../types'
 // DialogTrigger classes
 const dialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
-// DialogOverlay base classes
+// DialogOverlay base classes (aligned with shadcn/ui)
 // Portal: element is moved to document.body during hydration
-const dialogOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-normal'
+const dialogOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/80 transition-opacity duration-200'
 
 // DialogOverlay open/closed classes
 const dialogOverlayOpenClasses = 'opacity-100'
 const dialogOverlayClosedClasses = 'opacity-0 pointer-events-none'
 
-// DialogContent base classes
+// DialogContent base classes (aligned with shadcn/ui)
 // Portal: element is moved to document.body during hydration
-// Uses flex layout so header/footer stay fixed while content scrolls
-const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-50 flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
+// Note: shadcn/ui uses 'grid', we use 'flex flex-col' for scroll behavior with fixed header/footer
+const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-50 flex flex-col w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg'
 
 // DialogContent open/closed classes
 const dialogContentOpenClasses = 'opacity-100 scale-100'
@@ -93,23 +93,18 @@ interface DialogTriggerProps {
  * Button that triggers the dialog to open.
  *
  * @param props.onClick - Click handler
- * @param props.disabled - Whether disabled
+ * @param props.disabled - Whether disabled (supports reactive values)
  */
-function DialogTrigger({
-  class: className = '',
-  onClick,
-  disabled = false,
-  children,
-}: DialogTriggerProps) {
+function DialogTrigger(props: DialogTriggerProps) {
   return (
     <button
       data-slot="dialog-trigger"
       type="button"
-      className={`${dialogTriggerClasses} ${className}`}
-      disabled={disabled}
-      onClick={onClick}
+      className={`${dialogTriggerClasses} ${props.class ?? ''}`}
+      disabled={props.disabled ?? false}
+      onClick={props.onClick}
     >
-      {children}
+      {props.children}
     </button>
   )
 }

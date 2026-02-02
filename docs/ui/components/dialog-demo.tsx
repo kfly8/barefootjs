@@ -6,7 +6,7 @@
  * Used in dialog documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
 import {
   DialogTrigger,
   DialogOverlay,
@@ -96,42 +96,108 @@ export function DialogBasicDemo() {
 }
 
 /**
- * Delete confirmation dialog demo
+ * Delete confirmation dialog demo (GitHub-style)
+ *
+ * IMPORTANT: DialogContent uses portal (moves to document.body), which breaks
+ * barefootjs scope-based element binding. Elements inside portaled content
+ * must use direct DOM manipulation via createEffect.
+ *
+ * Pattern for portaled content:
+ * 1. Use createEffect to wait for dialog to open
+ * 2. Use getElementById to find elements (they're now in document.body)
+ * 3. Attach handlers manually
+ * 4. Clean up handlers on close using onCleanup
  */
 export function DialogFormDemo() {
   const [open, setOpen] = createSignal(false)
+  const projectName = 'my-project'
+
+  const handleClose = () => {
+    setOpen(false)
+  }
+
+  // Setup portaled element handlers when dialog opens
+  createEffect(() => {
+    if (!open()) return
+
+    // Wait for portal to complete DOM move
+    const timer = setTimeout(() => {
+      const input = document.getElementById('confirm-project-name') as HTMLInputElement
+      const deleteBtn = document.getElementById('delete-project-button') as HTMLButtonElement
+
+      if (!input || !deleteBtn) return
+
+      // Clear input on open
+      input.value = ''
+      deleteBtn.disabled = true
+
+      // Input handler: update button disabled state
+      const handleInput = () => {
+        deleteBtn.disabled = input.value !== projectName
+      }
+
+      // Delete handler: close if confirmed
+      const handleDelete = () => {
+        if (input.value === projectName) {
+          handleClose()
+        }
+      }
+
+      input.addEventListener('input', handleInput)
+      deleteBtn.addEventListener('click', handleDelete)
+
+      // Cleanup when dialog closes
+      onCleanup(() => {
+        input.removeEventListener('input', handleInput)
+        deleteBtn.removeEventListener('click', handleDelete)
+      })
+    }, 0)
+
+    onCleanup(() => clearTimeout(timer))
+  })
 
   return (
     <div>
-      <DialogTrigger onClick={() => setOpen(true)} class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
         Delete Project
-      </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+      </button>
+      <DialogOverlay open={open()} onClick={handleClose} />
       <DialogContent
         open={open()}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         ariaLabelledby="delete-dialog-title"
         ariaDescribedby="delete-dialog-description"
       >
         <DialogHeader>
           <DialogTitle id="delete-dialog-title">Delete Project</DialogTitle>
           <DialogDescription id="delete-dialog-description">
-            Are you sure you want to delete this project? This action cannot be undone.
+            This action cannot be undone. This will permanently delete the <strong className="text-foreground">{projectName}</strong> project.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 text-sm text-muted-foreground">
-          <p>This will permanently delete:</p>
-          <ul className="list-disc list-inside mt-2 space-y-1">
-            <li>All project files and folders</li>
-            <li>All collaborator access</li>
-            <li>All project settings</li>
-          </ul>
+        <div className="py-4">
+          <label for="confirm-project-name" className="text-sm text-muted-foreground">
+            Please type <strong className="text-foreground">{projectName}</strong> to confirm.
+          </label>
+          <input
+            id="confirm-project-name"
+            type="text"
+            placeholder={projectName}
+            className="mt-2 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
         </div>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <DialogTrigger onClick={() => setOpen(false)} class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Delete
-          </DialogTrigger>
+          <DialogClose onClick={handleClose}>Cancel</DialogClose>
+          <button
+            type="button"
+            id="delete-project-button"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
+          >
+            Delete Project
+          </button>
         </DialogFooter>
       </DialogContent>
     </div>
@@ -155,7 +221,7 @@ export function DialogLongContentDemo() {
         onClose={() => setOpen(false)}
         ariaLabelledby="long-dialog-title"
         ariaDescribedby="long-dialog-description"
-        class="max-h-80"
+        class="max-h-[66vh]"
       >
         <DialogHeader class="flex-shrink-0">
           <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>

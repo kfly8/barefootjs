@@ -249,7 +249,7 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog.locator('text=Delete Project').first()).toBeVisible()
     })
 
-    test('shows warning message', async ({ page }) => {
+    test('shows confirmation input', async ({ page }) => {
       const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
       const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
@@ -259,9 +259,80 @@ test.describe('Dialog Documentation Page', () => {
       const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
-      // Check warning content
-      await expect(dialog.locator('text=This action cannot be undone')).toBeVisible()
-      await expect(dialog.locator('text=All project files')).toBeVisible()
+      // Check confirmation prompt
+      await expect(dialog.locator('text=Please type')).toBeVisible()
+      await expect(dialog.locator('text=my-project').first()).toBeVisible()
+
+      // Delete button should be present
+      const deleteButton = dialog.locator('button#delete-project-button')
+      await expect(deleteButton).toBeVisible()
+    })
+
+    test('delete button is disabled without confirmation', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+      await expect(dialog).toBeVisible()
+
+      // Delete button should be disabled without typing project name
+      const deleteButton = dialog.locator('button#delete-project-button')
+      await expect(deleteButton).toBeDisabled()
+
+      // Dialog should still be open
+      await expect(dialog).toBeVisible()
+      await expect(dialog).toHaveCSS('opacity', '1')
+    })
+
+    test('delete button becomes enabled when project name matches', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+      await expect(dialog).toBeVisible()
+
+      const confirmInput = dialog.locator('input#confirm-project-name')
+      const deleteButton = dialog.locator('button#delete-project-button')
+
+      // Initially disabled
+      await expect(deleteButton).toBeDisabled()
+
+      // Type correct project name
+      await confirmInput.click()
+      await confirmInput.pressSequentially('my-project')
+
+      // Button should now be enabled
+      await expect(deleteButton).toBeEnabled()
+    })
+
+    test('delete closes dialog when project name matches', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+      await expect(dialog).toBeVisible()
+
+      const confirmInput = dialog.locator('input#confirm-project-name')
+      const deleteButton = dialog.locator('button#delete-project-button')
+
+      // Type correct project name (using pressSequentially to trigger oninput)
+      await confirmInput.click()
+      await confirmInput.pressSequentially('my-project')
+
+      // Click delete - should close
+      await deleteButton.click()
+
+      // Dialog should be closed
+      await expect(dialog).toHaveCSS('opacity', '0')
     })
 
     test('closes delete dialog when Cancel is clicked', async ({ page }) => {
@@ -281,7 +352,7 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog).toHaveCSS('opacity', '0')
     })
 
-    test('closes delete dialog when Delete is clicked', async ({ page }) => {
+    test('resets input when dialog is reopened', async ({ page }) => {
       const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
       const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
@@ -291,11 +362,21 @@ test.describe('Dialog Documentation Page', () => {
       const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
-      const deleteButton = dialog.locator('button:has-text("Delete")').last()
+      // Type project name and click delete (using pressSequentially to trigger oninput)
+      const confirmInput = dialog.locator('input#confirm-project-name')
+      await confirmInput.click()
+      await confirmInput.pressSequentially('my-project')
+
+      const deleteButton = dialog.locator('button#delete-project-button')
       await deleteButton.click()
 
-      // Dialog should be closed (check opacity since we use CSS transitions)
+      // Dialog should be closed
       await expect(dialog).toHaveCSS('opacity', '0')
+
+      // Re-open and check input is cleared
+      await trigger.click()
+      await expect(dialog).toBeVisible()
+      await expect(confirmInput).toHaveValue('')
     })
   })
 
