@@ -14,6 +14,18 @@ export type Portal = {
   unmount: () => void
 }
 
+/**
+ * Options for createPortal
+ */
+export interface PortalOptions {
+  /**
+   * The scope element that owns this portal.
+   * When provided, the portal element will have a data-bf-portal-owner attribute
+   * set to the scope ID, allowing find() to locate elements inside the portal.
+   */
+  ownerScope?: Element
+}
+
 /** Anything that can be converted to HTML string via toString() */
 export type Renderable = { toString(): string }
 
@@ -28,6 +40,7 @@ export type PortalChildren = HTMLElement | string | Renderable
  *
  * @param children - Element to mount (HTMLElement, HTML string, or JSX.Element)
  * @param container - Target container element (defaults to document.body)
+ * @param options - Optional configuration including ownerScope for scope-based find()
  * @returns Portal object with element reference and unmount method
  *
  * @example
@@ -48,6 +61,9 @@ export type PortalChildren = HTMLElement | string | Renderable
  * // With JSX.Element (Hono)
  * const portal = createPortal(<Modal />, document.body)
  *
+ * // With ownerScope for scope-based element detection
+ * const portal = createPortal(modalEl, document.body, { ownerScope: scopeElement })
+ *
  * // Access the mounted element
  * console.log(portal.element)
  *
@@ -56,7 +72,8 @@ export type PortalChildren = HTMLElement | string | Renderable
  */
 export function createPortal(
   children: PortalChildren,
-  container: HTMLElement = document.body
+  container: HTMLElement = document.body,
+  options?: PortalOptions
 ): Portal {
   let element: HTMLElement
 
@@ -75,6 +92,14 @@ export function createPortal(
     }
 
     element = parsed
+  }
+
+  // Set portal owner for scope-based find()
+  if (options?.ownerScope) {
+    const scopeId = (options.ownerScope as HTMLElement).dataset?.bfScope
+    if (scopeId) {
+      element.setAttribute('data-bf-portal-owner', scopeId)
+    }
   }
 
   container.appendChild(element)

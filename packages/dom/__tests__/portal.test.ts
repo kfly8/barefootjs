@@ -251,4 +251,49 @@ describe('createPortal', () => {
       expect(() => createPortal(emptyJsx, container)).toThrow('createPortal: Invalid HTML provided')
     })
   })
+
+  describe('with ownerScope option', () => {
+    test('sets data-bf-portal-owner when ownerScope has scope ID', () => {
+      const ownerScope = document.createElement('div')
+      ownerScope.dataset.bfScope = 'Dialog_abc123'
+
+      const portal = createPortal('<div class="modal">Content</div>', container, { ownerScope })
+
+      expect(portal.element.getAttribute('data-bf-portal-owner')).toBe('Dialog_abc123')
+    })
+
+    test('does not set data-bf-portal-owner when ownerScope is missing scope ID', () => {
+      const ownerScope = document.createElement('div')
+      // No data-bf-scope attribute
+
+      const portal = createPortal('<div class="modal">Content</div>', container, { ownerScope })
+
+      expect(portal.element.hasAttribute('data-bf-portal-owner')).toBe(false)
+    })
+
+    test('does not set data-bf-portal-owner when options not provided', () => {
+      const portal = createPortal('<div class="modal">Content</div>', container)
+
+      expect(portal.element.hasAttribute('data-bf-portal-owner')).toBe(false)
+    })
+
+    test('does not set data-bf-portal-owner when ownerScope is undefined', () => {
+      const portal = createPortal('<div class="modal">Content</div>', container, { ownerScope: undefined })
+
+      expect(portal.element.hasAttribute('data-bf-portal-owner')).toBe(false)
+    })
+
+    test('works with HTMLElement children', () => {
+      const ownerScope = document.createElement('div')
+      ownerScope.dataset.bfScope = 'DialogContent_xyz789'
+
+      const modalEl = document.createElement('div')
+      modalEl.className = 'dialog-content'
+
+      const portal = createPortal(modalEl, container, { ownerScope })
+
+      expect(portal.element.getAttribute('data-bf-portal-owner')).toBe('DialogContent_xyz789')
+      expect(portal.element.className).toBe('dialog-content')
+    })
+  })
 })

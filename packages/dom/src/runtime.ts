@@ -178,6 +178,22 @@ export function find(
         if (siblingFound) return siblingFound
       }
     }
+
+    // Search in portals owned by this scope
+    // Portals are elements with data-bf-portal-owner matching this scope's ID
+    const portals = document.querySelectorAll(`[data-bf-portal-owner="${scopeId}"]`)
+    for (const portal of portals) {
+      if (portal.matches?.(selector)) return portal
+      // Search within portal, excluding elements inside nested component scopes
+      const matches = portal.querySelectorAll(selector)
+      for (const match of matches) {
+        const nearestScope = match.closest('[data-bf-scope]')
+        // Include if no nested scope, or if the match is inside a portal-specific scope
+        if (!nearestScope) {
+          return match
+        }
+      }
+    }
   }
 
   return null

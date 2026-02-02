@@ -162,6 +162,103 @@ describe('find', () => {
     expect(el?.textContent).toBe('child')
     expect(el).not.toBe(scope)
   })
+
+  describe('with portals', () => {
+    test('finds element in portal owned by scope', () => {
+      document.body.innerHTML = `
+        <div data-bf-scope="Dialog_abc123">
+          <button data-bf="trigger">Open</button>
+        </div>
+        <div data-bf-portal-owner="Dialog_abc123">
+          <input data-bf="input" />
+        </div>
+      `
+      const scope = document.querySelector('[data-bf-scope]')
+      const input = find(scope, '[data-bf="input"]')
+      expect(input).not.toBeNull()
+      expect(input?.tagName.toLowerCase()).toBe('input')
+    })
+
+    test('prioritizes scope over portal for same selector', () => {
+      document.body.innerHTML = `
+        <div data-bf-scope="Test_1">
+          <span data-bf="item">Scope</span>
+        </div>
+        <div data-bf-portal-owner="Test_1">
+          <span data-bf="item">Portal</span>
+        </div>
+      `
+      const scope = document.querySelector('[data-bf-scope]')
+      const item = find(scope, '[data-bf="item"]')
+      expect(item?.textContent).toBe('Scope')
+    })
+
+    test('finds element in portal when not in scope', () => {
+      document.body.innerHTML = `
+        <div data-bf-scope="Dialog_xyz">
+          <button data-bf="trigger">Open</button>
+        </div>
+        <div data-bf-portal-owner="Dialog_xyz">
+          <div class="content">
+            <input data-bf="email" type="email" />
+            <button data-bf="submit">Submit</button>
+          </div>
+        </div>
+      `
+      const scope = document.querySelector('[data-bf-scope]')
+      const email = find(scope, '[data-bf="email"]')
+      const submit = find(scope, '[data-bf="submit"]')
+      expect(email).not.toBeNull()
+      expect(submit).not.toBeNull()
+      expect(email?.getAttribute('type')).toBe('email')
+    })
+
+    test('does not find element in portal owned by different scope', () => {
+      document.body.innerHTML = `
+        <div data-bf-scope="Dialog_1">
+          <button data-bf="trigger">Open</button>
+        </div>
+        <div data-bf-portal-owner="Dialog_2">
+          <input data-bf="input" />
+        </div>
+      `
+      const scope = document.querySelector('[data-bf-scope="Dialog_1"]')
+      const input = find(scope, '[data-bf="input"]')
+      expect(input).toBeNull()
+    })
+
+    test('finds multiple elements across multiple portals', () => {
+      document.body.innerHTML = `
+        <div data-bf-scope="Dialog_multi">
+          <button data-bf="trigger">Open</button>
+        </div>
+        <div data-bf-portal-owner="Dialog_multi">
+          <div data-bf="overlay" class="overlay"></div>
+        </div>
+        <div data-bf-portal-owner="Dialog_multi">
+          <div data-bf="content" class="content"></div>
+        </div>
+      `
+      const scope = document.querySelector('[data-bf-scope]')
+      const overlay = find(scope, '[data-bf="overlay"]')
+      const content = find(scope, '[data-bf="content"]')
+      expect(overlay).not.toBeNull()
+      expect(content).not.toBeNull()
+    })
+
+    test('finds portal element itself when it matches selector', () => {
+      document.body.innerHTML = `
+        <div data-bf-scope="Dialog_self">
+          <button data-bf="trigger">Open</button>
+        </div>
+        <div data-bf-portal-owner="Dialog_self" data-bf="portal-root"></div>
+      `
+      const scope = document.querySelector('[data-bf-scope]')
+      const portalRoot = find(scope, '[data-bf="portal-root"]')
+      expect(portalRoot).not.toBeNull()
+      expect(portalRoot?.getAttribute('data-bf-portal-owner')).toBe('Dialog_self')
+    })
+  })
 })
 
 describe('hydrate', () => {
