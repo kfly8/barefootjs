@@ -180,6 +180,9 @@ interface DialogContentProps {
  * @param props.ariaDescribedby - ID of description for accessibility
  */
 function DialogContent(props: DialogContentProps) {
+  // Use object to store ref (const object can be mutated)
+  const ref = { current: null as HTMLElement | null }
+
   // Scroll lock: prevent body scroll when dialog is open
   createEffect(() => {
     if (props.open) {
@@ -188,6 +191,17 @@ function DialogContent(props: DialogContentProps) {
       onCleanup(() => {
         document.body.style.overflow = originalOverflow
       })
+    }
+  })
+
+  // Focus first focusable element when dialog opens
+  createEffect(() => {
+    if (props.open && ref.current) {
+      const focusableElements = ref.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0] as HTMLElement
+      setTimeout(() => firstElement?.focus(), 0)
     }
   })
 
@@ -220,20 +234,12 @@ function DialogContent(props: DialogContentProps) {
     }
   }
 
-  // Move element to document.body on mount (portal behavior) and handle focus
+  // Move element to document.body on mount (portal behavior)
   const handleMount = (el: HTMLElement) => {
+    ref.current = el
     // Portal: move to body
     if (el && el.parentNode !== document.body) {
       document.body.appendChild(el)
-    }
-
-    // Focus first element when open
-    if ((props.open ?? false) && el) {
-      const focusableElements = el.querySelectorAll(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      const firstElement = focusableElements[0] as HTMLElement
-      setTimeout(() => firstElement?.focus(), 0)
     }
   }
 

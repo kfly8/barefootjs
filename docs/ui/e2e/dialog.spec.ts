@@ -40,6 +40,21 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog.locator('text=Create New Task')).toBeVisible()
     })
 
+    test('focuses first form element when dialog opens', async ({ page }) => {
+      const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Create Task")')
+
+      await trigger.click()
+
+      // Dialog is portaled to body
+      const dialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
+      await expect(dialog).toBeVisible()
+
+      // First form element (title input) should be focused
+      const titleInput = dialog.locator('input#task-title')
+      await expect(titleInput).toBeFocused()
+    })
+
     test('closes dialog when close button is clicked', async ({ page }) => {
       const basicDemo = page.locator('[data-bf-scope^="DialogBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Create Task")')
