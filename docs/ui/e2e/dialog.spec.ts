@@ -236,49 +236,42 @@ test.describe('Dialog Documentation Page', () => {
     })
   })
 
-  test.describe('Dialog with Form', () => {
-    test('opens form dialog when trigger is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+  test.describe('Delete Confirmation Dialog', () => {
+    test('opens delete dialog when trigger is clicked', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
       // Dialog is portaled to body
-      const dialog = page.locator('[role="dialog"][aria-labelledby="form-dialog-title"]')
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
-      await expect(dialog.locator('text=Edit Profile').first()).toBeVisible()
+      await expect(dialog.locator('text=Delete Project').first()).toBeVisible()
     })
 
-    test('form inputs are focusable', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+    test('shows warning message', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
       // Dialog is portaled to body
-      const dialog = page.locator('[role="dialog"][aria-labelledby="form-dialog-title"]')
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
-      const nameInput = dialog.locator('input#name')
-      const emailInput = dialog.locator('input#email')
-
-      await expect(nameInput).toBeVisible()
-      await expect(emailInput).toBeVisible()
-
-      // Click and type in name input
-      await nameInput.click()
-      await nameInput.fill('John Doe')
-      await expect(nameInput).toHaveValue('John Doe')
+      // Check warning content
+      await expect(dialog.locator('text=This action cannot be undone')).toBeVisible()
+      await expect(dialog.locator('text=All project files')).toBeVisible()
     })
 
-    test('closes form dialog when Cancel is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+    test('closes delete dialog when Cancel is clicked', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
       // Dialog is portaled to body
-      const dialog = page.locator('[role="dialog"][aria-labelledby="form-dialog-title"]')
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
       const cancelButton = dialog.locator('button:has-text("Cancel")')
@@ -288,18 +281,18 @@ test.describe('Dialog Documentation Page', () => {
       await expect(dialog).toHaveCSS('opacity', '0')
     })
 
-    test('closes form dialog when Save is clicked', async ({ page }) => {
-      const formDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
-      const trigger = formDemo.locator('button:has-text("Edit Profile")')
+    test('closes delete dialog when Delete is clicked', async ({ page }) => {
+      const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+      const trigger = deleteDemo.locator('button:has-text("Delete Project")')
 
       await trigger.click()
 
       // Dialog is portaled to body
-      const dialog = page.locator('[role="dialog"][aria-labelledby="form-dialog-title"]')
+      const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
       await expect(dialog).toBeVisible()
 
-      const saveButton = dialog.locator('button:has-text("Save changes")')
-      await saveButton.click()
+      const deleteButton = dialog.locator('button:has-text("Delete")').last()
+      await deleteButton.click()
 
       // Dialog should be closed (check opacity since we use CSS transitions)
       await expect(dialog).toHaveCSS('opacity', '0')

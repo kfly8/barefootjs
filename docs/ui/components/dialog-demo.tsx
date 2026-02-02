@@ -96,56 +96,42 @@ export function DialogBasicDemo() {
 }
 
 /**
- * Dialog with form demo
+ * Delete confirmation dialog demo
  */
 export function DialogFormDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <DialogTrigger onClick={() => setOpen(true)}>
-        Edit Profile
+      <DialogTrigger onClick={() => setOpen(true)} class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+        Delete Project
       </DialogTrigger>
       <DialogOverlay open={open()} onClick={() => setOpen(false)} />
       <DialogContent
         open={open()}
         onClose={() => setOpen(false)}
-        ariaLabelledby="form-dialog-title"
-        ariaDescribedby="form-dialog-description"
+        ariaLabelledby="delete-dialog-title"
+        ariaDescribedby="delete-dialog-description"
       >
         <DialogHeader>
-          <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
-          <DialogDescription id="form-dialog-description">
-            Make changes to your profile here. Click save when you're done.
+          <DialogTitle id="delete-dialog-title">Delete Project</DialogTitle>
+          <DialogDescription id="delete-dialog-description">
+            Are you sure you want to delete this project? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label for="name" className="text-right text-sm font-medium">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              placeholder="Enter your name"
-              className="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label for="email" className="text-right text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              className="col-span-3 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
+        <div className="py-4 text-sm text-muted-foreground">
+          <p>This will permanently delete:</p>
+          <ul className="list-disc list-inside mt-2 space-y-1">
+            <li>All project files and folders</li>
+            <li>All collaborator access</li>
+            <li>All project settings</li>
+          </ul>
         </div>
         <DialogFooter>
           <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <DialogTrigger onClick={() => setOpen(false)}>Save changes</DialogTrigger>
+          <DialogTrigger onClick={() => setOpen(false)} class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Delete
+          </DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>
@@ -171,13 +157,13 @@ export function DialogLongContentDemo() {
         ariaDescribedby="long-dialog-description"
         class="max-h-80"
       >
-        <DialogHeader>
+        <DialogHeader class="flex-shrink-0">
           <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
           <DialogDescription id="long-dialog-description">
             Please read the following terms carefully.
           </DialogDescription>
         </DialogHeader>
-        <div className="text-sm text-muted-foreground space-y-4">
+        <div className="text-sm text-muted-foreground space-y-4 overflow-y-auto flex-1 min-h-0">
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
           </p>
@@ -203,7 +189,7 @@ export function DialogLongContentDemo() {
             At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
           </p>
         </div>
-        <DialogFooter>
+        <DialogFooter class="flex-shrink-0">
           <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
           <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
         </DialogFooter>

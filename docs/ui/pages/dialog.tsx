@@ -21,7 +21,7 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
-  { id: 'with-form', title: 'With Form', branch: 'start' },
+  { id: 'delete-confirm', title: 'Delete Confirmation', branch: 'start' },
   { id: 'long-content', title: 'Long Content', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
@@ -96,12 +96,9 @@ function CreateTaskDialog() {
   )
 }`
 
-const formCode = `"use client"
+const deleteCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   DialogTrigger,
   DialogOverlay,
@@ -113,37 +110,45 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 
-function DialogForm() {
+function DeleteConfirmDialog() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <DialogTrigger onClick={() => setOpen(true)}>
-        Edit Profile
+      <DialogTrigger
+        onClick={() => setOpen(true)}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        Delete Project
       </DialogTrigger>
       <DialogOverlay open={open()} onClick={() => setOpen(false)} />
       <DialogContent
         open={open()}
         onClose={() => setOpen(false)}
-        ariaLabelledby="form-dialog-title"
+        ariaLabelledby="delete-dialog-title"
+        ariaDescribedby="delete-dialog-description"
       >
         <DialogHeader>
-          <DialogTitle id="form-dialog-title">Edit Profile</DialogTitle>
-          <DialogDescription>
-            Make changes to your profile here.
+          <DialogTitle id="delete-dialog-title">Delete Project</DialogTitle>
+          <DialogDescription id="delete-dialog-description">
+            Are you sure? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" type="text" className="col-span-3" />
-          </div>
+        <div className="py-4 text-sm text-muted-foreground">
+          <p>This will permanently delete:</p>
+          <ul className="list-disc list-inside mt-2 space-y-1">
+            <li>All project files and folders</li>
+            <li>All collaborator access</li>
+          </ul>
         </div>
         <DialogFooter>
           <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <Button onClick={() => setOpen(false)}>Save changes</Button>
+          <DialogTrigger
+            onClick={() => setOpen(false)}
+            class="bg-destructive text-destructive-foreground ..."
+          >
+            Delete
+          </DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>
@@ -180,17 +185,17 @@ function DialogLongContent() {
         ariaDescribedby="long-dialog-description"
         class="max-h-80"
       >
-        <DialogHeader>
+        <DialogHeader class="flex-shrink-0">
           <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
           <DialogDescription id="long-dialog-description">
             Please read the following terms carefully.
           </DialogDescription>
         </DialogHeader>
-        <div className="text-sm text-muted-foreground space-y-4">
+        <div className="text-sm text-muted-foreground space-y-4 overflow-y-auto flex-1 min-h-0">
           <p>Lorem ipsum dolor sit amet...</p>
-          {/* Multiple paragraphs of content */}
+          {/* Multiple paragraphs - only this area scrolls */}
         </div>
-        <DialogFooter>
+        <DialogFooter class="flex-shrink-0">
           <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
           <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
         </DialogFooter>
@@ -315,7 +320,7 @@ export function DialogPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="With Form" code={formCode}>
+            <Example title="Delete Confirmation" code={deleteCode}>
               <DialogFormDemo />
             </Example>
 

@@ -53,8 +53,8 @@ const dialogOverlayClosedClasses = 'opacity-0 pointer-events-none'
 
 // DialogContent base classes
 // Portal: element is moved to document.body during hydration
-// max-h and overflow-y-auto enable scrolling within the dialog when content is long
-const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
+// Uses flex layout so header/footer stay fixed while content scrolls
+const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-50 flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
 
 // DialogContent open/closed classes
 const dialogContentOpenClasses = 'opacity-100 scale-100'
