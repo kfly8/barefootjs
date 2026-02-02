@@ -37,7 +37,7 @@
  * ```
  */
 
-import { createEffect, onCleanup } from '@barefootjs/dom'
+import { createEffect, onCleanup, createPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
 // DialogTrigger classes
@@ -130,9 +130,11 @@ interface DialogOverlayProps {
  */
 function DialogOverlay(props: DialogOverlayProps) {
   // Move element to document.body on mount (portal behavior)
+  // Uses createPortal with ownerScope for scope-based element detection
   const moveToBody = (el: HTMLElement) => {
     if (el && el.parentNode !== document.body) {
-      document.body.appendChild(el)
+      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      createPortal(el, document.body, { ownerScope })
     }
   }
 
@@ -230,11 +232,13 @@ function DialogContent(props: DialogContentProps) {
   }
 
   // Move element to document.body on mount (portal behavior)
+  // Uses createPortal with ownerScope for scope-based element detection
   const handleMount = (el: HTMLElement) => {
     ref.current = el
-    // Portal: move to body
+    // Portal: move to body with ownerScope for find() support
     if (el && el.parentNode !== document.body) {
-      document.body.appendChild(el)
+      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      createPortal(el, document.body, { ownerScope })
     }
   }
 

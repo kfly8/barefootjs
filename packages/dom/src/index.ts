@@ -14,6 +14,7 @@ export {
 export {
   createPortal,
   type Portal,
+  type PortalOptions,
   type Renderable,
   type PortalChildren,
 } from './portal'
