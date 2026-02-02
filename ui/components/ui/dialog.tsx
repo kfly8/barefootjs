@@ -44,15 +44,17 @@ import type { Child } from '../../types'
 const dialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
 // DialogOverlay base classes
-const dialogOverlayBaseClasses = 'fixed inset-0 z-dialog bg-black/50 backdrop-blur-sm transition-opacity duration-normal'
+// Portal: element is moved to document.body during hydration
+const dialogOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-normal'
 
 // DialogOverlay open/closed classes
 const dialogOverlayOpenClasses = 'opacity-100'
 const dialogOverlayClosedClasses = 'opacity-0 pointer-events-none'
 
 // DialogContent base classes
+// Portal: element is moved to document.body during hydration
 // max-h and overflow-y-auto enable scrolling within the dialog when content is long
-const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-dialog grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
+const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
 
 // DialogContent open/closed classes
 const dialogContentOpenClasses = 'opacity-100 scale-100'
@@ -126,17 +128,26 @@ interface DialogOverlayProps {
 
 /**
  * Semi-transparent overlay behind the dialog.
+ * Portals to document.body to avoid z-index issues with fixed headers.
  *
  * @param props.open - Whether visible
  * @param props.onClick - Click handler to close
  */
 function DialogOverlay(props: DialogOverlayProps) {
+  // Move element to document.body on mount (portal behavior)
+  const moveToBody = (el: HTMLElement) => {
+    if (el && el.parentNode !== document.body) {
+      document.body.appendChild(el)
+    }
+  }
+
   return (
     <div
       data-slot="dialog-overlay"
       data-state={(props.open ?? false) ? 'open' : 'closed'}
       className={`${dialogOverlayBaseClasses} ${(props.open ?? false) ? dialogOverlayOpenClasses : dialogOverlayClosedClasses} ${props.class ?? ''}`}
       onClick={props.onClick}
+      ref={moveToBody}
     />
   )
 }
@@ -161,6 +172,7 @@ interface DialogContentProps {
 
 /**
  * Main content container for the dialog.
+ * Portals to document.body to avoid z-index issues with fixed headers.
  *
  * @param props.open - Whether visible
  * @param props.onClose - Close callback
@@ -208,7 +220,14 @@ function DialogContent(props: DialogContentProps) {
     }
   }
 
-  const handleFocusOnOpen = (el: HTMLElement) => {
+  // Move element to document.body on mount (portal behavior) and handle focus
+  const handleMount = (el: HTMLElement) => {
+    // Portal: move to body
+    if (el && el.parentNode !== document.body) {
+      document.body.appendChild(el)
+    }
+
+    // Focus first element when open
     if ((props.open ?? false) && el) {
       const focusableElements = el.querySelectorAll(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -229,7 +248,7 @@ function DialogContent(props: DialogContentProps) {
       tabindex={-1}
       className={`${dialogContentBaseClasses} ${(props.open ?? false) ? dialogContentOpenClasses : dialogContentClosedClasses} ${props.class ?? ''}`}
       onKeyDown={handleKeyDown}
-      ref={handleFocusOnOpen}
+      ref={handleMount}
     >
       {props.children}
     </div>
