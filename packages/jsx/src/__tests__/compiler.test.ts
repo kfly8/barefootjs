@@ -584,4 +584,132 @@ describe('Compiler', () => {
       expect(clientJs?.content).not.toContain('const result = () => {}')
     })
   })
+
+  describe('import optimization', () => {
+    test('component with event handler imports only required functions', () => {
+      const source = `
+        'use client'
+
+        export function Button() {
+          return <button onClick={() => console.log('clicked')}>Click</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Button.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should import only required functions
+      expect(clientJs?.content).toContain('findScope')
+      expect(clientJs?.content).toContain('find')
+      expect(clientJs?.content).toContain('hydrate')
+      expect(clientJs?.content).toContain('registerComponent')
+      // Should NOT import unused functions
+      expect(clientJs?.content).not.toContain('createSignal')
+      expect(clientJs?.content).not.toContain('createMemo')
+      expect(clientJs?.content).not.toContain('createEffect')
+      expect(clientJs?.content).not.toContain('onCleanup')
+      expect(clientJs?.content).not.toContain('onMount')
+    })
+
+    test('component with signal imports createSignal and createEffect', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return <div>{count()}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should import createSignal and createEffect (for reactive updates)
+      expect(clientJs?.content).toContain('createSignal')
+      expect(clientJs?.content).toContain('createEffect')
+      // Should NOT import unused functions
+      expect(clientJs?.content).not.toContain('createMemo')
+      expect(clientJs?.content).not.toContain('onCleanup')
+      expect(clientJs?.content).not.toContain('onMount')
+    })
+
+    test('component with memo imports createMemo', () => {
+      const source = `
+        'use client'
+        import { createSignal, createMemo } from '@barefootjs/dom'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          const doubled = createMemo(() => count() * 2)
+          return <div>{doubled()}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should import createMemo
+      expect(clientJs?.content).toContain('createMemo')
+    })
+
+    test('user-defined imports from @barefootjs/dom are preserved', () => {
+      const source = `
+        'use client'
+        import { createSignal, createPortal } from '@barefootjs/dom'
+
+        export function Modal() {
+          const [open, setOpen] = createSignal(false)
+          return <div onClick={() => setOpen(true)}>{open() && 'Open'}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Modal.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // User-defined import should be preserved
+      expect(clientJs?.content).toContain('createPortal')
+    })
+
+    test('imports are sorted alphabetically', () => {
+      const source = `
+        'use client'
+        import { createSignal, createMemo, onMount } from '@barefootjs/dom'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          const doubled = createMemo(() => count() * 2)
+          onMount(() => console.log('mounted'))
+          return <div>{doubled()}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+
+      // Extract import line
+      const importMatch = clientJs?.content.match(/import \{ ([^}]+) \} from '@barefootjs\/dom'/)
+      expect(importMatch).not.toBeNull()
+
+      const imports = importMatch![1].split(', ')
+      const sortedImports = [...imports].sort()
+      expect(imports).toEqual(sortedImports)
+    })
+  })
 })
