@@ -19,7 +19,7 @@ import {
 } from '@ui/components/ui/dialog'
 
 /**
- * Basic dialog demo
+ * Create task dialog demo - typical dialog with form
  */
 export function DialogBasicDemo() {
   const [open, setOpen] = createSignal(false)
@@ -47,7 +47,7 @@ export function DialogBasicDemo() {
   return (
     <div>
       <DialogTrigger onClick={openDialog}>
-        Open Dialog
+        Create Task
       </DialogTrigger>
       <DialogOverlay open={open()} onClick={closeDialog} />
       <DialogContent
@@ -57,16 +57,38 @@ export function DialogBasicDemo() {
         ariaDescribedby="dialog-description"
       >
         <DialogHeader>
-          <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
+          <DialogTitle id="dialog-title">Create New Task</DialogTitle>
           <DialogDescription id="dialog-description">
-            This is a basic dialog example. Press ESC or click outside to close.
+            Add a new task to your list.
           </DialogDescription>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground py-4">
-          Dialog content goes here. You can add any content you need.
-        </p>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label for="task-title" className="text-sm font-medium">
+              Title
+            </label>
+            <input
+              id="task-title"
+              type="text"
+              placeholder="Enter task title"
+              className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+          <div className="grid gap-2">
+            <label for="task-description" className="text-sm font-medium">
+              Description
+            </label>
+            <textarea
+              id="task-description"
+              placeholder="Enter task description (optional)"
+              rows={3}
+              className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+            />
+          </div>
+        </div>
         <DialogFooter>
-          <DialogClose onClick={closeDialog}>Close</DialogClose>
+          <DialogClose onClick={closeDialog}>Cancel</DialogClose>
+          <DialogTrigger onClick={closeDialog}>Create</DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>

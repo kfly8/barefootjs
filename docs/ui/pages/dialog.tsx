@@ -43,13 +43,13 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 
-function DialogBasic() {
+function CreateTaskDialog() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
       <DialogTrigger onClick={() => setOpen(true)}>
-        Open Dialog
+        Create Task
       </DialogTrigger>
       <DialogOverlay open={open()} onClick={() => setOpen(false)} />
       <DialogContent
@@ -59,14 +59,38 @@ function DialogBasic() {
         ariaDescribedby="dialog-description"
       >
         <DialogHeader>
-          <DialogTitle id="dialog-title">Dialog Title</DialogTitle>
+          <DialogTitle id="dialog-title">Create New Task</DialogTitle>
           <DialogDescription id="dialog-description">
-            This is a basic dialog example.
+            Add a new task to your list.
           </DialogDescription>
         </DialogHeader>
-        <p>Dialog content goes here.</p>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label for="task-title" className="text-sm font-medium">
+              Title
+            </label>
+            <input
+              id="task-title"
+              type="text"
+              placeholder="Enter task title"
+              className="flex h-10 w-full rounded-md border ..."
+            />
+          </div>
+          <div className="grid gap-2">
+            <label for="task-description" className="text-sm font-medium">
+              Description
+            </label>
+            <textarea
+              id="task-description"
+              placeholder="Enter task description (optional)"
+              rows={3}
+              className="flex w-full rounded-md border ..."
+            />
+          </div>
+        </div>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Close</DialogClose>
+          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
+          <DialogTrigger onClick={() => setOpen(false)}>Create</DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>
