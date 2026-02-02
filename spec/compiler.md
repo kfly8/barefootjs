@@ -70,13 +70,29 @@ setCount(n => n + 1)  // Updater function
 
 ### Props Access
 
-Props use **destructuring at definition** but may need **getter calls at usage**:
+Props should be accessed via `props.xxx` to maintain reactivity (SolidJS-style):
+
+| Pattern | Behavior | Use Case |
+|---------|----------|----------|
+| `props.value` | Reactive (may be getter) | In event handlers, JSX |
+| `const { value } = props` | Captured once | Static props / initial values only |
 
 ```tsx
-// ✅ Destructuring at component definition is OK
-function Counter({ initial, onChange }: Props) {
-  const [count, setCount] = createSignal(initial)
-  // ...
+// ✅ GOOD: Maintains reactivity
+function Child(props: Props) {
+  return <p>{props.value}</p>  // Re-evaluates on each access
+}
+
+// ⚠️ Destructuring captures value once - loses reactivity
+function Child({ value }: Props) {
+  const captured = value  // If parent passes count(), this is stale
+  return <p>{captured}</p>
+}
+
+// ✅ OK: Destructured value as initial value for local signal
+function Child({ value }: Props) {
+  const [local, setLocal] = createSignal(value)
+  return <p>{local()}</p>  // local signal is reactive
 }
 ```
 
@@ -90,36 +106,6 @@ function Counter({ initial, onChange }: Props) {
 const propsForInit = {
   get value() { return count() },  // Dynamic: wrapped as getter
   onChange: handleChange           // Callback: passed directly
-}
-```
-
-### Props Access Patterns
-
-| Pattern | Behavior | Use Case |
-|---------|----------|----------|
-| `props.value` | Direct access (may be getter) | In event handlers |
-| `props.value()` | Explicit getter call | When prop is reactive |
-| `const { value } = props` | Destructure once | Static props only |
-
-**⚠️ Important:** Destructuring reactive props breaks reactivity:
-
-```tsx
-// ❌ BAD: Loses reactivity (value captured once)
-function Child({ value }: Props) {
-  const captured = value  // If parent passes count(), this is stale
-  return <p>{captured}</p>
-}
-
-// ✅ GOOD: Maintains reactivity
-function Child(props: Props) {
-  return <p>{props.value()}</p>  // Re-evaluates on each access
-}
-
-// ✅ ALSO GOOD: Use in effect
-function Child({ value }: Props) {
-  const [local, setLocal] = createSignal(value)
-  // value is used as initial value, local signal is reactive
-  return <p>{local()}</p>
 }
 ```
 
@@ -304,18 +290,7 @@ function Component({ checked }: Props) {
 
 ---
 
-## Reactivity Model
-
-This section documents the current reactive behavior of the compiler.
-
-### Overview
-
-Barefoot.js uses **fine-grained reactivity** similar to SolidJS:
-- Components execute **once** (not on every render like React)
-- Reactivity flows through **signal getter calls** and **property access**
-- JSX expressions are wrapped in `createEffect` for reactive updates
-
----
+## Compiler Internals
 
 ### Reactivity Classification
 
@@ -324,212 +299,49 @@ Barefoot.js uses **fine-grained reactivity** similar to SolidJS:
 | `count()` (signal getter) | Yes | Signal call detected |
 | `doubled()` (memo call) | Yes | Memo call detected |
 | `props.count` | Yes | Props reference |
-| `count` (destructured prop) | Yes* | Props parameter (*see caveats) |
+| `count` (destructured prop) | No | Value captured at definition |
 | `"static string"` | No | Literal value |
 | `CONSTANT` (no reactive deps) | No | Pure constant |
-| `classes` (depends on signal) | Yes | Transitive dependency |
 
----
+### Generated Client JS Examples
 
-### Props Access Patterns
-
-#### Pattern A: Destructured Props
+**Destructured props** - value captured once:
 
 ```tsx
 // Source
-function Counter({ count }: { count: number }) {
+function Counter({ count }: Props) {
   return <div>{count}</div>
 }
 
-// Generated Client JS
+// Generated
 const count = props.count  // Captured ONCE at hydration
 createEffect(() => {
   if (_slot_0) _slot_0.textContent = String(count)
 })
 ```
 
-**Behavior**: Value captured at hydration. Does NOT update when parent changes.
-
-#### Pattern B: Direct Props Access
+**Direct props access** - reactive:
 
 ```tsx
 // Source
-function Counter(props: { count: number }) {
+function Counter(props: Props) {
   return <div>{props.count}</div>
 }
 
-// Generated Client JS
+// Generated
 createEffect(() => {
   if (_slot_0) _slot_0.textContent = String(props.count)
 })
 ```
 
-**Behavior**: Accessed inside effect. Updates when parent passes new value via getter.
+### Known Issues
 
-#### Pattern C: Props in Memo/Effect (SolidJS-style)
-
-```tsx
-// Source - use props.xxx directly for reactivity
-function Checkbox(props: { checked?: boolean }) {
-  const isControlled = createMemo(() => props.checked !== undefined)
-}
-
-// Generated Client JS - preserved as-is
-const isControlled = createMemo(() => props.checked !== undefined)
-```
-
-**Behavior**: Props accessed via `props.xxx` maintain reactivity. **No implicit transformation** - you must write `props.xxx` explicitly.
-
-#### Pattern D: Props Passed to Child
-
-```tsx
-// Parent
-function Parent() {
-  const [value, setValue] = createSignal(false)
-  return <Checkbox checked={value()} />
-}
-
-// Generated: getter for reactivity
-initChild('Checkbox', _slot_0, {
-  get checked() { return value() }
-})
-```
-
-**Behavior**: Dynamic props wrapped in getters for SolidJS-style reactivity.
-
----
-
-### Context-Dependent Behavior Summary
-
-| Context | Pattern | Reactive? | Notes |
-|---------|---------|-----------|-------|
-| **JSX expression** | `{count()}` | Yes | Wrapped in `createEffect` |
-| **JSX expression** | `{props.value}` | Yes | Wrapped in `createEffect` |
-| **Memo body** | `props.checked` | Yes | Props accessed via object maintain reactivity |
-| **Memo body** | `checked` (destructured) | No | Value captured at definition |
-| **Effect body** | `props.checked` | Yes | Props accessed via object maintain reactivity |
-| **Effect body** | `checked` (destructured) | No | Value captured at definition |
-| **Child props** | `<C val={x()}/>` | Yes | Getter: `get val() { return x() }` |
-| **Constant def** | `const c = x()` | No | Evaluated once (late if depends on signal) |
-
-**Rule**: Use `props.xxx` to maintain reactivity. Destructured props capture the value once.
-
----
-
-### Comparison with SolidJS and React
-
-#### SolidJS
-
-| Aspect | SolidJS | Barefoot.js |
-|--------|---------|-------------|
-| Component execution | Once | Once (hydration) |
-| Props access style | Always `props.xxx` | Destructured or `props.xxx` |
-| Reactivity trigger | Signal getter call | Signal getter call |
-| Prop reactivity | Via proxy/getters | Via getters (child) or effects (JSX) |
-
-**Key Difference**: SolidJS **discourages destructuring props**. Barefoot.js allows it but with caveats.
-
-```tsx
-// SolidJS - idiomatic
-function Counter(props) {
-  return <div>{props.count}</div>  // Always reactive
-}
-
-// Barefoot.js - works but has edge cases
-function Counter({ count }) {
-  return <div>{count}</div>  // Reactive in JSX, static elsewhere
-}
-```
-
-#### React
-
-| Aspect | React | Barefoot.js |
-|--------|-------|-------------|
-| Component execution | Every render | Once (hydration) |
-| Props access | Any style works | Style affects reactivity |
-| State update | Re-renders component | Triggers effects only |
-
-**Key Difference**: React re-runs the entire component. Barefoot.js runs once and updates via effects.
-
-```tsx
-// React - props always fresh
-function Counter({ count }) {
-  console.log(count)  // Fresh on every render
-  return <div>{count}</div>
-}
-
-// Barefoot.js - props captured once
-function Counter({ count }) {
-  console.log(count)  // Only logs INITIAL value
-  return <div>{count}</div>  // JSX updates via effect
-}
-```
-
----
-
-### Known Inconsistencies
-
-#### 1. Destructuring vs Direct Access (SolidJS Rule)
-
-```tsx
-// BROKEN: value captured at hydration, loses reactivity
-function Checkbox({ checked }) {
-  const isControlled = checked !== undefined  // Always initial value
-  const x = createMemo(() => checked !== undefined)  // Also broken - checked is captured
-}
-
-// WORKS: use props object directly
-function Checkbox(props) {
-  const isControlled = createMemo(() => props.checked !== undefined)
-  // props.checked is reactive - updates when parent changes
-}
-```
-
-**SolidJS-style Rule**: Destructured props lose reactivity. Use `props.xxx` to maintain reactivity.
-
-#### 2. Constant Ordering
+**Constant Ordering** - Compiler must detect dependency and reorder:
 
 ```tsx
 const classes = `btn ${isActive() && 'on'}`  // Uses memo
 const isActive = createMemo(() => selected() === id)
 ```
-
-Compiler must detect dependency and reorder. This is fragile.
-
----
-
-### Underlying Principle
-
-**Reactivity flows through function calls and property access, not variable capture.**
-
-| Access Pattern | Reactive? | Why |
-|----------------|-----------|-----|
-| `signal()` | Yes | Function call re-evaluated in effect |
-| `props.xxx` | Potentially | Property access can use getter |
-| `const x = signal()` | No | Value captured at definition |
-| `const x = props.xxx` | No | Value captured at definition |
-
----
-
-### Reactivity Rule (SolidJS-style)
-
-**Adopted Approach**: Destructured props lose reactivity. Use `props.xxx` for reactive access.
-
-```tsx
-// ✅ GOOD: Reactive props access
-function Component(props: Props) {
-  const derived = createMemo(() => props.value * 2)  // Reactive
-  return <div>{props.name}</div>  // Reactive in JSX
-}
-
-// ❌ BAD: Loses reactivity
-function Component({ value, name }: Props) {
-  const derived = createMemo(() => value * 2)  // Captured once, not reactive
-  return <div>{name}</div>  // Still works in JSX due to createEffect wrapper
-}
-```
-
-This matches SolidJS behavior where props must be accessed via the props object to maintain reactivity.
 
 ---
 
