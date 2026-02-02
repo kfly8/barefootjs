@@ -96,18 +96,45 @@ function Child({ value }: Props) {
 }
 ```
 
-**Compiler transformation for child component props:**
+### Lazy Evaluation
+
+Reactivity is based on **lazy evaluation** - expressions are only evaluated when accessed. This enables efficient fine-grained updates.
+
+**Parent-to-child props example:**
 
 ```tsx
 // Parent component
-<Counter value={count()} onChange={handleChange} />
+function Parent() {
+  const [count, setCount] = createSignal(0)
+  return <Child value={count()} onChange={() => setCount(n => n + 1)} />
+}
 
-// Generated client JS (getter-based for reactive props)
-const propsForInit = {
-  get value() { return count() },  // Dynamic: wrapped as getter
-  onChange: handleChange           // Callback: passed directly
+// Compiler wraps dynamic expressions in getters, but not callbacks
+// → { get value() { return count() }, onChange: () => setCount(n => n + 1) }
+
+// Child component
+function Child(props: Props) {
+  // Value is evaluated HERE when accessed
+  createEffect(() => {
+    console.log(props.value)  // ← count() is called at this moment
+  })
+
+  // Callback is called directly (no lazy evaluation needed)
+  return <button onClick={props.onChange}>+1</button>
 }
 ```
+
+**Compiler transformation rules:**
+
+| Prop type | Transformation | Reason |
+|-----------|---------------|--------|
+| Dynamic expression `{count()}` | `get value() { return count() }` | Lazy evaluation for reactivity |
+| Callback `{() => fn()}` | `onChange: () => fn()` | No lazy evaluation needed |
+| Static value `{"hello"}` | `label: "hello"` | No lazy evaluation needed |
+
+The **consumer** (child) determines when evaluation happens, not the **provider** (parent). This is why:
+- `props.value` → Getter is called → Reactive
+- `const { value } = props` → Getter is called immediately → Value captured once
 
 ### Comparison with SolidJS and React
 
