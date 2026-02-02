@@ -51,7 +51,8 @@ const dialogOverlayOpenClasses = 'opacity-100'
 const dialogOverlayClosedClasses = 'opacity-0 pointer-events-none'
 
 // DialogContent base classes
-const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-dialog grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
+// max-h and overflow-y-auto enable scrolling within the dialog when content is long
+const dialogContentBaseClasses = 'fixed left-[50%] top-[50%] z-dialog grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-background p-6 shadow-lg transition-all duration-normal outline-none sm:max-w-lg'
 
 // DialogContent open/closed classes
 const dialogContentOpenClasses = 'opacity-100 scale-100'

@@ -2,7 +2,7 @@
  * Dialog Documentation Page
  */
 
-import { DialogBasicDemo, DialogFormDemo } from '@/components/dialog-demo'
+import { DialogBasicDemo, DialogFormDemo, DialogLongContentDemo } from '@/components/dialog-demo'
 import {
   DocPage,
   PageHeader,
@@ -22,7 +22,8 @@ const tocItems: TocItem[] = [
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
   { id: 'basic', title: 'Basic', branch: 'start' },
-  { id: 'with-form', title: 'With Form', branch: 'end' },
+  { id: 'with-form', title: 'With Form' },
+  { id: 'long-content', title: 'Long Content', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -120,6 +121,55 @@ function DialogForm() {
         <DialogFooter>
           <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
           <Button onClick={() => setOpen(false)}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </div>
+  )
+}`
+
+const longContentCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  DialogTrigger,
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
+
+function DialogLongContent() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div>
+      <DialogTrigger onClick={() => setOpen(true)}>
+        Open Long Content Dialog
+      </DialogTrigger>
+      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+      <DialogContent
+        open={open()}
+        onClose={() => setOpen(false)}
+        ariaLabelledby="long-dialog-title"
+        ariaDescribedby="long-dialog-description"
+        class="max-h-80"
+      >
+        <DialogHeader>
+          <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
+          <DialogDescription id="long-dialog-description">
+            Please read the following terms carefully.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="text-sm text-muted-foreground space-y-4">
+          <p>Lorem ipsum dolor sit amet...</p>
+          {/* Multiple paragraphs of content */}
+        </div>
+        <DialogFooter>
+          <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
+          <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
         </DialogFooter>
       </DialogContent>
     </div>
@@ -248,6 +298,10 @@ export function DialogPage() {
 
             <Example title="With Form" code={formCode}>
               <DialogFormDemo />
+            </Example>
+
+            <Example title="Long Content" code={longContentCode}>
+              <DialogLongContentDemo />
             </Example>
           </div>
         </Section>
