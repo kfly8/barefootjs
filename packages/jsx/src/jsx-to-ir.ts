@@ -252,6 +252,47 @@ function transformSelfClosingComponent(
 // Fragment Transformation
 // =============================================================================
 
+/**
+ * Check if a fragment is "transparent" (just passes through children).
+ * Pattern: <>{children}</> or <>{props.children}</>
+ * Transparent fragments don't need scope markers on their children.
+ */
+function isTransparentFragment(
+  node: ts.JsxFragment,
+  ctx: TransformContext
+): boolean {
+  // Filter out whitespace-only text nodes
+  const children = node.children.filter(child => {
+    if (ts.isJsxText(child)) {
+      return child.text.trim() !== ''
+    }
+    return true
+  })
+
+  // Must have exactly one child
+  if (children.length !== 1) return false
+
+  const child = children[0]
+
+  // Child must be a JSX expression
+  if (!ts.isJsxExpression(child)) return false
+  if (!child.expression) return false
+
+  const exprText = child.expression.getText(ctx.sourceFile)
+
+  // Check for children patterns
+  if (exprText === 'children') return true
+  if (exprText === 'props.children') return true
+
+  // Check for custom props object name (e.g., p.children)
+  const propsName = ctx.analyzer.propsObjectName
+  if (propsName && exprText === `${propsName}.children`) {
+    return true
+  }
+
+  return false
+}
+
 function transformFragment(
   node: ts.JsxFragment,
   ctx: TransformContext
@@ -261,10 +302,14 @@ function transformFragment(
   // to enable proper hydration queries across siblings
   const isFragmentRoot = ctx.isRoot
 
+  // Detect transparent fragment (Context Provider pattern)
+  const isTransparent = isFragmentRoot && isTransparentFragment(node, ctx)
+
   const children = transformChildren(node.children, ctx)
 
-  // If this was the root fragment, ensure all direct element children have needsScope
-  if (isFragmentRoot) {
+  // If this was the root fragment and NOT transparent, ensure all direct element children have needsScope
+  // Transparent fragments skip this because they just pass through children
+  if (isFragmentRoot && !isTransparent) {
     for (const child of children) {
       if (child.type === 'element') {
         child.needsScope = true
@@ -275,6 +320,7 @@ function transformFragment(
   return {
     type: 'fragment',
     children,
+    transparent: isTransparent || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
