@@ -103,6 +103,7 @@ func main() {
 	e.GET("/reactive-props", reactivePropsHandler)
 	e.GET("/props-reactivity", propsReactivityHandler)
 	e.GET("/form", formHandler)
+	e.GET("/dialog", dialogHandler)
 
 	// Todo API endpoints
 	e.GET("/api/todos", getTodosAPI)
@@ -140,6 +141,7 @@ func indexHandler(c echo.Context) error {
         <li><a href="/toggle">Toggle</a></li>
         <li><a href="/todos">Todo (@client)</a></li>
         <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
+        <li><a href="/dialog">Dialog</a></li>
     </ul>
 </body>
 </html>
@@ -232,6 +234,15 @@ func formHandler(c echo.Context) error {
 		Props:   &props,
 		Title:   "Form - BarefootJS",
 		Heading: "Form Example",
+	})
+}
+
+func dialogHandler(c echo.Context) error {
+	props := NewDialogExampleProps(DialogExampleInput{})
+	return c.Render(http.StatusOK, "DialogExample", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Dialog - BarefootJS",
+		Heading: "Dialog Example",
 	})
 }
 
