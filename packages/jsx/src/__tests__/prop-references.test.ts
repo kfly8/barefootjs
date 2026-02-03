@@ -16,7 +16,7 @@ const adapter = new TestAdapter()
 
 describe('PropReference extraction', () => {
   describe('extractPropReferences via jsxToIR', () => {
-    test('extracts simple prop reference', () => {
+    test('destructured props do NOT have propRefs (no transformation needed)', () => {
       const source = `
         'use client'
 
@@ -39,15 +39,8 @@ describe('PropReference extraction', () => {
         const expr = ir.children[0] as IRExpression
         expect(expr.type).toBe('expression')
         expect(expr.expr).toBe('open')
-        // NEW: propRefs should contain the reference
-        expect(expr.propRefs).toBeDefined()
-        expect(expr.propRefs).toHaveLength(1)
-        expect(expr.propRefs![0]).toEqual({
-          propName: 'open',
-          start: 0,
-          end: 4,
-          defaultValue: undefined,
-        })
+        // Destructured props should NOT have propRefs (captured once, no transformation)
+        expect(expr.propRefs ?? []).toHaveLength(0)
       }
     })
 
@@ -129,7 +122,7 @@ describe('PropReference extraction', () => {
       }
     })
 
-    test('extracts multiple prop references', () => {
+    test('multiple destructured props do NOT have propRefs', () => {
       const source = `
         'use client'
 
@@ -153,15 +146,12 @@ describe('PropReference extraction', () => {
         const expr = ir.children[0] as IRExpression
         expect(expr.type).toBe('expression')
         expect(expr.expr).toBe("firstName + ' ' + lastName")
-        // Should have propRefs for both 'firstName' and 'lastName'
-        expect(expr.propRefs).toBeDefined()
-        expect(expr.propRefs).toHaveLength(2)
-        expect(expr.propRefs![0].propName).toBe('firstName')
-        expect(expr.propRefs![1].propName).toBe('lastName')
+        // Destructured props should NOT have propRefs
+        expect(expr.propRefs ?? []).toHaveLength(0)
       }
     })
 
-    test('extracts prop with default value', () => {
+    test('destructured props with default value do NOT have propRefs', () => {
       const source = `
         'use client'
 
@@ -184,21 +174,14 @@ describe('PropReference extraction', () => {
         const expr = ir.children[0] as IRExpression
         expect(expr.type).toBe('expression')
         expect(expr.expr).toBe('open')
-        // propRefs should include defaultValue
-        expect(expr.propRefs).toBeDefined()
-        expect(expr.propRefs).toHaveLength(1)
-        expect(expr.propRefs![0]).toEqual({
-          propName: 'open',
-          start: 0,
-          end: 4,
-          defaultValue: 'false',
-        })
+        // Destructured props should NOT have propRefs
+        expect(expr.propRefs ?? []).toHaveLength(0)
       }
     })
   })
 
   describe('IRConditional with conditionPropRefs', () => {
-    test('extracts prop reference in ternary condition', () => {
+    test('destructured props in ternary condition do NOT have conditionPropRefs', () => {
       const source = `
         'use client'
 
@@ -221,22 +204,15 @@ describe('PropReference extraction', () => {
         const cond = ir.children[0] as IRConditional
         expect(cond.type).toBe('conditional')
         expect(cond.condition).toBe('open')
-        // NEW: conditionPropRefs should contain the reference
-        expect(cond.conditionPropRefs).toBeDefined()
-        expect(cond.conditionPropRefs).toHaveLength(1)
-        expect(cond.conditionPropRefs![0]).toEqual({
-          propName: 'open',
-          start: 0,
-          end: 4,
-          defaultValue: undefined,
-        })
+        // Destructured props should NOT have conditionPropRefs
+        expect(cond.conditionPropRefs ?? []).toHaveLength(0)
       }
     })
   })
 })
 
 describe('ClientJS generation with semantic prop refs', () => {
-  test('transforms prop ref to props.xxx in generated code', () => {
+  test('destructured props are captured once, NOT transformed in createEffect', () => {
     const source = `
       'use client'
 
@@ -257,10 +233,11 @@ describe('ClientJS generation with semantic prop refs', () => {
 
     const clientJs = result.files.find((f) => f.type === 'clientJs')
     expect(clientJs).toBeDefined()
-    // Should transform 'open' to 'props.open' in condition
-    expect(clientJs?.content).toContain('props.open')
-    // Should NOT have double-wrapped props.props.open
-    expect(clientJs?.content).not.toContain('props.props')
+    // Should have capture: const open = props.open
+    expect(clientJs?.content).toContain('const open = props.open')
+    // createEffect should use 'open' directly, NOT 'props.open'
+    // (destructured props are static, captured once)
+    expect(clientJs?.content).not.toMatch(/insert\([^)]*props\.open/)
   })
 
   test('does NOT double-wrap props.open (SolidJS style)', () => {
@@ -314,7 +291,7 @@ describe('ClientJS generation with semantic prop refs', () => {
     expect(clientJs?.content).not.toContain('window.props.open')
   })
 
-  test('transforms prop with default value correctly', () => {
+  test('destructured props with default value are captured once', () => {
     const source = `
       'use client'
 
@@ -335,8 +312,8 @@ describe('ClientJS generation with semantic prop refs', () => {
 
     const clientJs = result.files.find((f) => f.type === 'clientJs')
     expect(clientJs).toBeDefined()
-    // Should use default value pattern: (props.open ?? false)
-    expect(clientJs?.content).toMatch(/props\.open\s*\?\?\s*false/)
+    // Should capture with default value: const open = props.open ?? false
+    expect(clientJs?.content).toMatch(/const open = props\.open \?\? false/)
   })
 })
 

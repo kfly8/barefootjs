@@ -60,79 +60,26 @@ function generateSlotId(ctx: TransformContext): string {
 
 /**
  * Extract prop references from an expression using TypeScript AST.
- * Returns positions relative to the expression string, not the source file.
  *
- * Handles edge cases:
- * - `open` (destructured prop) -> tracked
- * - `props.open` (already object access) -> NOT tracked (using propsObjectName)
- * - `window.open()` (not a prop) -> NOT tracked
- * - `isOpen` (different identifier) -> NOT tracked
+ * Per spec/compiler.md:
+ * - Destructured props ({ open }: Props) are captured once and static
+ * - Props object (props: Props) already uses props.xxx pattern
+ *
+ * In both cases, NO transformation is needed in createEffect:
+ * - Destructured: const open = props.open (captured once), then use 'open'
+ * - Props object: use props.open directly (already has prefix)
+ *
+ * Therefore, this function always returns empty array.
  */
 function extractPropReferences(
-  exprNode: ts.Expression,
-  exprText: string,
-  ctx: TransformContext
+  _exprNode: ts.Expression,
+  _exprText: string,
+  _ctx: TransformContext
 ): PropReference[] {
-  const refs: PropReference[] = []
-  const propSet = new Set(ctx.analyzer.propsParams.map((p) => p.name))
-  const propsObjectName = ctx.analyzer.propsObjectName
-
-  // When using SolidJS-style props (propsObjectName set), skip extraction
-  // because source already uses props.xxx pattern
-  if (propsObjectName) {
-    return refs
-  }
-
-  // If no props, return empty
-  if (propSet.size === 0) {
-    return refs
-  }
-
-  // Calculate offset: difference between expression text start in source and exprNode.getStart()
-  const exprStartInSource = exprNode.getStart(ctx.sourceFile)
-
-  function visit(node: ts.Node): void {
-    if (ts.isIdentifier(node)) {
-      const name = node.text
-
-      // Check if this identifier is a prop
-      if (!propSet.has(name)) {
-        return
-      }
-
-      // Check if this identifier is the property part of a PropertyAccessExpression
-      // e.g., in `props.open`, `open` is the property - skip it
-      const parent = node.parent
-      if (parent && ts.isPropertyAccessExpression(parent) && parent.name === node) {
-        return
-      }
-
-      // Calculate position relative to expression string
-      const nodeStartInSource = node.getStart(ctx.sourceFile)
-      const nodeEndInSource = node.getEnd()
-      const start = nodeStartInSource - exprStartInSource
-      const end = nodeEndInSource - exprStartInSource
-
-      // Find the prop to get default value
-      const prop = ctx.analyzer.propsParams.find((p) => p.name === name)
-
-      refs.push({
-        propName: name,
-        start,
-        end,
-        defaultValue: prop?.defaultValue,
-      })
-    }
-
-    ts.forEachChild(node, visit)
-  }
-
-  visit(exprNode)
-
-  // Sort by start position (ascending) for consistent processing
-  refs.sort((a, b) => a.start - b.start)
-
-  return refs
+  // No transformation needed - always return empty
+  // - Destructured props: captured once at hydration, used as-is
+  // - Props object: already uses props.xxx syntax
+  return []
 }
 
 // =============================================================================
