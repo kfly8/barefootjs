@@ -69,6 +69,17 @@ export interface ParamInfo {
   defaultValue?: string
 }
 
+/**
+ * Reference to a destructured prop in an expression.
+ * Tracks position for position-based replacement instead of regex.
+ */
+export interface PropReference {
+  propName: string // The prop name (e.g., "open")
+  start: number // Start position in expression string (0-indexed)
+  end: number // End position (exclusive)
+  defaultValue?: string // Default value if prop is optional
+}
+
 // =============================================================================
 // IR Node Types
 // =============================================================================
@@ -105,6 +116,8 @@ export interface IRText {
 export interface IRExpression {
   type: 'expression'
   expr: string
+  /** Semantic prop references with positions for position-based replacement */
+  propRefs?: PropReference[]
   typeInfo: TypeInfo | null
   reactive: boolean
   slotId: string | null
@@ -116,6 +129,8 @@ export interface IRExpression {
 export interface IRConditional {
   type: 'conditional'
   condition: string
+  /** Semantic prop references in condition with positions */
+  conditionPropRefs?: PropReference[]
   conditionType: TypeInfo | null
   reactive: boolean
   whenTrue: IRNode

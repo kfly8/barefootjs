@@ -23,6 +23,7 @@ import type {
   IRTemplatePart,
   SourceLocation,
   TypeInfo,
+  PropReference,
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
@@ -51,6 +52,34 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
 
 function generateSlotId(ctx: TransformContext): string {
   return `slot_${ctx.slotIdCounter++}`
+}
+
+// =============================================================================
+// Prop Reference Extraction
+// =============================================================================
+
+/**
+ * Extract prop references from an expression using TypeScript AST.
+ *
+ * Per spec/compiler.md:
+ * - Destructured props ({ open }: Props) are captured once and static
+ * - Props object (props: Props) already uses props.xxx pattern
+ *
+ * In both cases, NO transformation is needed in createEffect:
+ * - Destructured: const open = props.open (captured once), then use 'open'
+ * - Props object: use props.open directly (already has prefix)
+ *
+ * Therefore, this function always returns empty array.
+ */
+function extractPropReferences(
+  _exprNode: ts.Expression,
+  _exprText: string,
+  _ctx: TransformContext
+): PropReference[] {
+  // No transformation needed - always return empty
+  // - Destructured props: captured once at hydration, used as-is
+  // - Props object: already uses props.xxx syntax
+  return []
 }
 
 // =============================================================================
@@ -431,9 +460,13 @@ function transformExpression(
   const needsSlot = reactive || isClientOnly
   const slotId = needsSlot ? generateSlotId(ctx) : null
 
+  // Extract prop references for semantic tracking
+  const propRefs = extractPropReferences(expr, exprText, ctx)
+
   return {
     type: 'expression',
     expr: exprText,
+    propRefs: propRefs.length > 0 ? propRefs : undefined,
     typeInfo: inferExpressionType(expr, ctx),
     reactive,
     slotId,
@@ -451,6 +484,7 @@ function transformConditional(
   ctx: TransformContext
 ): IRConditional {
   const condition = node.condition.getText(ctx.sourceFile)
+  const conditionPropRefs = extractPropReferences(node.condition, condition, ctx)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -461,6 +495,7 @@ function transformConditional(
   return {
     type: 'conditional',
     condition,
+    conditionPropRefs: conditionPropRefs.length > 0 ? conditionPropRefs : undefined,
     conditionType: null,
     reactive,
     whenTrue,

@@ -18,6 +18,7 @@ import type {
   FunctionInfo,
   ConstantInfo,
   ParamInfo,
+  PropReference,
 } from './types'
 import { isBooleanAttr } from './html-constants'
 
@@ -100,6 +101,7 @@ interface ReactiveChildProp {
 interface DynamicElement {
   slotId: string
   expression: string
+  propRefs?: PropReference[] // Semantic prop references for position-based replacement
   insideConditional?: boolean // true if element is inside a conditional branch
 }
 
@@ -112,6 +114,7 @@ interface ConditionalBranchEvent {
 interface ConditionalElement {
   slotId: string
   condition: string
+  conditionPropRefs?: PropReference[] // Semantic prop references for position-based replacement
   whenTrueHtml: string
   whenFalseHtml: string
   whenTrueEvents: ConditionalBranchEvent[]
@@ -319,6 +322,7 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         ctx.dynamicElements.push({
           slotId: node.slotId,
           expression: node.expr,
+          propRefs: node.propRefs,
           insideConditional,
         })
       }
@@ -346,6 +350,7 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         ctx.conditionalElements.push({
           slotId: node.slotId,
           condition: node.condition,
+          conditionPropRefs: node.conditionPropRefs,
           whenTrueHtml: irToHtmlTemplate(node.whenTrue),
           whenFalseHtml: irToHtmlTemplate(node.whenFalse),
           whenTrueEvents,
@@ -1210,33 +1215,44 @@ function expandDynamicPropValue(value: string, ctx: ClientJsContext): string {
 
 /**
  * Replace prop references in an expression with props.xxx accessor pattern.
- * This ensures props are accessed via the getter when used in child component props.
  *
- * Note: When using SolidJS-style props (propsObjectName is set), the source code
- * already uses props.xxx pattern, so we skip the transformation to avoid
- * double-wrapping (props.xxx -> props.props.xxx).
+ * Per spec/compiler.md:
+ * - Destructured props ({ open }: Props) are captured once as static values
+ *   → const open = props.open (captured once), then use 'open' directly
+ * - Props object (props: Props) already uses props.xxx pattern
+ *   → No transformation needed
+ *
+ * Therefore, this function now returns expr unchanged in most cases.
+ * The only case where transformation might be needed is for child component props
+ * (handled separately in irToComponentTemplate).
  */
 function replacePropReferences(expr: string, ctx: ClientJsContext): string {
-  // If using SolidJS-style props object pattern, skip transformation
-  // because the source already uses props.xxx syntax
+  // Props object pattern: already uses props.xxx, no transformation needed
   if (ctx.propsObjectName) {
     return expr
   }
 
-  let result = expr
-
-  for (const prop of ctx.propsParams) {
-    // Match word boundary to avoid partial matches
-    const pattern = new RegExp(`\\b${prop.name}\\b`, 'g')
-    const replacement = prop.defaultValue
-      ? `(props.${prop.name} ?? ${prop.defaultValue})`
-      : `props.${prop.name}`
-    result = result.replace(pattern, replacement)
-  }
-
-  return result
+  // Destructured props: captured once at hydration, use as-is
+  // The capture happens in generateInitFunction (const propName = props.propName)
+  // After that, we use propName directly without transformation
+  return expr
 }
 
+/**
+ * Replace prop references using position-based replacement.
+ *
+ * Per spec/compiler.md, no transformation is needed:
+ * - Destructured props are captured once and used as-is
+ * - Props object already has props.xxx prefix
+ */
+function replacePropReferencesWithPositions(
+  expr: string,
+  _propRefs: PropReference[] | undefined,
+  ctx: ClientJsContext
+): string {
+  // Delegate to replacePropReferences (which now returns expr unchanged)
+  return replacePropReferences(expr, ctx)
+}
 
 /**
  * Check if a value references reactive data (props, signals, or memos).
@@ -1725,7 +1741,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   for (const elem of ctx.dynamicElements) {
     // Replace prop references with props.xxx to maintain reactivity
     // This ensures props passed as getters are re-evaluated on each effect run
-    const expr = replacePropReferences(elem.expression, ctx)
+    // Use position-based replacement when propRefs are available (semantic tracking)
+    const expr = replacePropReferencesWithPositions(elem.expression, elem.propRefs, ctx)
     if (elem.insideConditional) {
       // For elements inside conditionals, find() dynamically since DOM may be swapped
       lines.push(`  createEffect(() => {`)
@@ -1790,6 +1807,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     // Add data-bf-cond to template root elements so insert() can find them after DOM swap
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
     const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
+    // Use position-based replacement for condition when propRefs are available
+    const condition = replacePropReferencesWithPositions(elem.condition, elem.conditionPropRefs, ctx)
 
     // Helper to generate bindEvents function body for a branch
     const generateBindEvents = (events: ConditionalBranchEvent[]) => {
@@ -1813,7 +1832,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     }
 
     // Generate whenTrue branch config
-    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
     generateBindEvents(elem.whenTrueEvents)
