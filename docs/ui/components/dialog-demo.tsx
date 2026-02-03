@@ -8,6 +8,7 @@
 
 import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
 import {
+  DialogRoot,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -46,9 +47,10 @@ export function DialogBasicDemo() {
 
   return (
     <div>
-      <DialogTrigger onClick={openDialog}>
-        Create Task
-      </DialogTrigger>
+      <DialogRoot>
+        <DialogTrigger onClick={openDialog}>
+          Create Task
+        </DialogTrigger>
         <DialogOverlay open={open()} onClick={closeDialog} />
         <DialogContent
           open={open()}
@@ -91,6 +93,7 @@ export function DialogBasicDemo() {
             <DialogTrigger onClick={closeDialog}>Create</DialogTrigger>
           </DialogFooter>
         </DialogContent>
+      </DialogRoot>
     </div>
   )
 }
@@ -156,49 +159,51 @@ export function DialogFormDemo() {
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
-        Delete Project
-      </button>
-      <DialogOverlay open={open()} onClick={handleClose} />
-      <DialogContent
-        open={open()}
-        onClose={handleClose}
-        ariaLabelledby="delete-dialog-title"
-        ariaDescribedby="delete-dialog-description"
-      >
-        <DialogHeader>
-          <DialogTitle id="delete-dialog-title">Delete Project</DialogTitle>
-          <DialogDescription id="delete-dialog-description">
-            This action cannot be undone. This will permanently delete the <strong className="text-foreground">{projectName}</strong> project.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <label for="confirm-project-name" className="text-sm text-muted-foreground">
-            Please type <strong className="text-foreground">{projectName}</strong> to confirm.
-          </label>
-          <input
-            id="confirm-project-name"
-            type="text"
-            placeholder={projectName}
-            className="mt-2 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-        </div>
-        <DialogFooter>
-          <DialogClose onClick={handleClose}>Cancel</DialogClose>
-          <button
-            type="button"
-            id="delete-project-button"
-            disabled
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
-          >
-            Delete Project
-          </button>
-        </DialogFooter>
-      </DialogContent>
+      <DialogRoot>
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        >
+          Delete Project
+        </button>
+        <DialogOverlay open={open()} onClick={handleClose} />
+        <DialogContent
+          open={open()}
+          onClose={handleClose}
+          ariaLabelledby="delete-dialog-title"
+          ariaDescribedby="delete-dialog-description"
+        >
+          <DialogHeader>
+            <DialogTitle id="delete-dialog-title">Delete Project</DialogTitle>
+            <DialogDescription id="delete-dialog-description">
+              This action cannot be undone. This will permanently delete the <strong className="text-foreground">{projectName}</strong> project.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label for="confirm-project-name" className="text-sm text-muted-foreground">
+              Please type <strong className="text-foreground">{projectName}</strong> to confirm.
+            </label>
+            <input
+              id="confirm-project-name"
+              type="text"
+              placeholder={projectName}
+              className="mt-2 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose onClick={handleClose}>Cancel</DialogClose>
+            <button
+              type="button"
+              id="delete-project-button"
+              disabled
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
+            >
+              Delete Project
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogRoot>
     </div>
   )
 }
@@ -211,54 +216,56 @@ export function DialogLongContentDemo() {
 
   return (
     <div>
-      <DialogTrigger onClick={() => setOpen(true)}>
-        Open Long Content Dialog
-      </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
-      <DialogContent
-        open={open()}
-        onClose={() => setOpen(false)}
-        ariaLabelledby="long-dialog-title"
-        ariaDescribedby="long-dialog-description"
-        class="max-h-[66vh]"
-      >
-        <DialogHeader class="flex-shrink-0">
-          <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
-          <DialogDescription id="long-dialog-description">
-            Please read the following terms carefully.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="text-sm text-muted-foreground space-y-4 overflow-y-auto flex-1 min-h-0">
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-          </p>
-          <p>
-            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-          <p>
-            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-          </p>
-          <p>
-            Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-          </p>
-          <p>
-            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
-          </p>
-          <p>
-            Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?
-          </p>
-          <p>
-            Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
-          </p>
-          <p>
-            At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
-          </p>
-        </div>
-        <DialogFooter class="flex-shrink-0">
-          <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
-          <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
-        </DialogFooter>
-      </DialogContent>
+      <DialogRoot>
+        <DialogTrigger onClick={() => setOpen(true)}>
+          Open Long Content Dialog
+        </DialogTrigger>
+        <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+        <DialogContent
+          open={open()}
+          onClose={() => setOpen(false)}
+          ariaLabelledby="long-dialog-title"
+          ariaDescribedby="long-dialog-description"
+          class="max-h-[66vh]"
+        >
+          <DialogHeader class="flex-shrink-0">
+            <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
+            <DialogDescription id="long-dialog-description">
+              Please read the following terms carefully.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground space-y-4 overflow-y-auto flex-1 min-h-0">
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </p>
+            <p>
+              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+            <p>
+              Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+            </p>
+            <p>
+              Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+            </p>
+            <p>
+              Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
+            </p>
+            <p>
+              Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?
+            </p>
+            <p>
+              Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
+            </p>
+            <p>
+              At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
+            </p>
+          </div>
+          <DialogFooter class="flex-shrink-0">
+            <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
+            <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
+          </DialogFooter>
+        </DialogContent>
+      </DialogRoot>
     </div>
   )
 }
