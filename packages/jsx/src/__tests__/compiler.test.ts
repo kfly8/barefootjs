@@ -439,8 +439,18 @@ describe('Compiler', () => {
       // Should not contain invalid double-prefix patterns
       expect(clientJs?.content).not.toContain('props.(props.open')
       expect(clientJs?.content).not.toContain('props.props.open')
-      // Should contain valid props.open reference
-      expect(clientJs?.content).toContain('props.open ?? false')
+
+      // Verify the generated child component props getter uses correct syntax
+      // Before fix: { get className() { return `base-class ${(props.(props.open ?? false) ?? false) ? 'active' : ''}` } }
+      // After fix:  { get className() { return `base-class ${props.open ?? false ? 'active' : ''}` } }
+      expect(clientJs?.content).toContain(
+        "initChild('ChildComponent', _slot_0, { get className() { return `base-class ${props.open ?? false ? 'active' : ''}` } })"
+      )
+
+      // Verify the reactive effect also uses correct syntax
+      expect(clientJs?.content).toContain(
+        "__ChildComponent_slot_0El.setAttribute('class', `base-class ${props.open ?? false ? 'active' : ''}`)"
+      )
     })
   })
 
