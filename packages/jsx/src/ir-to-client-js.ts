@@ -20,6 +20,7 @@ import type {
   ParamInfo,
 } from './types'
 import { isBooleanAttr } from './html-constants'
+import { parseExpression, transformPropReferences, stringifyExpr, type ParsedExpr } from './expression-parser'
 
 /**
  * Convert an attribute value to a string expression.
@@ -1212,17 +1213,43 @@ function expandDynamicPropValue(value: string, ctx: ClientJsContext): string {
  * Replace prop references in an expression with props.xxx accessor pattern.
  * This ensures props are accessed via the getter when used in child component props.
  *
+ * Uses AST-based transformation to correctly handle existing props.xxx references
+ * and avoid double-prefixing issues (Issue #257).
+ *
  * Note: When using SolidJS-style props (propsObjectName is set), the source code
  * already uses props.xxx pattern, so we skip the transformation to avoid
  * double-wrapping (props.xxx -> props.props.xxx).
  */
-function replacePropReferences(expr: string, ctx: ClientJsContext): string {
+function replacePropReferences(expr: string, ctx: ClientJsContext, parsedExpr?: ParsedExpr): string {
   // If using SolidJS-style props object pattern, skip transformation
   // because the source already uses props.xxx syntax
   if (ctx.propsObjectName) {
     return expr
   }
 
+  // Build prop names and default values maps
+  const propNames = new Set(ctx.propsParams.map(p => p.name))
+  const defaultValues = new Map(
+    ctx.propsParams.filter(p => p.defaultValue).map(p => [p.name, p.defaultValue!])
+  )
+
+  // Use pre-parsed AST if available, otherwise parse now
+  const ast = parsedExpr ?? parseExpression(expr)
+  if (ast.kind === 'unsupported') {
+    // Fallback to legacy regex-based replacement for unsupported expressions
+    return legacyReplacePropReferences(expr, ctx)
+  }
+
+  // Transform using AST to correctly handle props.xxx references
+  const transformed = transformPropReferences(ast, propNames, defaultValues)
+  return stringifyExpr(transformed)
+}
+
+/**
+ * Legacy regex-based prop reference replacement.
+ * Used as fallback when expression cannot be parsed to AST.
+ */
+function legacyReplacePropReferences(expr: string, ctx: ClientJsContext): string {
   let result = expr
 
   for (const prop of ctx.propsParams) {

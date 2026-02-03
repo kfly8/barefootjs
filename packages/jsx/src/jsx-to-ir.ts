@@ -896,9 +896,13 @@ function parseTernary(
 
   // Only parse if both branches are string literals
   if (whenTrueValue !== null && whenFalseValue !== null) {
+    const conditionText = expr.condition.getText(ctx.sourceFile)
+    // Parse condition for AST-based prop reference transformation
+    const conditionParsed = parseExpression(conditionText)
     return {
       type: 'ternary',
-      condition: expr.condition.getText(ctx.sourceFile),
+      condition: conditionText,
+      conditionParsed: conditionParsed.kind !== 'unsupported' ? conditionParsed : undefined,
       whenTrue: whenTrueValue,
       whenFalse: whenFalseValue,
     }
