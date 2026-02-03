@@ -253,7 +253,7 @@ export interface IRTemplateLiteral {
 
 export type IRTemplatePart =
   | { type: 'string'; value: string }
-  | { type: 'ternary'; condition: string; conditionParsed?: ParsedExpr; whenTrue: string; whenFalse: string }
+  | { type: 'ternary'; condition: string; whenTrue: string; whenFalse: string }
 
 export interface IRAttribute {
   name: string

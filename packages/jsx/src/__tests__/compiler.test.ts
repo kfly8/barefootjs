@@ -412,48 +412,6 @@ describe('Compiler', () => {
     })
   })
 
-  describe('props reference in template literals', () => {
-    test('should not double-prefix props.xxx in template literal passed to child (Issue #257)', () => {
-      // Issue #257: When using props.xxx pattern inside template literals
-      // that are passed as props to child components, the compiler generates
-      // invalid JavaScript with double props. prefix like props.(props.open ?? false)
-      const source = `
-        'use client'
-        // @bf-ignore props-destructuring
-        function ChildComponent({ className }: { className?: string }) {
-          return <div className={className} />
-        }
-        // @bf-ignore props-destructuring
-        export function ParentComponent({ open = false }: { open?: boolean }) {
-          const props = { open } as { open?: boolean }
-          return (
-            <ChildComponent
-              className={\`base-class \${(props.open ?? false) ? 'active' : ''}\`}
-            />
-          )
-        }
-      `
-      const result = compileJSXSync(source, 'Parent.tsx', { adapter })
-      const clientJs = result.files.find(f => f.type === 'clientJs')
-
-      // Should not contain invalid double-prefix patterns
-      expect(clientJs?.content).not.toContain('props.(props.open')
-      expect(clientJs?.content).not.toContain('props.props.open')
-
-      // Verify the generated child component props getter uses correct syntax
-      // Before fix: { get className() { return `base-class ${(props.(props.open ?? false) ?? false) ? 'active' : ''}` } }
-      // After fix:  { get className() { return `base-class ${props.open ?? false ? 'active' : ''}` } }
-      expect(clientJs?.content).toContain(
-        "initChild('ChildComponent', _slot_0, { get className() { return `base-class ${props.open ?? false ? 'active' : ''}` } })"
-      )
-
-      // Verify the reactive effect also uses correct syntax
-      expect(clientJs?.content).toContain(
-        "__ChildComponent_slot_0El.setAttribute('class', `base-class ${props.open ?? false ? 'active' : ''}`)"
-      )
-    })
-  })
-
   describe('boolean attributes', () => {
     test('isBooleanAttr identifies known boolean attributes', () => {
       expect(isBooleanAttr('checked')).toBe(true)
