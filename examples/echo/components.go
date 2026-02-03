@@ -230,8 +230,8 @@ func NewTodoAppSSRProps(in TodoAppSSRInput) TodoAppSSRProps {
 // ReactiveChildInput is the user-facing input type.
 type ReactiveChildInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	Value interface{}
-	Label interface{}
+	Value int
+	Label string
 	OnIncrement interface{}
 }
 
@@ -239,8 +239,8 @@ type ReactiveChildInput struct {
 type ReactiveChildProps struct {
 	ScopeID string `json:"scopeID"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	Value interface{} `json:"value"`
-	Label interface{} `json:"label"`
+	Value int `json:"value"`
+	Label string `json:"label"`
 	OnIncrement interface{} `json:"onIncrement"`
 }
 

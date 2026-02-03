@@ -12,18 +12,19 @@
 import { createSignal, createMemo } from '@barefootjs/dom'
 
 // Child component that receives reactive props
+// Uses SolidJS-style props (props.xxx) to maintain reactivity
 type ChildProps = {
   value: number
   label: string
   onIncrement: () => void
 }
 
-function ReactiveChild({ value, label, onIncrement }: ChildProps) {
+function ReactiveChild(props: ChildProps) {
   return (
     <div className="reactive-child">
-      <span className="child-label">{label}</span>
-      <span className="child-value">{value}</span>
-      <button className="btn-child-increment" onClick={() => onIncrement()}>
+      <span className="child-label">{props.label}</span>
+      <span className="child-value">{props.value}</span>
+      <button className="btn-child-increment" onClick={() => props.onIncrement()}>
         Increment from child
       </button>
     </div>

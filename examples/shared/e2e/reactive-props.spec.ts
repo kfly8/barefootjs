@@ -87,12 +87,18 @@ export function reactivePropsTests(baseUrl: string) {
       })
 
       test.describe('destructured props (captures initial value)', () => {
-        test('raw value updates when parent changes', async ({ page }) => {
+        test('raw value does NOT update when parent changes (static)', async ({ page }) => {
           const destructuredStyle = page.locator('.destructured-style-child')
 
-          // Raw value updates because it's passed as a prop to the element
+          // Initial value is 1
+          await expect(destructuredStyle.locator('.child-raw-value')).toHaveText('1')
+
+          // Raw value stays at initial because destructured props are captured once
           await page.click('.btn-increment')
-          await expect(destructuredStyle.locator('.child-raw-value')).toHaveText('2')
+          await expect(destructuredStyle.locator('.child-raw-value')).toHaveText('1')
+
+          await page.click('.btn-increment')
+          await expect(destructuredStyle.locator('.child-raw-value')).toHaveText('1')
         })
 
         test('computed value (createMemo) does NOT update', async ({ page }) => {
