@@ -356,6 +356,63 @@ func Comment(content string) template.HTML {
 }
 
 // =============================================================================
+// Portal Collection
+// =============================================================================
+
+// PortalContent represents a single portal's content to be rendered at body end.
+type PortalContent struct {
+	ID      string        // Unique portal ID for hydration matching
+	OwnerID string        // Owner scope ID for find() support
+	Content template.HTML // Portal HTML content
+}
+
+// PortalCollector collects portal content during template rendering.
+// Portal content is rendered at </body> to avoid z-index issues.
+type PortalCollector struct {
+	portals []PortalContent
+	counter int
+}
+
+// NewPortalCollector creates a new PortalCollector.
+func NewPortalCollector() *PortalCollector {
+	return &PortalCollector{
+		portals: []PortalContent{},
+		counter: 0,
+	}
+}
+
+// Add registers portal content to be rendered at body end.
+func (pc *PortalCollector) Add(ownerID string, content template.HTML) string {
+	pc.counter++
+	id := "bf-portal-" + strconv.Itoa(pc.counter)
+	pc.portals = append(pc.portals, PortalContent{
+		ID:      id,
+		OwnerID: ownerID,
+		Content: content,
+	})
+	return "" // Return empty string for template use
+}
+
+// Render outputs all collected portals as HTML.
+// Each portal is wrapped in a div with data-bf-portal-id and data-bf-portal-owner.
+func (pc *PortalCollector) Render() template.HTML {
+	if pc == nil || len(pc.portals) == 0 {
+		return ""
+	}
+	var buf strings.Builder
+	for _, p := range pc.portals {
+		buf.WriteString(`<div data-bf-portal-id="`)
+		buf.WriteString(p.ID)
+		buf.WriteString(`" data-bf-portal-owner="`)
+		buf.WriteString(p.OwnerID)
+		buf.WriteString(`">`)
+		buf.WriteString(string(p.Content))
+		buf.WriteString("</div>\n")
+	}
+	return template.HTML(buf.String())
+}
+
+// =============================================================================
 // Script Collection
 // =============================================================================
 
@@ -425,6 +482,9 @@ type RenderContext struct {
 	// PropsScripts contains JSON script tags for hydration (main + children)
 	PropsScripts template.HTML
 
+	// Portals contains collected portal content to render at body end
+	Portals template.HTML
+
 	// Scripts contains the collected JS script tags
 	Scripts template.HTML
 
@@ -487,19 +547,25 @@ type RenderOptions struct {
 // Child component props are automatically detected (any slice field with ScopeID/Scripts).
 func (r *Renderer) Render(opts RenderOptions) string {
 	// Create script collector and inject into props
-	collector := NewScriptCollector()
-	setScriptsField(opts.Props, collector)
+	scriptCollector := NewScriptCollector()
+	setScriptsField(opts.Props, scriptCollector)
+
+	// Create portal collector and inject into props
+	portalCollector := NewPortalCollector()
+	setPortalsField(opts.Props, portalCollector)
 
 	// Auto-detect and process child component props (slices)
 	childSlices := findChildComponentSlices(opts.Props)
 	for _, slice := range childSlices {
-		setScriptsOnSlice(slice, collector)
+		setScriptsOnSlice(slice, scriptCollector)
+		setPortalsOnSlice(slice, portalCollector)
 	}
 
 	// Auto-detect and process single child component props
 	singleChildren := findSingleChildComponents(opts.Props)
 	for _, child := range singleChildren {
-		setScriptsOnSingle(child, collector)
+		setScriptsOnSingle(child, scriptCollector)
+		setPortalsOnSingle(child, portalCollector)
 	}
 
 	// Render the component template
@@ -539,7 +605,8 @@ func (r *Renderer) Render(opts RenderOptions) string {
 		Props:         opts.Props,
 		ComponentHTML: template.HTML(componentBuf.String()),
 		PropsScripts:  template.HTML(propsScriptsBuf.String()),
-		Scripts:       BfScripts(collector),
+		Portals:       portalCollector.Render(),
+		Scripts:       BfScripts(scriptCollector),
 		Title:         title,
 		Heading:       heading,
 		Extra:         opts.Extra,
@@ -558,6 +625,21 @@ func setScriptsField(v interface{}, collector *ScriptCollector) {
 		return
 	}
 	field := val.FieldByName("Scripts")
+	if field.IsValid() && field.CanSet() {
+		field.Set(reflect.ValueOf(collector))
+	}
+}
+
+// setPortalsField sets the Portals field on a struct using reflection.
+func setPortalsField(v interface{}, collector *PortalCollector) {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return
+	}
+	field := val.FieldByName("Portals")
 	if field.IsValid() && field.CanSet() {
 		field.Set(reflect.ValueOf(collector))
 	}
@@ -630,6 +712,26 @@ func setScriptsOnSlice(slice interface{}, collector *ScriptCollector) {
 		}
 		if item.Kind() == reflect.Struct {
 			field := item.FieldByName("Scripts")
+			if field.IsValid() && field.CanSet() {
+				field.Set(reflect.ValueOf(collector))
+			}
+		}
+	}
+}
+
+// setPortalsOnSlice sets Portals on all items in a slice.
+func setPortalsOnSlice(slice interface{}, collector *PortalCollector) {
+	val := reflect.ValueOf(slice)
+	if val.Kind() != reflect.Slice {
+		return
+	}
+	for i := 0; i < val.Len(); i++ {
+		item := val.Index(i)
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Struct {
+			field := item.FieldByName("Portals")
 			if field.IsValid() && field.CanSet() {
 				field.Set(reflect.ValueOf(collector))
 			}
@@ -712,6 +814,20 @@ func setScriptsOnSingle(child interface{}, collector *ScriptCollector) {
 	}
 	if val.Kind() == reflect.Struct {
 		field := val.FieldByName("Scripts")
+		if field.IsValid() && field.CanSet() {
+			field.Set(reflect.ValueOf(collector))
+		}
+	}
+}
+
+// setPortalsOnSingle sets Portals on a single struct child component.
+func setPortalsOnSingle(child interface{}, collector *PortalCollector) {
+	val := reflect.ValueOf(child)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() == reflect.Struct {
+		field := val.FieldByName("Portals")
 		if field.IsValid() && field.CanSet() {
 			field.Set(reflect.ValueOf(collector))
 		}

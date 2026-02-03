@@ -250,3 +250,117 @@ func TestFuncMap(t *testing.T) {
 		}
 	}
 }
+
+// =============================================================================
+// Portal Collection Tests
+// =============================================================================
+
+func TestNewPortalCollector(t *testing.T) {
+	pc := NewPortalCollector()
+	if pc == nil {
+		t.Error("NewPortalCollector() returned nil")
+	}
+	if len(pc.portals) != 0 {
+		t.Errorf("NewPortalCollector() should have empty portals, got %d", len(pc.portals))
+	}
+	if pc.counter != 0 {
+		t.Errorf("NewPortalCollector() counter should be 0, got %d", pc.counter)
+	}
+}
+
+func TestPortalCollector_Add(t *testing.T) {
+	pc := NewPortalCollector()
+
+	// Add first portal
+	result := pc.Add("scope-1", "<div>Content 1</div>")
+	if result != "" {
+		t.Errorf("Add() should return empty string, got %q", result)
+	}
+	if len(pc.portals) != 1 {
+		t.Errorf("After first Add(), portals count should be 1, got %d", len(pc.portals))
+	}
+	if pc.portals[0].ID != "bf-portal-1" {
+		t.Errorf("First portal ID should be 'bf-portal-1', got %q", pc.portals[0].ID)
+	}
+	if pc.portals[0].OwnerID != "scope-1" {
+		t.Errorf("First portal OwnerID should be 'scope-1', got %q", pc.portals[0].OwnerID)
+	}
+
+	// Add second portal
+	pc.Add("scope-2", "<div>Content 2</div>")
+	if len(pc.portals) != 2 {
+		t.Errorf("After second Add(), portals count should be 2, got %d", len(pc.portals))
+	}
+	if pc.portals[1].ID != "bf-portal-2" {
+		t.Errorf("Second portal ID should be 'bf-portal-2', got %q", pc.portals[1].ID)
+	}
+}
+
+func TestPortalCollector_Render_Empty(t *testing.T) {
+	pc := NewPortalCollector()
+	result := pc.Render()
+	if result != "" {
+		t.Errorf("Render() on empty collector should return empty string, got %q", result)
+	}
+}
+
+func TestPortalCollector_Render_Nil(t *testing.T) {
+	var pc *PortalCollector
+	result := pc.Render()
+	if result != "" {
+		t.Errorf("Render() on nil collector should return empty string, got %q", result)
+	}
+}
+
+func TestPortalCollector_Render_Single(t *testing.T) {
+	pc := NewPortalCollector()
+	pc.Add("scope-abc", "<div>Portal Content</div>")
+
+	result := string(pc.Render())
+	expected := `<div data-bf-portal-id="bf-portal-1" data-bf-portal-owner="scope-abc"><div>Portal Content</div></div>` + "\n"
+	if result != expected {
+		t.Errorf("Render() = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalCollector_Render_Multiple(t *testing.T) {
+	pc := NewPortalCollector()
+	pc.Add("scope-1", "<div>Content 1</div>")
+	pc.Add("scope-2", "<span>Content 2</span>")
+
+	result := string(pc.Render())
+
+	// Check that both portals are rendered
+	if !contains(result, `data-bf-portal-id="bf-portal-1"`) {
+		t.Error("Render() should contain first portal ID")
+	}
+	if !contains(result, `data-bf-portal-id="bf-portal-2"`) {
+		t.Error("Render() should contain second portal ID")
+	}
+	if !contains(result, `data-bf-portal-owner="scope-1"`) {
+		t.Error("Render() should contain first portal owner")
+	}
+	if !contains(result, `data-bf-portal-owner="scope-2"`) {
+		t.Error("Render() should contain second portal owner")
+	}
+	if !contains(result, "<div>Content 1</div>") {
+		t.Error("Render() should contain first portal content")
+	}
+	if !contains(result, "<span>Content 2</span>") {
+		t.Error("Render() should contain second portal content")
+	}
+}
+
+// helper function for string contains check
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

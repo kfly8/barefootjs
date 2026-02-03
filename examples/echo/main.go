@@ -56,9 +56,9 @@ func defaultLayout(ctx *bf.RenderContext) string {
 <body>%s
     <div id="app">%s%s</div>
     <p><a href="/">← Back</a></p>
-    %s
+    %s%s
 </body>
-</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Scripts)
+</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Portals, ctx.Scripts)
 }
 
 // In-memory todo storage
