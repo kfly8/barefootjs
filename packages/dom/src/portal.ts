@@ -70,6 +70,30 @@ export type PortalChildren = HTMLElement | string | Renderable
  * // Later: unmount
  * portal.unmount()
  */
+/**
+ * Check if an element is inside an SSR-rendered portal.
+ * SSR portals are marked with data-bf-portal-id attribute.
+ *
+ * @param element - Element to check
+ * @returns true if element is inside an SSR portal
+ */
+export function isSSRPortal(element: HTMLElement): boolean {
+  return element.closest('[data-bf-portal-id]') !== null
+}
+
+/**
+ * Remove a portal placeholder element (used after hydration).
+ * SSR Portal renders a <template data-bf-portal-placeholder="..."> as a marker.
+ *
+ * @param portalId - The portal ID to find and remove
+ */
+export function cleanupPortalPlaceholder(portalId: string): void {
+  const placeholder = document.querySelector(
+    `template[data-bf-portal-placeholder="${portalId}"]`
+  )
+  placeholder?.remove()
+}
+
 export function createPortal(
   children: PortalChildren,
   container: HTMLElement = document.body,

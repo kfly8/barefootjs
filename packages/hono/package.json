@@ -18,6 +18,18 @@
       "types": "./src/scripts.tsx",
       "import": "./src/scripts.tsx"
     },
+    "./portals": {
+      "types": "./src/portals.tsx",
+      "import": "./src/portals.tsx"
+    },
+    "./portal": {
+      "types": "./src/portal-ssr.tsx",
+      "import": "./src/portal-ssr.tsx"
+    },
+    "./dialog-context": {
+      "types": "./src/dialog-context.tsx",
+      "import": "./src/dialog-context.tsx"
+    },
     "./preload": {
       "types": "./src/preload.tsx",
       "import": "./src/preload.tsx"

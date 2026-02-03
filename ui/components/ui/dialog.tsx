@@ -37,8 +37,45 @@
  * ```
  */
 
-import { createEffect, onCleanup, createPortal } from '@barefootjs/dom'
+import { createEffect, onCleanup, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
+
+// Scope ID context for SSR portal support
+// This is set by DialogRoot and used by DialogOverlay/DialogContent
+let currentDialogScopeId: string | undefined = undefined
+
+/**
+ * Props for DialogRoot component.
+ */
+interface DialogRootProps {
+  /** Scope ID for SSR portal support (from __scopeId in compiled component) */
+  scopeId?: string
+  /** Dialog content */
+  children?: Child
+}
+
+/**
+ * Root component that provides scope context for Dialog components.
+ * Wrap your Dialog usage with this to enable SSR portal support.
+ *
+ * @param props.scopeId - Scope ID from the compiled component (__scopeId)
+ *
+ * @example
+ * ```tsx
+ * <DialogRoot scopeId={__scopeId}>
+ *   <DialogTrigger onClick={() => setOpen(true)}>Open</DialogTrigger>
+ *   <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+ *   <DialogContent open={open()} onClose={() => setOpen(false)}>
+ *     ...
+ *   </DialogContent>
+ * </DialogRoot>
+ * ```
+ */
+function DialogRoot(props: DialogRootProps) {
+  // Set the scope ID for child components to use
+  currentDialogScopeId = props.scopeId
+  return <>{props.children}</>
+}
 
 // DialogTrigger classes
 const dialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
@@ -131,8 +168,9 @@ interface DialogOverlayProps {
 function DialogOverlay(props: DialogOverlayProps) {
   // Move element to document.body on mount (portal behavior)
   // Uses createPortal with ownerScope for scope-based element detection
+  // Skip if element is already in an SSR portal (content already at body)
   const moveToBody = (el: HTMLElement) => {
-    if (el && el.parentNode !== document.body) {
+    if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
       const ownerScope = el.closest('[data-bf-scope]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
@@ -233,10 +271,12 @@ function DialogContent(props: DialogContentProps) {
 
   // Move element to document.body on mount (portal behavior)
   // Uses createPortal with ownerScope for scope-based element detection
+  // Skip if element is already in an SSR portal (content already at body)
   const handleMount = (el: HTMLElement) => {
     ref.current = el
     // Portal: move to body with ownerScope for find() support
-    if (el && el.parentNode !== document.body) {
+    // Skip if already in SSR portal (content already at correct position)
+    if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
       const ownerScope = el.closest('[data-bf-scope]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
@@ -387,6 +427,7 @@ function DialogClose({ class: className = '', onClick, children }: DialogClosePr
 }
 
 export {
+  DialogRoot,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -397,6 +438,7 @@ export {
   DialogClose,
 }
 export type {
+  DialogRootProps,
   DialogTriggerProps,
   DialogOverlayProps,
   DialogContentProps,

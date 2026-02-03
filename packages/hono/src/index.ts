@@ -11,3 +11,12 @@ export type { HonoAdapterOptions } from './adapter'
 // BfScripts is exported from a separate entry point to avoid JSX runtime issues in tests
 // Usage: import { BfScripts } from '@barefootjs/hono/scripts'
 export type { CollectedScript, CollectedPropsScript } from './scripts'
+
+// Portal components for SSR
+// Usage: import { BfPortals, Portal } from '@barefootjs/hono/portals'
+export type { CollectedPortal } from './portals'
+export type { PortalProps } from './portal-ssr'
+
+// Dialog context for scopeId sharing
+// Usage: import { DialogContext, useDialogContext } from '@barefootjs/hono/dialog-context'
+export type { DialogContextValue } from './dialog-context'
