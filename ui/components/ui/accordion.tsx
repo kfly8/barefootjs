@@ -156,17 +156,14 @@ interface AccordionTriggerProps {
 /**
  * Clickable header that toggles accordion content.
  *
+ * Uses SolidJS-style props (props.xxx) to maintain reactivity.
+ * Destructured props would lose reactivity for the icon rotation.
+ *
  * @param props.open - Whether open
  * @param props.disabled - Whether disabled
  * @param props.onClick - Click handler
  */
-function AccordionTrigger({
-  class: className = '',
-  open = false,
-  disabled = false,
-  onClick,
-  children,
-}: AccordionTriggerProps) {
+function AccordionTrigger(props: AccordionTriggerProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = e.currentTarget as HTMLElement
     const accordion = target.closest('[data-slot="accordion"]')
@@ -201,13 +198,14 @@ function AccordionTrigger({
     }
   }
 
+  const className = props.class ?? ''
   const classes = `${accordionTriggerBaseClasses} ${accordionTriggerFocusClasses} ${className}`
-  const iconClasses = `text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal ${open ? 'rotate-180' : ''}`
+  const iconClasses = `text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal ${props.open ? 'rotate-180' : ''}`
 
   // Handle click with stopPropagation to prevent bubbling to parent scope element
   const handleClick = (e: Event) => {
     e.stopPropagation()
-    onClick?.()
+    props.onClick?.()
   }
 
   return (
@@ -215,14 +213,14 @@ function AccordionTrigger({
       <button
         data-slot="accordion-trigger"
         className={classes}
-        disabled={disabled}
-        aria-expanded={open}
-        aria-disabled={disabled || undefined}
+        disabled={props.disabled}
+        aria-expanded={props.open}
+        aria-disabled={props.disabled || undefined}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
-        {children}
-        <ChevronDownIcon size="sm" className={iconClasses} />
+        {props.children}
+        <ChevronDownIcon size="sm" class={iconClasses} />
       </button>
     </h3>
   )
