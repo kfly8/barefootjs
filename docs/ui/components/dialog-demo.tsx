@@ -25,36 +25,16 @@ import {
 export function DialogBasicDemo() {
   const [open, setOpen] = createSignal(false)
 
-  // Open dialog and schedule focus
-  const openDialog = () => {
-    setOpen(true)
-    setTimeout(() => {
-      const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
-      const dialog = scope?.querySelector('[role="dialog"]')
-      if (dialog) (dialog as HTMLElement).focus()
-    }, 10)
-  }
-
-  // Close dialog and return focus to trigger
-  const closeDialog = () => {
-    setOpen(false)
-    setTimeout(() => {
-      const scope = document.querySelector('[data-bf-scope^="DialogBasicDemo_"]')
-      const trigger = scope?.querySelector('button')
-      if (trigger) trigger.focus()
-    }, 10)
-  }
-
   return (
     <div>
       <DialogRoot>
-        <DialogTrigger onClick={openDialog}>
+        <DialogTrigger onClick={() => setOpen(true)}>
           Create Task
         </DialogTrigger>
-        <DialogOverlay open={open()} onClick={closeDialog} />
+        <DialogOverlay open={open()} onClick={() => setOpen(false)} />
         <DialogContent
           open={open()}
-          onClose={closeDialog}
+          onClose={() => setOpen(false)}
           ariaLabelledby="dialog-title"
           ariaDescribedby="dialog-description"
         >
@@ -89,8 +69,8 @@ export function DialogBasicDemo() {
             </div>
           </div>
           <DialogFooter>
-            <DialogClose onClick={closeDialog}>Cancel</DialogClose>
-            <DialogTrigger onClick={closeDialog}>Create</DialogTrigger>
+            <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
+            <DialogTrigger onClick={() => setOpen(false)}>Create</DialogTrigger>
           </DialogFooter>
         </DialogContent>
       </DialogRoot>
@@ -102,59 +82,60 @@ export function DialogBasicDemo() {
  * Delete confirmation dialog demo (GitHub-style)
  *
  * Uses reactive binding for form elements inside portal.
- * Portal-aware find() enables standard event binding to work.
- *
- * Note: The compiler doesn't yet support reactive `disabled` attribute binding,
- * so we use createEffect to manually update the button's disabled state.
+ * Note: Portal elements need special handling because find() is called during
+ * hydration before Portal mounts. We use createEffect with DOM query to set up
+ * handlers after elements are available.
  */
 export function DialogFormDemo() {
   const [open, setOpen] = createSignal(false)
+  const [confirmText, setConfirmText] = createSignal('')
   const projectName = 'my-project'
+  const isConfirmed = () => confirmText() === projectName
 
-  const handleOpen = () => {
-    setOpen(true)
+  const handleDelete = () => {
+    if (isConfirmed()) {
+      setOpen(false)
+      setConfirmText('')
+    }
   }
 
   const handleClose = () => {
     setOpen(false)
+    setConfirmText('')
   }
 
-  // Portal element handlers (workaround for hydration timing)
-  // The compiler's find() is called during hydration before Portal mounts,
-  // so we need to set up handlers after the Portal is mounted.
+  // Set up handlers for Portal elements after they're mounted
   createEffect(() => {
     if (!open()) return
 
-    const timer = setTimeout(() => {
+    // Wait for next frame to ensure Portal has mounted
+    const frame = requestAnimationFrame(() => {
       const input = document.getElementById('confirm-project-name') as HTMLInputElement
       const btn = document.getElementById('delete-project-button') as HTMLButtonElement
       if (!input || !btn) return
 
-      // Clear input and set initial disabled state
+      // Reset input on open
       input.value = ''
-      btn.disabled = true
+      setConfirmText('')
 
-      // Update disabled on input change
-      const updateDisabled = () => {
-        btn.disabled = input.value !== projectName
-      }
-      input.addEventListener('input', updateDisabled)
+      // Set up input handler
+      const handleInput = () => setConfirmText(input.value)
+      input.addEventListener('input', handleInput)
 
-      // Click handler for delete button
-      const handleDeleteClick = () => {
-        if (input.value === projectName) {
-          handleClose()
-        }
-      }
-      btn.addEventListener('click', handleDeleteClick)
+      // Set up button click handler (needed because Portal moves element after hydration)
+      btn.onclick = handleDelete
+
+      // Set up reactive disabled effect
+      createEffect(() => {
+        btn.disabled = !isConfirmed()
+      })
 
       onCleanup(() => {
-        input.removeEventListener('input', updateDisabled)
-        btn.removeEventListener('click', handleDeleteClick)
+        input.removeEventListener('input', handleInput)
       })
-    }, 0)
+    })
 
-    onCleanup(() => clearTimeout(timer))
+    onCleanup(() => cancelAnimationFrame(frame))
   })
 
   return (
@@ -162,7 +143,7 @@ export function DialogFormDemo() {
       <DialogRoot>
         <button
           type="button"
-          onClick={handleOpen}
+          onClick={() => setOpen(true)}
           className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
         >
           Delete Project
@@ -188,6 +169,8 @@ export function DialogFormDemo() {
               id="confirm-project-name"
               type="text"
               placeholder={projectName}
+              value={confirmText()}
+              onInput={(e) => setConfirmText((e.target as HTMLInputElement).value)}
               className="mt-2 flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
@@ -196,7 +179,8 @@ export function DialogFormDemo() {
             <button
               type="button"
               id="delete-project-button"
-              disabled
+              disabled={!isConfirmed()}
+              onClick={handleDelete}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
             >
               Delete Project

@@ -48,8 +48,12 @@ let currentDialogScopeId: string | undefined = undefined
  * Props for DialogRoot component.
  */
 interface DialogRootProps {
-  /** Scope ID for SSR portal support (from __scopeId in compiled component) */
+  /** Scope ID for SSR portal support (explicit) */
   scopeId?: string
+  /** Scope ID from compiler (auto-passed via hydration props) */
+  __instanceId?: string
+  /** Scope ID from compiler in loops (auto-passed via hydration props) */
+  __bfScope?: string
   /** Dialog content */
   children?: Child
 }
@@ -58,11 +62,12 @@ interface DialogRootProps {
  * Root component that provides scope context for Dialog components.
  * Wrap your Dialog usage with this to enable SSR portal support.
  *
- * @param props.scopeId - Scope ID from the compiled component (__scopeId)
+ * The scopeId is automatically received from the compiler via `__instanceId`
+ * or `__bfScope` props. You can also pass it explicitly via `scopeId` prop.
  *
  * @example
  * ```tsx
- * <DialogRoot scopeId={__scopeId}>
+ * <DialogRoot>
  *   <DialogTrigger onClick={() => setOpen(true)}>Open</DialogTrigger>
  *   <DialogOverlay open={open()} onClick={() => setOpen(false)} />
  *   <DialogContent open={open()} onClose={() => setOpen(false)}>
@@ -73,7 +78,8 @@ interface DialogRootProps {
  */
 function DialogRoot(props: DialogRootProps) {
   // Set the scope ID for child components to use
-  currentDialogScopeId = props.scopeId
+  // Prefer explicit scopeId, fallback to compiler-injected hydration props
+  currentDialogScopeId = props.scopeId || props.__instanceId || props.__bfScope
   return <>{props.children}</>
 }
 
