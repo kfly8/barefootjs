@@ -13,6 +13,8 @@ export {
 
 export {
   createPortal,
+  isSSRPortal,
+  cleanupPortalPlaceholder,
   type Portal,
   type PortalOptions,
   type Renderable,

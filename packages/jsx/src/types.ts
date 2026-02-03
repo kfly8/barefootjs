@@ -217,6 +217,8 @@ export interface IRSlot {
 export interface IRFragment {
   type: 'fragment'
   children: IRNode[]
+  /** When true, this fragment just passes through children (Context Provider pattern) */
+  transparent?: boolean
   loc: SourceLocation
 }
 

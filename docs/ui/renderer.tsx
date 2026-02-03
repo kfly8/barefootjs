@@ -19,6 +19,7 @@ declare module 'hono' {
   }
 }
 import { BfScripts } from '../../packages/hono/src/scripts'
+import { BfPortals } from '../../packages/hono/src/portals'
 import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
 import { SidebarMenu } from '@/components/sidebar-menu'
 import { Header } from '@/components/header'
@@ -122,6 +123,7 @@ export const renderer = jsxRenderer(
                 {children}
               </main>
             </div>
+            <BfPortals />
             <BfScripts />
           </body>
         </html>
