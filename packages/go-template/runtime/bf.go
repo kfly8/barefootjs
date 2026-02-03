@@ -3,6 +3,7 @@
 package bf
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
 	"reflect"
@@ -51,6 +52,9 @@ func FuncMap() template.FuncMap {
 
 		// Child component marker
 		"bfIsChild": IsChild,
+
+		// Portal HTML rendering (parses and executes template string)
+		"bfPortalHTML": PortalHTML,
 	}
 }
 
@@ -353,6 +357,28 @@ func capitalize(s string) string {
 // The "bf-" prefix is automatically added.
 func Comment(content string) template.HTML {
 	return template.HTML("<!--bf-" + content + "-->")
+}
+
+// PortalHTML parses and executes a template string with the provided data.
+// Used for rendering dynamic portal content where the template string
+// contains Go template expressions (e.g., {{if .Open}}open{{end}}).
+//
+// The template string is parsed fresh each time to support dynamic content.
+// Standard Go template functions (if, range, eq, etc.) are available.
+func PortalHTML(data interface{}, tmplStr string) template.HTML {
+	// Create a new template with the FuncMap for custom functions
+	t, err := template.New("portal").Funcs(FuncMap()).Parse(tmplStr)
+	if err != nil {
+		// Return error message as HTML comment for debugging
+		return template.HTML("<!-- bfPortalHTML error: " + err.Error() + " -->")
+	}
+
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		return template.HTML("<!-- bfPortalHTML exec error: " + err.Error() + " -->")
+	}
+
+	return template.HTML(buf.String())
 }
 
 // =============================================================================

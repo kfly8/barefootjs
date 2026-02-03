@@ -1,6 +1,7 @@
 package bf
 
 import (
+	"html/template"
 	"testing"
 )
 
@@ -241,13 +242,65 @@ func TestFuncMap(t *testing.T) {
 		"bf_add", "bf_sub", "bf_mul", "bf_div", "bf_mod", "bf_neg",
 		"bf_lower", "bf_upper", "bf_trim", "bf_contains", "bf_join",
 		"bf_len", "bf_at", "bf_includes", "bf_first", "bf_last",
-		"bfComment",
+		"bfComment", "bfPortalHTML",
 	}
 
 	for _, name := range expectedFuncs {
 		if _, ok := fm[name]; !ok {
 			t.Errorf("FuncMap missing function: %s", name)
 		}
+	}
+}
+
+// =============================================================================
+// Portal HTML Rendering Tests
+// =============================================================================
+
+func TestPortalHTML_Static(t *testing.T) {
+	result := PortalHTML(nil, "<div>Hello</div>")
+	expected := template.HTML("<div>Hello</div>")
+	if result != expected {
+		t.Errorf("PortalHTML static = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalHTML_Dynamic(t *testing.T) {
+	data := struct {
+		Name string
+	}{Name: "World"}
+
+	result := PortalHTML(data, "<div>Hello {{.Name}}</div>")
+	expected := template.HTML("<div>Hello World</div>")
+	if result != expected {
+		t.Errorf("PortalHTML dynamic = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalHTML_Conditional(t *testing.T) {
+	data := struct {
+		Open bool
+	}{Open: true}
+
+	result := PortalHTML(data, `<div data-state="{{if .Open}}open{{else}}closed{{end}}"></div>`)
+	expected := template.HTML(`<div data-state="open"></div>`)
+	if result != expected {
+		t.Errorf("PortalHTML conditional = %q, want %q", result, expected)
+	}
+
+	// Test with Open = false
+	data.Open = false
+	result = PortalHTML(data, `<div data-state="{{if .Open}}open{{else}}closed{{end}}"></div>`)
+	expected = template.HTML(`<div data-state="closed"></div>`)
+	if result != expected {
+		t.Errorf("PortalHTML conditional (false) = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalHTML_InvalidTemplate(t *testing.T) {
+	result := PortalHTML(nil, "{{.Unclosed")
+	// Should return error comment instead of panicking
+	if !contains(string(result), "bfPortalHTML error") {
+		t.Errorf("PortalHTML invalid template should return error comment, got %q", result)
 	}
 }
 
