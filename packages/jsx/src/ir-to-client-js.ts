@@ -18,6 +18,7 @@ import type {
   FunctionInfo,
   ConstantInfo,
   ParamInfo,
+  PropReference,
 } from './types'
 import { isBooleanAttr } from './html-constants'
 
@@ -100,6 +101,7 @@ interface ReactiveChildProp {
 interface DynamicElement {
   slotId: string
   expression: string
+  propRefs?: PropReference[] // Semantic prop references for position-based replacement
   insideConditional?: boolean // true if element is inside a conditional branch
 }
 
@@ -112,6 +114,7 @@ interface ConditionalBranchEvent {
 interface ConditionalElement {
   slotId: string
   condition: string
+  conditionPropRefs?: PropReference[] // Semantic prop references for position-based replacement
   whenTrueHtml: string
   whenFalseHtml: string
   whenTrueEvents: ConditionalBranchEvent[]
@@ -319,6 +322,7 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         ctx.dynamicElements.push({
           slotId: node.slotId,
           expression: node.expr,
+          propRefs: node.propRefs,
           insideConditional,
         })
       }
@@ -346,6 +350,7 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         ctx.conditionalElements.push({
           slotId: node.slotId,
           condition: node.condition,
+          conditionPropRefs: node.conditionPropRefs,
           whenTrueHtml: irToHtmlTemplate(node.whenTrue),
           whenFalseHtml: irToHtmlTemplate(node.whenFalse),
           whenTrueEvents,
@@ -1237,6 +1242,46 @@ function replacePropReferences(expr: string, ctx: ClientJsContext): string {
   return result
 }
 
+/**
+ * Replace prop references using position-based replacement.
+ * Processes from end to start to preserve positions.
+ *
+ * This is the preferred method when propRefs are available (from semantic AST analysis).
+ * Falls back to regex-based replacePropReferences when propRefs are not available.
+ */
+function replacePropReferencesWithPositions(
+  expr: string,
+  propRefs: PropReference[] | undefined,
+  ctx: ClientJsContext
+): string {
+  // If using SolidJS-style props object pattern, skip transformation
+  if (ctx.propsObjectName) {
+    return expr
+  }
+
+  // If no propRefs, fall back to regex-based replacement
+  if (!propRefs || propRefs.length === 0) {
+    return replacePropReferences(expr, ctx)
+  }
+
+  let result = expr
+
+  // Process from end to start to preserve positions
+  const sortedRefs = [...propRefs].sort((a, b) => b.start - a.start)
+
+  for (const ref of sortedRefs) {
+    const before = result.slice(0, ref.start)
+    const after = result.slice(ref.end)
+
+    const replacement = ref.defaultValue
+      ? `(props.${ref.propName} ?? ${ref.defaultValue})`
+      : `props.${ref.propName}`
+
+    result = before + replacement + after
+  }
+
+  return result
+}
 
 /**
  * Check if a value references reactive data (props, signals, or memos).
@@ -1725,7 +1770,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   for (const elem of ctx.dynamicElements) {
     // Replace prop references with props.xxx to maintain reactivity
     // This ensures props passed as getters are re-evaluated on each effect run
-    const expr = replacePropReferences(elem.expression, ctx)
+    // Use position-based replacement when propRefs are available (semantic tracking)
+    const expr = replacePropReferencesWithPositions(elem.expression, elem.propRefs, ctx)
     if (elem.insideConditional) {
       // For elements inside conditionals, find() dynamically since DOM may be swapped
       lines.push(`  createEffect(() => {`)
@@ -1790,6 +1836,8 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     // Add data-bf-cond to template root elements so insert() can find them after DOM swap
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
     const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
+    // Use position-based replacement for condition when propRefs are available
+    const condition = replacePropReferencesWithPositions(elem.condition, elem.conditionPropRefs, ctx)
 
     // Helper to generate bindEvents function body for a branch
     const generateBindEvents = (events: ConditionalBranchEvent[]) => {
@@ -1813,7 +1861,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     }
 
     // Generate whenTrue branch config
-    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
     generateBindEvents(elem.whenTrueEvents)

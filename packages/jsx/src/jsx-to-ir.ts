@@ -23,6 +23,7 @@ import type {
   IRTemplatePart,
   SourceLocation,
   TypeInfo,
+  PropReference,
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
@@ -51,6 +52,87 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
 
 function generateSlotId(ctx: TransformContext): string {
   return `slot_${ctx.slotIdCounter++}`
+}
+
+// =============================================================================
+// Prop Reference Extraction
+// =============================================================================
+
+/**
+ * Extract prop references from an expression using TypeScript AST.
+ * Returns positions relative to the expression string, not the source file.
+ *
+ * Handles edge cases:
+ * - `open` (destructured prop) -> tracked
+ * - `props.open` (already object access) -> NOT tracked (using propsObjectName)
+ * - `window.open()` (not a prop) -> NOT tracked
+ * - `isOpen` (different identifier) -> NOT tracked
+ */
+function extractPropReferences(
+  exprNode: ts.Expression,
+  exprText: string,
+  ctx: TransformContext
+): PropReference[] {
+  const refs: PropReference[] = []
+  const propSet = new Set(ctx.analyzer.propsParams.map((p) => p.name))
+  const propsObjectName = ctx.analyzer.propsObjectName
+
+  // When using SolidJS-style props (propsObjectName set), skip extraction
+  // because source already uses props.xxx pattern
+  if (propsObjectName) {
+    return refs
+  }
+
+  // If no props, return empty
+  if (propSet.size === 0) {
+    return refs
+  }
+
+  // Calculate offset: difference between expression text start in source and exprNode.getStart()
+  const exprStartInSource = exprNode.getStart(ctx.sourceFile)
+
+  function visit(node: ts.Node): void {
+    if (ts.isIdentifier(node)) {
+      const name = node.text
+
+      // Check if this identifier is a prop
+      if (!propSet.has(name)) {
+        return
+      }
+
+      // Check if this identifier is the property part of a PropertyAccessExpression
+      // e.g., in `props.open`, `open` is the property - skip it
+      const parent = node.parent
+      if (parent && ts.isPropertyAccessExpression(parent) && parent.name === node) {
+        return
+      }
+
+      // Calculate position relative to expression string
+      const nodeStartInSource = node.getStart(ctx.sourceFile)
+      const nodeEndInSource = node.getEnd()
+      const start = nodeStartInSource - exprStartInSource
+      const end = nodeEndInSource - exprStartInSource
+
+      // Find the prop to get default value
+      const prop = ctx.analyzer.propsParams.find((p) => p.name === name)
+
+      refs.push({
+        propName: name,
+        start,
+        end,
+        defaultValue: prop?.defaultValue,
+      })
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(exprNode)
+
+  // Sort by start position (ascending) for consistent processing
+  refs.sort((a, b) => a.start - b.start)
+
+  return refs
 }
 
 // =============================================================================
@@ -431,9 +513,13 @@ function transformExpression(
   const needsSlot = reactive || isClientOnly
   const slotId = needsSlot ? generateSlotId(ctx) : null
 
+  // Extract prop references for semantic tracking
+  const propRefs = extractPropReferences(expr, exprText, ctx)
+
   return {
     type: 'expression',
     expr: exprText,
+    propRefs: propRefs.length > 0 ? propRefs : undefined,
     typeInfo: inferExpressionType(expr, ctx),
     reactive,
     slotId,
@@ -451,6 +537,7 @@ function transformConditional(
   ctx: TransformContext
 ): IRConditional {
   const condition = node.condition.getText(ctx.sourceFile)
+  const conditionPropRefs = extractPropReferences(node.condition, condition, ctx)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -461,6 +548,7 @@ function transformConditional(
   return {
     type: 'conditional',
     condition,
+    conditionPropRefs: conditionPropRefs.length > 0 ? conditionPropRefs : undefined,
     conditionType: null,
     reactive,
     whenTrue,
