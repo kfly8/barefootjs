@@ -507,8 +507,9 @@ export class GoTemplateAdapter extends BaseAdapter {
   ): void {
     if (node.type === 'component') {
       const comp = node as IRComponent
+      // Skip Portal components (handled separately via PortalCollector)
       // Skip components inside loops (handled by nestedComponents)
-      if (!inLoop && comp.slotId) {
+      if (comp.name !== 'Portal' && !inLoop && comp.slotId) {
         const suffix = comp.slotId.replace('slot_', 'Slot')
         result.push({
           name: comp.name,
@@ -516,6 +517,12 @@ export class GoTemplateAdapter extends BaseAdapter {
           props: comp.props,
           fieldName: `${comp.name}${suffix}`,
         })
+      }
+      // Recurse into Portal's children to find nested components
+      if (comp.name === 'Portal' && comp.children) {
+        for (const child of comp.children) {
+          this.collectStaticChildInstancesRecursive(child, result, inLoop)
+        }
       }
     } else if (node.type === 'loop') {
       const loop = node as IRLoop

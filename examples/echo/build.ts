@@ -23,6 +23,7 @@ const components = [
   '../shared/components/ReactiveProps.tsx',
   '../shared/components/Form.tsx',
   '../shared/components/DialogExample.tsx',
+  '../shared/components/PortalExample.tsx',
 ]
 
 // Output directories
