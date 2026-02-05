@@ -54,7 +54,7 @@ export function Header() {
               className="relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-foreground"
             >
               UI
-              <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-emerald-500 rounded-full" />
+              <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full" style="background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end))" />
             </a>
           </nav>
         </div>

@@ -64,7 +64,7 @@ export function createApp() {
         {/* Hero */}
         <div className="space-y-4 max-w-2xl">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            Ready-made components for BarefootJS
+            <span className="gradient-text">Ready-made</span> components for BarefootJS
           </h1>
           <p className="text-muted-foreground text-lg">
             Pick a component. Copy the code. Make it yours.
