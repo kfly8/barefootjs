@@ -41,6 +41,9 @@ examples/*/bun.lock
 examples/*/package-lock.json
 examples/*/node_modules
 
+# Claude Code local overrides
+CLAUDE.local.md
+
 # Playwright
 playwright-report/
 test-results/
