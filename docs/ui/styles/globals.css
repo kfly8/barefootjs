@@ -186,6 +186,16 @@ button {
   border-width: 0;
   border-style: solid;
   background-color: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+/* Reset form element browser defaults */
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
 }
 
 /* Monospace code elements */
