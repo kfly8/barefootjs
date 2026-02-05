@@ -22,7 +22,6 @@ const components = [
   '../shared/components/TodoAppSSR.tsx',
   '../shared/components/ReactiveProps.tsx',
   '../shared/components/Form.tsx',
-  '../shared/components/DialogExample.tsx',
   '../shared/components/PortalExample.tsx',
 ]
 

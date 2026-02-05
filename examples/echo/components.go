@@ -422,31 +422,6 @@ func NewFormProps(in FormInput) FormProps {
 	}
 }
 
-// DialogExampleInput is the user-facing input type.
-type DialogExampleInput struct {
-	ScopeID string // Optional: if empty, random ID is generated
-}
-
-// DialogExampleProps is the props type for the DialogExample component.
-type DialogExampleProps struct {
-	ScopeID string `json:"scopeID"`
-	Scripts *bf.ScriptCollector `json:"-"`
-	Open bool `json:"open"`
-}
-
-// NewDialogExampleProps creates DialogExampleProps from DialogExampleInput.
-func NewDialogExampleProps(in DialogExampleInput) DialogExampleProps {
-	scopeID := in.ScopeID
-	if scopeID == "" {
-		scopeID = "DialogExample_" + randomID(6)
-	}
-
-	return DialogExampleProps{
-		ScopeID: scopeID,
-		Open: false,
-	}
-}
-
 // PortalExampleInput is the user-facing input type.
 type PortalExampleInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
