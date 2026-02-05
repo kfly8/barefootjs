@@ -12,8 +12,11 @@
     "site"
   ],
   "scripts": {
+    "setup": "bun install && bun run --filter 'barefootjs-echo-example' setup",
+    "build": "bun run --filter '@barefootjs/dom' build && bun run --filter '@barefootjs/jsx' build && bun run --filter '@barefootjs/hono' --filter '@barefootjs/go-template' build && bun run --filter '*' build",
     "test": "bun test --cwd . packages/",
-    "build": "bun run --filter '*' build"
+    "test:e2e": "bun run --filter '*' test:e2e",
+    "clean": "bun run --filter '*' clean"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",
