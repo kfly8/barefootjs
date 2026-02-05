@@ -112,7 +112,7 @@ export const renderer = jsxRenderer(
             `}</style>
           </head>
           <body>
-            <Header currentPath={currentPath} />
+            <Header />
             <MobileHeader />
             <MobileMenu />
             <MobilePageNav currentPath={currentPath} />

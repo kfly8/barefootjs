@@ -24,17 +24,7 @@ function GitHubStarsPlaceholder() {
   )
 }
 
-export interface HeaderProps {
-  currentPath?: string
-}
-
-export function Header({ currentPath = '/' }: HeaderProps) {
-  // Check if a nav item is active
-  const isActive = (path: string) => {
-    if (path === '/') return currentPath === '/'
-    return currentPath.startsWith(path)
-  }
-
+export function Header() {
   return (
     <header className="hidden sm:block fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="px-6 h-14 flex items-center justify-between gap-4">
@@ -54,24 +44,17 @@ export function Header({ currentPath = '/' }: HeaderProps) {
           {/* Navigation links */}
           <nav className="hidden sm:flex items-center gap-1">
             <a
-              href="/docs/core"
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
-                isActive('/docs/core')
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-              }`}
+              href="https://docs.barefootjs.dev"
+              className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50"
             >
-              core
+              docs
             </a>
             <a
               href="/"
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
-                isActive('/components') || isActive('/forms')
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-              }`}
+              className="relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-foreground"
             >
-              ui
+              UI
+              <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full" style="background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end))" />
             </a>
           </nav>
         </div>

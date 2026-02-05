@@ -62,6 +62,10 @@
   --info: oklch(0.623 0.214 259.815);
   --info-foreground: oklch(0.985 0 0);
 
+  /* Gradient - emerald/yellow-green (brand accent) */
+  --gradient-start: oklch(0.65 0.18 145);
+  --gradient-end: oklch(0.55 0.15 165);
+
   /* Border/Input/Ring */
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
@@ -131,6 +135,10 @@
   /* Info */
   --info: oklch(0.623 0.214 259.815);
   --info-foreground: oklch(0.985 0 0);
+
+  /* Gradient - emerald/yellow-green (brand accent) */
+  --gradient-start: oklch(0.70 0.18 145);
+  --gradient-end: oklch(0.60 0.15 165);
 
   /* Border/Input/Ring */
   --border: oklch(1 0 0 / 10%);
@@ -245,6 +253,14 @@ html {
 /* Ensure hidden attribute works with flexbox items */
 [hidden] {
   display: none !important;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Card hover action - show action button only on card hover */

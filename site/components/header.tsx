@@ -27,7 +27,7 @@ export function Header() {
           {/* Navigation links */}
           <nav className="hidden sm:flex items-center gap-1">
             <a
-              href="/docs/core"
+              href="https://docs.barefootjs.dev"
               className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50"
             >
               docs
@@ -36,7 +36,7 @@ export function Header() {
               href="https://ui.barefootjs.dev"
               className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50"
             >
-              ui
+              UI
             </a>
           </nav>
         </div>
