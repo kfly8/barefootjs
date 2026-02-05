@@ -33,7 +33,7 @@ export function Header() {
               docs
             </a>
             <a
-              href="/components"
+              href="https://ui.barefootjs.dev"
               className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50"
             >
               ui
