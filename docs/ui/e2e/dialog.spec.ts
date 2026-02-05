@@ -138,11 +138,14 @@ test.describe('Dialog Documentation Page', () => {
       const dialog = page.locator('[role="dialog"][aria-labelledby="dialog-title"][data-state="open"]')
       await expect(dialog).toBeVisible()
 
-      // Focus on dialog
-      await dialog.focus()
-
       // Get focusable elements - first is the title input
       const titleInput = dialog.locator('input#task-title')
+
+      // Wait for autofocus to complete before manually focusing the dialog container
+      await expect(titleInput).toBeFocused()
+
+      // Focus on dialog container
+      await dialog.focus()
 
       // Tab should move focus to the first focusable element (title input)
       await page.keyboard.press('Tab')
