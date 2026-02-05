@@ -109,6 +109,11 @@ interface ConditionalBranchEvent {
   handler: string
 }
 
+interface ConditionalBranchRef {
+  slotId: string
+  callback: string
+}
+
 interface ConditionalElement {
   slotId: string
   condition: string
@@ -116,6 +121,8 @@ interface ConditionalElement {
   whenFalseHtml: string
   whenTrueEvents: ConditionalBranchEvent[]
   whenFalseEvents: ConditionalBranchEvent[]
+  whenTrueRefs: ConditionalBranchRef[]
+  whenFalseRefs: ConditionalBranchRef[]
 }
 
 interface LoopChildEvent {
@@ -171,6 +178,8 @@ interface ClientOnlyConditional {
   whenFalseHtml: string
   whenTrueEvents: ConditionalBranchEvent[]
   whenFalseEvents: ConditionalBranchEvent[]
+  whenTrueRefs: ConditionalBranchRef[]
+  whenFalseRefs: ConditionalBranchRef[]
 }
 
 // =============================================================================
@@ -329,6 +338,8 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         // Client-only conditional: uses comment markers, evaluated on client via insert()
         const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
         const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
+        const whenTrueRefs = collectConditionalBranchRefs(node.whenTrue)
+        const whenFalseRefs = collectConditionalBranchRefs(node.whenFalse)
         ctx.clientOnlyConditionals.push({
           slotId: node.slotId,
           condition: node.condition,
@@ -336,12 +347,16 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
           whenFalseHtml: irToHtmlTemplate(node.whenFalse),
           whenTrueEvents,
           whenFalseEvents,
+          whenTrueRefs,
+          whenFalseRefs,
         })
       } else if (node.reactive && node.slotId) {
         // Normal reactive conditional: server renders initial state
-        // Collect events from each branch for use with insert()
+        // Collect events and refs from each branch for use with insert()
         const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
         const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
+        const whenTrueRefs = collectConditionalBranchRefs(node.whenTrue)
+        const whenFalseRefs = collectConditionalBranchRefs(node.whenFalse)
 
         ctx.conditionalElements.push({
           slotId: node.slotId,
@@ -350,6 +365,8 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
           whenFalseHtml: irToHtmlTemplate(node.whenFalse),
           whenTrueEvents,
           whenFalseEvents,
+          whenTrueRefs,
+          whenFalseRefs,
         })
       }
       // Recurse into conditional branches with insideConditional = true
@@ -671,6 +688,50 @@ function collectConditionalBranchEvents(node: IRNode): ConditionalBranchEvent[] 
 }
 
 /**
+ * Collect refs from a conditional branch for use with insert().
+ * These refs will be called via the branch's bindEvents function.
+ */
+function collectConditionalBranchRefs(node: IRNode): ConditionalBranchRef[] {
+  const refs: ConditionalBranchRef[] = []
+
+  function traverse(n: IRNode): void {
+    switch (n.type) {
+      case 'element':
+        // Collect ref from this element
+        if (n.slotId && n.ref) {
+          refs.push({
+            slotId: n.slotId,
+            callback: n.ref,
+          })
+        }
+        // Recurse into children
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
+      case 'fragment':
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
+      case 'conditional':
+        // Nested conditionals - collect from both branches
+        traverse(n.whenTrue)
+        traverse(n.whenFalse)
+        break
+      case 'component':
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
+    }
+  }
+
+  traverse(node)
+  return refs
+}
+
+/**
  * Collect detailed event info from loop children for event delegation
  */
 function collectLoopChildEvents(node: IRNode): LoopChildEvent[] {
@@ -765,6 +826,12 @@ function irToHtmlTemplate(node: IRNode): string {
       return node.children.map(irToHtmlTemplate).join('')
 
     case 'component': {
+      // Portal is a special pass-through component - render its children directly
+      // Portal moves content to document.body, so we need the actual content in templates
+      if (node.name === 'Portal') {
+        return node.children.map(irToHtmlTemplate).join('')
+      }
+
       // Component children in loops require special handling.
       // We generate a placeholder with scope marker that can be hydrated.
       // Note: Full component rendering on client is a known limitation.
@@ -883,11 +950,17 @@ function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
     case 'fragment':
       return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
 
-    case 'component':
+    case 'component': {
+      // Portal is a special pass-through component - render its children directly
+      if (node.name === 'Portal') {
+        return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+      }
+
       // Nested components render as placeholders
       const keyProp = node.props.find((p) => p.name === 'key')
       const keyAttr = keyProp ? ` data-key="\${${transformExpr(keyProp.value)}}"` : ''
       return `<div${keyAttr} data-bf-scope="${node.name}_\${Math.random().toString(36).slice(2, 8)}"></div>`
+    }
 
     case 'loop':
       return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
@@ -1079,6 +1152,26 @@ function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
   // From ref callbacks
   for (const elem of ctx.refElements) {
     extractIdentifiers(elem.callback, used)
+  }
+
+  // From conditional branch refs
+  for (const elem of ctx.conditionalElements) {
+    for (const ref of elem.whenTrueRefs) {
+      extractIdentifiers(ref.callback, used)
+    }
+    for (const ref of elem.whenFalseRefs) {
+      extractIdentifiers(ref.callback, used)
+    }
+  }
+
+  // From client-only conditional branch refs
+  for (const elem of ctx.clientOnlyConditionals) {
+    for (const ref of elem.whenTrueRefs) {
+      extractIdentifiers(ref.callback, used)
+    }
+    for (const ref of elem.whenFalseRefs) {
+      extractIdentifiers(ref.callback, used)
+    }
   }
 
   // From local function bodies (to find prop references like onAdd)
@@ -1768,8 +1861,13 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     const condition = elem.condition
 
     // Helper to generate bindEvents function body for a branch
-    const generateBindEvents = (events: ConditionalBranchEvent[]) => {
-      // Group events by slotId to avoid duplicate variable declarations
+    const generateBindEvents = (events: ConditionalBranchEvent[], refs: ConditionalBranchRef[]) => {
+      // Collect all slot IDs that need element references
+      const allSlotIds = new Set<string>()
+      for (const event of events) allSlotIds.add(event.slotId)
+      for (const ref of refs) allSlotIds.add(ref.slotId)
+
+      // Group events by slotId
       const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
       for (const event of events) {
         if (!eventsBySlot.has(event.slotId)) {
@@ -1778,13 +1876,23 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
         eventsBySlot.get(event.slotId)!.push(event)
       }
 
-      for (const [slotId, slotEvents] of eventsBySlot) {
+      // Generate element references for all slots
+      for (const slotId of allSlotIds) {
         lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
+      }
+
+      // Generate event handlers
+      for (const [slotId, slotEvents] of eventsBySlot) {
         for (const event of slotEvents) {
           // Wrap handler in block to prevent accidental return false (which prevents default)
           const wrappedHandler = wrapHandlerInBlock(event.handler)
           lines.push(`      if (_${slotId}) _${slotId}.${toDomEventProp(event.eventName)} = ${wrappedHandler}`)
         }
+      }
+
+      // Generate ref callbacks
+      for (const ref of refs) {
+        lines.push(`      if (_${ref.slotId}) (${ref.callback})(_${ref.slotId})`)
       }
     }
 
@@ -1792,14 +1900,14 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     lines.push(`  insert(__scope, '${elem.slotId}', () => ${condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenTrueEvents)
+    generateBindEvents(elem.whenTrueEvents, elem.whenTrueRefs)
     lines.push(`    }`)
     lines.push(`  }, {`)
 
     // Generate whenFalse branch config
     lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenFalseEvents)
+    generateBindEvents(elem.whenFalseEvents, elem.whenFalseRefs)
     lines.push(`    }`)
     lines.push(`  })`)
     lines.push('')
@@ -1813,8 +1921,13 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
 
     // Helper to generate bindEvents function body for a branch
-    const generateBindEvents = (events: ConditionalBranchEvent[]) => {
-      // Group events by slotId to avoid duplicate variable declarations
+    const generateBindEvents = (events: ConditionalBranchEvent[], refs: ConditionalBranchRef[]) => {
+      // Collect all slot IDs that need element references
+      const allSlotIds = new Set<string>()
+      for (const event of events) allSlotIds.add(event.slotId)
+      for (const ref of refs) allSlotIds.add(ref.slotId)
+
+      // Group events by slotId
       const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
       for (const event of events) {
         if (!eventsBySlot.has(event.slotId)) {
@@ -1823,13 +1936,23 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
         eventsBySlot.get(event.slotId)!.push(event)
       }
 
-      for (const [slotId, slotEvents] of eventsBySlot) {
+      // Generate element references for all slots
+      for (const slotId of allSlotIds) {
         lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
+      }
+
+      // Generate event handlers
+      for (const [slotId, slotEvents] of eventsBySlot) {
         for (const event of slotEvents) {
           // Wrap handler in block to prevent accidental return false (which prevents default)
           const wrappedHandler = wrapHandlerInBlock(event.handler)
           lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${wrappedHandler}`)
         }
+      }
+
+      // Generate ref callbacks
+      for (const ref of refs) {
+        lines.push(`      if (_${ref.slotId}) (${ref.callback})(_${ref.slotId})`)
       }
     }
 
@@ -1837,12 +1960,12 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenTrueEvents)
+    generateBindEvents(elem.whenTrueEvents, elem.whenTrueRefs)
     lines.push(`    }`)
     lines.push(`  }, {`)
     lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenFalseEvents)
+    generateBindEvents(elem.whenFalseEvents, elem.whenFalseRefs)
     lines.push(`    }`)
     lines.push(`  })`)
     lines.push('')
@@ -2009,6 +2132,12 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     for (const event of cond.whenFalseEvents) {
       conditionalSlotIds.add(event.slotId)
     }
+    for (const ref of cond.whenTrueRefs) {
+      conditionalSlotIds.add(ref.slotId)
+    }
+    for (const ref of cond.whenFalseRefs) {
+      conditionalSlotIds.add(ref.slotId)
+    }
   }
 
   // Event handlers - skip those inside conditionals (handled by insert())
@@ -2127,8 +2256,9 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
     lines.push(`  })`)
   }
 
-  // Ref callbacks
+  // Ref callbacks - skip those inside conditionals (handled by insert())
   for (const elem of ctx.refElements) {
+    if (conditionalSlotIds.has(elem.slotId)) continue
     lines.push(`  if (_${elem.slotId}) (${elem.callback})(_${elem.slotId})`)
   }
 
@@ -2210,6 +2340,12 @@ function generateElementRefs(ctx: ClientJsContext): string {
     for (const event of cond.whenFalseEvents) {
       conditionalSlotIds.add(event.slotId)
     }
+    for (const ref of cond.whenTrueRefs) {
+      conditionalSlotIds.add(ref.slotId)
+    }
+    for (const ref of cond.whenFalseRefs) {
+      conditionalSlotIds.add(ref.slotId)
+    }
   }
 
   for (const elem of ctx.interactiveElements) {
@@ -2236,7 +2372,10 @@ function generateElementRefs(ctx: ClientJsContext): string {
     regularSlots.add(elem.slotId)
   }
   for (const elem of ctx.refElements) {
-    regularSlots.add(elem.slotId)
+    // Skip refs inside conditionals (handled by insert())
+    if (!conditionalSlotIds.has(elem.slotId)) {
+      regularSlots.add(elem.slotId)
+    }
   }
   for (const attr of ctx.reactiveAttrs) {
     regularSlots.add(attr.slotId)

@@ -1018,6 +1018,111 @@ describe('GoTemplateAdapter', () => {
     })
   })
 
+  describe('Portal component handling', () => {
+    test('renders Portal component with children as portal collection', () => {
+      // Portal component should add its children to PortalCollector
+      const portalComp: IRComponent = {
+        type: 'component',
+        name: 'Portal',
+        props: [],
+        propsType: null,
+        children: [
+          {
+            type: 'element',
+            tag: 'div',
+            attrs: [{ name: 'data-slot', value: 'dialog-overlay', dynamic: false, isLiteral: true, loc }],
+            events: [],
+            ref: null,
+            children: [],
+            slotId: null,
+            needsScope: false,
+            loc,
+          },
+        ],
+        template: '',
+        slotId: 'slot_portal_1',
+        loc,
+      }
+
+      const result = adapter.renderComponent(portalComp)
+      // Portal should use PortalCollector instead of normal template call
+      expect(result).toContain('.Portals.Add')
+      // Content is escaped for Go string literal (quotes become \")
+      expect(result).toContain('data-slot=\\"dialog-overlay\\"')
+    })
+
+    test('renders Portal with dynamic attribute in children', () => {
+      // Portal with dynamic content (e.g., data-state based on open prop)
+      const portalComp: IRComponent = {
+        type: 'component',
+        name: 'Portal',
+        props: [],
+        propsType: null,
+        children: [
+          {
+            type: 'element',
+            tag: 'div',
+            attrs: [
+              { name: 'data-slot', value: 'dialog-overlay', dynamic: false, isLiteral: true, loc },
+              { name: 'data-state', value: "open ? 'open' : 'closed'", dynamic: true, isLiteral: false, loc },
+            ],
+            events: [],
+            ref: null,
+            children: [],
+            slotId: null,
+            needsScope: false,
+            loc,
+          },
+        ],
+        template: '',
+        slotId: 'slot_portal_2',
+        loc,
+      }
+
+      const result = adapter.renderComponent(portalComp)
+      // Should use PortalCollector with bfPortalHTML for dynamic data-state
+      expect(result).toContain('.Portals.Add')
+      expect(result).toContain('bfPortalHTML')
+      expect(result).toContain('data-state')
+    })
+
+    test('Portal without children renders empty portal add', () => {
+      const portalComp: IRComponent = {
+        type: 'component',
+        name: 'Portal',
+        props: [],
+        propsType: null,
+        children: [],
+        template: '',
+        slotId: 'slot_portal_empty',
+        loc,
+      }
+
+      const result = adapter.renderComponent(portalComp)
+      // Empty Portal should still call Add but with empty content
+      expect(result).toContain('.Portals.Add')
+    })
+
+    test('non-Portal component renders normally', () => {
+      // Ensure non-Portal components are not affected
+      const comp: IRComponent = {
+        type: 'component',
+        name: 'DialogTrigger',
+        props: [],
+        propsType: null,
+        children: [],
+        template: '',
+        slotId: 'slot_1',
+        loc,
+      }
+
+      const result = adapter.renderComponent(comp)
+      // Should render as normal template call
+      expect(result).toBe('{{template "DialogTrigger" .DialogTriggerSlot1}}')
+      expect(result).not.toContain('.Portals.Add')
+    })
+  })
+
   describe('block body filter rendering', () => {
     // Helper to parse block body from code string
     function parseBlock(code: string) {

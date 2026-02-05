@@ -16,6 +16,7 @@ import TodoAppSSR from '@/components/TodoAppSSR'
 import ReactiveProps, { PropsReactivityComparison } from '@/components/ReactiveProps'
 import Form from '@/components/Form'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
+import PortalExample from '@/components/PortalExample'
 
 const app = new Hono()
 
@@ -131,6 +132,17 @@ app.get('/form', (c) => {
     <div>
       <h1>Form Example</h1>
       <Form />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Portal example
+app.get('/portal', (c) => {
+  return c.render(
+    <div>
+      <h1>Portal Example</h1>
+      <PortalExample />
       <p><a href="/">← Back</a></p>
     </div>
   )

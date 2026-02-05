@@ -421,3 +421,28 @@ func NewFormProps(in FormInput) FormProps {
 		Accepted: false,
 	}
 }
+
+// PortalExampleInput is the user-facing input type.
+type PortalExampleInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+}
+
+// PortalExampleProps is the props type for the PortalExample component.
+type PortalExampleProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Open bool `json:"open"`
+}
+
+// NewPortalExampleProps creates PortalExampleProps from PortalExampleInput.
+func NewPortalExampleProps(in PortalExampleInput) PortalExampleProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "PortalExample_" + randomID(6)
+	}
+
+	return PortalExampleProps{
+		ScopeID: scopeID,
+		Open: false,
+	}
+}

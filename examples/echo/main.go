@@ -56,9 +56,9 @@ func defaultLayout(ctx *bf.RenderContext) string {
 <body>%s
     <div id="app">%s%s</div>
     <p><a href="/">← Back</a></p>
-    %s
+    %s%s
 </body>
-</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Scripts)
+</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Portals, ctx.Scripts)
 }
 
 // In-memory todo storage
@@ -103,6 +103,7 @@ func main() {
 	e.GET("/reactive-props", reactivePropsHandler)
 	e.GET("/props-reactivity", propsReactivityHandler)
 	e.GET("/form", formHandler)
+	e.GET("/portal", portalHandler)
 
 	// Todo API endpoints
 	e.GET("/api/todos", getTodosAPI)
@@ -232,6 +233,15 @@ func formHandler(c echo.Context) error {
 		Props:   &props,
 		Title:   "Form - BarefootJS",
 		Heading: "Form Example",
+	})
+}
+
+func portalHandler(c echo.Context) error {
+	props := NewPortalExampleProps(PortalExampleInput{})
+	return c.Render(http.StatusOK, "PortalExample", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Portal - BarefootJS",
+		Heading: "Portal Example",
 	})
 }
 

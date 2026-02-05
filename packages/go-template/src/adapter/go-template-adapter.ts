@@ -507,8 +507,9 @@ export class GoTemplateAdapter extends BaseAdapter {
   ): void {
     if (node.type === 'component') {
       const comp = node as IRComponent
+      // Skip Portal components (handled separately via PortalCollector)
       // Skip components inside loops (handled by nestedComponents)
-      if (!inLoop && comp.slotId) {
+      if (comp.name !== 'Portal' && !inLoop && comp.slotId) {
         const suffix = comp.slotId.replace('slot_', 'Slot')
         result.push({
           name: comp.name,
@@ -516,6 +517,12 @@ export class GoTemplateAdapter extends BaseAdapter {
           props: comp.props,
           fieldName: `${comp.name}${suffix}`,
         })
+      }
+      // Recurse into Portal's children to find nested components
+      if (comp.name === 'Portal' && comp.children) {
+        for (const child of comp.children) {
+          this.collectStaticChildInstancesRecursive(child, result, inLoop)
+        }
       }
     } else if (node.type === 'loop') {
       const loop = node as IRLoop
@@ -1889,6 +1896,11 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderComponent(comp: IRComponent): string {
+    // Handle Portal component specially - collect content for body end
+    if (comp.name === 'Portal') {
+      return this.renderPortalComponent(comp)
+    }
+
     // In Go templates, components are rendered using {{template "name" data}}
     if (this.inLoop) {
       // Loop children: dot becomes loop item (already has correct props)
@@ -1901,6 +1913,34 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
     // Static children without slotId: fallback to .ComponentName
     return `{{template "${comp.name}" .${comp.name}}}`
+  }
+
+  /**
+   * Render a Portal component by adding its children to PortalCollector.
+   * Portal content is rendered at </body> instead of inline.
+   *
+   * For static content: uses simple string literal with Add()
+   * For dynamic content: uses bfPortalHTML() to parse and execute template string
+   */
+  private renderPortalComponent(comp: IRComponent): string {
+    // Render children content
+    const children = this.renderChildren(comp.children)
+
+    // Escape for Go double-quoted string literal
+    const escapedContent = children
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+
+    // Check if content has template expressions (dynamic content)
+    if (children.includes('{{')) {
+      // Content has dynamic parts - use bfPortalHTML to capture and render
+      // bfPortalHTML parses and executes the template string with provided data
+      return `{{.Portals.Add .ScopeID (bfPortalHTML . "${escapedContent}")}}`
+    }
+
+    // Static content - can use simple string literal
+    return `{{.Portals.Add .ScopeID "${escapedContent}"}}`
   }
 
   private renderFragment(fragment: IRFragment): string {

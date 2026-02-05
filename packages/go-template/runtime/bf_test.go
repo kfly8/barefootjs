@@ -1,6 +1,7 @@
 package bf
 
 import (
+	"html/template"
 	"testing"
 )
 
@@ -241,7 +242,7 @@ func TestFuncMap(t *testing.T) {
 		"bf_add", "bf_sub", "bf_mul", "bf_div", "bf_mod", "bf_neg",
 		"bf_lower", "bf_upper", "bf_trim", "bf_contains", "bf_join",
 		"bf_len", "bf_at", "bf_includes", "bf_first", "bf_last",
-		"bfComment",
+		"bfComment", "bfPortalHTML",
 	}
 
 	for _, name := range expectedFuncs {
@@ -249,4 +250,170 @@ func TestFuncMap(t *testing.T) {
 			t.Errorf("FuncMap missing function: %s", name)
 		}
 	}
+}
+
+// =============================================================================
+// Portal HTML Rendering Tests
+// =============================================================================
+
+func TestPortalHTML_Static(t *testing.T) {
+	result := PortalHTML(nil, "<div>Hello</div>")
+	expected := template.HTML("<div>Hello</div>")
+	if result != expected {
+		t.Errorf("PortalHTML static = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalHTML_Dynamic(t *testing.T) {
+	data := struct {
+		Name string
+	}{Name: "World"}
+
+	result := PortalHTML(data, "<div>Hello {{.Name}}</div>")
+	expected := template.HTML("<div>Hello World</div>")
+	if result != expected {
+		t.Errorf("PortalHTML dynamic = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalHTML_Conditional(t *testing.T) {
+	data := struct {
+		Open bool
+	}{Open: true}
+
+	result := PortalHTML(data, `<div data-state="{{if .Open}}open{{else}}closed{{end}}"></div>`)
+	expected := template.HTML(`<div data-state="open"></div>`)
+	if result != expected {
+		t.Errorf("PortalHTML conditional = %q, want %q", result, expected)
+	}
+
+	// Test with Open = false
+	data.Open = false
+	result = PortalHTML(data, `<div data-state="{{if .Open}}open{{else}}closed{{end}}"></div>`)
+	expected = template.HTML(`<div data-state="closed"></div>`)
+	if result != expected {
+		t.Errorf("PortalHTML conditional (false) = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalHTML_InvalidTemplate(t *testing.T) {
+	result := PortalHTML(nil, "{{.Unclosed")
+	// Should return error comment instead of panicking
+	if !contains(string(result), "bfPortalHTML error") {
+		t.Errorf("PortalHTML invalid template should return error comment, got %q", result)
+	}
+}
+
+// =============================================================================
+// Portal Collection Tests
+// =============================================================================
+
+func TestNewPortalCollector(t *testing.T) {
+	pc := NewPortalCollector()
+	if pc == nil {
+		t.Error("NewPortalCollector() returned nil")
+	}
+	if len(pc.portals) != 0 {
+		t.Errorf("NewPortalCollector() should have empty portals, got %d", len(pc.portals))
+	}
+	if pc.counter != 0 {
+		t.Errorf("NewPortalCollector() counter should be 0, got %d", pc.counter)
+	}
+}
+
+func TestPortalCollector_Add(t *testing.T) {
+	pc := NewPortalCollector()
+
+	// Add first portal
+	result := pc.Add("scope-1", "<div>Content 1</div>")
+	if result != "" {
+		t.Errorf("Add() should return empty string, got %q", result)
+	}
+	if len(pc.portals) != 1 {
+		t.Errorf("After first Add(), portals count should be 1, got %d", len(pc.portals))
+	}
+	if pc.portals[0].ID != "bf-portal-1" {
+		t.Errorf("First portal ID should be 'bf-portal-1', got %q", pc.portals[0].ID)
+	}
+	if pc.portals[0].OwnerID != "scope-1" {
+		t.Errorf("First portal OwnerID should be 'scope-1', got %q", pc.portals[0].OwnerID)
+	}
+
+	// Add second portal
+	pc.Add("scope-2", "<div>Content 2</div>")
+	if len(pc.portals) != 2 {
+		t.Errorf("After second Add(), portals count should be 2, got %d", len(pc.portals))
+	}
+	if pc.portals[1].ID != "bf-portal-2" {
+		t.Errorf("Second portal ID should be 'bf-portal-2', got %q", pc.portals[1].ID)
+	}
+}
+
+func TestPortalCollector_Render_Empty(t *testing.T) {
+	pc := NewPortalCollector()
+	result := pc.Render()
+	if result != "" {
+		t.Errorf("Render() on empty collector should return empty string, got %q", result)
+	}
+}
+
+func TestPortalCollector_Render_Nil(t *testing.T) {
+	var pc *PortalCollector
+	result := pc.Render()
+	if result != "" {
+		t.Errorf("Render() on nil collector should return empty string, got %q", result)
+	}
+}
+
+func TestPortalCollector_Render_Single(t *testing.T) {
+	pc := NewPortalCollector()
+	pc.Add("scope-abc", "<div>Portal Content</div>")
+
+	result := string(pc.Render())
+	expected := `<div data-bf-portal-id="bf-portal-1" data-bf-portal-owner="scope-abc"><div>Portal Content</div></div>` + "\n"
+	if result != expected {
+		t.Errorf("Render() = %q, want %q", result, expected)
+	}
+}
+
+func TestPortalCollector_Render_Multiple(t *testing.T) {
+	pc := NewPortalCollector()
+	pc.Add("scope-1", "<div>Content 1</div>")
+	pc.Add("scope-2", "<span>Content 2</span>")
+
+	result := string(pc.Render())
+
+	// Check that both portals are rendered
+	if !contains(result, `data-bf-portal-id="bf-portal-1"`) {
+		t.Error("Render() should contain first portal ID")
+	}
+	if !contains(result, `data-bf-portal-id="bf-portal-2"`) {
+		t.Error("Render() should contain second portal ID")
+	}
+	if !contains(result, `data-bf-portal-owner="scope-1"`) {
+		t.Error("Render() should contain first portal owner")
+	}
+	if !contains(result, `data-bf-portal-owner="scope-2"`) {
+		t.Error("Render() should contain second portal owner")
+	}
+	if !contains(result, "<div>Content 1</div>") {
+		t.Error("Render() should contain first portal content")
+	}
+	if !contains(result, "<span>Content 2</span>") {
+		t.Error("Render() should contain second portal content")
+	}
+}
+
+// helper function for string contains check
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }
