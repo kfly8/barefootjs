@@ -408,18 +408,14 @@ test.describe('Dialog Documentation Page', () => {
 })
 
 test.describe('Home Page - Dialog Link', () => {
-  test('displays Dialog component link', async ({ page }) => {
+  test('displays Dialog preview card', async ({ page }) => {
     await page.goto('/')
-    // Use main content area to avoid matching mobile menu links
-    const mainContent = page.locator('main')
-    await expect(mainContent.locator('a[href="/docs/components/dialog"]')).toBeVisible()
+    await expect(page.locator('#components a[href="/docs/components/dialog"]')).toBeVisible()
   })
 
   test('navigates to Dialog page on click', async ({ page }) => {
     await page.goto('/')
-    // Use main content area to avoid matching mobile menu links
-    const mainContent = page.locator('main')
-    await mainContent.locator('a[href="/docs/components/dialog"]').click()
+    await page.locator('#components a[href="/docs/components/dialog"]').click()
     await expect(page).toHaveURL('/docs/components/dialog')
     await expect(page.locator('h1')).toContainText('Dialog')
   })
