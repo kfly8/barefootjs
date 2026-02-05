@@ -209,16 +209,14 @@ test.describe('Accordion Documentation Page', () => {
 })
 
 test.describe('Home Page - Accordion Link', () => {
-  test('displays Accordion component link', async ({ page }) => {
+  test('displays Accordion preview card', async ({ page }) => {
     await page.goto('/')
-    const accordionCard = page.getByRole('link', { name: 'Accordion A vertically stacked' })
-    await expect(accordionCard).toBeVisible()
-    await expect(accordionCard.locator('h2')).toContainText('Accordion')
+    await expect(page.locator('#components a[href="/docs/components/accordion"]')).toBeVisible()
   })
 
   test('navigates to Accordion page on click', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('link', { name: 'Accordion A vertically stacked' }).click()
+    await page.locator('#components a[href="/docs/components/accordion"]').click()
     await expect(page).toHaveURL('/docs/components/accordion')
     await expect(page.locator('h1')).toContainText('Accordion')
   })

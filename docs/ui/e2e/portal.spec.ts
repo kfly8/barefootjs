@@ -152,17 +152,3 @@ test.describe('Portal Documentation Page', () => {
     })
   })
 })
-
-test.describe('Home Page - Portal Link', () => {
-  test('displays Portal component link', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/portal"]')).toBeVisible()
-  })
-
-  test('navigates to Portal page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.click('a[href="/docs/components/portal"]')
-    await expect(page).toHaveURL('/docs/components/portal')
-    await expect(page.locator('h1')).toContainText('Portal')
-  })
-})

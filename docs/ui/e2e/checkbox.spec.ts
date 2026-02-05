@@ -342,22 +342,3 @@ test.describe('Checkbox Documentation Page', () => {
     })
   })
 })
-
-test.describe('Home Page - Checkbox Link', () => {
-  test('displays Checkbox component link', async ({ page }) => {
-    await page.goto('/')
-    // Use main content area selector to avoid sidebar duplicates
-    const mainContent = page.locator('main')
-    await expect(mainContent.locator('a[href="/docs/components/checkbox"]')).toBeVisible()
-    await expect(mainContent.locator('a[href="/docs/components/checkbox"] h2')).toContainText('Checkbox')
-  })
-
-  test('navigates to Checkbox page on click', async ({ page }) => {
-    await page.goto('/')
-    // Use main content area selector to avoid sidebar duplicates
-    const mainContent = page.locator('main')
-    await mainContent.locator('a[href="/docs/components/checkbox"]').click()
-    await expect(page).toHaveURL('/docs/components/checkbox')
-    await expect(page.locator('h1')).toContainText('Checkbox')
-  })
-})

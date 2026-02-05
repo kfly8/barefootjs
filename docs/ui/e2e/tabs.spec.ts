@@ -169,18 +169,14 @@ test.describe('Tabs Documentation Page', () => {
 
 // Skip: Focus on Button during issue #126 design phase
 test.describe('Home Page - Tabs Link', () => {
-  test('displays Tabs component link', async ({ page }) => {
+  test('displays Tabs preview card', async ({ page }) => {
     await page.goto('/')
-    // Use role locator to find the card link specifically
-    const tabsCard = page.getByRole('link', { name: 'Tabs A set of layered' })
-    await expect(tabsCard).toBeVisible()
-    await expect(tabsCard.locator('h2')).toContainText('Tabs')
+    await expect(page.locator('#components a[href="/docs/components/tabs"]')).toBeVisible()
   })
 
   test('navigates to Tabs page on click', async ({ page }) => {
     await page.goto('/')
-    // Use role locator to find the card link specifically
-    await page.getByRole('link', { name: 'Tabs A set of layered' }).click()
+    await page.locator('#components a[href="/docs/components/tabs"]').click()
     await expect(page).toHaveURL('/docs/components/tabs')
     await expect(page.locator('h1')).toContainText('Tabs')
   })

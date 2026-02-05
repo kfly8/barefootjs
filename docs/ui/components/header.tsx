@@ -42,7 +42,7 @@ export function Header({ currentPath = '/' }: HeaderProps) {
         <div className="flex items-center gap-6">
           {/* Logo */}
           <a
-            href="/"
+            href="https://barefootjs.dev"
             className="text-foreground transition-colors no-underline"
           >
             <Logo />
