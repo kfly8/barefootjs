@@ -12,7 +12,7 @@
     "site"
   ],
   "scripts": {
-    "setup": "bun install && bun run --filter 'barefootjs-echo-example' deps",
+    "setup": "bun install && bun run --filter 'barefootjs-echo-example' setup",
     "build": "bun run --filter '@barefootjs/dom' build && bun run --filter '@barefootjs/jsx' build && bun run --filter '@barefootjs/hono' --filter '@barefootjs/go-template' build && bun run --filter '*' build",
     "test": "bun test --cwd . packages/",
     "test:e2e": "bun run --filter '*' test:e2e",
