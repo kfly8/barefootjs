@@ -64,7 +64,7 @@ export function Header({ currentPath = '/' }: HeaderProps) {
               core
             </a>
             <a
-              href="/components"
+              href="/"
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline ${
                 isActive('/components') || isActive('/forms')
                   ? 'bg-accent text-foreground'

@@ -13,7 +13,7 @@ const links = [
   {
     title: 'UI Components',
     description: 'Pre-built components using Barefoot.js.',
-    href: 'https://barefootjs-ui.pages.dev/',
+    href: 'https://ui.barefootjs.dev/',
   },
   {
     title: 'GitHub',
