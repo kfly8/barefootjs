@@ -141,8 +141,6 @@ func indexHandler(c echo.Context) error {
         <li><a href="/toggle">Toggle</a></li>
         <li><a href="/todos">Todo (@client)</a></li>
         <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
-        <li><a href="/dialog">Dialog</a></li>
-        <li><a href="/portal">Portal</a></li>
     </ul>
 </body>
 </html>
