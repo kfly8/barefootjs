@@ -30,40 +30,20 @@ import { ValidationPage } from './pages/forms/validation'
 import { SubmitPage } from './pages/forms/submit'
 import { FieldArraysPage } from './pages/forms/field-arrays'
 
-// Navigation data for the home page
-const components = [
-  { name: 'Badge', path: '/docs/components/badge', description: 'Displays a badge or a component that looks like a badge.' },
-  { name: 'Button', path: '/docs/components/button', description: 'Displays a button or a component that looks like a button.' },
-  { name: 'Card', path: '/docs/components/card', description: 'Displays a card with header, content, and footer.' },
-  { name: 'Checkbox', path: '/docs/components/checkbox', description: 'A control that allows the user to toggle between checked and unchecked states.' },
-  { name: 'Input', path: '/docs/components/input', description: 'Displays an input field for user text entry.' },
-  { name: 'Portal', path: '/docs/components/portal', description: 'Renders children into a different part of the DOM tree.' },
-  { name: 'Switch', path: '/docs/components/switch', description: 'A control that allows the user to toggle between checked and not checked.' },
-  { name: 'Accordion', path: '/docs/components/accordion', description: 'A vertically stacked set of interactive headings that each reveal content.' },
-  { name: 'Tabs', path: '/docs/components/tabs', description: 'A set of layered sections of content displayed one at a time.' },
-  { name: 'Dialog', path: '/docs/components/dialog', description: 'A modal dialog that displays content in a layer above the page.' },
-  { name: 'Dropdown', path: '/docs/components/dropdown', description: 'A select-like dropdown menu for choosing from a list of options.' },
-  { name: 'Toast', path: '/docs/components/toast', description: 'A non-blocking notification that displays brief messages to users.' },
-  { name: 'Tooltip', path: '/docs/components/tooltip', description: 'A popup that displays contextual information on hover or focus.' },
-  { name: 'Select', path: '/docs/components/select', description: 'A dropdown for choosing from a list of options.' },
-]
 
-const formPatterns = [
-  { name: 'Controlled Input', path: '/docs/forms/controlled-input', description: 'Two-way binding between signals and input values.' },
-  { name: 'Form Validation', path: '/docs/forms/validation', description: 'Error state management and multi-field validation patterns.' },
-  { name: 'Form Submit', path: '/docs/forms/submit', description: 'Async submit handling with loading, success, and error states.' },
-  { name: 'Field Arrays', path: '/docs/forms/field-arrays', description: 'Dynamic list of form inputs with add/remove and per-item validation.' },
-]
-
-// Reusable link card component for the home page
-function NavLink({ name, path, description }: { name: string; path: string; description: string }) {
+// Preview card for the home page component showcase
+function PreviewCard({ name, path, children }: { name: string; path: string; children: any }) {
   return (
     <a
       href={path}
-      className="block p-4 border border-border rounded-lg hover:border-ring hover:bg-accent transition-colors"
+      className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline overflow-hidden"
     >
-      <h2 className="font-semibold text-foreground">{name}</h2>
-      <p className="text-sm text-muted-foreground mt-1">{description}</p>
+      <div className="flex-1 p-6 flex items-center justify-center bg-muted/30 border-b border-border min-h-40">
+        {children}
+      </div>
+      <div className="px-4 py-3 h-11 flex items-center">
+        <span className="text-sm font-medium text-foreground group-hover:text-foreground">{name}</span>
+      </div>
     </a>
   )
 }
@@ -77,30 +57,107 @@ export function createApp() {
 
   app.use(renderer)
 
-  // Home - Components list
+  // Home - Hero + Components list
   app.get('/', (c) => {
     return c.render(
-      <div className="space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Components</h1>
+      <div className="space-y-12">
+        {/* Hero */}
+        <div className="space-y-4 max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+            Ready-made components for BarefootJS
+          </h1>
           <p className="text-muted-foreground text-lg">
-            Beautifully designed components built with BarefootJS and UnoCSS.
+            Pick a component. Copy the code. Make it yours.
           </p>
         </div>
 
-        <div className="grid gap-4">
-          {components.map((c) => <NavLink {...c} />)}
-        </div>
+        {/* Component Showcase */}
+        <div className="space-y-6" id="components">
 
-        <div className="space-y-2 mt-8">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Form Patterns</h2>
-          <p className="text-muted-foreground">
-            Common patterns for building forms with BarefootJS.
-          </p>
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Button */}
+            <PreviewCard name="Button" path="/docs/components/button">
+              <div className="flex items-center gap-2">
+                <span className="h-9 px-4 inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground">Primary</span>
+                <span className="h-9 px-4 inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background text-foreground">Outline</span>
+                <span className="h-9 px-4 inline-flex items-center justify-center rounded-md text-sm font-medium text-muted-foreground hover:text-foreground">Ghost</span>
+              </div>
+            </PreviewCard>
 
-        <div className="grid gap-4">
-          {formPatterns.map((p) => <NavLink {...p} />)}
+            {/* Card */}
+            <PreviewCard name="Card" path="/docs/components/card">
+              <div className="w-full max-w-48 bg-card rounded-lg border border-border shadow-sm p-4 space-y-2">
+                <div className="text-sm font-semibold text-foreground">Card Title</div>
+                <div className="text-xs text-muted-foreground">A short description of the card content.</div>
+                <span className="h-7 px-3 inline-flex items-center justify-center rounded-md text-xs font-medium bg-primary text-primary-foreground">Action</span>
+              </div>
+            </PreviewCard>
+
+            {/* Tabs */}
+            <PreviewCard name="Tabs" path="/docs/components/tabs">
+              <div className="w-full max-w-56">
+                <div className="flex border-b border-border">
+                  <span className="px-3 py-1.5 text-sm font-medium text-foreground border-b-2 border-primary">Account</span>
+                  <span className="px-3 py-1.5 text-sm text-muted-foreground">Password</span>
+                  <span className="px-3 py-1.5 text-sm text-muted-foreground">Settings</span>
+                </div>
+                <div className="p-3 text-xs text-muted-foreground">
+                  Manage your account settings and preferences.
+                </div>
+              </div>
+            </PreviewCard>
+
+            {/* Switch */}
+            <PreviewCard name="Switch" path="/docs/components/switch">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-5 bg-primary rounded-full relative">
+                    <div className="w-4 h-4 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-foreground">Enabled</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-5 bg-muted rounded-full relative">
+                    <div className="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">Disabled</span>
+                </div>
+              </div>
+            </PreviewCard>
+
+            {/* Dialog */}
+            <PreviewCard name="Dialog" path="/docs/components/dialog">
+              <div className="w-full max-w-52 bg-card rounded-lg border border-border shadow-lg p-4 space-y-3">
+                <div className="text-sm font-semibold text-foreground">Confirm</div>
+                <div className="text-xs text-muted-foreground">Are you sure you want to continue?</div>
+                <div className="flex justify-end gap-2">
+                  <span className="h-7 px-3 inline-flex items-center justify-center rounded-md text-xs border border-input bg-background text-foreground">Cancel</span>
+                  <span className="h-7 px-3 inline-flex items-center justify-center rounded-md text-xs bg-primary text-primary-foreground">Confirm</span>
+                </div>
+              </div>
+            </PreviewCard>
+
+            {/* Accordion */}
+            <PreviewCard name="Accordion" path="/docs/components/accordion">
+              <div className="w-full max-w-52 text-sm">
+                <div className="border-b border-border py-2 flex justify-between items-center text-foreground font-medium">
+                  <span>Section 1</span>
+                  <span className="text-muted-foreground text-xs">−</span>
+                </div>
+                <div className="py-2 text-xs text-muted-foreground">
+                  Content for the first section.
+                </div>
+                <div className="border-b border-border border-t py-2 flex justify-between items-center text-muted-foreground">
+                  <span>Section 2</span>
+                  <span className="text-xs">+</span>
+                </div>
+                <div className="border-b border-border py-2 flex justify-between items-center text-muted-foreground">
+                  <span>Section 3</span>
+                  <span className="text-xs">+</span>
+                </div>
+              </div>
+            </PreviewCard>
+          </div>
         </div>
       </div>
     )
