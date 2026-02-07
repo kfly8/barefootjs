@@ -955,7 +955,11 @@ describe('Compiler', () => {
   })
 
   describe('Context.Provider JSX', () => {
-    test('detects <MenuContext.Provider> and produces IRProvider node', () => {
+    test('<X.Provider value={...}> becomes IRProvider with contextName, valueProp, and children', () => {
+      // <MenuContext.Provider> should produce an IRProvider node that:
+      // - extracts "MenuContext" from "MenuContext.Provider"
+      // - captures the value prop expression
+      // - preserves child elements
       const source = `
         'use client'
         import { createContext, createSignal, provideContext } from '@barefootjs/dom'
@@ -975,18 +979,29 @@ describe('Compiler', () => {
       const ctx = analyzeComponent(source, 'DropdownMenu.tsx')
       const ir = jsxToIR(ctx)
 
-      expect(ir).not.toBeNull()
-      expect(ir!.type).toBe('provider')
-      if (ir!.type === 'provider') {
-        expect(ir!.contextName).toBe('MenuContext')
-        expect(ir!.valueProp.name).toBe('value')
-        expect(ir!.valueProp.value).toBe('{ open, setOpen }')
-        expect(ir!.children).toHaveLength(1)
-        expect(ir!.children[0].type).toBe('element')
-      }
+      expect(ir).toMatchObject({
+        type: 'provider',
+        contextName: 'MenuContext',
+        valueProp: {
+          name: 'value',
+          value: '{ open, setOpen }',
+          dynamic: true,
+        },
+        children: [
+          {
+            type: 'element',
+            tag: 'div',
+            children: [
+              { type: 'expression', expr: 'children' },
+            ],
+          },
+        ],
+      })
     })
 
-    test('Provider children are preserved in IR', () => {
+    test('Provider preserves multiple children as sibling IR nodes', () => {
+      // Provider is transparent — its children should appear
+      // directly under the IRProvider node, not wrapped.
       const source = `
         'use client'
         import { createContext, createSignal, provideContext } from '@barefootjs/dom'
@@ -1007,16 +1022,22 @@ describe('Compiler', () => {
       const ctx = analyzeComponent(source, 'Tabs.tsx')
       const ir = jsxToIR(ctx)
 
-      expect(ir).not.toBeNull()
-      expect(ir!.type).toBe('provider')
-      if (ir!.type === 'provider') {
-        expect(ir!.children).toHaveLength(2)
-        expect(ir!.children[0].type).toBe('element')
-        expect(ir!.children[1].type).toBe('element')
-      }
+      expect(ir).toMatchObject({
+        type: 'provider',
+        contextName: 'Ctx',
+        valueProp: { name: 'value', value: '{ active, setActive }' },
+        children: [
+          { type: 'element', tag: 'div', attrs: [{ name: 'class', value: 'tabs-header' }] },
+          { type: 'element', tag: 'div', attrs: [{ name: 'class', value: 'tabs-body' }] },
+        ],
+      })
     })
 
-    test('generated client JS contains provideContext() call', () => {
+    test('compiler generates provideContext() before initChild() in client JS', () => {
+      // The generated init function must:
+      // 1. Import provideContext from @barefootjs/dom
+      // 2. Call provideContext(ContextName, valueExpr) BEFORE initChild()
+      //    so child components can read the context during their initialization
       const adapter = new TestAdapter()
       const source = `
         'use client'
@@ -1035,47 +1056,28 @@ describe('Compiler', () => {
       `
 
       const result = compileJSXSync(source, 'DropdownMenu.tsx', { adapter })
-
       expect(result.errors).toHaveLength(0)
 
-      const clientJs = result.files.find(f => f.type === 'clientJs')
-      expect(clientJs).toBeDefined()
-      expect(clientJs?.content).toContain('provideContext(MenuContext, { open, setOpen })')
-    })
-
-    test('provideContext appears before initChild calls', () => {
-      const adapter = new TestAdapter()
-      const source = `
-        'use client'
-        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
-
-        const MenuContext = createContext()
-
-        export function DropdownMenu(props) {
-          const [open, setOpen] = createSignal(false)
-          return (
-            <MenuContext.Provider value={{ open, setOpen }}>
-              <DropdownTrigger />
-            </MenuContext.Provider>
-          )
-        }
-      `
-
-      const result = compileJSXSync(source, 'DropdownMenu.tsx', { adapter })
-
-      const clientJs = result.files.find(f => f.type === 'clientJs')
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
       expect(clientJs).toBeDefined()
 
-      const content = clientJs!.content
-      const provideIdx = content.indexOf('provideContext(')
-      const initChildIdx = content.indexOf('initChild(')
+      // Verify the init function body contains the expected sequence:
+      //   provideContext(MenuContext, { open, setOpen })   ← context setup
+      //   initChild('DropdownTrigger', ...)                ← child init (after)
+      const initBody = clientJs.content
+        .split('\n')
+        .filter(line => line.includes('provideContext(') || line.includes('initChild('))
+        .map(line => line.trim())
 
-      expect(provideIdx).toBeGreaterThan(-1)
-      expect(initChildIdx).toBeGreaterThan(-1)
-      expect(provideIdx).toBeLessThan(initChildIdx)
+      expect(initBody).toEqual([
+        'provideContext(MenuContext, { open, setOpen })',
+        "initChild('DropdownTrigger', _slot_0, {})",
+      ])
     })
 
-    test('self-closing Provider is detected', () => {
+    test('self-closing <X.Provider /> produces IRProvider with empty children', () => {
+      // Self-closing syntax should work just like the open/close form
+      // but with no children (e.g., for provider-only setup components)
       const source = `
         'use client'
         import { createContext, createSignal, provideContext } from '@barefootjs/dom'
@@ -1091,12 +1093,16 @@ describe('Compiler', () => {
       const ctx = analyzeComponent(source, 'Root.tsx')
       const ir = jsxToIR(ctx)
 
-      expect(ir).not.toBeNull()
-      expect(ir!.type).toBe('provider')
-      if (ir!.type === 'provider') {
-        expect(ir!.contextName).toBe('Ctx')
-        expect(ir!.children).toHaveLength(0)
-      }
+      expect(ir).toMatchObject({
+        type: 'provider',
+        contextName: 'Ctx',
+        valueProp: {
+          name: 'value',
+          value: '{ val, setVal }',
+          dynamic: true,
+        },
+        children: [],
+      })
     })
   })
 })
