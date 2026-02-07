@@ -104,6 +104,8 @@ func main() {
 	e.GET("/props-reactivity", propsReactivityHandler)
 	e.GET("/form", formHandler)
 	e.GET("/portal", portalHandler)
+	e.GET("/conditional-return", conditionalReturnHandler)
+	e.GET("/conditional-return-link", conditionalReturnLinkHandler)
 
 	// Todo API endpoints
 	e.GET("/api/todos", getTodosAPI)
@@ -242,6 +244,24 @@ func portalHandler(c echo.Context) error {
 		Props:   &props,
 		Title:   "Portal - BarefootJS",
 		Heading: "Portal Example",
+	})
+}
+
+func conditionalReturnHandler(c echo.Context) error {
+	props := NewConditionalReturnProps(ConditionalReturnInput{})
+	return c.Render(http.StatusOK, "ConditionalReturn", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Conditional Return - BarefootJS",
+		Heading: "Conditional Return Example",
+	})
+}
+
+func conditionalReturnLinkHandler(c echo.Context) error {
+	props := NewConditionalReturnProps(ConditionalReturnInput{Variant: "link"})
+	return c.Render(http.StatusOK, "ConditionalReturn", bf.RenderOptions{
+		Props:   &props,
+		Title:   "Conditional Return (Link) - BarefootJS",
+		Heading: "Conditional Return Example (Link)",
 	})
 }
 

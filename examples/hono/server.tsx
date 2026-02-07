@@ -17,6 +17,7 @@ import ReactiveProps, { PropsReactivityComparison } from '@/components/ReactiveP
 import Form from '@/components/Form'
 import { AsyncCounterWrapper } from './components/AsyncCounterWrapper'
 import PortalExample from '@/components/PortalExample'
+import ConditionalReturn from '@/components/ConditionalReturn'
 
 const app = new Hono()
 
@@ -143,6 +144,27 @@ app.get('/portal', (c) => {
     <div>
       <h1>Portal Example</h1>
       <PortalExample />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+// Conditional return (if/else JSX branches)
+app.get('/conditional-return', (c) => {
+  return c.render(
+    <div>
+      <h1>Conditional Return Example</h1>
+      <ConditionalReturn />
+      <p><a href="/">← Back</a></p>
+    </div>
+  )
+})
+
+app.get('/conditional-return-link', (c) => {
+  return c.render(
+    <div>
+      <h1>Conditional Return Example (Link)</h1>
+      <ConditionalReturn variant="link" />
       <p><a href="/">← Back</a></p>
     </div>
   )

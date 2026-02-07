@@ -820,4 +820,137 @@ describe('Compiler', () => {
       }
     })
   })
+
+  describe('conditional JSX returns (if-statement)', () => {
+    test('collects event handlers from both branches of conditional return', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Toggle(props: { asChild?: boolean }) {
+          const [open, setOpen] = createSignal(false)
+
+          if (props.asChild) {
+            return <span onClick={() => setOpen(!open())}>child</span>
+          }
+
+          return <button onClick={() => setOpen(!open())}>toggle</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Toggle.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain('initToggle')
+      // Both branches should have click handlers collected
+      expect(clientJs?.content).toContain('onclick')
+    })
+
+    test('collects reactive attributes from conditional return branches', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Disclosure(props: { asChild?: boolean }) {
+          const [open, setOpen] = createSignal(false)
+
+          if (props.asChild) {
+            return <div aria-expanded={open()} onClick={() => setOpen(!open())}>child</div>
+          }
+
+          return <button aria-expanded={open()} onClick={() => setOpen(!open())}>toggle</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Disclosure.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Reactive attribute should generate createEffect for aria-expanded
+      expect(clientJs?.content).toContain('createEffect')
+      expect(clientJs?.content).toContain('aria-expanded')
+    })
+
+    test('collects child component inits from conditional return branches', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Wrapper(props: { variant?: string }) {
+          const [active, setActive] = createSignal(false)
+
+          if (props.variant === 'fancy') {
+            return <div><Child onToggle={() => setActive(!active())} /></div>
+          }
+
+          return <div><Child onToggle={() => setActive(!active())} /></div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Wrapper.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Child component initialization should be collected
+      expect(clientJs?.content).toContain('initChild')
+    })
+  })
+
+  describe('spread props in child component', () => {
+    test('does not generate invalid get ...() syntax for spread props', () => {
+      const source = `
+        'use client'
+
+        export function Button({ className = '', asChild = false, children, ...props }: any) {
+          if (asChild) {
+            return <Slot className={className} {...props}>{children}</Slot>
+          }
+          return <button className={className} {...props}>{children}</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Button.tsx', { adapter })
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      if (clientJs) {
+        // Spread props must not produce invalid JS like "get ...() { ... }"
+        expect(clientJs.content).not.toContain('get ...()')
+        expect(clientJs.content).not.toContain('...: ')
+      }
+    })
+
+    test('preserves named props alongside spread props', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Wrapper() {
+          const [active, setActive] = createSignal(false)
+
+          return (
+            <div>
+              <Child className="test" onClick={() => setActive(!active())} />
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Wrapper.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Named props should still be collected
+      expect(clientJs?.content).toContain('initChild')
+      expect(clientJs?.content).toContain('onClick')
+    })
+  })
 })

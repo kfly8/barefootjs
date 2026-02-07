@@ -470,6 +470,8 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
       // Build propsExpr from component props for parent-child communication
       const propsForInit: string[] = []
       for (const prop of node.props) {
+        // Skip spread/rest props (can't be represented as property definitions)
+        if (prop.name === '...' || prop.name.startsWith('...')) continue
         // Event handlers (on*) passed directly to child
         const isEventHandler =
           prop.name.startsWith('on') &&
@@ -522,6 +524,13 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
     case 'fragment':
       for (const child of node.children) {
         collectElements(child, ctx)
+      }
+      break
+
+    case 'if-statement':
+      collectElements(node.consequent, ctx, insideConditional)
+      if (node.alternate) {
+        collectElements(node.alternate, ctx, insideConditional)
       }
       break
   }
@@ -634,6 +643,12 @@ function collectEventHandlersFromIR(node: IRNode): string[] {
         handlers.push(...collectEventHandlersFromIR(child))
       }
       break
+    case 'if-statement':
+      handlers.push(...collectEventHandlersFromIR(node.consequent))
+      if (node.alternate) {
+        handlers.push(...collectEventHandlersFromIR(node.alternate))
+      }
+      break
     // Text, expression, slot, loop don't have events at this level
   }
 
@@ -680,6 +695,12 @@ function collectConditionalBranchEvents(node: IRNode): ConditionalBranchEvent[] 
           traverse(child)
         }
         break
+      case 'if-statement':
+        traverse(n.consequent)
+        if (n.alternate) {
+          traverse(n.alternate)
+        }
+        break
     }
   }
 
@@ -724,6 +745,12 @@ function collectConditionalBranchRefs(node: IRNode): ConditionalBranchRef[] {
           traverse(child)
         }
         break
+      case 'if-statement':
+        traverse(n.consequent)
+        if (n.alternate) {
+          traverse(n.alternate)
+        }
+        break
     }
   }
 
@@ -766,6 +793,12 @@ function collectLoopChildEvents(node: IRNode): LoopChildEvent[] {
     case 'component':
       for (const child of node.children) {
         events.push(...collectLoopChildEvents(child))
+      }
+      break
+    case 'if-statement':
+      events.push(...collectLoopChildEvents(node.consequent))
+      if (node.alternate) {
+        events.push(...collectLoopChildEvents(node.alternate))
       }
       break
   }
@@ -846,6 +879,10 @@ function irToHtmlTemplate(node: IRNode): string {
     case 'loop':
       // Nested loops - render children
       return node.children.map(irToHtmlTemplate).join('')
+
+    case 'if-statement':
+      // Compile-time if-statement: both branches handled at SSR level
+      return ''
 
     default:
       return ''
@@ -965,6 +1002,10 @@ function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
     case 'loop':
       return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
 
+    case 'if-statement':
+      // Compile-time if-statement: both branches handled at SSR level
+      return ''
+
     default:
       return ''
   }
@@ -1025,6 +1066,16 @@ function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>): boolea
 
     case 'fragment':
       return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
+
+    case 'if-statement':
+      // Check both branches of the if-statement
+      if (!canGenerateStaticTemplate(node.consequent, propNames)) {
+        return false
+      }
+      if (node.alternate && !canGenerateStaticTemplate(node.alternate, propNames)) {
+        return false
+      }
+      return true
 
     case 'text':
       return true

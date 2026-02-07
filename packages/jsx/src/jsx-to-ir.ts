@@ -1243,6 +1243,7 @@ function buildIfStatementChain(
   // Start with the final return (else case) if it exists
   let alternate: IRNode | null = null
   if (analyzer.jsxReturn) {
+    ctx.isRoot = true
     alternate = transformNode(analyzer.jsxReturn, ctx)
   }
 
@@ -1254,6 +1255,8 @@ function buildIfStatementChain(
     const condition = condReturn.condition.getText(analyzer.sourceFile)
 
     // Transform the JSX return in the then branch
+    // Reset isRoot so each branch gets needsScope=true
+    ctx.isRoot = true
     const consequent = transformNode(condReturn.jsxReturn, ctx)
     if (!consequent) {
       continue
