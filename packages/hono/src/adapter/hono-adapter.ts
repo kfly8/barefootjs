@@ -472,6 +472,12 @@ export class HonoAdapter implements TemplateAdapter {
       }
     }
 
+    // Include local functions (helper functions defined at module level)
+    for (const func of ir.metadata.localFunctions) {
+      const params = func.params.map((p) => p.name).join(', ')
+      lines.push(`  function ${func.name}(${params}) ${func.body}`)
+    }
+
     return lines.join('\n')
   }
 

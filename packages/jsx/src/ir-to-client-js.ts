@@ -470,6 +470,8 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
       // Build propsExpr from component props for parent-child communication
       const propsForInit: string[] = []
       for (const prop of node.props) {
+        // Skip spread/rest props (can't be represented as property definitions)
+        if (prop.name === '...' || prop.name.startsWith('...')) continue
         // Event handlers (on*) passed directly to child
         const isEventHandler =
           prop.name.startsWith('on') &&
