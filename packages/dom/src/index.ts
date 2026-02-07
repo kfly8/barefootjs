@@ -23,6 +23,8 @@ export {
 
 export { reconcileList, type RenderItemFn } from './list'
 
+export { createContext, useContext, provideContext, type Context } from './context'
+
 // Template registry for client-side component creation
 export { registerTemplate, getTemplate, hasTemplate, type TemplateFn } from './template'
 

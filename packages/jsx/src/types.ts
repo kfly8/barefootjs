@@ -83,6 +83,7 @@ export type IRNode =
   | IRSlot
   | IRFragment
   | IRIfStatement
+  | IRProvider
 
 export interface IRElement {
   type: 'element'
@@ -219,6 +220,14 @@ export interface IRFragment {
   children: IRNode[]
   /** When true, this fragment just passes through children (Context Provider pattern) */
   transparent?: boolean
+  loc: SourceLocation
+}
+
+export interface IRProvider {
+  type: 'provider'
+  contextName: string   // "MenuContext" (extracted from X.Provider)
+  valueProp: IRProp     // The 'value' prop expression
+  children: IRNode[]
   loc: SourceLocation
 }
 
