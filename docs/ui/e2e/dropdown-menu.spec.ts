@@ -161,6 +161,65 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
   })
 
+  test.describe('asChild Trigger', () => {
+    test('renders trigger with ARIA attributes via display:contents wrapper', async ({ page }) => {
+      const demo = page.locator('[data-bf-scope^="DropdownMenuAsChildDemo_"]').first()
+      const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
+
+      await expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+
+      // Child button is inside the trigger wrapper
+      const childButton = trigger.locator('button')
+      await expect(childButton).toHaveAttribute('aria-label', 'Actions')
+    })
+
+    test('aria-expanded updates reactively on asChild trigger', async ({ page }) => {
+      const demo = page.locator('[data-bf-scope^="DropdownMenuAsChildDemo_"]').first()
+      const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
+      const childButton = trigger.locator('button')
+
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+
+      await childButton.click()
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+
+      await childButton.click()
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    test('click toggles menu open/close on asChild trigger', async ({ page }) => {
+      const demo = page.locator('[data-bf-scope^="DropdownMenuAsChildDemo_"]').first()
+      const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
+      const childButton = trigger.locator('button')
+
+      await childButton.click()
+      const openContent = page.locator('[data-slot="dropdown-menu-content"][data-state="open"]')
+      await expect(openContent).toBeVisible()
+
+      await childButton.click()
+      await expect(openContent).toHaveCount(0)
+    })
+
+    test('keyboard navigation works with asChild trigger', async ({ page }) => {
+      const demo = page.locator('[data-bf-scope^="DropdownMenuAsChildDemo_"]').first()
+      const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
+      const childButton = trigger.locator('button')
+
+      await childButton.click()
+
+      const content = page.locator('[data-slot="dropdown-menu-content"][data-state="open"]')
+      await content.focus()
+
+      await page.keyboard.press('ArrowDown')
+      const firstItem = content.locator('[data-slot="dropdown-menu-item"]').first()
+      await expect(firstItem).toBeFocused()
+
+      await page.keyboard.press('Escape')
+      await expect(content).toHaveCount(0)
+    })
+  })
+
   test.describe('Accessibility', () => {
     test('displays accessibility section', async ({ page }) => {
       await expect(page.locator('h2:has-text("Accessibility")')).toBeVisible()

@@ -93,6 +93,8 @@ interface DropdownMenuTriggerProps {
   open?: boolean
   /** Whether disabled */
   disabled?: boolean
+  /** Render child element as trigger instead of built-in button */
+  asChild?: boolean
   /** Click handler to toggle dropdown menu */
   onClick?: () => void
   /** Trigger content (any element: button, avatar, icon, etc.) */
@@ -115,6 +117,21 @@ function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
       e.preventDefault()
       props.onClick?.()
     }
+  }
+
+  if (props.asChild) {
+    return (
+      <span
+        data-slot="dropdown-menu-trigger"
+        aria-expanded={props.open ?? false}
+        aria-haspopup="menu"
+        onClick={props.onClick}
+        onKeyDown={handleKeyDown}
+        style="display:contents"
+      >
+        {props.children}
+      </span>
+    )
   }
 
   return (

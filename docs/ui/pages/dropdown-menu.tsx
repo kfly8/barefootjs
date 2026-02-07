@@ -2,7 +2,7 @@
  * Dropdown Menu Documentation Page
  */
 
-import { DropdownMenuProfileDemo } from '@/components/dropdown-menu-demo'
+import { DropdownMenuProfileDemo, DropdownMenuAsChildDemo } from '@/components/dropdown-menu-demo'
 import {
   DocPage,
   PageHeader,
@@ -22,6 +22,7 @@ const tocItems: TocItem[] = [
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
   { id: 'profile-menu', title: 'Profile Menu', branch: 'start' },
+  { id: 'as-child', title: 'As Child' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -80,6 +81,48 @@ function ProfileMenu() {
   )
 }`
 
+const asChildCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { SettingsIcon, GlobeIcon, LogOutIcon } from '@/components/ui/icon'
+
+function AsChildMenu() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())} asChild>
+        <button className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+          <SettingsIcon size="sm" />
+          <span>Actions</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent open={open()} onClose={() => setOpen(false)}>
+        <DropdownMenuItem onClick={() => setOpen(false)}>
+          <SettingsIcon size="sm" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setOpen(false)}>
+          <GlobeIcon size="sm" />
+          <span>Language</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setOpen(false)}>
+          <LogOutIcon size="sm" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}`
+
 // Props definitions
 const dropdownMenuTriggerProps: PropDefinition[] = [
   {
@@ -93,6 +136,12 @@ const dropdownMenuTriggerProps: PropDefinition[] = [
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the trigger is disabled.',
+  },
+  {
+    name: 'asChild',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Render child element as trigger instead of built-in button. Merges ARIA and event props onto the child.',
   },
   {
     name: 'onClick',
@@ -192,6 +241,9 @@ export function DropdownMenuPage() {
           <div className="space-y-8">
             <Example title="Profile Menu" code={profileMenuCode}>
               <DropdownMenuProfileDemo />
+            </Example>
+            <Example title="As Child" code={asChildCode}>
+              <DropdownMenuAsChildDemo />
             </Example>
           </div>
         </Section>

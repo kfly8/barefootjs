@@ -23,6 +23,42 @@ import {
 import { SettingsIcon, GlobeIcon, LogOutIcon, CircleHelpIcon } from '@ui/components/ui/icon'
 
 /**
+ * asChild demo - custom button element as trigger via asChild prop
+ */
+export function DropdownMenuAsChildDemo() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div className="relative inline-block">
+      <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())} asChild>
+        <button
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
+          aria-label="Actions"
+        >
+          <SettingsIcon size="sm" />
+          <span>Actions</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent open={open()} onClose={() => setOpen(false)}>
+        <DropdownMenuItem onClick={() => setOpen(false)}>
+          <SettingsIcon size="sm" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setOpen(false)}>
+          <GlobeIcon size="sm" />
+          <span>Language</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setOpen(false)}>
+          <LogOutIcon size="sm" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </div>
+  )
+}
+
+/**
  * Profile menu demo - avatar trigger with account actions
  */
 export function DropdownMenuProfileDemo() {
