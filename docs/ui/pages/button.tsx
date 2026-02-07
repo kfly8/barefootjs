@@ -5,6 +5,7 @@
 import { Button } from '@/components/ui/button'
 import { PlusIcon } from '@/components/ui/icon'
 import { ButtonDemo } from '@/components/button-demo'
+import { ButtonAsChildDemo } from '@/components/button-as-child-demo'
 import {
   DocPage,
   PageHeader,
@@ -31,6 +32,7 @@ const tocItems: TocItem[] = [
   { id: 'sizes', title: 'Sizes', branch: 'child' },
   { id: 'icon-sizes', title: 'Icon Sizes', branch: 'child' },
   { id: 'disabled', title: 'Disabled', branch: 'child' },
+  { id: 'as-child', title: 'As Child', branch: 'child' },
   { id: 'counter', title: 'Counter', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -51,6 +53,10 @@ const iconSizeCode = `<Button size="icon-sm" aria-label="Add">
 
 const disabledCode = `<Button disabled>Disabled</Button>
 <Button variant="outline" disabled>Disabled</Button>`
+
+const asChildCode = `<Button asChild>
+  <a href="/home">Go Home</a>
+</Button>`
 
 const counterCode = `"use client"
 
@@ -174,6 +180,10 @@ function ButtonExample() {
             <Example title="Disabled" code={disabledCode} showLineNumbers={false}>
               <Button disabled>Disabled</Button>
               <Button variant="outline" disabled>Disabled</Button>
+            </Example>
+
+            <Example title="As Child" code={asChildCode} showLineNumbers={false}>
+              <ButtonAsChildDemo />
             </Example>
 
             <Example title="Counter" code={counterCode}>
