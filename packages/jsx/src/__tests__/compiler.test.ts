@@ -953,4 +953,150 @@ describe('Compiler', () => {
       expect(clientJs?.content).toContain('onClick')
     })
   })
+
+  describe('Context.Provider JSX', () => {
+    test('detects <MenuContext.Provider> and produces IRProvider node', () => {
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const MenuContext = createContext()
+
+        export function DropdownMenu({ children }) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <MenuContext.Provider value={{ open, setOpen }}>
+              <div>{children}</div>
+            </MenuContext.Provider>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'DropdownMenu.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('provider')
+      if (ir!.type === 'provider') {
+        expect(ir!.contextName).toBe('MenuContext')
+        expect(ir!.valueProp.name).toBe('value')
+        expect(ir!.valueProp.value).toBe('{ open, setOpen }')
+        expect(ir!.children).toHaveLength(1)
+        expect(ir!.children[0].type).toBe('element')
+      }
+    })
+
+    test('Provider children are preserved in IR', () => {
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const Ctx = createContext()
+
+        export function Tabs({ children }) {
+          const [active, setActive] = createSignal(0)
+          return (
+            <Ctx.Provider value={{ active, setActive }}>
+              <div class="tabs-header">Header</div>
+              <div class="tabs-body">{children}</div>
+            </Ctx.Provider>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Tabs.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('provider')
+      if (ir!.type === 'provider') {
+        expect(ir!.children).toHaveLength(2)
+        expect(ir!.children[0].type).toBe('element')
+        expect(ir!.children[1].type).toBe('element')
+      }
+    })
+
+    test('generated client JS contains provideContext() call', () => {
+      const adapter = new TestAdapter()
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const MenuContext = createContext()
+
+        export function DropdownMenu(props) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <MenuContext.Provider value={{ open, setOpen }}>
+              <DropdownTrigger />
+            </MenuContext.Provider>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'DropdownMenu.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain('provideContext(MenuContext, { open, setOpen })')
+    })
+
+    test('provideContext appears before initChild calls', () => {
+      const adapter = new TestAdapter()
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const MenuContext = createContext()
+
+        export function DropdownMenu(props) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <MenuContext.Provider value={{ open, setOpen }}>
+              <DropdownTrigger />
+            </MenuContext.Provider>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'DropdownMenu.tsx', { adapter })
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+
+      const content = clientJs!.content
+      const provideIdx = content.indexOf('provideContext(')
+      const initChildIdx = content.indexOf('initChild(')
+
+      expect(provideIdx).toBeGreaterThan(-1)
+      expect(initChildIdx).toBeGreaterThan(-1)
+      expect(provideIdx).toBeLessThan(initChildIdx)
+    })
+
+    test('self-closing Provider is detected', () => {
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const Ctx = createContext()
+
+        export function Root() {
+          const [val, setVal] = createSignal(0)
+          return <Ctx.Provider value={{ val, setVal }} />
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Root.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('provider')
+      if (ir!.type === 'provider') {
+        expect(ir!.contextName).toBe('Ctx')
+        expect(ir!.children).toHaveLength(0)
+      }
+    })
+  })
 })

@@ -24,6 +24,7 @@ import type {
   ParsedExpr,
   ParsedStatement,
   IRIfStatement,
+  IRProvider,
 } from '@barefootjs/jsx'
 import { BaseAdapter, type AdapterOutput, type AdapterGenerateOptions, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
@@ -890,6 +891,8 @@ export class GoTemplateAdapter extends BaseAdapter {
         return this.renderSlot(node as IRSlot)
       case 'if-statement':
         return this.renderIfStatement(node as IRIfStatement)
+      case 'provider':
+        return this.renderChildren((node as IRProvider).children)
       default:
         return ''
     }

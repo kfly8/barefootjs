@@ -16,6 +16,7 @@ import type {
   IRComponent,
   IRFragment,
   IRIfStatement,
+  IRProvider,
   IRAttribute,
   IREvent,
   IRProp,
@@ -113,6 +114,12 @@ function transformJsxElement(
   ctx: TransformContext
 ): IRNode {
   const tagName = node.openingElement.tagName.getText(ctx.sourceFile)
+
+  // Detect Context.Provider pattern: X.Provider
+  if (tagName.endsWith('.Provider') && /^[A-Z]/.test(tagName)) {
+    return transformProviderElement(node, ctx, tagName)
+  }
+
   const isComponent = /^[A-Z]/.test(tagName)
 
   if (isComponent) {
@@ -167,6 +174,12 @@ function transformSelfClosingElement(
   ctx: TransformContext
 ): IRNode {
   const tagName = node.tagName.getText(ctx.sourceFile)
+
+  // Detect Context.Provider pattern: <X.Provider ... />
+  if (tagName.endsWith('.Provider') && /^[A-Z]/.test(tagName)) {
+    return transformSelfClosingProviderElement(node, ctx, tagName)
+  }
+
   const isComponent = /^[A-Z]/.test(tagName)
 
   if (isComponent) {
@@ -191,6 +204,56 @@ function transformSelfClosingElement(
     children: [],
     slotId,
     needsScope,
+    loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
+  }
+}
+
+// =============================================================================
+// Provider Transformation
+// =============================================================================
+
+function transformProviderElement(
+  node: ts.JsxElement,
+  ctx: TransformContext,
+  tagName: string
+): IRProvider {
+  const contextName = tagName.slice(0, -'.Provider'.length)
+  const props = processComponentProps(node.openingElement.attributes, ctx)
+  const valueProp = props.find(p => p.name === 'value')
+
+  if (!valueProp) {
+    throw new Error(`<${tagName}> requires a 'value' prop`)
+  }
+
+  const children = transformChildren(node.children, ctx)
+
+  return {
+    type: 'provider',
+    contextName,
+    valueProp,
+    children,
+    loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
+  }
+}
+
+function transformSelfClosingProviderElement(
+  node: ts.JsxSelfClosingElement,
+  ctx: TransformContext,
+  tagName: string
+): IRProvider {
+  const contextName = tagName.slice(0, -'.Provider'.length)
+  const props = processComponentProps(node.attributes, ctx)
+  const valueProp = props.find(p => p.name === 'value')
+
+  if (!valueProp) {
+    throw new Error(`<${tagName}> requires a 'value' prop`)
+  }
+
+  return {
+    type: 'provider',
+    contextName,
+    valueProp,
+    children: [],
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }

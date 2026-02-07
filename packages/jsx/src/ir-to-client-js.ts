@@ -69,6 +69,7 @@ interface ClientJsContext {
   reactiveAttrs: ReactiveAttribute[]
   clientOnlyElements: ClientOnlyElement[]
   clientOnlyConditionals: ClientOnlyConditional[]
+  providerSetups: Array<{ contextName: string; valueExpr: string }>
 }
 
 interface InteractiveElement {
@@ -282,6 +283,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     reactiveAttrs: [],
     clientOnlyElements: [],
     clientOnlyConditionals: [],
+    providerSetups: [],
   }
 }
 
@@ -299,7 +301,8 @@ function needsClientJs(ctx: ClientJsContext): boolean {
     ctx.childInits.length > 0 ||
     ctx.reactiveAttrs.length > 0 ||
     ctx.clientOnlyElements.length > 0 ||
-    ctx.clientOnlyConditionals.length > 0
+    ctx.clientOnlyConditionals.length > 0 ||
+    ctx.providerSetups.length > 0
   )
 }
 
@@ -533,6 +536,16 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
         collectElements(node.alternate, ctx, insideConditional)
       }
       break
+
+    case 'provider':
+      ctx.providerSetups.push({
+        contextName: node.contextName,
+        valueExpr: node.valueProp.value,
+      })
+      for (const child of node.children) {
+        collectElements(child, ctx)
+      }
+      break
   }
 }
 
@@ -649,6 +662,11 @@ function collectEventHandlersFromIR(node: IRNode): string[] {
         handlers.push(...collectEventHandlersFromIR(node.alternate))
       }
       break
+    case 'provider':
+      for (const child of node.children) {
+        handlers.push(...collectEventHandlersFromIR(child))
+      }
+      break
     // Text, expression, slot, loop don't have events at this level
   }
 
@@ -701,6 +719,11 @@ function collectConditionalBranchEvents(node: IRNode): ConditionalBranchEvent[] 
           traverse(n.alternate)
         }
         break
+      case 'provider':
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
     }
   }
 
@@ -751,6 +774,11 @@ function collectConditionalBranchRefs(node: IRNode): ConditionalBranchRef[] {
           traverse(n.alternate)
         }
         break
+      case 'provider':
+        for (const child of n.children) {
+          traverse(child)
+        }
+        break
     }
   }
 
@@ -799,6 +827,11 @@ function collectLoopChildEvents(node: IRNode): LoopChildEvent[] {
       events.push(...collectLoopChildEvents(node.consequent))
       if (node.alternate) {
         events.push(...collectLoopChildEvents(node.alternate))
+      }
+      break
+    case 'provider':
+      for (const child of node.children) {
+        events.push(...collectLoopChildEvents(child))
       }
       break
   }
@@ -883,6 +916,9 @@ function irToHtmlTemplate(node: IRNode): string {
     case 'if-statement':
       // Compile-time if-statement: both branches handled at SSR level
       return ''
+
+    case 'provider':
+      return node.children.map(irToHtmlTemplate).join('')
 
     default:
       return ''
@@ -1006,6 +1042,9 @@ function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
       // Compile-time if-statement: both branches handled at SSR level
       return ''
 
+    case 'provider':
+      return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+
     default:
       return ''
   }
@@ -1076,6 +1115,9 @@ function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>): boolea
         return false
       }
       return true
+
+    case 'provider':
+      return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
 
     case 'text':
       return true
@@ -1518,7 +1560,8 @@ const DOM_IMPORT_CANDIDATES = [
   'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
   'findScope', 'find', 'hydrate', 'cond', 'insert', 'reconcileList',
   'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
-  'createPortal'
+  'createPortal',
+  'provideContext', 'createContext', 'useContext',
 ] as const
 
 const IMPORT_PLACEHOLDER = '/* __BAREFOOTJS_DOM_IMPORTS__ */'
@@ -2323,6 +2366,15 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   for (const onMount of ctx.onMounts) {
     const jsBody = stripTypeScriptSyntax(onMount.body)
     lines.push(`  onMount(${jsBody})`)
+  }
+
+  // Provider context setup (must be before child inits)
+  if (ctx.providerSetups.length > 0) {
+    lines.push('')
+    lines.push('  // Provide context for child components')
+    for (const provider of ctx.providerSetups) {
+      lines.push(`  provideContext(${provider.contextName}, ${provider.valueExpr})`)
+    }
   }
 
   // Child component inits with props

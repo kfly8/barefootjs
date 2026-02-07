@@ -15,6 +15,7 @@ import {
   type IRComponent,
   type IRFragment,
   type IRIfStatement,
+  type IRProvider,
   type IRTemplateLiteral,
   type ParamInfo,
   type AdapterOutput,
@@ -535,6 +536,8 @@ export class HonoAdapter implements TemplateAdapter {
         // If-statements are rendered at the component level, not inline
         // This case shouldn't normally be hit, but return empty for safety
         return ''
+      case 'provider':
+        return this.renderChildren((node as IRProvider).children)
       default:
         return ''
     }
