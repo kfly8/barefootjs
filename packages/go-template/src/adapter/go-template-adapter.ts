@@ -23,6 +23,7 @@ import type {
   SourceLocation,
   ParsedExpr,
   ParsedStatement,
+  IRIfStatement,
 } from '@barefootjs/jsx'
 import { BaseAdapter, type AdapterOutput, type AdapterGenerateOptions, isBooleanAttr, parseExpression, isSupported } from '@barefootjs/jsx'
 
@@ -130,6 +131,10 @@ export class GoTemplateAdapter extends BaseAdapter {
       for (const child of loop.children) {
         if (this.hasEventsInTree(child)) return true
       }
+    } else if (node.type === 'if-statement') {
+      const ifStmt = node as IRIfStatement
+      if (this.hasEventsInTree(ifStmt.consequent)) return true
+      if (ifStmt.alternate && this.hasEventsInTree(ifStmt.alternate)) return true
     }
     return false
   }
@@ -167,6 +172,12 @@ export class GoTemplateAdapter extends BaseAdapter {
       const loop = node as IRLoop
       for (const child of loop.children) {
         this.collectChildComponentNames(child, names)
+      }
+    } else if (node.type === 'if-statement') {
+      const ifStmt = node as IRIfStatement
+      this.collectChildComponentNames(ifStmt.consequent, names)
+      if (ifStmt.alternate) {
+        this.collectChildComponentNames(ifStmt.alternate, names)
       }
     }
   }
@@ -877,6 +888,8 @@ export class GoTemplateAdapter extends BaseAdapter {
         return this.renderFragment(node as IRFragment)
       case 'slot':
         return this.renderSlot(node as IRSlot)
+      case 'if-statement':
+        return this.renderIfStatement(node as IRIfStatement)
       default:
         return ''
     }
@@ -1605,6 +1618,31 @@ export class GoTemplateAdapter extends BaseAdapter {
       start: { line: 1, column: 0 },
       end: { line: 1, column: 0 },
     }
+  }
+
+  private renderIfStatement(ifStmt: IRIfStatement): string {
+    const goCondition = this.convertConditionToGo(ifStmt.condition)
+    const consequent = this.renderNode(ifStmt.consequent)
+    let result = `{{if ${goCondition}}}${consequent}`
+
+    if (ifStmt.alternate) {
+      if (ifStmt.alternate.type === 'if-statement') {
+        const altIfStmt = ifStmt.alternate as IRIfStatement
+        const altCondition = this.convertConditionToGo(altIfStmt.condition)
+        const altConsequent = this.renderNode(altIfStmt.consequent)
+        result += `{{else if ${altCondition}}}${altConsequent}`
+        if (altIfStmt.alternate) {
+          const altElse = this.renderNode(altIfStmt.alternate)
+          result += `{{else}}${altElse}`
+        }
+      } else {
+        const alternate = this.renderNode(ifStmt.alternate)
+        result += `{{else}}${alternate}`
+      }
+    }
+
+    result += '{{end}}'
+    return result
   }
 
   renderConditional(cond: IRConditional): string {

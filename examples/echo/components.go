@@ -446,3 +446,31 @@ func NewPortalExampleProps(in PortalExampleInput) PortalExampleProps {
 		Open: false,
 	}
 }
+
+// ConditionalReturnInput is the user-facing input type.
+type ConditionalReturnInput struct {
+	ScopeID string // Optional: if empty, random ID is generated
+	Variant interface{}
+}
+
+// ConditionalReturnProps is the props type for the ConditionalReturn component.
+type ConditionalReturnProps struct {
+	ScopeID string `json:"scopeID"`
+	Scripts *bf.ScriptCollector `json:"-"`
+	Variant interface{} `json:"variant"`
+	Count int `json:"count"`
+}
+
+// NewConditionalReturnProps creates ConditionalReturnProps from ConditionalReturnInput.
+func NewConditionalReturnProps(in ConditionalReturnInput) ConditionalReturnProps {
+	scopeID := in.ScopeID
+	if scopeID == "" {
+		scopeID = "ConditionalReturn_" + randomID(6)
+	}
+
+	return ConditionalReturnProps{
+		ScopeID: scopeID,
+		Variant: in.Variant,
+		Count: 0,
+	}
+}
