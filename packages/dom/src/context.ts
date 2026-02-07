@@ -14,6 +14,8 @@ export type Context<T> = {
   readonly defaultValue: T | undefined
   /** Internal flag: true when default was explicitly provided (even if undefined) */
   readonly _hasDefault: boolean
+  /** JSX Provider component. Compiled to provideContext() by the compiler. */
+  readonly Provider: (props: { value: T; children?: unknown }) => unknown
 }
 
 const contextStore = new Map<symbol, unknown>()
@@ -29,6 +31,9 @@ export function createContext<T>(defaultValue?: T): Context<T> {
     id: Symbol(),
     defaultValue,
     _hasDefault: arguments.length > 0,
+    // Provider is compiled away by the JSX compiler into provideContext() calls.
+    // This runtime stub exists only for TypeScript type checking.
+    Provider: (() => { throw new Error('Context.Provider should be compiled away') }) as Context<T>['Provider'],
   }
 }
 

@@ -64,7 +64,7 @@ const strokePaths = {
   'arrow-right': 'M5 12h14m-7-7 7 7-7 7',
 } as const
 
-export type IconName = keyof typeof strokePaths | 'github' | 'search'
+export type IconName = keyof typeof strokePaths | 'github' | 'search' | 'settings' | 'globe' | 'log-out' | 'circle-help'
 
 // Icons that need butt linecap for proper visual centering
 const buttLinecapIcons = ['plus', 'minus'] as const
@@ -231,6 +231,49 @@ export function GitHubIcon({ size, class: className = '' }: IconProps) {
   )
 }
 
+export function SettingsIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+export function GlobeIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </svg>
+  )
+}
+
+export function LogOutIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    </svg>
+  )
+}
+
+export function CircleHelpIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  )
+}
+
 export function SearchIcon({ size, class: className = '' }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
@@ -251,6 +294,22 @@ export function Icon({ name, size = 'md', class: className = '' }: { name: IconN
 
   if (name === 'search') {
     return <SearchIcon size={size} className={className} />
+  }
+
+  if (name === 'settings') {
+    return <SettingsIcon size={size} className={className} />
+  }
+
+  if (name === 'globe') {
+    return <GlobeIcon size={size} className={className} />
+  }
+
+  if (name === 'log-out') {
+    return <LogOutIcon size={size} className={className} />
+  }
+
+  if (name === 'circle-help') {
+    return <CircleHelpIcon size={size} className={className} />
   }
 
   const path = strokePaths[name as keyof typeof strokePaths]

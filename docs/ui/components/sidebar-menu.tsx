@@ -45,7 +45,7 @@ const menuData: MenuCategory[] = [
       { title: 'Card', href: '/docs/components/card' },
       { title: 'Checkbox', href: '/docs/components/checkbox' },
       { title: 'Dialog', href: '/docs/components/dialog' },
-      { title: 'Dropdown', href: '/docs/components/dropdown' },
+      { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
       { title: 'Input', href: '/docs/components/input' },
       { title: 'Select', href: '/docs/components/select' },
       { title: 'Switch', href: '/docs/components/switch' },

@@ -1565,6 +1565,7 @@ const DOM_IMPORT_CANDIDATES = [
 ] as const
 
 const IMPORT_PLACEHOLDER = '/* __BAREFOOTJS_DOM_IMPORTS__ */'
+const MODULE_CONSTANTS_PLACEHOLDER = '/* __MODULE_LEVEL_CONSTANTS__ */'
 
 /**
  * Detect which @barefootjs/dom functions are actually used in the generated code
@@ -1624,6 +1625,7 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   }
 
   lines.push('')
+  lines.push(MODULE_CONSTANTS_PLACEHOLDER)
 
   // Init function
   lines.push(`export function init${name}(__instanceIndex, __parentScope, props = {}) {`)
@@ -1649,13 +1651,28 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   const neededConstants: ConstantInfo[] = []
   const outputConstants = new Set<string>()
 
+  // Track module-level constants (createContext calls) that must be shared across components
+  const moduleLevelConstants: ConstantInfo[] = []
+  const moduleLevelConstantNames = new Set<string>()
+
   // Check all local constants - include ANY constant that is used in client-side code
   for (const constant of ctx.localConstants) {
     // Include constant if it's used (regardless of whether it depends on reactive data)
     if (usedIdentifiers.has(constant.name)) {
+      const trimmedValue = constant.value.trim()
+
+      // createContext() and new WeakMap() calls must be at module level —
+      // createContext() creates a unique Symbol, new WeakMap() is an identity-based store.
+      // Duplicating inside each component init would break cross-component sharing.
+      if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
+        moduleLevelConstants.push(constant)
+        moduleLevelConstantNames.add(constant.name)
+        continue
+      }
+
       // Skip arrow functions - they're handled separately as event handlers
       // Skip constants named 'props' - the function parameter already provides props
-      if (!constant.value.trim().includes('=>') && constant.name !== 'props') {
+      if (!trimmedValue.includes('=>') && constant.name !== 'props') {
         neededConstants.push(constant)
         outputConstants.add(constant.name)
 
@@ -1664,6 +1681,20 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
         for (const propName of refs.usedProps) {
           neededProps.add(propName)
         }
+      }
+    }
+  }
+
+  // Also check providerSetups — the context variable must be available at module level
+  for (const provider of ctx.providerSetups) {
+    if (!moduleLevelConstantNames.has(provider.contextName)) {
+      // Find the createContext constant from localConstants (may not be in usedIdentifiers)
+      const contextConstant = ctx.localConstants.find(
+        (c) => c.name === provider.contextName && /^createContext\b/.test(c.value.trim())
+      )
+      if (contextConstant) {
+        moduleLevelConstants.push(contextConstant)
+        moduleLevelConstantNames.add(contextConstant.name)
       }
     }
   }
@@ -2427,7 +2458,22 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
   const sortedImports = [...usedImports].sort()
   const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/dom'`
 
-  return generatedCode.replace(IMPORT_PLACEHOLDER, importLine)
+  // Generate module-level constants (shared across components in the same file).
+  // Uses `var` with nullish coalescing to allow safe re-declaration when multiple
+  // components in the same file reference the same context.
+  let moduleConstantsCode = ''
+  if (moduleLevelConstants.length > 0) {
+    const moduleConstantLines: string[] = []
+    for (const constant of moduleLevelConstants) {
+      const jsValue = stripTypeScriptSyntax(constant.value)
+      moduleConstantLines.push(`var ${constant.name} = ${constant.name} ?? ${jsValue}`)
+    }
+    moduleConstantsCode = moduleConstantLines.join('\n') + '\n'
+  }
+
+  return generatedCode
+    .replace(IMPORT_PLACEHOLDER, importLine)
+    .replace(MODULE_CONSTANTS_PLACEHOLDER, moduleConstantsCode)
 }
 
 function generateElementRefs(ctx: ClientJsContext): string {

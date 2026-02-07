@@ -18,7 +18,7 @@ import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
-import { DropdownPage } from './pages/dropdown'
+import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
@@ -211,9 +211,9 @@ export function createApp() {
     return c.render(<DialogPage />)
   })
 
-  // Dropdown documentation
-  app.get('/docs/components/dropdown', (c) => {
-    return c.render(<DropdownPage />)
+  // Dropdown Menu documentation
+  app.get('/docs/components/dropdown-menu', (c) => {
+    return c.render(<DropdownMenuPage />)
   })
 
   // Toast documentation
