@@ -902,4 +902,55 @@ describe('Compiler', () => {
       expect(clientJs?.content).toContain('initChild')
     })
   })
+
+  describe('spread props in child component', () => {
+    test('does not generate invalid get ...() syntax for spread props', () => {
+      const source = `
+        'use client'
+
+        export function Button({ className = '', asChild = false, children, ...props }: any) {
+          if (asChild) {
+            return <Slot className={className} {...props}>{children}</Slot>
+          }
+          return <button className={className} {...props}>{children}</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Button.tsx', { adapter })
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      if (clientJs) {
+        // Spread props must not produce invalid JS like "get ...() { ... }"
+        expect(clientJs.content).not.toContain('get ...()')
+        expect(clientJs.content).not.toContain('...: ')
+      }
+    })
+
+    test('preserves named props alongside spread props', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Wrapper() {
+          const [active, setActive] = createSignal(false)
+
+          return (
+            <div>
+              <Child className="test" onClick={() => setActive(!active())} />
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Wrapper.tsx', { adapter })
+
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Named props should still be collected
+      expect(clientJs?.content).toContain('initChild')
+      expect(clientJs?.content).toContain('onClick')
+    })
+  })
 })
