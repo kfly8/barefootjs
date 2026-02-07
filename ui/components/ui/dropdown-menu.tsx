@@ -6,32 +6,45 @@
  * An action menu triggered by a button, avatar, or any element.
  * Inspired by shadcn/ui DropdownMenu with CSS variable theming support.
  *
+ * State management uses createContext/useContext for parent-child communication.
+ * Root DropdownMenu manages open state, children consume via context.
+ *
  * Features:
  * - ESC key to close
  * - Arrow key navigation
- * - Click outside to close
  * - Accessibility (role="menu", role="menuitem")
  *
  * @example Basic dropdown menu
  * ```tsx
  * const [open, setOpen] = createSignal(false)
  *
- * <DropdownMenu>
- *   <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())}>
- *     <button>Open Menu</button>
+ * <DropdownMenu open={open()} onOpenChange={setOpen}>
+ *   <DropdownMenuTrigger>
+ *     <span>Open Menu</span>
  *   </DropdownMenuTrigger>
- *   <DropdownMenuContent open={open()} onClose={() => setOpen(false)}>
+ *   <DropdownMenuContent>
  *     <DropdownMenuLabel>My Account</DropdownMenuLabel>
  *     <DropdownMenuSeparator />
- *     <DropdownMenuItem onClick={() => {}}>Settings</DropdownMenuItem>
- *     <DropdownMenuItem onClick={() => {}}>Log out</DropdownMenuItem>
+ *     <DropdownMenuItem onSelect={() => {}}>Settings</DropdownMenuItem>
+ *     <DropdownMenuItem onSelect={() => {}}>Log out</DropdownMenuItem>
  *   </DropdownMenuContent>
  * </DropdownMenu>
  * ```
  */
 
-import { createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
+
+// Context for parent-child state sharing
+interface DropdownMenuContextValue {
+  open: () => boolean
+  onOpenChange: (open: boolean) => void
+}
+
+const DropdownMenuContext = createContext<DropdownMenuContextValue>()
+
+// Store Content → Trigger element mapping for MenuItem focus return after portal
+const contentTriggerMap = new WeakMap<HTMLElement, HTMLElement>()
 
 // DropdownMenu container classes
 const dropdownMenuClasses = 'relative inline-block'
@@ -66,6 +79,10 @@ const dropdownMenuShortcutClasses = 'ml-auto text-xs tracking-widest text-muted-
  * Props for DropdownMenu component.
  */
 interface DropdownMenuProps {
+  /** Whether the dropdown menu is open */
+  open?: boolean
+  /** Callback when open state should change */
+  onOpenChange?: (open: boolean) => void
   /** DropdownMenuTrigger and DropdownMenuContent */
   children?: Child
   /** Additional CSS classes */
@@ -73,15 +90,22 @@ interface DropdownMenuProps {
 }
 
 /**
- * DropdownMenu container component.
+ * DropdownMenu root component.
+ * Provides open state to children via context.
  *
- * @param props.children - Trigger and content components
+ * @param props.open - Whether the dropdown menu is open
+ * @param props.onOpenChange - Callback when open state should change
  */
 function DropdownMenu(props: DropdownMenuProps) {
   return (
-    <div data-slot="dropdown-menu" className={`${dropdownMenuClasses} ${props.class ?? ''}`}>
-      {props.children}
-    </div>
+    <DropdownMenuContext.Provider value={{
+      open: () => props.open ?? false,
+      onOpenChange: props.onOpenChange ?? (() => {}),
+    }}>
+      <div data-slot="dropdown-menu" className={`${dropdownMenuClasses} ${props.class ?? ''}`}>
+        {props.children}
+      </div>
+    </DropdownMenuContext.Provider>
   )
 }
 
@@ -89,14 +113,10 @@ function DropdownMenu(props: DropdownMenuProps) {
  * Props for DropdownMenuTrigger component.
  */
 interface DropdownMenuTriggerProps {
-  /** Whether the dropdown menu is open */
-  open?: boolean
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
-  /** Click handler to toggle dropdown menu */
-  onClick?: () => void
   /** Trigger content (any element: button, avatar, icon, etc.) */
   children?: Child
   /** Additional CSS classes */
@@ -105,29 +125,39 @@ interface DropdownMenuTriggerProps {
 
 /**
  * Button that toggles the dropdown menu.
- * Renders children as-is without built-in styling or chevron.
+ * Reads open state from context and toggles via onOpenChange.
  *
- * @param props.open - Whether open
  * @param props.disabled - Whether disabled
- * @param props.onClick - Click handler
+ * @param props.asChild - Render child as trigger
  */
 function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && props.open) {
-      e.preventDefault()
-      props.onClick?.()
-    }
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(DropdownMenuContext)
+
+    createEffect(() => {
+      el.setAttribute('aria-expanded', String(ctx.open()))
+    })
+
+    el.addEventListener('click', () => {
+      ctx.onOpenChange(!ctx.open())
+    })
+
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && ctx.open()) {
+        e.preventDefault()
+        ctx.onOpenChange(false)
+      }
+    })
   }
 
   if (props.asChild) {
     return (
       <span
         data-slot="dropdown-menu-trigger"
-        aria-expanded={props.open ?? false}
+        aria-expanded="false"
         aria-haspopup="menu"
-        onClick={props.onClick}
-        onKeyDown={handleKeyDown}
         style="display:contents"
+        ref={handleMount}
       >
         {props.children}
       </span>
@@ -138,12 +168,11 @@ function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
     <button
       data-slot="dropdown-menu-trigger"
       type="button"
-      aria-expanded={props.open ?? false}
+      aria-expanded="false"
       aria-haspopup="menu"
       disabled={props.disabled ?? false}
       className={`${dropdownMenuTriggerClasses} ${props.class ?? ''}`}
-      onClick={props.onClick}
-      onKeyDown={handleKeyDown}
+      ref={handleMount}
     >
       {props.children}
     </button>
@@ -154,10 +183,6 @@ function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
  * Props for DropdownMenuContent component.
  */
 interface DropdownMenuContentProps {
-  /** Whether the dropdown menu is open */
-  open?: boolean
-  /** Callback to close the dropdown menu */
-  onClose?: () => void
   /** DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator components */
   children?: Child
   /** Alignment relative to trigger */
@@ -168,91 +193,95 @@ interface DropdownMenuContentProps {
 
 /**
  * Content container for dropdown menu items.
+ * Portaled to body. Reads open state from context.
  *
- * @param props.open - Whether visible
- * @param props.onClose - Close callback
  * @param props.align - Alignment ('start' or 'end')
  */
 function DropdownMenuContent(props: DropdownMenuContentProps) {
-  const ref = { current: null as HTMLElement | null }
-  const triggerRef = { current: null as HTMLElement | null }
-
-  // Position content relative to trigger using fixed positioning
-  createEffect(() => {
-    if (props.open && ref.current && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect()
-      ref.current.style.top = `${rect.bottom + 4}px`
-      if (props.align === 'end') {
-        ref.current.style.left = `${rect.right - ref.current.offsetWidth}px`
-      } else {
-        ref.current.style.left = `${rect.left}px`
-      }
-    }
-  })
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    const target = e.currentTarget as HTMLElement
-    const items = target.querySelectorAll('[data-slot="dropdown-menu-item"]:not([aria-disabled="true"])')
-    const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
-
-    switch (e.key) {
-      case 'Escape':
-        if (props.onClose) props.onClose()
-        break
-      case 'ArrowDown':
-        e.preventDefault()
-        if (items.length > 0) {
-          const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0
-          ;(items[nextIndex] as HTMLElement).focus()
-        }
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        if (items.length > 0) {
-          const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1
-          ;(items[prevIndex] as HTMLElement).focus()
-        }
-        break
-      case 'Enter':
-      case ' ':
-        e.preventDefault()
-        if (document.activeElement && (document.activeElement as HTMLElement).dataset.slot === 'dropdown-menu-item') {
-          ;(document.activeElement as HTMLElement).click()
-        }
-        break
-      case 'Home':
-        e.preventDefault()
-        if (items.length > 0) {
-          ;(items[0] as HTMLElement).focus()
-        }
-        break
-      case 'End':
-        e.preventDefault()
-        if (items.length > 0) {
-          ;(items[items.length - 1] as HTMLElement).focus()
-        }
-        break
-    }
-  }
-
-  // Portal: move to body to escape overflow clipping from ancestors
   const handleMount = (el: HTMLElement) => {
-    ref.current = el
-    triggerRef.current = el.parentElement?.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement
+    // Get trigger ref before portal (while still inside DropdownMenu container)
+    const triggerEl = el.parentElement?.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement
+    if (triggerEl) contentTriggerMap.set(el, triggerEl)
+
+    // Portal to body to escape overflow clipping
     if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
       const ownerScope = el.closest('[data-bf-scope]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
+
+    const ctx = useContext(DropdownMenuContext)
+
+    // Reactive show/hide + positioning
+    createEffect(() => {
+      const isOpen = ctx.open()
+      el.dataset.state = isOpen ? 'open' : 'closed'
+      el.className = `${dropdownMenuContentBaseClasses} ${isOpen ? dropdownMenuContentOpenClasses : dropdownMenuContentClosedClasses} ${props.class ?? ''}`
+
+      if (isOpen && triggerEl) {
+        const rect = triggerEl.getBoundingClientRect()
+        el.style.top = `${rect.bottom + 4}px`
+        if (props.align === 'end') {
+          el.style.left = `${rect.right - el.offsetWidth}px`
+        } else {
+          el.style.left = `${rect.left}px`
+        }
+      }
+    })
+
+    // Keyboard navigation
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      const items = el.querySelectorAll('[data-slot="dropdown-menu-item"]:not([aria-disabled="true"])')
+      const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
+
+      switch (e.key) {
+        case 'Escape':
+          ctx.onOpenChange(false)
+          triggerEl?.focus()
+          break
+        case 'ArrowDown':
+          e.preventDefault()
+          if (items.length > 0) {
+            const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0
+            ;(items[nextIndex] as HTMLElement).focus()
+          }
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          if (items.length > 0) {
+            const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1
+            ;(items[prevIndex] as HTMLElement).focus()
+          }
+          break
+        case 'Enter':
+        case ' ':
+          e.preventDefault()
+          if (document.activeElement && (document.activeElement as HTMLElement).dataset.slot === 'dropdown-menu-item') {
+            ;(document.activeElement as HTMLElement).click()
+          }
+          break
+        case 'Home':
+          e.preventDefault()
+          if (items.length > 0) {
+            ;(items[0] as HTMLElement).focus()
+          }
+          break
+        case 'End':
+          e.preventDefault()
+          if (items.length > 0) {
+            ;(items[items.length - 1] as HTMLElement).focus()
+          }
+          break
+      }
+    })
   }
 
   return (
     <div
       data-slot="dropdown-menu-content"
-      data-state={(props.open ?? false) ? 'open' : 'closed'}
+      data-state="closed"
       role="menu"
       tabindex={-1}
-      className={`${dropdownMenuContentBaseClasses} ${(props.open ?? false) ? dropdownMenuContentOpenClasses : dropdownMenuContentClosedClasses} ${props.class ?? ''}`}
-      onKeyDown={handleKeyDown}
+      className={`${dropdownMenuContentBaseClasses} ${dropdownMenuContentClosedClasses} ${props.class ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -266,8 +295,8 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
 interface DropdownMenuItemProps {
   /** Whether disabled */
   disabled?: boolean
-  /** Click handler */
-  onClick?: () => void
+  /** Callback when item is selected (menu auto-closes) */
+  onSelect?: () => void
   /** Item content (text, icons, shortcuts) */
   children?: Child
   /** Additional CSS classes */
@@ -276,15 +305,25 @@ interface DropdownMenuItemProps {
 
 /**
  * Individual dropdown menu item (action).
+ * Auto-closes menu and returns focus to trigger on select.
  *
  * @param props.disabled - Whether disabled
- * @param props.onClick - Click handler
+ * @param props.onSelect - Selection callback
  */
 function DropdownMenuItem(props: DropdownMenuItemProps) {
-  const handleClick = () => {
-    props.onClick?.()
-    const trigger = document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement
-    setTimeout(() => trigger?.focus(), 0)
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(DropdownMenuContext)
+
+    el.addEventListener('click', () => {
+      if (el.getAttribute('aria-disabled') === 'true') return
+      props.onSelect?.()
+      ctx.onOpenChange(false)
+
+      // Focus return: use stored trigger ref
+      const content = el.closest('[data-slot="dropdown-menu-content"]') as HTMLElement
+      const trigger = content ? contentTriggerMap.get(content) : null
+      setTimeout(() => trigger?.focus(), 0)
+    })
   }
 
   return (
@@ -294,7 +333,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       aria-disabled={(props.disabled ?? false) || undefined}
       tabindex={(props.disabled ?? false) ? -1 : 0}
       className={`${dropdownMenuItemBaseClasses} ${(props.disabled ?? false) ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
-      onClick={handleClick}
+      ref={handleMount}
     >
       {props.children}
     </div>

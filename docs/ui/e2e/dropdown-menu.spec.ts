@@ -231,6 +231,7 @@ test.describe('DropdownMenu Documentation Page', () => {
   test.describe('API Reference', () => {
     test('displays API reference section', async ({ page }) => {
       await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
+      await expect(page.locator('h3:text-is("DropdownMenu")')).toBeVisible()
       await expect(page.locator('h3:has-text("DropdownMenuTrigger")')).toBeVisible()
       await expect(page.locator('h3:has-text("DropdownMenuContent")')).toBeVisible()
       await expect(page.locator('h3:has-text("DropdownMenuItem")')).toBeVisible()

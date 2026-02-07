@@ -47,32 +47,32 @@ function ProfileMenu() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())}>
+    <DropdownMenu open={open()} onOpenChange={setOpen}>
+      <DropdownMenuTrigger>
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
           KK
         </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent open={open()} onClose={() => setOpen(false)} align="end">
+      <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => setOpen(false)}>
+          <DropdownMenuItem onSelect={() => console.log('settings')}>
             <SettingsIcon size="sm" />
             <span>Settings</span>
             <DropdownMenuShortcut>⇧⌘,</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(false)}>
+          <DropdownMenuItem>
             <GlobeIcon size="sm" />
             <span>Language</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(false)}>
+          <DropdownMenuItem>
             <CircleHelpIcon size="sm" />
             <span>Help</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setOpen(false)}>
+        <DropdownMenuItem>
           <LogOutIcon size="sm" />
           <span>Log out</span>
         </DropdownMenuItem>
@@ -97,24 +97,24 @@ function AsChildMenu() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())} asChild>
+    <DropdownMenu open={open()} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
         <button className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
           <SettingsIcon size="sm" />
           <span>Actions</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent open={open()} onClose={() => setOpen(false)}>
-        <DropdownMenuItem onClick={() => setOpen(false)}>
+      <DropdownMenuContent>
+        <DropdownMenuItem onSelect={() => console.log('settings')}>
           <SettingsIcon size="sm" />
           <span>Settings</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setOpen(false)}>
+        <DropdownMenuItem>
           <GlobeIcon size="sm" />
           <span>Language</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setOpen(false)}>
+        <DropdownMenuItem>
           <LogOutIcon size="sm" />
           <span>Log out</span>
         </DropdownMenuItem>
@@ -124,13 +124,21 @@ function AsChildMenu() {
 }`
 
 // Props definitions
-const dropdownMenuTriggerProps: PropDefinition[] = [
+const dropdownMenuProps: PropDefinition[] = [
   {
     name: 'open',
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the dropdown menu is open.',
   },
+  {
+    name: 'onOpenChange',
+    type: '(open: boolean) => void',
+    description: 'Callback when open state should change.',
+  },
+]
+
+const dropdownMenuTriggerProps: PropDefinition[] = [
   {
     name: 'disabled',
     type: 'boolean',
@@ -141,27 +149,11 @@ const dropdownMenuTriggerProps: PropDefinition[] = [
     name: 'asChild',
     type: 'boolean',
     defaultValue: 'false',
-    description: 'Render child element as trigger instead of built-in button. Merges ARIA and event props onto the child.',
-  },
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the trigger is clicked.',
+    description: 'Render child element as trigger instead of built-in button.',
   },
 ]
 
 const dropdownMenuContentProps: PropDefinition[] = [
-  {
-    name: 'open',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the dropdown menu content is visible.',
-  },
-  {
-    name: 'onClose',
-    type: '() => void',
-    description: 'Event handler called when the dropdown menu should close (ESC key).',
-  },
   {
     name: 'align',
     type: "'start' | 'end'",
@@ -178,9 +170,9 @@ const dropdownMenuItemProps: PropDefinition[] = [
     description: 'Whether the item is disabled.',
   },
   {
-    name: 'onClick',
+    name: 'onSelect',
     type: '() => void',
-    description: 'Event handler called when the item is clicked.',
+    description: 'Callback when the item is selected. Menu auto-closes after selection.',
   },
 ]
 
@@ -213,7 +205,7 @@ export function DropdownMenuPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<DropdownMenu><DropdownMenuTrigger>...</DropdownMenuTrigger><DropdownMenuContent>...</DropdownMenuContent></DropdownMenu>`}>
+        <Example title="" code={`<DropdownMenu open={open()} onOpenChange={setOpen}><DropdownMenuTrigger>...</DropdownMenuTrigger><DropdownMenuContent>...</DropdownMenuContent></DropdownMenu>`}>
           <div className="flex gap-4">
             <DropdownMenuProfileDemo />
           </div>
@@ -262,6 +254,10 @@ export function DropdownMenuPage() {
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
           <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenu</h3>
+              <PropsTable props={dropdownMenuProps} />
+            </div>
             <div>
               <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuTrigger</h3>
               <PropsTable props={dropdownMenuTriggerProps} />

@@ -454,6 +454,11 @@ export class HonoAdapter implements TemplateAdapter {
     // Include local constants
     for (const constant of ir.metadata.localConstants) {
       const value = constant.value.trim()
+      // Skip client-only constructs in SSR:
+      // - createContext() — only used client-side via provideContext/useContext
+      // - new WeakMap() — client-side cross-component shared state
+      if (/^createContext\b/.test(value) || /^new WeakMap\b/.test(value)) continue
+
       // Check if it's an arrow function or function expression
       const isArrowFunc =
         value.startsWith('async (') ||

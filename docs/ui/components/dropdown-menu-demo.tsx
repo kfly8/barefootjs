@@ -12,6 +12,7 @@
 
 import { createSignal } from '@barefootjs/dom'
 import {
+  DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -29,31 +30,33 @@ export function DropdownMenuAsChildDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div className="relative inline-block">
-      <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())} asChild>
-        <button
-          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
-          aria-label="Actions"
-        >
-          <SettingsIcon size="sm" />
-          <span>Actions</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent open={open()} onClose={() => setOpen(false)}>
-        <DropdownMenuItem onClick={() => setOpen(false)}>
-          <SettingsIcon size="sm" />
-          <span>Settings</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setOpen(false)}>
-          <GlobeIcon size="sm" />
-          <span>Language</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setOpen(false)}>
-          <LogOutIcon size="sm" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+    <div>
+      <DropdownMenu open={open()} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
+            aria-label="Actions"
+          >
+            <SettingsIcon size="sm" />
+            <span>Actions</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>
+            <SettingsIcon size="sm" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <GlobeIcon size="sm" />
+            <span>Language</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <LogOutIcon size="sm" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }
@@ -65,39 +68,41 @@ export function DropdownMenuProfileDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div className="relative inline-block">
-      <DropdownMenuTrigger open={open()} onClick={() => setOpen(!open())}>
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium"
-          aria-label="Profile menu"
-        >
-          KK
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent open={open()} onClose={() => setOpen(false)} align="end">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => setOpen(false)}>
-            <SettingsIcon size="sm" />
-            <span>Settings</span>
-            <DropdownMenuShortcut>⇧⌘,</DropdownMenuShortcut>
+    <div>
+      <DropdownMenu open={open()} onOpenChange={setOpen}>
+        <DropdownMenuTrigger>
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium"
+            aria-label="Profile menu"
+          >
+            KK
+          </span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem>
+              <SettingsIcon size="sm" />
+              <span>Settings</span>
+              <DropdownMenuShortcut>⇧⌘,</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <GlobeIcon size="sm" />
+              <span>Language</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CircleHelpIcon size="sm" />
+              <span>Help</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <LogOutIcon size="sm" />
+            <span>Log out</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(false)}>
-            <GlobeIcon size="sm" />
-            <span>Language</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(false)}>
-            <CircleHelpIcon size="sm" />
-            <span>Help</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setOpen(false)}>
-          <LogOutIcon size="sm" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }
