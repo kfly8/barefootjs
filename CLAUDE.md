@@ -18,5 +18,7 @@ Adapters: HonoAdapter (`packages/hono/`), GoTemplateAdapter (`packages/go-templa
 - `packages/go-template/` — Go html/template adapter
 - `ui/` — UI component registry
 - `docs/ui/` — Documentation site (Hono + Cloudflare Workers)
-- `spec/compiler.md` — Compiler spec (transformation rules, IR schema, error codes)
-- `spec/ui.md` — UI component spec
+
+## Specs
+
+- `spec/compiler.md` — Compiler spec: pipeline architecture, IR schema, transformation rules, adapter interface, error codes
