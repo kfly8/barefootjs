@@ -2,7 +2,7 @@
  * Dropdown Menu Documentation Page
  */
 
-import { DropdownMenuProfileDemo, DropdownMenuAsChildDemo } from '@/components/dropdown-menu-demo'
+import { DropdownMenuProfileDemo, DropdownMenuBasicDemo, DropdownMenuCheckboxDemo } from '@/components/dropdown-menu-demo'
 import {
   DocPage,
   PageHeader,
@@ -21,14 +21,13 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
-  { id: 'profile-menu', title: 'Profile Menu', branch: 'start' },
-  { id: 'as-child', title: 'As Child' },
-  { id: 'accessibility', title: 'Accessibility' },
+  { id: 'basic', title: 'Basic', branch: 'start' },
+  { id: 'checkbox-items', title: 'Checkbox Items', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const profileMenuCode = `"use client"
+const basicCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import {
@@ -38,86 +37,69 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuGroup,
-  DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu'
-import { SettingsIcon, GlobeIcon, LogOutIcon, CircleHelpIcon } from '@/components/ui/icon'
 
-function ProfileMenu() {
+function BasicMenu() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <DropdownMenu open={open()} onOpenChange={setOpen}>
       <DropdownMenuTrigger>
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-          KK
+        <span className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+          Open Menu
         </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onSelect={() => console.log('settings')}>
-            <SettingsIcon size="sm" />
-            <span>Settings</span>
-            <DropdownMenuShortcut>⇧⌘,</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <GlobeIcon size="sm" />
-            <span>Language</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CircleHelpIcon size="sm" />
-            <span>Help</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <LogOutIcon size="sm" />
-          <span>Log out</span>
+          <span>Copy</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <span>Paste</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive">
+          <span>Delete</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }`
 
-const asChildCode = `"use client"
+const checkboxCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { SettingsIcon, GlobeIcon, LogOutIcon } from '@/components/ui/icon'
 
-function AsChildMenu() {
+function CheckboxMenu() {
   const [open, setOpen] = createSignal(false)
+  const [showStatus, setShowStatus] = createSignal(true)
+  const [showActivity, setShowActivity] = createSignal(false)
 
   return (
     <DropdownMenu open={open()} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <button className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-          <SettingsIcon size="sm" />
-          <span>Actions</span>
-        </button>
+      <DropdownMenuTrigger>
+        <span className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+          View
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onSelect={() => console.log('settings')}>
-          <SettingsIcon size="sm" />
-          <span>Settings</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <GlobeIcon size="sm" />
-          <span>Language</span>
-        </DropdownMenuItem>
+        <DropdownMenuLabel>Toggle Panels</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LogOutIcon size="sm" />
-          <span>Log out</span>
-        </DropdownMenuItem>
+        <DropdownMenuCheckboxItem checked={showStatus()} onCheckedChange={setShowStatus}>
+          <span>Status Bar</span>
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem checked={showActivity()} onCheckedChange={setShowActivity}>
+          <span>Activity Panel</span>
+        </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -174,6 +156,68 @@ const dropdownMenuItemProps: PropDefinition[] = [
     type: '() => void',
     description: 'Callback when the item is selected. Menu auto-closes after selection.',
   },
+  {
+    name: 'variant',
+    type: "'default' | 'destructive'",
+    defaultValue: "'default'",
+    description: 'Visual variant. Use "destructive" for dangerous actions like log out.',
+  },
+]
+
+const dropdownMenuCheckboxItemProps: PropDefinition[] = [
+  {
+    name: 'checked',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Whether the checkbox is checked.',
+  },
+  {
+    name: 'onCheckedChange',
+    type: '(checked: boolean) => void',
+    description: 'Callback when checked state changes. Menu stays open.',
+  },
+  {
+    name: 'disabled',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Whether the item is disabled.',
+  },
+]
+
+const dropdownMenuRadioGroupProps: PropDefinition[] = [
+  {
+    name: 'value',
+    type: 'string',
+    description: 'Currently selected value.',
+  },
+  {
+    name: 'onValueChange',
+    type: '(value: string) => void',
+    description: 'Callback when value changes.',
+  },
+]
+
+const dropdownMenuRadioItemProps: PropDefinition[] = [
+  {
+    name: 'value',
+    type: 'string',
+    description: 'Value for this radio item.',
+  },
+  {
+    name: 'disabled',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Whether the item is disabled.',
+  },
+]
+
+const dropdownMenuSubTriggerProps: PropDefinition[] = [
+  {
+    name: 'disabled',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Whether the sub trigger is disabled.',
+  },
 ]
 
 const dropdownMenuLabelProps: PropDefinition[] = [
@@ -221,34 +265,25 @@ export function DropdownMenuPage() {
           <ul className="list-disc list-inside space-y-2 text-muted-foreground">
             <li><strong className="text-foreground">Props-based state</strong> - Parent controls open state with signals</li>
             <li><strong className="text-foreground">Flexible trigger</strong> - Use any element as the trigger (button, avatar, icon)</li>
-            <li><strong className="text-foreground">ESC key to close</strong> - Press Escape to close the menu</li>
-            <li><strong className="text-foreground">Arrow key navigation</strong> - Navigate items with keyboard</li>
-            <li><strong className="text-foreground">Accessibility</strong> - role="menu", role="menuitem", aria-expanded, aria-haspopup</li>
-            <li><strong className="text-foreground">Composable</strong> - Label, Separator, Shortcut, Group sub-components</li>
+            <li><strong className="text-foreground">Submenu</strong> - Nested submenus with hover and keyboard navigation</li>
+            <li><strong className="text-foreground">Checkbox items</strong> - Multi-select items with check indicator</li>
+            <li><strong className="text-foreground">Radio items</strong> - Single-select items within a group</li>
+            <li><strong className="text-foreground">Destructive variant</strong> - Red styling for dangerous actions</li>
+            <li><strong className="text-foreground">Keyboard navigation</strong> - Arrow keys, Home/End, Enter/Space, ESC</li>
+            <li><strong className="text-foreground">Composable</strong> - Label, Separator, Shortcut, Group, Sub sub-components</li>
           </ul>
         </Section>
 
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Profile Menu" code={profileMenuCode}>
-              <DropdownMenuProfileDemo />
+            <Example title="Basic" code={basicCode}>
+              <DropdownMenuBasicDemo />
             </Example>
-            <Example title="As Child" code={asChildCode}>
-              <DropdownMenuAsChildDemo />
+            <Example title="Checkbox Items" code={checkboxCode}>
+              <DropdownMenuCheckboxDemo />
             </Example>
           </div>
-        </Section>
-
-        {/* Accessibility */}
-        <Section id="accessibility" title="Accessibility">
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong className="text-foreground">Keyboard Navigation</strong> - Arrow Up/Down to navigate, Home/End to jump, Enter/Space to select</li>
-            <li><strong className="text-foreground">Focus Return</strong> - Focus returns to trigger after action</li>
-            <li><strong className="text-foreground">ESC to Close</strong> - Press Escape to close the menu</li>
-            <li><strong className="text-foreground">ARIA</strong> - role="menu" on content, role="menuitem" on items</li>
-            <li><strong className="text-foreground">State Attributes</strong> - aria-expanded, aria-haspopup="menu", aria-disabled</li>
-          </ul>
         </Section>
 
         {/* API Reference */}
@@ -269,6 +304,30 @@ export function DropdownMenuPage() {
             <div>
               <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuItem</h3>
               <PropsTable props={dropdownMenuItemProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuCheckboxItem</h3>
+              <PropsTable props={dropdownMenuCheckboxItemProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuRadioGroup</h3>
+              <PropsTable props={dropdownMenuRadioGroupProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuRadioItem</h3>
+              <PropsTable props={dropdownMenuRadioItemProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuSub</h3>
+              <p className="text-sm text-muted-foreground">Submenu container. Manages sub-open state internally. Wrap SubTrigger and SubContent.</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuSubTrigger</h3>
+              <PropsTable props={dropdownMenuSubTriggerProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuSubContent</h3>
+              <p className="text-sm text-muted-foreground">Content container for submenu items. Positioned to the right of the trigger.</p>
             </div>
             <div>
               <h3 className="text-lg font-medium text-foreground mb-4">DropdownMenuLabel</h3>

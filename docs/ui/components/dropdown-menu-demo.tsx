@@ -16,6 +16,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuGroup,
@@ -24,35 +30,32 @@ import {
 import { SettingsIcon, GlobeIcon, LogOutIcon, CircleHelpIcon } from '@ui/components/ui/icon'
 
 /**
- * asChild demo - custom button element as trigger via asChild prop
+ * Basic demo - simple menu with a few items
  */
-export function DropdownMenuAsChildDemo() {
+export function DropdownMenuBasicDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <DropdownMenu open={open()} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <button
+      <DropdownMenuTrigger>
+        <span
           className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
-          aria-label="Actions"
         >
-          <SettingsIcon size="sm" />
-          <span>Actions</span>
-        </button>
+          Open Menu
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem>
-          <SettingsIcon size="sm" />
-          <span>Settings</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <GlobeIcon size="sm" />
-          <span>Language</span>
-        </DropdownMenuItem>
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <LogOutIcon size="sm" />
-          <span>Log out</span>
+          <span>Copy</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <span>Paste</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive">
+          <span>Delete</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -60,10 +63,45 @@ export function DropdownMenuAsChildDemo() {
 }
 
 /**
+ * Checkbox demo - toggle options without closing the menu
+ */
+export function DropdownMenuCheckboxDemo() {
+  const [open, setOpen] = createSignal(false)
+  const [showStatus, setShowStatus] = createSignal(true)
+  const [showActivity, setShowActivity] = createSignal(false)
+
+  return (
+    <DropdownMenu open={open()} onOpenChange={setOpen}>
+      <DropdownMenuTrigger>
+        <span
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
+        >
+          View
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Toggle Panels</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuCheckboxItem checked={showStatus()} onCheckedChange={setShowStatus}>
+          <span>Status Bar</span>
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem checked={showActivity()} onCheckedChange={setShowActivity}>
+          <span>Activity Panel</span>
+        </DropdownMenuCheckboxItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/**
  * Profile menu demo - avatar trigger with account actions
+ * Features: submenu, checkbox items, radio items, destructive variant
  */
 export function DropdownMenuProfileDemo() {
   const [open, setOpen] = createSignal(false)
+  const [showBookmarks, setShowBookmarks] = createSignal(true)
+  const [showToolbar, setShowToolbar] = createSignal(false)
+  const [language, setLanguage] = createSignal('en')
 
   return (
     <DropdownMenu open={open()} onOpenChange={setOpen}>
@@ -84,17 +122,41 @@ export function DropdownMenuProfileDemo() {
             <span>Settings</span>
             <DropdownMenuShortcut>⇧⌘,</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <GlobeIcon size="sm" />
-            <span>Language</span>
-          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <GlobeIcon size="sm" />
+              <span>Language</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup value={language()} onValueChange={setLanguage}>
+                <DropdownMenuRadioItem value="en">
+                  <span>English</span>
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="ja">
+                  <span>Japanese</span>
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="fr">
+                  <span>French</span>
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuItem>
             <CircleHelpIcon size="sm" />
             <span>Help</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuCheckboxItem checked={showBookmarks()} onCheckedChange={setShowBookmarks}>
+            <span>Show Bookmarks Bar</span>
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem checked={showToolbar()} onCheckedChange={setShowToolbar}>
+            <span>Show Toolbar</span>
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive">
           <LogOutIcon size="sm" />
           <span>Log out</span>
         </DropdownMenuItem>
