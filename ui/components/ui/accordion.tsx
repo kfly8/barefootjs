@@ -6,43 +6,33 @@
  * A vertically stacked set of interactive headings that reveal content.
  * Inspired by shadcn/ui with CSS variable theming support.
  *
- * Design Decision: Props-based state management instead of Context.
- * For "only one open at a time" behavior, use a single signal to
- * track the currently open item and pass `open`/`onOpenChange` props.
+ * State management uses createContext/useContext for parent-child communication.
+ * AccordionItem manages open state, children consume via context.
  *
  * @example Basic accordion
  * ```tsx
- * const [openItem, setOpenItem] = useState<string | null>(null)
+ * const [openItem, setOpenItem] = createSignal<string | null>(null)
  *
  * <Accordion>
- *   <AccordionItem value="item-1">
- *     <AccordionTrigger
- *       open={openItem === 'item-1'}
- *       onClick={() => setOpenItem(openItem === 'item-1' ? null : 'item-1')}
- *     >
- *       Section 1
- *     </AccordionTrigger>
- *     <AccordionContent open={openItem === 'item-1'}>
- *       Content for section 1
- *     </AccordionContent>
- *   </AccordionItem>
- *   <AccordionItem value="item-2">
- *     <AccordionTrigger
- *       open={openItem === 'item-2'}
- *       onClick={() => setOpenItem(openItem === 'item-2' ? null : 'item-2')}
- *     >
- *       Section 2
- *     </AccordionTrigger>
- *     <AccordionContent open={openItem === 'item-2'}>
- *       Content for section 2
- *     </AccordionContent>
+ *   <AccordionItem value="item-1" open={openItem() === 'item-1'} onOpenChange={(v) => setOpenItem(v ? 'item-1' : null)}>
+ *     <AccordionTrigger>Section 1</AccordionTrigger>
+ *     <AccordionContent>Content for section 1</AccordionContent>
  *   </AccordionItem>
  * </Accordion>
  * ```
  */
 
+import { createContext, useContext, createEffect } from '@barefootjs/dom'
 import type { Child } from '../../types'
 import { ChevronDownIcon } from './icon'
+
+// Context for AccordionItem → children state sharing
+interface AccordionItemContextValue {
+  open: () => boolean
+  onOpenChange: (open: boolean) => void
+}
+
+const AccordionItemContext = createContext<AccordionItemContextValue>()
 
 // Accordion container classes
 const accordionClasses = 'w-full'
@@ -114,26 +104,28 @@ interface AccordionItemProps {
 
 /**
  * Individual accordion item.
+ * Provides open state to children via context.
  *
  * @param props.value - Item identifier
  * @param props.open - Whether open
  * @param props.disabled - Whether disabled
+ * @param props.onOpenChange - Callback when open state changes
  */
-function AccordionItem({
-  class: className = '',
-  value,
-  open = false,
-  children,
-}: AccordionItemProps) {
+function AccordionItem(props: AccordionItemProps) {
   return (
-    <div
-      data-slot="accordion-item"
-      data-state={open ? 'open' : 'closed'}
-      data-value={value}
-      className={`${accordionItemClasses} ${className}`}
-    >
-      {children}
-    </div>
+    <AccordionItemContext.Provider value={{
+      open: () => props.open ?? false,
+      onOpenChange: props.onOpenChange ?? (() => {}),
+    }}>
+      <div
+        data-slot="accordion-item"
+        data-state={props.open ? 'open' : 'closed'}
+        data-value={props.value}
+        className={`${accordionItemClasses} ${props.class ?? ''}`}
+      >
+        {props.children}
+      </div>
+    </AccordionItemContext.Provider>
   )
 }
 
@@ -141,12 +133,8 @@ function AccordionItem({
  * Props for AccordionTrigger component.
  */
 interface AccordionTriggerProps {
-  /** Whether the accordion item is open */
-  open?: boolean
   /** Whether disabled */
   disabled?: boolean
-  /** Click handler */
-  onClick?: () => void
   /** Trigger label */
   children?: Child
   /** Additional CSS classes */
@@ -155,15 +143,35 @@ interface AccordionTriggerProps {
 
 /**
  * Clickable header that toggles accordion content.
+ * Reads open state from AccordionItemContext.
  *
- * Uses SolidJS-style props (props.xxx) to maintain reactivity.
- * Destructured props would lose reactivity for the icon rotation.
- *
- * @param props.open - Whether open
  * @param props.disabled - Whether disabled
- * @param props.onClick - Click handler
  */
 function AccordionTrigger(props: AccordionTriggerProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(AccordionItemContext)
+
+    // Reactive aria-expanded and chevron rotation
+    createEffect(() => {
+      const isOpen = ctx.open()
+      el.setAttribute('aria-expanded', String(isOpen))
+      const icon = el.querySelector('svg')
+      if (icon) {
+        if (isOpen) {
+          icon.classList.add('rotate-180')
+        } else {
+          icon.classList.remove('rotate-180')
+        }
+      }
+    })
+
+    // Click handler with stopPropagation to prevent bubbling to parent scope element
+    el.addEventListener('click', (e: Event) => {
+      e.stopPropagation()
+      ctx.onOpenChange(!ctx.open())
+    })
+  }
+
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = e.currentTarget as HTMLElement
     const accordion = target.closest('[data-slot="accordion"]')
@@ -200,13 +208,7 @@ function AccordionTrigger(props: AccordionTriggerProps) {
 
   const className = props.class ?? ''
   const classes = `${accordionTriggerBaseClasses} ${accordionTriggerFocusClasses} ${className}`
-  const iconClasses = `text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal ${props.open ? 'rotate-180' : ''}`
-
-  // Handle click with stopPropagation to prevent bubbling to parent scope element
-  const handleClick = (e: Event) => {
-    e.stopPropagation()
-    props.onClick?.()
-  }
+  const iconClasses = 'text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal'
 
   return (
     <h3 className="flex">
@@ -214,10 +216,10 @@ function AccordionTrigger(props: AccordionTriggerProps) {
         data-slot="accordion-trigger"
         className={classes}
         disabled={props.disabled}
-        aria-expanded={props.open}
+        aria-expanded="false"
         aria-disabled={props.disabled || undefined}
-        onClick={handleClick}
         onKeyDown={handleKeyDown}
+        ref={handleMount}
       >
         {props.children}
         <ChevronDownIcon size="sm" class={iconClasses} />
@@ -230,8 +232,6 @@ function AccordionTrigger(props: AccordionTriggerProps) {
  * Props for AccordionContent component.
  */
 interface AccordionContentProps {
-  /** Whether the content is visible */
-  open?: boolean
   /** Content to display */
   children?: Child
   /** Additional CSS classes */
@@ -240,30 +240,32 @@ interface AccordionContentProps {
 
 /**
  * Collapsible content panel.
- *
- * @param props.open - Whether visible
+ * Reads open state from AccordionItemContext.
  */
-function AccordionContent({
-  class: className = '',
-  open = false,
-  children,
-}: AccordionContentProps) {
-  // Create props object for reactive class updates
-  // The compiler detects props.open usage and generates createEffect for client-side updates
-  // Note: The 'props' constant is intentionally skipped in client JS generation
-  //       since the function parameter already provides props
-  const props = { open, class: className, children } as AccordionContentProps
+function AccordionContent(props: AccordionContentProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(AccordionItemContext)
+
+    createEffect(() => {
+      const isOpen = ctx.open()
+      el.dataset.state = isOpen ? 'open' : 'closed'
+      el.className = `${accordionContentBaseClasses} ${isOpen ? accordionContentOpenClasses : accordionContentClosedClasses}`
+    })
+  }
+
+  const className = props.class ?? ''
 
   return (
     <div
       data-slot="accordion-content"
       role="region"
-      data-state={(props.open ?? false) ? 'open' : 'closed'}
-      className={`${accordionContentBaseClasses} ${(props.open ?? false) ? accordionContentOpenClasses : accordionContentClosedClasses}`}
+      data-state="closed"
+      className={`${accordionContentBaseClasses} ${accordionContentClosedClasses}`}
+      ref={handleMount}
     >
       <div className={accordionContentInnerClasses}>
         <div className={`pt-0 pb-4 ${className}`}>
-          {children}
+          {props.children}
         </div>
       </div>
     </div>

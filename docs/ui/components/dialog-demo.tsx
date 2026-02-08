@@ -8,7 +8,7 @@
 
 import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
 import {
-  DialogRoot,
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -27,14 +27,12 @@ export function DialogBasicDemo() {
 
   return (
     <div>
-      <DialogRoot>
-        <DialogTrigger onClick={() => setOpen(true)}>
+      <Dialog open={open()} onOpenChange={setOpen}>
+        <DialogTrigger>
           Create Task
         </DialogTrigger>
-        <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+        <DialogOverlay />
         <DialogContent
-          open={open()}
-          onClose={() => setOpen(false)}
           ariaLabelledby="dialog-title"
           ariaDescribedby="dialog-description"
         >
@@ -69,11 +67,11 @@ export function DialogBasicDemo() {
             </div>
           </div>
           <DialogFooter>
-            <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-            <DialogTrigger onClick={() => setOpen(false)}>Create</DialogTrigger>
+            <DialogClose>Cancel</DialogClose>
+            <DialogClose>Create</DialogClose>
           </DialogFooter>
         </DialogContent>
-      </DialogRoot>
+      </Dialog>
     </div>
   )
 }
@@ -99,9 +97,9 @@ export function DialogFormDemo() {
     }
   }
 
-  const handleClose = () => {
-    setOpen(false)
-    setConfirmText('')
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) setConfirmText('')
   }
 
   // Set up handlers for Portal elements after they're mounted
@@ -140,18 +138,17 @@ export function DialogFormDemo() {
 
   return (
     <div>
-      <DialogRoot>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-        >
-          Delete Project
-        </button>
-        <DialogOverlay open={open()} onClick={handleClose} />
+      <Dialog open={open()} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete Project
+          </button>
+        </DialogTrigger>
+        <DialogOverlay />
         <DialogContent
-          open={open()}
-          onClose={handleClose}
           ariaLabelledby="delete-dialog-title"
           ariaDescribedby="delete-dialog-description"
         >
@@ -175,7 +172,7 @@ export function DialogFormDemo() {
             />
           </div>
           <DialogFooter>
-            <DialogClose onClick={handleClose}>Cancel</DialogClose>
+            <DialogClose>Cancel</DialogClose>
             <button
               type="button"
               id="delete-project-button"
@@ -187,7 +184,7 @@ export function DialogFormDemo() {
             </button>
           </DialogFooter>
         </DialogContent>
-      </DialogRoot>
+      </Dialog>
     </div>
   )
 }
@@ -200,14 +197,12 @@ export function DialogLongContentDemo() {
 
   return (
     <div>
-      <DialogRoot>
-        <DialogTrigger onClick={() => setOpen(true)}>
+      <Dialog open={open()} onOpenChange={setOpen}>
+        <DialogTrigger>
           Open Long Content Dialog
         </DialogTrigger>
-        <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+        <DialogOverlay />
         <DialogContent
-          open={open()}
-          onClose={() => setOpen(false)}
           ariaLabelledby="long-dialog-title"
           ariaDescribedby="long-dialog-description"
           class="max-h-[66vh]"
@@ -245,11 +240,11 @@ export function DialogLongContentDemo() {
             </p>
           </div>
           <DialogFooter class="flex-shrink-0">
-            <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
-            <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
+            <DialogClose>Decline</DialogClose>
+            <DialogClose>Accept</DialogClose>
           </DialogFooter>
         </DialogContent>
-      </DialogRoot>
+      </Dialog>
     </div>
   )
 }

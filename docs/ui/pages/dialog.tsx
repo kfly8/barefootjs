@@ -31,6 +31,7 @@ const basicCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import {
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -45,14 +46,10 @@ function CreateTaskDialog() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div>
-      <DialogTrigger onClick={() => setOpen(true)}>
-        Create Task
-      </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+    <Dialog open={open()} onOpenChange={setOpen}>
+      <DialogTrigger>Create Task</DialogTrigger>
+      <DialogOverlay />
       <DialogContent
-        open={open()}
-        onClose={() => setOpen(false)}
         ariaLabelledby="dialog-title"
         ariaDescribedby="dialog-description"
       >
@@ -87,11 +84,11 @@ function CreateTaskDialog() {
           </div>
         </div>
         <DialogFooter>
-          <DialogClose onClick={() => setOpen(false)}>Cancel</DialogClose>
-          <DialogTrigger onClick={() => setOpen(false)}>Create</DialogTrigger>
+          <DialogClose>Cancel</DialogClose>
+          <DialogClose>Create</DialogClose>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }`
 
@@ -99,6 +96,7 @@ const deleteCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import {
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -116,18 +114,18 @@ function DeleteConfirmDialog() {
 
   const isConfirmed = () => confirmText() === projectName
 
-  const handleClose = () => {
-    setOpen(false)
-    setConfirmText('')
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) setConfirmText('')
   }
 
   return (
-    <div>
-      <DialogTrigger onClick={() => setOpen(true)} class="bg-destructive ...">
-        Delete Project
+    <Dialog open={open()} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <button class="bg-destructive ...">Delete Project</button>
       </DialogTrigger>
-      <DialogOverlay open={open()} onClick={handleClose} />
-      <DialogContent open={open()} onClose={handleClose} ...>
+      <DialogOverlay />
+      <DialogContent ariaLabelledby="delete-dialog-title" ...>
         <DialogHeader>
           <DialogTitle>Delete Project</DialogTitle>
           <DialogDescription>
@@ -147,9 +145,9 @@ function DeleteConfirmDialog() {
           />
         </div>
         <DialogFooter>
-          <DialogClose onClick={handleClose}>Cancel</DialogClose>
+          <DialogClose>Cancel</DialogClose>
           <button
-            onClick={handleClose}
+            onClick={() => { setOpen(false); setConfirmText('') }}
             disabled={!isConfirmed()}
             class="bg-destructive ..."
           >
@@ -157,7 +155,7 @@ function DeleteConfirmDialog() {
           </button>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }`
 
@@ -165,6 +163,7 @@ const longContentCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import {
+  Dialog,
   DialogTrigger,
   DialogOverlay,
   DialogContent,
@@ -179,14 +178,10 @@ function DialogLongContent() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div>
-      <DialogTrigger onClick={() => setOpen(true)}>
-        Open Long Content Dialog
-      </DialogTrigger>
-      <DialogOverlay open={open()} onClick={() => setOpen(false)} />
+    <Dialog open={open()} onOpenChange={setOpen}>
+      <DialogTrigger>Open Long Content Dialog</DialogTrigger>
+      <DialogOverlay />
       <DialogContent
-        open={open()}
-        onClose={() => setOpen(false)}
         ariaLabelledby="long-dialog-title"
         ariaDescribedby="long-dialog-description"
         class="max-h-[66vh]"
@@ -202,44 +197,16 @@ function DialogLongContent() {
           {/* Multiple paragraphs - only this area scrolls */}
         </div>
         <DialogFooter class="flex-shrink-0">
-          <DialogClose onClick={() => setOpen(false)}>Decline</DialogClose>
-          <DialogTrigger onClick={() => setOpen(false)}>Accept</DialogTrigger>
+          <DialogClose>Decline</DialogClose>
+          <DialogClose>Accept</DialogClose>
         </DialogFooter>
       </DialogContent>
-    </div>
+    </Dialog>
   )
 }`
 
 // Props definitions
-const dialogTriggerProps: PropDefinition[] = [
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the trigger is clicked.',
-  },
-  {
-    name: 'disabled',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the trigger is disabled.',
-  },
-]
-
-const dialogOverlayProps: PropDefinition[] = [
-  {
-    name: 'open',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the overlay is visible.',
-  },
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the overlay is clicked (typically to close the dialog).',
-  },
-]
-
-const dialogContentProps: PropDefinition[] = [
+const dialogProps: PropDefinition[] = [
   {
     name: 'open',
     type: 'boolean',
@@ -247,10 +214,30 @@ const dialogContentProps: PropDefinition[] = [
     description: 'Whether the dialog is open.',
   },
   {
-    name: 'onClose',
-    type: '() => void',
-    description: 'Event handler called when the dialog should close (ESC key).',
+    name: 'onOpenChange',
+    type: '(open: boolean) => void',
+    description: 'Event handler called when the open state should change.',
   },
+]
+
+const dialogTriggerProps: PropDefinition[] = [
+  {
+    name: 'disabled',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Whether the trigger is disabled.',
+  },
+  {
+    name: 'asChild',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Render child element as trigger instead of built-in button.',
+  },
+]
+
+const dialogOverlayProps: PropDefinition[] = []
+
+const dialogContentProps: PropDefinition[] = [
   {
     name: 'ariaLabelledby',
     type: 'string',
@@ -279,13 +266,7 @@ const dialogDescriptionProps: PropDefinition[] = [
   },
 ]
 
-const dialogCloseProps: PropDefinition[] = [
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the close button is clicked.',
-  },
-]
+const dialogCloseProps: PropDefinition[] = []
 
 export function DialogPage() {
   const installCommands = getHighlightedCommands('barefoot add dialog')
@@ -339,6 +320,10 @@ export function DialogPage() {
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
           <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-4">Dialog</h3>
+              <PropsTable props={dialogProps} />
+            </div>
             <div>
               <h3 className="text-lg font-medium text-foreground mb-4">DialogTrigger</h3>
               <PropsTable props={dialogTriggerProps} />
