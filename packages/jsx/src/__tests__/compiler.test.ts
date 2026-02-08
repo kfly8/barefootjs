@@ -1105,4 +1105,171 @@ describe('Compiler', () => {
       })
     })
   })
+
+  describe('component as JSX root (#281)', () => {
+    test('component with children as root is wrapped in div with needsScope', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function MenuDemo() {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <DropdownMenu open={open()} onOpenChange={setOpen}>
+              <DropdownMenuTrigger>
+                <span>KK</span>
+              </DropdownMenuTrigger>
+            </DropdownMenu>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'MenuDemo.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('element')
+      if (ir!.type === 'element') {
+        expect(ir!.tag).toBe('div')
+        expect(ir!.needsScope).toBe(true)
+        expect(ir!.children).toHaveLength(1)
+        expect(ir!.children[0].type).toBe('component')
+        if (ir!.children[0].type === 'component') {
+          expect(ir!.children[0].name).toBe('DropdownMenu')
+        }
+      }
+    })
+
+    test('self-closing component as root is wrapped in div with needsScope', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function IconButton() {
+          const [active, setActive] = createSignal(false)
+          return <ChevronIcon active={active()} />
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'IconButton.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('element')
+      if (ir!.type === 'element') {
+        expect(ir!.tag).toBe('div')
+        expect(ir!.needsScope).toBe(true)
+        expect(ir!.children).toHaveLength(1)
+        expect(ir!.children[0].type).toBe('component')
+        if (ir!.children[0].type === 'component') {
+          expect(ir!.children[0].name).toBe('ChevronIcon')
+        }
+      }
+    })
+
+    test('fragment root with component child wraps the component in div', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Layout() {
+          const [theme, setTheme] = createSignal('light')
+          return (
+            <>
+              <header>Header</header>
+              <ThemeProvider theme={theme()} />
+            </>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Layout.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('fragment')
+      if (ir!.type === 'fragment') {
+        const header = ir!.children.find(c => c.type === 'element' && c.tag === 'header')
+        expect(header).toBeDefined()
+        if (header?.type === 'element') {
+          expect(header.needsScope).toBe(true)
+        }
+
+        // Component child should be wrapped in a div with needsScope
+        const wrapper = ir!.children.find(
+          c => c.type === 'element' && c.tag === 'div' && c.children.length === 1 && c.children[0].type === 'component'
+        )
+        expect(wrapper).toBeDefined()
+        if (wrapper?.type === 'element') {
+          expect(wrapper.needsScope).toBe(true)
+          expect(wrapper.children[0].type).toBe('component')
+        }
+      }
+    })
+
+    test('non-root component is NOT wrapped in div', () => {
+      const source = `
+        'use client'
+
+        export function App() {
+          return (
+            <div>
+              <ChildComponent />
+            </div>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'App.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('element')
+      if (ir!.type === 'element') {
+        expect(ir!.tag).toBe('div')
+        expect(ir!.needsScope).toBe(true)
+        // Child should be a component directly, NOT wrapped
+        expect(ir!.children).toHaveLength(1)
+        expect(ir!.children[0].type).toBe('component')
+      }
+    })
+
+    test('scope does not leak into component slot children', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Demo() {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <Menu>
+              <button>Toggle</button>
+            </Menu>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Demo.tsx')
+      const ir = jsxToIR(ctx)
+
+      expect(ir).not.toBeNull()
+      expect(ir!.type).toBe('element')
+      if (ir!.type === 'element') {
+        // Wrapper div has needsScope
+        expect(ir!.tag).toBe('div')
+        expect(ir!.needsScope).toBe(true)
+
+        // The button inside the component's children should NOT have needsScope
+        const comp = ir!.children[0]
+        expect(comp.type).toBe('component')
+        if (comp.type === 'component') {
+          const button = comp.children.find(c => c.type === 'element' && c.tag === 'button')
+          expect(button).toBeDefined()
+          if (button?.type === 'element') {
+            expect(button.needsScope).toBe(false)
+          }
+        }
+      }
+    })
+  })
 })
