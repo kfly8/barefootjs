@@ -9,18 +9,25 @@ The `/* @client */` comment directive marks a JSX expression for **client-only e
 
 ## When to Use
 
-Use `/* @client */` when an expression cannot be compiled into a server template. This typically applies to complex JavaScript operations that have no equivalent in template languages like Go `html/template`.
+When the compiler encounters an expression it cannot translate to a server template, it emits a **compile error** (`BF021`). Adding `/* @client */` resolves the error by explicitly opting into client-only evaluation.
 
-Common cases:
+```
+error[BF021]: Expression cannot be compiled to server template
 
-- Nested higher-order methods (`.filter(x => x.items().filter(...))`)
-- Unsupported array methods (`.find()`, `.reduce()`, `.forEach()`, etc.)
-- Any pattern the compiler flags as unsupported
+  --> src/components/Dashboard.tsx:15:10
+   |
+15 |   {items().reduce((sum, x) => sum + x.price, 0)}
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: Add /* @client */ to evaluate this expression on the client only
+```
+
+See [JSX Compatibility — Limitations](./jsx-compatibility.md#limitations) for the full list of unsupported patterns.
 
 
 ## How It Works
 
-Without `/* @client */`, the compiler tries to translate the expression into both a server template value and a client-side effect. With the directive, the server outputs a comment marker and the client JS evaluates the expression entirely:
+With `/* @client */`, the compiler skips server template generation for the expression. The server outputs a comment marker and the client JS evaluates the expression entirely:
 
 **Server output:**
 
