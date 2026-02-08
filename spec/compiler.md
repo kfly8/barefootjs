@@ -225,7 +225,7 @@ The Intermediate Representation (IR) is a pure JSON tree structure. Full type de
 - `IRText` - Static text content
 - `IRExpression` - Dynamic expressions (reactive or static)
 - `IRConditional` - Ternary/logical conditionals
-- `IRLoop` - Array mapping (.map())
+- `IRLoop` - Array mapping (.map()), with optional `filterPredicate` and `sortComparator`
 - `IRComponent` - Child component references
 - `IRSlot` - Slot placeholders
 
@@ -280,7 +280,7 @@ interface TemplateAdapter {
 | BF010 | Unknown signal reference |
 | BF011 | Signal used outside component |
 | BF020 | Invalid JSX expression |
-| BF021 | Unsupported JSX pattern (e.g., filter predicate too complex for SSR) |
+| BF021 | Unsupported JSX pattern (e.g., filter predicate or sort comparator too complex for SSR) |
 | BF030 | Type inference failed |
 | BF031 | Props type mismatch |
 | BF043 | Props destructuring breaks reactivity |
@@ -317,7 +317,9 @@ function Component({ checked }: Props) {
 
 ### Unsupported Expressions (BF021)
 
-When a filter predicate cannot be compiled to a server template (e.g., nested higher-order methods, complex predicates), the compiler emits a **BF021** error. This replaces the previous silent fallback to client-only evaluation.
+When a filter predicate or sort comparator cannot be compiled to a server template, the compiler emits a **BF021** error. This replaces the previous silent fallback to client-only evaluation.
+
+**Filter predicates**: Complex predicates (nested higher-order methods, `typeof`, etc.) trigger BF021.
 
 ```
 error[BF021]: Expression cannot be compiled to server template: Higher-order method 'some()' with complex predicate.
@@ -329,6 +331,25 @@ error[BF021]: Expression cannot be compiled to server template: Higher-order met
    |
    = help: Add /* @client */ to evaluate this expression on the client only
 ```
+
+**Sort comparators**: Only simple `(a, b) => a.field - b.field` patterns are supported. Complex comparators (`.localeCompare()`, block body, multi-field) trigger BF021.
+
+```
+error[BF021]: Expression cannot be compiled to server template: Sort comparator 'a.name.localeCompare(b.name)' is not a simple subtraction pattern (a.field - b.field)
+
+  --> src/components/List.tsx:9:30
+   |
+ 9 |             {items().sort((a, b) => a.name.localeCompare(b.name)).map(t => (
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: Add /* @client */ to evaluate this expression on the client only
+```
+
+**Supported sort patterns**:
+- `sort((a, b) => a.price - b.price)` → ascending by `price`
+- `toSorted((a, b) => b.priority - a.priority)` → descending by `priority`
+- `filter(...).sort(...).map(...)` → filter + sort chaining
+- `sort(...).filter(...).map(...)` → sort + filter chaining
 
 **Suppression with `@client`**: If the developer intentionally wants client-only evaluation, add `/* @client */` before the expression. This suppresses the BF021 error:
 

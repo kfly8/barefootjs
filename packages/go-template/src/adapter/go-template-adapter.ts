@@ -1887,6 +1887,11 @@ export class GoTemplateAdapter extends BaseAdapter {
     const children = this.renderChildren(loop.children)
     this.inLoop = false
 
+    // Apply sort if present: wrap array with bf_sort pipeline
+    if (loop.sortComparator) {
+      goArray = `(bf_sort ${goArray} "${loop.sortComparator.field}" "${loop.sortComparator.direction}")`
+    }
+
     // Handle filter().map() pattern by adding if-condition
     if (loop.filterPredicate) {
       let filterCond: string

@@ -626,6 +626,114 @@ function isFilterCall(node: ts.Expression): { array: ts.Expression; callback: ts
 }
 
 /**
+ * Check if a node is a sort() or toSorted() call.
+ * Returns the sort's array expression, callback, and method name.
+ */
+function isSortCall(node: ts.Expression): { array: ts.Expression; callback: ts.Expression; method: 'sort' | 'toSorted' } | null {
+  if (!ts.isCallExpression(node)) return null
+  if (!ts.isPropertyAccessExpression(node.expression)) return null
+  const methodName = node.expression.name.text
+  if (methodName !== 'sort' && methodName !== 'toSorted') return null
+  if (node.arguments.length !== 1) return null
+
+  return {
+    array: node.expression.expression,
+    callback: node.arguments[0],
+    method: methodName,
+  }
+}
+
+/**
+ * Sort comparator extraction result.
+ */
+type SortComparatorResult = {
+  paramA: string
+  paramB: string
+  field: string
+  direction: 'asc' | 'desc'
+  raw: string
+  method: 'sort' | 'toSorted'
+}
+
+type SortExtractionResult = {
+  result: SortComparatorResult | null
+  unsupportedReason?: string
+}
+
+/**
+ * Extract sort comparator info from an arrow function.
+ * Supports simple subtraction patterns:
+ *   (a, b) => a.field - b.field  → asc
+ *   (a, b) => b.field - a.field  → desc
+ */
+function extractSortComparator(
+  callback: ts.Expression,
+  method: 'sort' | 'toSorted',
+  ctx: TransformContext
+): SortExtractionResult {
+  if (!ts.isArrowFunction(callback)) {
+    return { result: null, unsupportedReason: 'Sort comparator must be an arrow function' }
+  }
+  if (callback.parameters.length !== 2) {
+    return { result: null, unsupportedReason: 'Sort comparator must have exactly 2 parameters' }
+  }
+
+  const paramA = callback.parameters[0].name.getText(ctx.sourceFile)
+  const paramB = callback.parameters[1].name.getText(ctx.sourceFile)
+
+  // Must be expression body (not block body)
+  if (ts.isBlock(callback.body)) {
+    return { result: null, unsupportedReason: 'Block body sort comparators are not supported for server-side rendering' }
+  }
+
+  const raw = callback.body.getText(ctx.sourceFile)
+
+  // Must be a subtraction: a.field - b.field or b.field - a.field
+  if (!ts.isBinaryExpression(callback.body) || callback.body.operatorToken.kind !== ts.SyntaxKind.MinusToken) {
+    return { result: null, unsupportedReason: `Sort comparator '${raw}' is not a simple subtraction pattern (a.field - b.field)` }
+  }
+
+  const left = callback.body.left
+  const right = callback.body.right
+
+  // Both sides must be property accesses
+  if (!ts.isPropertyAccessExpression(left) || !ts.isPropertyAccessExpression(right)) {
+    return { result: null, unsupportedReason: `Sort comparator '${raw}' is not a simple field access pattern` }
+  }
+
+  const leftObj = left.expression.getText(ctx.sourceFile)
+  const rightObj = right.expression.getText(ctx.sourceFile)
+  const leftField = left.name.text
+  const rightField = right.name.text
+
+  // Fields must match
+  if (leftField !== rightField) {
+    return { result: null, unsupportedReason: `Sort comparator compares different fields: '${leftField}' vs '${rightField}'` }
+  }
+
+  // Determine direction
+  let direction: 'asc' | 'desc'
+  if (leftObj === paramA && rightObj === paramB) {
+    direction = 'asc'
+  } else if (leftObj === paramB && rightObj === paramA) {
+    direction = 'desc'
+  } else {
+    return { result: null, unsupportedReason: `Sort comparator '${raw}' does not use the expected parameter pattern` }
+  }
+
+  return {
+    result: {
+      paramA,
+      paramB,
+      field: leftField,
+      direction,
+      raw,
+      method,
+    },
+  }
+}
+
+/**
  * Result type for extractFilterPredicate.
  * Either has an expression body (predicate) or block body (blockBody).
  */
@@ -696,24 +804,35 @@ function transformMapCall(
   isClientOnly = false
 ): IRLoop {
   const propAccess = node.expression as ts.PropertyAccessExpression
+  const mapSource = propAccess.expression
 
-  // Check for filter().map() pattern
-  const filterInfo = isFilterCall(propAccess.expression)
+  // Detect chaining patterns on .map()'s source expression:
+  // 1. sort().map() or toSorted().map()
+  // 2. filter().map()
+  // 3. filter().sort().map()  (outermost = sort, inner = filter)
+  // 4. sort().filter().map()  (outermost = filter, inner = sort)
+
   let array: string
   let filterPredicate: FilterPredicateResult | undefined
+  let sortComparator: SortComparatorResult | undefined
+  let chainOrder: 'filter-sort' | 'sort-filter' | undefined
 
-  if (filterInfo) {
-    const extraction = extractFilterPredicate(filterInfo.callback, ctx)
-    const extracted = extraction.result
+  const filterInfo = isFilterCall(mapSource)
+  const sortInfo = isSortCall(mapSource)
 
-    if (isClientOnly || !extracted) {
-      // Emit error when predicate is unsupported and @client is not present
-      if (!isClientOnly && extraction.unsupportedReason) {
+  if (sortInfo) {
+    // Outermost is sort: could be sort().map() or filter().sort().map()
+    const innerFilter = isFilterCall(sortInfo.array)
+
+    // Handle sort comparator extraction
+    const sortExtraction = extractSortComparator(sortInfo.callback, sortInfo.method, ctx)
+    if (isClientOnly || !sortExtraction.result) {
+      if (!isClientOnly && sortExtraction.unsupportedReason) {
         ctx.analyzer.errors.push(
           createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
-            getSourceLocation(filterInfo.callback, ctx.sourceFile, ctx.filePath),
+            getSourceLocation(sortInfo.callback, ctx.sourceFile, ctx.filePath),
             {
-              message: `Expression cannot be compiled to server template: ${extraction.unsupportedReason}`,
+              message: `Expression cannot be compiled to server template: ${sortExtraction.unsupportedReason}`,
               suggestion: {
                 message: 'Add /* @client */ to evaluate this expression on the client only',
               },
@@ -721,16 +840,99 @@ function transformMapCall(
           )
         )
       }
-      // @client or unsupported: keep filter() in array for client evaluation
-      array = propAccess.expression.getText(ctx.sourceFile)
-      filterPredicate = undefined
+      // Keep sort (and filter if present) in array string for client evaluation
+      array = mapSource.getText(ctx.sourceFile)
     } else {
-      // SSR with supported predicate (expression or block body)
-      array = filterInfo.array.getText(ctx.sourceFile)
-      filterPredicate = extracted
+      sortComparator = sortExtraction.result
+
+      if (innerFilter) {
+        // filter().sort().map() pattern
+        chainOrder = 'filter-sort'
+        const filterExtraction = extractFilterPredicate(innerFilter.callback, ctx)
+        if (isClientOnly || !filterExtraction.result) {
+          if (!isClientOnly && filterExtraction.unsupportedReason) {
+            ctx.analyzer.errors.push(
+              createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
+                getSourceLocation(innerFilter.callback, ctx.sourceFile, ctx.filePath),
+                {
+                  message: `Expression cannot be compiled to server template: ${filterExtraction.unsupportedReason}`,
+                  suggestion: {
+                    message: 'Add /* @client */ to evaluate this expression on the client only',
+                  },
+                }
+              )
+            )
+          }
+          // Keep entire chain in array for client evaluation
+          array = mapSource.getText(ctx.sourceFile)
+          sortComparator = undefined
+          chainOrder = undefined
+        } else {
+          array = innerFilter.array.getText(ctx.sourceFile)
+          filterPredicate = filterExtraction.result
+        }
+      } else {
+        // Simple sort().map()
+        array = sortInfo.array.getText(ctx.sourceFile)
+      }
+    }
+  } else if (filterInfo) {
+    // Outermost is filter: could be filter().map() or sort().filter().map()
+    const innerSort = isSortCall(filterInfo.array)
+
+    // Handle filter predicate extraction
+    const filterExtraction = extractFilterPredicate(filterInfo.callback, ctx)
+
+    if (isClientOnly || !filterExtraction.result) {
+      if (!isClientOnly && filterExtraction.unsupportedReason) {
+        ctx.analyzer.errors.push(
+          createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
+            getSourceLocation(filterInfo.callback, ctx.sourceFile, ctx.filePath),
+            {
+              message: `Expression cannot be compiled to server template: ${filterExtraction.unsupportedReason}`,
+              suggestion: {
+                message: 'Add /* @client */ to evaluate this expression on the client only',
+              },
+            }
+          )
+        )
+      }
+      // Keep filter (and sort if present) in array for client evaluation
+      array = mapSource.getText(ctx.sourceFile)
+    } else {
+      filterPredicate = filterExtraction.result
+
+      if (innerSort) {
+        // sort().filter().map() pattern
+        chainOrder = 'sort-filter'
+        const sortExtraction = extractSortComparator(innerSort.callback, innerSort.method, ctx)
+        if (isClientOnly || !sortExtraction.result) {
+          if (!isClientOnly && sortExtraction.unsupportedReason) {
+            ctx.analyzer.errors.push(
+              createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
+                getSourceLocation(innerSort.callback, ctx.sourceFile, ctx.filePath),
+                {
+                  message: `Expression cannot be compiled to server template: ${sortExtraction.unsupportedReason}`,
+                  suggestion: {
+                    message: 'Add /* @client */ to evaluate this expression on the client only',
+                  },
+                }
+              )
+            )
+          }
+          // Keep sort in array for client evaluation, but keep filter extracted
+          array = filterInfo.array.getText(ctx.sourceFile)
+        } else {
+          sortComparator = sortExtraction.result
+          array = innerSort.array.getText(ctx.sourceFile)
+        }
+      } else {
+        // Simple filter().map()
+        array = filterInfo.array.getText(ctx.sourceFile)
+      }
     }
   } else {
-    array = propAccess.expression.getText(ctx.sourceFile)
+    array = mapSource.getText(ctx.sourceFile)
   }
 
   // Get callback function
@@ -830,6 +1032,8 @@ function transformMapCall(
     childComponent,
     nestedComponents,
     filterPredicate,
+    sortComparator,
+    chainOrder,
     clientOnly: isClientOnly || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }

@@ -242,6 +242,7 @@ func TestFuncMap(t *testing.T) {
 		"bf_add", "bf_sub", "bf_mul", "bf_div", "bf_mod", "bf_neg",
 		"bf_lower", "bf_upper", "bf_trim", "bf_contains", "bf_join",
 		"bf_len", "bf_at", "bf_includes", "bf_first", "bf_last",
+		"bf_every", "bf_some", "bf_filter", "bf_sort",
 		"bfComment", "bfPortalHTML",
 	}
 
@@ -407,6 +408,114 @@ func TestPortalCollector_Render_Multiple(t *testing.T) {
 // helper function for string contains check
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+// =============================================================================
+// Sort Tests
+// =============================================================================
+
+type sortItem struct {
+	Name     string
+	Priority int
+	Price    float64
+}
+
+func TestSort_AscendingByInt(t *testing.T) {
+	items := []sortItem{
+		{Name: "C", Priority: 3},
+		{Name: "A", Priority: 1},
+		{Name: "B", Priority: 2},
+	}
+
+	result := Sort(items, "priority", "asc")
+
+	if len(result) != 3 {
+		t.Fatalf("Sort returned %d items, want 3", len(result))
+	}
+	if result[0].(sortItem).Name != "A" {
+		t.Errorf("Sort asc: first item = %v, want A", result[0].(sortItem).Name)
+	}
+	if result[1].(sortItem).Name != "B" {
+		t.Errorf("Sort asc: second item = %v, want B", result[1].(sortItem).Name)
+	}
+	if result[2].(sortItem).Name != "C" {
+		t.Errorf("Sort asc: third item = %v, want C", result[2].(sortItem).Name)
+	}
+}
+
+func TestSort_DescendingByInt(t *testing.T) {
+	items := []sortItem{
+		{Name: "A", Priority: 1},
+		{Name: "C", Priority: 3},
+		{Name: "B", Priority: 2},
+	}
+
+	result := Sort(items, "priority", "desc")
+
+	if len(result) != 3 {
+		t.Fatalf("Sort returned %d items, want 3", len(result))
+	}
+	if result[0].(sortItem).Name != "C" {
+		t.Errorf("Sort desc: first item = %v, want C", result[0].(sortItem).Name)
+	}
+	if result[2].(sortItem).Name != "A" {
+		t.Errorf("Sort desc: last item = %v, want A", result[2].(sortItem).Name)
+	}
+}
+
+func TestSort_ByFloat(t *testing.T) {
+	items := []sortItem{
+		{Name: "Expensive", Price: 99.99},
+		{Name: "Cheap", Price: 9.99},
+		{Name: "Mid", Price: 49.99},
+	}
+
+	result := Sort(items, "price", "asc")
+
+	if len(result) != 3 {
+		t.Fatalf("Sort returned %d items, want 3", len(result))
+	}
+	if result[0].(sortItem).Name != "Cheap" {
+		t.Errorf("Sort by float asc: first = %v, want Cheap", result[0].(sortItem).Name)
+	}
+	if result[2].(sortItem).Name != "Expensive" {
+		t.Errorf("Sort by float asc: last = %v, want Expensive", result[2].(sortItem).Name)
+	}
+}
+
+func TestSort_EmptySlice(t *testing.T) {
+	var items []sortItem
+	result := Sort(items, "priority", "asc")
+
+	if result == nil {
+		t.Error("Sort of empty slice should return empty slice, not nil")
+	}
+	if len(result) != 0 {
+		t.Errorf("Sort of empty slice returned %d items, want 0", len(result))
+	}
+}
+
+func TestSort_NilSlice(t *testing.T) {
+	result := Sort(nil, "priority", "asc")
+
+	if result != nil {
+		t.Errorf("Sort of nil should return nil, got %v", result)
+	}
+}
+
+func TestSort_NonMutating(t *testing.T) {
+	items := []sortItem{
+		{Name: "C", Priority: 3},
+		{Name: "A", Priority: 1},
+		{Name: "B", Priority: 2},
+	}
+
+	Sort(items, "priority", "asc")
+
+	// Original slice should be unchanged
+	if items[0].Name != "C" {
+		t.Errorf("Sort mutated original: first = %v, want C", items[0].Name)
+	}
 }
 
 func containsHelper(s, substr string) bool {
