@@ -106,29 +106,6 @@ function transformNode(node: ts.Node, ctx: TransformContext): IRNode | null {
 }
 
 // =============================================================================
-// Scope Wrapper Helper
-// =============================================================================
-
-/**
- * Wrap an IR node in a <div> element with needsScope = true.
- * Used when a component (or provider) appears at root position where
- * data-bf-scope is needed but there is no native HTML element to carry it.
- */
-function wrapInScopeElement(node: IRNode): IRElement {
-  return {
-    type: 'element',
-    tag: 'div',
-    attrs: [],
-    events: [],
-    ref: null,
-    children: [node],
-    slotId: null,
-    needsScope: true,
-    loc: node.loc,
-  }
-}
-
-// =============================================================================
 // JSX Element Transformation
 // =============================================================================
 
@@ -146,13 +123,7 @@ function transformJsxElement(
   const isComponent = /^[A-Z]/.test(tagName)
 
   if (isComponent) {
-    // When a component is the JSX root, wrap it in a <div> so data-bf-scope
-    // has a real DOM element to attach to. Reset isRoot to prevent it from
-    // leaking into the component's slot children.
-    const wasRoot = ctx.isRoot
-    ctx.isRoot = false
-    const comp = transformComponentElement(node, ctx, tagName)
-    return wasRoot ? wrapInScopeElement(comp) : comp
+    return transformComponentElement(node, ctx, tagName)
   }
 
   return transformHtmlElement(node, ctx, tagName)
@@ -212,10 +183,7 @@ function transformSelfClosingElement(
   const isComponent = /^[A-Z]/.test(tagName)
 
   if (isComponent) {
-    const wasRoot = ctx.isRoot
-    ctx.isRoot = false
-    const comp = transformSelfClosingComponent(node, ctx, tagName)
-    return wasRoot ? wrapInScopeElement(comp) : comp
+    return transformSelfClosingComponent(node, ctx, tagName)
   }
 
   const { attrs, events, ref } = processAttributes(node.attributes, ctx)
@@ -257,22 +225,7 @@ function transformProviderElement(
     throw new Error(`<${tagName}> requires a 'value' prop`)
   }
 
-  // Provider is transparent (adapter renders only its children), so when
-  // Provider is the root, its children need scope markers.
-  const wasRoot = ctx.isRoot
-  ctx.isRoot = false
-
   const children = transformChildren(node.children, ctx)
-
-  if (wasRoot) {
-    for (let i = 0; i < children.length; i++) {
-      if (children[i].type === 'element') {
-        (children[i] as IRElement).needsScope = true
-      } else if (children[i].type === 'component') {
-        children[i] = wrapInScopeElement(children[i])
-      }
-    }
-  }
 
   return {
     type: 'provider',
@@ -315,6 +268,12 @@ function transformComponentElement(
   name: string
 ): IRComponent {
   const props = processComponentProps(node.openingElement.attributes, ctx)
+
+  // Consume isRoot so it doesn't leak into slot children.
+  // Components don't have needsScope; the adapter handles scope placement
+  // for root components via isRootOfClientComponent / __instanceId.
+  ctx.isRoot = false
+
   const children = transformChildren(node.children, ctx)
 
   // Always assign slotId to child components.
@@ -340,6 +299,10 @@ function transformSelfClosingComponent(
   name: string
 ): IRComponent {
   const props = processComponentProps(node.attributes, ctx)
+
+  // Consume isRoot so it doesn't leak to subsequent siblings.
+  // See transformComponentElement for details.
+  ctx.isRoot = false
 
   // Always assign slotId to child components.
   // Even if no reactive props are passed from parent, the child may have internal state
@@ -417,16 +380,12 @@ function transformFragment(
 
   const children = transformChildren(node.children, ctx)
 
-  // If this was the root fragment and NOT transparent, ensure all direct children have needsScope.
-  // Transparent fragments skip this because they just pass through children.
-  // Elements get needsScope directly; components are wrapped in a <div> scope element
-  // since components don't produce a real DOM element for data-bf-scope.
+  // If this was the root fragment and NOT transparent, ensure all direct element children have needsScope
+  // Transparent fragments skip this because they just pass through children
   if (isFragmentRoot && !isTransparent) {
-    for (let i = 0; i < children.length; i++) {
-      if (children[i].type === 'element') {
-        (children[i] as IRElement).needsScope = true
-      } else if (children[i].type === 'component') {
-        children[i] = wrapInScopeElement(children[i])
+    for (const child of children) {
+      if (child.type === 'element') {
+        child.needsScope = true
       }
     }
   }
