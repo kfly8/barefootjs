@@ -31,13 +31,11 @@
 - [`untrack`](./reactivity/untrack.md) — Read signals without tracking dependencies
 - [Props Reactivity](./reactivity/props-reactivity.md) — Gotchas with destructuring
 
-### 5. Templates & Rendering
+### 5. [Templates & Rendering](./rendering.md)
 
-- JSX Expressions
-- Conditional Rendering
-- List Rendering
-- Event Handling
-- Refs
+- [JSX Compatibility](./rendering/jsx-compatibility.md) — What works, what doesn't, and what differs
+- [Fragment](./rendering/fragment.md) — Fragment support and hydration behavior
+- [`/* @client */` Directive](./rendering/client-directive.md) — Skip server evaluation for client-only expressions
 
 ### 6. Components
 
