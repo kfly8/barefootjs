@@ -82,3 +82,5 @@ Each memo in the chain only recomputes when its direct dependencies change.
 | Returns a value | Yes (getter function) | No |
 | Triggers other effects | Yes (acts as a signal) | No |
 | Used for | Derived data | Side effects (DOM, fetch, logging) |
+
+Internally, `createMemo` is sugar over `createSignal` + `createEffect` — it creates a signal and an effect that updates it when dependencies change. This means a memo behaves exactly like a read-only signal to the rest of the reactive system.
