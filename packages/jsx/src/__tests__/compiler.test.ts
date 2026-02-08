@@ -1075,6 +1075,111 @@ describe('Compiler', () => {
       ])
     })
 
+    test('provider-only root (no element child) auto-generates scope wrapper (#290)', () => {
+      // When a component returns only a Provider wrapping {children},
+      // the compiler should auto-wrap in a <div style="display:contents"> with needsScope=true
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const DialogContext = createContext()
+
+        export function Dialog({ children }) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <DialogContext.Provider value={{ open, setOpen }}>
+              {children}
+            </DialogContext.Provider>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Dialog.tsx')
+      const ir = jsxToIR(ctx)
+
+      // Root should be a synthetic scope wrapper element
+      expect(ir).toMatchObject({
+        type: 'element',
+        tag: 'div',
+        needsScope: true,
+        attrs: [{ name: 'style', value: 'display:contents' }],
+        children: [
+          {
+            type: 'provider',
+            contextName: 'DialogContext',
+            children: [
+              { type: 'expression', expr: 'children' },
+            ],
+          },
+        ],
+      })
+    })
+
+    test('provider with element child does NOT get auto-wrapped (#290)', () => {
+      // When a provider already contains an HTML element, no wrapper should be added
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const MenuContext = createContext()
+
+        export function DropdownMenu({ children }) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <MenuContext.Provider value={{ open, setOpen }}>
+              <div>{children}</div>
+            </MenuContext.Provider>
+          )
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'DropdownMenu.tsx')
+      const ir = jsxToIR(ctx)
+
+      // Root should be the provider itself (no synthetic wrapper)
+      expect(ir).toMatchObject({
+        type: 'provider',
+        contextName: 'MenuContext',
+        children: [
+          {
+            type: 'element',
+            tag: 'div',
+            needsScope: true,
+          },
+        ],
+      })
+    })
+
+    test('end-to-end: provider-only component generates findScope + provideContext in client JS (#290)', () => {
+      const adapter = new TestAdapter()
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const DialogContext = createContext()
+
+        export function Dialog(props) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <DialogContext.Provider value={{ open, setOpen }}>
+              {props.children}
+            </DialogContext.Provider>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Dialog.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+
+      // The generated client JS must contain findScope (for hydration)
+      // and provideContext (for context setup)
+      expect(clientJs.content).toContain('findScope')
+      expect(clientJs.content).toContain('provideContext(DialogContext')
+    })
+
     test('self-closing <X.Provider /> produces IRProvider with empty children', () => {
       // Self-closing syntax should work just like the open/close form
       // but with no children (e.g., for provider-only setup components)

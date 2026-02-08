@@ -119,9 +119,7 @@ function Dialog(props: DialogProps) {
       open: () => props.open ?? false,
       onOpenChange: props.onOpenChange ?? (() => {}),
     }}>
-      <div data-slot="dialog" style="display:contents">
-        {props.children}
-      </div>
+      {props.children}
     </DialogContext.Provider>
   )
 }
