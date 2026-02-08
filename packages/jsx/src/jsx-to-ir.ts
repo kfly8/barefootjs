@@ -268,6 +268,12 @@ function transformComponentElement(
   name: string
 ): IRComponent {
   const props = processComponentProps(node.openingElement.attributes, ctx)
+
+  // Consume isRoot so it doesn't leak into slot children.
+  // Components don't have needsScope; the adapter handles scope placement
+  // for root components via isRootOfClientComponent / __instanceId.
+  ctx.isRoot = false
+
   const children = transformChildren(node.children, ctx)
 
   // Always assign slotId to child components.
@@ -293,6 +299,10 @@ function transformSelfClosingComponent(
   name: string
 ): IRComponent {
   const props = processComponentProps(node.attributes, ctx)
+
+  // Consume isRoot so it doesn't leak to subsequent siblings.
+  // See transformComponentElement for details.
+  ctx.isRoot = false
 
   // Always assign slotId to child components.
   // Even if no reactive props are passed from parent, the child may have internal state
