@@ -134,3 +134,99 @@ describe('Unsupported Expression Error (BF021)', () => {
     expect(bf021[0].message).toContain('Expression cannot be compiled to server template')
   })
 })
+
+describe('Unsupported Sort Comparator (BF021)', () => {
+  test('emits BF021 error for non-subtraction sort comparator', () => {
+    const source = `
+      'use client'
+      import { createSignal } from '@barefootjs/dom'
+
+      export function TodoList() {
+        const [items, setItems] = createSignal<any[]>([])
+        return (
+          <ul>
+            {items().sort((a, b) => a.name.localeCompare(b.name)).map(t => (
+              <li>{t.name}</li>
+            ))}
+          </ul>
+        )
+      }
+    `
+
+    const { errors } = compileToIR(source)
+    const bf021 = errors.filter(e => e.code === ErrorCodes.UNSUPPORTED_JSX_PATTERN)
+
+    expect(bf021).toHaveLength(1)
+    expect(bf021[0].message).toContain('not a simple subtraction pattern')
+  })
+
+  test('@client suppresses BF021 for unsupported sort comparator', () => {
+    const source = `
+      'use client'
+      import { createSignal } from '@barefootjs/dom'
+
+      export function TodoList() {
+        const [items, setItems] = createSignal<any[]>([])
+        return (
+          <ul>
+            {/* @client */ items().sort((a, b) => a.name.localeCompare(b.name)).map(t => (
+              <li>{t.name}</li>
+            ))}
+          </ul>
+        )
+      }
+    `
+
+    const { errors } = compileToIR(source)
+    const bf021 = errors.filter(e => e.code === ErrorCodes.UNSUPPORTED_JSX_PATTERN)
+
+    expect(bf021).toHaveLength(0)
+  })
+
+  test('emits BF021 error for block body sort comparator', () => {
+    const source = `
+      'use client'
+      import { createSignal } from '@barefootjs/dom'
+
+      export function TodoList() {
+        const [items, setItems] = createSignal<any[]>([])
+        return (
+          <ul>
+            {items().sort((a, b) => { return a.price - b.price }).map(t => (
+              <li>{t.name}</li>
+            ))}
+          </ul>
+        )
+      }
+    `
+
+    const { errors } = compileToIR(source)
+    const bf021 = errors.filter(e => e.code === ErrorCodes.UNSUPPORTED_JSX_PATTERN)
+
+    expect(bf021).toHaveLength(1)
+    expect(bf021[0].message).toContain('Block body sort comparators are not supported')
+  })
+
+  test('no BF021 error for supported sort comparator', () => {
+    const source = `
+      'use client'
+      import { createSignal } from '@barefootjs/dom'
+
+      export function TodoList() {
+        const [items, setItems] = createSignal<any[]>([])
+        return (
+          <ul>
+            {items().sort((a, b) => a.price - b.price).map(t => (
+              <li>{t.name}</li>
+            ))}
+          </ul>
+        )
+      }
+    `
+
+    const { errors } = compileToIR(source)
+    const bf021 = errors.filter(e => e.code === ErrorCodes.UNSUPPORTED_JSX_PATTERN)
+
+    expect(bf021).toHaveLength(0)
+  })
+})

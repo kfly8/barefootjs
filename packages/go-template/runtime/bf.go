@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -43,6 +44,7 @@ func FuncMap() template.FuncMap {
 		"bf_every":  Every,
 		"bf_some":   Some,
 		"bf_filter": Filter,
+		"bf_sort":   Sort,
 
 		// Comment marker (for hydration)
 		"bfComment": Comment,
@@ -339,6 +341,62 @@ func Filter(items any, field string, value any) []any {
 		}
 	}
 	return result
+}
+
+// Sort returns a new slice sorted by the specified field in the given direction.
+// Direction must be "asc" or "desc". Uses stable sort to preserve relative order
+// of equal elements.
+// Mirrors JavaScript's Array.prototype.toSorted((a, b) => a.field - b.field).
+func Sort(items any, field string, direction string) []any {
+	v := reflect.ValueOf(items)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return nil
+	}
+
+	length := v.Len()
+	if length == 0 {
+		return []any{}
+	}
+
+	// Copy items into a new slice (non-mutating, like toSorted)
+	result := make([]any, length)
+	for i := 0; i < length; i++ {
+		result[i] = v.Index(i).Interface()
+	}
+
+	capitalizedField := capitalize(field)
+
+	sort.SliceStable(result, func(i, j int) bool {
+		vi := getFieldValue(result[i], capitalizedField)
+		vj := getFieldValue(result[j], capitalizedField)
+
+		if direction == "desc" {
+			return toFloat64(vi) > toFloat64(vj)
+		}
+		return toFloat64(vi) < toFloat64(vj)
+	})
+
+	return result
+}
+
+// getFieldValue extracts a struct field value using reflection.
+func getFieldValue(item any, field string) any {
+	v := reflect.ValueOf(item)
+	if v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return nil
+	}
+
+	fieldVal := v.FieldByName(field)
+	if !fieldVal.IsValid() {
+		return nil
+	}
+	return fieldVal.Interface()
 }
 
 // capitalize uppercases the first character of a string.

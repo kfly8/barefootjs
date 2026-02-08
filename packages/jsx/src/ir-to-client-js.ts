@@ -148,6 +148,12 @@ interface LoopElement {
     param: string
     raw: string  // Original filter predicate expression or block body
   }
+  sortComparator?: {
+    paramA: string
+    paramB: string
+    raw: string  // Full comparator body for client JS
+  }
+  chainOrder?: 'filter-sort' | 'sort-filter'
 }
 
 interface RefElement {
@@ -186,6 +192,33 @@ interface ClientOnlyConditional {
 // =============================================================================
 // Helpers
 // =============================================================================
+
+/**
+ * Build the chained array expression for reconcileList.
+ * Chains .toSorted() and .filter() in the correct order based on chainOrder.
+ * Always uses .toSorted() (non-mutating) regardless of source method.
+ */
+function buildChainedArrayExpr(elem: LoopElement): string {
+  const sortExpr = elem.sortComparator
+    ? `.toSorted((${elem.sortComparator.paramA}, ${elem.sortComparator.paramB}) => ${elem.sortComparator.raw})`
+    : ''
+  const filterExpr = elem.filterPredicate
+    ? `.filter(${elem.filterPredicate.param} => ${elem.filterPredicate.raw})`
+    : ''
+
+  if (!sortExpr && !filterExpr) return elem.array
+
+  if (elem.chainOrder === 'sort-filter') {
+    // sort first, then filter
+    return `${elem.array}${sortExpr}${filterExpr}`
+  } else if (elem.chainOrder === 'filter-sort') {
+    // filter first, then sort
+    return `${elem.array}${filterExpr}${sortExpr}`
+  } else {
+    // Only one of sort or filter
+    return `${elem.array}${sortExpr}${filterExpr}`
+  }
+}
 
 /**
  * Map of JSX event names to DOM event property names.
@@ -413,6 +446,12 @@ function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional =
             param: node.filterPredicate.param,
             raw: node.filterPredicate.raw,
           } : undefined,
+          sortComparator: node.sortComparator ? {
+            paramA: node.sortComparator.paramA,
+            paramB: node.sortComparator.paramB,
+            raw: node.sortComparator.raw,
+          } : undefined,
+          chainOrder: node.chainOrder,
         })
       }
       // Don't traverse into loop children for interactive elements collection
@@ -2174,26 +2213,22 @@ function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingCom
       const keyExpr = elem.key || '__idx'
       const indexParam = elem.index || '__idx'
 
-      // Apply filter predicate if present
-      const filterExpr = elem.filterPredicate
-        ? `${elem.array}.filter(${elem.filterPredicate.param} => ${elem.filterPredicate.raw})`
-        : elem.array
+      // Build chained array expression with filter/sort
+      const chainedExpr = buildChainedArrayExpr(elem)
 
       lines.push(`  createEffect(() => {`)
-      lines.push(`    reconcileList(_${elem.slotId}, ${filterExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
+      lines.push(`    reconcileList(_${elem.slotId}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
       lines.push(`      createComponent('${name}', ${propsExpr}, ${keyExpr})`)
       lines.push(`    )`)
       lines.push(`  })`)
     } else {
       // Template string-based rendering (original implementation)
-      // Apply filter predicate if present
-      const filterExprTemplate = elem.filterPredicate
-        ? `${elem.array}.filter(${elem.filterPredicate.param} => ${elem.filterPredicate.raw})`
-        : elem.array
+      // Build chained array expression with filter/sort
+      const chainedExprTemplate = buildChainedArrayExpr(elem)
 
       const indexParamTemplate = elem.index || '__idx'
       lines.push(`  createEffect(() => {`)
-      lines.push(`    const __arr = ${filterExprTemplate}`)
+      lines.push(`    const __arr = ${chainedExprTemplate}`)
       lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
       lines.push(`  })`)
     }

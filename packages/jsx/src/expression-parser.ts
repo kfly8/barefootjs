@@ -66,7 +66,7 @@ export interface SupportResult {
 const UNSUPPORTED_METHODS = new Set([
   'filter', 'map', 'reduce', 'reduceRight', 'every', 'some',
   'find', 'findIndex', 'findLast', 'findLastIndex',
-  'forEach', 'flatMap', 'flat', 'sort', 'toSorted',
+  'forEach', 'flatMap', 'flat',
 ])
 
 // =============================================================================

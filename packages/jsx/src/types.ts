@@ -192,6 +192,27 @@ export interface IRLoop {
   }
 
   /**
+   * Sort comparator for sort().map() / toSorted().map() pattern.
+   * When present, the loop array is sorted before iteration.
+   * Example: todos.sort((a, b) => a.priority - b.priority).map(...)
+   */
+  sortComparator?: {
+    paramA: string          // e.g., 'a'
+    paramB: string          // e.g., 'b'
+    field: string           // e.g., 'priority'
+    direction: 'asc' | 'desc'
+    raw: string             // Full comparator body for client JS
+    method: 'sort' | 'toSorted'
+  }
+
+  /**
+   * When both filter and sort are chained, indicates the order of operations.
+   * 'filter-sort': filter first, then sort (e.g., filter().sort().map())
+   * 'sort-filter': sort first, then filter (e.g., sort().filter().map())
+   */
+  chainOrder?: 'filter-sort' | 'sort-filter'
+
+  /**
    * When true, loop should be evaluated on client side only.
    * SSR adapters should skip rendering and output placeholder markers.
    */

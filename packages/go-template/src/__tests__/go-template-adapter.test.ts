@@ -1252,4 +1252,95 @@ describe('GoTemplateAdapter', () => {
       expect(result).toContain('TodoItem')
     })
   })
+
+  describe('sort().map() rendering', () => {
+    test('renders sort().map() with bf_sort', () => {
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'items',
+        arrayType: null,
+        itemType: null,
+        param: 'item',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'Item', loc }],
+        slotId: null,
+        isStaticArray: true,
+        sortComparator: {
+          paramA: 'a',
+          paramB: 'b',
+          field: 'price',
+          direction: 'asc',
+          raw: 'a.price - b.price',
+          method: 'sort',
+        },
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      expect(result).toBe('{{range $_, $item := (bf_sort .Items "price" "asc")}}Item{{end}}')
+    })
+
+    test('renders sort().map() with desc direction', () => {
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'items',
+        arrayType: null,
+        itemType: null,
+        param: 'item',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'Item', loc }],
+        slotId: null,
+        isStaticArray: true,
+        sortComparator: {
+          paramA: 'a',
+          paramB: 'b',
+          field: 'priority',
+          direction: 'desc',
+          raw: 'b.priority - a.priority',
+          method: 'toSorted',
+        },
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      expect(result).toBe('{{range $_, $item := (bf_sort .Items "priority" "desc")}}Item{{end}}')
+    })
+
+    test('renders sort().filter().map() with bf_sort + if condition', () => {
+      const loop: IRLoop = {
+        type: 'loop',
+        array: 'todos',
+        arrayType: null,
+        itemType: null,
+        param: 'todo',
+        index: null,
+        key: null,
+        children: [{ type: 'text', value: 'TodoItem', loc }],
+        slotId: null,
+        isStaticArray: true,
+        sortComparator: {
+          paramA: 'a',
+          paramB: 'b',
+          field: 'priority',
+          direction: 'asc',
+          raw: 'a.priority - b.priority',
+          method: 'sort',
+        },
+        filterPredicate: {
+          param: 't',
+          predicate: { kind: 'not', operand: { kind: 'property-access', object: 't', property: 'done' }, raw: '!t.done' },
+          raw: '!t.done',
+        },
+        chainOrder: 'sort-filter',
+        loc,
+      }
+
+      const result = adapter.renderLoop(loop)
+      expect(result).toContain('bf_sort')
+      expect(result).toContain('{{if')
+      expect(result).toContain('{{end}}{{end}}')
+    })
+  })
 })
