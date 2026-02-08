@@ -70,7 +70,84 @@ export function jsxToIR(analyzer: AnalyzerContext): IRNode | null {
   if (!analyzer.jsxReturn) return null
 
   const ctx = createTransformContext(analyzer)
-  return transformNode(analyzer.jsxReturn, ctx)
+  const ir = transformNode(analyzer.jsxReturn, ctx)
+
+  // Auto-generate scope wrapper for provider-only roots that lack a scope element.
+  // When a component returns only a Provider wrapping children (no native HTML element),
+  // findScope() would return null during hydration. Wrapping in a synthetic
+  // <div style="display:contents"> provides the necessary data-bf-scope anchor.
+  if (ir && needsScopeWrapper(ir)) {
+    return wrapInScopeElement(ir)
+  }
+
+  return ir
+}
+
+// =============================================================================
+// Auto Scope Wrapper
+// =============================================================================
+
+/**
+ * Check if the IR root needs a synthetic scope wrapper.
+ * Returns true when the root contains a provider with children but has no scope element,
+ * meaning hydration would fail because findScope() returns null.
+ * Providers without children (self-closing) don't need wrapping since there are
+ * no child components to consume the context.
+ */
+function needsScopeWrapper(ir: IRNode): boolean {
+  return hasProviderWithChildren(ir) && !hasRootScopeElement(ir)
+}
+
+/**
+ * Check if the IR tree contains a provider with children at or near the root.
+ */
+function hasProviderWithChildren(ir: IRNode): boolean {
+  if (ir.type === 'provider') return ir.children.length > 0
+  if (ir.type === 'fragment') {
+    return ir.children.some(c => hasProviderWithChildren(c))
+  }
+  return false
+}
+
+/**
+ * Check if the IR tree already has a scope element at its root level.
+ * Walks through providers since they are transparent wrappers.
+ */
+function hasRootScopeElement(ir: IRNode): boolean {
+  switch (ir.type) {
+    case 'element':
+      return ir.needsScope
+    case 'fragment':
+      return ir.children.some(c => c.type === 'element' && (c as IRElement).needsScope)
+    case 'provider':
+      return ir.children.some(c => hasRootScopeElement(c))
+    default:
+      return false
+  }
+}
+
+/**
+ * Wrap an IR node in a synthetic <div style="display:contents"> scope element.
+ * Used when a component has no native HTML element at its root (e.g., provider-only).
+ */
+function wrapInScopeElement(node: IRNode): IRElement {
+  return {
+    type: 'element',
+    tag: 'div',
+    attrs: [{
+      name: 'style',
+      value: 'display:contents',
+      dynamic: false,
+      isLiteral: true,
+      loc: node.loc,
+    }],
+    events: [],
+    ref: null,
+    children: [node],
+    slotId: null,
+    needsScope: true,
+    loc: node.loc,
+  }
 }
 
 // =============================================================================
