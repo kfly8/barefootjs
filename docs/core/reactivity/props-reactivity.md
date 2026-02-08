@@ -30,6 +30,29 @@ function Display({ value }: { value: number }) {
 }
 ```
 
+The compiler emits a warning (`BF043`) when it detects props destructuring in a client component, since this is a common source of bugs:
+
+```
+warning[BF043]: Props destructuring breaks reactivity
+
+  --> src/components/Display.tsx:1:18
+   |
+ 1 | function Display({ value }: { value: number }) {
+   |                  ^^^^^^^^^
+   |
+   = help: Access props via `props.value` to maintain reactivity
+```
+
+If you intentionally want to capture a value once (e.g., for an initial value), suppress the warning with the `@bf-ignore` directive:
+
+```tsx
+// @bf-ignore props-destructuring
+function Counter({ initial }: { initial: number }) {
+  const [count, setCount] = createSignal(initial)
+  return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+}
+```
+
 
 ## When Destructuring Is Fine
 
