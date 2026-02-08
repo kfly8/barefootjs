@@ -14,7 +14,7 @@
 - Quick Start (5-minute tutorial)
 - Project Structure
 
-### 3. Core Concepts
+### 3. [Core Concepts](./core-concepts.md)
 
 - Two-Phase Compilation
 - Signal-Based Reactivity
