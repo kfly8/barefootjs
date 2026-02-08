@@ -676,9 +676,13 @@ export function registerComponent(name: string, init: ComponentInitFn): void {
   const pending = pendingChildInits.get(name)
   if (pending) {
     for (const { scope, props } of pending) {
-      if (!scope.hasAttribute('data-bf-init')) {
-        init(0, scope, props)
+      // Skip if already initialized as a child component.
+      // When element lacks data-bf-child, it's a root component whose parent
+      // marked it with data-bf-init during hydrate — still needs child init.
+      if (scope.hasAttribute('data-bf-init') && scope.hasAttribute('data-bf-child')) {
+        continue
       }
+      init(0, scope, props)
     }
     pendingChildInits.delete(name)
   }
@@ -725,10 +729,13 @@ export function initChild(
     return
   }
 
-  // Only initialize if not already initialized
-  if (!childScope.hasAttribute('data-bf-init')) {
-    init(0, childScope, props)
+  // Skip if already initialized as a child component.
+  // When element lacks data-bf-child, it's a root component whose parent
+  // marked it with data-bf-init during hydrate — still needs child init.
+  if (childScope.hasAttribute('data-bf-init') && childScope.hasAttribute('data-bf-child')) {
+    return
   }
+  init(0, childScope, props)
 }
 
 // --- updateClientMarker ---
