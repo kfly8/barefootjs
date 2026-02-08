@@ -280,7 +280,7 @@ interface TemplateAdapter {
 | BF010 | Unknown signal reference |
 | BF011 | Signal used outside component |
 | BF020 | Invalid JSX expression |
-| BF021 | Unsupported JSX pattern |
+| BF021 | Unsupported JSX pattern (e.g., filter predicate too complex for SSR) |
 | BF030 | Type inference failed |
 | BF031 | Props type mismatch |
 | BF043 | Props destructuring breaks reactivity |
@@ -314,6 +314,31 @@ function Component({ checked }: Props) {
 | Rule ID | Error Code | Description |
 |---------|------------|-------------|
 | `props-destructuring` | BF043 | Props destructuring in function parameters |
+
+### Unsupported Expressions (BF021)
+
+When a filter predicate cannot be compiled to a server template (e.g., nested higher-order methods, complex predicates), the compiler emits a **BF021** error. This replaces the previous silent fallback to client-only evaluation.
+
+```
+error[BF021]: Expression cannot be compiled to server template: Higher-order method 'some()' with complex predicate.
+
+  --> src/components/TodoList.tsx:9:30
+   |
+ 9 |             {todos().filter(t => t.items.some(i => i.done)).map(t => (
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: Add /* @client */ to evaluate this expression on the client only
+```
+
+**Suppression with `@client`**: If the developer intentionally wants client-only evaluation, add `/* @client */` before the expression. This suppresses the BF021 error:
+
+```tsx
+{/* @client */ todos().filter(t => t.items.some(i => i.done)).map(t => (
+  <li>{t.name}</li>
+))}
+```
+
+When `@client` is present, the compiler skips SSR for that expression without emitting an error.
 
 ---
 

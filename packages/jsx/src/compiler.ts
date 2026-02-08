@@ -49,13 +49,15 @@ export async function compileJSX(
 
   // Single component flow
   const ctx = analyzeComponent(source, entryPath)
-  errors.push(...ctx.errors)
 
   if (!ctx.jsxReturn) {
+    errors.push(...ctx.errors)  // Only analyzer errors
     return { files, errors }
   }
 
   const ir = jsxToIR(ctx)
+  errors.push(...ctx.errors)  // All errors: analyzer + IR phase
+
   if (!ir) {
     return { files, errors }
   }
@@ -115,11 +117,14 @@ function compileMultipleComponentsSync(
 
   for (const componentName of componentNames) {
     const ctx = analyzeComponent(source, filePath, componentName)
-    errors.push(...ctx.errors)
 
-    if (!ctx.jsxReturn) continue
+    if (!ctx.jsxReturn) {
+      errors.push(...ctx.errors)  // Only analyzer errors
+      continue
+    }
 
     const ir = jsxToIR(ctx)
+    errors.push(...ctx.errors)  // All errors: analyzer + IR phase
     if (!ir) continue
 
     const componentIR: ComponentIR = {
@@ -313,13 +318,15 @@ export function compileJSXSync(
 
   // Single component flow
   const ctx = analyzeComponent(source, filePath)
-  errors.push(...ctx.errors)
 
   if (!ctx.jsxReturn) {
+    errors.push(...ctx.errors)  // Only analyzer errors
     return { files, errors }
   }
 
   const ir = jsxToIR(ctx)
+  errors.push(...ctx.errors)  // All errors: analyzer + IR phase
+
   if (!ir) {
     return { files, errors }
   }
