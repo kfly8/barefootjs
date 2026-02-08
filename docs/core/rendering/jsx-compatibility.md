@@ -118,8 +118,6 @@ When the compiler encounters an unsupported expression, it emits a **compile err
 {/* @client */ items().reduce((sum, x) => sum + x.price, 0)}
 ```
 
-> `.find()` is currently unsupported but [planned for future support](https://github.com/kfly8/barefootjs/issues/287). `.reduce()` is unlikely to be supported due to the difficulty of translating it to template syntax.
-
 **Destructuring in predicate parameters** — the compiler requires a single named parameter:
 
 ```tsx
