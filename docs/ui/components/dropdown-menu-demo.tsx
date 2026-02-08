@@ -70,7 +70,7 @@ export function DropdownMenuProfileDemo() {
   return (
     <div>
       <DropdownMenu open={open()} onOpenChange={setOpen}>
-        <DropdownMenuTrigger class="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        <DropdownMenuTrigger class="rounded-full p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
           <span
             className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium"
             aria-label="Profile menu"
