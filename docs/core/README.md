@@ -21,7 +21,7 @@
 - Hydration Model
 - The `"use client"` Directive
 
-### 4. Reactivity
+### 4. [Reactivity](./reactivity.md)
 
 - Signals (`createSignal`)
 - Effects (`createEffect`)
