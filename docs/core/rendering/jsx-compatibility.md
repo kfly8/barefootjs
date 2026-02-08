@@ -32,20 +32,16 @@ return <div>...</div>
 ))}
 ```
 
-`.filter().map()` chains work when the predicate is simple (single expression):
+`.filter().map()` chains work when the predicate uses supported expressions — simple single expressions and block bodies with variable declarations, `if`/`return` statements:
 
 ```tsx
-// ✅ Simple predicate — works
+// ✅ Simple predicate
 {todos().filter(t => !t.done).map(todo => (
   <TodoItem key={todo.id} todo={todo} />
 ))}
-```
 
-Complex predicates (block bodies, multiple statements) require [`/* @client */`](./client-directive.md):
-
-```tsx
-// ❌ Block body predicate — needs @client
-{/* @client */ todos().filter(t => {
+// ✅ Block body with simple statements — also works
+{todos().filter(t => {
   const f = filter()
   if (f === 'active') return !t.done
   if (f === 'completed') return t.done
@@ -82,38 +78,41 @@ Expressions in attributes are reactive:
 
 BarefootJS compiles JSX into server templates (Go `html/template`, Hono JSX, etc.) **and** client JS. Some JavaScript expressions cannot be translated into server template syntax. These patterns require the [`/* @client */` directive](./client-directive.md) to evaluate on the client only.
 
-### Expressions that need `/* @client */`
+### Supported higher-order patterns
 
-**Chained higher-order methods that produce a scalar value:**
-
-```tsx
-<strong>{/* @client */ todos().filter(t => !t.done).length}</strong>
-{/* @client */ todos().filter(t => !t.done).length === 1 ? 'item' : 'items'}
-```
-
-**`.every()` / `.some()` as attribute values:**
+The following patterns are compiled into both server templates and client JS:
 
 ```tsx
-<input type="checkbox" checked={/* @client */ todos().every(t => t.done)} />
-```
+// .filter() with simple predicate
+{todos().filter(t => !t.done).map(todo => <TodoItem todo={todo} />)}
 
-**Conditional rendering based on filtered results:**
+// .filter().length
+<strong>{todos().filter(t => !t.done).length}</strong>
 
-```tsx
-{/* @client */ todos().filter(t => t.done).length > 0 && (
+// .every() / .some()
+<input type="checkbox" checked={todos().every(t => t.done)} />
+
+// Comparison with .filter().length
+{todos().filter(t => t.done).length > 0 && (
   <button onClick={handleClearCompleted}>Clear completed</button>
 )}
 ```
 
 ### Patterns that are not supported
 
-The following patterns cannot be compiled and will produce an error:
+The following patterns cannot be compiled for server templates. Use [`/* @client */`](./client-directive.md) as the workaround:
 
 - **Nested higher-order methods:** `items().filter(x => x.sub.filter(...))`
 - **Unsupported array methods:** `.find()`, `.reduce()`, `.forEach()`, `.flatMap()`, `.sort()`
 - **Function expressions:** `function(x) { return x }`
 - **Destructuring in predicates:** `.filter(({done}) => done)`
 
-Use `/* @client */` as the workaround for all of these.
+```tsx
+// ❌ Nested higher-order — not supported
+{items().filter(x => x.items().filter(y => y.done).length > 0)}
 
-See the [TodoApp example](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoApp.tsx) for a real-world component using `/* @client */` throughout.
+// ✅ Workaround: use /* @client */
+{/* @client */ items().filter(x => x.items().filter(y => y.done).length > 0)}
+```
+
+See the [TodoApp example](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoApp.tsx) for a real-world component using `/* @client */`.

@@ -13,9 +13,8 @@ Use `/* @client */` when an expression cannot be compiled into a server template
 
 Common cases:
 
-- Filter predicates with multiple statements
-- Chained methods that produce scalar values (`.filter().length`)
-- `.every()` / `.some()` in attributes
+- Nested higher-order methods (`.filter(x => x.items().filter(...))`)
+- Unsupported array methods (`.find()`, `.reduce()`, `.forEach()`, etc.)
 - Any pattern the compiler flags as unsupported
 
 
@@ -39,51 +38,31 @@ insert(scope, 'slot_5', () => todos().filter(t => !t.done).length)
 
 ## Examples
 
-All examples are from a TodoApp component. See the full source at [`examples/shared/components/TodoApp.tsx`](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoApp.tsx).
+### Unsupported patterns
 
-### Text content
+Patterns that the compiler cannot translate to server templates require `/* @client */`:
 
 ```tsx
+// Nested higher-order methods
+{/* @client */ items().filter(x => x.tags().filter(t => t.active).length > 0)}
+
+// Unsupported array methods
+{/* @client */ items().find(x => x.id === selectedId())}
+```
+
+### Explicit client-only evaluation
+
+Even for patterns the compiler supports, you can use `/* @client */` to skip server evaluation. The [TodoApp example](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoApp.tsx) uses this approach:
+
+```tsx
+// These expressions CAN compile without @client, but the developer
+// chose client-only evaluation here
+checked={/* @client */ todos().every(t => t.done)}
+
 <strong>{/* @client */ todos().filter(t => !t.done).length}</strong>
 ```
 
-The server renders `<strong><!--bf-client:slot_5--></strong>`. The client evaluates the filter and inserts the count.
-
-### Attribute value
-
-```tsx
-<input
-  type="checkbox"
-  checked={/* @client */ todos().every(t => t.done)}
-/>
-```
-
-The server renders the checkbox without the `checked` attribute. The client evaluates `.every()` and sets it.
-
-### List rendering with complex filter
-
-```tsx
-{/* @client */ todos().filter(t => {
-  const f = filter()
-  if (f === 'active') return !t.done
-  if (f === 'completed') return t.done
-  return true
-}).map(todo => (
-  <TodoItem key={todo.id} todo={todo} />
-))}
-```
-
-The server renders a comment marker. The client evaluates the filter, renders the list, and manages updates.
-
-### Conditional rendering
-
-```tsx
-{/* @client */ todos().filter(t => t.done).length > 0 && (
-  <button onClick={handleClearCompleted}>Clear completed</button>
-)}
-```
-
-The server renders comment markers. The client evaluates the condition and inserts or removes the button.
+Compare with the [TodoAppSSR version](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoAppSSR.tsx), which omits `/* @client */` and lets the compiler generate server template equivalents for the same expressions.
 
 
 ## Trade-off
