@@ -102,6 +102,20 @@ test.describe('DropdownMenu Documentation Page', () => {
       await expect(openContent).toHaveCount(0)
     })
 
+    test('closes on click outside', async ({ page }) => {
+      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
+
+      await trigger.click()
+
+      const openContent = page.locator('[data-slot="dropdown-menu-content"][data-state="open"]')
+      await expect(openContent).toBeVisible()
+
+      // Click outside the menu (on the page header)
+      await page.locator('h1').click()
+      await expect(openContent).toHaveCount(0)
+    })
+
     test('closes on item click', async ({ page }) => {
       const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')

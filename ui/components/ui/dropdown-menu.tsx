@@ -141,13 +141,6 @@ function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
     el.addEventListener('click', () => {
       ctx.onOpenChange(!ctx.open())
     })
-
-    el.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && ctx.open()) {
-        e.preventDefault()
-        ctx.onOpenChange(false)
-      }
-    })
   }
 
   if (props.asChild) {
@@ -211,33 +204,72 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
 
     const ctx = useContext(DropdownMenuContext)
 
-    // Reactive show/hide + positioning
+    // Position content relative to trigger
+    const updatePosition = () => {
+      if (!triggerEl) return
+      const rect = triggerEl.getBoundingClientRect()
+      el.style.top = `${rect.bottom + 4}px`
+      if (props.align === 'end') {
+        el.style.left = `${rect.right - el.offsetWidth}px`
+      } else {
+        el.style.left = `${rect.left}px`
+      }
+    }
+
+    // Track cleanup functions for global listeners
+    let cleanupFns: Function[] = []
+
+    // Reactive show/hide + positioning + global listeners
     createEffect(() => {
+      // Clean up previous listeners
+      for (const fn of cleanupFns) fn()
+      cleanupFns = []
+
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
       el.className = `${dropdownMenuContentBaseClasses} ${isOpen ? dropdownMenuContentOpenClasses : dropdownMenuContentClosedClasses} ${props.class ?? ''}`
 
-      if (isOpen && triggerEl) {
-        const rect = triggerEl.getBoundingClientRect()
-        el.style.top = `${rect.bottom + 4}px`
-        if (props.align === 'end') {
-          el.style.left = `${rect.right - el.offsetWidth}px`
-        } else {
-          el.style.left = `${rect.left}px`
+      if (isOpen) {
+        updatePosition()
+
+        // Close on click outside (content or trigger)
+        const handleClickOutside = (e: MouseEvent) => {
+          if (!el.contains(e.target as Node) && !triggerEl?.contains(e.target as Node)) {
+            ctx.onOpenChange(false)
+          }
         }
+
+        // Close on ESC anywhere in the document
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            ctx.onOpenChange(false)
+            triggerEl?.focus()
+          }
+        }
+
+        // Reposition on scroll (capture phase for nested scrollable containers) and resize
+        const handleScroll = () => updatePosition()
+
+        document.addEventListener('mousedown', handleClickOutside)
+        document.addEventListener('keydown', handleGlobalKeyDown)
+        window.addEventListener('scroll', handleScroll, true)
+        window.addEventListener('resize', handleScroll)
+
+        cleanupFns.push(
+          () => document.removeEventListener('mousedown', handleClickOutside),
+          () => document.removeEventListener('keydown', handleGlobalKeyDown),
+          () => window.removeEventListener('scroll', handleScroll, true),
+          () => window.removeEventListener('resize', handleScroll),
+        )
       }
     })
 
-    // Keyboard navigation
+    // Keyboard navigation within content
     el.addEventListener('keydown', (e: KeyboardEvent) => {
       const items = el.querySelectorAll('[data-slot="dropdown-menu-item"]:not([aria-disabled="true"])')
       const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
 
       switch (e.key) {
-        case 'Escape':
-          ctx.onOpenChange(false)
-          triggerEl?.focus()
-          break
         case 'ArrowDown':
           e.preventDefault()
           if (items.length > 0) {
