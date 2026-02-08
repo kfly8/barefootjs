@@ -32,10 +32,25 @@ return <div>...</div>
 ))}
 ```
 
-`.filter().map()` chains are also supported:
+`.filter().map()` chains work when the predicate is simple (single expression):
 
 ```tsx
+// ✅ Simple predicate — works
 {todos().filter(t => !t.done).map(todo => (
+  <TodoItem key={todo.id} todo={todo} />
+))}
+```
+
+Complex predicates (block bodies, multiple statements) require [`/* @client */`](./client-directive.md):
+
+```tsx
+// ❌ Block body predicate — needs @client
+{/* @client */ todos().filter(t => {
+  const f = filter()
+  if (f === 'active') return !t.done
+  if (f === 'completed') return t.done
+  return true
+}).map(todo => (
   <TodoItem key={todo.id} todo={todo} />
 ))}
 ```
@@ -68,19 +83,6 @@ Expressions in attributes are reactive:
 BarefootJS compiles JSX into server templates (Go `html/template`, Hono JSX, etc.) **and** client JS. Some JavaScript expressions cannot be translated into server template syntax. These patterns require the [`/* @client */` directive](./client-directive.md) to evaluate on the client only.
 
 ### Expressions that need `/* @client */`
-
-**Complex filter predicates** — block bodies with multiple statements:
-
-```tsx
-{/* @client */ todos().filter(t => {
-  const f = filter()
-  if (f === 'active') return !t.done
-  if (f === 'completed') return t.done
-  return true
-}).map(todo => (
-  <TodoItem key={todo.id} todo={todo} />
-))}
-```
 
 **Chained higher-order methods that produce a scalar value:**
 
