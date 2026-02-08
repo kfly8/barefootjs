@@ -23,11 +23,13 @@
 
 ### 4. [Reactivity](./reactivity.md)
 
-- Signals (`createSignal`)
-- Effects (`createEffect`)
-- Memos (`createMemo`)
-- Lifecycle (`onMount`, `onCleanup`)
-- Props Reactivity — Gotchas
+- [`createSignal`](./reactivity/create-signal.md) — Create a reactive value
+- [`createEffect`](./reactivity/create-effect.md) — Run side effects when dependencies change
+- [`createMemo`](./reactivity/create-memo.md) — Create a cached derived value
+- [`onMount`](./reactivity/on-mount.md) — Run once on component initialization
+- [`onCleanup`](./reactivity/on-cleanup.md) — Register cleanup for effects and lifecycle
+- [`untrack`](./reactivity/untrack.md) — Read signals without tracking dependencies
+- [Props Reactivity](./reactivity/props-reactivity.md) — Gotchas with destructuring
 
 ### 5. Templates & Rendering
 
