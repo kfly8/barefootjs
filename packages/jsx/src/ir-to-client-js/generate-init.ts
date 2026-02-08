@@ -213,46 +213,21 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
     lines.push('')
   }
 
-  // 5. Dynamic text updates
   emitDynamicTextUpdates(lines, ctx)
-
-  // 6. Client-only expressions
   emitClientOnlyExpressions(lines, ctx)
-
-  // 7. Reactive attribute updates
   emitReactiveAttributeUpdates(lines, ctx)
-
-  // 8. Conditional updates
   emitConditionalUpdates(lines, ctx)
-
-  // 9. Client-only conditionals
   emitClientOnlyConditionals(lines, ctx)
-
-  // 10. Loop updates
   emitLoopUpdates(lines, ctx)
 
-  // Collect conditional slot IDs for event/ref filtering
   const conditionalSlotIds = collectConditionalSlotIds(ctx)
 
-  // 11. Event handlers
   emitEventHandlers(lines, ctx, conditionalSlotIds)
-
-  // 12. Reactive prop bindings
   emitReactivePropBindings(lines, ctx)
-
-  // 13. Reactive child props
   emitReactiveChildProps(lines, ctx)
-
-  // 14. Ref callbacks
   emitRefCallbacks(lines, ctx, conditionalSlotIds)
-
-  // 15. Effects and onMounts
   emitEffectsAndOnMounts(lines, ctx)
-
-  // 16. Provider and child inits
   emitProviderAndChildInits(lines, ctx)
-
-  // 17. Registration and hydration
   emitRegistrationAndHydration(lines, ctx, _ir)
 
   // Generate code and detect used imports
