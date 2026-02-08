@@ -13,6 +13,10 @@
  * - ESC key to close
  * - Arrow key navigation
  * - Accessibility (role="menu", role="menuitem")
+ * - Submenu support with hover/keyboard navigation
+ * - CheckboxItem for multi-select
+ * - RadioGroup/RadioItem for single-select
+ * - Destructive variant for dangerous actions
  *
  * @example Basic dropdown menu
  * ```tsx
@@ -32,7 +36,7 @@
  * ```
  */
 
-import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
 // Context for parent-child state sharing
@@ -43,7 +47,23 @@ interface DropdownMenuContextValue {
 
 const DropdownMenuContext = createContext<DropdownMenuContextValue>()
 
-// Store Content → Trigger element mapping for MenuItem focus return after portal
+// Context for Submenu state
+interface DropdownMenuSubContextValue {
+  subOpen: () => boolean
+  onSubOpenChange: (open: boolean) => void
+}
+
+const DropdownMenuSubContext = createContext<DropdownMenuSubContextValue>()
+
+// Context for RadioGroup value
+interface DropdownMenuRadioGroupContextValue {
+  value: () => string
+  onValueChange: (value: string) => void
+}
+
+const DropdownMenuRadioGroupContext = createContext<DropdownMenuRadioGroupContextValue>()
+
+// Store Content -> Trigger element mapping for MenuItem focus return after portal
 const contentTriggerMap = new WeakMap<HTMLElement, HTMLElement>()
 
 // DropdownMenu container classes
@@ -65,6 +85,21 @@ const dropdownMenuItemBaseClasses = 'relative flex cursor-pointer select-none it
 // DropdownMenuItem state classes
 const dropdownMenuItemDefaultClasses = 'text-popover-foreground hover:bg-accent/50 focus:bg-accent focus:text-accent-foreground'
 const dropdownMenuItemDisabledClasses = 'pointer-events-none opacity-50'
+
+// DropdownMenuItem destructive variant classes
+const dropdownMenuItemDestructiveClasses = 'text-destructive hover:bg-accent/50 focus:bg-accent focus:text-destructive'
+
+// CheckboxItem / RadioItem classes (left padding for indicator)
+const dropdownMenuCheckableItemClasses = 'relative flex cursor-pointer select-none items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden'
+
+// Indicator container classes (CheckIcon / DotIcon)
+const dropdownMenuIndicatorClasses = 'absolute left-2 flex size-3.5 shrink-0 items-center justify-center'
+
+// SubTrigger classes
+const dropdownMenuSubTriggerClasses = 'relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden'
+
+// SubContent classes (absolute positioned, similar to Content)
+const dropdownMenuSubContentBaseClasses = 'absolute z-50 min-w-[8rem] rounded-md border border-border bg-popover p-1 shadow-md'
 
 // DropdownMenuLabel classes
 const dropdownMenuLabelClasses = 'px-2 py-1.5 text-sm font-semibold text-foreground'
@@ -242,6 +277,9 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
         // Close on ESC anywhere in the document
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
           if (e.key === 'Escape') {
+            // If a submenu is open, let SubContent handle ESC
+            const openSub = el.querySelector('[data-slot="dropdown-menu-sub-content"][data-state="open"]')
+            if (openSub) return
             ctx.onOpenChange(false)
             triggerEl?.focus()
           }
@@ -289,6 +327,19 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
             ;(items[prevIndex] as HTMLElement).focus()
           }
           break
+        case 'ArrowRight': {
+          const focused = document.activeElement as HTMLElement
+          if (focused?.dataset.subTrigger === 'true') {
+            e.preventDefault()
+            focused.click()
+            setTimeout(() => {
+              const subContent = focused.closest('[data-slot="dropdown-menu-sub"]')?.querySelector('[data-slot="dropdown-menu-sub-content"][data-state="open"]') as HTMLElement
+              const firstItem = subContent?.querySelector('[data-slot="dropdown-menu-item"]:not([aria-disabled="true"])') as HTMLElement
+              firstItem?.focus()
+            }, 50)
+          }
+          break
+        }
         case 'Enter':
         case ' ':
           e.preventDefault()
@@ -334,6 +385,8 @@ interface DropdownMenuItemProps {
   disabled?: boolean
   /** Callback when item is selected (menu auto-closes) */
   onSelect?: () => void
+  /** Visual variant */
+  variant?: 'default' | 'destructive'
   /** Item content (text, icons, shortcuts) */
   children?: Child
   /** Additional CSS classes */
@@ -346,6 +399,7 @@ interface DropdownMenuItemProps {
  *
  * @param props.disabled - Whether disabled
  * @param props.onSelect - Selection callback
+ * @param props.variant - Visual variant ('default' or 'destructive')
  */
 function DropdownMenuItem(props: DropdownMenuItemProps) {
   const handleMount = (el: HTMLElement) => {
@@ -363,13 +417,340 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     })
   }
 
+  const isDisabled = props.disabled ?? false
+  const isDestructive = props.variant === 'destructive'
+  const stateClasses = isDisabled
+    ? dropdownMenuItemDisabledClasses
+    : isDestructive
+      ? dropdownMenuItemDestructiveClasses
+      : dropdownMenuItemDefaultClasses
+
   return (
     <div
       data-slot="dropdown-menu-item"
       role="menuitem"
-      aria-disabled={(props.disabled ?? false) || undefined}
-      tabindex={(props.disabled ?? false) ? -1 : 0}
-      className={`${dropdownMenuItemBaseClasses} ${(props.disabled ?? false) ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      aria-disabled={isDisabled || undefined}
+      tabindex={isDisabled ? -1 : 0}
+      className={`${dropdownMenuItemBaseClasses} ${stateClasses} ${props.class ?? ''}`}
+      ref={handleMount}
+    >
+      {props.children}
+    </div>
+  )
+}
+
+/**
+ * Props for DropdownMenuCheckboxItem component.
+ */
+interface DropdownMenuCheckboxItemProps {
+  /** Whether the checkbox is checked */
+  checked?: boolean
+  /** Callback when checked state changes */
+  onCheckedChange?: (checked: boolean) => void
+  /** Whether disabled */
+  disabled?: boolean
+  /** Item content */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Menu item with checkbox behavior.
+ * Toggles on click without closing the menu.
+ */
+function DropdownMenuCheckboxItem(props: DropdownMenuCheckboxItemProps) {
+  const handleMount = (el: HTMLElement) => {
+    createEffect(() => {
+      el.setAttribute('aria-checked', String(props.checked ?? false))
+    })
+
+    el.addEventListener('click', () => {
+      if (el.getAttribute('aria-disabled') === 'true') return
+      props.onCheckedChange?.(!(props.checked ?? false))
+    })
+  }
+
+  const isDisabled = props.disabled ?? false
+
+  return (
+    <div
+      data-slot="dropdown-menu-item"
+      role="menuitemcheckbox"
+      aria-checked={String(props.checked ?? false)}
+      aria-disabled={isDisabled || undefined}
+      tabindex={isDisabled ? -1 : 0}
+      className={`${dropdownMenuCheckableItemClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      ref={handleMount}
+    >
+      <span className={dropdownMenuIndicatorClasses}>
+        {(props.checked ?? false) ? (
+          <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        ) : null}
+      </span>
+      {props.children}
+    </div>
+  )
+}
+
+/**
+ * Props for DropdownMenuRadioGroup component.
+ */
+interface DropdownMenuRadioGroupProps {
+  /** Currently selected value */
+  value?: string
+  /** Callback when value changes */
+  onValueChange?: (value: string) => void
+  /** RadioItem children */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Group of radio items for single selection.
+ */
+function DropdownMenuRadioGroup(props: DropdownMenuRadioGroupProps) {
+  return (
+    <DropdownMenuRadioGroupContext.Provider value={{
+      value: () => props.value ?? '',
+      onValueChange: props.onValueChange ?? (() => {}),
+    }}>
+      <div data-slot="dropdown-menu-radio-group" role="group" className={props.class ?? ''}>
+        {props.children}
+      </div>
+    </DropdownMenuRadioGroupContext.Provider>
+  )
+}
+
+/**
+ * Props for DropdownMenuRadioItem component.
+ */
+interface DropdownMenuRadioItemProps {
+  /** Value for this radio item */
+  value: string
+  /** Whether disabled */
+  disabled?: boolean
+  /** Item content */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Menu item with radio behavior.
+ * Selects on click without closing the menu.
+ */
+function DropdownMenuRadioItem(props: DropdownMenuRadioItemProps) {
+  const handleMount = (el: HTMLElement) => {
+    const radioCtx = useContext(DropdownMenuRadioGroupContext)
+
+    createEffect(() => {
+      el.setAttribute('aria-checked', String(radioCtx.value() === props.value))
+    })
+
+    el.addEventListener('click', () => {
+      if (el.getAttribute('aria-disabled') === 'true') return
+      radioCtx.onValueChange(props.value)
+    })
+  }
+
+  const isDisabled = props.disabled ?? false
+
+  return (
+    <div
+      data-slot="dropdown-menu-item"
+      role="menuitemradio"
+      aria-checked="false"
+      aria-disabled={isDisabled || undefined}
+      tabindex={isDisabled ? -1 : 0}
+      className={`${dropdownMenuCheckableItemClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      ref={handleMount}
+    >
+      <span className={dropdownMenuIndicatorClasses} data-slot="dropdown-menu-radio-indicator">
+        {/* Dot indicator rendered reactively via effect */}
+      </span>
+      {props.children}
+    </div>
+  )
+}
+
+/**
+ * Props for DropdownMenuSub component.
+ */
+interface DropdownMenuSubProps {
+  /** SubTrigger and SubContent */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Submenu container. Manages sub-open state internally.
+ */
+function DropdownMenuSub(props: DropdownMenuSubProps) {
+  const [subOpen, setSubOpen] = createSignal(false)
+
+  return (
+    <DropdownMenuSubContext.Provider value={{
+      subOpen,
+      onSubOpenChange: setSubOpen,
+    }}>
+      <div data-slot="dropdown-menu-sub" className={`relative ${props.class ?? ''}`}>
+        {props.children}
+      </div>
+    </DropdownMenuSubContext.Provider>
+  )
+}
+
+/**
+ * Props for DropdownMenuSubTrigger component.
+ */
+interface DropdownMenuSubTriggerProps {
+  /** Whether disabled */
+  disabled?: boolean
+  /** Trigger content */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Trigger element for a submenu.
+ * Opens submenu on hover with delay.
+ */
+function DropdownMenuSubTrigger(props: DropdownMenuSubTriggerProps) {
+  const handleMount = (el: HTMLElement) => {
+    const subCtx = useContext(DropdownMenuSubContext)
+    let hoverTimer: ReturnType<typeof setTimeout> | null = null
+
+    createEffect(() => {
+      el.setAttribute('aria-expanded', String(subCtx.subOpen()))
+    })
+
+    el.addEventListener('mouseenter', () => {
+      if (el.getAttribute('aria-disabled') === 'true') return
+      hoverTimer = setTimeout(() => subCtx.onSubOpenChange(true), 100)
+    })
+
+    el.addEventListener('mouseleave', (e: MouseEvent) => {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null }
+      // Don't close if moving to subcontent
+      const related = e.relatedTarget as HTMLElement
+      const subContent = el.closest('[data-slot="dropdown-menu-sub"]')?.querySelector('[data-slot="dropdown-menu-sub-content"]')
+      if (subContent?.contains(related)) return
+      subCtx.onSubOpenChange(false)
+    })
+
+    el.addEventListener('click', () => {
+      if (el.getAttribute('aria-disabled') === 'true') return
+      subCtx.onSubOpenChange(!subCtx.subOpen())
+    })
+  }
+
+  const isDisabled = props.disabled ?? false
+
+  return (
+    <div
+      data-slot="dropdown-menu-item"
+      data-sub-trigger="true"
+      role="menuitem"
+      aria-haspopup="menu"
+      aria-expanded="false"
+      aria-disabled={isDisabled || undefined}
+      tabindex={isDisabled ? -1 : 0}
+      className={`${dropdownMenuSubTriggerClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      ref={handleMount}
+    >
+      {props.children}
+      <svg className="ml-auto size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+  )
+}
+
+/**
+ * Props for DropdownMenuSubContent component.
+ */
+interface DropdownMenuSubContentProps {
+  /** SubContent items */
+  children?: Child
+  /** Additional CSS classes */
+  class?: string
+}
+
+/**
+ * Content container for a submenu.
+ * Positioned to the right of the parent sub trigger.
+ */
+function DropdownMenuSubContent(props: DropdownMenuSubContentProps) {
+  const handleMount = (el: HTMLElement) => {
+    const subCtx = useContext(DropdownMenuSubContext)
+
+    createEffect(() => {
+      const isOpen = subCtx.subOpen()
+      el.dataset.state = isOpen ? 'open' : 'closed'
+      if (isOpen) {
+        el.style.display = ''
+      } else {
+        el.style.display = 'none'
+      }
+    })
+
+    // Close submenu on mouseleave (if not moving to trigger)
+    el.addEventListener('mouseleave', (e: MouseEvent) => {
+      const related = e.relatedTarget as HTMLElement
+      const sub = el.closest('[data-slot="dropdown-menu-sub"]')
+      const trigger = sub?.querySelector('[data-sub-trigger="true"]')
+      if (trigger?.contains(related)) return
+      subCtx.onSubOpenChange(false)
+    })
+
+    // Keyboard navigation within subcontent
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'ArrowLeft') {
+        e.preventDefault()
+        e.stopPropagation()
+        subCtx.onSubOpenChange(false)
+        // Focus back to sub trigger
+        const sub = el.closest('[data-slot="dropdown-menu-sub"]')
+        const trigger = sub?.querySelector('[data-sub-trigger="true"]') as HTMLElement
+        trigger?.focus()
+        return
+      }
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        e.stopPropagation()
+        const items = el.querySelectorAll('[data-slot="dropdown-menu-item"]:not([aria-disabled="true"])')
+        const currentIndex = Array.from(items).findIndex(item => item === document.activeElement)
+        if (e.key === 'ArrowDown') {
+          const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0
+          ;(items[nextIndex] as HTMLElement).focus()
+        } else {
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1
+          ;(items[prevIndex] as HTMLElement).focus()
+        }
+        return
+      }
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        e.stopPropagation()
+        if (document.activeElement && (document.activeElement as HTMLElement).dataset.slot === 'dropdown-menu-item') {
+          ;(document.activeElement as HTMLElement).click()
+        }
+      }
+    })
+  }
+
+  return (
+    <div
+      data-slot="dropdown-menu-sub-content"
+      data-state="closed"
+      role="menu"
+      tabindex={-1}
+      style="display:none"
+      className={`${dropdownMenuSubContentBaseClasses} left-full top-0 ${props.class ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -468,6 +849,12 @@ export {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
@@ -479,6 +866,12 @@ export type {
   DropdownMenuTriggerProps,
   DropdownMenuContentProps,
   DropdownMenuItemProps,
+  DropdownMenuCheckboxItemProps,
+  DropdownMenuRadioGroupProps,
+  DropdownMenuRadioItemProps,
+  DropdownMenuSubProps,
+  DropdownMenuSubTriggerProps,
+  DropdownMenuSubContentProps,
   DropdownMenuLabelProps,
   DropdownMenuSeparatorProps,
   DropdownMenuShortcutProps,
