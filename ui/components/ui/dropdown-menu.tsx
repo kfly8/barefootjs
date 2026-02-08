@@ -250,12 +250,17 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
         // Reposition on scroll (capture phase for nested scrollable containers) and resize
         const handleScroll = () => updatePosition()
 
+        // Lock body scroll while menu is open
+        const originalOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
         document.addEventListener('mousedown', handleClickOutside)
         document.addEventListener('keydown', handleGlobalKeyDown)
         window.addEventListener('scroll', handleScroll, true)
         window.addEventListener('resize', handleScroll)
 
         cleanupFns.push(
+          () => { document.body.style.overflow = originalOverflow },
           () => document.removeEventListener('mousedown', handleClickOutside),
           () => document.removeEventListener('keydown', handleGlobalKeyDown),
           () => window.removeEventListener('scroll', handleScroll, true),
