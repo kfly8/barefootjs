@@ -76,43 +76,49 @@ Expressions in attributes are reactive:
 
 ## Limitations
 
-BarefootJS compiles JSX into server templates (Go `html/template`, Hono JSX, etc.) **and** client JS. Some JavaScript expressions cannot be translated into server template syntax. These patterns require the [`/* @client */` directive](./client-directive.md) to evaluate on the client only.
+BarefootJS compiles JSX into server templates (Go `html/template`, Hono JSX, etc.) **and** client JS. Some JavaScript expressions cannot be translated into server template syntax.
 
-### Supported higher-order patterns
+When the compiler encounters an unsupported expression, it **silently falls back to client-only evaluation** — the same behavior as adding [`/* @client */`](./client-directive.md). No compile error is produced. The expression works correctly, but the server renders a placeholder instead of the initial value.
 
-The following patterns are compiled into both server templates and client JS:
+If you want to make this fallback explicit and intentional, add `/* @client */` to the expression. This documents the intent and makes it clear to other developers that the expression is client-only by design.
+
+### Patterns that fall back to client-only
+
+**Nested higher-order methods** — a higher-order method inside a predicate of another:
 
 ```tsx
-// .filter() with simple predicate
-{todos().filter(t => !t.done).map(todo => <TodoItem todo={todo} />)}
+// Falls back to client-only (server renders placeholder)
+{items().filter(x => x.tags().filter(t => t.active).length > 0)}
 
-// .filter().length
-<strong>{todos().filter(t => !t.done).length}</strong>
-
-// .every() / .some()
-<input type="checkbox" checked={todos().every(t => t.done)} />
-
-// Comparison with .filter().length
-{todos().filter(t => t.done).length > 0 && (
-  <button onClick={handleClearCompleted}>Clear completed</button>
-)}
+// Make it explicit with /* @client */
+{/* @client */ items().filter(x => x.tags().filter(t => t.active).length > 0)}
 ```
 
-### Patterns that are not supported
-
-The following patterns cannot be compiled for server templates. Use [`/* @client */`](./client-directive.md) as the workaround:
-
-- **Nested higher-order methods:** `items().filter(x => x.sub.filter(...))`
-- **Unsupported array methods:** `.find()`, `.reduce()`, `.forEach()`, `.flatMap()`, `.sort()`
-- **Function expressions:** `function(x) { return x }`
-- **Destructuring in predicates:** `.filter(({done}) => done)`
+**Unsupported array methods** — `.find()`, `.reduce()`, `.forEach()`, `.flatMap()`, `.sort()` and others cannot be translated to server template syntax:
 
 ```tsx
-// ❌ Nested higher-order — not supported
-{items().filter(x => x.items().filter(y => y.done).length > 0)}
+// Falls back to client-only
+{items().find(x => x.id === selectedId())?.name}
+```
 
-// ✅ Workaround: use /* @client */
-{/* @client */ items().filter(x => x.items().filter(y => y.done).length > 0)}
+**Destructuring in predicate parameters** — the compiler requires a single named parameter:
+
+```tsx
+// Falls back to client-only
+{items().filter(({done}) => done).map(...)}
+
+// ✅ Use a named parameter instead
+{items().filter(t => t.done).map(...)}
+```
+
+**Function expressions** — `function` keyword syntax is not supported:
+
+```tsx
+// Falls back to client-only
+{items().filter(function(x) { return x.done })}
+
+// ✅ Use arrow functions instead
+{items().filter(x => x.done)}
 ```
 
 See the [TodoApp example](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoApp.tsx) for a real-world component using `/* @client */`.
