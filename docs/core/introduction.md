@@ -83,13 +83,10 @@ If your backend is Go, Python, or Perl, the gap is wider: you either maintain se
 
 BarefootJS compiles JSX into **native templates for your backend** and **minimal client JS** — bridging server rendering and client interactivity without a runtime.
 
-| | BarefootJS | React | SolidJS | htmx |
-|---|---|---|---|---|
-| Backend agnostic | Any (Go, TS, …) | JS only | JS only | Any |
-| Reactivity | Fine-grained (signals) | Component-level (vDOM) | Fine-grained | Page-level |
-| Client JS size | Minimal (per-component) | Framework runtime | Runtime | Minimal |
-| Type safety | Full TypeScript | Full TypeScript | Full TypeScript | None |
-| Server rendering | Native templates | RSC / framework SSR | Limited | Native |
+- **Backend agnostic** — The same JSX source produces templates for any backend (Go, TypeScript, etc.)
+- **Fine-grained reactivity** — Signals track dependencies at the expression level, updating only the affected DOM nodes
+- **Minimal client JS** — Each component ships only the JavaScript it needs, not a framework runtime
+- **Full type safety** — TypeScript types flow through the entire compilation pipeline
 
 
 ## Design Philosophy
