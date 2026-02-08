@@ -32,6 +32,7 @@ export function collectConditionalSlotIds(ctx: ClientJsContext): Set<string> {
   return conditionalSlotIds
 }
 
+/** Emit `const propName = props.propName ?? default` declarations. */
 export function emitPropsExtraction(
   lines: string[],
   ctx: ClientJsContext,
@@ -67,6 +68,7 @@ export function emitPropsExtraction(
   }
 }
 
+/** Emit constants that have no signal/memo dependencies (before signal declarations). */
 export function emitEarlyConstants(lines: string[], earlyConstants: ConstantInfo[]): void {
   for (const constant of earlyConstants) {
     const jsValue = stripTypeScriptSyntax(constant.value)
@@ -77,6 +79,7 @@ export function emitEarlyConstants(lines: string[], earlyConstants: ConstantInfo
   }
 }
 
+/** Emit createSignal/createMemo declarations, controlled-signal sync effects, and late constants. */
 export function emitSignalsAndMemos(
   lines: string[],
   ctx: ClientJsContext,
@@ -137,6 +140,7 @@ export function emitSignalsAndMemos(
   }
 }
 
+/** Emit local function definitions, arrow-function constants, and props-based event handlers. */
 export function emitFunctionsAndHandlers(
   lines: string[],
   ctx: ClientJsContext,
@@ -189,6 +193,7 @@ export function emitFunctionsAndHandlers(
   }
 }
 
+/** Emit createEffect blocks that update textContent for reactive expressions. */
 export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.dynamicElements) {
     const expr = elem.expression
@@ -208,6 +213,7 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
   }
 }
 
+/** Emit createEffect blocks for client-only expressions using comment markers. */
 export function emitClientOnlyExpressions(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.clientOnlyElements) {
     lines.push(`  // @client: ${elem.slotId}`)
@@ -218,6 +224,7 @@ export function emitClientOnlyExpressions(lines: string[], ctx: ClientJsContext)
   }
 }
 
+/** Emit createEffect blocks that sync reactive attribute values (class, value, checked, etc.). */
 export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsContext): void {
   if (ctx.reactiveAttrs.length > 0) {
     // Group by slot to update multiple attrs together
@@ -250,6 +257,7 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
   }
 }
 
+/** Emit insert() calls for server-rendered reactive conditionals with branch configs. */
 export function emitConditionalUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.conditionalElements) {
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
@@ -301,6 +309,7 @@ export function emitConditionalUpdates(lines: string[], ctx: ClientJsContext): v
   }
 }
 
+/** Emit insert() calls for client-only conditionals (not server-rendered). */
 export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.clientOnlyConditionals) {
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
@@ -351,6 +360,7 @@ export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext
   }
 }
 
+/** Emit reconcileList calls for dynamic loops, and static array child initialization. */
 export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.loopElements) {
     // Static prop arrays don't need reconcileList - SSR elements are hydrated directly
@@ -484,6 +494,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   }
 }
 
+/** Emit DOM event handler assignments, skipping slots inside conditionals. */
 export function emitEventHandlers(
   lines: string[],
   ctx: ClientJsContext,
@@ -504,6 +515,7 @@ export function emitEventHandlers(
   }
 }
 
+/** Emit createEffect to update component element attributes when signal/memo values change. */
 export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext): void {
   if (ctx.reactiveProps.length > 0) {
     lines.push('')
@@ -552,6 +564,7 @@ export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext):
   }
 }
 
+/** Emit createEffect to update child component DOM attributes when parent props change. */
 export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): void {
   if (ctx.reactiveChildProps.length > 0) {
     lines.push('')
@@ -590,6 +603,7 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
   }
 }
 
+/** Emit ref callback invocations, skipping slots inside conditionals. */
 export function emitRefCallbacks(
   lines: string[],
   ctx: ClientJsContext,
@@ -601,6 +615,7 @@ export function emitRefCallbacks(
   }
 }
 
+/** Emit user-defined createEffect and onMount calls. */
 export function emitEffectsAndOnMounts(lines: string[], ctx: ClientJsContext): void {
   for (const effect of ctx.effects) {
     const jsBody = stripTypeScriptSyntax(effect.body)
@@ -613,6 +628,7 @@ export function emitEffectsAndOnMounts(lines: string[], ctx: ClientJsContext): v
   }
 }
 
+/** Emit provideContext calls and initChild calls for child components. */
 export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext): void {
   if (ctx.providerSetups.length > 0) {
     lines.push('')
@@ -632,6 +648,7 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
   }
 }
 
+/** Emit registerComponent() call and hydration bootstrap (auto-init script tag). */
 export function emitRegistrationAndHydration(
   lines: string[],
   ctx: ClientJsContext,

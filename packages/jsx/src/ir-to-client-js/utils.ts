@@ -109,6 +109,7 @@ export function wrapHandlerInBlock(handler: string): string {
   return trimmed
 }
 
+/** Infer a sensible JS default value literal from a type descriptor. */
 export function inferDefaultValue(type: { kind: string; primitive?: string }): string {
   if (type.kind === 'primitive') {
     switch (type.primitive) {

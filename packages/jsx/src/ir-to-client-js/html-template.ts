@@ -6,6 +6,7 @@ import type { IRNode } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import { toHtmlAttrName, attrValueToString } from './utils'
 
+/** Convert an IR node tree to an HTML template string (for conditionals/loops). */
 export function irToHtmlTemplate(node: IRNode): string {
   switch (node.type) {
     case 'element': {

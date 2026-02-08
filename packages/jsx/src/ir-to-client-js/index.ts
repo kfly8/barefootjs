@@ -9,6 +9,7 @@ import type { ClientJsContext } from './types'
 import { collectElements } from './collect-elements'
 import { generateInitFunction } from './generate-init'
 
+/** Public entry point: IR → client JS string. Returns '' if no client JS is needed. */
 export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
   const ctx = createContext(ir)
 
@@ -23,6 +24,7 @@ export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]):
   return generateInitFunction(ir, ctx, siblingComponents)
 }
 
+/** Initialize an empty ClientJsContext from component IR metadata. */
 function createContext(ir: ComponentIR): ClientJsContext {
   return {
     componentName: ir.metadata.componentName,
@@ -50,6 +52,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
   }
 }
 
+/** Return true if the context has any elements that require client-side hydration. */
 function needsClientJs(ctx: ClientJsContext): boolean {
   return (
     ctx.signals.length > 0 ||

@@ -9,6 +9,7 @@ import { isReactiveExpression, collectEventHandlersFromIR, collectConditionalBra
 import { irToHtmlTemplate } from './html-template'
 import { expandDynamicPropValue } from './prop-handling'
 
+/** Recursively walk the IR tree and populate ctx with interactive/dynamic/loop/conditional elements. */
 export function collectElements(node: IRNode, ctx: ClientJsContext, insideConditional = false): void {
   switch (node.type) {
     case 'element':
@@ -254,6 +255,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
   }
 }
 
+/** Extract events, refs, and reactive attributes from a single IR element into ctx. */
 function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideConditional = false): void {
   // Events
   if (element.events.length > 0 && element.slotId) {
