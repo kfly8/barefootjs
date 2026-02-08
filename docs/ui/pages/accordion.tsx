@@ -40,42 +40,23 @@ import {
 function AccordionSingle() {
   const [openItem, setOpenItem] = createSignal<string | null>('item-1')
 
-  const toggle = (value: string) => {
-    setOpenItem(openItem() === value ? null : value)
-  }
-
   return (
     <Accordion>
-      <AccordionItem value="item-1">
-        <AccordionTrigger
-          open={openItem() === 'item-1'}
-          onClick={() => toggle('item-1')}
-        >
-          Is it accessible?
-        </AccordionTrigger>
-        <AccordionContent open={openItem() === 'item-1'}>
+      <AccordionItem value="item-1" open={openItem() === 'item-1'} onOpenChange={(v) => setOpenItem(v ? 'item-1' : null)}>
+        <AccordionTrigger>Is it accessible?</AccordionTrigger>
+        <AccordionContent>
           Yes. It adheres to the WAI-ARIA design pattern.
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="item-2">
-        <AccordionTrigger
-          open={openItem() === 'item-2'}
-          onClick={() => toggle('item-2')}
-        >
-          Is it styled?
-        </AccordionTrigger>
-        <AccordionContent open={openItem() === 'item-2'}>
+      <AccordionItem value="item-2" open={openItem() === 'item-2'} onOpenChange={(v) => setOpenItem(v ? 'item-2' : null)}>
+        <AccordionTrigger>Is it styled?</AccordionTrigger>
+        <AccordionContent>
           Yes. It comes with default styles that match your theme.
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="item-3">
-        <AccordionTrigger
-          open={openItem() === 'item-3'}
-          onClick={() => toggle('item-3')}
-        >
-          Is it animated?
-        </AccordionTrigger>
-        <AccordionContent open={openItem() === 'item-3'}>
+      <AccordionItem value="item-3" open={openItem() === 'item-3'} onOpenChange={(v) => setOpenItem(v ? 'item-3' : null)}>
+        <AccordionTrigger>Is it animated?</AccordionTrigger>
+        <AccordionContent>
           Yes. It's animated by default with CSS transitions.
         </AccordionContent>
       </AccordionItem>
@@ -101,36 +82,21 @@ function AccordionMultiple() {
 
   return (
     <Accordion>
-      <AccordionItem value="item-1">
-        <AccordionTrigger
-          open={item1Open()}
-          onClick={() => setItem1Open(!item1Open())}
-        >
-          First Item
-        </AccordionTrigger>
-        <AccordionContent open={item1Open()}>
+      <AccordionItem value="item-1" open={item1Open()} onOpenChange={setItem1Open}>
+        <AccordionTrigger>First Item</AccordionTrigger>
+        <AccordionContent>
           Content for first item.
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="item-2">
-        <AccordionTrigger
-          open={item2Open()}
-          onClick={() => setItem2Open(!item2Open())}
-        >
-          Second Item
-        </AccordionTrigger>
-        <AccordionContent open={item2Open()}>
+      <AccordionItem value="item-2" open={item2Open()} onOpenChange={setItem2Open}>
+        <AccordionTrigger>Second Item</AccordionTrigger>
+        <AccordionContent>
           Content for second item.
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="item-3">
-        <AccordionTrigger
-          open={item3Open()}
-          onClick={() => setItem3Open(!item3Open())}
-        >
-          Third Item
-        </AccordionTrigger>
-        <AccordionContent open={item3Open()}>
+      <AccordionItem value="item-3" open={item3Open()} onOpenChange={setItem3Open}>
+        <AccordionTrigger>Third Item</AccordionTrigger>
+        <AccordionContent>
           Content for third item.
         </AccordionContent>
       </AccordionItem>
@@ -166,32 +132,14 @@ const accordionItemProps: PropDefinition[] = [
 
 const accordionTriggerProps: PropDefinition[] = [
   {
-    name: 'open',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the trigger indicates an open state.',
-  },
-  {
     name: 'disabled',
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the trigger is disabled.',
   },
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Event handler called when the trigger is clicked.',
-  },
 ]
 
-const accordionContentProps: PropDefinition[] = [
-  {
-    name: 'open',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the content is visible.',
-  },
-]
+const accordionContentProps: PropDefinition[] = []
 
 export function AccordionPage() {
   const installCommands = getHighlightedCommands('barefoot add accordion')
