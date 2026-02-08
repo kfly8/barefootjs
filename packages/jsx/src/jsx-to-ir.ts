@@ -27,6 +27,7 @@ import type {
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
+import { createError, ErrorCodes } from './errors'
 
 // =============================================================================
 // Transform Context
@@ -636,19 +637,31 @@ type FilterPredicateResult = {
 }
 
 /**
+ * Extraction result that carries an optional unsupported reason.
+ * When unsupportedReason is set, the predicate cannot be compiled to server template.
+ */
+type FilterExtractionResult = {
+  result: FilterPredicateResult | null
+  unsupportedReason?: string
+}
+
+/**
  * Extract filter predicate info from an arrow function.
  * Performs early parsing to get ParsedExpr AST (expression body)
  * or ParsedStatement[] (block body).
+ *
+ * Returns FilterExtractionResult with unsupportedReason when the predicate
+ * cannot be compiled to a server template.
  */
 function extractFilterPredicate(
   callback: ts.Expression,
   ctx: TransformContext
-): FilterPredicateResult | null {
-  if (!ts.isArrowFunction(callback)) return null
-  if (callback.parameters.length < 1) return null
+): FilterExtractionResult {
+  if (!ts.isArrowFunction(callback)) return { result: null }
+  if (callback.parameters.length < 1) return { result: null }
 
   const firstParam = callback.parameters[0]
-  if (!ts.isIdentifier(firstParam.name)) return null
+  if (!ts.isIdentifier(firstParam.name)) return { result: null }
 
   const param = firstParam.name.getText(ctx.sourceFile)
 
@@ -657,11 +670,11 @@ function extractFilterPredicate(
     const raw = callback.body.getText(ctx.sourceFile)
     const statements = parseBlockBody(callback.body, ctx.sourceFile)
     if (!statements) {
-      return null  // Fallback to clientOnly
+      return { result: null, unsupportedReason: 'Block body filter predicate cannot be parsed for server-side rendering' }
     }
     // TODO: Check if all statements are supported for SSR
     // For now, if parseBlockBody succeeds, we assume it's supported
-    return { param, blockBody: statements, raw }
+    return { result: { param, blockBody: statements, raw } }
   }
 
   // Expression body: filter(t => !t.done)
@@ -671,10 +684,10 @@ function extractFilterPredicate(
   // Check if predicate is supported for SSR
   const support = isSupported(predicate)
   if (!support.supported) {
-    return null  // Fallback to clientOnly
+    return { result: null, unsupportedReason: support.reason }
   }
 
-  return { param, predicate, raw }
+  return { result: { param, predicate, raw } }
 }
 
 function transformMapCall(
@@ -690,8 +703,24 @@ function transformMapCall(
   let filterPredicate: FilterPredicateResult | undefined
 
   if (filterInfo) {
-    const extracted = extractFilterPredicate(filterInfo.callback, ctx)
+    const extraction = extractFilterPredicate(filterInfo.callback, ctx)
+    const extracted = extraction.result
+
     if (isClientOnly || !extracted) {
+      // Emit error when predicate is unsupported and @client is not present
+      if (!isClientOnly && extraction.unsupportedReason) {
+        ctx.analyzer.errors.push(
+          createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
+            getSourceLocation(filterInfo.callback, ctx.sourceFile, ctx.filePath),
+            {
+              message: `Expression cannot be compiled to server template: ${extraction.unsupportedReason}`,
+              suggestion: {
+                message: 'Add /* @client */ to evaluate this expression on the client only',
+              },
+            }
+          )
+        )
+      }
       // @client or unsupported: keep filter() in array for client evaluation
       array = propAccess.expression.getText(ctx.sourceFile)
       filterPredicate = undefined
