@@ -1,0 +1,11 @@
+# Templates & Rendering
+
+This section covers BarefootJS-specific JSX behavior. Standard JSX knowledge is assumed.
+
+## Pages
+
+| Topic | Description |
+|-------|-------------|
+| [JSX Compatibility](./rendering/jsx-compatibility.md) | What works, what doesn't, and what differs from React |
+| [Fragment](./rendering/fragment.md) | Fragment support and hydration behavior |
+| [`/* @client */` Directive](./rendering/client-directive.md) | Skip server evaluation for client-only expressions |
