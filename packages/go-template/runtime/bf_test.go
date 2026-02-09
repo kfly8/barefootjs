@@ -226,6 +226,91 @@ func TestLast(t *testing.T) {
 	}
 }
 
+// =============================================================================
+// Find / FindIndex Tests
+// =============================================================================
+
+type findItem struct {
+	Id   int
+	Name string
+	Done bool
+}
+
+func TestFind_ByBooleanField(t *testing.T) {
+	items := []findItem{
+		{Id: 1, Name: "A", Done: false},
+		{Id: 2, Name: "B", Done: true},
+		{Id: 3, Name: "C", Done: false},
+	}
+
+	got := Find(items, "done", true)
+	if got == nil {
+		t.Fatal("Find by bool: got nil, want item B")
+	}
+	if got.(findItem).Name != "B" {
+		t.Errorf("Find by bool: got %v, want B", got.(findItem).Name)
+	}
+}
+
+func TestFind_ByIntField(t *testing.T) {
+	items := []findItem{
+		{Id: 1, Name: "A"},
+		{Id: 2, Name: "B"},
+		{Id: 3, Name: "C"},
+	}
+
+	got := Find(items, "id", 2)
+	if got == nil {
+		t.Fatal("Find by int: got nil, want item B")
+	}
+	if got.(findItem).Name != "B" {
+		t.Errorf("Find by int: got %v, want B", got.(findItem).Name)
+	}
+}
+
+func TestFind_NotFound(t *testing.T) {
+	items := []findItem{
+		{Id: 1, Name: "A"},
+	}
+
+	got := Find(items, "id", 99)
+	if got != nil {
+		t.Errorf("Find not found: got %v, want nil", got)
+	}
+}
+
+func TestFind_EmptySlice(t *testing.T) {
+	var items []findItem
+	got := Find(items, "id", 1)
+	if got != nil {
+		t.Errorf("Find empty: got %v, want nil", got)
+	}
+}
+
+func TestFindIndex_Found(t *testing.T) {
+	items := []findItem{
+		{Id: 1, Name: "A", Done: false},
+		{Id: 2, Name: "B", Done: true},
+		{Id: 3, Name: "C", Done: false},
+	}
+
+	got := FindIndex(items, "done", true)
+	if got != 1 {
+		t.Errorf("FindIndex found: got %d, want 1", got)
+	}
+}
+
+func TestFindIndex_NotFound(t *testing.T) {
+	items := []findItem{
+		{Id: 1, Name: "A"},
+	}
+
+	got := FindIndex(items, "id", 99)
+	if got != -1 {
+		t.Errorf("FindIndex not found: got %d, want -1", got)
+	}
+}
+
 func TestComment(t *testing.T) {
 	got := Comment("cond-start:slot_0")
 	want := "<!--bf-cond-start:slot_0-->"
@@ -242,7 +327,7 @@ func TestFuncMap(t *testing.T) {
 		"bf_add", "bf_sub", "bf_mul", "bf_div", "bf_mod", "bf_neg",
 		"bf_lower", "bf_upper", "bf_trim", "bf_contains", "bf_join",
 		"bf_len", "bf_at", "bf_includes", "bf_first", "bf_last",
-		"bf_every", "bf_some", "bf_filter", "bf_sort",
+		"bf_every", "bf_some", "bf_filter", "bf_find", "bf_find_index", "bf_sort",
 		"bfComment", "bfPortalHTML",
 	}
 

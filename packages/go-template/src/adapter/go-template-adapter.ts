@@ -935,6 +935,15 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     const goExpr = this.convertExpressionToGo(expr.expr)
 
+    // If the expression already contains Go template blocks (e.g., {{with ...}}),
+    // don't wrap it again in {{...}} to avoid double-wrapping
+    if (goExpr.startsWith('{{')) {
+      if (expr.reactive && expr.slotId) {
+        return `<span ${this.renderSlotMarker(expr.slotId)}>${goExpr}</span>`
+      }
+      return goExpr
+    }
+
     if (expr.reactive && expr.slotId) {
       return `<span ${this.renderSlotMarker(expr.slotId)}>{{${goExpr}}}</span>`
     }
@@ -994,6 +1003,14 @@ export class GoTemplateAdapter extends BaseAdapter {
           const result = this.renderFilterLengthExpr(expr.object, e => this.renderParsedExpr(e))
           if (result) {
             return result
+          }
+        }
+
+        // Handle find().property → {{with bf_find ...}}{{.Property}}{{end}}
+        if (expr.object.kind === 'higher-order' && expr.object.method === 'find') {
+          const findResult = this.renderHigherOrderExpr(expr.object, e => this.renderParsedExpr(e))
+          if (findResult) {
+            return `{{with ${findResult}}}{{.${this.capitalizeFieldName(expr.property)}}}{{end}}`
           }
         }
 
@@ -1132,7 +1149,46 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   /**
-   * Render a higher-order expression (filter, every, some) to Go template.
+   * Extract field name and value from an equality predicate.
+   * Extends extractFieldPredicate to also handle equality comparisons.
+   *
+   * t.done → { field: "Done", value: "true" }
+   * !t.done → { field: "Done", value: "false" }
+   * u.id === selectedId() → { field: "Id", value: <rendered expr> }
+   * selectedId() === u.id → same (supports both operand orders)
+   */
+  private extractEqualityPredicate(
+    pred: ParsedExpr,
+    param: string,
+    renderValue: (e: ParsedExpr) => string
+  ): { field: string; value: string } | null {
+    // Boolean field: t.done → { field: "Done", value: "true" }
+    if (pred.kind === 'member' && pred.object.kind === 'identifier' && pred.object.name === param) {
+      return { field: this.capitalizeFieldName(pred.property), value: 'true' }
+    }
+    // Negated boolean: !t.done → { field: "Done", value: "false" }
+    if (pred.kind === 'unary' && pred.op === '!' && pred.argument.kind === 'member') {
+      const mem = pred.argument
+      if (mem.object.kind === 'identifier' && mem.object.name === param) {
+        return { field: this.capitalizeFieldName(mem.property), value: 'false' }
+      }
+    }
+    // Equality: u.id === expr or expr === u.id
+    if (pred.kind === 'binary' && (pred.op === '===' || pred.op === '==')) {
+      // Left is param.field
+      if (pred.left.kind === 'member' && pred.left.object.kind === 'identifier' && pred.left.object.name === param) {
+        return { field: this.capitalizeFieldName(pred.left.property), value: renderValue(pred.right) }
+      }
+      // Right is param.field (reversed operand order)
+      if (pred.right.kind === 'member' && pred.right.object.kind === 'identifier' && pred.right.object.name === param) {
+        return { field: this.capitalizeFieldName(pred.right.property), value: renderValue(pred.left) }
+      }
+    }
+    return null
+  }
+
+  /**
+   * Render a higher-order expression (filter, every, some, find, findIndex) to Go template.
    * Returns null if the expression is not supported.
    *
    * @param expr - The higher-order expression
@@ -1142,22 +1198,30 @@ export class GoTemplateAdapter extends BaseAdapter {
     expr: Extract<ParsedExpr, { kind: 'higher-order' }>,
     renderArray: (e: ParsedExpr) => string
   ): string | null {
-    const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
-    if (!field) {
-      return null
-    }
-
     const arrayExpr = renderArray(expr.object)
 
-    if (expr.method === 'every') {
-      return `bf_every ${arrayExpr} "${field}"`
+    if (expr.method === 'every' || expr.method === 'some') {
+      const { field } = this.extractFieldPredicate(expr.predicate, expr.param)
+      if (!field) return null
+      return expr.method === 'every'
+        ? `bf_every ${arrayExpr} "${field}"`
+        : `bf_some ${arrayExpr} "${field}"`
     }
-    if (expr.method === 'some') {
-      return `bf_some ${arrayExpr} "${field}"`
-    }
+
     if (expr.method === 'filter') {
+      const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
+      if (!field) return null
       const value = negated ? 'false' : 'true'
       return `bf_filter ${arrayExpr} "${field}" ${value}`
+    }
+
+    if (expr.method === 'find' || expr.method === 'findIndex') {
+      const eqPred = this.extractEqualityPredicate(
+        expr.predicate, expr.param, e => this.renderParsedExpr(e)
+      )
+      if (!eqPred) return null
+      const func = expr.method === 'find' ? 'bf_find' : 'bf_find_index'
+      return `${func} ${arrayExpr} "${eqPred.field}" ${eqPred.value}`
     }
 
     return null

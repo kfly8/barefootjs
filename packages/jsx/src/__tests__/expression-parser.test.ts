@@ -189,6 +189,37 @@ describe('expression-parser', () => {
       }
     })
 
+    test('parses find() call into higher-order kind', () => {
+      const result = parseExpression('users().find(u => u.id === selectedId())')
+      expect(result.kind).toBe('higher-order')
+      if (result.kind === 'higher-order') {
+        expect(result.method).toBe('find')
+        expect(result.param).toBe('u')
+        expect(result.predicate.kind).toBe('binary')
+      }
+    })
+
+    test('parses findIndex() call into higher-order kind', () => {
+      const result = parseExpression('items().findIndex(t => t.done)')
+      expect(result.kind).toBe('higher-order')
+      if (result.kind === 'higher-order') {
+        expect(result.method).toBe('findIndex')
+        expect(result.param).toBe('t')
+      }
+    })
+
+    test('parses find().property into member kind with higher-order object', () => {
+      const result = parseExpression('users().find(u => u.id === selectedId()).name')
+      expect(result.kind).toBe('member')
+      if (result.kind === 'member') {
+        expect(result.property).toBe('name')
+        expect(result.object.kind).toBe('higher-order')
+        if (result.object.kind === 'higher-order') {
+          expect(result.object.method).toBe('find')
+        }
+      }
+    })
+
     test('parses filter().length into member kind with higher-order object', () => {
       const result = parseExpression('todos().filter(t => !t.done).length')
       expect(result.kind).toBe('member')
@@ -281,6 +312,20 @@ describe('expression-parser', () => {
       expect(result.level).toBe('L5')
     })
 
+    test('L5: find() with simple predicate IS supported', () => {
+      const expr = parseExpression('users().find(u => u.id === selectedId())')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
+    })
+
+    test('L5: findIndex() with simple predicate IS supported', () => {
+      const expr = parseExpression('items().findIndex(t => t.done)')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
+    })
+
     test('filter().length IS supported (as member with higher-order object)', () => {
       const expr = parseExpression('items().filter(x => !x.done).length')
       const result = isSupported(expr)
@@ -344,6 +389,16 @@ describe('expression-parser', () => {
     test('converts higher-order to string', () => {
       const expr = parseExpression('todos().filter(t => !t.done)')
       expect(exprToString(expr)).toBe('todos().filter(t => !t.done)')
+    })
+
+    test('converts find() to string', () => {
+      const expr = parseExpression('users().find(u => u.id === selectedId())')
+      expect(exprToString(expr)).toBe('users().find(u => u.id === selectedId())')
+    })
+
+    test('converts findIndex() to string', () => {
+      const expr = parseExpression('items().findIndex(t => t.done)')
+      expect(exprToString(expr)).toBe('items().findIndex(t => t.done)')
     })
 
     test('converts filter-length to string', () => {
