@@ -1,6 +1,6 @@
 # Writing a Custom Adapter
 
-This guide walks through building a custom adapter, using the Go Template adapter (`GoTemplateAdapter`) as a concrete, production-tested example. Each step maps to the actual implementation in `@barefootjs/go-template`.
+This guide walks through building a custom adapter, using the `TestAdapter` (`packages/jsx/src/adapters/test-adapter.ts`) as a concrete example. The TestAdapter is a minimal, working adapter included in the compiler package — it generates simple JSX output and demonstrates every method you need to implement.
 
 
 ## Step 1: Implement `TemplateAdapter`
@@ -12,44 +12,30 @@ import type {
   ComponentIR,
   IRNode,
   IRElement,
+  IRText,
   IRExpression,
   IRConditional,
   IRLoop,
   IRComponent,
-  IRText,
   IRFragment,
-  IRSlot,
-} from '@barefootjs/jsx'
-import { BaseAdapter, type AdapterOutput, type AdapterGenerateOptions } from '@barefootjs/jsx'
+  ParamInfo,
+} from '../types'
+import { type AdapterOutput, BaseAdapter } from './interface'
 
-export interface GoTemplateAdapterOptions {
-  packageName?: string
-}
-
-export class GoTemplateAdapter extends BaseAdapter {
-  name = 'go-template'
-  extension = '.tmpl'
+export class TestAdapter extends BaseAdapter {
+  name = 'test'
+  extension = '.test.tsx'
 
   private componentName: string = ''
-  private options: Required<GoTemplateAdapterOptions>
 
-  constructor(options: GoTemplateAdapterOptions = {}) {
-    super()
-    this.options = {
-      packageName: options.packageName ?? 'components',
-    }
-  }
-
-  generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput {
+  generate(ir: ComponentIR): AdapterOutput {
     this.componentName = ir.metadata.componentName
 
-    const templateBody = this.renderNode(ir.root)
-    const scriptRegistrations = options?.skipScriptRegistration
-      ? ''
-      : this.generateScriptRegistrations(ir)
-
-    const template = `{{define "${this.componentName}"}}\n${scriptRegistrations}${templateBody}\n{{end}}\n`
+    const imports = this.generateImports(ir)
     const types = this.generateTypes(ir)
+    const component = this.generateComponent(ir)
+
+    const template = [imports, types, component].filter(Boolean).join('\n\n')
 
     return {
       template,
@@ -62,12 +48,12 @@ export class GoTemplateAdapter extends BaseAdapter {
 }
 ```
 
-The `generate()` method is the entry point. It receives the full `ComponentIR`, renders the IR tree into Go template syntax, and wraps it in a `{{define}}...{{end}}` block.
+The `generate()` method is the entry point. It receives the full `ComponentIR` and returns an `AdapterOutput` containing the generated template, optional types, and the file extension.
 
 
 ## Step 2: Implement `renderNode()`
 
-The dispatcher routes each IR node to the correct rendering method. The Go Template adapter handles all standard node types:
+The dispatcher routes each IR node to the correct rendering method:
 
 ```typescript
 renderNode(node: IRNode): string {
@@ -79,12 +65,13 @@ renderNode(node: IRNode): string {
     case 'loop':        return this.renderLoop(node)
     case 'component':   return this.renderComponent(node)
     case 'fragment':    return this.renderChildren((node as IRFragment).children)
-    case 'slot':        return this.renderSlot(node as IRSlot)
-    case 'if-statement': return this.renderIfStatement(node)
+    case 'slot':        return '{children}'
     default:            return ''
   }
 }
 ```
+
+Each `case` maps to one of the required `TemplateAdapter` methods. The `text` and `fragment` cases are simple enough to handle inline.
 
 
 ## Step 3: Implement Element Rendering
@@ -93,8 +80,7 @@ Elements are the most common node type. You need to:
 
 1. Render the HTML tag and attributes
 2. Insert hydration markers (`data-bf-scope`, `data-bf`)
-3. Handle void elements (no closing tag)
-4. Render children recursively
+3. Render children recursively
 
 ```typescript
 renderElement(element: IRElement): string {
@@ -104,129 +90,84 @@ renderElement(element: IRElement): string {
 
   let hydrationAttrs = ''
   if (element.needsScope) {
-    hydrationAttrs += ` ${this.renderScopeMarker('.ScopeID')}`
+    hydrationAttrs += ' data-bf-scope={__scopeId}'
   }
   if (element.slotId) {
-    hydrationAttrs += ` ${this.renderSlotMarker(element.slotId)}`
+    hydrationAttrs += ` data-bf="${element.slotId}"`
   }
 
-  // Void elements have no closing tag
-  const voidElements = [
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-    'link', 'meta', 'param', 'source', 'track', 'wbr',
-  ]
-
-  if (voidElements.includes(tag.toLowerCase())) {
-    return `<${tag}${attrs}${hydrationAttrs}>`
+  if (children) {
+    return `<${tag}${attrs}${hydrationAttrs}>${children}</${tag}>`
+  } else {
+    return `<${tag}${attrs}${hydrationAttrs} />`
   }
-
-  return `<${tag}${attrs}${hydrationAttrs}>${children}</${tag}>`
 }
 ```
 
-**Important:** Event handlers (`element.events`) are not rendered in the server template. They exist only in the client JS.
-
 ### Attributes
 
-The `renderAttributes()` helper translates each attribute. Dynamic attributes use Go template syntax:
+The `renderAttributes()` helper handles static attributes, dynamic expressions, spread attributes, and event handlers:
 
 ```typescript
 private renderAttributes(element: IRElement): string {
   const parts: string[] = []
 
   for (const attr of element.attrs) {
+    const attrName = attr.name === 'class' ? 'className' : attr.name
+
     if (attr.name === '...') {
-      // Spread attributes — expand known fields
-      continue
-    }
-    if (attr.dynamic) {
-      const goExpr = this.convertExpressionToGo(attr.value)
-      parts.push(`${attr.name}="{{${goExpr}}}"`)
+      parts.push(`{...${attr.value}}`)
     } else if (attr.value === null) {
-      // Boolean attribute (e.g., disabled)
-      parts.push(attr.name)
+      parts.push(attrName)           // Boolean attribute
+    } else if (attr.dynamic) {
+      parts.push(`${attrName}={${attr.value}}`)
     } else {
-      parts.push(`${attr.name}="${attr.value}"`)
+      parts.push(`${attrName}="${attr.value}"`)
     }
+  }
+
+  // Event handlers — render as no-op stubs for SSR
+  for (const event of element.events) {
+    const handlerName = `on${event.name.charAt(0).toUpperCase()}${event.name.slice(1)}`
+    parts.push(`${handlerName}={() => {}}`)
   }
 
   return parts.length > 0 ? ' ' + parts.join(' ') : ''
 }
 ```
 
+**Note:** The TestAdapter renders event handlers as no-op stubs (`() => {}`) since JSX expects them to be present. In non-JSX adapters (like Go Template), event handlers are simply omitted — they only exist in the client JS.
+
 
 ## Step 4: Implement Expression Rendering
 
-Expressions are where the bulk of the translation work happens. JavaScript expressions must be converted to Go template syntax.
+Expressions render dynamic values. Reactive expressions with a `slotId` get wrapped in a `<span>` with a hydration marker so the client JS can update them:
 
 ```typescript
 renderExpression(expr: IRExpression): string {
-  // @client expressions are skipped server-side
-  if (expr.clientOnly) {
-    if (expr.slotId) {
-      return `{{bfComment "client:${expr.slotId}"}}`
-    }
-    return ''
+  if (expr.expr === 'null' || expr.expr === 'undefined') {
+    return 'null'
   }
-
-  const goExpr = this.convertExpressionToGo(expr.expr)
-
   if (expr.reactive && expr.slotId) {
-    // Reactive expression — wrap in a <span> with hydration marker
-    return `<span ${this.renderSlotMarker(expr.slotId)}>{{${goExpr}}}</span>`
+    return `<span data-bf="${expr.slotId}">{${expr.expr}}</span>`
   }
-
-  return `{{${goExpr}}}`
+  return `{${expr.expr}}`
 }
 ```
 
-### Expression Translation
-
-The core of the Go Template adapter is converting JavaScript expressions to Go template syntax. Key transformations:
-
-```typescript
-private convertExpressionToGo(jsExpr: string): string {
-  // Property access: props.name → .Name
-  // Signal getter:   count()   → .Count
-  // Comparison:      a === b   → eq .A .B
-  // Arithmetic:      a + b     → bf_add .A .B
-  // Logical:         a && b    → and .A .B
-  // Negation:        !a        → not .A
-
-  // The Go adapter uses parseExpression() to get a structured AST,
-  // then renders each node in the AST to Go template syntax.
-  const parsed = parseExpression(jsExpr)
-  if (parsed && isSupported(parsed)) {
-    return this.renderParsedExpr(parsed)
-  }
-
-  // Fallback for unsupported expressions
-  return jsExpr
-}
-```
-
-The `parseExpression()` utility from `@barefootjs/jsx` parses JavaScript expressions into a structured AST (`ParsedExpr`), which the adapter then renders node-by-node into Go template syntax.
+Since the TestAdapter outputs JSX, expressions pass through as-is (`{count()}`). A non-JSX adapter would need to convert the JavaScript expression into the target template language (e.g., `count()` → `{{.Count}}` for Go).
 
 
 ## Step 5: Implement Conditional Rendering
 
-Ternary expressions in JSX become `{{if}}...{{else}}...{{end}}` blocks:
+Ternary expressions in JSX stay as JSX ternaries in the TestAdapter output:
 
 ```typescript
 renderConditional(cond: IRConditional): string {
-  // @client conditionals use comment markers
-  if (cond.clientOnly) {
-    if (cond.slotId) {
-      return `{{bfComment "cond-start:${cond.slotId}"}}{{bfComment "cond-end:${cond.slotId}"}}`
-    }
-    return ''
-  }
-
-  const condition = this.convertExpressionToGo(cond.condition)
   const whenTrue = this.renderNode(cond.whenTrue)
   const whenFalse = this.renderNode(cond.whenFalse)
 
-  return `{{if ${condition}}}${whenTrue}{{else}}${whenFalse}{{end}}`
+  return `{${cond.condition} ? ${whenTrue} : ${whenFalse || 'null'}}`
 }
 ```
 
@@ -235,34 +176,24 @@ renderConditional(cond: IRConditional): string {
 {isActive ? <span>Active</span> : <span>Inactive</span>}
 ```
 
-**Output (Go Template):**
-```go-template
-{{if .IsActive}}<span>Active</span>{{else}}<span>Inactive</span>{{end}}
+**Output (TestAdapter):**
+```tsx
+{isActive ? <span>Active</span> : <span>Inactive</span>}
 ```
+
+A non-JSX adapter would translate this into the target language's conditional syntax (e.g., `{{if .IsActive}}...{{else}}...{{end}}` for Go).
 
 
 ## Step 6: Implement Loop Rendering
 
-Array `.map()` calls become `{{range}}...{{end}}` blocks. The Go adapter also handles `.filter().map()` and `.sort().map()` chains:
+Array `.map()` calls stay as JSX map expressions:
 
 ```typescript
 renderLoop(loop: IRLoop): string {
+  const indexParam = loop.index ? `, ${loop.index}` : ''
   const children = this.renderChildren(loop.children)
-  const array = this.convertExpressionToGo(loop.array)
 
-  // .filter().map() → {{range bf_filter .Items "Field" value}}
-  if (loop.filterPredicate) {
-    const filterExpr = this.renderFilterExpression(loop)
-    return `{{range ${filterExpr}}}${children}{{end}}`
-  }
-
-  // .sort().map() → {{range bf_sort .Items "Field" "asc"}}
-  if (loop.sortComparator) {
-    return `{{range bf_sort ${array} "${loop.sortComparator.field}" "${loop.sortComparator.direction}"}}${children}{{end}}`
-  }
-
-  // Plain .map() → {{range .Items}}
-  return `{{range ${array}}}${children}{{end}}`
+  return `{${loop.array}.map((${loop.param}${indexParam}) => ${children})}`
 }
 ```
 
@@ -271,46 +202,43 @@ renderLoop(loop: IRLoop): string {
 {items.map(item => <li>{item.name}</li>)}
 ```
 
-**Output (Go Template):**
-```go-template
-{{range .Items}}<li>{{.Name}}</li>{{end}}
+**Output (TestAdapter):**
+```tsx
+{items.map((item) => <li>{item.name}</li>)}
 ```
+
+A non-JSX adapter would translate this into the target language's iteration syntax (e.g., `{{range .Items}}...{{end}}` for Go).
 
 
 ## Step 7: Implement Component Rendering
 
-Nested components are rendered using Go's `{{template}}` action:
+Nested components are rendered as JSX elements with the parent's scope ID passed through:
 
 ```typescript
 renderComponent(comp: IRComponent): string {
-  // Render the child component using {{template "ChildName" .ChildProps}}
-  // The Props struct contains a pre-built field for each child instance
-  const fieldName = this.getComponentFieldName(comp)
+  const props = this.renderComponentProps(comp)
+  const children = this.renderChildren(comp.children)
 
-  return `{{template "${comp.name}" .${fieldName}}}`
+  const scopeAttr = ' __bfScope={__scopeId}'
+
+  if (children) {
+    return `<${comp.name}${props}${scopeAttr}>${children}</${comp.name}>`
+  } else {
+    return `<${comp.name}${props}${scopeAttr} />`
+  }
 }
 ```
 
-**Input (JSX):**
-```tsx
-<TodoItem task={item} />
-```
-
-**Output (Go Template):**
-```go-template
-{{template "TodoItem" .TodoItemSlot3}}
-```
-
-The parent's Go `Props` struct contains a `TodoItemSlot3` field of type `TodoItemProps`, pre-built by the `NewTodoListProps()` constructor.
+The `__bfScope` prop passes the parent's scope ID so nested components can participate in the hydration hierarchy.
 
 
 ## Step 8: Implement Hydration Markers
 
-These methods generate the `data-bf-*` attributes in Go template syntax:
+These methods generate the `data-bf-*` attributes in the target language's syntax:
 
 ```typescript
 renderScopeMarker(instanceIdExpr: string): string {
-  return `data-bf-scope="{{${instanceIdExpr}}}"`
+  return `data-bf-scope={${instanceIdExpr}}`
 }
 
 renderSlotMarker(slotId: string): string {
@@ -322,94 +250,69 @@ renderCondMarker(condId: string): string {
 }
 ```
 
-**Example output:**
-```html
-<div data-bf-scope="{{.ScopeID}}" data-bf="slot_0">...</div>
-```
+The TestAdapter uses JSX expression syntax (`{...}`) for the scope marker since the value is dynamic. The slot and cond markers use plain string attributes since slot IDs are compile-time constants.
 
 
-## Step 9: Implement Type Generation
+## Step 9: Generate Signal Initializers
 
-For typed backend languages, `generateTypes()` produces type definitions. The Go adapter generates structs and a constructor function:
+Client components need signal getters to return initial values during SSR. The TestAdapter creates stub functions:
 
 ```typescript
-generateTypes(ir: ComponentIR): string | null {
+private generateSignalInitializers(ir: ComponentIR): string {
   const lines: string[] = []
-  lines.push(`package ${this.options.packageName}`)
-  lines.push('')
 
-  const name = ir.metadata.componentName
-
-  // Input struct — external API
-  lines.push(`type ${name}Input struct {`)
-  lines.push('\tScopeID string')
-  for (const param of ir.metadata.propsParams) {
-    const goType = this.typeInfoToGo(param.type, param.defaultValue)
-    lines.push(`\t${this.capitalize(param.name)} ${goType}`)
+  for (const signal of ir.metadata.signals) {
+    lines.push(`  const ${signal.getter} = () => ${signal.initialValue}`)
+    lines.push(`  const ${signal.setter} = () => {}`)
   }
-  lines.push('}')
-  lines.push('')
 
-  // Props struct — internal representation with hydration fields
-  lines.push(`type ${name}Props struct {`)
-  lines.push('\tScopeID string `json:"scopeID"`')
-  lines.push('\tScripts *bf.ScriptCollector `json:"-"`')
-  for (const param of ir.metadata.propsParams) {
-    const goType = this.typeInfoToGo(param.type, param.defaultValue)
-    lines.push(`\t${this.capitalize(param.name)} ${goType} \`json:"${param.name}"\``)
+  for (const memo of ir.metadata.memos) {
+    lines.push(`  const ${memo.name} = ${memo.computation}`)
   }
-  lines.push('}')
-  lines.push('')
-
-  // Constructor
-  lines.push(`func New${name}Props(in ${name}Input) ${name}Props {`)
-  lines.push('\tscopeID := in.ScopeID')
-  lines.push('\tif scopeID == "" {')
-  lines.push(`\t\tscopeID = "${name}_" + randomID(6)`)
-  lines.push('\t}')
-  lines.push(`\treturn ${name}Props{`)
-  lines.push('\t\tScopeID: scopeID,')
-  for (const param of ir.metadata.propsParams) {
-    lines.push(`\t\t${this.capitalize(param.name)}: in.${this.capitalize(param.name)},`)
-  }
-  lines.push('\t}')
-  lines.push('}')
 
   return lines.join('\n')
 }
 ```
 
-For dynamically-typed backends, return `null` from `generateTypes()`.
+For example, `const [count, setCount] = createSignal(initial)` becomes:
+```typescript
+const count = () => initial   // getter returns initial value
+const setCount = () => {}     // setter is a no-op on the server
+```
+
+This allows the template to evaluate `count()` during SSR and render the initial value.
 
 
-## Step 10: Script Registration
+## Optional: Type Generation
 
-Client components need their JavaScript loaded in the browser. The Go adapter registers scripts at the beginning of each component template:
+If your backend language is typed, implement `generateTypes()`. The TestAdapter generates a hydration-extended props type:
 
 ```typescript
-private generateScriptRegistrations(ir: ComponentIR): string {
-  if (!this.hasClientInteractivity(ir)) {
-    return ''
+generateTypes(ir: ComponentIR): string | null {
+  const lines: string[] = []
+
+  const propsTypeName = ir.metadata.propsType?.raw
+  if (propsTypeName) {
+    lines.push(`type ${this.componentName}PropsWithHydration = ${propsTypeName} & {`)
+    lines.push('  __instanceId?: string')
+    lines.push('  __bfScope?: string')
+    lines.push('}')
   }
 
-  const registrations: string[] = []
-  registrations.push('{{.Scripts.Register "/static/client/barefoot.js"}}')
-  registrations.push(`{{.Scripts.Register "/static/client/${ir.metadata.componentName}.client.js"}}`)
-
-  return `{{if .Scripts}}${registrations.join('')}{{end}}\n`
+  return lines.length > 0 ? lines.join('\n') : null
 }
 ```
 
-The `ScriptCollector` on the Go server tracks which scripts are needed and ensures each is included at most once in the page output.
+For dynamically-typed backends, return `null`.
 
 
 ## Testing Your Adapter
 
-Use the compiler's test infrastructure to verify your adapter output:
+Use the compiler to verify your adapter output:
 
 ```typescript
 import { compileJsxToIR } from '@barefootjs/jsx'
-import { GoTemplateAdapter } from './go-template-adapter'
+import { TestAdapter } from './test-adapter'
 
 const source = `
 "use client"
@@ -427,21 +330,22 @@ export function Counter({ initial = 0 }: { initial?: number }) {
 `
 
 const ir = compileJsxToIR(source)
-const adapter = new GoTemplateAdapter()
+const adapter = new TestAdapter()
 const output = adapter.generate(ir)
 
 console.log(output.template)
-// {{define "Counter"}}
-// {{if .Scripts}}{{.Scripts.Register "/static/client/barefoot.js"}}{{.Scripts.Register "/static/client/Counter.client.js"}}{{end}}
-// <div data-bf-scope="{{.ScopeID}}"><p data-bf="slot_0">{{.Count}}</p><button data-bf="slot_1">+1</button>...</div>
-// {{end}}
-
-console.log(output.types)
-// package components
+// export function Counter({ initial = 0, __instanceId, __bfScope }: CounterPropsWithHydration) {
+//   const __scopeId = ...
+//   const count = () => initial
+//   const setCount = () => {}
 //
-// type CounterInput struct { ... }
-// type CounterProps struct { ... }
-// func NewCounterProps(in CounterInput) CounterProps { ... }
+//   return (
+//     <div data-bf-scope={__scopeId}>
+//       <span data-bf="slot_0">{count()}</span>
+//       <button data-bf="slot_1" onClick={() => {}}>+1</button>
+//     </div>
+//   )
+// }
 ```
 
 
@@ -449,21 +353,26 @@ console.log(output.types)
 
 When building a custom adapter, ensure you handle:
 
-- [ ] All IR node types (`element`, `text`, `expression`, `conditional`, `loop`, `component`, `fragment`, `slot`, `if-statement`, `provider`)
+- [ ] All IR node types (`element`, `text`, `expression`, `conditional`, `loop`, `component`, `fragment`, `slot`)
 - [ ] Hydration markers (`data-bf-scope`, `data-bf`, `data-bf-cond`) on interactive elements
 - [ ] Static vs. dynamic attributes
 - [ ] Boolean HTML attributes (`disabled`, `checked`, etc.)
-- [ ] Void HTML elements (`<input>`, `<br>`, `<img>`, etc.)
+- [ ] Spread attributes (`{...props}`)
 - [ ] Signal getter stubs for server-side initial values
+- [ ] Nested component scope passing
 - [ ] Props serialization (`<script data-bf-props>` tag) for client hydration
 - [ ] Script registration for client JS loading
 - [ ] `/* @client */` directive (skip client-only expressions server-side)
-- [ ] Spread attributes (`{...props}`)
-- [ ] Nested component scope passing
-- [ ] Type generation (for typed backend languages)
+
+Production adapters handle additional concerns beyond what the TestAdapter covers:
+
+- [ ] Void HTML elements (`<input>`, `<br>`, etc.) — no closing tag
+- [ ] Expression translation to the target template language
+- [ ] Type generation for typed backend languages
+- [ ] `if-statement` and `provider` IR node types
 
 ### Reference Implementations
 
-- **GoTemplateAdapter** (`packages/go-template/src/adapter/go-template-adapter.ts`) — Full production adapter with type generation, expression parsing, and array method translation
-- **HonoAdapter** (`packages/hono/src/adapter/hono-adapter.ts`) — JSX-to-JSX adapter with script collection via Hono's request context
-- **TestAdapter** (`packages/jsx/src/adapters/test-adapter.ts`) — Minimal reference implementation for testing
+- **TestAdapter** (`packages/jsx/src/adapters/test-adapter.ts`) — Minimal working adapter used throughout this guide
+- **HonoAdapter** (`packages/hono/src/adapter/hono-adapter.ts`) — Production JSX-to-JSX adapter with script collection via Hono's request context
+- **GoTemplateAdapter** (`packages/go-template/src/adapter/go-template-adapter.ts`) — Production adapter with expression translation, type generation, and array method mapping
