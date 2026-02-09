@@ -2,6 +2,8 @@
 
 Component props in BarefootJS are typed with TypeScript interfaces. The compiler preserves type information through compilation, and the adapter uses it to generate type-safe server templates.
 
+Props in client components are reactive — **how you access them matters**. See [Props Reactivity](../reactivity/props-reactivity.md) for the full explanation. This page focuses on typing patterns.
+
 
 ## Defining Props
 
@@ -21,23 +23,24 @@ export function Greeting(props: GreetingProps) {
 
 ## Default Values
 
-Use nullish coalescing (`??`) or default parameter syntax for default values:
+Use nullish coalescing (`??`) on the props object:
 
 ```tsx
-// Nullish coalescing — works with props object access
 function Button(props: { variant?: 'default' | 'primary'; children?: Child }) {
   const variant = props.variant ?? 'default'
   return <button className={variant}>{props.children}</button>
 }
+```
 
-// Default parameters — works with destructuring
+For props that are only used as an initial value for a signal, default parameter syntax is also fine. Note that the compiler emits warning `BF043` for destructuring, so add `@bf-ignore` to signal intent:
+
+```tsx
+// @bf-ignore props-destructuring
 function Counter({ initial = 0 }: { initial?: number }) {
   const [count, setCount] = createSignal(initial)
   return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
 }
 ```
-
-> **Note:** Default parameter syntax destructures the prop, which captures the value once. This is fine when the value is used as an initial value for a signal. See the reactivity section below.
 
 
 ## Extending HTML Attributes
@@ -52,8 +55,12 @@ interface ButtonProps extends ButtonHTMLAttributes {
   size?: 'sm' | 'md' | 'lg'
 }
 
-function Button({ className = '', variant = 'default', size = 'md', ...rest }: ButtonProps) {
-  return <button className={`btn btn-${variant} btn-${size} ${className}`} {...rest} />
+function Button(props: ButtonProps) {
+  const variant = props.variant ?? 'default'
+  const size = props.size ?? 'md'
+  const classes = `btn btn-${variant} btn-${size} ${props.className ?? ''}`
+
+  return <button className={classes} {...props}>{props.children}</button>
 }
 ```
 
@@ -62,114 +69,24 @@ This lets callers pass any standard button attribute (`type`, `disabled`, `aria-
 
 ## Rest Spreading
 
-Use rest syntax to forward unknown props to the underlying element:
+Use rest syntax to forward unknown props to the underlying element. Since rest spreading captures values once, use it for server components or for attributes that don't need reactive updates:
 
 ```tsx
-function Card({ title, children, ...rest }: { title: string; children?: Child } & HTMLAttributes) {
+function Card(props: { title: string; children?: Child } & HTMLAttributes) {
   return (
-    <div {...rest}>
-      <h2>{title}</h2>
-      {children}
+    <div className={props.className}>
+      <h2>{props.title}</h2>
+      {props.children}
     </div>
   )
 }
 ```
 
 ```tsx
-// Caller can pass className, style, data-* attributes, etc.
 <Card title="Dashboard" className="shadow-lg" data-testid="dashboard-card">
   <p>Content</p>
 </Card>
 ```
-
-
-## Props and Reactivity
-
-How you access props determines whether reactive updates propagate. This is the most important behavioral difference from React.
-
-### Direct Access — Reactive
-
-Accessing props via `props.xxx` maintains reactivity. Each access calls the underlying getter:
-
-```tsx
-function Display(props: { value: number }) {
-  createEffect(() => {
-    console.log(props.value) // Re-runs when parent updates value
-  })
-  return <span>{props.value}</span>
-}
-```
-
-### Destructuring — Captures Once
-
-Destructuring calls the getter immediately and stores the result. The value does not update:
-
-```tsx
-function Display({ value }: { value: number }) {
-  createEffect(() => {
-    console.log(value) // Stale — captured at component init
-  })
-  return <span>{value}</span>
-}
-```
-
-The compiler emits warning `BF043` when it detects destructuring in a client component:
-
-```
-warning[BF043]: Props destructuring breaks reactivity
-
-  --> src/components/Display.tsx:1:18
-   |
- 1 | function Display({ value }: { value: number }) {
-   |                  ^^^^^^^^^
-   |
-   = help: Access props via `props.value` to maintain reactivity
-```
-
-### When Destructuring Is Safe
-
-Destructuring is fine when:
-
-- The value is used as an **initial value** for a signal
-- The value never changes (e.g., `id`, static label)
-
-```tsx
-// @bf-ignore props-destructuring
-function Counter({ initial }: { initial: number }) {
-  const [count, setCount] = createSignal(initial) // OK — initial value only
-  return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
-}
-```
-
-Use `@bf-ignore props-destructuring` to suppress the warning when destructuring is intentional.
-
-### Summary
-
-| Pattern | Reactive? | Use when |
-|---------|-----------|----------|
-| `props.value` | Yes | You need live updates from parent |
-| `const { value } = props` | No | Value is used once (e.g., initial state) |
-| `createSignal(props.value)` | `props.value` is reactive, signal is independent | Creating local state from a prop |
-
-For more details, see [Props Reactivity](../reactivity/props-reactivity.md).
-
-
-## How Props Are Compiled
-
-When a parent passes a dynamic expression, the compiler transforms it into a getter on the props object:
-
-```tsx
-// Parent
-<Child value={count()} />
-
-// Compiled props object
-{ get value() { return count() } }
-```
-
-- `props.value` calls the getter, which calls `count()`, so the dependency is tracked
-- `const { value } = props` calls the getter once, stores the number, no further tracking
-
-Static values (string literals, numbers, booleans) are passed directly without getters.
 
 
 ## Type Preservation
