@@ -51,6 +51,44 @@ export function AccordionSingleOpenDemo() {
 }
 
 /**
+ * Accordion with asChild trigger (mixed-mode: one asChild, one standard)
+ * Tests keyboard navigation between display:contents and button triggers.
+ */
+export function AccordionAsChildDemo() {
+  const [openItem, setOpenItem] = createSignal<string | null>(null)
+
+  return (
+    <div>
+      <Accordion>
+        <AccordionItem value="custom" open={openItem() === 'custom'} onOpenChange={(v) => setOpenItem(v ? 'custom' : null)}>
+          <AccordionTrigger asChild>
+            <button
+              type="button"
+              data-testid="accordion-aschild-trigger"
+              className="flex flex-1 items-center justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all hover:underline focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
+            >
+              Custom Trigger
+            </button>
+          </AccordionTrigger>
+          <AccordionContent>
+            This item uses a custom trigger element via asChild.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="standard" open={openItem() === 'standard'} onOpenChange={(v) => setOpenItem(v ? 'standard' : null)}>
+          <AccordionTrigger>
+            Standard Trigger
+          </AccordionTrigger>
+          <AccordionContent>
+            This item uses the default button trigger.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+      <span data-testid="accordion-aschild-state">{openItem() === 'custom' ? 'open' : 'closed'}</span>
+    </div>
+  )
+}
+
+/**
  * Multiple open accordion (each item manages its own state)
  */
 export function AccordionMultipleOpenDemo() {

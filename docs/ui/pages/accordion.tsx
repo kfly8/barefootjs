@@ -2,7 +2,7 @@
  * Accordion Documentation Page
  */
 
-import { AccordionSingleOpenDemo, AccordionMultipleOpenDemo } from '@/components/accordion-demo'
+import { AccordionSingleOpenDemo, AccordionMultipleOpenDemo, AccordionAsChildDemo } from '@/components/accordion-demo'
 import {
   DocPage,
   PageHeader,
@@ -21,7 +21,8 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
   { id: 'single-open', title: 'Single Open', branch: 'start' },
-  { id: 'multiple-open', title: 'Multiple Open', branch: 'end' },
+  { id: 'multiple-open', title: 'Multiple Open', branch: 'child' },
+  { id: 'as-child', title: 'As Child', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
@@ -104,6 +105,39 @@ function AccordionMultiple() {
   )
 }`
 
+const asChildCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion'
+
+function AccordionAsChild() {
+  const [openItem, setOpenItem] = createSignal<string | null>(null)
+
+  return (
+    <Accordion>
+      <AccordionItem value="custom" open={openItem() === 'custom'} onOpenChange={(v) => setOpenItem(v ? 'custom' : null)}>
+        <AccordionTrigger asChild>
+          <button type="button" className="...">Custom Trigger</button>
+        </AccordionTrigger>
+        <AccordionContent>
+          This item uses a custom trigger element via asChild.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="standard" open={openItem() === 'standard'} onOpenChange={(v) => setOpenItem(v ? 'standard' : null)}>
+        <AccordionTrigger>Standard Trigger</AccordionTrigger>
+        <AccordionContent>
+          This item uses the default button trigger.
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  )
+}`
+
 // Props definition
 const accordionItemProps: PropDefinition[] = [
   {
@@ -136,6 +170,12 @@ const accordionTriggerProps: PropDefinition[] = [
     type: 'boolean',
     defaultValue: 'false',
     description: 'Whether the trigger is disabled.',
+  },
+  {
+    name: 'asChild',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Render child element as trigger instead of built-in button.',
   },
 ]
 
@@ -177,6 +217,12 @@ export function AccordionPage() {
             <Example title="Multiple Open" code={multipleCode}>
               <div className="w-full max-w-md">
                 <AccordionMultipleOpenDemo />
+              </div>
+            </Example>
+
+            <Example title="As Child" code={asChildCode}>
+              <div className="w-full max-w-md">
+                <AccordionAsChildDemo />
               </div>
             </Example>
           </div>

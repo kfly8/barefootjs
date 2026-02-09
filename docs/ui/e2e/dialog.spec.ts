@@ -410,6 +410,61 @@ test.describe('Dialog Documentation Page', () => {
   })
 })
 
+test.describe('DialogTrigger asChild', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/docs/components/dialog')
+  })
+
+  test('custom button renders as trigger with destructive styling', async ({ page }) => {
+    const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+    const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+    await expect(trigger).toBeVisible()
+    // Should be a custom-styled button (destructive), not the default DialogTrigger styling
+    await expect(trigger).toHaveClass(/bg-destructive/)
+  })
+
+  test('display:contents wrapper is present on asChild trigger', async ({ page }) => {
+    const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+    const triggerWrapper = deleteDemo.locator('[data-slot="dialog-trigger"]')
+
+    await expect(triggerWrapper).toBeVisible()
+    // The wrapper should use display:contents
+    await expect(triggerWrapper).toHaveCSS('display', 'contents')
+  })
+
+  test('clicking asChild trigger opens dialog', async ({ page }) => {
+    const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+    const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+    await trigger.click()
+
+    const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+    await expect(dialog).toBeVisible()
+    await expect(dialog.locator('text=Delete Project').first()).toBeVisible()
+  })
+
+  test('dialog can be closed and reopened via asChild trigger', async ({ page }) => {
+    const deleteDemo = page.locator('[data-bf-scope^="DialogFormDemo_"]').first()
+    const trigger = deleteDemo.locator('button:has-text("Delete Project")')
+
+    // Open dialog
+    await trigger.click()
+    const dialog = page.locator('[role="dialog"][aria-labelledby="delete-dialog-title"]')
+    await expect(dialog).toBeVisible()
+
+    // Close via Cancel
+    const cancelButton = dialog.locator('button:has-text("Cancel")')
+    await cancelButton.click()
+    await expect(dialog).toHaveCSS('opacity', '0')
+
+    // Reopen
+    await trigger.click()
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toHaveCSS('opacity', '1')
+  })
+})
+
 test.describe('Home Page - Dialog Link', () => {
   test('displays Dialog preview card', async ({ page }) => {
     await page.goto('/')

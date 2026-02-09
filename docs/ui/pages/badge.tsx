@@ -3,6 +3,7 @@
  */
 
 import { Badge } from '@/components/ui/badge'
+import { BadgeAsChildDemo } from '@/components/badge-as-child-demo'
 import {
   DocPage,
   PageHeader,
@@ -23,7 +24,8 @@ const tocItems: TocItem[] = [
   { id: 'default', title: 'Default', branch: 'start' },
   { id: 'secondary', title: 'Secondary', branch: 'child' },
   { id: 'destructive', title: 'Destructive', branch: 'child' },
-  { id: 'outline', title: 'Outline', branch: 'end' },
+  { id: 'outline', title: 'Outline', branch: 'child' },
+  { id: 'as-child', title: 'As Child', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
@@ -60,6 +62,28 @@ function BadgeOutline() {
   return <Badge variant="outline">Outline</Badge>
 }`
 
+const asChildCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Badge } from '@/components/ui/badge'
+
+function BadgeAsChild() {
+  const [count, setCount] = createSignal(0)
+
+  return (
+    <div className="flex items-center gap-4">
+      <Badge asChild>
+        <a href="#" onClick={() => setCount(count() + 1)}>
+          Clicked {count()} times
+        </a>
+      </Badge>
+      <Badge variant="outline" asChild>
+        <a href="#">Outline Link</a>
+      </Badge>
+    </div>
+  )
+}`
+
 // Props definition
 const badgeProps: PropDefinition[] = [
   {
@@ -67,6 +91,12 @@ const badgeProps: PropDefinition[] = [
     type: "'default' | 'secondary' | 'destructive' | 'outline'",
     defaultValue: "'default'",
     description: 'The visual style of the badge.',
+  },
+  {
+    name: 'asChild',
+    type: 'boolean',
+    defaultValue: 'false',
+    description: 'Render child element with badge styling instead of <span>.',
   },
   {
     name: 'children',
@@ -114,6 +144,10 @@ export function BadgePage() {
 
             <Example title="Outline" code={outlineCode}>
               <Badge variant="outline">Outline</Badge>
+            </Example>
+
+            <Example title="As Child" code={asChildCode}>
+              <BadgeAsChildDemo />
             </Example>
           </div>
         </Section>
