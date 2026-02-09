@@ -3,11 +3,9 @@
  */
 
 import {
-  ToastBasicDemo,
-  ToastSuccessDemo,
-  ToastErrorDemo,
-  ToastWarningDemo,
-  ToastInfoDemo,
+  ToastSimpleDemo,
+  ToastWithTitleDemo,
+  ToastDestructiveDemo,
   ToastWithActionDemo,
   ToastVariantsDemo,
 } from '@/components/toast-demo'
@@ -29,18 +27,45 @@ const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
-  { id: 'basic', title: 'Basic', branch: 'start' },
-  { id: 'success', title: 'Success', branch: 'child' },
-  { id: 'error', title: 'Error', branch: 'child' },
-  { id: 'warning', title: 'Warning', branch: 'child' },
-  { id: 'info', title: 'Info', branch: 'child' },
+  { id: 'simple', title: 'Simple', branch: 'start' },
+  { id: 'with-title', title: 'With Title', branch: 'child' },
+  { id: 'destructive', title: 'Destructive', branch: 'child' },
   { id: 'with-action', title: 'With Action', branch: 'end' },
   { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const basicCode = `"use client"
+const simpleCode = `"use client"
+
+import { createSignal } from '@barefootjs/dom'
+import { Button } from '@/components/ui/button'
+import {
+  ToastProvider,
+  Toast,
+  ToastDescription,
+  ToastClose,
+} from '@/components/ui/toast'
+
+function ToastSimple() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div>
+      <Button onClick={() => setOpen(true)}>Add to calendar</Button>
+      <ToastProvider position="bottom-right">
+        <Toast open={open()} onOpenChange={setOpen}>
+          <div className="flex-1">
+            <ToastDescription>Event has been created.</ToastDescription>
+          </div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}`
+
+const withTitleCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import { Button } from '@/components/ui/button'
@@ -52,31 +77,26 @@ import {
   ToastClose,
 } from '@/components/ui/toast'
 
-function ToastBasic() {
+function ToastWithTitle() {
   const [open, setOpen] = createSignal(false)
-
-  const showToast = () => {
-    setOpen(true)
-    setTimeout(() => setOpen(false), 5000)
-  }
 
   return (
     <div>
-      <Button onClick={showToast}>Show Toast</Button>
+      <Button onClick={() => setOpen(true)}>Show Notification</Button>
       <ToastProvider position="bottom-right">
-        <Toast open={open()}>
+        <Toast open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
             <ToastTitle>Notification</ToastTitle>
-            <ToastDescription>This is a basic toast message.</ToastDescription>
+            <ToastDescription>Your changes have been saved successfully.</ToastDescription>
           </div>
-          <ToastClose onClick={() => setOpen(false)} />
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>
   )
 }`
 
-const successCode = `"use client"
+const destructiveCode = `"use client"
 
 import { createSignal } from '@barefootjs/dom'
 import { Button } from '@/components/ui/button'
@@ -85,135 +105,22 @@ import {
   Toast,
   ToastTitle,
   ToastDescription,
-  ToastClose,
+  ToastAction,
 } from '@/components/ui/toast'
 
-function ToastSuccess() {
+function ToastDestructive() {
   const [open, setOpen] = createSignal(false)
-
-  const showToast = () => {
-    setOpen(true)
-    setTimeout(() => setOpen(false), 5000)
-  }
 
   return (
     <div>
-      <Button onClick={showToast}>Show Success</Button>
+      <Button variant="destructive" onClick={() => setOpen(true)}>Show Error</Button>
       <ToastProvider position="bottom-right">
-        <Toast variant="success" open={open()}>
+        <Toast variant="error" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Success</ToastTitle>
-            <ToastDescription>Your changes have been saved.</ToastDescription>
+            <ToastTitle>Uh oh! Something went wrong.</ToastTitle>
+            <ToastDescription>There was a problem with your request.</ToastDescription>
           </div>
-          <ToastClose onClick={() => setOpen(false)} />
-        </Toast>
-      </ToastProvider>
-    </div>
-  )
-}`
-
-const errorCode = `"use client"
-
-import { createSignal } from '@barefootjs/dom'
-import { Button } from '@/components/ui/button'
-import {
-  ToastProvider,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-} from '@/components/ui/toast'
-
-function ToastError() {
-  const [open, setOpen] = createSignal(false)
-
-  const showToast = () => {
-    setOpen(true)
-    setTimeout(() => setOpen(false), 5000)
-  }
-
-  return (
-    <div>
-      <Button onClick={showToast}>Show Error</Button>
-      <ToastProvider position="bottom-right">
-        <Toast variant="error" open={open()}>
-          <div className="flex-1">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>Something went wrong. Please try again.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => setOpen(false)} />
-        </Toast>
-      </ToastProvider>
-    </div>
-  )
-}`
-
-const warningCode = `"use client"
-
-import { createSignal } from '@barefootjs/dom'
-import { Button } from '@/components/ui/button'
-import {
-  ToastProvider,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-} from '@/components/ui/toast'
-
-function ToastWarning() {
-  const [open, setOpen] = createSignal(false)
-
-  const showToast = () => {
-    setOpen(true)
-    setTimeout(() => setOpen(false), 5000)
-  }
-
-  return (
-    <div>
-      <Button onClick={showToast}>Show Warning</Button>
-      <ToastProvider position="bottom-right">
-        <Toast variant="warning" open={open()}>
-          <div className="flex-1">
-            <ToastTitle>Warning</ToastTitle>
-            <ToastDescription>Please review before continuing.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => setOpen(false)} />
-        </Toast>
-      </ToastProvider>
-    </div>
-  )
-}`
-
-const infoCode = `"use client"
-
-import { createSignal } from '@barefootjs/dom'
-import { Button } from '@/components/ui/button'
-import {
-  ToastProvider,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-} from '@/components/ui/toast'
-
-function ToastInfo() {
-  const [open, setOpen] = createSignal(false)
-
-  const showToast = () => {
-    setOpen(true)
-    setTimeout(() => setOpen(false), 5000)
-  }
-
-  return (
-    <div>
-      <Button onClick={showToast}>Show Info</Button>
-      <ToastProvider position="bottom-right">
-        <Toast variant="info" open={open()}>
-          <div className="flex-1">
-            <ToastTitle>Info</ToastTitle>
-            <ToastDescription>Here is some helpful information.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => setOpen(false)} />
+          <ToastAction altText="Try again">Try again</ToastAction>
         </Toast>
       </ToastProvider>
     </div>
@@ -236,30 +143,18 @@ import {
 function ToastWithAction() {
   const [open, setOpen] = createSignal(false)
 
-  const showToast = () => {
-    setOpen(true)
-    setTimeout(() => setOpen(false), 5000)
-  }
-
-  const handleUndo = () => {
-    console.log('Undo clicked')
-    setOpen(false)
-  }
-
   return (
     <div>
-      <Button onClick={showToast}>Delete Item</Button>
+      <Button onClick={() => setOpen(true)}>Delete Item</Button>
       <ToastProvider position="bottom-right">
-        <Toast open={open()}>
+        <Toast open={open()} onOpenChange={setOpen} duration={10000}>
           <div className="flex-1">
             <ToastTitle>Item deleted</ToastTitle>
             <ToastDescription>The item has been removed from your list.</ToastDescription>
           </div>
           <div className="flex gap-2">
-            <ToastAction altText="Undo deletion" onClick={handleUndo}>
-              Undo
-            </ToastAction>
-            <ToastClose onClick={() => setOpen(false)} />
+            <ToastAction altText="Undo deletion">Undo</ToastAction>
+            <ToastClose />
           </div>
         </Toast>
       </ToastProvider>
@@ -293,7 +188,13 @@ const toastProps: PropDefinition[] = [
   {
     name: 'onOpenChange',
     type: '(open: boolean) => void',
-    description: 'Event handler called when the open state changes.',
+    description: 'Callback when the open state changes (e.g., on auto-dismiss or close).',
+  },
+  {
+    name: 'duration',
+    type: 'number',
+    defaultValue: '5000',
+    description: 'Auto-dismiss duration in milliseconds. Set to 0 to disable auto-dismiss.',
   },
 ]
 
@@ -317,7 +218,7 @@ const toastCloseProps: PropDefinition[] = [
   {
     name: 'onClick',
     type: '() => void',
-    description: 'Event handler called when the close button is clicked.',
+    description: 'Additional click handler called before dismiss.',
   },
 ]
 
@@ -330,7 +231,7 @@ const toastActionProps: PropDefinition[] = [
   {
     name: 'onClick',
     type: '() => void',
-    description: 'Event handler called when the action button is clicked.',
+    description: 'Click handler called before auto-dismiss.',
   },
 ]
 
@@ -361,11 +262,12 @@ export function ToastPage() {
         {/* Features */}
         <Section id="features" title="Features">
           <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong className="text-foreground">Auto-dismiss</strong> - Toasts automatically disappear after a timeout</li>
-            <li><strong className="text-foreground">Manual dismiss</strong> - Close button to dismiss immediately</li>
+            <li><strong className="text-foreground">Auto-dismiss</strong> - Toasts automatically disappear after a configurable duration</li>
+            <li><strong className="text-foreground">Manual dismiss</strong> - Close button to dismiss immediately via context</li>
             <li><strong className="text-foreground">Variants</strong> - default, success, error, warning, info</li>
             <li><strong className="text-foreground">Position options</strong> - top-right, top-left, bottom-right, bottom-left</li>
             <li><strong className="text-foreground">Action buttons</strong> - Optional action button for undo/retry operations</li>
+            <li><strong className="text-foreground">Portal rendering</strong> - Toast container portals to document.body to avoid z-index issues</li>
             <li><strong className="text-foreground">Accessibility</strong> - role="status", aria-live="polite" (assertive for errors)</li>
             <li><strong className="text-foreground">Stackable</strong> - Multiple toasts can be displayed simultaneously</li>
           </ul>
@@ -374,24 +276,16 @@ export function ToastPage() {
         {/* Examples */}
         <Section id="examples" title="Examples">
           <div className="space-y-8">
-            <Example title="Basic" code={basicCode}>
-              <ToastBasicDemo />
+            <Example title="Simple" code={simpleCode}>
+              <ToastSimpleDemo />
             </Example>
 
-            <Example title="Success" code={successCode}>
-              <ToastSuccessDemo />
+            <Example title="With Title" code={withTitleCode}>
+              <ToastWithTitleDemo />
             </Example>
 
-            <Example title="Error" code={errorCode}>
-              <ToastErrorDemo />
-            </Example>
-
-            <Example title="Warning" code={warningCode}>
-              <ToastWarningDemo />
-            </Example>
-
-            <Example title="Info" code={infoCode}>
-              <ToastInfoDemo />
+            <Example title="Destructive" code={destructiveCode}>
+              <ToastDestructiveDemo />
             </Example>
 
             <Example title="With Action" code={withActionCode}>
