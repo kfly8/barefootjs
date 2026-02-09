@@ -1130,6 +1130,10 @@ export class GoTemplateAdapter extends BaseAdapter {
           const templateBlock = this.renderFindTemplateBlock(expr, e => this.renderParsedExpr(e))
           if (templateBlock) return templateBlock
         }
+        if (expr.method === 'every' || expr.method === 'some') {
+          const templateBlock = this.renderEverySomeTemplateBlock(expr, e => this.renderParsedExpr(e))
+          if (templateBlock) return templateBlock
+        }
         return `[UNSUPPORTED: ${expr.method}]`
       }
 
@@ -1266,6 +1270,51 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
 
     return null
+  }
+
+  /**
+   * Render every()/some() with complex predicates using {{range}}{{if}} with variable reassignment.
+   * Falls back from bf_every/bf_some when extractFieldPredicate returns null.
+   * Reuses renderFilterExpr for condition rendering.
+   *
+   * every: start true, set false on first failure, break early
+   * some: start false, set true on first match, break early
+   *
+   * @param expr - The higher-order every/some expression
+   * @param renderArray - Function to render the array expression
+   */
+  private renderEverySomeTemplateBlock(
+    expr: Extract<ParsedExpr, { kind: 'higher-order' }>,
+    renderArray: (e: ParsedExpr) => string
+  ): string | null {
+    const arrayExpr = renderArray(expr.object)
+    const condition = this.renderFilterExpr(expr.predicate, expr.param)
+    if (condition.includes('[UNSUPPORTED')) return null
+
+    if (expr.method === 'every') {
+      // Negate condition: if NOT condition, set false and break
+      const negated = this.negateGoCondition(condition)
+      return `{{$bf_result := true}}{{range ${arrayExpr}}}{{if ${negated}}}{{$bf_result = false}}{{break}}{{end}}{{end}}{{$bf_result}}`
+    }
+
+    if (expr.method === 'some') {
+      return `{{$bf_result := false}}{{range ${arrayExpr}}}{{if ${condition}}}{{$bf_result = true}}{{break}}{{end}}{{end}}{{$bf_result}}`
+    }
+
+    return null
+  }
+
+  /**
+   * Negate a Go template condition.
+   * Wraps in `not (...)` when the condition is a Go function call (eq, ne, gt, etc.),
+   * otherwise uses `not condition`.
+   */
+  private negateGoCondition(condition: string): string {
+    const goFuncPattern = /^(eq|ne|gt|lt|ge|le|and|or|not|bf_)\b/
+    if (goFuncPattern.test(condition)) {
+      return `not (${condition})`
+    }
+    return `not ${condition}`
   }
 
   /**
@@ -1729,14 +1778,26 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   private renderIfStatement(ifStmt: IRIfStatement): string {
-    const goCondition = this.convertConditionToGo(ifStmt.condition)
+    const { condition: goCondition, preamble } = this.convertConditionToGo(ifStmt.condition)
     const consequent = this.renderNode(ifStmt.consequent)
-    let result = `{{if ${goCondition}}}${consequent}`
+    let result = `${preamble}{{if ${goCondition}}}${consequent}`
 
     if (ifStmt.alternate) {
       if (ifStmt.alternate.type === 'if-statement') {
         const altIfStmt = ifStmt.alternate as IRIfStatement
-        const altCondition = this.convertConditionToGo(altIfStmt.condition)
+        const { condition: altCondition, preamble: altPreamble } = this.convertConditionToGo(altIfStmt.condition)
+        if (altPreamble) {
+          // Preamble in else-if context is not supported
+          this.errors.push({
+            code: 'BF102',
+            severity: 'error',
+            message: `Complex predicate in else-if is not supported: ${altIfStmt.condition}`,
+            loc: this.makeLoc(),
+            suggestion: {
+              message: 'Options:\n1. Use @client directive for client-side evaluation\n2. Pre-compute the value in Go code',
+            },
+          })
+        }
         const altConsequent = this.renderNode(altIfStmt.consequent)
         result += `{{else if ${altCondition}}}${altConsequent}`
         if (altIfStmt.alternate) {
@@ -1759,13 +1820,13 @@ export class GoTemplateAdapter extends BaseAdapter {
       return this.renderClientOnlyConditional(cond)
     }
 
-    const goCondition = this.convertConditionToGo(cond.condition)
+    const { condition: goCondition, preamble } = this.convertConditionToGo(cond.condition)
     const whenTrue = this.renderNode(cond.whenTrue)
 
     // If reactive (has slotId), wrap each branch with cond marker
     if (cond.slotId) {
       const whenTrueWrapped = this.wrapWithCondMarker(whenTrue, cond.slotId)
-      let result = `{{if ${goCondition}}}${whenTrueWrapped}`
+      let result = `${preamble}{{if ${goCondition}}}${whenTrueWrapped}`
 
       if (cond.whenFalse) {
         // Handle null/undefined branches with empty comment markers for client hydration
@@ -1792,7 +1853,7 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
 
     // Non-reactive: original logic
-    let result = `{{if ${goCondition}}}${whenTrue}`
+    let result = `${preamble}{{if ${goCondition}}}${whenTrue}`
 
     if (cond.whenFalse && cond.whenFalse.type !== 'expression') {
       const whenFalse = this.renderNode(cond.whenFalse)
@@ -1815,8 +1876,10 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   /**
    * Convert a JS condition to Go template condition syntax.
+   * Returns { condition, preamble } where preamble contains template blocks
+   * that must be emitted before the {{if}} (e.g., every/some range blocks).
    */
-  private convertConditionToGo(jsCondition: string): string {
+  private convertConditionToGo(jsCondition: string): { condition: string; preamble: string } {
     const trimmed = jsCondition.trim()
     const parsed = parseExpression(trimmed)
     const support = isSupported(parsed)
@@ -1834,10 +1897,25 @@ export class GoTemplateAdapter extends BaseAdapter {
         },
       })
       // Return false - Go template comments must be separate actions
-      return `false`
+      return { condition: `false`, preamble: '' }
     }
 
-    return this.renderConditionExpr(parsed)
+    const rendered = this.renderConditionExpr(parsed)
+
+    // Detect template blocks (e.g., from every/some with complex predicates).
+    // These cannot be placed inside {{if ...}} directly.
+    // Split into preamble (template block) + condition variable.
+    if (rendered.startsWith('{{')) {
+      const lastOpen = rendered.lastIndexOf('{{')
+      const lastClose = rendered.lastIndexOf('}}')
+      if (lastOpen >= 0 && lastClose > lastOpen) {
+        const preamble = rendered.substring(0, lastOpen)
+        const condition = rendered.substring(lastOpen + 2, lastClose)
+        return { condition, preamble }
+      }
+    }
+
+    return { condition: rendered, preamble: '' }
   }
 
   /**
@@ -2127,8 +2205,8 @@ export class GoTemplateAdapter extends BaseAdapter {
         const value = attr.value as string
         if (isBooleanAttr(attrName)) {
           // Boolean attrs: render attr name only when truthy, omit when falsy
-          const goCond = this.convertConditionToGo(value)
-          parts.push(`{{if ${goCond}}}${attrName}{{end}}`)
+          const { condition: goCond, preamble } = this.convertConditionToGo(value)
+          parts.push(`${preamble}{{if ${goCond}}}${attrName}{{end}}`)
         } else {
           // Check for ternary/conditional expressions using the parser
           const parsed = parseExpression(value.trim())
@@ -2155,8 +2233,8 @@ export class GoTemplateAdapter extends BaseAdapter {
       if (part.type === 'string') {
         output += part.value
       } else if (part.type === 'ternary') {
-        const goCond = this.convertConditionToGo(part.condition)
-        output += `{{if ${goCond}}}${part.whenTrue}{{else}}${part.whenFalse}{{end}}`
+        const { condition: goCond, preamble } = this.convertConditionToGo(part.condition)
+        output += `${preamble}{{if ${goCond}}}${part.whenTrue}{{else}}${part.whenFalse}{{end}}`
       }
     }
     return output
