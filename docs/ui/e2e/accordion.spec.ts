@@ -208,6 +208,72 @@ test.describe('Accordion Documentation Page', () => {
   })
 })
 
+test.describe('Accordion asChild', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/docs/components/accordion')
+  })
+
+  test('renders child element as trigger', async ({ page }) => {
+    const trigger = page.locator('[data-testid="accordion-aschild-trigger"]')
+    await expect(trigger).toBeVisible()
+
+    // Should be a <button> tag (the custom child), not the default accordion button
+    const tagName = await trigger.evaluate((el) => el.tagName.toLowerCase())
+    expect(tagName).toBe('button')
+  })
+
+  test('toggles content on click with reactive state', async ({ page }) => {
+    const trigger = page.locator('[data-testid="accordion-aschild-trigger"]')
+    const stateEl = page.locator('[data-testid="accordion-aschild-state"]')
+
+    // Initially closed
+    await expect(stateEl).toContainText('closed')
+
+    // Click to open
+    await trigger.click()
+    await expect(stateEl).toContainText('open')
+
+    // Content should be visible
+    const demo = trigger.locator('xpath=ancestor::*[@data-slot="accordion"]')
+    await expect(demo.locator('text=This item uses a custom trigger element via asChild')).toBeVisible()
+  })
+
+  test('aria-expanded updates reactively', async ({ page }) => {
+    const triggerWrapper = page.locator('[data-testid="accordion-aschild-trigger"]').locator('xpath=ancestor::*[@data-slot="accordion-trigger"]')
+
+    // Initially closed
+    await expect(triggerWrapper).toHaveAttribute('aria-expanded', 'false')
+
+    // Click to open
+    await page.locator('[data-testid="accordion-aschild-trigger"]').click()
+
+    // aria-expanded should update
+    await expect(triggerWrapper).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  test('keyboard navigation between asChild and standard triggers', async ({ page }) => {
+    const asChildTrigger = page.locator('[data-testid="accordion-aschild-trigger"]')
+    const demo = asChildTrigger.locator('xpath=ancestor::*[@data-slot="accordion"]')
+    const standardTrigger = demo.locator('button:has-text("Standard Trigger")')
+
+    // Focus on the asChild trigger
+    await asChildTrigger.focus()
+    await expect(asChildTrigger).toBeFocused()
+
+    // ArrowDown should move to standard trigger
+    await page.keyboard.press('ArrowDown')
+    await expect(standardTrigger).toBeFocused()
+
+    // ArrowDown should wrap back to asChild trigger
+    await page.keyboard.press('ArrowDown')
+    await expect(asChildTrigger).toBeFocused()
+
+    // ArrowUp should wrap to standard trigger
+    await page.keyboard.press('ArrowUp')
+    await expect(standardTrigger).toBeFocused()
+  })
+})
+
 test.describe('Home Page - Accordion Link', () => {
   test('displays Accordion preview card', async ({ page }) => {
     await page.goto('/')

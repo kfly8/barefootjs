@@ -54,6 +54,48 @@ test.describe('Badge Documentation Page', () => {
     })
   })
 
+  test.describe('Badge asChild', () => {
+    test('renders <a> tag with badge styling (not <span>)', async ({ page }) => {
+      const link = page.locator('[data-testid="badge-aschild-link"]')
+      await expect(link).toBeVisible()
+
+      // Should be an <a> tag
+      const tagName = await link.evaluate((el) => el.tagName.toLowerCase())
+      expect(tagName).toBe('a')
+
+      // Should have badge styling classes
+      await expect(link).toHaveClass(/inline-flex/)
+      await expect(link).toHaveClass(/rounded-full/)
+    })
+
+    test('renders outline variant with asChild', async ({ page }) => {
+      const outlineLink = page.locator('[data-testid="badge-aschild-outline"]')
+      await expect(outlineLink).toBeVisible()
+
+      // Should be an <a> tag
+      const tagName = await outlineLink.evaluate((el) => el.tagName.toLowerCase())
+      expect(tagName).toBe('a')
+
+      // Should have outline variant styling
+      await expect(outlineLink).toHaveClass(/text-foreground/)
+    })
+
+    test('reactive count updates on click', async ({ page }) => {
+      const link = page.locator('[data-testid="badge-aschild-link"]')
+
+      // Initially 0 clicks
+      await expect(link).toContainText('Clicked 0 times')
+
+      // Click to increment
+      await link.click()
+      await expect(link).toContainText('Clicked 1 times')
+
+      // Click again
+      await link.click()
+      await expect(link).toContainText('Clicked 2 times')
+    })
+  })
+
   test.describe('API Reference', () => {
     test('displays API Reference section', async ({ page }) => {
       await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()

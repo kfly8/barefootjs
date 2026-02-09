@@ -135,6 +135,8 @@ function AccordionItem(props: AccordionItemProps) {
 interface AccordionTriggerProps {
   /** Whether disabled */
   disabled?: boolean
+  /** Render child element as trigger instead of built-in button */
+  asChild?: boolean
   /** Trigger label */
   children?: Child
   /** Additional CSS classes */
@@ -146,6 +148,7 @@ interface AccordionTriggerProps {
  * Reads open state from AccordionItemContext.
  *
  * @param props.disabled - Whether disabled
+ * @param props.asChild - Render child as trigger
  */
 function AccordionTrigger(props: AccordionTriggerProps) {
   const handleMount = (el: HTMLElement) => {
@@ -170,40 +173,61 @@ function AccordionTrigger(props: AccordionTriggerProps) {
       e.stopPropagation()
       ctx.onOpenChange(!ctx.open())
     })
+
+    // Keyboard navigation (attached via addEventListener for display:contents support)
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      const accordion = el.closest('[data-slot="accordion"]')
+      if (!accordion) return
+
+      const triggers = accordion.querySelectorAll('[data-slot="accordion-trigger"]:not([disabled])')
+      const currentIndex = Array.from(triggers).indexOf(el)
+
+      let nextIndex: number | null = null
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault()
+          nextIndex = currentIndex < triggers.length - 1 ? currentIndex + 1 : 0
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : triggers.length - 1
+          break
+        case 'Home':
+          e.preventDefault()
+          nextIndex = 0
+          break
+        case 'End':
+          e.preventDefault()
+          nextIndex = triggers.length - 1
+          break
+      }
+
+      if (nextIndex !== null && triggers[nextIndex]) {
+        const target = triggers[nextIndex] as HTMLElement
+        if (target.style?.display === 'contents') {
+          const focusable = target.querySelector('button, [tabindex], a, input, select, textarea') as HTMLElement
+          focusable?.focus()
+        } else {
+          target.focus()
+        }
+      }
+    })
   }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    const target = e.currentTarget as HTMLElement
-    const accordion = target.closest('[data-slot="accordion"]')
-    if (!accordion) return
-
-    const triggers = accordion.querySelectorAll('[data-slot="accordion-trigger"]:not([disabled])')
-    const currentIndex = Array.from(triggers).indexOf(target)
-
-    let nextIndex: number | null = null
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        nextIndex = currentIndex < triggers.length - 1 ? currentIndex + 1 : 0
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        nextIndex = currentIndex > 0 ? currentIndex - 1 : triggers.length - 1
-        break
-      case 'Home':
-        e.preventDefault()
-        nextIndex = 0
-        break
-      case 'End':
-        e.preventDefault()
-        nextIndex = triggers.length - 1
-        break
-    }
-
-    if (nextIndex !== null && triggers[nextIndex]) {
-      ;(triggers[nextIndex] as HTMLElement).focus()
-    }
+  if (props.asChild) {
+    return (
+      <h3 className="flex">
+        <span
+          data-slot="accordion-trigger"
+          style="display:contents"
+          aria-expanded="false"
+          ref={handleMount}
+        >
+          {props.children}
+        </span>
+      </h3>
+    )
   }
 
   const className = props.class ?? ''
@@ -218,7 +242,6 @@ function AccordionTrigger(props: AccordionTriggerProps) {
         disabled={props.disabled}
         aria-expanded="false"
         aria-disabled={props.disabled || undefined}
-        onKeyDown={handleKeyDown}
         ref={handleMount}
       >
         {props.children}
