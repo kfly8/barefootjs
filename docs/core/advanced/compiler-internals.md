@@ -127,15 +127,7 @@ The compiler parses `.filter()` and `.sort()` chains before `.map()` for server-
 ))}
 ```
 
-**Supported filter patterns:**
-- Simple property access: `t => !t.done`, `t => t.active`
-- Comparison: `t => t.count > 0`
-
-**Supported sort patterns:**
-- Simple subtraction: `(a, b) => a.field - b.field` (ascending)
-- Reverse subtraction: `(a, b) => b.field - a.field` (descending)
-
-Complex patterns (nested methods, `localeCompare`, block bodies) trigger **BF021** with a suggestion to use `/* @client */`.
+Simple patterns (e.g., `t => !t.done`, `(a, b) => a.price - b.price`) can be compiled for server-side evaluation. Complex patterns trigger **BF021** with a suggestion to use `/* @client */`. See [Error Codes Reference](./error-codes.md#bf021--unsupported-jsx-pattern) for details.
 
 ### Auto Scope Wrapping
 
