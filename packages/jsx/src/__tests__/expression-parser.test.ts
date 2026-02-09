@@ -312,6 +312,20 @@ describe('expression-parser', () => {
       expect(result.level).toBe('L5')
     })
 
+    test('L5: every() with complex predicate IS supported', () => {
+      const expr = parseExpression('items().every(t => t.price > 100)')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
+    })
+
+    test('L5: some() with complex predicate IS supported', () => {
+      const expr = parseExpression('items().some(t => t.price > 100 && t.active)')
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L5')
+    })
+
     test('L5: find() with simple predicate IS supported', () => {
       const expr = parseExpression('users().find(u => u.id === selectedId())')
       const result = isSupported(expr)

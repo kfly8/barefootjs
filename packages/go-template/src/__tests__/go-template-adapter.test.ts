@@ -880,6 +880,103 @@ describe('GoTemplateAdapter', () => {
       expect(result).toBe('{{bf_some .Todos "Important"}}')
     })
 
+    test('renders every() with comparison predicate using range+variable', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().every(t => t.price > 100)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe(
+        '{{$bf_result := true}}{{range .Items}}{{if not (gt .Price 100)}}{{$bf_result = false}}{{break}}{{end}}{{end}}{{$bf_result}}'
+      )
+    })
+
+    test('renders some() with comparison predicate using range+variable', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().some(t => t.price > 100)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe(
+        '{{$bf_result := false}}{{range .Items}}{{if gt .Price 100}}{{$bf_result = true}}{{break}}{{end}}{{end}}{{$bf_result}}'
+      )
+    })
+
+    test('renders every() with logical AND predicate', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().every(t => t.price > 100 && t.active)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe(
+        '{{$bf_result := true}}{{range .Items}}{{if not (and (gt .Price 100) (.Active))}}{{$bf_result = false}}{{break}}{{end}}{{end}}{{$bf_result}}'
+      )
+    })
+
+    test('renders some() with mixed predicate and signal', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().some(t => t.price > minPrice() && t.category === type())',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe(
+        '{{$bf_result := false}}{{range .Items}}{{if and (gt .Price $.MinPrice) (eq .Category $.Type)}}{{$bf_result = true}}{{break}}{{end}}{{end}}{{$bf_result}}'
+      )
+    })
+
+    test('simple every(t => t.done) still uses bf_every (regression)', () => {
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'todos().every(t => t.done)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      // Simple predicates should still use the runtime function
+      expect(result).toBe('{{bf_every .Todos "Done"}}')
+    })
+
+    test('every() with complex predicate in condition uses preamble', () => {
+      const cond: IRConditional = {
+        type: 'conditional',
+        condition: 'items().every(t => t.price > 100)',
+        conditionType: null,
+        reactive: false,
+        whenTrue: { type: 'text', value: 'All expensive', loc },
+        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderConditional(cond)
+      expect(result).toBe(
+        '{{$bf_result := true}}{{range .Items}}{{if not (gt .Price 100)}}{{$bf_result = false}}{{break}}{{end}}{{end}}{{if $bf_result}}All expensive{{end}}'
+      )
+    })
+
     test('renders filter().length in condition', () => {
       const cond: IRConditional = {
         type: 'conditional',
