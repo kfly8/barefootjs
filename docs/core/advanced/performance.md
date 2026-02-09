@@ -1,0 +1,251 @@
+# Performance Optimization
+
+BarefootJS is designed for performance by default — server-side rendering with minimal client JavaScript. This guide covers strategies to minimize bundle size, reduce hydration cost, and optimize runtime reactivity.
+
+## How BarefootJS Achieves Performance
+
+### Zero-JS by Default
+
+Components without reactive state generate **no client JavaScript at all**. Only components with `"use client"` produce client-side code:
+
+```tsx
+// Server-only — 0 bytes of client JS
+export function Header() {
+  return (
+    <header>
+      <h1>My App</h1>
+      <nav>...</nav>
+    </header>
+  )
+}
+```
+
+### Minimal Hydration
+
+Unlike frameworks that ship the full component tree to the client, BarefootJS sends only:
+- Signal initialization
+- Event handler bindings
+- Effect setup for reactive updates
+
+The HTML structure is never re-created on the client — it was already rendered by the server.
+
+---
+
+## Reducing Client JS Size
+
+### 1. Prefer Server Components
+
+Keep components server-side when they don't need interactivity:
+
+```tsx
+// ✅ Server component — no client JS
+export function ProductCard(props: Props) {
+  return (
+    <div class="card">
+      <h2>{props.name}</h2>
+      <p>{props.description}</p>
+      <span>{props.price}</span>
+    </div>
+  )
+}
+
+// Only the interactive part needs "use client"
+"use client"
+export function AddToCartButton(props: Props) {
+  const [added, setAdded] = createSignal(false)
+  return (
+    <button onClick={() => setAdded(true)}>
+      {added() ? 'Added' : 'Add to Cart'}
+    </button>
+  )
+}
+```
+
+### 2. Minimize Signal Count
+
+Each signal adds tracking overhead. Use `createMemo` for derived values instead of separate signals:
+
+```tsx
+// ❌ Redundant signal
+const [count, setCount] = createSignal(0)
+const [doubled, setDoubled] = createSignal(0)
+createEffect(() => setDoubled(count() * 2))  // Extra signal + effect
+
+// ✅ Use memo instead
+const [count, setCount] = createSignal(0)
+const doubled = createMemo(() => count() * 2)  // Computed, no extra signal
+```
+
+### 3. Use Static Arrays When Possible
+
+If a list doesn't change after initial render, the compiler detects it as a **static array** and skips `reconcileList`:
+
+```tsx
+// Static — no reconcileList generated
+const tabs = ['Home', 'About', 'Contact']
+{tabs.map(tab => <Tab label={tab} />)}
+
+// Dynamic — reconcileList needed
+const [items, setItems] = createSignal([...])
+{items().map(item => <Item key={item.id} data={item} />)}
+```
+
+### 4. Move Filter/Sort to Server
+
+When possible, use filter/sort patterns the compiler can evaluate server-side:
+
+```tsx
+// ✅ Server-side filter — no client JS for the filter logic
+{items().filter(i => i.active).map(i => <Item key={i.id} data={i} />)}
+
+// ❌ Client-only — entire filter runs in the browser
+{/* @client */ items().filter(i => i.tags.some(t => t.featured)).map(...)}
+```
+
+---
+
+## Optimizing Hydration
+
+### 1. Reduce Scope Nesting
+
+Deeply nested component hierarchies increase `findScope()` traversal. Flatten where possible:
+
+```tsx
+// ❌ Deeply nested — many scopes to traverse
+<Layout>
+  <Sidebar>
+    <NavGroup>
+      <NavItem />  // 4 scopes deep
+    </NavGroup>
+  </Sidebar>
+</Layout>
+
+// ✅ Flatter — fewer scopes
+<Layout>
+  <Sidebar items={navItems} />  // Sidebar renders items directly
+</Layout>
+```
+
+### 2. Use Keys for List Reconciliation
+
+Always provide stable keys for dynamic lists. Without keys, the reconciler can't reuse DOM nodes:
+
+```tsx
+// ✅ Stable key — DOM nodes reused when list changes
+{items().map(item => <li key={item.id}>{item.name}</li>)}
+
+// ❌ Index key — DOM nodes recreated on reorder
+{items().map((item, i) => <li key={i}>{item.name}</li>)}
+```
+
+### 3. Preserve Focus in Lists
+
+The reconciler automatically preserves focused elements during list updates. If a focused input is in a list item, it won't lose focus when the list re-renders. This is built-in — no action needed on your part.
+
+---
+
+## Optimizing Reactivity
+
+### 1. Batch Updates
+
+Multiple signal updates in an event handler are batched automatically:
+
+```tsx
+function handleSubmit() {
+  setName('')        // These don't trigger
+  setEmail('')       // intermediate re-renders —
+  setSubmitted(true) // effects run once after all three
+}
+```
+
+### 2. Use `untrack` for One-Time Reads
+
+When you need a signal's current value without subscribing to changes:
+
+```tsx
+createEffect(() => {
+  // Only re-runs when items() changes, not when count() changes
+  const currentCount = untrack(() => count())
+  console.log(`${items().length} items, count was ${currentCount}`)
+})
+```
+
+### 3. Avoid Effects for Derived Data
+
+`createMemo` is cheaper than `createEffect` + `createSignal`:
+
+```tsx
+// ❌ Effect → Signal chain (two subscriptions)
+const [total, setTotal] = createSignal(0)
+createEffect(() => setTotal(price() * quantity()))
+
+// ✅ Single memo (one subscription)
+const total = createMemo(() => price() * quantity())
+```
+
+### 4. Guard Effect Side Effects
+
+Effects with the same result can skip expensive operations:
+
+```tsx
+createEffect(() => {
+  const cls = isActive() ? 'active' : 'inactive'
+  if (element.className !== cls) {
+    element.className = cls  // Only touches DOM when value changes
+  }
+})
+```
+
+> **Note:** The compiler already generates guarded updates for text content and common attributes. This tip applies to custom effects.
+
+---
+
+## Bundle Analysis
+
+### What's Included in Client JS
+
+| Feature | Client JS Cost |
+|---------|---------------|
+| `createSignal` | ~200 bytes (runtime) |
+| `createEffect` | ~150 bytes (runtime) |
+| `createMemo` | ~100 bytes (runtime) |
+| `reconcileList` | ~500 bytes (runtime) |
+| `createComponent` | ~300 bytes (runtime) |
+| Each component init | Varies (typically 200–500 bytes) |
+
+The `@barefootjs/dom` runtime is shared across all components — it's loaded once.
+
+### Measuring
+
+Check the compiled output size:
+
+```bash
+# View generated client JS
+ls -la dist/components/*-*.js
+
+# Total client JS size
+du -sh dist/components/*.js
+```
+
+---
+
+## Comparison
+
+| Metric | BarefootJS | React | SolidJS |
+|--------|-----------|-------|---------|
+| Initial HTML | Server-rendered | Client-rendered (or SSR + hydrate full tree) | Client-rendered |
+| Client JS | Only interactive parts | Full component tree | Full component tree |
+| Hydration | Targeted (slot-based) | Full tree reconciliation | N/A (no SSR) |
+| DOM updates | Fine-grained (signal → element) | Virtual DOM diff | Fine-grained |
+| Runtime size | ~2 KB | ~40 KB | ~7 KB |
+
+---
+
+## Checklist
+
+- [ ] Components without interactivity are server-only (no `"use client"`)
+- [ ] Derived values use `createMemo`, not `createEffect` + `createSignal`
+- [ ] Lists have stable `key` props
+- [ ] Filter/sort uses SSR-compatible patterns where possible
+- [ ] `untrack()` used for intentional one-time reads
+- [ ] Component hierarchy is reasonably flat
