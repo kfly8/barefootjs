@@ -37,13 +37,13 @@
 - [Fragment](./rendering/fragment.md) — Fragment support and hydration behavior
 - [`/* @client */` Directive](./rendering/client-directive.md) — Skip server evaluation for client-only expressions
 
-### 6. Components
+### 6. [Components](./components.md)
 
-- Component Authoring
-- Props & Type Safety
-- Children & Slots
-- Context API
-- Portals
+- [Component Authoring](./components/component-authoring.md) — Server components, client components, and the compilation model
+- [Props & Type Safety](./components/props-type-safety.md) — Typing props, defaults, and rest spreading
+- [Children & Slots](./components/children-slots.md) — Children prop, the `Slot` component, and the `asChild` pattern
+- [Context API](./components/context-api.md) — Sharing state with `createContext` / `useContext`
+- [Portals](./components/portals.md) — Rendering elements outside their parent DOM hierarchy
 
 ### 7. Adapters
 
