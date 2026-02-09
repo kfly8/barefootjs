@@ -195,8 +195,6 @@ createEffect(() => {
 
 The signal getter `ctx.activeItem()` is called inside the effect, so the effect subscribes to `activeItem`. When `activeItem` changes (via `toggle`), only the affected effects re-run.
 
-> **Important:** Call `useContext` before `createEffect`, not inside it. The context lookup itself is not reactive — it is the signal getters within the returned value that provide reactivity.
-
 
 ## Context Without a Default
 
