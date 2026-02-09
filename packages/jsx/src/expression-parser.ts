@@ -23,7 +23,7 @@ export type ParsedExpr =
   | { kind: 'logical'; op: '&&' | '||'; left: ParsedExpr; right: ParsedExpr }
   | { kind: 'template-literal'; parts: TemplatePart[] }
   | { kind: 'arrow-fn'; param: string; body: ParsedExpr }
-  | { kind: 'higher-order'; method: 'filter' | 'every' | 'some'; object: ParsedExpr; param: string; predicate: ParsedExpr }
+  | { kind: 'higher-order'; method: 'filter' | 'every' | 'some' | 'find' | 'findIndex'; object: ParsedExpr; param: string; predicate: ParsedExpr }
   | { kind: 'unsupported'; raw: string; reason: string }
 
 export type TemplatePart =
@@ -65,7 +65,7 @@ export interface SupportResult {
 // Higher-order array methods that are not supported
 const UNSUPPORTED_METHODS = new Set([
   'filter', 'map', 'reduce', 'reduceRight', 'every', 'some',
-  'find', 'findIndex', 'findLast', 'findLastIndex',
+  'findLast', 'findLastIndex',
   'forEach', 'flatMap', 'flat',
 ])
 
@@ -141,12 +141,12 @@ function convertNode(node: ts.Node, raw: string): ParsedExpr {
     const args = node.arguments.map(arg => convertNode(arg, raw))
 
     // Detect higher-order methods: arr.filter(x => pred), arr.every(x => pred), arr.some(x => pred)
-    if (callee.kind === 'member' && ['filter', 'every', 'some'].includes(callee.property)) {
+    if (callee.kind === 'member' && ['filter', 'every', 'some', 'find', 'findIndex'].includes(callee.property)) {
       if (args.length === 1 && args[0].kind === 'arrow-fn') {
         const arrowFn = args[0] as { kind: 'arrow-fn'; param: string; body: ParsedExpr }
         return {
           kind: 'higher-order',
-          method: callee.property as 'filter' | 'every' | 'some',
+          method: callee.property as 'filter' | 'every' | 'some' | 'find' | 'findIndex',
           object: callee.object,
           param: arrowFn.param,
           predicate: arrowFn.body,

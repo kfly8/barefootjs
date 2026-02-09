@@ -54,7 +54,7 @@ Patterns that the compiler cannot translate to server templates require `/* @cli
 {/* @client */ items().filter(x => x.tags().filter(t => t.active).length > 0)}
 
 // Unsupported array methods
-{/* @client */ items().find(x => x.id === selectedId())}
+{/* @client */ items().reduce((sum, x) => sum + x.price, 0)}
 ```
 
 ### Explicit client-only evaluation

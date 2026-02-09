@@ -935,6 +935,16 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     const goExpr = this.convertExpressionToGo(expr.expr)
 
+    // If the expression already contains Go template blocks (e.g., {{with ...}}),
+    // don't wrap it again in {{...}} to avoid double-wrapping.
+    // Use comment markers instead of <span> to avoid changing DOM structure.
+    if (goExpr.startsWith('{{')) {
+      if (expr.reactive && expr.slotId) {
+        return `{{bfComment "expr-start:${expr.slotId}"}}${goExpr}{{bfComment "expr-end:${expr.slotId}"}}`
+      }
+      return goExpr
+    }
+
     if (expr.reactive && expr.slotId) {
       return `<span ${this.renderSlotMarker(expr.slotId)}>{{${goExpr}}}</span>`
     }
@@ -995,6 +1005,19 @@ export class GoTemplateAdapter extends BaseAdapter {
           if (result) {
             return result
           }
+        }
+
+        // Handle find().property → {{with bf_find ...}}{{.Property}}{{end}}
+        if (expr.object.kind === 'higher-order' && expr.object.method === 'find') {
+          const findResult = this.renderHigherOrderExpr(expr.object, e => this.renderParsedExpr(e))
+          if (findResult) {
+            return `{{with ${findResult}}}{{.${this.capitalizeFieldName(expr.property)}}}{{end}}`
+          }
+          // Fall back to template iteration for complex predicates
+          const templateBlock = this.renderFindTemplateBlock(
+            expr.object, e => this.renderParsedExpr(e), this.capitalizeFieldName(expr.property)
+          )
+          if (templateBlock) return templateBlock
         }
 
         // Handle SolidJS-style props pattern: props.xxx -> .Xxx
@@ -1102,7 +1125,12 @@ export class GoTemplateAdapter extends BaseAdapter {
 
       case 'higher-order': {
         const result = this.renderHigherOrderExpr(expr, e => this.renderParsedExpr(e))
-        return result ?? `[UNSUPPORTED: ${expr.method}]`
+        if (result) return result
+        if (expr.method === 'find' || expr.method === 'findIndex') {
+          const templateBlock = this.renderFindTemplateBlock(expr, e => this.renderParsedExpr(e))
+          if (templateBlock) return templateBlock
+        }
+        return `[UNSUPPORTED: ${expr.method}]`
       }
 
       case 'unsupported':
@@ -1132,7 +1160,46 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   /**
-   * Render a higher-order expression (filter, every, some) to Go template.
+   * Extract field name and value from an equality predicate.
+   * Extends extractFieldPredicate to also handle equality comparisons.
+   *
+   * t.done → { field: "Done", value: "true" }
+   * !t.done → { field: "Done", value: "false" }
+   * u.id === selectedId() → { field: "Id", value: <rendered expr> }
+   * selectedId() === u.id → same (supports both operand orders)
+   */
+  private extractEqualityPredicate(
+    pred: ParsedExpr,
+    param: string,
+    renderValue: (e: ParsedExpr) => string
+  ): { field: string; value: string } | null {
+    // Boolean field: t.done → { field: "Done", value: "true" }
+    if (pred.kind === 'member' && pred.object.kind === 'identifier' && pred.object.name === param) {
+      return { field: this.capitalizeFieldName(pred.property), value: 'true' }
+    }
+    // Negated boolean: !t.done → { field: "Done", value: "false" }
+    if (pred.kind === 'unary' && pred.op === '!' && pred.argument.kind === 'member') {
+      const mem = pred.argument
+      if (mem.object.kind === 'identifier' && mem.object.name === param) {
+        return { field: this.capitalizeFieldName(mem.property), value: 'false' }
+      }
+    }
+    // Equality: u.id === expr or expr === u.id
+    if (pred.kind === 'binary' && (pred.op === '===' || pred.op === '==')) {
+      // Left is param.field
+      if (pred.left.kind === 'member' && pred.left.object.kind === 'identifier' && pred.left.object.name === param) {
+        return { field: this.capitalizeFieldName(pred.left.property), value: renderValue(pred.right) }
+      }
+      // Right is param.field (reversed operand order)
+      if (pred.right.kind === 'member' && pred.right.object.kind === 'identifier' && pred.right.object.name === param) {
+        return { field: this.capitalizeFieldName(pred.right.property), value: renderValue(pred.left) }
+      }
+    }
+    return null
+  }
+
+  /**
+   * Render a higher-order expression (filter, every, some, find, findIndex) to Go template.
    * Returns null if the expression is not supported.
    *
    * @param expr - The higher-order expression
@@ -1142,22 +1209,60 @@ export class GoTemplateAdapter extends BaseAdapter {
     expr: Extract<ParsedExpr, { kind: 'higher-order' }>,
     renderArray: (e: ParsedExpr) => string
   ): string | null {
-    const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
-    if (!field) {
-      return null
-    }
-
     const arrayExpr = renderArray(expr.object)
 
-    if (expr.method === 'every') {
-      return `bf_every ${arrayExpr} "${field}"`
+    if (expr.method === 'every' || expr.method === 'some') {
+      const { field } = this.extractFieldPredicate(expr.predicate, expr.param)
+      if (!field) return null
+      return expr.method === 'every'
+        ? `bf_every ${arrayExpr} "${field}"`
+        : `bf_some ${arrayExpr} "${field}"`
     }
-    if (expr.method === 'some') {
-      return `bf_some ${arrayExpr} "${field}"`
-    }
+
     if (expr.method === 'filter') {
+      const { field, negated } = this.extractFieldPredicate(expr.predicate, expr.param)
+      if (!field) return null
       const value = negated ? 'false' : 'true'
       return `bf_filter ${arrayExpr} "${field}" ${value}`
+    }
+
+    if (expr.method === 'find' || expr.method === 'findIndex') {
+      const eqPred = this.extractEqualityPredicate(
+        expr.predicate, expr.param, e => this.renderParsedExpr(e)
+      )
+      if (!eqPred) return null
+      const func = expr.method === 'find' ? 'bf_find' : 'bf_find_index'
+      return `${func} ${arrayExpr} "${eqPred.field}" ${eqPred.value}`
+    }
+
+    return null
+  }
+
+  /**
+   * Render find()/findIndex() with complex predicates using {{range}}{{if}}...{{break}} blocks.
+   * Falls back from bf_find/bf_find_index when extractEqualityPredicate returns null.
+   * Reuses renderFilterExpr for condition rendering.
+   *
+   * @param expr - The higher-order find/findIndex expression
+   * @param renderArray - Function to render the array expression
+   * @param propertyAccess - Optional property to access on the found element (for find().property)
+   */
+  private renderFindTemplateBlock(
+    expr: Extract<ParsedExpr, { kind: 'higher-order' }>,
+    renderArray: (e: ParsedExpr) => string,
+    propertyAccess?: string
+  ): string | null {
+    const arrayExpr = renderArray(expr.object)
+    const condition = this.renderFilterExpr(expr.predicate, expr.param)
+    if (condition.includes('[UNSUPPORTED')) return null
+
+    if (expr.method === 'find') {
+      const output = propertyAccess ? `{{.${propertyAccess}}}` : '{{.}}'
+      return `{{range ${arrayExpr}}}{{if ${condition}}}${output}{{break}}{{end}}{{end}}`
+    }
+
+    if (expr.method === 'findIndex') {
+      return `{{range $i, $_ := ${arrayExpr}}}{{if ${condition}}}{{$i}}{{break}}{{end}}{{end}}`
     }
 
     return null

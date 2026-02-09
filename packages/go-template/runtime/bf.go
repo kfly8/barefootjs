@@ -41,10 +41,12 @@ func FuncMap() template.FuncMap {
 		"bf_last":     Last,
 
 		// Higher-order Array Methods
-		"bf_every":  Every,
-		"bf_some":   Some,
-		"bf_filter": Filter,
-		"bf_sort":   Sort,
+		"bf_every":      Every,
+		"bf_some":       Some,
+		"bf_filter":     Filter,
+		"bf_find":       Find,
+		"bf_find_index": FindIndex,
+		"bf_sort":       Sort,
 
 		// Comment marker (for hydration)
 		"bfComment": Comment,
@@ -341,6 +343,72 @@ func Filter(items any, field string, value any) []any {
 		}
 	}
 	return result
+}
+
+// Find returns the first item where item.field == value, or nil if not found.
+// Mirrors JavaScript's Array.prototype.find(item => item.field === value).
+func Find(items any, field string, value any) any {
+	v := reflect.ValueOf(items)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return nil
+	}
+
+	capitalizedField := capitalize(field)
+	for i := 0; i < v.Len(); i++ {
+		item := v.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		fieldVal := item.FieldByName(capitalizedField)
+		if !fieldVal.IsValid() {
+			continue
+		}
+
+		if reflect.DeepEqual(fieldVal.Interface(), value) {
+			return v.Index(i).Interface()
+		}
+	}
+	return nil
+}
+
+// FindIndex returns the index of the first item where item.field == value, or -1.
+// Mirrors JavaScript's Array.prototype.findIndex(item => item.field === value).
+func FindIndex(items any, field string, value any) int {
+	v := reflect.ValueOf(items)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return -1
+	}
+
+	capitalizedField := capitalize(field)
+	for i := 0; i < v.Len(); i++ {
+		item := v.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		fieldVal := item.FieldByName(capitalizedField)
+		if !fieldVal.IsValid() {
+			continue
+		}
+
+		if reflect.DeepEqual(fieldVal.Interface(), value) {
+			return i
+		}
+	}
+	return -1
 }
 
 // Sort returns a new slice sorted by the specified field in the given direction.
