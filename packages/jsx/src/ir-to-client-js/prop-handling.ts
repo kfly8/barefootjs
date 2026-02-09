@@ -1,0 +1,148 @@
+/**
+ * Props expansion, dependency analysis, and controlled component detection.
+ */
+
+import type { ConstantInfo, ParamInfo, SignalInfo } from '../types'
+import type { ClientJsContext } from './types'
+
+/**
+ * Expand dynamic prop value by resolving local constants.
+ *
+ * Per spec/compiler.md, no prop reference transformation is needed:
+ * - Destructured props are captured once at hydration, used as-is
+ * - Props object already uses props.xxx syntax
+ */
+export function expandDynamicPropValue(value: string, ctx: ClientJsContext): string {
+  const trimmedValue = value.trim()
+
+  const constant = ctx.localConstants.find((c) => c.name === trimmedValue)
+  if (constant) {
+    return constant.value
+  }
+
+  return value
+}
+
+/**
+ * Check if a value references reactive data (props, signals, or memos).
+ */
+export function valueReferencesReactiveData(
+  value: string,
+  ctx: ClientJsContext
+): { usesProps: boolean; usedProps: string[]; usesSignals: boolean; usesMemos: boolean } {
+  const usedProps: string[] = []
+  let usesSignals = false
+  let usesMemos = false
+
+  for (const prop of ctx.propsParams) {
+    if (new RegExp(`\\b${prop.name}\\b`).test(value)) {
+      usedProps.push(prop.name)
+    }
+  }
+
+  for (const signal of ctx.signals) {
+    if (new RegExp(`\\b${signal.getter}\\s*\\(`).test(value)) {
+      usesSignals = true
+    }
+  }
+
+  for (const memo of ctx.memos) {
+    if (new RegExp(`\\b${memo.name}\\s*\\(`).test(value)) {
+      usesMemos = true
+    }
+  }
+
+  return {
+    usesProps: usedProps.length > 0,
+    usedProps,
+    usesSignals,
+    usesMemos,
+  }
+}
+
+/**
+ * Check if a signal is initialized from a prop value (controlled signal pattern).
+ * Returns the prop name if the signal's initial value references a prop, null otherwise.
+ *
+ * Detects patterns like:
+ *   const [controlledChecked, setControlledChecked] = createSignal(props.checked)
+ *   const [controlledValue, setControlledValue] = createSignal(value)
+ *
+ * These signals need a createEffect to sync with parent's prop changes.
+ *
+ * Note: Props starting with "default" (e.g., defaultChecked, defaultValue) are
+ * excluded as they are initial values, not controlled props.
+ */
+export function getControlledPropName(
+  signal: SignalInfo,
+  propsParams: ParamInfo[]
+): string | null {
+  const initialValue = signal.initialValue.trim()
+  const isDefaultProp = (propName: string) => propName.startsWith('default')
+
+  // Direct props.X reference (e.g., props.checked)
+  const propsMatch = initialValue.match(/^props\.(\w+)$/)
+  if (propsMatch) {
+    const propName = propsMatch[1]
+    if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
+      return propName
+    }
+  }
+
+  // Simple prop name (e.g., checked in createSignal(checked))
+  if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(initialValue)) {
+    if (propsParams.some((p) => p.name === initialValue) && !isDefaultProp(initialValue)) {
+      return initialValue
+    }
+  }
+
+  // Prop with nullish coalescing (e.g., checked ?? false)
+  const nullishMatch = initialValue.match(/^(\w+)\s*\?\?\s*.+$/)
+  if (nullishMatch) {
+    const propName = nullishMatch[1]
+    if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
+      return propName
+    }
+  }
+
+  return null
+}
+
+/**
+ * Detect props that are used with property access (e.g., highlightedCommands.pnpm).
+ * These props need a default value of {} to avoid "cannot read properties of undefined".
+ */
+export function detectPropsWithPropertyAccess(
+  ctx: ClientJsContext,
+  neededConstants: ConstantInfo[]
+): Set<string> {
+  const result = new Set<string>()
+  const sources: string[] = []
+
+  for (const elem of ctx.conditionalElements) {
+    sources.push(elem.whenTrueHtml, elem.whenFalseHtml, elem.condition)
+  }
+  for (const elem of ctx.loopElements) {
+    sources.push(elem.template)
+  }
+  for (const elem of ctx.dynamicElements) {
+    sources.push(elem.expression)
+  }
+  for (const constant of neededConstants) {
+    sources.push(constant.value)
+  }
+
+  for (const prop of ctx.propsParams) {
+    const dotPattern = new RegExp(`\\b${prop.name}\\.[a-zA-Z_]`)
+    const bracketPattern = new RegExp(`\\b${prop.name}\\s*\\[`)
+
+    for (const source of sources) {
+      if (dotPattern.test(source) || bracketPattern.test(source)) {
+        result.add(prop.name)
+        break
+      }
+    }
+  }
+
+  return result
+}
