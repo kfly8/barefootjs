@@ -68,24 +68,6 @@ return <div>...</div>
 Some comparators (e.g., `localeCompare`, block bodies) are not supported and will produce a compile error — use `/* @client */` in that case.
 
 
-## Single-Value Lookup
-
-`.find()` and `.findIndex()` work with simple predicates — boolean field access and equality comparisons:
-
-```tsx
-// ✅ Boolean predicate
-{items().find(t => t.done)}
-
-// ✅ Equality predicate with property access
-{users().find(u => u.id === selectedId()).name}
-
-// ✅ findIndex
-{items().findIndex(t => t.done)}
-```
-
-Complex predicates (e.g., `x.a > 5 && x.b < 10`) are not supported — use `/* @client */` in that case.
-
-
 ## Event Handling
 
 `on*` attributes bind event handlers. The handler receives the native DOM event:
