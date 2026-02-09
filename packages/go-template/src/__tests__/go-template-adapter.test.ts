@@ -971,6 +971,66 @@ describe('GoTemplateAdapter', () => {
       expect(result).toBe('{{bf_find_index .Items "Done" true}}')
     })
 
+    test('renders find() with complex predicate using template iteration', () => {
+      // find(t => t.price > 100) — complex predicate, not simple equality
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().find(t => t.price > 100)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe('{{range .Items}}{{if gt .Price 100}}{{.}}{{break}}{{end}}{{end}}')
+    })
+
+    test('renders find().property with complex predicate using template iteration', () => {
+      // find(t => t.price > 100 && t.active).name — complex predicate with property access
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().find(t => t.price > 100 && t.active).name',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe('{{range .Items}}{{if and (gt .Price 100) (.Active)}}{{.Name}}{{break}}{{end}}{{end}}')
+    })
+
+    test('renders findIndex() with complex predicate using template iteration', () => {
+      // findIndex(t => t.price > 100) — complex predicate
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: 'items().findIndex(t => t.price > 100)',
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe('{{range $i, $_ := .Items}}{{if gt .Price 100}}{{$i}}{{break}}{{end}}{{end}}')
+    })
+
+    test('renders find() with equality + comparison mixed predicate', () => {
+      // find(t => t.price > 100 && t.category === type()) — mixed predicate with signal
+      const expr: IRExpression = {
+        type: 'expression',
+        expr: "items().find(t => t.price > 100 && t.category === type())",
+        typeInfo: null,
+        reactive: false,
+        slotId: null,
+        loc,
+      }
+
+      const result = adapter.renderExpression(expr)
+      expect(result).toBe('{{range .Items}}{{if and (gt .Price 100) (eq .Category $.Type)}}{{.}}{{break}}{{end}}{{end}}')
+    })
+
     test('renders find() in condition without {{with}}', () => {
       const cond: IRConditional = {
         type: 'conditional',

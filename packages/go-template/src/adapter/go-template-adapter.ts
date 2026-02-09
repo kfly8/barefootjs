@@ -1013,6 +1013,11 @@ export class GoTemplateAdapter extends BaseAdapter {
           if (findResult) {
             return `{{with ${findResult}}}{{.${this.capitalizeFieldName(expr.property)}}}{{end}}`
           }
+          // Fall back to template iteration for complex predicates
+          const templateBlock = this.renderFindTemplateBlock(
+            expr.object, e => this.renderParsedExpr(e), this.capitalizeFieldName(expr.property)
+          )
+          if (templateBlock) return templateBlock
         }
 
         // Handle SolidJS-style props pattern: props.xxx -> .Xxx
@@ -1120,7 +1125,12 @@ export class GoTemplateAdapter extends BaseAdapter {
 
       case 'higher-order': {
         const result = this.renderHigherOrderExpr(expr, e => this.renderParsedExpr(e))
-        return result ?? `[UNSUPPORTED: ${expr.method}]`
+        if (result) return result
+        if (expr.method === 'find' || expr.method === 'findIndex') {
+          const templateBlock = this.renderFindTemplateBlock(expr, e => this.renderParsedExpr(e))
+          if (templateBlock) return templateBlock
+        }
+        return `[UNSUPPORTED: ${expr.method}]`
       }
 
       case 'unsupported':
@@ -1223,6 +1233,36 @@ export class GoTemplateAdapter extends BaseAdapter {
       if (!eqPred) return null
       const func = expr.method === 'find' ? 'bf_find' : 'bf_find_index'
       return `${func} ${arrayExpr} "${eqPred.field}" ${eqPred.value}`
+    }
+
+    return null
+  }
+
+  /**
+   * Render find()/findIndex() with complex predicates using {{range}}{{if}}...{{break}} blocks.
+   * Falls back from bf_find/bf_find_index when extractEqualityPredicate returns null.
+   * Reuses renderFilterExpr for condition rendering.
+   *
+   * @param expr - The higher-order find/findIndex expression
+   * @param renderArray - Function to render the array expression
+   * @param propertyAccess - Optional property to access on the found element (for find().property)
+   */
+  private renderFindTemplateBlock(
+    expr: Extract<ParsedExpr, { kind: 'higher-order' }>,
+    renderArray: (e: ParsedExpr) => string,
+    propertyAccess?: string
+  ): string | null {
+    const arrayExpr = renderArray(expr.object)
+    const condition = this.renderFilterExpr(expr.predicate, expr.param)
+    if (condition.includes('[UNSUPPORTED')) return null
+
+    if (expr.method === 'find') {
+      const output = propertyAccess ? `{{.${propertyAccess}}}` : '{{.}}'
+      return `{{range ${arrayExpr}}}{{if ${condition}}}${output}{{break}}{{end}}{{end}}`
+    }
+
+    if (expr.method === 'findIndex') {
+      return `{{range $i, $_ := ${arrayExpr}}}{{if ${condition}}}{{$i}}{{break}}{{end}}{{end}}`
     }
 
     return null
