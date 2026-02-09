@@ -936,10 +936,11 @@ export class GoTemplateAdapter extends BaseAdapter {
     const goExpr = this.convertExpressionToGo(expr.expr)
 
     // If the expression already contains Go template blocks (e.g., {{with ...}}),
-    // don't wrap it again in {{...}} to avoid double-wrapping
+    // don't wrap it again in {{...}} to avoid double-wrapping.
+    // Use comment markers instead of <span> to avoid changing DOM structure.
     if (goExpr.startsWith('{{')) {
       if (expr.reactive && expr.slotId) {
-        return `<span ${this.renderSlotMarker(expr.slotId)}>${goExpr}</span>`
+        return `{{bfComment "expr-start:${expr.slotId}"}}${goExpr}{{bfComment "expr-end:${expr.slotId}"}}`
       }
       return goExpr
     }
