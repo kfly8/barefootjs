@@ -6,6 +6,7 @@
  */
 
 import { createEffect } from './reactive'
+import { registerTemplate } from './template'
 
 // --- unwrap ---
 
@@ -43,7 +44,7 @@ export function findScope(
   // Check if parent is the scope element itself
   // This handles two cases:
   // 1. Scope ID starts with component name (e.g., "AddTodoForm_abc123")
-  // 2. Scope ID is from parent component via initChild (e.g., "TodoApp_xyz_slot_5")
+  // 2. Scope ID is from parent component via initChild (e.g., "TodoApp_xyz_s5")
   //    In this case, initChild already found the correct element, so trust it
   if (parentEl?.dataset?.bfScope) {
     const scopeId = parentEl.dataset.bfScope
@@ -51,7 +52,7 @@ export function findScope(
     // (when initChild passes the scope element directly)
     if (
       scopeId.startsWith(`${name}_`) ||
-      (scopeId.includes('_slot_') && parent !== document)
+      (/_s\d/.test(scopeId) && parent !== document)
     ) {
       // Mark as initialized if not already
       if (!parentEl.hasAttribute('data-bf-init')) {
@@ -519,7 +520,7 @@ export interface BranchConfig {
  * - Condition change: Create new element from template, call branch.bindEvents()
  *
  * @param scope - Component scope element
- * @param id - Conditional slot ID (e.g., 'slot_0')
+ * @param id - Conditional slot ID (e.g., 's0')
  * @param conditionFn - Function that returns current condition value
  * @param whenTrue - Branch config for when condition is true
  * @param whenFalse - Branch config for when condition is false
@@ -738,20 +739,68 @@ export function initChild(
   init(0, childScope, props)
 }
 
+// --- mount ---
+
+/**
+ * Combined component registration + template registration + hydration.
+ * Replaces the three separate calls: registerComponent() + registerTemplate() + hydrate().
+ *
+ * @param name - Component name
+ * @param init - Init function that takes (idx, scope, props)
+ * @param templateFn - Optional template function for client-side creation
+ */
+export function mount(
+  name: string,
+  init: ComponentInitFn,
+  templateFn?: (props: Record<string, unknown>) => string
+): void {
+  registerComponent(name, init)
+  if (templateFn) {
+    registerTemplate(name, templateFn)
+  }
+  hydrate(name, (props, idx, scope) => init(idx, scope, props))
+}
+
+// --- shorthand finders ---
+
+/**
+ * Shorthand for find(scope, '[data-bf="id"]').
+ * Used by compiler-generated code for regular slot element references.
+ *
+ * @param scope - The scope element to search within
+ * @param id - The slot ID (e.g., 's0')
+ * @returns The matching element or null
+ */
+export function $(scope: Element | null, id: string): Element | null {
+  return find(scope, `[data-bf="${id}"]`)
+}
+
+/**
+ * Shorthand for find(scope, '[data-bf-scope$="_id"]').
+ * Used by compiler-generated code for child component scope references.
+ *
+ * @param scope - The scope element to search within
+ * @param id - The slot ID suffix (e.g., 's1')
+ * @returns The matching element or null
+ */
+export function $c(scope: Element | null, id: string): Element | null {
+  return find(scope, `[data-bf-scope$="_${id}"]`)
+}
+
 // --- updateClientMarker ---
 
 /**
  * Update text content for a client marker.
  * Used for @client directive expressions that are evaluated only on the client side.
  *
- * Expects comment marker format: <!--bf-client:slot_X-->
+ * Expects comment marker format: <!--bf-client:sX-->
  * Both GoTemplateAdapter and HonoAdapter output this format for @client directives.
  *
  * A zero-width space (\u200B) is used as a prefix to mark text nodes managed by @client.
  * This allows distinguishing managed text nodes from other content.
  *
  * @param scope - The component scope element to search within
- * @param id - The slot ID (e.g., 'slot_5')
+ * @param id - The slot ID (e.g., 's5')
  * @param value - The value to display (will be converted to string)
  */
 export function updateClientMarker(scope: Element | null, id: string, value: unknown): void {

@@ -44,6 +44,9 @@ export {
   getComponentInit,
   initChild,
   updateClientMarker,
+  mount,
+  $ as $,
+  $c,
   type ComponentInitFn,
   type BranchConfig,
 } from './runtime'

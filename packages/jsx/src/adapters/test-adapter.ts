@@ -141,9 +141,9 @@ export class TestAdapter extends BaseAdapter {
 
     // Generate scope ID
     if (hasClientInteractivity) {
-      // Interactive components: use __bfScope if it contains _slot_ (means parent passes event handlers)
+      // Interactive components: use __bfScope if it contains _sN (means parent passes event handlers)
       // Otherwise, generate unique ID for independent hydration
-      lines.push(`  const __scopeId = (__bfScope?.includes('_slot_') ? __bfScope : null) || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
+      lines.push(`  const __scopeId = (/_s\\d/.test(__bfScope || '') ? __bfScope : null) || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
     } else {
       // Non-interactive components can inherit parent's scope or use fallback
       lines.push(`  const __scopeId = __bfScope || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)

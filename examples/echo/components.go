@@ -270,8 +270,8 @@ type ReactivePropsProps struct {
 	Scripts *bf.ScriptCollector `json:"-"`
 	Count int `json:"count"`
 	Doubled int `json:"doubled"`
-	ReactiveChildSlot6 ReactiveChildProps `json:"-"`
-	ReactiveChildSlot7 ReactiveChildProps `json:"-"`
+	ReactiveChilds6 ReactiveChildProps `json:"-"`
+	ReactiveChilds7 ReactiveChildProps `json:"-"`
 }
 
 // NewReactivePropsProps creates ReactivePropsProps from ReactivePropsInput.
@@ -285,13 +285,13 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 		ScopeID: scopeID,
 		Count: 0,
 		Doubled: 0 * 2,
-		ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{
-			ScopeID: scopeID + "_slot_6",
+		ReactiveChilds6: NewReactiveChildProps(ReactiveChildInput{
+			ScopeID: scopeID + "_s6",
 			Value: 0,
 			Label: "Child A",
 		}),
-		ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{
-			ScopeID: scopeID + "_slot_7",
+		ReactiveChilds7: NewReactiveChildProps(ReactiveChildInput{
+			ScopeID: scopeID + "_s7",
 			Value: 0 * 2,
 			Label: "Child B (doubled)",
 		}),
@@ -370,8 +370,8 @@ type PropsReactivityComparisonProps struct {
 	ScopeID string `json:"scopeID"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Count int `json:"count"`
-	PropsStyleChildSlot4 PropsStyleChildProps `json:"-"`
-	DestructuredStyleChildSlot5 DestructuredStyleChildProps `json:"-"`
+	PropsStyleChilds4 PropsStyleChildProps `json:"-"`
+	DestructuredStyleChilds5 DestructuredStyleChildProps `json:"-"`
 }
 
 // NewPropsReactivityComparisonProps creates PropsReactivityComparisonProps from PropsReactivityComparisonInput.
@@ -384,13 +384,13 @@ func NewPropsReactivityComparisonProps(in PropsReactivityComparisonInput) PropsR
 	return PropsReactivityComparisonProps{
 		ScopeID: scopeID,
 		Count: 1,
-		PropsStyleChildSlot4: NewPropsStyleChildProps(PropsStyleChildInput{
-			ScopeID: scopeID + "_slot_4",
+		PropsStyleChilds4: NewPropsStyleChildProps(PropsStyleChildInput{
+			ScopeID: scopeID + "_s4",
 			Value: 1,
 			Label: "Props Style",
 		}),
-		DestructuredStyleChildSlot5: NewDestructuredStyleChildProps(DestructuredStyleChildInput{
-			ScopeID: scopeID + "_slot_5",
+		DestructuredStyleChilds5: NewDestructuredStyleChildProps(DestructuredStyleChildInput{
+			ScopeID: scopeID + "_s5",
 			Value: 1,
 			Label: "Destructured",
 		}),

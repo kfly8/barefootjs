@@ -279,15 +279,14 @@ export function generateElementRefs(ctx: ClientJsContext): string {
 
   const refLines: string[] = []
 
-  // Regular element slots use data-bf; find() also searches sibling scopes
+  // Regular element slots use $() shorthand for find(scope, '[data-bf="id"]')
   for (const slotId of regularSlots) {
-    refLines.push(`  const _${slotId} = find(__scope, '[data-bf="${slotId}"]')`)
+    refLines.push(`  const _${slotId} = $(__scope, '${slotId}')`)
   }
 
-  // Component slots use data-bf-scope suffix matching; find() handles cases
-  // where the scope element itself is the target (no wrapper element)
+  // Component slots use $c() shorthand for find(scope, '[data-bf-scope$="_id"]')
   for (const slotId of componentSlots) {
-    refLines.push(`  const _${slotId} = find(__scope, '[data-bf-scope$="_${slotId}"]')`)
+    refLines.push(`  const _${slotId} = $c(__scope, '${slotId}')`)
   }
 
   return refLines.join('\n')

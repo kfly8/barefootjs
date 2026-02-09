@@ -63,11 +63,14 @@ func FuncMap() template.FuncMap {
 }
 
 // IsChild returns "data-bf-child" if the scopeID indicates a child component.
-// Child components have scopeIDs that contain "_slot_" (e.g., "Parent_abc123_slot_4").
+// Child components have scopeIDs that contain "_sN" pattern (e.g., "Parent_abc123_s4").
 // This marker tells the hydration system to skip auto-hydration and let the parent initialize.
 func IsChild(scopeID string) template.HTMLAttr {
-	if strings.Contains(scopeID, "_slot_") {
-		return template.HTMLAttr("data-bf-child")
+	// Check for _s followed by a digit (slot pattern)
+	for i := 0; i < len(scopeID)-2; i++ {
+		if scopeID[i] == '_' && scopeID[i+1] == 's' && scopeID[i+2] >= '0' && scopeID[i+2] <= '9' {
+			return template.HTMLAttr("data-bf-child")
+		}
 	}
 	return ""
 }
