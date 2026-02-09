@@ -45,12 +45,12 @@
 - [Context API](./components/context-api.md) — Sharing state with `createContext` / `useContext`
 - [Portals](./components/portals.md) — Rendering elements outside their parent DOM hierarchy
 
-### 7. Adapters
+### 7. [Adapters](./adapters.md)
 
-- Adapter Architecture
-- Hono Adapter
-- Go Template Adapter
-- Writing a Custom Adapter
+- [Adapter Architecture](./adapters/adapter-architecture.md) — How adapters work, the `TemplateAdapter` interface, and the IR contract
+- [Hono Adapter](./adapters/hono-adapter.md) — Configuration and output format for Hono / JSX-based servers
+- [Go Template Adapter](./adapters/go-template-adapter.md) — Configuration and output format for Go `html/template`
+- [Writing a Custom Adapter](./adapters/custom-adapter.md) — Step-by-step guide to implementing your own adapter
 
 ### 8. UI Components
 
