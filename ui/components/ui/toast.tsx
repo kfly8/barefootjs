@@ -305,24 +305,20 @@ function ToastDescription({ class: className = '', children }: ToastDescriptionP
  * Props for ToastClose component.
  */
 interface ToastCloseProps {
-  /** Additional click handler (called before dismiss) */
-  onClick?: () => void
   /** Additional CSS classes */
   class?: string
 }
 
 /**
  * Close button for the toast.
- * Uses ToastContext to auto-dismiss on click.
- *
- * @param props.onClick - Additional click handler
+ * Uses ToastContext to dismiss on click. No additional handler —
+ * its only responsibility is dismissing the toast.
  */
 function ToastClose(props: ToastCloseProps) {
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(ToastContext)
 
     el.addEventListener('click', () => {
-      props.onClick?.()
       ctx.dismiss()
     })
   }

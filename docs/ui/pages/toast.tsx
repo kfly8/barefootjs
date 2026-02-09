@@ -214,13 +214,7 @@ const toastDescriptionProps: PropDefinition[] = [
   },
 ]
 
-const toastCloseProps: PropDefinition[] = [
-  {
-    name: 'onClick',
-    type: '() => void',
-    description: 'Additional click handler called before dismiss.',
-  },
-]
+const toastCloseProps: PropDefinition[] = []
 
 const toastActionProps: PropDefinition[] = [
   {
