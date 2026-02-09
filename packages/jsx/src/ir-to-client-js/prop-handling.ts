@@ -15,14 +15,11 @@ import type { ClientJsContext } from './types'
 export function expandDynamicPropValue(value: string, ctx: ClientJsContext): string {
   const trimmedValue = value.trim()
 
-  // Check if value is a simple identifier that matches a local constant
   const constant = ctx.localConstants.find((c) => c.name === trimmedValue)
   if (constant) {
-    // Expand the constant's value
     return constant.value
   }
 
-  // Return value as-is (no transformation needed per spec)
   return value
 }
 
@@ -37,26 +34,20 @@ export function valueReferencesReactiveData(
   let usesSignals = false
   let usesMemos = false
 
-  // Check for props references
   for (const prop of ctx.propsParams) {
-    const pattern = new RegExp(`\\b${prop.name}\\b`)
-    if (pattern.test(value)) {
+    if (new RegExp(`\\b${prop.name}\\b`).test(value)) {
       usedProps.push(prop.name)
     }
   }
 
-  // Check for signal getter calls
   for (const signal of ctx.signals) {
-    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
-    if (pattern.test(value)) {
+    if (new RegExp(`\\b${signal.getter}\\s*\\(`).test(value)) {
       usesSignals = true
     }
   }
 
-  // Check for memo calls
   for (const memo of ctx.memos) {
-    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
-    if (pattern.test(value)) {
+    if (new RegExp(`\\b${memo.name}\\s*\\(`).test(value)) {
       usesMemos = true
     }
   }
@@ -87,32 +78,25 @@ export function getControlledPropName(
   propsParams: ParamInfo[]
 ): string | null {
   const initialValue = signal.initialValue.trim()
-
-  // Helper to check if prop is a "default*" prop (initial value, not controlled)
   const isDefaultProp = (propName: string) => propName.startsWith('default')
 
-  // Pattern 1: Direct props.X reference
-  // e.g., props.checked
+  // Direct props.X reference (e.g., props.checked)
   const propsMatch = initialValue.match(/^props\.(\w+)$/)
   if (propsMatch) {
     const propName = propsMatch[1]
-    // Verify it's actually a prop and not a default* prop
     if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
       return propName
     }
   }
 
-  // Pattern 2: Simple prop name (will be a prop parameter)
-  // e.g., checked in createSignal(checked)
-  // Note: This only matches simple identifiers, not function calls
+  // Simple prop name (e.g., checked in createSignal(checked))
   if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(initialValue)) {
     if (propsParams.some((p) => p.name === initialValue) && !isDefaultProp(initialValue)) {
       return initialValue
     }
   }
 
-  // Pattern 3: Prop with nullish coalescing
-  // e.g., checked ?? false, value ?? ""
+  // Prop with nullish coalescing (e.g., checked ?? false)
   const nullishMatch = initialValue.match(/^(\w+)\s*\?\?\s*.+$/)
   if (nullishMatch) {
     const propName = nullishMatch[1]
@@ -133,35 +117,22 @@ export function detectPropsWithPropertyAccess(
   neededConstants: ConstantInfo[]
 ): Set<string> {
   const result = new Set<string>()
-
-  // Collect all source code that might reference props with property access
   const sources: string[] = []
 
-  // From conditional templates
   for (const elem of ctx.conditionalElements) {
-    sources.push(elem.whenTrueHtml)
-    sources.push(elem.whenFalseHtml)
-    sources.push(elem.condition)
+    sources.push(elem.whenTrueHtml, elem.whenFalseHtml, elem.condition)
   }
-
-  // From loop templates
   for (const elem of ctx.loopElements) {
     sources.push(elem.template)
   }
-
-  // From dynamic expressions
   for (const elem of ctx.dynamicElements) {
     sources.push(elem.expression)
   }
-
-  // From needed constants
   for (const constant of neededConstants) {
     sources.push(constant.value)
   }
 
-  // Check each prop for property access pattern
   for (const prop of ctx.propsParams) {
-    // Look for patterns like: propName.something or propName['something']
     const dotPattern = new RegExp(`\\b${prop.name}\\.[a-zA-Z_]`)
     const bracketPattern = new RegExp(`\\b${prop.name}\\s*\\[`)
 

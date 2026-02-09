@@ -10,7 +10,6 @@ import { toHtmlAttrName, attrValueToString } from './utils'
 export function irToHtmlTemplate(node: IRNode): string {
   switch (node.type) {
     case 'element': {
-      // Build attributes, including data-bf marker if element has slotId
       const attrParts = node.attrs
         .map((a) => {
           if (a.name === '...') return ''
@@ -24,7 +23,6 @@ export function irToHtmlTemplate(node: IRNode): string {
         })
         .filter(Boolean)
 
-      // Add data-bf marker if element has a slotId
       if (node.slotId) {
         attrParts.push(`data-bf="${node.slotId}"`)
       }
@@ -43,7 +41,6 @@ export function irToHtmlTemplate(node: IRNode): string {
 
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
-      // Wrap expression in span with data-bf marker if it has a slotId
       if (node.slotId) {
         return `<span data-bf="${node.slotId}">\${${node.expr}}</span>`
       }
@@ -74,11 +71,9 @@ export function irToHtmlTemplate(node: IRNode): string {
     }
 
     case 'loop':
-      // Nested loops - render children
       return node.children.map(irToHtmlTemplate).join('')
 
     case 'if-statement':
-      // Compile-time if-statement: both branches handled at SSR level
       return ''
 
     case 'provider':
@@ -94,11 +89,10 @@ export function irToHtmlTemplate(node: IRNode): string {
  * This ensures cond() can find the element for subsequent swaps.
  */
 export function addCondAttrToTemplate(html: string, condId: string): string {
-  // Element: add data-bf-cond attribute
   if (/^<\w+/.test(html)) {
     return html.replace(/^(<\w+)(\s|>)/, `$1 data-bf-cond="${condId}"$2`)
   }
-  // Text: use comment markers
+  // Text nodes use comment markers instead of attributes
   return `<!--bf-cond-start:${condId}-->${html}<!--bf-cond-end:${condId}-->`
 }
 
@@ -114,18 +108,11 @@ export function addCondAttrToTemplate(html: string, condId: string): string {
  * @param propNames - Set of prop names to prefix with 'props.'
  */
 export function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
-  // Helper to transform expressions to use props.propName
   const transformExpr = (expr: string): string => {
-    // Replace prop references with props.propName
-    // Only match when the prop is used as an identifier (followed by . or [ or end of expression)
-    // Don't match inside string literals (preceded by ' or ")
     let result = expr
     for (const propName of propNames) {
-      // Match propName when:
-      // - Not already prefixed with 'props.'
-      // - Not inside a string literal (not preceded by ' or ")
-      // - Followed by property access (.), index access ([), method call (, or end of expression context
-      // This prevents matching 'todo' in 'todo-item' class names
+      // Match propName as identifier followed by property/index/call access,
+      // but not already prefixed with 'props.' or inside string literals
       const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?=[.\\[()])`, 'g')
       result = result.replace(pattern, `props.${propName}`)
     }
@@ -150,7 +137,6 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
         })
         .filter(Boolean)
 
-      // Add data-bf marker if element has a slotId (for client-side event binding)
       if (node.slotId) {
         attrParts.push(`data-bf="${node.slotId}"`)
       }
@@ -169,7 +155,6 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
 
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
-      // Wrap expression in span with data-bf marker if it has a slotId
       if (node.slotId) {
         return `<span data-bf="${node.slotId}">\${${transformExpr(node.expr)}}</span>`
       }
@@ -178,7 +163,6 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
     case 'conditional': {
       const trueBranch = irToComponentTemplate(node.whenTrue, propNames)
       const falseBranch = irToComponentTemplate(node.whenFalse, propNames)
-      // Add data-bf-cond attribute to each branch for conditional swapping
       const trueHtml = node.slotId ? addCondAttrToTemplate(trueBranch, node.slotId) : trueBranch
       const falseHtml = node.slotId ? addCondAttrToTemplate(falseBranch, node.slotId) : falseBranch
       return `\${${transformExpr(node.condition)} ? \`${trueHtml}\` : \`${falseHtml}\`}`
@@ -188,12 +172,10 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
       return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
 
     case 'component': {
-      // Portal is a special pass-through component - render its children directly
       if (node.name === 'Portal') {
         return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
       }
 
-      // Nested components render as placeholders
       const keyProp = node.props.find((p) => p.name === 'key')
       const keyAttr = keyProp ? ` data-key="\${${transformExpr(keyProp.value)}}"` : ''
       return `<div${keyAttr} data-bf-scope="${node.name}_\${Math.random().toString(36).slice(2, 8)}"></div>`
@@ -203,7 +185,6 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
       return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
 
     case 'if-statement':
-      // Compile-time if-statement: both branches handled at SSR level
       return ''
 
     case 'provider':
@@ -227,24 +208,18 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
 export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>): boolean {
   switch (node.type) {
     case 'loop':
-      // Loops use signal arrays which aren't available at module scope
       return false
 
     case 'component':
-      // Child components can't be fully represented in static templates
       return false
 
     case 'expression':
-      // Check if expression references non-prop variables with function calls
-      // e.g., todos().length or todos().filter(...) would fail
-      // Only allow: prop references (todo.done) or static values
       if (node.expr.includes('()') && !isSimplePropExpression(node.expr, propNames)) {
         return false
       }
       return true
 
     case 'element':
-      // Check all children and dynamic attributes
       for (const attr of node.attrs) {
         if (attr.dynamic && attr.value) {
           const valueStr = attrValueToString(attr.value)
@@ -256,7 +231,6 @@ export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>):
       return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
 
     case 'conditional':
-      // Check condition and both branches
       if (node.condition.includes('()') && !isSimplePropExpression(node.condition, propNames)) {
         return false
       }
@@ -267,7 +241,6 @@ export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>):
       return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
 
     case 'if-statement':
-      // Check both branches of the if-statement
       if (!canGenerateStaticTemplate(node.consequent, propNames)) {
         return false
       }
@@ -293,16 +266,11 @@ export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>):
  * Non-prop expressions call signals: todos(), todos().length, todos().filter(...)
  */
 export function isSimplePropExpression(expr: string, propNames: Set<string>): boolean {
-  // Extract the root identifier (before any . or [ or ()
   const match = expr.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)/)
-  if (!match) return true // Not an identifier, probably a literal
+  if (!match) return true
 
   const rootIdent = match[1]
-
-  // If the root is a prop, it's safe (props are passed to the template function)
   if (propNames.has(rootIdent)) return true
-
-  // If it contains () and root is not a prop, it's a signal call
   if (expr.includes('()')) return false
 
   return true

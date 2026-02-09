@@ -47,13 +47,10 @@ export function emitPropsExtraction(
       if (defaultVal) {
         lines.push(`  const ${propName} = props.${propName} ?? ${defaultVal}`)
       } else if (propsUsedAsLoopArrays.has(propName)) {
-        // Prop is used as loop array - provide [] as default
         lines.push(`  const ${propName} = props.${propName} ?? []`)
       } else if (propsWithPropertyAccess.has(propName)) {
-        // Prop is used with property access - provide {} as default
         lines.push(`  const ${propName} = props.${propName} ?? {}`)
       } else if (prop?.optional && prop?.type) {
-        // Provide sensible defaults for optional props without explicit defaults
         const inferredDefault = inferDefaultValue(prop.type)
         if (inferredDefault !== 'undefined') {
           lines.push(`  const ${propName} = props.${propName} ?? ${inferredDefault}`)
@@ -87,21 +84,16 @@ export function emitSignalsAndMemos(
   lateConstants: ConstantInfo[]
 ): void {
   for (const signal of ctx.signals) {
-    // Determine initial value for the signal
     let initialValue: string
     if (signal.initialValue.startsWith('props.')) {
-      // Already prefixed with props.
       initialValue = `${signal.initialValue} ?? ${inferDefaultValue(signal.type)}`
     } else {
-      // Check if controlled
       const controlled = controlledSignals.find(c => c.signal === signal)
       if (controlled) {
-        // Signal is initialized from a prop - use props.propName accessor
         const prop = ctx.propsParams.find(p => p.name === controlled.propName)
         const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
         initialValue = `props.${controlled.propName} ?? ${defaultVal}`
       } else {
-        // Not a prop reference - use literal initial value
         initialValue = signal.initialValue
       }
     }
@@ -109,8 +101,6 @@ export function emitSignalsAndMemos(
     lines.push(`  const [${signal.getter}, ${signal.setter}] = createSignal(${initialValue})`)
   }
 
-  // Generate sync effects for controlled signals
-  // This ensures parent prop changes are reflected in the internal signal
   for (const { signal, propName } of controlledSignals) {
     const prop = ctx.propsParams.find(p => p.name === propName)
     const accessor = prop?.defaultValue
@@ -123,13 +113,11 @@ export function emitSignalsAndMemos(
     lines.push(`  })`)
   }
 
-  // Memo declarations
   for (const memo of ctx.memos) {
     const jsComputation = stripTypeScriptSyntax(memo.computation)
     lines.push(`  const ${memo.name} = createMemo(${jsComputation})`)
   }
 
-  // Late constants (depend on signals/memos)
   for (const constant of lateConstants) {
     const jsValue = stripTypeScriptSyntax(constant.value)
     lines.push(`  const ${constant.name} = ${jsValue}`)
@@ -149,7 +137,6 @@ export function emitFunctionsAndHandlers(
   usedFunctions: Set<string>,
   neededProps: Set<string>
 ): void {
-  // Local functions used as event handlers or called within expressions
   for (const fn of ctx.localFunctions) {
     if (usedIdentifiers.has(fn.name)) {
       const paramStr = fn.params.map((p) => p.name).join(', ')
@@ -159,7 +146,6 @@ export function emitFunctionsAndHandlers(
     }
   }
 
-  // Arrow function constants used as handlers
   for (const constant of ctx.localConstants) {
     if (outputConstants.has(constant.name)) continue
     if (usedIdentifiers.has(constant.name)) {
@@ -172,7 +158,6 @@ export function emitFunctionsAndHandlers(
     }
   }
 
-  // Props-based event handlers (e.g., onClick from props)
   const localNames = new Set([
     ...ctx.localFunctions.map((f) => f.name),
     ...ctx.localConstants.map((c) => c.name),
@@ -227,7 +212,6 @@ export function emitClientOnlyExpressions(lines: string[], ctx: ClientJsContext)
 /** Emit createEffect blocks that sync reactive attribute values (class, value, checked, etc.). */
 export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsContext): void {
   if (ctx.reactiveAttrs.length > 0) {
-    // Group by slot to update multiple attrs together
     const attrsBySlot = new Map<string, typeof ctx.reactiveAttrs>()
     for (const attr of ctx.reactiveAttrs) {
       if (!attrsBySlot.has(attr.slotId)) {
@@ -257,52 +241,59 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
   }
 }
 
+/**
+ * Emit find() + event binding + ref callbacks for a conditional branch.
+ * Used by both emitConditionalUpdates and emitClientOnlyConditionals.
+ */
+function emitBranchBindings(
+  lines: string[],
+  events: ConditionalBranchEvent[],
+  refs: ConditionalBranchRef[],
+  eventPropFn: (eventName: string) => string
+): void {
+  const allSlotIds = new Set<string>()
+  for (const event of events) allSlotIds.add(event.slotId)
+  for (const ref of refs) allSlotIds.add(ref.slotId)
+
+  const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
+  for (const event of events) {
+    if (!eventsBySlot.has(event.slotId)) {
+      eventsBySlot.set(event.slotId, [])
+    }
+    eventsBySlot.get(event.slotId)!.push(event)
+  }
+
+  for (const slotId of allSlotIds) {
+    lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
+  }
+
+  for (const [slotId, slotEvents] of eventsBySlot) {
+    for (const event of slotEvents) {
+      const wrappedHandler = wrapHandlerInBlock(event.handler)
+      lines.push(`      if (_${slotId}) _${slotId}.${eventPropFn(event.eventName)} = ${wrappedHandler}`)
+    }
+  }
+
+  for (const ref of refs) {
+    lines.push(`      if (_${ref.slotId}) (${ref.callback})(_${ref.slotId})`)
+  }
+}
+
 /** Emit insert() calls for server-rendered reactive conditionals with branch configs. */
 export function emitConditionalUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.conditionalElements) {
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
     const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
-    const condition = elem.condition
 
-    const generateBindEvents = (events: ConditionalBranchEvent[], refs: ConditionalBranchRef[]) => {
-      const allSlotIds = new Set<string>()
-      for (const event of events) allSlotIds.add(event.slotId)
-      for (const ref of refs) allSlotIds.add(ref.slotId)
-
-      const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
-      for (const event of events) {
-        if (!eventsBySlot.has(event.slotId)) {
-          eventsBySlot.set(event.slotId, [])
-        }
-        eventsBySlot.get(event.slotId)!.push(event)
-      }
-
-      for (const slotId of allSlotIds) {
-        lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
-      }
-
-      for (const [slotId, slotEvents] of eventsBySlot) {
-        for (const event of slotEvents) {
-          const wrappedHandler = wrapHandlerInBlock(event.handler)
-          lines.push(`      if (_${slotId}) _${slotId}.${toDomEventProp(event.eventName)} = ${wrappedHandler}`)
-        }
-      }
-
-      for (const ref of refs) {
-        lines.push(`      if (_${ref.slotId}) (${ref.callback})(_${ref.slotId})`)
-      }
-    }
-
-    lines.push(`  insert(__scope, '${elem.slotId}', () => ${condition}, {`)
+    lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenTrueEvents, elem.whenTrueRefs)
+    emitBranchBindings(lines, elem.whenTrueEvents, elem.whenTrueRefs, toDomEventProp)
     lines.push(`    }`)
     lines.push(`  }, {`)
-
     lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenFalseEvents, elem.whenFalseRefs)
+    emitBranchBindings(lines, elem.whenFalseEvents, elem.whenFalseRefs, toDomEventProp)
     lines.push(`    }`)
     lines.push(`  })`)
     lines.push('')
@@ -314,46 +305,18 @@ export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext
   for (const elem of ctx.clientOnlyConditionals) {
     const whenTrueWithCond = addCondAttrToTemplate(elem.whenTrueHtml, elem.slotId)
     const whenFalseWithCond = addCondAttrToTemplate(elem.whenFalseHtml, elem.slotId)
-
-    const generateBindEvents = (events: ConditionalBranchEvent[], refs: ConditionalBranchRef[]) => {
-      const allSlotIds = new Set<string>()
-      for (const event of events) allSlotIds.add(event.slotId)
-      for (const ref of refs) allSlotIds.add(ref.slotId)
-
-      const eventsBySlot = new Map<string, ConditionalBranchEvent[]>()
-      for (const event of events) {
-        if (!eventsBySlot.has(event.slotId)) {
-          eventsBySlot.set(event.slotId, [])
-        }
-        eventsBySlot.get(event.slotId)!.push(event)
-      }
-
-      for (const slotId of allSlotIds) {
-        lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
-      }
-
-      for (const [slotId, slotEvents] of eventsBySlot) {
-        for (const event of slotEvents) {
-          const wrappedHandler = wrapHandlerInBlock(event.handler)
-          lines.push(`      if (_${slotId}) _${slotId}.on${event.eventName} = ${wrappedHandler}`)
-        }
-      }
-
-      for (const ref of refs) {
-        lines.push(`      if (_${ref.slotId}) (${ref.callback})(_${ref.slotId})`)
-      }
-    }
+    const rawEventProp = (eventName: string) => `on${eventName}`
 
     lines.push(`  // @client conditional: ${elem.slotId}`)
     lines.push(`  insert(__scope, '${elem.slotId}', () => ${elem.condition}, {`)
     lines.push(`    template: () => \`${whenTrueWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenTrueEvents, elem.whenTrueRefs)
+    emitBranchBindings(lines, elem.whenTrueEvents, elem.whenTrueRefs, rawEventProp)
     lines.push(`    }`)
     lines.push(`  }, {`)
     lines.push(`    template: () => \`${whenFalseWithCond}\`,`)
     lines.push(`    bindEvents: (__branchScope) => {`)
-    generateBindEvents(elem.whenFalseEvents, elem.whenFalseRefs)
+    emitBranchBindings(lines, elem.whenFalseEvents, elem.whenFalseRefs, rawEventProp)
     lines.push(`    }`)
     lines.push(`  })`)
     lines.push('')
@@ -363,9 +326,7 @@ export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext
 /** Emit reconcileList calls for dynamic loops, and static array child initialization. */
 export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.loopElements) {
-    // Static prop arrays don't need reconcileList - SSR elements are hydrated directly
     if (elem.isStaticArray) {
-      // Static prop array - SSR elements are already rendered
       if (elem.childComponent) {
         const { name } = elem.childComponent
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
@@ -379,7 +340,6 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         lines.push('')
       }
 
-      // Initialize nested components
       if (elem.nestedComponents && elem.nestedComponents.length > 0) {
         for (const comp of elem.nestedComponents) {
           const propsEntries = comp.props.map((p) => {
@@ -449,7 +409,6 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
     }
     lines.push('')
 
-    // Event delegation for loop child events (only for template string mode)
     if (!elem.childComponent && elem.childEvents.length > 0) {
       const eventsByName = new Map<string, typeof elem.childEvents>()
       for (const ev of elem.childEvents) {
@@ -663,7 +622,6 @@ export function emitRegistrationAndHydration(
   lines.push(`registerComponent('${name}', init${name})`)
   lines.push('')
 
-  // Register template for client-side component creation
   const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate)

@@ -12,11 +12,8 @@ import { generateInitFunction } from './generate-init'
 /** Public entry point: IR → client JS string. Returns '' if no client JS is needed. */
 export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
   const ctx = createContext(ir)
-
-  // Collect all interactive/dynamic elements from IR
   collectElements(ir.root, ctx)
 
-  // Check if client JS is needed
   if (!needsClientJs(ctx)) {
     return ''
   }

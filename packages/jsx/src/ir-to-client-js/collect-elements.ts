@@ -21,13 +21,11 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
 
     case 'expression':
       if (node.clientOnly && node.slotId) {
-        // Client-only: uses comment marker, evaluated via updateClientMarker()
         ctx.clientOnlyElements.push({
           slotId: node.slotId,
           expression: node.expr,
         })
       } else if (node.reactive && node.slotId) {
-        // Normal reactive: uses <span data-bf>
         ctx.dynamicElements.push({
           slotId: node.slotId,
           expression: node.expr,
@@ -38,7 +36,6 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
 
     case 'conditional':
       if (node.clientOnly && node.slotId) {
-        // Client-only conditional: uses comment markers, evaluated on client via insert()
         const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
         const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
         const whenTrueRefs = collectConditionalBranchRefs(node.whenTrue)
@@ -54,8 +51,6 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           whenFalseRefs,
         })
       } else if (node.reactive && node.slotId) {
-        // Normal reactive conditional: server renders initial state
-        // Collect events and refs from each branch for use with insert()
         const whenTrueEvents = collectConditionalBranchEvents(node.whenTrue)
         const whenFalseEvents = collectConditionalBranchEvents(node.whenFalse)
         const whenTrueRefs = collectConditionalBranchRefs(node.whenTrue)
@@ -80,7 +75,6 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
 
     case 'loop':
       if (node.slotId) {
-        // Collect event handlers from loop children for function extraction
         const childHandlers: string[] = []
         const childEvents: LoopChildEvent[] = []
         for (const child of node.children) {
@@ -88,7 +82,6 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           childEvents.push(...collectLoopChildEvents(child))
         }
 
-        // Also extract identifiers from childComponent props if present
         if (node.childComponent) {
           for (const prop of node.childComponent.props) {
             if (prop.isEventHandler) {
@@ -127,13 +120,10 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       break
 
     case 'component':
-      // Check for event handlers and reactive props on component
       if (node.slotId) {
-        // Event handlers need to be attached to the component's rendered root element
         const componentEvents: IREvent[] = []
         for (const prop of node.props) {
           if (prop.name.startsWith('on') && prop.name.length > 2) {
-            // Convert onClick to click, onSubmit to submit, etc.
             const eventName = prop.name[2].toLowerCase() + prop.name.slice(3)
             componentEvents.push({
               name: eventName,
@@ -143,8 +133,6 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           }
         }
         if (componentEvents.length > 0) {
-          // Use the component's slotId to find the rendered element
-          // Component slots use data-bf-scope instead of data-bf
           ctx.interactiveElements.push({
             slotId: node.slotId,
             events: componentEvents,
@@ -152,16 +140,12 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           })
         }
 
-        // Check for reactive props (props that call signal/memo getters)
-        // These need effects to update the element when values change
+        // Reactive props need effects to update the element when values change
         for (const prop of node.props) {
-          // Skip event handlers
           if (prop.name.startsWith('on') && prop.name.length > 2) continue
-          // Check if prop value is a function call that matches a memo name
           const value = prop.value
           if (value.endsWith('()')) {
             const fnName = value.slice(0, -2)
-            // Check if it's a memo or signal getter
             const isMemo = ctx.memos.some((m) => m.name === fnName)
             const isSignalGetter = ctx.signals.some((s) => s.getter === fnName)
             if (isMemo || isSignalGetter) {
@@ -176,12 +160,9 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
         }
       }
 
-      // Build propsExpr from component props for parent-child communication
       const propsForInit: string[] = []
       for (const prop of node.props) {
-        // Skip spread/rest props (can't be represented as property definitions)
         if (prop.name === '...' || prop.name.startsWith('...')) continue
-        // Event handlers (on*) passed directly to child
         const isEventHandler =
           prop.name.startsWith('on') &&
           prop.name.length > 2 &&
@@ -189,17 +170,12 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
         if (isEventHandler) {
           propsForInit.push(`${prop.name}: ${prop.value}`)
         } else if (prop.dynamic) {
-          // Dynamic props wrapped in getters for reactivity (SolidJS-style)
-          // Expand constant references and replace prop references with props.xxx pattern
           const expandedValue = expandDynamicPropValue(prop.value, ctx)
           propsForInit.push(`get ${prop.name}() { return ${expandedValue} }`)
 
-          // If the expanded value references props OR reactive expressions (signals/memos),
-          // add to reactiveChildProps so we can generate createEffect to update the child's DOM attribute
           const hasPropsRef = expandedValue.includes('props.')
           const hasReactiveExpr = isReactiveExpression(expandedValue, ctx)
           if (hasPropsRef || hasReactiveExpr) {
-            // Map prop name to DOM attribute name
             const attrName = prop.name === 'className' ? 'class' : prop.name
             ctx.reactiveChildProps.push({
               componentName: node.name,
@@ -210,10 +186,8 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
             })
           }
         } else if (prop.isLiteral) {
-          // String literal from JSX attribute (e.g., value="account")
           propsForInit.push(`${prop.name}: ${JSON.stringify(prop.value)}`)
         } else {
-          // Variable reference or function call (non-dynamic, non-literal)
           propsForInit.push(`${prop.name}: ${prop.value}`)
         }
       }
@@ -257,7 +231,6 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
 
 /** Extract events, refs, and reactive attributes from a single IR element into ctx. */
 function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideConditional = false): void {
-  // Events
   if (element.events.length > 0 && element.slotId) {
     ctx.interactiveElements.push({
       slotId: element.slotId,
@@ -265,7 +238,6 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
     })
   }
 
-  // Refs
   if (element.ref && element.slotId) {
     ctx.refElements.push({
       slotId: element.slotId,
@@ -273,17 +245,13 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
     })
   }
 
-  // Reactive attributes (attributes that depend on signals/memos)
   if (element.slotId) {
     for (const attr of element.attrs) {
       if (attr.dynamic && attr.value) {
-        // Convert IRTemplateLiteral to string for reactivity checking
         const valueStr = attrValueToString(attr.value)
         if (!valueStr) continue
 
-        // Check if the attribute value references any signal getters or memos
-        const isReactive = isReactiveExpression(valueStr, ctx)
-        if (isReactive) {
+        if (isReactiveExpression(valueStr, ctx)) {
           ctx.reactiveAttrs.push({
             slotId: element.slotId,
             attrName: attr.name,
