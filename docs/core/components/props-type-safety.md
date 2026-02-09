@@ -91,29 +91,4 @@ function Card(props: { title: string; children?: Child } & HTMLAttributes) {
 
 ## Type Preservation
 
-The compiler captures the full TypeScript type information for props and carries it through the IR. Adapters use this information to generate type-safe output:
-
-<!-- tabs:adapter -->
-<!-- tab:Hono -->
-```tsx
-// Props types are preserved in the Hono template
-export function Greeting(props: { name: string; greeting?: string }) {
-  return <h1 data-bf-scope="Greeting">{props.greeting ?? 'Hello'}, {props.name}</h1>
-}
-```
-<!-- tab:Go Template -->
-```go
-// _types.go — Generated struct with correct Go types
-type GreetingProps struct {
-    Name     string  `json:"name"`
-    Greeting *string `json:"greeting,omitempty"`
-}
-```
-```go-template
-{{define "Greeting"}}
-<h1 data-bf-scope="{{.ScopeID}}">{{with .Greeting}}{{.}}{{else}}Hello{{end}}, {{.Name}}</h1>
-{{end}}
-```
-<!-- /tabs -->
-
-TypeScript `string` maps to Go `string`, `number` maps to `float64`, optional props map to pointer types, and union types map to Go type aliases. This means a type error in your JSX source is caught at compile time, and the generated server code is also type-safe.
+The compiler captures TypeScript type information for props and carries it through the IR. Each adapter uses this information to generate type-safe server output. For details on how types are mapped to specific backends, see [Adapters](../adapters.md).
