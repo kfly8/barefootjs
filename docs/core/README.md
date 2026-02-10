@@ -52,27 +52,12 @@
 - [Go Template Adapter](./adapters/go-template-adapter.md) — Configuration and output format for Go `html/template`
 - [Writing a Custom Adapter](./adapters/custom-adapter.md) — Step-by-step guide to implementing your own adapter
 
-### 8. [UI Components](./ui-components.md)
-
-- Architecture & Design Philosophy
-- Installation (`barefoot add`)
-- Component Patterns (`asChild`, Controlled/Uncontrolled)
-- Theming & Customization
-- Component API & Demos → [ui.barefootjs.dev](https://ui.barefootjs.dev)
-
-### 9. [Advanced](./advanced.md)
+### 8. [Advanced](./advanced.md)
 
 - [IR Schema Reference](./advanced/ir-schema.md) — Node types, metadata, hydration markers
 - [Compiler Internals](./advanced/compiler-internals.md) — Pipeline phases, reactivity analysis, code generation
 - [Error Codes Reference](./advanced/error-codes.md) — All BF001–BF043 errors with solutions
 - [Performance Optimization](./advanced/performance.md) — Minimal client JS, fast hydration, efficient reactivity
-
-### 10. [Guides](./guides.md)
-
-- [Migrating from React](./guides/migrating-from-react.md) — Key differences and step-by-step migration
-- [Using with Go Backend](./guides/go-backend.md) — Go `html/template` integration
-- [Deploying to Cloudflare Workers](./guides/cloudflare-workers.md) — Hono on the edge
-- [Building a Todo App](./guides/todo-app.md) — End-to-end tutorial
 
 ---
 

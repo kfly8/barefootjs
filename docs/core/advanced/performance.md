@@ -62,41 +62,9 @@ const [items, setItems] = createSignal([...])
 {items().map(item => <Item key={item.id} data={item} />)}
 ```
 
-### Move Filter/Sort to Server
-
-When possible, use filter/sort patterns the compiler can evaluate server-side:
-
-```tsx
-// ✅ Server-side filter — no client JS for the filter logic
-{items().filter(i => i.active).map(i => <Item key={i.id} data={i} />)}
-
-// ❌ Client-only — entire filter runs in the browser
-{/* @client */ items().filter(i => i.tags.some(t => t.featured)).map(...)}
-```
-
 ---
 
 ## Optimizing Hydration
-
-### Reduce Scope Nesting
-
-Deeply nested component hierarchies increase `findScope()` traversal. Flatten where possible:
-
-```tsx
-// ❌ Deeply nested — many scopes to traverse
-<Layout>
-  <Sidebar>
-    <NavGroup>
-      <NavItem />  // 4 scopes deep
-    </NavGroup>
-  </Sidebar>
-</Layout>
-
-// ✅ Flatter — fewer scopes
-<Layout>
-  <Sidebar items={navItems} />  // Sidebar renders items directly
-</Layout>
-```
 
 ### Use Keys for List Reconciliation
 
@@ -211,12 +179,3 @@ du -sh dist/components/*.js
 | DOM updates | Fine-grained (signal → element) | Virtual DOM diff | Fine-grained |
 | Runtime size | ~2 KB | ~40 KB | ~7 KB |
 
----
-
-## Checklist
-
-- [ ] Derived values use `createMemo`, not `createEffect` + `createSignal`
-- [ ] Lists have stable `key` props
-- [ ] Filter/sort uses SSR-compatible patterns where possible
-- [ ] `untrack()` used for intentional one-time reads
-- [ ] Component hierarchy is reasonably flat
