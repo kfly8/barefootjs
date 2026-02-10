@@ -7,8 +7,9 @@ import type { ComponentIR } from '../types'
 // All exports from @barefootjs/dom that may be used in generated code
 export const DOM_IMPORT_CANDIDATES = [
   'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
-  'findScope', 'find', 'hydrate', 'cond', 'insert', 'reconcileList',
+  'findScope', 'hydrate', 'cond', 'insert', 'reconcileList',
   'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
+  'mount',
   'createPortal',
   'provideContext', 'createContext', 'useContext',
 ] as const
@@ -26,6 +27,14 @@ export function detectUsedImports(code: string): Set<string> {
     if (new RegExp(`\\b${name}\\s*\\(`).test(code)) {
       used.add(name)
     }
+  }
+  // Shorthand finders need special detection ($ is not a word character)
+  if (/\$c\s*\(/.test(code)) {
+    used.add('$c')
+  }
+  // Match $( but not $c( - use negative lookahead
+  if (/\$\s*\(/.test(code)) {
+    used.add('$')
   }
   return used
 }

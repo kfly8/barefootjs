@@ -180,21 +180,34 @@ export function emitFunctionsAndHandlers(
 
 /** Emit createEffect blocks that update textContent for reactive expressions. */
 export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): void {
+  // Group elements by expression to consolidate effects with same dependencies
+  const byExpression = new Map<string, typeof ctx.dynamicElements>()
   for (const elem of ctx.dynamicElements) {
-    const expr = elem.expression
-    if (elem.insideConditional) {
-      lines.push(`  createEffect(() => {`)
-      lines.push(`    const __el = find(__scope, '[data-bf="${elem.slotId}"]')`)
-      lines.push(`    const __val = ${expr}`)
-      lines.push(`    if (__el) __el.textContent = String(__val)`)
-      lines.push(`  })`)
-    } else {
-      lines.push(`  createEffect(() => {`)
-      lines.push(`    const __val = ${expr}`)
-      lines.push(`    if (_${elem.slotId}) _${elem.slotId}.textContent = String(__val)`)
-      lines.push(`  })`)
+    const key = elem.expression
+    if (!byExpression.has(key)) {
+      byExpression.set(key, [])
     }
-    lines.push('')
+    byExpression.get(key)!.push(elem)
+  }
+
+  for (const [expr, elems] of byExpression) {
+    // Separate conditional vs non-conditional elements
+    const conditionalElems = elems.filter(e => e.insideConditional)
+    const normalElems = elems.filter(e => !e.insideConditional)
+
+    if (normalElems.length > 0 || conditionalElems.length > 0) {
+      lines.push(`  createEffect(() => {`)
+      lines.push(`    const __val = ${expr}`)
+      for (const elem of normalElems) {
+        lines.push(`    if (_${elem.slotId}) _${elem.slotId}.textContent = String(__val)`)
+      }
+      for (const elem of conditionalElems) {
+        lines.push(`    const __el_${elem.slotId} = $(__scope, '${elem.slotId}')`)
+        lines.push(`    if (__el_${elem.slotId}) __el_${elem.slotId}.textContent = String(__val)`)
+      }
+      lines.push(`  })`)
+      lines.push('')
+    }
   }
 }
 
@@ -264,7 +277,7 @@ function emitBranchBindings(
   }
 
   for (const slotId of allSlotIds) {
-    lines.push(`      const _${slotId} = find(__branchScope, '[data-bf="${slotId}"]')`)
+    lines.push(`      const _${slotId} = $(__branchScope, '${slotId}')`)
   }
 
   for (const [slotId, slotEvents] of eventsBySlot) {
@@ -544,8 +557,8 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       const varSuffix = first.slotId ? first.slotId.replace(/-/g, '_') : first.componentName
       const varName = `__${first.componentName}_${varSuffix}El`
       const selectorBase = first.slotId
-        ? `find(__scope, '[data-bf-scope$="_${first.slotId}"]')`
-        : `find(__scope, '[data-bf-scope^="${first.componentName}_"]')`
+        ? `$c(__scope, '${first.slotId}')`
+        : `$c(__scope, '${first.componentName}')`
       lines.push(`    const ${varName} = ${selectorBase}`)
       lines.push(`    if (${varName}) {`)
       for (const prop of props) {
@@ -607,7 +620,7 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
   }
 }
 
-/** Emit registerComponent() call and hydration bootstrap (auto-init script tag). */
+/** Emit mount() call that registers component, template, and hydrates. */
 export function emitRegistrationAndHydration(
   lines: string[],
   ctx: ClientJsContext,
@@ -618,20 +631,14 @@ export function emitRegistrationAndHydration(
   lines.push(`}`)
   lines.push('')
 
-  lines.push(`// Register for parent initialization`)
-  lines.push(`registerComponent('${name}', init${name})`)
-  lines.push('')
-
   const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+  let templateArg = ''
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate)
     if (templateHtml) {
-      lines.push(`// Register template for client-side creation`)
-      lines.push(`registerTemplate('${name}', (props) => \`${templateHtml}\`)`)
-      lines.push('')
+      templateArg = `, (props) => \`${templateHtml}\``
     }
   }
 
-  lines.push(`// Auto-hydrate component instances on page load`)
-  lines.push(`hydrate('${name}', (props, idx, scope) => init${name}(idx, scope, props))`)
+  lines.push(`mount('${name}', init${name}${templateArg})`)
 }

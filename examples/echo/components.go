@@ -286,12 +286,12 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 		Count: 0,
 		Doubled: 0 * 2,
 		ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{
-			ScopeID: scopeID + "_slot_6",
+			ScopeID: scopeID + "_s6",
 			Value: 0,
 			Label: "Child A",
 		}),
 		ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{
-			ScopeID: scopeID + "_slot_7",
+			ScopeID: scopeID + "_s7",
 			Value: 0 * 2,
 			Label: "Child B (doubled)",
 		}),
@@ -385,12 +385,12 @@ func NewPropsReactivityComparisonProps(in PropsReactivityComparisonInput) PropsR
 		ScopeID: scopeID,
 		Count: 1,
 		PropsStyleChildSlot4: NewPropsStyleChildProps(PropsStyleChildInput{
-			ScopeID: scopeID + "_slot_4",
+			ScopeID: scopeID + "_s4",
 			Value: 1,
 			Label: "Props Style",
 		}),
 		DestructuredStyleChildSlot5: NewDestructuredStyleChildProps(DestructuredStyleChildInput{
-			ScopeID: scopeID + "_slot_5",
+			ScopeID: scopeID + "_s5",
 			Value: 1,
 			Label: "Destructured",
 		}),
