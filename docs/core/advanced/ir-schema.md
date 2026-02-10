@@ -9,7 +9,7 @@ JSX Source → [Phase 1: analyzer + jsx-to-ir] → IR → [Phase 2a: adapter] �
                                                    → [Phase 2b: ir-to-client-js] → Client JS
 ```
 
-The IR is optionally serializable to `*.ir.json` for debugging.
+The IR can be output as `*.ir.json` for debugging by passing `outputIR: true` to the compiler. See [Debugging](#debugging) for details.
 
 ---
 
@@ -299,17 +299,19 @@ The client runtime uses these markers to locate elements during hydration withou
 
 ## Debugging
 
-Export IR as JSON for inspection:
+Export IR as JSON for inspection by passing `outputIR: true`:
 
 ```typescript
 import { compileJSXSync } from '@barefootjs/jsx'
 
 const result = compileJSXSync(source, 'Counter.tsx', {
   adapter: new HonoAdapter(),
+  outputIR: true,
 })
 
 // result.ir contains the full ComponentIR
 console.log(JSON.stringify(result.ir, null, 2))
-```
 
-Or use the `--ir` flag with the CLI to output `*.ir.json` files alongside compiled output.
+// result.additionalFiles includes the *.ir.json file
+// e.g., { path: 'Counter.ir.json', content: '...' }
+```
