@@ -11,41 +11,41 @@ JSX Source → [Phase 1: analyzer + jsx-to-ir] → IR → [Phase 2a: adapter] �
 
 ## Source
 
-IR の型定義は [`packages/jsx/src/types.ts`](../../../packages/jsx/src/types.ts) にあります。ノード型、属性、メタデータすべてがこのファイルに定義されています。
+The IR type definitions live in [`packages/jsx/src/types.ts`](../../../packages/jsx/src/types.ts). All node types, attributes, and metadata are defined in this file.
 
-主なノード型:
+Key node types:
 
-| Type | 概要 |
-|------|------|
-| `IRElement` | HTML/SVG 要素 |
-| `IRText` | 静的テキスト |
-| `IRExpression` | 動的式 (`{braces}`) |
-| `IRConditional` | 三項演算子・論理式による分岐 |
-| `IRLoop` | `.map()` によるリスト（filter/sort 含む） |
-| `IRComponent` | 子コンポーネント参照 |
-| `IRFragment` | JSX フラグメント (`<>...</>`) |
-| `IRIfStatement` | コンポーネント本体内の早期 return |
+| Type | Description |
+|------|-------------|
+| `IRElement` | HTML/SVG element |
+| `IRText` | Static text |
+| `IRExpression` | Dynamic expression (`{braces}`) |
+| `IRConditional` | Branching via ternary or logical expressions |
+| `IRLoop` | List rendering via `.map()` (including filter/sort) |
+| `IRComponent` | Child component reference |
+| `IRFragment` | JSX fragment (`<>...</>`) |
+| `IRIfStatement` | Early return within a component body |
 | `IRProvider` | Context Provider |
 
 ---
 
 ## Hydration Markers
 
-IR の `slotId` と `needsScope` フィールドは、レンダリングされたテンプレートの HTML 属性にマッピングされます:
+The `slotId` and `needsScope` fields in the IR map to HTML attributes in the rendered template:
 
 | IR Field | HTML Output | Purpose |
 |----------|------------|---------|
-| `needsScope: true` | `data-bf-scope="ComponentName"` | コンポーネントのルート境界 |
-| `slotId: "0"` | `data-bf="0"` | インタラクティブ要素の参照 |
-| Conditional `slotId` | `data-bf-cond="1"` | 条件分岐のアンカー |
+| `needsScope: true` | `data-bf-scope="ComponentName"` | Component root boundary |
+| `slotId: "0"` | `data-bf="0"` | Reference for interactive elements |
+| Conditional `slotId` | `data-bf-cond="1"` | Anchor for conditional branches |
 
-クライアントランタイムはこれらのマーカーを使って、フル DOM 走査なしにハイドレーション対象の要素を特定します。
+The client runtime uses these markers to locate elements that need hydration without a full DOM traversal.
 
 ---
 
 ## Debugging
 
-`outputIR: true` を渡すと IR を JSON として出力できます:
+Pass `outputIR: true` to output the IR as JSON:
 
 ```typescript
 import { compileJSXSync } from '@barefootjs/jsx'
