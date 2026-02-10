@@ -305,11 +305,3 @@ console.log(JSON.stringify(result.ir, null, 2))
 console.log(result.clientJs)
 ```
 
-### Common compilation issues
-
-| Symptom | Likely Cause |
-|---------|-------------|
-| No client JS generated | Component has no reactive elements |
-| Element not updating | Expression not detected as reactive (check signal name pattern) |
-| Hydration mismatch | Server template and client JS disagree on slot IDs |
-| BF021 on filter/sort | Predicate too complex for SSR — use `/* @client */` |
