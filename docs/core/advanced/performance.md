@@ -86,18 +86,6 @@ The reconciler automatically preserves focused elements during list updates. If 
 
 ## Optimizing Reactivity
 
-### Batch Updates
-
-Multiple signal updates in an event handler are batched automatically:
-
-```tsx
-function handleSubmit() {
-  setName('')        // These don't trigger
-  setEmail('')       // intermediate re-renders —
-  setSubmitted(true) // effects run once after all three
-}
-```
-
 ### Use `untrack` for One-Time Reads
 
 When you need a signal's current value without subscribing to changes:
@@ -138,44 +126,4 @@ createEffect(() => {
 
 > **Note:** The compiler already generates guarded updates for text content and common attributes. This tip applies to custom effects.
 
----
-
-## Bundle Analysis
-
-### What's Included in Client JS
-
-| Feature | Client JS Cost |
-|---------|---------------|
-| `createSignal` | ~200 bytes (runtime) |
-| `createEffect` | ~150 bytes (runtime) |
-| `createMemo` | ~100 bytes (runtime) |
-| `reconcileList` | ~500 bytes (runtime) |
-| `createComponent` | ~300 bytes (runtime) |
-| Each component init | Varies (typically 200–500 bytes) |
-
-The `@barefootjs/dom` runtime is shared across all components — it's loaded once.
-
-### Measuring
-
-Check the compiled output size:
-
-```bash
-# View generated client JS
-ls -la dist/components/*-*.js
-
-# Total client JS size
-du -sh dist/components/*.js
-```
-
----
-
-## Comparison
-
-| Metric | BarefootJS | React | SolidJS |
-|--------|-----------|-------|---------|
-| Initial HTML | Server-rendered | Client-rendered (or SSR + hydrate full tree) | Client-rendered |
-| Client JS | Only interactive parts | Full component tree | Full component tree |
-| Hydration | Targeted (slot-based) | Full tree reconciliation | N/A (no SSR) |
-| DOM updates | Fine-grained (signal → element) | Virtual DOM diff | Fine-grained |
-| Runtime size | ~2 KB | ~40 KB | ~7 KB |
 
