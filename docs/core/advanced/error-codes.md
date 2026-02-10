@@ -127,7 +127,7 @@ export function Counter() {
 - `.filter().sort().map()`
 - `.sort().filter().map()`
 
-`.reduce()`, `.slice()`, `.flatMap()`, `.find()` など上記以外のメソッドチェーンは検出対象外で、クライアント側の評価にフォールバックします。
+`.reduce()`, `.slice()`, `.flatMap()` など上記以外のメソッドチェーンは検出対象外で、クライアント側の評価にフォールバックします。
 
 #### filter: サポートされるプレディケート
 
