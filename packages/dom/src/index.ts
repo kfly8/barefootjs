@@ -34,7 +34,6 @@ export { createComponent, getPropsUpdateFn, getComponentProps } from './componen
 // Runtime helpers (internal, for compiler-generated code)
 export {
   findScope,
-  find,
   hydrate,
   bind,
   cond,
