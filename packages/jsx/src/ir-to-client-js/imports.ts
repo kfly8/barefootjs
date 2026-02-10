@@ -7,7 +7,7 @@ import type { ComponentIR } from '../types'
 // All exports from @barefootjs/dom that may be used in generated code
 export const DOM_IMPORT_CANDIDATES = [
   'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
-  'findScope', 'find', 'hydrate', 'cond', 'insert', 'reconcileList',
+  'findScope', 'hydrate', 'cond', 'insert', 'reconcileList',
   'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
   'mount',
   'createPortal',
