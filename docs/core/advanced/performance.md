@@ -1,3 +1,8 @@
+---
+title: Performance Optimization
+description: Strategies to minimize bundle size, reduce hydration cost, and optimize runtime reactivity
+---
+
 # Performance Optimization
 
 BarefootJS is designed for performance by default — server-side rendering with minimal client JavaScript. This guide covers strategies to minimize bundle size, reduce hydration cost, and optimize runtime reactivity.

@@ -9,6 +9,7 @@
     "examples/*",
     "ui",
     "docs/ui",
+    "docs/core-site",
     "site"
   ],
   "scripts": {
