@@ -17,7 +17,11 @@ Adapters: HonoAdapter (`packages/hono/`), GoTemplateAdapter (`packages/go-templa
 - `packages/hono/` — Hono/JSX adapter
 - `packages/go-template/` — Go html/template adapter
 - `ui/` — UI component registry
-- `docs/ui/` — Documentation site (Hono + Cloudflare Workers)
+- `site/docs/` — Core documentation site (Hono + Cloudflare Workers)
+- `site/ui/` — UI component documentation site (Hono + Cloudflare Workers)
+- `site/lp/` — Landing page (Hono + Cloudflare Workers)
+- `site/shared/` — Shared design tokens and components across sites
+- `docs/core/` — Documentation content (Markdown source files)
 
 ## Specs
 

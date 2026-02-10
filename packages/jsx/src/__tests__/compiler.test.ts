@@ -353,7 +353,7 @@ describe('Compiler', () => {
   describe('real components', () => {
     test('compiles ButtonDemo component', async () => {
       // Path to the actual button-demo component
-      const docsUiPath = resolve(dirname(import.meta.path), '../../../../docs/ui')
+      const docsUiPath = resolve(dirname(import.meta.path), '../../../../site/ui')
       const buttonDemoPath = resolve(docsUiPath, 'components/button-demo.tsx')
 
       const result = await compileJSX(buttonDemoPath, async (path) => {

@@ -7,26 +7,27 @@
  */
 
 import { Hono } from 'hono'
-import { resolve, dirname } from 'node:path'
 import { renderer } from './renderer'
-import { discoverPages, type Page } from './lib/content'
 import { initHighlighter, renderMarkdown } from './lib/markdown'
+import type { Page, ContentMap } from './lib/content'
 
-const CONTENT_DIR = resolve(dirname(import.meta.path), '../core')
-
-export async function createApp(): Promise<{ app: Hono; pages: Page[] }> {
+/**
+ * Create the Hono app with routes for all documentation pages.
+ *
+ * @param content - Map of slug → raw markdown content
+ * @param pages   - List of page metadata (slug, name)
+ */
+export async function createApp(content: ContentMap, pages: Page[]): Promise<Hono> {
   await initHighlighter()
-  const pages = await discoverPages(CONTENT_DIR)
 
   const app = new Hono()
   app.use(renderer)
 
   // Index page (README.md)
-  const indexPage = pages.find((p) => p.slug === '')
-  if (indexPage) {
+  const indexContent = content['']
+  if (indexContent !== undefined) {
     app.get('/', async (c) => {
-      const content = await Bun.file(indexPage.sourcePath).text()
-      const parsed = await renderMarkdown(content)
+      const parsed = await renderMarkdown(indexContent)
       return c.render(
         <div dangerouslySetInnerHTML={{ __html: parsed.html }} />,
         {
@@ -36,19 +37,20 @@ export async function createApp(): Promise<{ app: Hono; pages: Page[] }> {
         }
       )
     })
-    app.get('/README.md', async (c) => {
-      const content = await Bun.file(indexPage.sourcePath).text()
+    app.get('/README.md', (c) => {
       c.header('Content-Type', 'text/markdown; charset=utf-8')
-      return c.body(content)
+      return c.body(indexContent)
     })
   }
 
   // All other pages: HTML version + raw Markdown version
   for (const page of pages.filter((p) => p.slug !== '')) {
+    const pageContent = content[page.slug]
+    if (pageContent === undefined) continue
+
     // HTML version
     app.get(`/${page.slug}`, async (c) => {
-      const content = await Bun.file(page.sourcePath).text()
-      const parsed = await renderMarkdown(content)
+      const parsed = await renderMarkdown(pageContent)
 
       // Collect extra meta tags from frontmatter
       const meta: Record<string, string> = {}
@@ -70,12 +72,11 @@ export async function createApp(): Promise<{ app: Hono; pages: Page[] }> {
     })
 
     // Raw Markdown version
-    app.get(`/${page.slug}.md`, async (c) => {
-      const content = await Bun.file(page.sourcePath).text()
+    app.get(`/${page.slug}.md`, (c) => {
       c.header('Content-Type', 'text/markdown; charset=utf-8')
-      return c.body(content)
+      return c.body(pageContent)
     })
   }
 
-  return { app, pages }
+  return app
 }

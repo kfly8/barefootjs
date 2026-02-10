@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "bun run --watch server.tsx",
-    "build": "bun run build.ts"
+    "build": "bun run build.ts",
+    "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
     "hono": "^4",
@@ -12,6 +13,7 @@
     "shiki": "^3.20.0"
   },
   "devDependencies": {
-    "bun-types": "^1.1.0"
+    "bun-types": "^1.1.0",
+    "wrangler": "^4.59.0"
   }
 }
