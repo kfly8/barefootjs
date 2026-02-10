@@ -558,7 +558,7 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       const varName = `__${first.componentName}_${varSuffix}El`
       const selectorBase = first.slotId
         ? `$c(__scope, '${first.slotId}')`
-        : `find(__scope, '[data-bf-scope^="${first.componentName}_"]')`
+        : `$c(__scope, '${first.componentName}')`
       lines.push(`    const ${varName} = ${selectorBase}`)
       lines.push(`    if (${varName}) {`)
       for (const prop of props) {

@@ -776,15 +776,20 @@ export function $(scope: Element | null, id: string): Element | null {
 }
 
 /**
- * Shorthand for find(scope, '[data-bf-scope$="_id"]').
- * Used by compiler-generated code for child component scope references.
+ * Shorthand for finding child component scope elements.
+ * - Slot ID (e.g., 's1'): uses suffix match [data-bf-scope$="_s1"]
+ * - Component name (e.g., 'Counter'): uses prefix match [data-bf-scope^="Counter_"]
  *
  * @param scope - The scope element to search within
- * @param id - The slot ID suffix (e.g., 's1')
+ * @param id - Slot ID suffix or component name
  * @returns The matching element or null
  */
 export function $c(scope: Element | null, id: string): Element | null {
-  return find(scope, `[data-bf-scope$="_${id}"]`)
+  // Slot IDs start with 's' + digit; component names start with uppercase
+  const selector = /^s\d/.test(id)
+    ? `[data-bf-scope$="_${id}"]`
+    : `[data-bf-scope^="${id}_"]`
+  return find(scope, selector)
 }
 
 // --- updateClientMarker ---
