@@ -116,58 +116,58 @@ export function Counter() {
 
 ### BF021 — Unsupported JSX Pattern
 
-**Trigger:** `.map()` の前にある配列メソッドチェーンがSSRテンプレートにコンパイルできない場合に発生します。サポート対象外のパターンはすべてクライアント側で評価されます。
+**Trigger:** An array method chain before `.map()` cannot be compiled to an SSR template. Unsupported patterns fall back to client-side evaluation.
 
-#### SSR対応チェーン
+#### SSR-Compatible Chains
 
-以下のチェーンパターンのみ `.map()` の前処理としてSSRコンパイルされます:
+Only the following chain patterns are SSR-compiled as preprocessing before `.map()`:
 
 - `.filter().map()`
 - `.sort().map()` / `.toSorted().map()`
 - `.filter().sort().map()`
 - `.sort().filter().map()`
 
-`.reduce()`, `.slice()`, `.flatMap()` など上記以外のメソッドチェーンは検出対象外で、クライアント側の評価にフォールバックします。
+Other method chains such as `.reduce()`, `.slice()`, `.flatMap()` are not detected and fall back to client-side evaluation.
 
-#### filter: サポートされるプレディケート
+#### filter: Supported Predicates
 
-アロー関数の式本体で、以下の要素で構成されるもの:
+Arrow function expression bodies composed of the following elements:
 
-- プロパティアクセス: `t.done`, `t.price`
-- リテラル: `'active'`, `5`, `true`
-- 比較: `===`, `!==`, `>`, `<`, `>=`, `<=`
-- 算術: `+`, `-`, `*`, `/`, `%`
-- 論理: `&&`, `||`, `!`
-- 三項演算子: `cond ? a : b`
+- Property access: `t.done`, `t.price`
+- Literals: `'active'`, `5`, `true`
+- Comparison: `===`, `!==`, `>`, `<`, `>=`, `<=`
+- Arithmetic: `+`, `-`, `*`, `/`, `%`
+- Logical: `&&`, `||`, `!`
+- Ternary: `cond ? a : b`
 
 ```tsx
-// ✅ SSRコンパイル可能
+// ✅ SSR-compilable
 {items().filter(t => !t.done).map(t => <li>{t.name}</li>)}
 {items().filter(t => t.price > 100 && t.active).map(t => <li>{t.name}</li>)}
 
-// ❌ BF021 — typeof, 関数呼び出し, ネストした高階メソッドは対象外
+// ❌ BF021 — typeof, function calls, nested higher-order methods are not supported
 {items().filter(t => typeof t === 'string').map(...)}
 {items().filter(t => customFn(t)).map(...)}
 {items().filter(t => t.tags.some(tag => tag.featured)).map(...)}
 ```
 
-#### sort: サポートされるコンパレータ
+#### sort: Supported Comparators
 
-`(a, b) => a.field - b.field` 形式の単純な減算パターンのみ:
+Only simple subtraction patterns of the form `(a, b) => a.field - b.field`:
 
 ```tsx
-// ✅ SSRコンパイル可能
-{items().sort((a, b) => a.price - b.price).map(...)}     // 昇順
-{items().toSorted((a, b) => b.date - a.date).map(...)}   // 降順
+// ✅ SSR-compilable
+{items().sort((a, b) => a.price - b.price).map(...)}     // ascending
+{items().toSorted((a, b) => b.date - a.date).map(...)}   // descending
 
-// ❌ BF021 — ブロック本体, localeCompare, 三項演算子等は対象外
+// ❌ BF021 — block bodies, localeCompare, ternary operators, etc. are not supported
 {items().sort((a, b) => { return a.price - b.price }).map(...)}
 {items().sort((a, b) => a.name.localeCompare(b.name)).map(...)}
 ```
 
-#### 対処法
+#### Workaround
 
-`/* @client */` を付けてクライアント側で評価する:
+Add `/* @client */` to evaluate on the client side:
 
 ```tsx
 {/* @client */ todos().filter(t => t.items.some(i => i.done)).map(t => (
