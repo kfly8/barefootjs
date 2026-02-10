@@ -33,35 +33,7 @@ The HTML structure is never re-created on the client — it was already rendered
 
 ## Reducing Client JS Size
 
-### 1. Prefer Server Components
-
-Keep components server-side when they don't need interactivity:
-
-```tsx
-// ✅ Server component — no client JS
-export function ProductCard(props: Props) {
-  return (
-    <div class="card">
-      <h2>{props.name}</h2>
-      <p>{props.description}</p>
-      <span>{props.price}</span>
-    </div>
-  )
-}
-
-// Only the interactive part needs "use client"
-"use client"
-export function AddToCartButton(props: Props) {
-  const [added, setAdded] = createSignal(false)
-  return (
-    <button onClick={() => setAdded(true)}>
-      {added() ? 'Added' : 'Add to Cart'}
-    </button>
-  )
-}
-```
-
-### 2. Minimize Signal Count
+### Minimize Signal Count
 
 Each signal adds tracking overhead. Use `createMemo` for derived values instead of separate signals:
 
@@ -76,7 +48,7 @@ const [count, setCount] = createSignal(0)
 const doubled = createMemo(() => count() * 2)  // Computed, no extra signal
 ```
 
-### 3. Use Static Arrays When Possible
+### Use Static Arrays When Possible
 
 If a list doesn't change after initial render, the compiler detects it as a **static array** and skips `reconcileList`:
 
@@ -90,7 +62,7 @@ const [items, setItems] = createSignal([...])
 {items().map(item => <Item key={item.id} data={item} />)}
 ```
 
-### 4. Move Filter/Sort to Server
+### Move Filter/Sort to Server
 
 When possible, use filter/sort patterns the compiler can evaluate server-side:
 
@@ -106,7 +78,7 @@ When possible, use filter/sort patterns the compiler can evaluate server-side:
 
 ## Optimizing Hydration
 
-### 1. Reduce Scope Nesting
+### Reduce Scope Nesting
 
 Deeply nested component hierarchies increase `findScope()` traversal. Flatten where possible:
 
@@ -126,7 +98,7 @@ Deeply nested component hierarchies increase `findScope()` traversal. Flatten wh
 </Layout>
 ```
 
-### 2. Use Keys for List Reconciliation
+### Use Keys for List Reconciliation
 
 Always provide stable keys for dynamic lists. Without keys, the reconciler can't reuse DOM nodes:
 
@@ -138,7 +110,7 @@ Always provide stable keys for dynamic lists. Without keys, the reconciler can't
 {items().map((item, i) => <li key={i}>{item.name}</li>)}
 ```
 
-### 3. Preserve Focus in Lists
+### Preserve Focus in Lists
 
 The reconciler automatically preserves focused elements during list updates. If a focused input is in a list item, it won't lose focus when the list re-renders. This is built-in — no action needed on your part.
 
@@ -146,7 +118,7 @@ The reconciler automatically preserves focused elements during list updates. If 
 
 ## Optimizing Reactivity
 
-### 1. Batch Updates
+### Batch Updates
 
 Multiple signal updates in an event handler are batched automatically:
 
@@ -158,7 +130,7 @@ function handleSubmit() {
 }
 ```
 
-### 2. Use `untrack` for One-Time Reads
+### Use `untrack` for One-Time Reads
 
 When you need a signal's current value without subscribing to changes:
 
@@ -170,7 +142,7 @@ createEffect(() => {
 })
 ```
 
-### 3. Avoid Effects for Derived Data
+### Avoid Effects for Derived Data
 
 `createMemo` is cheaper than `createEffect` + `createSignal`:
 
@@ -183,7 +155,7 @@ createEffect(() => setTotal(price() * quantity()))
 const total = createMemo(() => price() * quantity())
 ```
 
-### 4. Guard Effect Side Effects
+### Guard Effect Side Effects
 
 Effects with the same result can skip expensive operations:
 
@@ -243,7 +215,6 @@ du -sh dist/components/*.js
 
 ## Checklist
 
-- [ ] Components without interactivity are server-only (no `"use client"`)
 - [ ] Derived values use `createMemo`, not `createEffect` + `createSignal`
 - [ ] Lists have stable `key` props
 - [ ] Filter/sort uses SSR-compatible patterns where possible
