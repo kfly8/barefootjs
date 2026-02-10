@@ -52,24 +52,12 @@
 - [Go Template Adapter](./adapters/go-template-adapter.md) — Configuration and output format for Go `html/template`
 - [Writing a Custom Adapter](./adapters/custom-adapter.md) — Step-by-step guide to implementing your own adapter
 
-### 8. UI Components
+### 8. [Advanced](./advanced.md)
 
-- Overview & Installation
-- Component Catalog (Button, Dialog, Accordion, Tabs, etc.)
-
-### 9. Advanced
-
-- IR Schema Reference
-- Compiler Internals
-- Error Codes Reference
-- Performance Optimization
-
-### 10. Guides
-
-- Migrating from React
-- Using with Go Backend
-- Deploying to Cloudflare Workers
-- Building a Todo App (Tutorial)
+- [IR Schema Reference](./advanced/ir-schema.md) — Node types, metadata, hydration markers
+- [Compiler Internals](./advanced/compiler-internals.md) — Pipeline phases, reactivity analysis, code generation
+- [Error Codes Reference](./advanced/error-codes.md) — All BF001–BF043 errors with solutions
+- [Performance Optimization](./advanced/performance.md) — Minimal client JS, fast hydration, efficient reactivity
 
 ---
 
