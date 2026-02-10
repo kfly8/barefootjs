@@ -116,33 +116,60 @@ export function Counter() {
 
 ### BF021 — Unsupported JSX Pattern
 
-**Trigger:** A `.filter()` predicate or `.sort()` comparator is too complex for server-side template compilation.
+**Trigger:** `.map()` の前にある配列メソッドチェーンがSSRテンプレートにコンパイルできない場合に発生します。サポート対象外のパターンはすべてクライアント側で評価されます。
+
+#### SSR対応チェーン
+
+以下のチェーンパターンのみ `.map()` の前処理としてSSRコンパイルされます:
+
+- `.filter().map()`
+- `.sort().map()` / `.toSorted().map()`
+- `.filter().sort().map()`
+- `.sort().filter().map()`
+
+`.reduce()`, `.slice()`, `.flatMap()`, `.find()` など上記以外のメソッドチェーンは検出対象外で、クライアント側の評価にフォールバックします。
+
+#### filter: サポートされるプレディケート
+
+アロー関数の式本体で、以下の要素で構成されるもの:
+
+- プロパティアクセス: `t.done`, `t.price`
+- リテラル: `'active'`, `5`, `true`
+- 比較: `===`, `!==`, `>`, `<`, `>=`, `<=`
+- 算術: `+`, `-`, `*`, `/`, `%`
+- 論理: `&&`, `||`, `!`
+- 三項演算子: `cond ? a : b`
 
 ```tsx
-// ❌ BF021 — nested higher-order method
-{todos().filter(t => t.items.some(i => i.done)).map(t => (
-  <li>{t.name}</li>
-))}
+// ✅ SSRコンパイル可能
+{items().filter(t => !t.done).map(t => <li>{t.name}</li>)}
+{items().filter(t => t.price > 100 && t.active).map(t => <li>{t.name}</li>)}
+
+// ❌ BF021 — typeof, 関数呼び出し, ネストした高階メソッドは対象外
+{items().filter(t => typeof t === 'string').map(...)}
+{items().filter(t => customFn(t)).map(...)}
+{items().filter(t => t.tags.some(tag => tag.featured)).map(...)}
 ```
 
-```
-error[BF021]: Expression cannot be compiled to server template: Higher-order method 'some()' with complex predicate.
-   = help: Add /* @client */ to evaluate this expression on the client only
-```
+#### sort: サポートされるコンパレータ
 
-**Supported filter patterns:**
-- `t => t.active` — property access
-- `t => !t.done` — negation
-- `t => t.count > 0` — comparison
-
-**Supported sort patterns:**
-- `(a, b) => a.price - b.price` — ascending
-- `(a, b) => b.priority - a.priority` — descending
-
-**Fix:** Use `/* @client */` to evaluate on the client only:
+`(a, b) => a.field - b.field` 形式の単純な減算パターンのみ:
 
 ```tsx
-// ✅ Client-only evaluation
+// ✅ SSRコンパイル可能
+{items().sort((a, b) => a.price - b.price).map(...)}     // 昇順
+{items().toSorted((a, b) => b.date - a.date).map(...)}   // 降順
+
+// ❌ BF021 — ブロック本体, localeCompare, 三項演算子等は対象外
+{items().sort((a, b) => { return a.price - b.price }).map(...)}
+{items().sort((a, b) => a.name.localeCompare(b.name)).map(...)}
+```
+
+#### 対処法
+
+`/* @client */` を付けてクライアント側で評価する:
+
+```tsx
 {/* @client */ todos().filter(t => t.items.some(i => i.done)).map(t => (
   <li>{t.name}</li>
 ))}
