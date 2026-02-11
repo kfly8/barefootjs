@@ -16,7 +16,7 @@ export function toggleTests(baseUrl: string) {
     test.beforeEach(async ({ page }) => {
       await page.goto(`${baseUrl}/toggle`)
       // Wait for ToggleItem components to be fully hydrated
-      await page.waitForSelector('.toggle-item[bf-s][bf-i]', { timeout: 10000 })
+      await page.waitForSelector('.toggle-item[bf-s][bf-h]', { timeout: 10000 })
     })
 
     test('displays settings panel', async ({ page }) => {

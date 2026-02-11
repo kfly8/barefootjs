@@ -11,8 +11,8 @@ export const BF_SCOPE = 'bf-s'
 /** Slot ID (most common): `bf="s1"` */
 export const BF_SLOT = 'bf'
 
-/** Runtime-only init guard: `bf-i` */
-export const BF_INIT = 'bf-i'
+/** Runtime-only hydration guard: `bf-h` */
+export const BF_HYDRATED = 'bf-h'
 
 /** Serialized props JSON: `bf-p="..."` */
 export const BF_PROPS = 'bf-p'
@@ -29,8 +29,8 @@ export const BF_PORTAL_ID = 'bf-pi'
 /** Portal placeholder: `bf-pp="bf-portal-1"` */
 export const BF_PORTAL_PLACEHOLDER = 'bf-pp'
 
-/** List item marker: `bf-item` */
-export const BF_ITEM = 'bf-item'
+/** List item marker: `bf-i` */
+export const BF_ITEM = 'bf-i'
 
 /** Child component prefix in scope value: `~ToggleItem_abc` */
 export const BF_CHILD_PREFIX = '~'

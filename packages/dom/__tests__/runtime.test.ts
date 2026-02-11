@@ -21,7 +21,7 @@ describe('findScope', () => {
     const scope = findScope('Counter', 0, null)
     expect(scope).not.toBeNull()
     expect(scope?.getAttribute('bf-s')).toBe('Counter_abc123')
-    expect(scope?.hasAttribute('bf-i')).toBe(true)
+    expect(scope?.hasAttribute('bf-h')).toBe(true)
   })
 
   test('returns parent if it is the scope element', () => {
@@ -35,7 +35,7 @@ describe('findScope', () => {
 
   test('skips already initialized scopes', () => {
     document.body.innerHTML = `
-      <div bf-s="Counter_1" bf-i="true"></div>
+      <div bf-s="Counter_1" bf-h="true"></div>
       <div bf-s="Counter_2"></div>
     `
     const scope = findScope('Counter', 0, null)

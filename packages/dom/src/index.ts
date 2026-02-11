@@ -1,7 +1,7 @@
 export {
   BF_SCOPE,
   BF_SLOT,
-  BF_INIT,
+  BF_HYDRATED,
   BF_PROPS,
   BF_COND,
   BF_PORTAL_OWNER,

@@ -214,8 +214,8 @@ createEffect(() => {
    | `bf-po` | Portal owner scope ID | `bf-po="Dialog_a1b2"` |
    | `bf-pi` | Portal container ID | `bf-pi="bf-portal-1"` |
    | `bf-pp` | Portal placeholder | `bf-pp="bf-portal-1"` |
-   | `bf-item` | List item marker | `bf-item` |
-   | `bf-i` | Init guard (runtime-only, not in template output) | `bf-i` |
+   | `bf-i` | List item marker | `bf-i` |
+   | `bf-h` | Hydration guard (runtime-only, not in template output) | `bf-h` |
 
 2. **Client JS**: Minimal JavaScript for reactivity
    - Uses `createEffect` for reactive updates

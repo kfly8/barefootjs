@@ -344,7 +344,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         const { name } = elem.childComponent
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${elem.slotId}) {`)
-        lines.push(`    const __childScopes = _${elem.slotId}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-i]), [bf-s^="${name}_"]:not([bf-i])')`)
+        lines.push(`    const __childScopes = _${elem.slotId}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
         lines.push(`    __childScopes.forEach((childScope, __idx) => {`)
         lines.push(`      const __childProps = ${elem.array}[__idx] || {}`)
         lines.push(`      initChild('${name}', childScope, __childProps)`)
@@ -367,8 +367,8 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
 
           const selector = comp.slotId
-            ? `[bf-s$="_${comp.slotId}"]:not([bf-i])`
-            : `[bf-s^="~${comp.name}_"]:not([bf-i]), [bf-s^="${comp.name}_"]:not([bf-i])`
+            ? `[bf-s$="_${comp.slotId}"]:not([bf-h])`
+            : `[bf-s^="~${comp.name}_"]:not([bf-h]), [bf-s^="${comp.name}_"]:not([bf-h])`
 
           lines.push(`  // Initialize nested ${comp.name} in static array`)
           lines.push(`  if (_${elem.slotId}) {`)
@@ -449,7 +449,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
             lines.push(`        if (${elem.param}) ${handlerCall}`)
             lines.push(`      }`)
           } else {
-            lines.push(`      const li = ${ev.childSlotId}El.closest('li, [bf-item]')`)
+            lines.push(`      const li = ${ev.childSlotId}El.closest('li, [bf-i]')`)
             lines.push(`      if (li && li.parentElement) {`)
             lines.push(`        const idx = Array.from(li.parentElement.children).indexOf(li)`)
             lines.push(`        const ${elem.param} = ${elem.array}[idx]`)

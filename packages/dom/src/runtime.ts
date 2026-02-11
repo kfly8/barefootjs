@@ -7,7 +7,7 @@
 
 import { createEffect } from './reactive'
 import { registerTemplate } from './template'
-import { BF_SCOPE, BF_SLOT, BF_INIT, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX } from './attrs'
+import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX } from './attrs'
 
 // --- unwrap ---
 
@@ -58,8 +58,8 @@ export function findScope(
       (/_s\d/.test(scopeId) && parent !== document)
     ) {
       // Mark as initialized if not already
-      if (!parentEl.hasAttribute(BF_INIT)) {
-        parentEl.setAttribute(BF_INIT, 'true')
+      if (!parentEl.hasAttribute(BF_HYDRATED)) {
+        parentEl.setAttribute(BF_HYDRATED, 'true')
       }
       return parent as Element
     }
@@ -71,12 +71,12 @@ export function findScope(
     searchRoot.querySelectorAll(`[${BF_SCOPE}^="${name}_"]`)
   )
   const uninitializedScopes = allScopes.filter(
-    s => !s.hasAttribute(BF_INIT)
+    s => !s.hasAttribute(BF_HYDRATED)
   )
   const scope = uninitializedScopes[idx] || null
 
   if (scope) {
-    scope.setAttribute(BF_INIT, 'true')
+    scope.setAttribute(BF_HYDRATED, 'true')
   }
 
   return scope
@@ -235,7 +235,7 @@ export function hydrate(
   const doHydrate = () => {
     // Only select uninitialized elements (skip already hydrated ones)
     const scopeEls = document.querySelectorAll(
-      `[${BF_SCOPE}^="${name}_"]:not([${BF_INIT}])`
+      `[${BF_SCOPE}^="${name}_"]:not([${BF_HYDRATED}])`
     )
 
     // Track initialized scope IDs to avoid duplicate initialization
@@ -272,7 +272,7 @@ export function hydrate(
       initializedScopes.add(instanceId)
 
       // Mark as initialized immediately to prevent duplicate init
-      scopeEl.setAttribute(BF_INIT, 'true')
+      scopeEl.setAttribute(BF_HYDRATED, 'true')
 
       // Read props from bf-p attribute on the scope element
       const propsJson = scopeEl.getAttribute(BF_PROPS)
@@ -700,8 +700,8 @@ export function registerComponent(name: string, init: ComponentInitFn): void {
     for (const { scope, props } of pending) {
       // Skip if already initialized as a child component.
       // When scope has no ~ prefix, it's a root component whose parent
-      // marked it with bf-i during hydrate — still needs child init.
-      if (scope.hasAttribute(BF_INIT) && scope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
+      // marked it with bf-h during hydrate — still needs child init.
+      if (scope.hasAttribute(BF_HYDRATED) && scope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
         continue
       }
       init(0, scope, props)
@@ -753,8 +753,8 @@ export function initChild(
 
   // Skip if already initialized as a child component.
   // When scope has no ~ prefix, it's a root component whose parent
-  // marked it with bf-i during hydrate — still needs child init.
-  if (childScope.hasAttribute(BF_INIT) && childScope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
+  // marked it with bf-h during hydrate — still needs child init.
+  if (childScope.hasAttribute(BF_HYDRATED) && childScope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
     return
   }
   init(0, childScope, props)

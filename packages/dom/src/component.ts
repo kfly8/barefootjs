@@ -7,7 +7,7 @@
 
 import { getTemplate } from './template'
 import { getComponentInit } from './runtime'
-import { BF_SCOPE, BF_INIT } from './attrs'
+import { BF_SCOPE, BF_HYDRATED } from './attrs'
 
 // WeakMap to store props update functions for each component element
 // This allows reconcileList to update props when an element is reused
@@ -83,7 +83,7 @@ export function createComponent(
   }
 
   // 6. Mark element as initialized
-  element.setAttribute(BF_INIT, 'true')
+  element.setAttribute(BF_HYDRATED, 'true')
 
   // 7. Store props and register update function for element reuse in reconcileList
   propsMap.set(element, props)

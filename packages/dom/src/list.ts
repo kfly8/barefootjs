@@ -11,7 +11,7 @@
  */
 
 import { getPropsUpdateFn, getComponentProps } from './component'
-import { BF_SCOPE, BF_SLOT, BF_INIT, BF_COND } from './attrs'
+import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_COND } from './attrs'
 
 
 /**
@@ -128,8 +128,8 @@ function reconcileListElements<T>(
       existingByKey.delete(key)
 
       // Check if this is an uninitialized SSR element
-      // SSR elements have bf-s but no bf-i
-      if (existingEl.getAttribute(BF_SCOPE) && !existingEl.hasAttribute(BF_INIT)) {
+      // SSR elements have bf-s but no bf-h
+      if (existingEl.getAttribute(BF_SCOPE) && !existingEl.hasAttribute(BF_HYDRATED)) {
         // For SSR elements, create new element with proper initialization
         const newEl = createEl()
         if (!newEl.dataset.key) {
