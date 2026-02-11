@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build packages
+        run: bun run --filter '@barefootjs/dom' build && bun run --filter '@barefootjs/jsx' build
+
       - name: Build documentation site
         run: cd site/docs && bun run build
 
