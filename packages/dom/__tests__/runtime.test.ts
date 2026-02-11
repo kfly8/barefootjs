@@ -127,15 +127,15 @@ describe('find', () => {
   })
 
   test('finds child scope element before matching scope itself', () => {
-    // AccordionTrigger case: parent scope also matches the selector,
-    // but we want the child scope (ChevronDownIcon)
+    // AccordionTrigger case: parent scope also matches the suffix selector,
+    // but we want the child scope (ChevronDownIcon) returned first
     document.body.innerHTML = `
       <div data-bf-scope="AccordionTrigger_abc_s0">
-        <span data-bf-scope="AccordionTrigger_abc_s0_child">icon</span>
+        <span data-bf-scope="AccordionTrigger_abc_s0_s0">icon</span>
       </div>
     `
     const scope = document.querySelector('[data-bf-scope="AccordionTrigger_abc_s0"]')
-    const el = find(scope, '[data-bf-scope$="_s0_child"]')
+    const el = find(scope, '[data-bf-scope$="_s0"]')
     expect(el).not.toBeNull()
     expect(el?.textContent).toBe('icon')
   })
@@ -151,14 +151,14 @@ describe('find', () => {
   })
 
   test('prioritizes child scope over self-match for scope selectors', () => {
-    // Both parent and child match the selector, child should be returned
+    // Both parent and child match the suffix selector, child should be returned
     document.body.innerHTML = `
       <div data-bf-scope="Parent_abc_s0">
-        <div data-bf-scope="Parent_abc_s0_inner">child</div>
+        <div data-bf-scope="Parent_abc_s0_s0">child</div>
       </div>
     `
     const scope = document.querySelector('[data-bf-scope="Parent_abc_s0"]')
-    const el = find(scope, '[data-bf-scope$="_s0_inner"]')
+    const el = find(scope, '[data-bf-scope$="_s0"]')
     expect(el?.textContent).toBe('child')
     expect(el).not.toBe(scope)
   })
