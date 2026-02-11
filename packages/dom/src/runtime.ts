@@ -807,10 +807,11 @@ export function $(scope: Element | null, id: string): Element | null {
  */
 export function $c(scope: Element | null, id: string): Element | null {
   // Slot IDs start with 's' + digit; component names start with uppercase
-  const selector = /^s\d/.test(id)
-    ? `[${BF_SCOPE}$="_${id}"]`
-    : `[${BF_SCOPE}^="${id}_"]`
-  return find(scope, selector)
+  if (/^s\d/.test(id)) {
+    return find(scope, `[${BF_SCOPE}$="_${id}"]`)
+  }
+  // Component name prefix match - support both child (~Name_) and root (Name_) scopes
+  return find(scope, `[${BF_SCOPE}^="${BF_CHILD_PREFIX}${id}_"], [${BF_SCOPE}^="${id}_"]`)
 }
 
 // --- updateClientMarker ---

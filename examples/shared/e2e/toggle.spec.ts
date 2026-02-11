@@ -102,7 +102,7 @@ export function toggleTests(baseUrl: string) {
 
       for (let i = 0; i < 3; i++) {
         const scopeId = await toggleItems.nth(i).getAttribute('bf-s')
-        expect(scopeId).toMatch(/^ToggleItem_[a-z0-9]{6}$/)
+        expect(scopeId).toMatch(/^~?ToggleItem_[a-z0-9]{6}$/)
       }
     })
 
