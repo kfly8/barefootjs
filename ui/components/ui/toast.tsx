@@ -15,7 +15,7 @@
  * - Manual dismiss via close button or context
  * - Portal rendering to document.body
  * - Reactive enter/exit animations via createEffect
- * - Position options: top-right, top-left, bottom-right, bottom-left
+ * - Position options: top-right, top-center, top-left, bottom-right, bottom-center, bottom-left
  * - Accessibility: role="status", aria-live="polite"
  *
  * @example Basic toast
@@ -48,11 +48,11 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
-import { XIcon } from './icon'
+import { XIcon, CircleCheckIcon, CircleXIcon, TriangleAlertIcon, InfoIcon } from './icon'
 
 // Type definitions
 type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
-type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+type ToastPosition = 'top-right' | 'top-center' | 'top-left' | 'bottom-right' | 'bottom-center' | 'bottom-left'
 
 // Context for Toast -> children state sharing
 interface ToastContextValue {
@@ -61,11 +61,14 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue>()
 
+
 // ToastProvider position classes
 const positionClasses: Record<ToastPosition, string> = {
   'top-right': 'top-4 right-4',
+  'top-center': 'top-4 left-1/2 -translate-x-1/2 items-center',
   'top-left': 'top-4 left-4',
   'bottom-right': 'bottom-4 right-4',
+  'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2 items-center',
   'bottom-left': 'bottom-4 left-4',
 }
 
@@ -75,21 +78,35 @@ const toastProviderClasses = 'fixed z-50 flex flex-col gap-2 pointer-events-none
 // Toast base classes
 const toastBaseClasses = 'items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-slow ease-out'
 
-// Toast variant classes
-const toastVariantClasses: Record<ToastVariant, string> = {
-  default: 'bg-background border-border text-foreground',
-  success: 'bg-success/10 border-success text-foreground',
-  error: 'bg-destructive/10 border-destructive text-foreground',
-  warning: 'bg-warning/10 border-warning text-foreground',
-  info: 'bg-info/10 border-info text-foreground',
+// Toast style (neutral for all variants — icons differentiate types)
+const toastVariantClass = 'bg-background border-border text-foreground'
+
+// Toast variant icon color classes
+const toastIconClasses: Record<ToastVariant, string> = {
+  default: '',
+  success: 'text-success',
+  error: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-info',
 }
 
-// Toast animation classes by data-state
-const toastStateClasses = {
-  entering: 'flex translate-x-full opacity-0',
-  visible: 'flex translate-x-0 opacity-100',
-  exiting: 'flex translate-x-full opacity-0',
-  hidden: 'hidden',
+// Position-aware toast animation classes
+function getToastStateClasses(position: ToastPosition) {
+  let enterExitClass = ''
+  if (position.endsWith('center')) {
+    enterExitClass = position.startsWith('top') ? '-translate-y-full' : 'translate-y-full'
+  } else if (position.endsWith('left')) {
+    enterExitClass = '-translate-x-full'
+  } else {
+    enterExitClass = 'translate-x-full'
+  }
+
+  return {
+    entering: `flex ${enterExitClass} opacity-0`,
+    visible: 'flex translate-x-0 translate-y-0 opacity-100',
+    exiting: `flex ${enterExitClass} opacity-0`,
+    hidden: 'hidden',
+  }
 }
 
 // Animation duration in ms (must match CSS transition-duration)
@@ -142,6 +159,7 @@ function ToastProvider(props: ToastProviderProps) {
   return (
     <div
       data-slot="toast-provider"
+      data-position={position}
       className={`${toastProviderClasses} ${positionClasses[position]} ${props.class ?? ''}`}
       ref={handleMount}
     >
@@ -195,6 +213,9 @@ function Toast(props: ToastProps) {
   }
 
   const handleMount = (el: HTMLElement) => {
+    const providerEl = el.closest('[data-slot="toast-provider"]') as HTMLElement
+    const position = (providerEl?.dataset.position ?? 'bottom-right') as ToastPosition
+    const stateClasses = getToastStateClasses(position)
     let dismissTimer: ReturnType<typeof setTimeout> | null = null
     let exitTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -209,13 +230,13 @@ function Toast(props: ToastProps) {
       if (isOpen) {
         // Entering state
         el.dataset.state = 'entering'
-        el.className = `${toastStateClasses.entering} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`
+        el.className = `${stateClasses.entering} ${toastBaseClasses} ${toastVariantClass} ${className}`
 
         // Transition to visible on next frame
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             el.dataset.state = 'visible'
-            el.className = `${toastStateClasses.visible} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`
+            el.className = `${stateClasses.visible} ${toastBaseClasses} ${toastVariantClass} ${className}`
           })
         })
 
@@ -230,17 +251,19 @@ function Toast(props: ToastProps) {
         if (currentState === 'visible' || currentState === 'entering') {
           // Exiting state
           el.dataset.state = 'exiting'
-          el.className = `${toastStateClasses.exiting} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`
+          el.className = `${stateClasses.exiting} ${toastBaseClasses} ${toastVariantClass} ${className}`
 
           exitTimer = setTimeout(() => {
             el.dataset.state = 'hidden'
-            el.className = `${toastStateClasses.hidden} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`
+            el.className = `${stateClasses.hidden} ${toastBaseClasses} ${toastVariantClass} ${className}`
           }, ANIMATION_DURATION)
         }
         // If already hidden, stay hidden
       }
     })
   }
+
+  const iconClass = toastIconClasses[variant]
 
   return (
     <ToastContext.Provider value={{ dismiss }}>
@@ -250,9 +273,13 @@ function Toast(props: ToastProps) {
         data-state="hidden"
         role={variant === 'error' ? 'alert' : 'status'}
         aria-live={variant === 'error' ? 'assertive' : 'polite'}
-        className={`${toastStateClasses.hidden} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`}
+        className={`hidden ${toastBaseClasses} ${toastVariantClass} ${className}`}
         ref={handleMount}
       >
+        {variant === 'success' && <CircleCheckIcon size="md" class={iconClass} />}
+        {variant === 'error' && <CircleXIcon size="md" class={iconClass} />}
+        {variant === 'warning' && <TriangleAlertIcon size="md" class={iconClass} />}
+        {variant === 'info' && <InfoIcon size="md" class={iconClass} />}
         {props.children}
       </div>
     </ToastContext.Provider>

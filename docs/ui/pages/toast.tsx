@@ -166,7 +166,7 @@ function ToastWithAction() {
 const toastProviderProps: PropDefinition[] = [
   {
     name: 'position',
-    type: "'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'",
+    type: "'top-right' | 'top-center' | 'top-left' | 'bottom-right' | 'bottom-center' | 'bottom-left'",
     defaultValue: "'bottom-right'",
     description: 'Position of the toast container on the viewport.',
   },
@@ -259,7 +259,7 @@ export function ToastPage() {
             <li><strong className="text-foreground">Auto-dismiss</strong> - Toasts automatically disappear after a configurable duration</li>
             <li><strong className="text-foreground">Manual dismiss</strong> - Close button to dismiss immediately via context</li>
             <li><strong className="text-foreground">Variants</strong> - default, success, error, warning, info</li>
-            <li><strong className="text-foreground">Position options</strong> - top-right, top-left, bottom-right, bottom-left</li>
+            <li><strong className="text-foreground">Position options</strong> - top-right, top-center, top-left, bottom-right, bottom-center, bottom-left</li>
             <li><strong className="text-foreground">Action buttons</strong> - Optional action button for undo/retry operations</li>
             <li><strong className="text-foreground">Portal rendering</strong> - Toast container portals to document.body to avoid z-index issues</li>
             <li><strong className="text-foreground">Accessibility</strong> - role="status", aria-live="polite" (assertive for errors)</li>
