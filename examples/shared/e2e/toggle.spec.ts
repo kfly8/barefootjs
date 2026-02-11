@@ -91,25 +91,25 @@ export function toggleTests(baseUrl: string) {
 
     test('parent Toggle has valid ScopeID format', async ({ page }) => {
       // Parent Toggle component should have ScopeID in format: Toggle_[6 random chars]
-      const scopeId = await page.locator('.settings-panel[data-bf-scope]').getAttribute('data-bf-scope')
+      const scopeId = await page.locator('.settings-panel[bf-s]').getAttribute('bf-s')
       expect(scopeId).toMatch(/^Toggle_[a-z0-9]{6}$/)
     })
 
     test('each ToggleItem has valid ScopeID format', async ({ page }) => {
       // Each ToggleItem should have ScopeID in format: ToggleItem_[6 random chars]
-      const toggleItems = page.locator('.toggle-item[data-bf-scope]')
+      const toggleItems = page.locator('.toggle-item[bf-s]')
       await expect(toggleItems).toHaveCount(3)
 
       for (let i = 0; i < 3; i++) {
-        const scopeId = await toggleItems.nth(i).getAttribute('data-bf-scope')
+        const scopeId = await toggleItems.nth(i).getAttribute('bf-s')
         expect(scopeId).toMatch(/^ToggleItem_[a-z0-9]{6}$/)
       }
     })
 
     test('all ScopeIDs are unique', async ({ page }) => {
       // Collect all ScopeIDs on the page
-      const allScopeIds = await page.locator('[data-bf-scope]').evaluateAll(
-        elements => elements.map(el => el.getAttribute('data-bf-scope'))
+      const allScopeIds = await page.locator('[bf-s]').evaluateAll(
+        elements => elements.map(el => el.getAttribute('bf-s'))
       )
 
       // Should have 4 ScopeIDs: 1 Toggle + 3 ToggleItems

@@ -11,6 +11,7 @@
  */
 
 import { getPropsUpdateFn, getComponentProps } from './component'
+import { BF_SCOPE, BF_SLOT, BF_INIT, BF_COND } from './attrs'
 
 
 /**
@@ -127,8 +128,8 @@ function reconcileListElements<T>(
       existingByKey.delete(key)
 
       // Check if this is an uninitialized SSR element
-      // SSR elements have data-bf-scope but no data-bf-init
-      if (existingEl.dataset.bfScope && !existingEl.hasAttribute('data-bf-init')) {
+      // SSR elements have bf-s but no bf-i
+      if (existingEl.getAttribute(BF_SCOPE) && !existingEl.hasAttribute(BF_INIT)) {
         // For SSR elements, create new element with proper initialization
         const newEl = createEl()
         if (!newEl.dataset.key) {
@@ -184,11 +185,11 @@ function syncElementState(target: HTMLElement, source: HTMLElement): void {
   // First, sync conditional elements by replacing them entirely
   // This must be done before syncing text slots, because conditional elements
   // may contain text slots that would be lost if we only update textContent
-  const sourceCondSlots = Array.from(source.querySelectorAll('[data-bf-cond]'))
+  const sourceCondSlots = Array.from(source.querySelectorAll(`[${BF_COND}]`))
   for (const sourceCondSlot of sourceCondSlots) {
-    const condId = (sourceCondSlot as HTMLElement).dataset.bfCond
+    const condId = (sourceCondSlot as HTMLElement).getAttribute(BF_COND)
     if (condId) {
-      const targetCondSlot = target.querySelector(`[data-bf-cond="${condId}"]`)
+      const targetCondSlot = target.querySelector(`[${BF_COND}="${condId}"]`)
       if (targetCondSlot) {
         // Move the source element directly (not clone) to preserve event listeners
         // The source element comes from createComponent which has already bound events
@@ -199,16 +200,16 @@ function syncElementState(target: HTMLElement, source: HTMLElement): void {
     }
   }
 
-  // Then sync text content of data-bf slots that are NOT inside conditional elements
+  // Then sync text content of bf slots that are NOT inside conditional elements
   // (conditional elements were already replaced above)
-  const sourceSlots = source.querySelectorAll('[data-bf]')
+  const sourceSlots = source.querySelectorAll(`[${BF_SLOT}]`)
   for (const sourceSlot of sourceSlots) {
-    const slotId = (sourceSlot as HTMLElement).dataset.bf
+    const slotId = (sourceSlot as HTMLElement).getAttribute(BF_SLOT)
     if (slotId) {
       // Skip if this slot is inside a conditional element (already handled)
-      if (sourceSlot.closest('[data-bf-cond]')) continue
+      if (sourceSlot.closest(`[${BF_COND}]`)) continue
 
-      const targetSlot = target.querySelector(`[data-bf="${slotId}"]`)
+      const targetSlot = target.querySelector(`[${BF_SLOT}="${slotId}"]`)
       if (targetSlot && sourceSlot.textContent !== null) {
         // Only update text content if no children (pure text node)
         if (sourceSlot.children.length === 0) {

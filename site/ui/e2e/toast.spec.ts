@@ -24,7 +24,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Default Toast', () => {
     test('opens toast when button is clicked', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -36,7 +36,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('closes toast when close button is clicked', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -55,7 +55,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('has correct accessibility attributes', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -69,7 +69,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Error Toast', () => {
     test('displays error variant with assertive aria-live', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastErrorDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastErrorDemo_"]').first()
       const trigger = demo.locator('button:has-text("Error")')
 
       await trigger.click()
@@ -82,7 +82,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('action button dismisses toast', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastErrorDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastErrorDemo_"]').first()
       const trigger = demo.locator('button:has-text("Error")')
 
       await trigger.click()
@@ -102,7 +102,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Toast with Action', () => {
     test('displays action button', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastWithActionDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastWithActionDemo_"]').first()
       const trigger = demo.locator('button:has-text("Delete Item")')
 
       await trigger.click()
@@ -116,7 +116,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('action button closes toast when clicked', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastWithActionDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastWithActionDemo_"]').first()
       const trigger = demo.locator('button:has-text("Delete Item")')
 
       await trigger.click()
@@ -136,7 +136,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Toast Animations', () => {
     test('shows toast with visible state after entering', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -147,7 +147,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('slides out when dismissed and transitions to hidden', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -165,7 +165,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('toast has transition classes for animation', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -179,7 +179,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Variant Icons', () => {
     test('success toast displays check icon', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastSuccessDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastSuccessDemo_"]').first()
       const trigger = demo.locator('button:has-text("Success")')
 
       await trigger.click()
@@ -190,7 +190,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test('error toast displays icon', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastErrorDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastErrorDemo_"]').first()
       const trigger = demo.locator('button:has-text("Error")')
 
       await trigger.click()
@@ -201,7 +201,7 @@ test.describe('Toast Documentation Page', () => {
     })
 
     test.skip('default toast has no variant icon', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastDefaultDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
       await trigger.click()
@@ -214,7 +214,7 @@ test.describe('Toast Documentation Page', () => {
 
   test.describe('Position Demo', () => {
     test('displays position buttons', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ToastPositionDemo_"]').first()
+      const demo = page.locator('[bf-s^="ToastPositionDemo_"]').first()
       await expect(demo.locator('button:has-text("Top Left")')).toBeVisible()
       await expect(demo.locator('button:has-text("Top Center")')).toBeVisible()
       await expect(demo.locator('button:has-text("Top Right")')).toBeVisible()

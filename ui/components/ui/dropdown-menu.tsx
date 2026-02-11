@@ -233,7 +233,7 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
 
     // Portal to body to escape overflow clipping
     if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
-      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      const ownerScope = el.closest('[bf-s]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
 

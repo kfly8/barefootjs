@@ -456,7 +456,7 @@ func TestPortalCollector_Render_Single(t *testing.T) {
 	pc.Add("scope-abc", "<div>Portal Content</div>")
 
 	result := string(pc.Render())
-	expected := `<div data-bf-portal-id="bf-portal-1" data-bf-portal-owner="scope-abc"><div>Portal Content</div></div>` + "\n"
+	expected := `<div bf-pi="bf-portal-1" bf-po="scope-abc"><div>Portal Content</div></div>` + "\n"
 	if result != expected {
 		t.Errorf("Render() = %q, want %q", result, expected)
 	}
@@ -470,16 +470,16 @@ func TestPortalCollector_Render_Multiple(t *testing.T) {
 	result := string(pc.Render())
 
 	// Check that both portals are rendered
-	if !contains(result, `data-bf-portal-id="bf-portal-1"`) {
+	if !contains(result, `bf-pi="bf-portal-1"`) {
 		t.Error("Render() should contain first portal ID")
 	}
-	if !contains(result, `data-bf-portal-id="bf-portal-2"`) {
+	if !contains(result, `bf-pi="bf-portal-2"`) {
 		t.Error("Render() should contain second portal ID")
 	}
-	if !contains(result, `data-bf-portal-owner="scope-1"`) {
+	if !contains(result, `bf-po="scope-1"`) {
 		t.Error("Render() should contain first portal owner")
 	}
-	if !contains(result, `data-bf-portal-owner="scope-2"`) {
+	if !contains(result, `bf-po="scope-2"`) {
 		t.Error("Render() should contain second portal owner")
 	}
 	if !contains(result, "<div>Content 1</div>") {

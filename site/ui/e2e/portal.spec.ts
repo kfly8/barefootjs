@@ -24,7 +24,7 @@ test.describe('Portal Documentation Page', () => {
 
   test.describe('Basic Portal', () => {
     test('shows portal content when button clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="PortalBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="PortalBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Portal")')
 
       await trigger.click()
@@ -36,7 +36,7 @@ test.describe('Portal Documentation Page', () => {
     })
 
     test('hides portal when close clicked', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="PortalBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="PortalBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Portal")')
 
       await trigger.click()
@@ -52,7 +52,7 @@ test.describe('Portal Documentation Page', () => {
     })
 
     test('portal renders outside demo scope', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="PortalBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="PortalBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Portal")')
 
       await trigger.click()
@@ -67,7 +67,7 @@ test.describe('Portal Documentation Page', () => {
     })
 
     test('disables button while portal is open', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="PortalBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="PortalBasicDemo_"]').first()
       const trigger = basicDemo.locator('button:has-text("Show Portal")')
 
       // Initially enabled
@@ -89,7 +89,7 @@ test.describe('Portal Documentation Page', () => {
 
   test.describe('Custom Container Portal', () => {
     test('renders portal inside custom container', async ({ page }) => {
-      const containerDemo = page.locator('[data-bf-scope^="PortalCustomContainerDemo_"]').first()
+      const containerDemo = page.locator('[bf-s^="PortalCustomContainerDemo_"]').first()
       const trigger = containerDemo.locator('button:has-text("Show in Container")')
       const container = containerDemo.locator('[data-portal-container]')
 
@@ -102,7 +102,7 @@ test.describe('Portal Documentation Page', () => {
     })
 
     test('hides portal on hide button click', async ({ page }) => {
-      const containerDemo = page.locator('[data-bf-scope^="PortalCustomContainerDemo_"]').first()
+      const containerDemo = page.locator('[bf-s^="PortalCustomContainerDemo_"]').first()
       const showTrigger = containerDemo.locator('button:has-text("Show in Container")')
       const hideTrigger = containerDemo.locator('button:has-text("Hide")')
 
@@ -116,7 +116,7 @@ test.describe('Portal Documentation Page', () => {
     })
 
     test('hide button is disabled when portal is not visible', async ({ page }) => {
-      const containerDemo = page.locator('[data-bf-scope^="PortalCustomContainerDemo_"]').first()
+      const containerDemo = page.locator('[bf-s^="PortalCustomContainerDemo_"]').first()
       const showTrigger = containerDemo.locator('button:has-text("Show in Container")')
       const hideTrigger = containerDemo.locator('button:has-text("Hide")')
 

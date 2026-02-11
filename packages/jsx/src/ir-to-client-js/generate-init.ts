@@ -279,12 +279,12 @@ export function generateElementRefs(ctx: ClientJsContext): string {
 
   const refLines: string[] = []
 
-  // Regular element slots use $() shorthand for find(scope, '[data-bf="id"]')
+  // Regular element slots use $() shorthand for find(scope, '[bf="id"]')
   for (const slotId of regularSlots) {
     refLines.push(`  const _${slotId} = $(__scope, '${slotId}')`)
   }
 
-  // Component slots use $c() shorthand for find(scope, '[data-bf-scope$="_id"]')
+  // Component slots use $c() shorthand for find(scope, '[bf-s$="_id"]')
   for (const slotId of componentSlots) {
     refLines.push(`  const _${slotId} = $c(__scope, '${slotId}')`)
   }

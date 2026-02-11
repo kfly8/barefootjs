@@ -222,10 +222,10 @@ export class TestAdapter extends BaseAdapter {
 
     let hydrationAttrs = ''
     if (element.needsScope) {
-      hydrationAttrs += ' data-bf-scope={__scopeId}'
+      hydrationAttrs += ' bf-s={__scopeId}'
     }
     if (element.slotId) {
-      hydrationAttrs += ` data-bf="${element.slotId}"`
+      hydrationAttrs += ` bf="${element.slotId}"`
     }
 
     if (children) {
@@ -240,7 +240,7 @@ export class TestAdapter extends BaseAdapter {
       return 'null'
     }
     if (expr.reactive && expr.slotId) {
-      return `<span data-bf="${expr.slotId}">{${expr.expr}}</span>`
+      return `<span bf="${expr.slotId}">{${expr.expr}}</span>`
     }
     return `{${expr.expr}}`
   }
@@ -344,15 +344,15 @@ export class TestAdapter extends BaseAdapter {
   }
 
   renderScopeMarker(instanceIdExpr: string): string {
-    return `data-bf-scope={${instanceIdExpr}}`
+    return `bf-s={${instanceIdExpr}}`
   }
 
   renderSlotMarker(slotId: string): string {
-    return `data-bf="${slotId}"`
+    return `bf="${slotId}"`
   }
 
   renderCondMarker(condId: string): string {
-    return `data-bf-cond="${condId}"`
+    return `bf-c="${condId}"`
   }
 }
 

@@ -43,7 +43,7 @@ npx barefootjs compile Counter.tsx
 ```
 
 Output:
-- `Counter.tsx` - Marked Template (server-side, with `data-bf` hydration markers)
+- `Counter.tsx` - Marked Template (server-side, with `bf` hydration markers)
 - `Counter.client.js` - Client JS (minimal JS for reactivity)
 
 ### STEP 3. Render on server, hydrate on client
@@ -70,7 +70,7 @@ export default app
 ```
 
 **Client:**
-The Client JS automatically finds elements with `data-bf` markers and hydrates them with reactivity.
+The Client JS automatically finds elements with `bf` markers and hydrates them with reactivity.
 
 ---
 

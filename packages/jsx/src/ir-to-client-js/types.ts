@@ -43,7 +43,7 @@ export interface ClientJsContext {
 export interface InteractiveElement {
   slotId: string
   events: IREvent[]
-  isComponentSlot?: boolean // true if this slot is for a component (uses data-bf-scope)
+  isComponentSlot?: boolean // true if this slot is for a component (uses bf-s)
 }
 
 export interface ReactiveComponentProp {
@@ -96,7 +96,7 @@ export interface ConditionalElement {
 
 export interface LoopChildEvent {
   eventName: string // 'click', 'submit', etc.
-  childSlotId: string // data-bf slot ID of the element with the event
+  childSlotId: string // bf slot ID of the element with the event
   handler: string // Handler expression (may reference loop param)
 }
 

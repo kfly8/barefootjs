@@ -1830,7 +1830,7 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   renderConditional(cond: IRConditional): string {
-    // Handle @client directive - render as template with data-bf-client attribute
+    // Handle @client directive - render as comment markers for client-side evaluation
     if (cond.clientOnly) {
       return this.renderClientOnlyConditional(cond)
     }
@@ -2255,22 +2255,21 @@ export class GoTemplateAdapter extends BaseAdapter {
     return output
   }
 
-  renderScopeMarker(instanceIdExpr: string): string {
-    // Include bfIsChild to mark child components for parent-first hydration
-    // Include bfPropsAttr to serialize props as data-bf-props attribute
-    return `data-bf-scope="{{${instanceIdExpr}}}" {{bfIsChild .}} {{bfPropsAttr .}}`
+  renderScopeMarker(_instanceIdExpr: string): string {
+    // bfScopeAttr returns scopeID with ~ prefix for child components
+    return `bf-s="{{bfScopeAttr .}}" {{bfPropsAttr .}}`
   }
 
   renderSlotMarker(slotId: string): string {
-    return `data-bf="${slotId}"`
+    return `bf="${slotId}"`
   }
 
   renderCondMarker(condId: string): string {
-    return `data-bf-cond="${condId}"`
+    return `bf-c="${condId}"`
   }
 
   private wrapWithCondMarker(content: string, condId: string): string {
-    // If content is an HTML element, add data-bf-cond attribute
+    // If content is an HTML element, add bf-c attribute
     if (content.startsWith('<')) {
       const match = content.match(/^<(\w+)/)
       if (match) {

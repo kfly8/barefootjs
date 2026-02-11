@@ -7,6 +7,7 @@
 
 import { createEffect } from './reactive'
 import { registerTemplate } from './template'
+import { BF_SCOPE, BF_SLOT, BF_INIT, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX } from './attrs'
 
 // --- unwrap ---
 
@@ -46,8 +47,10 @@ export function findScope(
   // 1. Scope ID starts with component name (e.g., "AddTodoForm_abc123")
   // 2. Scope ID is from parent component via initChild (e.g., "TodoApp_xyz_s5")
   //    In this case, initChild already found the correct element, so trust it
-  if (parentEl?.dataset?.bfScope) {
-    const scopeId = parentEl.dataset.bfScope
+  const rawScope = parentEl?.getAttribute(BF_SCOPE)
+  if (rawScope) {
+    // Strip child prefix for name matching
+    const scopeId = rawScope.startsWith(BF_CHILD_PREFIX) ? rawScope.slice(1) : rawScope
     // Accept if it matches the name prefix OR if it's a child slot pattern
     // (when initChild passes the scope element directly)
     if (
@@ -55,8 +58,8 @@ export function findScope(
       (/_s\d/.test(scopeId) && parent !== document)
     ) {
       // Mark as initialized if not already
-      if (!parentEl.hasAttribute('data-bf-init')) {
-        parentEl.setAttribute('data-bf-init', 'true')
+      if (!parentEl.hasAttribute(BF_INIT)) {
+        parentEl.setAttribute(BF_INIT, 'true')
       }
       return parent as Element
     }
@@ -65,15 +68,15 @@ export function findScope(
   // Search for scope elements with prefix matching
   const searchRoot = parent || document
   const allScopes = Array.from(
-    searchRoot.querySelectorAll(`[data-bf-scope^="${name}_"]`)
+    searchRoot.querySelectorAll(`[${BF_SCOPE}^="${name}_"]`)
   )
   const uninitializedScopes = allScopes.filter(
-    s => !s.hasAttribute('data-bf-init')
+    s => !s.hasAttribute(BF_INIT)
   )
   const scope = uninitializedScopes[idx] || null
 
   if (scope) {
-    scope.setAttribute('data-bf-init', 'true')
+    scope.setAttribute(BF_INIT, 'true')
   }
 
   return scope
@@ -84,7 +87,7 @@ export function findScope(
 /**
  * Check if an element belongs directly to a scope (not in a nested scope).
  * Returns true only if the element's nearest scope is exactly the given scope.
- * Elements inside nested child scopes (which have their own data-bf-scope) return false.
+ * Elements inside nested child scopes (which have their own bf-s) return false.
  */
 function belongsToScope(
   element: Element,
@@ -92,28 +95,35 @@ function belongsToScope(
   isLookingForScope = false
 ): boolean {
   // If element has its own scope, it's a component root
-  const elementScope = (element as HTMLElement).dataset?.bfScope
-  if (elementScope) {
-    // When looking for child scope elements (data-bf-scope selectors),
+  const rawElementScope = element.getAttribute(BF_SCOPE)
+  if (rawElementScope) {
+    // Strip child prefix for ID comparison
+    const elementScope = rawElementScope.startsWith(BF_CHILD_PREFIX)
+      ? rawElementScope.slice(1)
+      : rawElementScope
+    // When looking for child scope elements (bf-s selectors),
     // accept only scopes whose ID is parentScopeId + "_sN" (single slot suffix).
     // Reject nested scopes like parentScopeId + "_sM_sN" which belong to an intermediate scope.
     if (isLookingForScope) {
-      const scopeId = (scope as HTMLElement).dataset?.bfScope
+      const rawScopeId = scope.getAttribute(BF_SCOPE)
+      const scopeId = rawScopeId?.startsWith(BF_CHILD_PREFIX)
+        ? rawScopeId.slice(1)
+        : rawScopeId
       if (scopeId && elementScope.startsWith(scopeId + '_')) {
         const remainder = elementScope.slice(scopeId.length + 1)
         return /^s\d+$/.test(remainder)
       }
-      // For component name prefix matches (e.g., [data-bf-scope^="Counter_"]),
+      // For component name prefix matches (e.g., [bf-s^="Counter_"]),
       // element scope ID won't start with parent scope ID. Use containment check.
       return scope.contains(element)
     }
-    // When looking for slot elements (data-bf selectors),
+    // When looking for slot elements (bf selectors),
     // exclude component roots to prevent slot ID collision
     return false
   }
 
   // Element doesn't have its own scope - check if nearest scope matches
-  const nearestScope = element.closest('[data-bf-scope]')
+  const nearestScope = element.closest(`[${BF_SCOPE}]`)
   return nearestScope === scope
 }
 
@@ -150,7 +160,7 @@ export function find(
 
   // Detect if we're looking for scope elements (child components)
   // vs slot elements (internal structure)
-  const isLookingForScope = selector.includes('data-bf-scope')
+  const isLookingForScope = selector.includes(BF_SCOPE)
 
   // For non-scope selectors, check if scope itself matches first
   if (!isLookingForScope && scope.matches?.(selector)) return scope
@@ -171,11 +181,11 @@ export function find(
 
   // For fragment roots, elements may be in sibling scope elements
   // Search siblings that share the EXACT SAME scope ID
-  const scopeId = (scope as HTMLElement).dataset?.bfScope
+  const scopeId = scope.getAttribute(BF_SCOPE)
   if (scopeId) {
     const parent = scope.parentElement
     if (parent) {
-      const siblings = parent.querySelectorAll(`[data-bf-scope="${scopeId}"]`)
+      const siblings = parent.querySelectorAll(`[${BF_SCOPE}="${scopeId}"]`)
       for (const sibling of siblings) {
         if (sibling === scope) continue
         if (sibling.matches?.(selector)) return sibling
@@ -189,14 +199,14 @@ export function find(
     }
 
     // Search in portals owned by this scope
-    // Portals are elements with data-bf-portal-owner matching this scope's ID
-    const portals = document.querySelectorAll(`[data-bf-portal-owner="${scopeId}"]`)
+    // Portals are elements with bf-po matching this scope's ID
+    const portals = document.querySelectorAll(`[${BF_PORTAL_OWNER}="${scopeId}"]`)
     for (const portal of portals) {
       if (portal.matches?.(selector)) return portal
       // Search within portal, excluding elements inside nested component scopes
       const matches = portal.querySelectorAll(selector)
       for (const match of matches) {
-        const nearestScope = match.closest('[data-bf-scope]')
+        const nearestScope = match.closest(`[${BF_SCOPE}]`)
         // Include if no nested scope, or if the match is inside a portal-specific scope
         if (!nearestScope) {
           return match
@@ -224,9 +234,8 @@ export function hydrate(
 ): void {
   const doHydrate = () => {
     // Only select uninitialized elements (skip already hydrated ones)
-    // Also skip child components (data-bf-child) - they are initialized by parent via initChild
     const scopeEls = document.querySelectorAll(
-      `[data-bf-scope^="${name}_"]:not([data-bf-init]):not([data-bf-child])`
+      `[${BF_SCOPE}^="${name}_"]:not([${BF_INIT}])`
     )
 
     // Track initialized scope IDs to avoid duplicate initialization
@@ -234,6 +243,9 @@ export function hydrate(
     const initializedScopes = new Set<string>()
 
     for (const scopeEl of scopeEls) {
+      // Skip child components (~ prefix) - they are initialized by parent via initChild
+      if (scopeEl.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) continue
+
       // Skip nested instances when parent is the same component type.
       // This prevents double initialization (parent's initChild handles it).
       //
@@ -242,14 +254,17 @@ export function hydrate(
       //   - Counter inside Counter → skip (same type, parent initializes)
       //
       // Note: This relies on scopeId format "ComponentName_xxxxx"
-      const parentScope = scopeEl.parentElement?.closest('[data-bf-scope]')
+      const parentScope = scopeEl.parentElement?.closest(`[${BF_SCOPE}]`)
       if (parentScope) {
-        const parentScopeId = (parentScope as HTMLElement).dataset.bfScope
+        const rawParentScopeId = parentScope.getAttribute(BF_SCOPE)
+        const parentScopeId = rawParentScopeId?.startsWith(BF_CHILD_PREFIX)
+          ? rawParentScopeId.slice(1)
+          : rawParentScopeId
         if (parentScopeId?.startsWith(name + '_')) continue
       }
 
       // Get unique instance ID from scope element
-      const instanceId = (scopeEl as HTMLElement).dataset.bfScope
+      const instanceId = scopeEl.getAttribute(BF_SCOPE)
       if (!instanceId) continue
 
       // Skip if already initialized in this batch (for fragment roots)
@@ -257,10 +272,10 @@ export function hydrate(
       initializedScopes.add(instanceId)
 
       // Mark as initialized immediately to prevent duplicate init
-      scopeEl.setAttribute('data-bf-init', 'true')
+      scopeEl.setAttribute(BF_INIT, 'true')
 
-      // Read props from data-bf-props attribute on the scope element
-      const propsJson = (scopeEl as HTMLElement).dataset.bfProps
+      // Read props from bf-p attribute on the scope element
+      const propsJson = scopeEl.getAttribute(BF_PROPS)
       const props = propsJson ? JSON.parse(propsJson) : {}
 
       init(props, 0, scopeEl)
@@ -399,9 +414,9 @@ export function cond(
         for (const { name, props, init } of inits) {
           // Find the scope for the newly inserted component
           // The component should be inside the conditional element
-          const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+          const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
           if (condEl) {
-            const componentScope = condEl.querySelector(`[data-bf-scope^="${name}"]`)
+            const componentScope = condEl.querySelector(`[${BF_SCOPE}^="${name}"]`)
             if (componentScope && init) {
               init(props, 0, componentScope as Element)
             }
@@ -437,7 +452,7 @@ function updateFragmentConditional(scope: Element, id: string, html: string): vo
     }
   }
 
-  const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+  const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
 
   const endMarker = `bf-cond-end:${id}`
 
@@ -483,10 +498,10 @@ function updateFragmentConditional(scope: Element, id: string, html: string): vo
 }
 
 /**
- * Update element conditional (single element with data-bf-cond)
+ * Update element conditional (single element with bf-c)
  */
 function updateElementConditional(scope: Element, id: string, html: string): void {
-  const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+  const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
   if (!condEl) return
 
   const template = document.createElement('template')
@@ -562,7 +577,7 @@ export function insert(
       // Hydration mode: check if existing DOM matches expected branch
       // If the existing element doesn't match the expected branch,
       // we need to swap the DOM first (e.g., SSR rendered whenFalse but now we need whenTrue)
-      const existingEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+      const existingEl = scope.querySelector(`[${BF_COND}="${id}"]`)
       if (existingEl) {
         // Check if the existing element type matches what we expect
         // For simple cases, compare tag names from templates
@@ -625,7 +640,7 @@ function autoFocusConditionalElement(scope: Element, id: string): void {
   // This is necessary because createComponent() may call insert() before
   // the element is added to the document by reconcileList().
   requestAnimationFrame(() => {
-    const condEl = scope.querySelector(`[data-bf-cond="${id}"]`)
+    const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
     if (condEl) {
       const autofocusEl = condEl.matches('[autofocus]')
         ? condEl
@@ -684,9 +699,9 @@ export function registerComponent(name: string, init: ComponentInitFn): void {
   if (pending) {
     for (const { scope, props } of pending) {
       // Skip if already initialized as a child component.
-      // When element lacks data-bf-child, it's a root component whose parent
-      // marked it with data-bf-init during hydrate — still needs child init.
-      if (scope.hasAttribute('data-bf-init') && scope.hasAttribute('data-bf-child')) {
+      // When scope has no ~ prefix, it's a root component whose parent
+      // marked it with bf-i during hydrate — still needs child init.
+      if (scope.hasAttribute(BF_INIT) && scope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
         continue
       }
       init(0, scope, props)
@@ -737,9 +752,9 @@ export function initChild(
   }
 
   // Skip if already initialized as a child component.
-  // When element lacks data-bf-child, it's a root component whose parent
-  // marked it with data-bf-init during hydrate — still needs child init.
-  if (childScope.hasAttribute('data-bf-init') && childScope.hasAttribute('data-bf-child')) {
+  // When scope has no ~ prefix, it's a root component whose parent
+  // marked it with bf-i during hydrate — still needs child init.
+  if (childScope.hasAttribute(BF_INIT) && childScope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
     return
   }
   init(0, childScope, props)
@@ -770,7 +785,7 @@ export function mount(
 // --- shorthand finders ---
 
 /**
- * Shorthand for find(scope, '[data-bf="id"]').
+ * Shorthand for find(scope, '[bf="id"]').
  * Used by compiler-generated code for regular slot element references.
  *
  * @param scope - The scope element to search within
@@ -778,13 +793,13 @@ export function mount(
  * @returns The matching element or null
  */
 export function $(scope: Element | null, id: string): Element | null {
-  return find(scope, `[data-bf="${id}"]`)
+  return find(scope, `[${BF_SLOT}="${id}"]`)
 }
 
 /**
  * Shorthand for finding child component scope elements.
- * - Slot ID (e.g., 's1'): uses suffix match [data-bf-scope$="_s1"]
- * - Component name (e.g., 'Counter'): uses prefix match [data-bf-scope^="Counter_"]
+ * - Slot ID (e.g., 's1'): uses suffix match [bf-s$="_s1"]
+ * - Component name (e.g., 'Counter'): uses prefix match [bf-s^="Counter_"]
  *
  * @param scope - The scope element to search within
  * @param id - Slot ID suffix or component name
@@ -793,8 +808,8 @@ export function $(scope: Element | null, id: string): Element | null {
 export function $c(scope: Element | null, id: string): Element | null {
   // Slot IDs start with 's' + digit; component names start with uppercase
   const selector = /^s\d/.test(id)
-    ? `[data-bf-scope$="_${id}"]`
-    : `[data-bf-scope^="${id}_"]`
+    ? `[${BF_SCOPE}$="_${id}"]`
+    : `[${BF_SCOPE}^="${id}_"]`
   return find(scope, selector)
 }
 

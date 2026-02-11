@@ -29,7 +29,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
 
   test.describe('Basic Tooltip', () => {
     test('shows tooltip on hover', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="TooltipBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="TooltipBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-tooltip-trigger]')
       const tooltip = basicDemo.locator('[role="tooltip"]')
 
@@ -43,7 +43,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
 
     test('hides tooltip on mouse leave', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="TooltipBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="TooltipBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-tooltip-trigger]')
       const tooltip = basicDemo.locator('[role="tooltip"]')
 
@@ -57,7 +57,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
 
     test('has correct accessibility attributes', async ({ page }) => {
-      const basicDemo = page.locator('[data-bf-scope^="TooltipBasicDemo_"]').first()
+      const basicDemo = page.locator('[bf-s^="TooltipBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-tooltip-trigger]')
       const tooltip = basicDemo.locator('[role="tooltip"]')
 
@@ -71,7 +71,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
 
   test.describe('Button with Hover Support', () => {
     test('shows tooltip on hover', async ({ page }) => {
-      const buttonDemo = page.locator('[data-bf-scope^="TooltipButtonDemo_"]').first()
+      const buttonDemo = page.locator('[bf-s^="TooltipButtonDemo_"]').first()
       const trigger = buttonDemo.locator('[data-tooltip-trigger]')
       const tooltip = buttonDemo.locator('[role="tooltip"]')
 
@@ -85,7 +85,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
 
     test('hides tooltip on mouse leave', async ({ page }) => {
-      const buttonDemo = page.locator('[data-bf-scope^="TooltipButtonDemo_"]').first()
+      const buttonDemo = page.locator('[bf-s^="TooltipButtonDemo_"]').first()
       const trigger = buttonDemo.locator('[data-tooltip-trigger]')
       const tooltip = buttonDemo.locator('[role="tooltip"]')
 
@@ -101,7 +101,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
 
   test.describe('Placement Options', () => {
     test('top placement shows tooltip above trigger', async ({ page }) => {
-      const topDemo = page.locator('[data-bf-scope^="TooltipTopDemo_"]').first()
+      const topDemo = page.locator('[bf-s^="TooltipTopDemo_"]').first()
       const trigger = topDemo.locator('[data-tooltip-trigger]')
       const tooltip = topDemo.locator('[role="tooltip"]')
 
@@ -111,7 +111,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
 
     test('right placement shows tooltip to the right', async ({ page }) => {
-      const rightDemo = page.locator('[data-bf-scope^="TooltipRightDemo_"]').first()
+      const rightDemo = page.locator('[bf-s^="TooltipRightDemo_"]').first()
       const trigger = rightDemo.locator('[data-tooltip-trigger]')
       const tooltip = rightDemo.locator('[role="tooltip"]')
 
@@ -121,7 +121,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
 
     test('bottom placement shows tooltip below trigger', async ({ page }) => {
-      const bottomDemo = page.locator('[data-bf-scope^="TooltipBottomDemo_"]').first()
+      const bottomDemo = page.locator('[bf-s^="TooltipBottomDemo_"]').first()
       const trigger = bottomDemo.locator('[data-tooltip-trigger]')
       const tooltip = bottomDemo.locator('[role="tooltip"]')
 
@@ -131,7 +131,7 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
 
     test('left placement shows tooltip to the left', async ({ page }) => {
-      const leftDemo = page.locator('[data-bf-scope^="TooltipLeftDemo_"]').first()
+      const leftDemo = page.locator('[bf-s^="TooltipLeftDemo_"]').first()
       const trigger = leftDemo.locator('[data-tooltip-trigger]')
       const tooltip = leftDemo.locator('[role="tooltip"]')
 
@@ -163,7 +163,7 @@ test.describe.skip('Tooltip with Delay', () => {
   })
 
   test('does not show tooltip before delay duration', async ({ page }) => {
-    const delayDemo = page.locator('[data-bf-scope^="TooltipDelayDemo_"]').first()
+    const delayDemo = page.locator('[bf-s^="TooltipDelayDemo_"]').first()
     const trigger = delayDemo.locator('[data-tooltip-trigger]')
     const tooltip = delayDemo.locator('[role="tooltip"]')
 
@@ -180,7 +180,7 @@ test.describe.skip('Tooltip with Delay', () => {
   })
 
   test('cancels open timer on mouse leave before delay', async ({ page }) => {
-    const delayDemo = page.locator('[data-bf-scope^="TooltipDelayDemo_"]').first()
+    const delayDemo = page.locator('[bf-s^="TooltipDelayDemo_"]').first()
     const trigger = delayDemo.locator('[data-tooltip-trigger]')
     const tooltip = delayDemo.locator('[role="tooltip"]')
 
@@ -195,7 +195,7 @@ test.describe.skip('Tooltip with Delay', () => {
   })
 
   test('immediate tooltip shows without delay when delayDuration is 0', async ({ page }) => {
-    const noDelayDemo = page.locator('[data-bf-scope^="TooltipNoDelayDemo_"]').first()
+    const noDelayDemo = page.locator('[bf-s^="TooltipNoDelayDemo_"]').first()
     const trigger = noDelayDemo.locator('[data-tooltip-trigger]')
     const tooltip = noDelayDemo.locator('[role="tooltip"]')
 

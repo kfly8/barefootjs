@@ -19,15 +19,15 @@ export function Counter() {
 export const HONO_OUTPUT = `// Hono JSX Template
 export function Counter({ count = 0 }) {
   return (
-    <button data-bf-scope="Counter" data-bf="slot_1">
-      Count: <span data-bf="slot_0">{count}</span>
+    <button bf-s="Counter" bf="slot_1">
+      Count: <span bf="slot_0">{count}</span>
     </button>
   )
 }`
 
 export const ECHO_OUTPUT = `{{/* Go Template */}}
-<button data-bf-scope="Counter" data-bf="slot_1">
-  Count: <span data-bf="slot_0">{{ .Count }}</span>
+<button bf-s="Counter" bf="slot_1">
+  Count: <span bf="slot_0">{{ .Count }}</span>
 </button>`
 
 export const CLIENT_CODE = `// Counter.client.js
@@ -39,8 +39,8 @@ export function initCounter(__instanceIndex, __parentScope, props = {}) {
 
   const [count, setCount] = createSignal(props.count ?? 0)
 
-  const _slot_0 = find(__scope, '[data-bf="slot_0"]')
-  const _slot_1 = find(__scope, '[data-bf="slot_1"]')
+  const _slot_0 = find(__scope, '[bf="slot_0"]')
+  const _slot_1 = find(__scope, '[bf="slot_1"]')
 
   createEffect(() => {
     if (_slot_0) _slot_0.textContent = String(count())

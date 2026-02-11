@@ -25,11 +25,11 @@ test.describe.skip('Controlled Input Documentation Page', () => {
 
   test.describe('Basic Two-Way Binding', () => {
     test('displays basic controlled demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="BasicControlledDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="BasicControlledDemo_"]')).toBeVisible()
     })
 
     test('updates display when typing', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicControlledDemo_"]')
+      const demo = page.locator('[bf-s^="BasicControlledDemo_"]')
       const input = demo.locator('input')
       const display = demo.locator('.current-value')
 
@@ -40,7 +40,7 @@ test.describe.skip('Controlled Input Documentation Page', () => {
     })
 
     test('handles rapid typing', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicControlledDemo_"]')
+      const demo = page.locator('[bf-s^="BasicControlledDemo_"]')
       const input = demo.locator('input')
       const display = demo.locator('.current-value')
 
@@ -53,7 +53,7 @@ test.describe.skip('Controlled Input Documentation Page', () => {
     // When value is synchronized via signal, cursor moves to end of input.
     // This is a validation finding for Issue #75.
     test.skip('handles typing in middle of text', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicControlledDemo_"]')
+      const demo = page.locator('[bf-s^="BasicControlledDemo_"]')
       const input = demo.locator('input')
       const display = demo.locator('.current-value')
 
@@ -73,11 +73,11 @@ test.describe.skip('Controlled Input Documentation Page', () => {
 
   test.describe('Character Count', () => {
     test('displays character count demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="CharacterCountDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="CharacterCountDemo_"]')).toBeVisible()
     })
 
     test('shows initial count of 0', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="CharacterCountDemo_"]')
+      const demo = page.locator('[bf-s^="CharacterCountDemo_"]')
       const charCount = demo.locator('.char-count')
       const remaining = demo.locator('.remaining-count')
 
@@ -86,7 +86,7 @@ test.describe.skip('Controlled Input Documentation Page', () => {
     })
 
     test('updates count on typing', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="CharacterCountDemo_"]')
+      const demo = page.locator('[bf-s^="CharacterCountDemo_"]')
       const input = demo.locator('input')
       const charCount = demo.locator('.char-count')
       const remaining = demo.locator('.remaining-count')
@@ -97,7 +97,7 @@ test.describe.skip('Controlled Input Documentation Page', () => {
     })
 
     test('updates count in real-time during typing', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="CharacterCountDemo_"]')
+      const demo = page.locator('[bf-s^="CharacterCountDemo_"]')
       const input = demo.locator('input')
       const charCount = demo.locator('.char-count')
 
@@ -108,11 +108,11 @@ test.describe.skip('Controlled Input Documentation Page', () => {
 
   test.describe('Live Preview', () => {
     test('displays live preview demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="LivePreviewDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="LivePreviewDemo_"]')).toBeVisible()
     })
 
     test('shows uppercase transformation', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="LivePreviewDemo_"]')
+      const demo = page.locator('[bf-s^="LivePreviewDemo_"]')
       const input = demo.locator('input')
       const uppercase = demo.locator('.uppercase-preview')
 
@@ -121,7 +121,7 @@ test.describe.skip('Controlled Input Documentation Page', () => {
     })
 
     test('shows correct word count', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="LivePreviewDemo_"]')
+      const demo = page.locator('[bf-s^="LivePreviewDemo_"]')
       const input = demo.locator('input')
       const wordCount = demo.locator('.word-count')
 
@@ -135,7 +135,7 @@ test.describe.skip('Controlled Input Documentation Page', () => {
     })
 
     test('handles empty and whitespace-only input', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="LivePreviewDemo_"]')
+      const demo = page.locator('[bf-s^="LivePreviewDemo_"]')
       const input = demo.locator('input')
       const wordCount = demo.locator('.word-count')
 
@@ -149,11 +149,11 @@ test.describe.skip('Controlled Input Documentation Page', () => {
 
   test.describe('Multi-Input Sync', () => {
     test('displays multi-input sync demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="MultiInputSyncDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="MultiInputSyncDemo_"]')).toBeVisible()
     })
 
     test('syncs value between inputs', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="MultiInputSyncDemo_"]')
+      const demo = page.locator('[bf-s^="MultiInputSyncDemo_"]')
       const inputs = demo.locator('input')
       const inputA = inputs.first()
       const inputB = inputs.last()

@@ -82,7 +82,7 @@ export function BfPortals() {
     return (
       <Fragment>
         {portals.map(({ id, scopeId, content }) => (
-          <div key={id} data-bf-portal-id={id} data-bf-portal-owner={scopeId}>
+          <div key={id} bf-pi={id} bf-po={scopeId}>
             {content}
           </div>
         ))}

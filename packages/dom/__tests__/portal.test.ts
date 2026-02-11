@@ -253,46 +253,46 @@ describe('createPortal', () => {
   })
 
   describe('with ownerScope option', () => {
-    test('sets data-bf-portal-owner when ownerScope has scope ID', () => {
+    test('sets bf-po when ownerScope has scope ID', () => {
       const ownerScope = document.createElement('div')
-      ownerScope.dataset.bfScope = 'Dialog_abc123'
+      ownerScope.setAttribute('bf-s', 'Dialog_abc123')
 
       const portal = createPortal('<div class="modal">Content</div>', container, { ownerScope })
 
-      expect(portal.element.getAttribute('data-bf-portal-owner')).toBe('Dialog_abc123')
+      expect(portal.element.getAttribute('bf-po')).toBe('Dialog_abc123')
     })
 
-    test('does not set data-bf-portal-owner when ownerScope is missing scope ID', () => {
+    test('does not set bf-po when ownerScope is missing scope ID', () => {
       const ownerScope = document.createElement('div')
-      // No data-bf-scope attribute
+      // No bf-s attribute
 
       const portal = createPortal('<div class="modal">Content</div>', container, { ownerScope })
 
-      expect(portal.element.hasAttribute('data-bf-portal-owner')).toBe(false)
+      expect(portal.element.hasAttribute('bf-po')).toBe(false)
     })
 
-    test('does not set data-bf-portal-owner when options not provided', () => {
+    test('does not set bf-po when options not provided', () => {
       const portal = createPortal('<div class="modal">Content</div>', container)
 
-      expect(portal.element.hasAttribute('data-bf-portal-owner')).toBe(false)
+      expect(portal.element.hasAttribute('bf-po')).toBe(false)
     })
 
-    test('does not set data-bf-portal-owner when ownerScope is undefined', () => {
+    test('does not set bf-po when ownerScope is undefined', () => {
       const portal = createPortal('<div class="modal">Content</div>', container, { ownerScope: undefined })
 
-      expect(portal.element.hasAttribute('data-bf-portal-owner')).toBe(false)
+      expect(portal.element.hasAttribute('bf-po')).toBe(false)
     })
 
     test('works with HTMLElement children', () => {
       const ownerScope = document.createElement('div')
-      ownerScope.dataset.bfScope = 'DialogContent_xyz789'
+      ownerScope.setAttribute('bf-s', 'DialogContent_xyz789')
 
       const modalEl = document.createElement('div')
       modalEl.className = 'dialog-content'
 
       const portal = createPortal(modalEl, container, { ownerScope })
 
-      expect(portal.element.getAttribute('data-bf-portal-owner')).toBe('DialogContent_xyz789')
+      expect(portal.element.getAttribute('bf-po')).toBe('DialogContent_xyz789')
       expect(portal.element.className).toBe('dialog-content')
     })
   })

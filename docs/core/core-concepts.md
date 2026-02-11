@@ -25,7 +25,7 @@ JSX Source
 
 **Phase 2** takes the IR and generates two outputs:
 
-- **Marked Template** — An HTML template for your server, with `data-bf-*` attributes marking interactive elements. The adapter determines the output format.
+- **Marked Template** — An HTML template for your server, with `bf-*` attributes marking interactive elements. The adapter determines the output format.
 - **Client JS** — A minimal script that creates signals, wires up effects, and binds event handlers to the marked elements.
 
 ### Example
@@ -60,9 +60,9 @@ Phase 2a produces a server template:
 ```tsx
 export function Counter(props) {
   return (
-    <div data-bf-scope="Counter">
-      <p data-bf="slot_0">{props.initial ?? 0}</p>
-      <button data-bf="slot_1">+1</button>
+    <div bf-s="Counter">
+      <p bf="slot_0">{props.initial ?? 0}</p>
+      <button bf="slot_1">+1</button>
     </div>
   )
 }
@@ -70,9 +70,9 @@ export function Counter(props) {
 <!-- tab:Go Template -->
 ```go-template
 {{define "Counter"}}
-<div data-bf-scope="{{.ScopeID}}">
-  <p data-bf="slot_0">{{.Initial}}</p>
-  <button data-bf="slot_1">+1</button>
+<div bf-s="{{.ScopeID}}">
+  <p bf="slot_0">{{.Initial}}</p>
+  <button bf="slot_1">+1</button>
 </div>
 {{end}}
 ```
@@ -86,10 +86,10 @@ import { createSignal, createEffect, find, bind } from '@barefootjs/dom'
 export function init(props) {
   const [count, setCount] = createSignal(props.initial ?? 0)
 
-  const _slot_0 = find('[data-bf="slot_0"]')
+  const _slot_0 = find('[bf="slot_0"]')
   createEffect(() => { _slot_0.textContent = String(count()) })
 
-  bind('[data-bf="slot_1"]', 'click', () => setCount(n => n + 1))
+  bind('[bf="slot_1"]', 'click', () => setCount(n => n + 1))
 }
 ```
 
@@ -170,19 +170,19 @@ Hydration is the process of making server-rendered HTML interactive. BarefootJS 
 
 ### Hydration Markers
 
-The compiler inserts `data-bf-*` attributes into the server template. These tell the client JS where to attach behavior:
+The compiler inserts `bf-*` attributes into the server template. These tell the client JS where to attach behavior:
 
 | Marker | Purpose | Example |
 |--------|---------|---------|
-| `data-bf-scope` | Component boundary | `<div data-bf-scope="Counter_a1b2">` |
-| `data-bf` | Interactive element | `<p data-bf="slot_0">` |
-| `data-bf-cond` | Conditional block | `<div data-bf-cond="slot_2">` |
+| `bf-s` | Component boundary | `<div bf-s="Counter_a1b2">` |
+| `bf` | Interactive element | `<p bf="slot_0">` |
+| `bf-c` | Conditional block | `<div bf-c="slot_2">` |
 
 ### Hydration Flow
 
 1. The server renders HTML with markers and embeds component props in a `<script>` tag
 2. The browser loads the client JS
-3. `hydrate()` finds all uninitialized `data-bf-scope` elements
+3. `hydrate()` finds all uninitialized `bf-s` elements
 4. For each scope, the init function runs — creating signals, binding effects, attaching event handlers
 5. The page is now interactive
 
@@ -193,9 +193,9 @@ Client JS loads
     ↓
 hydrate("Counter", init)
     ↓
-Find <div data-bf-scope="Counter_a1b2">
+Find <div bf-s="Counter_a1b2">
     ↓
-Read props from data-bf-props attribute
+Read props from bf-p attribute
     ↓
 Run init(): createSignal, createEffect, bind events
     ↓
@@ -207,15 +207,15 @@ Page is interactive
 Each component only hydrates its own elements. The runtime's `find()` function searches within a scope boundary, excluding nested component scopes. This prevents components from interfering with each other.
 
 ```html
-<div data-bf-scope="TodoApp_x1">        <!-- TodoApp scope -->
-  <h1 data-bf="slot_0">Todo</h1>        <!-- belongs to TodoApp -->
-  <div data-bf-scope="TodoItem_y1">     <!-- TodoItem scope (excluded from TodoApp queries) -->
-    <span data-bf="slot_0">Buy milk</span>
+<div bf-s="TodoApp_x1">        <!-- TodoApp scope -->
+  <h1 bf="slot_0">Todo</h1>        <!-- belongs to TodoApp -->
+  <div bf-s="TodoItem_y1">     <!-- TodoItem scope (excluded from TodoApp queries) -->
+    <span bf="slot_0">Buy milk</span>
   </div>
 </div>
 ```
 
-When TodoApp's init calls `find(scope, '[data-bf="slot_0"]')`, it finds the `<h1>`, not the `<span>` inside TodoItem.
+When TodoApp's init calls `find(scope, '[bf="slot_0"]')`, it finds the `<h1>`, not the `<span>` inside TodoItem.
 
 
 ## The `"use client"` Directive

@@ -148,7 +148,7 @@ function ToastProvider(props: ToastProviderProps) {
   const handleMount = (el: HTMLElement) => {
     // Portal to body
     if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
-      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      const ownerScope = el.closest('[bf-s]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
   }

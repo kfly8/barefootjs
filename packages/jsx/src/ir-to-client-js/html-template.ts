@@ -24,7 +24,7 @@ export function irToHtmlTemplate(node: IRNode): string {
         .filter(Boolean)
 
       if (node.slotId) {
-        attrParts.push(`data-bf="${node.slotId}"`)
+        attrParts.push(`bf="${node.slotId}"`)
       }
 
       const attrs = attrParts.join(' ')
@@ -42,7 +42,7 @@ export function irToHtmlTemplate(node: IRNode): string {
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
       if (node.slotId) {
-        return `<span data-bf="${node.slotId}">\${${node.expr}}</span>`
+        return `<span bf="${node.slotId}">\${${node.expr}}</span>`
       }
       return `\${${node.expr}}`
 
@@ -65,7 +65,7 @@ export function irToHtmlTemplate(node: IRNode): string {
       // For dynamic lists, consider using plain elements instead of components.
       const keyProp = node.props.find((p) => p.name === 'key')
       const keyAttr = keyProp ? ` data-key="\${${keyProp.value}}"` : ''
-      const scopeAttr = ` data-bf-scope="${node.name}_\${Math.random().toString(36).slice(2, 8)}"`
+      const scopeAttr = ` bf-s="${node.name}_\${Math.random().toString(36).slice(2, 8)}"`
       // Generate minimal placeholder - content will be rendered by component
       return `<div${keyAttr}${scopeAttr}></div>`
     }
@@ -85,12 +85,12 @@ export function irToHtmlTemplate(node: IRNode): string {
 }
 
 /**
- * Add data-bf-cond attribute to the first element in an HTML template string.
+ * Add bf-c attribute to the first element in an HTML template string.
  * This ensures cond() can find the element for subsequent swaps.
  */
 export function addCondAttrToTemplate(html: string, condId: string): string {
   if (/^<\w+/.test(html)) {
-    return html.replace(/^(<\w+)(\s|>)/, `$1 data-bf-cond="${condId}"$2`)
+    return html.replace(/^(<\w+)(\s|>)/, `$1 bf-c="${condId}"$2`)
   }
   // Text nodes use comment markers instead of attributes
   return `<!--bf-cond-start:${condId}-->${html}<!--bf-cond-end:${condId}-->`
@@ -102,7 +102,7 @@ export function addCondAttrToTemplate(html: string, condId: string): string {
  *
  * This is similar to irToHtmlTemplate but:
  * - Expressions are transformed to use the template function's props parameter
- * - data-bf markers ARE included so client code can find elements
+ * - bf markers ARE included so client code can find elements
  *
  * @param node - IR node to render
  * @param propNames - Set of prop names to prefix with 'props.'
@@ -138,7 +138,7 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
         .filter(Boolean)
 
       if (node.slotId) {
-        attrParts.push(`data-bf="${node.slotId}"`)
+        attrParts.push(`bf="${node.slotId}"`)
       }
 
       const attrs = attrParts.join(' ')
@@ -156,7 +156,7 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
       if (node.slotId) {
-        return `<span data-bf="${node.slotId}">\${${transformExpr(node.expr)}}</span>`
+        return `<span bf="${node.slotId}">\${${transformExpr(node.expr)}}</span>`
       }
       return `\${${transformExpr(node.expr)}}`
 
@@ -178,7 +178,7 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
 
       const keyProp = node.props.find((p) => p.name === 'key')
       const keyAttr = keyProp ? ` data-key="\${${transformExpr(keyProp.value)}}"` : ''
-      return `<div${keyAttr} data-bf-scope="${node.name}_\${Math.random().toString(36).slice(2, 8)}"></div>`
+      return `<div${keyAttr} bf-s="${node.name}_\${Math.random().toString(36).slice(2, 8)}"></div>`
     }
 
     case 'loop':

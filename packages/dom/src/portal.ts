@@ -7,6 +7,8 @@
  * API inspired by React's createPortal(children, domNode).
  */
 
+import { BF_SCOPE, BF_PORTAL_ID, BF_PORTAL_OWNER, BF_PORTAL_PLACEHOLDER, BF_CHILD_PREFIX } from './attrs'
+
 export type Portal = {
   /** The mounted element */
   element: HTMLElement
@@ -20,7 +22,7 @@ export type Portal = {
 export interface PortalOptions {
   /**
    * The scope element that owns this portal.
-   * When provided, the portal element will have a data-bf-portal-owner attribute
+   * When provided, the portal element will have a bf-po attribute
    * set to the scope ID, allowing find() to locate elements inside the portal.
    */
   ownerScope?: Element
@@ -72,24 +74,24 @@ export type PortalChildren = HTMLElement | string | Renderable
  */
 /**
  * Check if an element is inside an SSR-rendered portal.
- * SSR portals are marked with data-bf-portal-id attribute.
+ * SSR portals are marked with bf-pi attribute.
  *
  * @param element - Element to check
  * @returns true if element is inside an SSR portal
  */
 export function isSSRPortal(element: HTMLElement): boolean {
-  return element.closest('[data-bf-portal-id]') !== null
+  return element.closest(`[${BF_PORTAL_ID}]`) !== null
 }
 
 /**
  * Remove a portal placeholder element (used after hydration).
- * SSR Portal renders a <template data-bf-portal-placeholder="..."> as a marker.
+ * SSR Portal renders a <template bf-pp="..."> as a marker.
  *
  * @param portalId - The portal ID to find and remove
  */
 export function cleanupPortalPlaceholder(portalId: string): void {
   const placeholder = document.querySelector(
-    `template[data-bf-portal-placeholder="${portalId}"]`
+    `template[${BF_PORTAL_PLACEHOLDER}="${portalId}"]`
   )
   placeholder?.remove()
 }
@@ -120,9 +122,10 @@ export function createPortal(
 
   // Set portal owner for scope-based find()
   if (options?.ownerScope) {
-    const scopeId = (options.ownerScope as HTMLElement).dataset?.bfScope
+    const raw = (options.ownerScope as HTMLElement).getAttribute?.(BF_SCOPE)
+    const scopeId = raw?.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
     if (scopeId) {
-      element.setAttribute('data-bf-portal-owner', scopeId)
+      element.setAttribute(BF_PORTAL_OWNER, scopeId)
     }
   }
 

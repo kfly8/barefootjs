@@ -204,9 +204,9 @@ createEffect(() => {
 ### Hydration Markers
 
 1. **Marked Template**: Server-side template with hydration markers
-   - `data-bf-scope="ComponentName"` - Component root
-   - `data-bf="id"` - Interactive element
-   - `data-bf-cond="id"` - Conditional element
+   - `bf-s="ComponentName"` - Component root (scope)
+   - `bf="id"` - Interactive element (slot)
+   - `bf-c="id"` - Conditional element
 
 2. **Client JS**: Minimal JavaScript for reactivity
    - Uses `createEffect` for reactive updates

@@ -64,10 +64,10 @@ examples/echo/
 
 ```gotemplate
 {{define "Counter"}}
-<div data-bf-scope="{{.ScopeID}}">
-  <p data-bf="slot_1">Count: <span data-bf="slot_0">{{.Count}}</span></p>
-  <button data-bf="slot_2">+1</button>
-  <button data-bf="slot_3">-1</button>
+<div bf-s="{{.ScopeID}}">
+  <p bf="slot_1">Count: <span bf="slot_0">{{.Count}}</span></p>
+  <button bf="slot_2">+1</button>
+  <button bf="slot_3">-1</button>
 </div>
 {{end}}
 ```
@@ -113,9 +113,9 @@ func counterHandler(c echo.Context) error {
 
 ## Data Attributes
 
-- `data-bf-scope` - Component root with scope ID for hydration
-- `data-bf="slotId"` - Reactive element marker
-- `data-bf-cond="condId"` - Conditional rendering marker
+- `bf-s` - Component root with scope ID for hydration
+- `bf="slotId"` - Reactive element marker
+- `bf-c="condId"` - Conditional rendering marker
 
 ## Expression Conversion
 

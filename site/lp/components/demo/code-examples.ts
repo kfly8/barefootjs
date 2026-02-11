@@ -24,16 +24,16 @@ export const HONO_OUTPUT = `// Hono JSX (Marked Template)
 
 export function Counter() {
   return (
-    <div data-bf-scope="Counter">
-      <span data-bf="slot_0">0</span>
-      <button data-bf="slot_1">+1</button>
+    <div bf-s="Counter">
+      <span bf="slot_0">0</span>
+      <button bf="slot_1">+1</button>
     </div>
   )
 }`
 
 export const ECHO_OUTPUT = `{{/* Go Template (Marked Template) */}}
 
-<div data-bf-scope="Counter">
-  <span data-bf="slot_0">{{ .Count }}</span>
-  <button data-bf="slot_1">+1</button>
+<div bf-s="Counter">
+  <span bf="slot_0">{{ .Count }}</span>
+  <button bf="slot_1">+1</button>
 </div>`

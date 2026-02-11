@@ -28,7 +28,7 @@ ComponentIR (JSON)
 Marked Template + optional types
 ```
 
-The adapter's job is to translate each IR node into the correct syntax for the target template language, inserting hydration markers (`data-bf-*` attributes) so the client JS can find and wire up interactive elements.
+The adapter's job is to translate each IR node into the correct syntax for the target template language, inserting hydration markers (`bf-*` attributes) so the client JS can find and wire up interactive elements.
 
 
 ## The `TemplateAdapter` Interface
@@ -97,13 +97,13 @@ Each method translates one IR node type into the target template language:
 
 ### Hydration marker methods
 
-These generate the `data-bf-*` attributes in the target language's syntax:
+These generate the `bf-*` attributes in the target language's syntax:
 
 | Method | Marker | Purpose |
 |--------|--------|---------|
-| `renderScopeMarker()` | `data-bf-scope` | Component boundary for scoped hydration |
-| `renderSlotMarker()` | `data-bf` | Interactive element identifier |
-| `renderCondMarker()` | `data-bf-cond` | Conditional block for DOM switching |
+| `renderScopeMarker()` | `bf-s` | Component boundary for scoped hydration |
+| `renderSlotMarker()` | `bf` | Interactive element identifier |
+| `renderCondMarker()` | `bf-c` | Conditional block for DOM switching |
 
 
 ## The `BaseAdapter` Class
@@ -220,13 +220,13 @@ A nested component invocation.
 
 ## Hydration Markers
 
-Adapters insert `data-bf-*` attributes into the template so the client JS knows where to attach behavior:
+Adapters insert `bf-*` attributes into the template so the client JS knows where to attach behavior:
 
 | Marker | Example | Purpose |
 |--------|---------|---------|
-| `data-bf-scope` | `<div data-bf-scope="Counter_a1b2">` | Component boundary — scopes all queries inside |
-| `data-bf` | `<p data-bf="slot_0">` | Interactive element — target for effects and event handlers |
-| `data-bf-cond` | `<div data-bf-cond="slot_2">` | Conditional block — target for DOM switching |
+| `bf-s` | `<div bf-s="Counter_a1b2">` | Component boundary — scopes all queries inside |
+| `bf` | `<p bf="slot_0">` | Interactive element — target for effects and event handlers |
+| `bf-c` | `<div bf-c="slot_2">` | Conditional block — target for DOM switching |
 
 The client JS uses these markers to find elements within a scope boundary, without interfering with nested component scopes.
 
