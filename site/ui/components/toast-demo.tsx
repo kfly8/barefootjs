@@ -2,16 +2,11 @@
 /**
  * ToastDemo Components
  *
- * Interactive demos for Toast component with enter/exit animations.
- * Used in toast documentation page.
- *
- * Animation lifecycle:
- * 1. show() → 'entering' → (rAF) → 'visible' → (duration) → dismiss()
- * 2. dismiss() → 'exiting' → (300ms) → 'hidden'
+ * Interactive demos for Toast component.
+ * Animation is managed internally by Toast via createEffect.
  */
 
 import { createSignal } from '@barefootjs/dom'
-import type { ToastAnimationState } from '@ui/components/ui/toast'
 import {
   ToastProvider,
   Toast,
@@ -22,56 +17,22 @@ import {
 } from '@ui/components/ui/toast'
 import { Button } from '@ui/components/ui/button'
 
-// Animation duration in ms (must match CSS transition-duration)
-const ANIMATION_DURATION = 300
-
 /**
- * Basic toast demo with slide-in/slide-out animations
+ * Default variant demo
  */
-export function ToastBasicDemo() {
-  const [state, setState] = createSignal<ToastAnimationState>('hidden')
-  let dismissTimer: ReturnType<typeof setTimeout> | null = null
-  let exitTimer: ReturnType<typeof setTimeout> | null = null
-
-  const show = () => {
-    // Clear existing timers
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (exitTimer) clearTimeout(exitTimer)
-
-    // Start entering animation
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setState('visible')
-      })
-    })
-
-    // Auto-dismiss after 5 seconds + animation time
-    dismissTimer = setTimeout(() => dismiss(), 5000 + ANIMATION_DURATION)
-  }
-
-  const dismiss = () => {
-    if (dismissTimer) {
-      clearTimeout(dismissTimer)
-      dismissTimer = null
-    }
-    const current = state()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      exitTimer = setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
+export function ToastDefaultDemo() {
+  const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button onClick={show}>Show Toast</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Default</Button>
       <ToastProvider position="bottom-right">
-        <Toast animationState={state()}>
+        <Toast open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Notification</ToastTitle>
-            <ToastDescription>This is a basic toast message.</ToastDescription>
+            <ToastTitle>Event created</ToastTitle>
+            <ToastDescription>Sunday, December 03, 2023 at 9:00 AM</ToastDescription>
           </div>
-          <ToastClose onClick={dismiss} />
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>
@@ -79,42 +40,21 @@ export function ToastBasicDemo() {
 }
 
 /**
- * Success toast demo
+ * Success variant demo
  */
 export function ToastSuccessDemo() {
-  const [state, setState] = createSignal<ToastAnimationState>('hidden')
-  let dismissTimer: ReturnType<typeof setTimeout> | null = null
-  let exitTimer: ReturnType<typeof setTimeout> | null = null
-
-  const show = () => {
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (exitTimer) clearTimeout(exitTimer)
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setState('visible'))
-    })
-    dismissTimer = setTimeout(() => dismiss(), 5000 + ANIMATION_DURATION)
-  }
-
-  const dismiss = () => {
-    if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
-    const current = state()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      exitTimer = setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
+  const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button variant="outline" onClick={show}>Show Success</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Success</Button>
       <ToastProvider position="bottom-right">
-        <Toast variant="success" animationState={state()}>
+        <Toast variant="success" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Success</ToastTitle>
-            <ToastDescription>Your changes have been saved.</ToastDescription>
+            <ToastTitle>Changes saved</ToastTitle>
+            <ToastDescription>Your changes have been saved successfully.</ToastDescription>
           </div>
-          <ToastClose onClick={dismiss} />
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>
@@ -122,42 +62,21 @@ export function ToastSuccessDemo() {
 }
 
 /**
- * Error toast demo
+ * Error variant demo
  */
 export function ToastErrorDemo() {
-  const [state, setState] = createSignal<ToastAnimationState>('hidden')
-  let dismissTimer: ReturnType<typeof setTimeout> | null = null
-  let exitTimer: ReturnType<typeof setTimeout> | null = null
-
-  const show = () => {
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (exitTimer) clearTimeout(exitTimer)
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setState('visible'))
-    })
-    dismissTimer = setTimeout(() => dismiss(), 5000 + ANIMATION_DURATION)
-  }
-
-  const dismiss = () => {
-    if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
-    const current = state()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      exitTimer = setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
+  const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button variant="destructive" onClick={show}>Show Error</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Error</Button>
       <ToastProvider position="bottom-right">
-        <Toast variant="error" animationState={state()}>
+        <Toast variant="error" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>Something went wrong. Please try again.</ToastDescription>
+            <ToastTitle>Something went wrong</ToastTitle>
+            <ToastDescription>There was a problem with your request.</ToastDescription>
           </div>
-          <ToastClose onClick={dismiss} />
+          <ToastAction altText="Try again">Try again</ToastAction>
         </Toast>
       </ToastProvider>
     </div>
@@ -165,42 +84,21 @@ export function ToastErrorDemo() {
 }
 
 /**
- * Warning toast demo
+ * Warning variant demo
  */
 export function ToastWarningDemo() {
-  const [state, setState] = createSignal<ToastAnimationState>('hidden')
-  let dismissTimer: ReturnType<typeof setTimeout> | null = null
-  let exitTimer: ReturnType<typeof setTimeout> | null = null
-
-  const show = () => {
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (exitTimer) clearTimeout(exitTimer)
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setState('visible'))
-    })
-    dismissTimer = setTimeout(() => dismiss(), 5000 + ANIMATION_DURATION)
-  }
-
-  const dismiss = () => {
-    if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
-    const current = state()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      exitTimer = setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
+  const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button variant="outline" onClick={show}>Show Warning</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Warning</Button>
       <ToastProvider position="bottom-right">
-        <Toast variant="warning" animationState={state()}>
+        <Toast variant="warning" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Warning</ToastTitle>
-            <ToastDescription>Please review your input before proceeding.</ToastDescription>
+            <ToastTitle>Heads up</ToastTitle>
+            <ToastDescription>You are about to exceed your storage limit.</ToastDescription>
           </div>
-          <ToastClose onClick={dismiss} />
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>
@@ -208,42 +106,21 @@ export function ToastWarningDemo() {
 }
 
 /**
- * Info toast demo
+ * Info variant demo
  */
 export function ToastInfoDemo() {
-  const [state, setState] = createSignal<ToastAnimationState>('hidden')
-  let dismissTimer: ReturnType<typeof setTimeout> | null = null
-  let exitTimer: ReturnType<typeof setTimeout> | null = null
-
-  const show = () => {
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (exitTimer) clearTimeout(exitTimer)
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setState('visible'))
-    })
-    dismissTimer = setTimeout(() => dismiss(), 5000 + ANIMATION_DURATION)
-  }
-
-  const dismiss = () => {
-    if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
-    const current = state()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      exitTimer = setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
+  const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button variant="outline" onClick={show}>Show Info</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Info</Button>
       <ToastProvider position="bottom-right">
-        <Toast variant="info" animationState={state()}>
+        <Toast variant="info" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Info</ToastTitle>
-            <ToastDescription>Here is some useful information.</ToastDescription>
+            <ToastTitle>New update available</ToastTitle>
+            <ToastDescription>A new version has been released.</ToastDescription>
           </div>
-          <ToastClose onClick={dismiss} />
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>
@@ -251,52 +128,23 @@ export function ToastInfoDemo() {
 }
 
 /**
- * Toast with action demo
+ * Toast with action demo — undo pattern
  */
 export function ToastWithActionDemo() {
-  const [state, setState] = createSignal<ToastAnimationState>('hidden')
-  let dismissTimer: ReturnType<typeof setTimeout> | null = null
-  let exitTimer: ReturnType<typeof setTimeout> | null = null
-
-  const show = () => {
-    if (dismissTimer) clearTimeout(dismissTimer)
-    if (exitTimer) clearTimeout(exitTimer)
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setState('visible'))
-    })
-    // Longer duration for action toasts
-    dismissTimer = setTimeout(() => dismiss(), 10000 + ANIMATION_DURATION)
-  }
-
-  const dismiss = () => {
-    if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
-    const current = state()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      exitTimer = setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
-
-  const handleUndo = () => {
-    dismiss()
-    // In a real app, this would trigger an undo action
-  }
+  const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button onClick={show}>Show Toast with Action</Button>
+      <Button onClick={() => setOpen(true)}>Delete Item</Button>
       <ToastProvider position="bottom-right">
-        <Toast animationState={state()}>
+        <Toast open={open()} onOpenChange={setOpen} duration={10000}>
           <div className="flex-1">
             <ToastTitle>Item deleted</ToastTitle>
             <ToastDescription>The item has been removed from your list.</ToastDescription>
           </div>
           <div className="flex gap-2">
-            <ToastAction altText="Undo deletion" onClick={handleUndo}>
-              Undo
-            </ToastAction>
-            <ToastClose onClick={dismiss} />
+            <ToastAction altText="Undo deletion">Undo</ToastAction>
+            <ToastClose />
           </div>
         </Toast>
       </ToastProvider>
@@ -305,102 +153,58 @@ export function ToastWithActionDemo() {
 }
 
 /**
- * All variants demo - for preview at top of page
+ * Position demo — all 6 positions in one example
  */
-export function ToastVariantsDemo() {
-  const [defaultState, setDefaultState] = createSignal<ToastAnimationState>('hidden')
-  const [successState, setSuccessState] = createSignal<ToastAnimationState>('hidden')
-  const [errorState, setErrorState] = createSignal<ToastAnimationState>('hidden')
-  const [warningState, setWarningState] = createSignal<ToastAnimationState>('hidden')
-  const [infoState, setInfoState] = createSignal<ToastAnimationState>('hidden')
-
-  let defaultDismissTimer: ReturnType<typeof setTimeout> | null = null
-  let successDismissTimer: ReturnType<typeof setTimeout> | null = null
-  let errorDismissTimer: ReturnType<typeof setTimeout> | null = null
-  let warningDismissTimer: ReturnType<typeof setTimeout> | null = null
-  let infoDismissTimer: ReturnType<typeof setTimeout> | null = null
-
-  const showToast = (
-    setState: (s: ToastAnimationState) => void,
-    getState: () => ToastAnimationState,
-    dismissTimerRef: { value: ReturnType<typeof setTimeout> | null },
-    duration: number
-  ) => {
-    if (dismissTimerRef.value) clearTimeout(dismissTimerRef.value)
-    setState('entering')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setState('visible'))
-    })
-    dismissTimerRef.value = setTimeout(() => {
-      dismissToast(setState, getState, dismissTimerRef)
-    }, duration + ANIMATION_DURATION)
-  }
-
-  const dismissToast = (
-    setState: (s: ToastAnimationState) => void,
-    getState: () => ToastAnimationState,
-    dismissTimerRef: { value: ReturnType<typeof setTimeout> | null }
-  ) => {
-    if (dismissTimerRef.value) { clearTimeout(dismissTimerRef.value); dismissTimerRef.value = null }
-    const current = getState()
-    if (current === 'visible' || current === 'entering') {
-      setState('exiting')
-      setTimeout(() => setState('hidden'), ANIMATION_DURATION)
-    }
-  }
-
-  const defaultTimerRef = { value: defaultDismissTimer }
-  const successTimerRef = { value: successDismissTimer }
-  const errorTimerRef = { value: errorDismissTimer }
-  const warningTimerRef = { value: warningDismissTimer }
-  const infoTimerRef = { value: infoDismissTimer }
-
-  const showAll = () => {
-    showToast(setDefaultState, defaultState, defaultTimerRef, 5000)
-    showToast(setSuccessState, successState, successTimerRef, 5000)
-    showToast(setErrorState, errorState, errorTimerRef, 5000)
-    showToast(setWarningState, warningState, warningTimerRef, 5000)
-    showToast(setInfoState, infoState, infoTimerRef, 5000)
-  }
+export function ToastPositionDemo() {
+  const [topLeft, setTopLeft] = createSignal(false)
+  const [topCenter, setTopCenter] = createSignal(false)
+  const [topRight, setTopRight] = createSignal(false)
+  const [bottomLeft, setBottomLeft] = createSignal(false)
+  const [bottomCenter, setBottomCenter] = createSignal(false)
+  const [bottomRight, setBottomRight] = createSignal(false)
 
   return (
-    <div>
-      <Button onClick={showAll}>Show All Variants</Button>
+    <div className="flex flex-wrap gap-2">
+      <Button variant="outline" onClick={() => setTopLeft(true)}>Top Left</Button>
+      <Button variant="outline" onClick={() => setTopCenter(true)}>Top Center</Button>
+      <Button variant="outline" onClick={() => setTopRight(true)}>Top Right</Button>
+      <Button variant="outline" onClick={() => setBottomLeft(true)}>Bottom Left</Button>
+      <Button variant="outline" onClick={() => setBottomCenter(true)}>Bottom Center</Button>
+      <Button variant="outline" onClick={() => setBottomRight(true)}>Bottom Right</Button>
+      <ToastProvider position="top-left">
+        <Toast open={topLeft()} onOpenChange={setTopLeft}>
+          <div className="flex-1"><ToastDescription>Top Left</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="top-center">
+        <Toast open={topCenter()} onOpenChange={setTopCenter}>
+          <div className="flex-1"><ToastDescription>Top Center</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="top-right">
+        <Toast open={topRight()} onOpenChange={setTopRight}>
+          <div className="flex-1"><ToastDescription>Top Right</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="bottom-left">
+        <Toast open={bottomLeft()} onOpenChange={setBottomLeft}>
+          <div className="flex-1"><ToastDescription>Bottom Left</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="bottom-center">
+        <Toast open={bottomCenter()} onOpenChange={setBottomCenter}>
+          <div className="flex-1"><ToastDescription>Bottom Center</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
       <ToastProvider position="bottom-right">
-        <Toast variant="default" animationState={defaultState()}>
-          <div className="flex-1">
-            <ToastTitle>Default</ToastTitle>
-            <ToastDescription>This is a default toast.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => dismissToast(setDefaultState, defaultState, defaultTimerRef)} />
-        </Toast>
-        <Toast variant="success" animationState={successState()}>
-          <div className="flex-1">
-            <ToastTitle>Success</ToastTitle>
-            <ToastDescription>Operation completed successfully.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => dismissToast(setSuccessState, successState, successTimerRef)} />
-        </Toast>
-        <Toast variant="error" animationState={errorState()}>
-          <div className="flex-1">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>An error occurred.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => dismissToast(setErrorState, errorState, errorTimerRef)} />
-        </Toast>
-        <Toast variant="warning" animationState={warningState()}>
-          <div className="flex-1">
-            <ToastTitle>Warning</ToastTitle>
-            <ToastDescription>Please be careful.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => dismissToast(setWarningState, warningState, warningTimerRef)} />
-        </Toast>
-        <Toast variant="info" animationState={infoState()}>
-          <div className="flex-1">
-            <ToastTitle>Info</ToastTitle>
-            <ToastDescription>Here is some information.</ToastDescription>
-          </div>
-          <ToastClose onClick={() => dismissToast(setInfoState, infoState, infoTimerRef)} />
+        <Toast open={bottomRight()} onOpenChange={setBottomRight}>
+          <div className="flex-1"><ToastDescription>Bottom Right</ToastDescription></div>
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>

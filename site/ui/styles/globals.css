@@ -240,15 +240,6 @@ html {
   display: block;
 }
 
-/* Toast visibility - controlled by animation state */
-[data-toast][data-toast-animation-state="hidden"] {
-  display: none !important;
-}
-[data-toast][data-toast-animation-state="entering"],
-[data-toast][data-toast-animation-state="visible"],
-[data-toast][data-toast-animation-state="exiting"] {
-  display: flex !important;
-}
 
 /* Ensure hidden attribute works with flexbox items */
 [hidden] {

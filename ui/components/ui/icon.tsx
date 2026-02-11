@@ -284,6 +284,49 @@ export function SearchIcon({ size, class: className = '' }: IconProps) {
   )
 }
 
+export function CircleCheckIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  )
+}
+
+export function CircleXIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
+  )
+}
+
+export function TriangleAlertIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  )
+}
+
+export function InfoIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  )
+}
+
 // Generic Icon component for dynamic icon selection
 export function Icon({ name, size = 'md', class: className = '' }: { name: IconName } & IconProps) {
   const s = sizeMap[size]

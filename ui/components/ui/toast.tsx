@@ -6,54 +6,69 @@
  * A non-blocking notification component that displays brief messages.
  * Inspired by shadcn/ui with CSS variable theming support.
  *
+ * State management uses createContext/useContext for parent-child communication.
+ * Toast root manages open state and animation, children consume via context.
+ *
  * Features:
  * - Variants: default, success, error, warning, info
  * - Auto-dismiss with configurable duration
- * - Manual dismiss via close button
- * - Position options: top-right, top-left, bottom-right, bottom-left
+ * - Manual dismiss via close button or context
+ * - Portal rendering to document.body
+ * - Reactive enter/exit animations via createEffect
+ * - Position options: top-right, top-center, top-left, bottom-right, bottom-center, bottom-left
  * - Accessibility: role="status", aria-live="polite"
  *
  * @example Basic toast
  * ```tsx
- * const [open, setOpen] = useState(false)
+ * const [open, setOpen] = createSignal(false)
  *
  * <ToastProvider position="bottom-right">
- *   <Toast variant="success" open={open}>
+ *   <Toast open={open()} onOpenChange={setOpen}>
  *     <div className="flex-1">
  *       <ToastTitle>Success!</ToastTitle>
  *       <ToastDescription>Your changes have been saved.</ToastDescription>
  *     </div>
- *     <ToastClose onClick={() => setOpen(false)} />
+ *     <ToastClose />
  *   </Toast>
  * </ToastProvider>
  * ```
  *
  * @example Toast with action
  * ```tsx
- * <Toast variant="default" open={open}>
+ * <Toast open={open()} onOpenChange={setOpen}>
  *   <div className="flex-1">
- *     <ToastTitle>Undo?</ToastTitle>
- *     <ToastDescription>Item was deleted.</ToastDescription>
+ *     <ToastTitle>Item deleted</ToastTitle>
+ *     <ToastDescription>The item has been removed.</ToastDescription>
  *   </div>
  *   <ToastAction altText="Undo" onClick={handleUndo}>Undo</ToastAction>
- *   <ToastClose onClick={() => setOpen(false)} />
+ *   <ToastClose />
  * </Toast>
  * ```
  */
 
+import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
 import { XIcon } from './icon'
 
 // Type definitions
 type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
-type ToastAnimationState = 'entering' | 'visible' | 'exiting' | 'hidden'
-type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+type ToastPosition = 'top-right' | 'top-center' | 'top-left' | 'bottom-right' | 'bottom-center' | 'bottom-left'
+
+// Context for Toast -> children state sharing
+interface ToastContextValue {
+  dismiss: () => void
+}
+
+const ToastContext = createContext<ToastContextValue>()
+
 
 // ToastProvider position classes
 const positionClasses: Record<ToastPosition, string> = {
   'top-right': 'top-4 right-4',
+  'top-center': 'top-4 left-1/2 -translate-x-1/2 items-center',
   'top-left': 'top-4 left-4',
   'bottom-right': 'bottom-4 right-4',
+  'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2 items-center',
   'bottom-left': 'bottom-4 left-4',
 }
 
@@ -63,21 +78,35 @@ const toastProviderClasses = 'fixed z-50 flex flex-col gap-2 pointer-events-none
 // Toast base classes
 const toastBaseClasses = 'items-start gap-3 w-80 p-4 rounded-lg border shadow-lg pointer-events-auto transition-all duration-slow ease-out'
 
-// Toast variant classes
-const toastVariantClasses: Record<ToastVariant, string> = {
-  default: 'bg-background border-border text-foreground',
-  success: 'bg-success/10 border-success text-foreground',
-  error: 'bg-destructive/10 border-destructive text-foreground',
-  warning: 'bg-warning/10 border-warning text-foreground',
-  info: 'bg-info/10 border-info text-foreground',
+// Toast style (neutral for all variants — icons differentiate types)
+const toastVariantClass = 'bg-background border-border text-foreground'
+
+// Toast variant icon color classes
+const toastIconClasses: Record<ToastVariant, string> = {
+  default: '',
+  success: 'text-success',
+  error: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-info',
 }
 
-// Toast animation classes
-const toastAnimationClasses: Record<ToastAnimationState, string> = {
-  entering: 'flex translate-x-full opacity-0',
-  visible: 'flex translate-x-0 opacity-100',
-  exiting: 'flex translate-x-full opacity-0',
-  hidden: 'hidden',
+// Position-aware toast animation classes
+function getToastStateClasses(position: ToastPosition) {
+  let enterExitClass = ''
+  if (position.endsWith('center')) {
+    enterExitClass = position.startsWith('top') ? '-translate-y-full' : 'translate-y-full'
+  } else if (position.endsWith('left')) {
+    enterExitClass = '-translate-x-full'
+  } else {
+    enterExitClass = 'translate-x-full'
+  }
+
+  return {
+    entering: `flex ${enterExitClass} opacity-0`,
+    visible: 'flex translate-x-0 translate-y-0 opacity-100',
+    exiting: `flex ${enterExitClass} opacity-0`,
+    hidden: 'hidden',
+  }
 }
 
 // ToastTitle classes
@@ -109,20 +138,29 @@ interface ToastProviderProps {
 
 /**
  * Container for toast notifications.
+ * Portals to document.body to avoid z-index issues.
  *
  * @param props.position - Position of the container
  */
-function ToastProvider({
-  class: className = '',
-  position = 'bottom-right',
-  children,
-}: ToastProviderProps) {
+function ToastProvider(props: ToastProviderProps) {
+  const position = props.position ?? 'bottom-right'
+
+  const handleMount = (el: HTMLElement) => {
+    // Portal to body
+    if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
+      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      createPortal(el, document.body, { ownerScope })
+    }
+  }
+
   return (
     <div
       data-slot="toast-provider"
-      className={`${toastProviderClasses} ${positionClasses[position]} ${className}`}
+      data-position={position}
+      className={`${toastProviderClasses} ${positionClasses[position]} ${props.class ?? ''}`}
+      ref={handleMount}
     >
-      {children}
+      {props.children}
     </div>
   )
 }
@@ -141,10 +179,13 @@ interface ToastProps {
    * @default false
    */
   open?: boolean
-  /** Animation state for enter/exit animations */
-  animationState?: ToastAnimationState
-  /** Callback when open state changes */
+  /** Callback when open state changes (e.g., on auto-dismiss) */
   onOpenChange?: (open: boolean) => void
+  /**
+   * Auto-dismiss duration in ms. Set to 0 to disable auto-dismiss.
+   * @default 5000
+   */
+  duration?: number
   /** Toast content */
   children?: Child
   /** Additional CSS classes */
@@ -153,37 +194,117 @@ interface ToastProps {
 
 /**
  * Toast notification component.
+ * Manages enter/exit animations reactively via createEffect.
  *
  * @param props.variant - Visual variant
- *   - `'default'` - Neutral styling
- *   - `'success'` - Success message (green)
- *   - `'error'` - Error message (red)
- *   - `'warning'` - Warning message (yellow)
- *   - `'info'` - Informational message (blue)
  * @param props.open - Whether visible
- * @param props.animationState - Current animation state
+ * @param props.onOpenChange - Called on auto-dismiss or close
+ * @param props.duration - Auto-dismiss duration in ms (0 = no auto-dismiss)
  */
-function Toast({
-  class: className = '',
-  variant = 'default',
-  open = false,
-  animationState,
-  children,
-}: ToastProps) {
-  // Determine the effective animation state
-  const effectiveState = animationState ?? (open ? 'visible' : 'hidden')
+function Toast(props: ToastProps) {
+  const variant = props.variant ?? 'default'
+  const className = props.class ?? ''
+
+  const dismiss = () => {
+    props.onOpenChange?.(false)
+  }
+
+  const handleMount = (el: HTMLElement) => {
+    const providerEl = el.closest('[data-slot="toast-provider"]') as HTMLElement
+    const position = (providerEl?.dataset.position ?? 'bottom-right') as ToastPosition
+    const stateClasses = getToastStateClasses(position)
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null
+
+    // Transition to hidden after exit animation completes
+    el.addEventListener('transitionend', () => {
+      if (el.dataset.state === 'exiting') {
+        el.dataset.state = 'hidden'
+        el.className = `${stateClasses.hidden} ${toastBaseClasses} ${toastVariantClass} ${className}`
+      }
+    })
+
+    createEffect(() => {
+      const isOpen = props.open ?? false
+      const duration = props.duration ?? 5000
+
+      if (isOpen) {
+        // Clear dismiss timer when entering
+        if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
+
+        // Entering state
+        el.dataset.state = 'entering'
+        el.className = `${stateClasses.entering} ${toastBaseClasses} ${toastVariantClass} ${className}`
+
+        // Transition to visible on next frame
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            el.dataset.state = 'visible'
+            el.className = `${stateClasses.visible} ${toastBaseClasses} ${toastVariantClass} ${className}`
+          })
+        })
+
+        // Auto-dismiss timer
+        if (duration > 0) {
+          dismissTimer = setTimeout(() => {
+            dismiss()
+          }, duration)
+        }
+      } else {
+        if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
+
+        const currentState = el.dataset.state
+        if (currentState === 'visible' || currentState === 'entering') {
+          // Exiting state — transitionend listener handles the rest
+          el.dataset.state = 'exiting'
+          el.className = `${stateClasses.exiting} ${toastBaseClasses} ${toastVariantClass} ${className}`
+        }
+      }
+    })
+  }
+
+  const iconClass = toastIconClasses[variant]
 
   return (
-    <div
-      data-slot="toast"
-      data-variant={variant}
-      data-state={effectiveState}
-      role={variant === 'error' ? 'alert' : 'status'}
-      aria-live={variant === 'error' ? 'assertive' : 'polite'}
-      className={`${toastAnimationClasses[effectiveState]} ${toastBaseClasses} ${toastVariantClasses[variant]} ${className}`}
-    >
-      {children}
-    </div>
+    <ToastContext.Provider value={{ dismiss }}>
+      <div
+        data-slot="toast"
+        data-variant={variant}
+        data-state="hidden"
+        role={variant === 'error' ? 'alert' : 'status'}
+        aria-live={variant === 'error' ? 'assertive' : 'polite'}
+        className={`hidden ${toastBaseClasses} ${toastVariantClass} ${className}`}
+        ref={handleMount}
+      >
+        {variant === 'success' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        )}
+        {variant === 'error' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m15 9-6 6" />
+            <path d="m9 9 6 6" />
+          </svg>
+        )}
+        {variant === 'warning' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+        )}
+        {variant === 'info' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+        )}
+        {props.children}
+      </div>
+    </ToastContext.Provider>
   )
 }
 
@@ -233,27 +354,33 @@ function ToastDescription({ class: className = '', children }: ToastDescriptionP
  * Props for ToastClose component.
  */
 interface ToastCloseProps {
-  /** Click handler to dismiss the toast */
-  onClick?: () => void
   /** Additional CSS classes */
   class?: string
 }
 
 /**
  * Close button for the toast.
- *
- * @param props.onClick - Click handler
+ * Uses ToastContext to dismiss on click. No additional handler —
+ * its only responsibility is dismissing the toast.
  */
-function ToastClose({ class: className = '', onClick }: ToastCloseProps) {
+function ToastClose(props: ToastCloseProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(ToastContext)
+
+    el.addEventListener('click', () => {
+      ctx.dismiss()
+    })
+  }
+
   return (
     <button
       data-slot="toast-close"
       type="button"
       aria-label="Close"
-      className={`${toastCloseClasses} ${className}`}
-      onClick={onClick}
+      className={`${toastCloseClasses} ${props.class ?? ''}`}
+      ref={handleMount}
     >
-      <XIcon size="sm" className="pointer-events-none" />
+      <XIcon size="sm" class="pointer-events-none" />
     </button>
   )
 }
@@ -274,23 +401,33 @@ interface ToastActionProps {
 
 /**
  * Action button for the toast.
+ * Uses ToastContext to auto-dismiss after action.
  *
  * @param props.altText - Accessible description
  * @param props.onClick - Click handler
  */
-function ToastAction({ class: className = '', altText, onClick, children }: ToastActionProps) {
+function ToastAction(props: ToastActionProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(ToastContext)
+
+    el.addEventListener('click', () => {
+      props.onClick?.()
+      ctx.dismiss()
+    })
+  }
+
   return (
     <button
       data-slot="toast-action"
       type="button"
-      aria-label={altText}
-      className={`${toastActionClasses} ${className}`}
-      onClick={onClick}
+      aria-label={props.altText}
+      className={`${toastActionClasses} ${props.class ?? ''}`}
+      ref={handleMount}
     >
-      {children}
+      {props.children}
     </button>
   )
 }
 
 export { ToastProvider, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction }
-export type { ToastVariant, ToastAnimationState, ToastPosition, ToastProviderProps, ToastProps, ToastTitleProps, ToastDescriptionProps, ToastCloseProps, ToastActionProps }
+export type { ToastVariant, ToastPosition, ToastProviderProps, ToastProps, ToastTitleProps, ToastDescriptionProps, ToastCloseProps, ToastActionProps }
