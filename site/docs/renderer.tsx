@@ -10,6 +10,7 @@ import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { navigation, type NavItem } from './lib/navigation'
 import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } from '../shared/components/sidebar'
 import { PageNav, type PageNavLink } from '../shared/components/page-nav'
+import { PageNavigation } from '../shared/components/page-navigation'
 import { BfScripts } from '../../packages/hono/src/scripts'
 import { TableOfContents } from '@/components/table-of-contents'
 import type { TocItem } from '../shared/components/table-of-contents'
@@ -178,6 +179,7 @@ export const renderer = jsxRenderer(
                   <article class="doc-article">
                     {children}
                   </article>
+                  <PageNavigation prev={prev} next={next} />
                 </div>
                 {toc && toc.length > 0 && <TableOfContents items={toc} />}
               </div>

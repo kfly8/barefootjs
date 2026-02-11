@@ -9,7 +9,8 @@ import { TableOfContents, type TocItem } from '@/components/table-of-contents'
 import { CopyButton } from '@/components/copy-button'
 // Re-export PackageManagerTabs from compiled component
 export { PackageManagerTabs } from '@/components/package-manager-tabs'
-import { PageNavigation, getNavLinks } from './PageNavigation'
+import { PageNavigation } from '../../../shared/components/page-navigation'
+import { getNavLinks } from './PageNavigation'
 import { highlight } from './highlighter'
 import { PageNav } from '../../../shared/components/page-nav'
 
