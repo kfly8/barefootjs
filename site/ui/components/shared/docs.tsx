@@ -139,7 +139,7 @@ export function Section({ id, title, children }: { id?: string; title: string; c
         {id && (
           <a
             href={`#${id}`}
-            className="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+            className="absolute -left-5 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
             aria-label={`Link to ${title}`}
           >
             #
@@ -242,7 +242,7 @@ export function Example({
           {id && (
             <a
               href={`#${id}`}
-              className="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+              className="absolute -left-5 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
               aria-label={`Link to ${title}`}
             >
               #

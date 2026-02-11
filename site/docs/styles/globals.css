@@ -156,6 +156,7 @@ html.theme-transition *::after {
 }
 
 .doc-article h2 {
+  position: relative;
   font-size: 1.5rem;
   font-weight: 600;
   margin-top: 32px;
@@ -167,6 +168,7 @@ html.theme-transition *::after {
 }
 
 .doc-article h3 {
+  position: relative;
   font-size: 1.25rem;
   font-weight: 600;
   margin-top: 24px;
@@ -176,10 +178,29 @@ html.theme-transition *::after {
 }
 
 .doc-article h4 {
+  position: relative;
   font-size: 1rem;
   font-weight: 600;
   margin-top: 20px;
   margin-bottom: 8px;
+}
+
+/* ── Heading Anchor Links ─────────────────────────────────── */
+
+.doc-article .heading-anchor {
+  position: absolute;
+  left: -1.25rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.doc-article h2:hover > .heading-anchor,
+.doc-article h3:hover > .heading-anchor,
+.doc-article h4:hover > .heading-anchor,
+.heading-anchor:focus {
+  opacity: 1;
 }
 
 .doc-article p {
@@ -193,6 +214,10 @@ html.theme-transition *::after {
 
 .doc-article a:hover {
   text-decoration: underline;
+}
+
+.doc-article a.heading-anchor:hover {
+  text-decoration: none;
 }
 
 .doc-article strong {

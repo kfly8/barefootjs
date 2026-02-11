@@ -129,7 +129,10 @@ function createMarked(): Marked {
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
           .trim()
-        return `<h${depth} id="${id}">${text}</h${depth}>\n`
+        const anchor = depth >= 2
+          ? `<a href="#${id}" class="heading-anchor" aria-label="Link to ${text.replace(/<[^>]*>/g, '')}">#</a>`
+          : ''
+        return `<h${depth} id="${id}">${anchor}${text}</h${depth}>\n`
       },
     },
   })
@@ -149,8 +152,8 @@ function extractTocFromHtml(html: string): TocItem[] {
   while ((match = headingRegex.exec(html)) !== null) {
     const level = parseInt(match[1], 10)
     const id = match[2]
-    // Strip HTML tags from title text
-    const title = match[3].replace(/<[^>]*>/g, '').trim()
+    // Strip heading anchor element (including its text), then remaining HTML tags
+    const title = match[3].replace(/<a[^>]*class="heading-anchor"[^>]*>.*?<\/a>/g, '').replace(/<[^>]*>/g, '').trim()
     rawItems.push({ level, id, title })
   }
 
