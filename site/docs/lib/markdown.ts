@@ -4,6 +4,9 @@
 
 import { Marked } from 'marked'
 import { createHighlighter, type Highlighter } from 'shiki'
+import type { TocItem } from '../../shared/components/table-of-contents'
+
+export type { TocItem }
 
 export interface Frontmatter {
   title?: string
@@ -15,6 +18,7 @@ export interface ParsedMarkdown {
   frontmatter: Frontmatter
   html: string
   raw: string
+  toc: TocItem[]
 }
 
 let highlighter: Highlighter | null = null
@@ -125,12 +129,59 @@ function createMarked(): Marked {
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
           .trim()
-        return `<h${depth} id="${id}">${text}</h${depth}>\n`
+        const anchor = depth >= 2
+          ? `<a href="#${id}" class="heading-anchor" aria-label="Link to ${text.replace(/<[^>]*>/g, '')}">#</a>`
+          : ''
+        return `<h${depth} id="${id}">${anchor}${text}</h${depth}>\n`
       },
     },
   })
 
   return marked
+}
+
+/**
+ * Extract TOC items (h2/h3) from rendered HTML.
+ * h2 → top-level item, h3 → child item with branch markers.
+ */
+function extractTocFromHtml(html: string): TocItem[] {
+  const headingRegex = /<h([23])\s+id="([^"]*)"[^>]*>([\s\S]*?)<\/h[23]>/g
+  const rawItems: { level: number; id: string; title: string }[] = []
+
+  let match: RegExpExecArray | null
+  while ((match = headingRegex.exec(html)) !== null) {
+    const level = parseInt(match[1], 10)
+    const id = match[2]
+    // Strip heading anchor element (including its text), then remaining HTML tags
+    const title = match[3].replace(/<a[^>]*class="heading-anchor"[^>]*>.*?<\/a>/g, '').replace(/<[^>]*>/g, '').trim()
+    rawItems.push({ level, id, title })
+  }
+
+  const tocItems: TocItem[] = []
+
+  for (let i = 0; i < rawItems.length; i++) {
+    const item = rawItems[i]
+    if (item.level === 2) {
+      tocItems.push({ id: item.id, title: item.title })
+    } else if (item.level === 3) {
+      // Determine branch position among consecutive h3 siblings
+      const prevIsH3 = i > 0 && rawItems[i - 1].level === 3
+      const nextIsH3 = i + 1 < rawItems.length && rawItems[i + 1].level === 3
+
+      let branch: 'start' | 'child' | 'end'
+      if (!prevIsH3 && nextIsH3) {
+        branch = 'start'
+      } else if (prevIsH3 && nextIsH3) {
+        branch = 'child'
+      } else {
+        branch = 'end'
+      }
+
+      tocItems.push({ id: item.id, title: item.title, branch })
+    }
+  }
+
+  return tocItems
 }
 
 const marked = createMarked()
@@ -146,11 +197,16 @@ export async function renderMarkdown(content: string): Promise<ParsedMarkdown> {
     frontmatter.title = extractTitleFromBody(body)
   }
 
-  const html = await marked.parse(body)
+  let html = await marked.parse(body)
+  const toc = extractTocFromHtml(html)
+
+  // Strip first H1 from rendered HTML (title is rendered separately in the layout)
+  html = html.replace(/<h1[^>]*>[\s\S]*?<\/h1>\n?/, '')
 
   return {
     frontmatter,
     html,
     raw: content,
+    toc,
   }
 }

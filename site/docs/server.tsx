@@ -12,8 +12,11 @@ const CONTENT_DIR = resolve(dirname(import.meta.path), '../../docs/core')
 const { pages, content } = await loadContentFromDisk(CONTENT_DIR)
 const app = await createApp(content, pages)
 
-// Serve static files (CSS)
-app.use('/static/*', serveStatic({ root: './', rewriteRequestPath: (path) => path.replace('/static', '/styles') }))
+// Serve compiled static files (CSS, components, icons)
+app.use('/static/*', serveStatic({
+  root: './dist',
+  rewriteRequestPath: (path) => path.replace('/static', ''),
+}))
 
 export default {
   port: 3001,

@@ -5,6 +5,12 @@
   "exports": {
     "./styles/*": "./styles/*",
     "./components/*": "./components/*",
-    "./lib/*": "./lib/*"
+    "./lib/*": "./lib/*",
+    "./lib/theme-init": "./lib/theme-init.ts"
+  },
+  "dependencies": {
+    "@barefootjs/hono": "workspace:*",
+    "@barefootjs/dom": "workspace:*",
+    "hono": "^4"
   }
 }

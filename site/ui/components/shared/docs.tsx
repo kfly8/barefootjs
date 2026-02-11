@@ -9,9 +9,10 @@ import { TableOfContents, type TocItem } from '@/components/table-of-contents'
 import { CopyButton } from '@/components/copy-button'
 // Re-export PackageManagerTabs from compiled component
 export { PackageManagerTabs } from '@/components/package-manager-tabs'
-import { PageNavigation, getNavLinks } from './PageNavigation'
+import { PageNavigation } from '../../../shared/components/page-navigation'
+import { getNavLinks } from './PageNavigation'
 import { highlight } from './highlighter'
-import { ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icon'
+import { PageNav } from '../../../shared/components/page-nav'
 
 // Re-export TocItem for convenience
 export type { TocItem }
@@ -71,35 +72,7 @@ export function PageHeader({ title, description, prev, next }: PageHeaderProps) 
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tighter text-foreground">{title}</h1>
-        {(prev || next) && (
-          <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Quick navigation">
-            {prev ? (
-              <a
-                href={prev.href}
-                className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
-                title={`Previous: ${prev.title}`}
-              >
-                <ChevronLeftIcon size="sm" />
-                <span className="max-w-24 truncate">{prev.title}</span>
-              </a>
-            ) : (
-              <div className="w-20" />
-            )}
-            <span className="text-border">|</span>
-            {next ? (
-              <a
-                href={next.href}
-                className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors no-underline"
-                title={`Next: ${next.title}`}
-              >
-                <span className="max-w-24 truncate">{next.title}</span>
-                <ChevronRightIcon size="sm" />
-              </a>
-            ) : (
-              <div className="w-20" />
-            )}
-          </nav>
-        )}
+        <PageNav prev={prev} next={next} />
       </div>
       <p className="text-muted-foreground text-lg leading-relaxed">{description}</p>
     </div>
@@ -166,7 +139,7 @@ export function Section({ id, title, children }: { id?: string; title: string; c
         {id && (
           <a
             href={`#${id}`}
-            className="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+            className="absolute -left-5 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
             aria-label={`Link to ${title}`}
           >
             #
@@ -269,7 +242,7 @@ export function Example({
           {id && (
             <a
               href={`#${id}`}
-              className="absolute -left-4 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
+              className="absolute -left-5 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity no-underline"
               aria-label={`Link to ${title}`}
             >
               #

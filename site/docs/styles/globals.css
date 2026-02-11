@@ -1,4 +1,8 @@
-/* BarefootJS Documentation — globals.css */
+/* BarefootJS Documentation — globals.css
+ *
+ * Site-specific styles for the documentation site.
+ * Color tokens are provided by tokens.css (concatenated by build.ts).
+ */
 
 /* ── Reset & Base ──────────────────────────────────────────── */
 
@@ -8,196 +12,76 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border);
 }
 
 :root {
-  --color-bg: #ffffff;
-  --color-bg-secondary: #f6f8fa;
-  --color-text: #1f2328;
-  --color-text-secondary: #656d76;
-  --color-border: #d0d7de;
-  --color-link: #0969da;
-  --color-link-hover: #0550ae;
-  --color-accent: #0969da;
-  --color-code-bg: #f6f8fa;
-  --color-sidebar-bg: #f6f8fa;
-  --color-sidebar-active: #0969da;
-  --color-header-bg: #ffffffee;
-  --sidebar-width: 240px;
-  --header-height: 52px;
-  --content-max-width: 780px;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-}
-
-html.dark {
-  --color-bg: #0d1117;
-  --color-bg-secondary: #161b22;
-  --color-text: #e6edf3;
-  --color-text-secondary: #8b949e;
-  --color-border: #30363d;
-  --color-link: #58a6ff;
-  --color-link-hover: #79c0ff;
-  --color-accent: #58a6ff;
-  --color-code-bg: #161b22;
-  --color-sidebar-bg: #0d1117;
-  --color-sidebar-active: #58a6ff;
-  --color-header-bg: #0d1117ee;
+  --sidebar-width: 14rem;    /* 224px — matches UI site (w-56) */
+  --content-max-width: 1000px; /* matches UI site (max-w-[1000px]) */
 }
 
 html {
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
-  color: var(--color-text);
-  background: var(--color-bg);
+  color: var(--foreground);
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
-/* ── Header ────────────────────────────────────────────────── */
-
-.top-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--header-height);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  background: var(--color-header-bg);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--color-border);
-  z-index: 100;
+button {
+  border-width: 0;
+  border-style: solid;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
 }
 
-.header-logo {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text);
-  text-decoration: none;
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
 }
 
-.header-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* ── Theme transition ──────────────────────────────────────── */
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color var(--duration-fast) ease,
+              color var(--duration-fast) ease,
+              border-color var(--duration-fast) ease !important;
 }
 
-.mobile-menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--color-text);
-  cursor: pointer;
-  padding: 4px;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
-/* ── Markdown Toggle Button ────────────────────────────────── */
-
-.md-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  text-decoration: none;
-  transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.md-toggle-btn:hover {
-  color: var(--color-text);
-  border-color: var(--color-text-secondary);
-}
-
-/* ── Theme Toggle ──────────────────────────────────────────── */
-
-.theme-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.theme-toggle-btn:hover {
-  color: var(--color-text);
-  border-color: var(--color-text-secondary);
-}
-
-.icon-moon { display: none; }
-html.dark .icon-sun { display: none; }
-html.dark .icon-moon { display: block; }
 
 /* ── Sidebar ───────────────────────────────────────────────── */
 
 .sidebar {
   position: fixed;
-  top: var(--header-height);
+  top: 3.5rem; /* top-14 — matches UI site */
   left: 0;
   bottom: 0;
   width: var(--sidebar-width);
   overflow-y: auto;
   padding: 16px 0;
-  background: var(--color-sidebar-bg);
-  border-right: 1px solid var(--color-border);
+  background: var(--card);
+  border-right: 1px solid var(--border);
   z-index: 90;
-}
-
-.sidebar-header {
-  display: none;
-}
-
-.sidebar-nav ul {
-  list-style: none;
-}
-
-.nav-link {
-  display: block;
-  padding: 5px 20px;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.nav-link:hover {
-  color: var(--color-text);
-}
-
-.nav-link-depth-1 {
-  padding-left: 32px;
-  font-size: 13px;
-}
-
-.nav-link-active {
-  color: var(--color-sidebar-active);
-  font-weight: 600;
-}
-
-.nav-link-parent-active {
-  color: var(--color-text);
-}
-
-.nav-children {
-  margin: 0;
 }
 
 /* ── Sidebar Overlay (mobile) ──────────────────────────────── */
@@ -206,17 +90,58 @@ html.dark .icon-moon { display: block; }
   display: none;
 }
 
+/* ── Markdown Toggle Button ────────────────────────────────── */
+
+.md-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color 0.15s;
+  margin-right: auto;
+}
+
+.md-toggle-btn:hover {
+  color: var(--foreground);
+}
+
+/* ── Document Title Bar ───────────────────────────────────── */
+
+.doc-title-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 8px;
+}
+
+.doc-title {
+  font-size: 1.875rem; /* text-3xl — matches UI site */
+  font-weight: 700;
+  line-height: 2.25rem;
+  letter-spacing: -0.05em; /* tracking-tighter — matches UI site */
+}
+
 /* ── Main Content ──────────────────────────────────────────── */
 
 .main-content {
   margin-left: var(--sidebar-width);
-  padding: calc(var(--header-height) + 24px) 24px 48px;
+  padding: 5rem 1.5rem 3rem;
   min-height: 100vh;
 }
 
-.doc-article {
+.doc-content-wrapper {
+  display: flex;
+  gap: 4rem;  /* gap-16 — matches UI site */
   max-width: var(--content-max-width);
   margin: 0 auto;
+  padding: 1.75rem 1rem 0; /* top: compensate for * {margin:0} reset removing h1 default margin */
+}
+
+.doc-main-column {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── Typography ────────────────────────────────────────────── */
@@ -226,33 +151,56 @@ html.dark .icon-moon { display: block; }
   font-weight: 700;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
   line-height: 1.25;
 }
 
 .doc-article h2 {
+  position: relative;
   font-size: 1.5rem;
   font-weight: 600;
   margin-top: 32px;
   margin-bottom: 12px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
   line-height: 1.3;
+  scroll-margin-top: 5rem;
 }
 
 .doc-article h3 {
+  position: relative;
   font-size: 1.25rem;
   font-weight: 600;
   margin-top: 24px;
   margin-bottom: 10px;
   line-height: 1.35;
+  scroll-margin-top: 5rem;
 }
 
 .doc-article h4 {
+  position: relative;
   font-size: 1rem;
   font-weight: 600;
   margin-top: 20px;
   margin-bottom: 8px;
+}
+
+/* ── Heading Anchor Links ─────────────────────────────────── */
+
+.doc-article .heading-anchor {
+  position: absolute;
+  left: -1.25rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.doc-article h2:hover > .heading-anchor,
+.doc-article h3:hover > .heading-anchor,
+.doc-article h4:hover > .heading-anchor,
+.heading-anchor:focus {
+  opacity: 1;
 }
 
 .doc-article p {
@@ -260,12 +208,16 @@ html.dark .icon-moon { display: block; }
 }
 
 .doc-article a {
-  color: var(--color-link);
+  color: var(--primary);
   text-decoration: none;
 }
 
 .doc-article a:hover {
   text-decoration: underline;
+}
+
+.doc-article a.heading-anchor:hover {
+  text-decoration: none;
 }
 
 .doc-article strong {
@@ -290,17 +242,17 @@ html.dark .icon-moon { display: block; }
 
 .doc-article hr {
   border: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--border);
   margin: 32px 0;
 }
 
 .doc-article blockquote {
   margin: 16px 0;
   padding: 12px 16px;
-  border-left: 4px solid var(--color-accent);
-  background: var(--color-bg-secondary);
+  border-left: 4px solid var(--primary);
+  background: var(--muted);
   border-radius: 0 6px 6px 0;
-  color: var(--color-text-secondary);
+  color: var(--muted-foreground);
 }
 
 .doc-article blockquote p:last-child {
@@ -321,12 +273,12 @@ html.dark .icon-moon { display: block; }
 .doc-article th,
 .doc-article td {
   padding: 8px 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   text-align: left;
 }
 
 .doc-article th {
-  background: var(--color-bg-secondary);
+  background: var(--muted);
   font-weight: 600;
 }
 
@@ -335,7 +287,7 @@ html.dark .icon-moon { display: block; }
 .doc-article code {
   font-family: var(--font-mono);
   font-size: 0.875em;
-  background: var(--color-code-bg);
+  background: var(--muted);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -358,7 +310,15 @@ html.dark .icon-moon { display: block; }
   padding: 16px;
   border-radius: 8px;
   overflow-x: auto;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
+}
+
+:root span[style*="--shiki-light"] {
+  color: var(--shiki-light);
+}
+
+.dark span[style*="--shiki-dark"] {
+  color: var(--shiki-dark);
 }
 
 html.dark .shiki,
@@ -373,7 +333,7 @@ html.dark .shiki span {
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-    background: var(--color-bg);
+    background: var(--background);
     z-index: 200;
   }
 
@@ -395,10 +355,7 @@ html.dark .shiki span {
 
   .main-content {
     margin-left: 0;
-    padding: calc(var(--header-height) + 16px) 16px 32px;
+    padding: 5rem 0.3rem 3rem; /* matches UI site mobile spacing */
   }
 
-  .md-toggle-btn span {
-    display: none;
-  }
 }

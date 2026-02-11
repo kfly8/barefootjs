@@ -106,6 +106,7 @@ export default defineConfig({
       './**/index.tsx',
       './pages/**/*.tsx',
       '../../ui/components/**/*.tsx',
+      '../shared/components/**/*.tsx',
       './components/**/*.tsx',
       './dist/**/*.tsx',
     ],

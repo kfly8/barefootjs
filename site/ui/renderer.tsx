@@ -21,11 +21,12 @@ declare module 'hono' {
 import { BfScripts } from '../../packages/hono/src/scripts'
 import { BfPortals } from '../../packages/hono/src/portals'
 import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
-import { SidebarMenu } from '@/components/sidebar-menu'
-import { Header } from '@/components/header'
-import { MobileHeader } from '@/components/mobile-header'
+import { SidebarNav, type SidebarEntry } from '../shared/components/sidebar'
+import { Header } from '../shared/components/header'
 import { MobileMenu } from '@/components/mobile-menu'
 import { MobilePageNav } from '@/components/mobile-page-nav'
+import { SearchButton } from '@/components/search-button'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { CommandPalette } from '@/components/command-palette'
 
 // Import manifest for dependency-aware preloading
@@ -56,16 +57,53 @@ function WithPredictableIds({ children }: { children: any }) {
   return <>{children}</>
 }
 
-// Theme initialization script - runs before page render to prevent FOUC
-const themeInitScript = `
-(function() {
-  const stored = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
-    document.documentElement.classList.add('dark');
-  }
-})();
-`
+import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
+
+// Sidebar menu data
+const menuEntries: SidebarEntry[] = [
+  {
+    title: 'Get Started',
+    defaultOpen: true,
+    links: [
+      { title: 'Introduction', href: '/' },
+    ],
+  },
+  {
+    title: 'Components',
+    links: [
+      { title: 'Accordion', href: '/docs/components/accordion' },
+      { title: 'Badge', href: '/docs/components/badge' },
+      { title: 'Button', href: '/docs/components/button' },
+      { title: 'Card', href: '/docs/components/card' },
+      { title: 'Checkbox', href: '/docs/components/checkbox' },
+      { title: 'Dialog', href: '/docs/components/dialog' },
+      { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
+      { title: 'Input', href: '/docs/components/input' },
+      { title: 'Select', href: '/docs/components/select' },
+      { title: 'Switch', href: '/docs/components/switch' },
+      { title: 'Tabs', href: '/docs/components/tabs' },
+      { title: 'Toast', href: '/docs/components/toast' },
+      { title: 'Tooltip', href: '/docs/components/tooltip' },
+    ],
+  },
+  {
+    title: 'Forms',
+    links: [
+      { title: 'Controlled Input', href: '/docs/forms/controlled-input' },
+      { title: 'Field Arrays', href: '/docs/forms/field-arrays' },
+      { title: 'Submit', href: '/docs/forms/submit' },
+      { title: 'Validation', href: '/docs/forms/validation' },
+    ],
+  },
+  {
+    title: 'Blocks',
+    links: [],
+  },
+  {
+    title: 'Charts',
+    links: [],
+  },
+]
 
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
@@ -112,12 +150,17 @@ export const renderer = jsxRenderer(
             `}</style>
           </head>
           <body>
-            <Header />
-            <MobileHeader />
+            <Header activePage="ui" searchSlot={<SearchButton />} themeSwitcher={<ThemeSwitcher />} />
             <MobileMenu />
             <MobilePageNav currentPath={currentPath} />
             <CommandPalette />
-            <SidebarMenu currentPath={currentPath} />
+            <nav
+              className="hidden sm:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
+              aria-label="Main navigation"
+              data-sidebar-menu
+            >
+              <SidebarNav entries={menuEntries} currentPath={currentPath} />
+            </nav>
             <div className="sm:pl-56">
               <main className="max-w-[1000px] mx-auto px-0 sm:px-4">
                 {children}

@@ -9,6 +9,7 @@
   "dependencies": {
     "@barefootjs/dom": "workspace:*",
     "@barefootjs/hono": "workspace:*",
+    "@barefootjs/site-shared": "workspace:*",
     "@shikijs/langs": "^3.21.0",
     "@shikijs/themes": "^3.21.0",
     "hono": "^4",

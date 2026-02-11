@@ -19,6 +19,7 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
+const SHARED_COMPONENTS_DIR = resolve(ROOT_DIR, '../shared/components')
 
 // File type helpers
 function hasUseClientDirective(content: string): boolean {
@@ -126,8 +127,10 @@ const adapter = new HonoAdapter({
   injectScriptCollection: false,
 })
 
-// Compile client components
-const componentFiles = await discoverComponentFiles(COMPONENTS_DIR)
+// Compile client components from local and shared dirs
+const localComponentFiles = await discoverComponentFiles(COMPONENTS_DIR)
+const sharedComponentFiles = await discoverComponentFiles(SHARED_COMPONENTS_DIR)
+const componentFiles = [...localComponentFiles, ...sharedComponentFiles]
 
 for (const entryPath of componentFiles) {
   const sourceContent = await Bun.file(entryPath).text()
@@ -160,7 +163,11 @@ for (const entryPath of componentFiles) {
     continue
   }
 
-  const relativePath = relative(COMPONENTS_DIR, entryPath)
+  // Determine rootDir based on source location
+  const isSharedComponent = entryPath.startsWith(SHARED_COMPONENTS_DIR)
+  const rootDir = isSharedComponent ? SHARED_COMPONENTS_DIR : COMPONENTS_DIR
+
+  const relativePath = relative(rootDir, entryPath)
   const dirPath = dirname(relativePath)
   const baseFileName = relativePath.split('/').pop()!
   const baseNameNoExt = baseFileName.replace('.tsx', '')
@@ -279,15 +286,13 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// Copy globals.css to dist
+// Concatenate tokens.css + globals.css to dist
 const STYLES_DIR = resolve(ROOT_DIR, 'styles')
-const globalsSource = resolve(STYLES_DIR, 'globals.css')
-const globalsDest = resolve(DIST_DIR, 'globals.css')
-
-if (await Bun.file(globalsSource).exists()) {
-  await Bun.write(globalsDest, Bun.file(globalsSource))
-  console.log('Copied: dist/globals.css')
-}
+const SHARED_STYLES_DIR = resolve(ROOT_DIR, '../shared/styles')
+const tokensCSS = await Bun.file(resolve(SHARED_STYLES_DIR, 'tokens.css')).text()
+const siteGlobalsCSS = await Bun.file(resolve(STYLES_DIR, 'globals.css')).text()
+await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + siteGlobalsCSS)
+console.log('Generated: dist/globals.css (tokens + globals)')
 
 // Generate UnoCSS
 console.log('\nGenerating UnoCSS...')

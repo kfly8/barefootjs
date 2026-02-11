@@ -3,8 +3,7 @@
  */
 
 :root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* LP-specific overrides (fonts and base tokens come from shared tokens.css) */
   --radius: 0.5rem;
 
   /* Light theme - monochrome */

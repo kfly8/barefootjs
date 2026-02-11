@@ -20,12 +20,8 @@ export function SearchButton() {
     const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform)
     setShortcutKey(isMac ? '⌘' : 'Ctrl')
 
-    // Set up click handler
-    const button = document.querySelector('[data-search-button]')
-    if (!button) return
-
+    // Set up click handlers for both desktop and mobile buttons
     const handleClick = () => {
-      // Dispatch Cmd+K event to open command palette
       const event = new KeyboardEvent('keydown', {
         key: 'k',
         metaKey: true,
@@ -35,21 +31,41 @@ export function SearchButton() {
       document.dispatchEvent(event)
     }
 
-    button.addEventListener('click', handleClick)
-    return () => button.removeEventListener('click', handleClick)
+    const button = document.querySelector('[data-search-button]')
+    const mobileButton = document.querySelector('[data-search-button-mobile]')
+
+    if (button) button.addEventListener('click', handleClick)
+    if (mobileButton) mobileButton.addEventListener('click', handleClick)
+
+    return () => {
+      if (button) button.removeEventListener('click', handleClick)
+      if (mobileButton) mobileButton.removeEventListener('click', handleClick)
+    }
   })
 
   return (
-    <button
-      data-search-button
-      type="button"
-      className="hidden sm:flex items-center gap-2 h-9 w-64 rounded-md border border-border bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-    >
-      <SearchIcon size="sm" />
-      <span className="flex-1 text-left">Search...</span>
-      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-        <span data-shortcut-key>{shortcutKey()}</span>K
-      </kbd>
-    </button>
+    <>
+      {/* Desktop: full search bar */}
+      <button
+        data-search-button
+        type="button"
+        className="hidden sm:flex items-center gap-2 h-9 w-64 rounded-md border border-border bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+      >
+        <SearchIcon size="sm" />
+        <span className="flex-1 text-left">Search...</span>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <span data-shortcut-key>{shortcutKey()}</span>K
+        </kbd>
+      </button>
+      {/* Mobile: icon only */}
+      <button
+        data-search-button-mobile
+        type="button"
+        className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-foreground hover:bg-accent transition-colors"
+        aria-label="Search"
+      >
+        <SearchIcon size="md" />
+      </button>
+    </>
   )
 }
