@@ -95,8 +95,16 @@ function belongsToScope(
   const elementScope = (element as HTMLElement).dataset?.bfScope
   if (elementScope) {
     // When looking for child scope elements (data-bf-scope selectors),
-    // include them if they are within the scope (at any depth)
+    // accept only scopes whose ID is parentScopeId + "_sN" (single slot suffix).
+    // Reject nested scopes like parentScopeId + "_sM_sN" which belong to an intermediate scope.
     if (isLookingForScope) {
+      const scopeId = (scope as HTMLElement).dataset?.bfScope
+      if (scopeId && elementScope.startsWith(scopeId + '_')) {
+        const remainder = elementScope.slice(scopeId.length + 1)
+        return /^s\d+$/.test(remainder)
+      }
+      // For component name prefix matches (e.g., [data-bf-scope^="Counter_"]),
+      // element scope ID won't start with parent scope ID. Use containment check.
       return scope.contains(element)
     }
     // When looking for slot elements (data-bf selectors),
