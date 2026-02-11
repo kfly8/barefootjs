@@ -150,6 +150,9 @@ export function stripTypeScriptSyntax(code: string): string {
   // Variable type annotations: let/const x: Type = value
   result = result.replace(/(let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[^\n=]+=(?!=)/g, '$1 $2 =')
 
+  // Variable type annotations without initializer: let x: Type => let x
+  result = result.replace(/(let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:[^\n;=]+/g, '$1 $2')
+
   // Multi-variable type annotations: let x: number, y: number
   result = result.replace(/(let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*,/g, '$1 $2,')
   result = result.replace(/,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*(?=[,\n;)])/g, ', $1')
