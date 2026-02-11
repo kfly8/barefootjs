@@ -1,3 +1,8 @@
+---
+title: Core Concepts
+description: Two-phase compilation, signal-based reactivity, and the hydration model
+---
+
 # Core Concepts
 
 BarefootJS has three key ideas: a two-phase compiler, signal-based reactivity, and marker-driven hydration. This page explains how they fit together.

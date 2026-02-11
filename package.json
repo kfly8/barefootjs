@@ -8,8 +8,10 @@
     "packages/*",
     "examples/*",
     "ui",
-    "docs/ui",
-    "site"
+    "site/shared",
+    "site/lp",
+    "site/ui",
+    "site/docs"
   ],
   "scripts": {
     "setup": "bun install && bun run --filter 'barefootjs-echo-example' setup",

@@ -17,7 +17,7 @@ import { dirname, resolve, join, relative } from 'node:path'
 const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
-const DOM_PKG_DIR = resolve(ROOT_DIR, '../packages/dom')
+const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 
 // File type helpers

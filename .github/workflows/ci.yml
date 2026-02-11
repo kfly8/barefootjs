@@ -69,7 +69,7 @@ jobs:
           path: examples/hono/playwright-report/
           retention-days: 30
 
-  e2e-docs-ui:
+  e2e-site-ui:
     runs-on: ubuntu-latest
     needs: test
 
@@ -90,21 +90,21 @@ jobs:
           cd ../jsx && bun run build
           cd ../hono && bun run build
 
-      - name: Build docs/ui
-        run: cd docs/ui && bun run build
+      - name: Build site/ui
+        run: cd site/ui && bun run build
 
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium
 
-      - name: Run docs/ui E2E tests
-        run: cd docs/ui && bun run test:e2e
+      - name: Run site/ui E2E tests
+        run: cd site/ui && bun run test:e2e
 
-      - name: Upload Playwright report (docs/ui)
+      - name: Upload Playwright report (site/ui)
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-docs-ui
-          path: docs/ui/playwright-report/
+          name: playwright-report-site-ui
+          path: site/ui/playwright-report/
           retention-days: 30
 
   e2e-echo:

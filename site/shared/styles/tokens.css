@@ -1,0 +1,39 @@
+/**
+ * BarefootJS Design Tokens
+ *
+ * Shared CSS variables for all BarefootJS sites (docs, ui, lp).
+ * Each site can override these values in its own globals.css.
+ *
+ * Usage:
+ *   @import '@barefootjs/site-shared/styles/tokens.css';
+ */
+
+:root {
+  /* ── Typography ──────────────────────────────────────── */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* ── Spacing scale ───────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Border radius ───────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* ── Transitions ─────────────────────────────────────── */
+  --duration-fast: 0.15s;
+  --duration-normal: 0.25s;
+
+  /* ── Layout ──────────────────────────────────────────── */
+  --header-height: 52px;
+}

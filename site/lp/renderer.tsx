@@ -18,7 +18,7 @@ declare module 'hono' {
     ): Response | Promise<Response>
   }
 }
-import { BfScripts } from '../packages/hono/src/scripts'
+import { BfScripts } from '../../packages/hono/src/scripts'
 
 /**
  * Predictable instance ID generator for consistent SSR.
