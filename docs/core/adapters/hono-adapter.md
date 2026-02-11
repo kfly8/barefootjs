@@ -95,9 +95,9 @@ export function Counter({ initial = 0, __instanceId, __bfScope }: CounterPropsWi
   const setCount = () => {}
 
   return (
-    <div data-bf-scope={__scopeId} {...(__bfPropsJson ? { "data-bf-props": __bfPropsJson } : {})}>
-      <p data-bf="slot_0">{count()}</p>
-      <button data-bf="slot_1">+1</button>
+    <div bf-s={__scopeId} {...(__bfPropsJson ? { "bf-p": __bfPropsJson } : {})}>
+      <p bf="slot_0">{count()}</p>
+      <button bf="slot_1">+1</button>
     </div>
   )
 }
@@ -105,10 +105,10 @@ export function Counter({ initial = 0, __instanceId, __bfScope }: CounterPropsWi
 
 Key aspects of the output:
 
-- **`data-bf-scope`** on the root element identifies the component boundary
-- **`data-bf="slot_N"`** marks elements that the client JS will target
+- **`bf-s`** on the root element identifies the component boundary
+- **`bf="slot_N"`** marks elements that the client JS will target
 - **Signal stubs** (`count = () => initial ?? 0`) allow the template to render the initial value server-side
-- **`data-bf-props`** attribute serializes props as JSON for client-side hydration
+- **`bf-p`** attribute serializes props as JSON for client-side hydration
 - **Event handlers are removed** — they exist only in the client JS
 
 
@@ -152,7 +152,7 @@ The adapter extends every client component's props with hydration-related fields
 |------|---------|
 | `__instanceId` | Unique instance identifier passed from the parent |
 | `__bfScope` | Parent's scope ID (for nested component communication) |
-| `__bfChild` | Marks this component as a child instance |
+| `__bfChild` | Marks this component as a child instance (adds `~` prefix to `bf-s` value) |
 | `data-key` | Stable key for list-rendered instances |
 
 These props are used internally by the hydration system and do not need to be passed manually when using components.
@@ -171,10 +171,10 @@ Ternary expressions in JSX compile to conditional output with hydration markers:
 **Output:**
 
 ```tsx
-{isActive() ? <span data-bf-cond="slot_2">Active</span> : <span data-bf-cond="slot_2">Inactive</span>}
+{isActive() ? <span bf-c="slot_2">Active</span> : <span bf-c="slot_2">Inactive</span>}
 ```
 
-The client JS uses the `data-bf-cond` marker to swap DOM nodes when the condition changes.
+The client JS uses the `bf-c` marker to swap DOM nodes when the condition changes.
 
 
 ## Loop Rendering

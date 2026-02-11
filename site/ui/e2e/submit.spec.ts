@@ -25,17 +25,17 @@ test.describe.skip('Form Submit Documentation Page', () => {
 
   test.describe('Basic Submit Demo', () => {
     test('displays basic submit demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="BasicSubmitDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="BasicSubmitDemo_"]')).toBeVisible()
     })
 
     test('shows no error initially', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const error = demo.locator('.error-message')
       await expect(error).toHaveText('')
     })
 
     test('shows validation error on blur when empty', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
       const error = demo.locator('.error-message')
 
@@ -45,7 +45,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('shows format error for invalid email', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
       const error = demo.locator('.error-message')
 
@@ -55,25 +55,25 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('button is disabled when form is invalid', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await expect(button).toBeDisabled()
     })
 
     test('button is enabled when form is valid', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('test@example.com')
       await expect(button).not.toBeDisabled()
     })
 
     test('shows loading state during submission', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('test@example.com')
       await button.click()
@@ -85,9 +85,9 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('shows success toast after submission', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('test@example.com')
       await button.click()
@@ -99,14 +99,14 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('form resets after successful submission', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="BasicSubmitDemo_"]')
+      const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
 
       await input.fill('test@example.com')
 
       // Wait for success toast to appear (indicates submission completed)
       const toast = demo.locator('[data-toast-variant="success"]')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
       await button.click()
 
       await expect(toast).toBeVisible({ timeout: 5000 })
@@ -117,13 +117,13 @@ test.describe.skip('Form Submit Documentation Page', () => {
 
   test.describe('Network Error Demo', () => {
     test('displays network error demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="NetworkErrorDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="NetworkErrorDemo_"]')).toBeVisible()
     })
 
     test('shows loading state during submission', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="NetworkErrorDemo_"]')
+      const demo = page.locator('[bf-s^="NetworkErrorDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('Test message')
       await button.click()
@@ -133,9 +133,9 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('completes submission and returns to idle state', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="NetworkErrorDemo_"]')
+      const demo = page.locator('[bf-s^="NetworkErrorDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('Test message')
       await button.click()
@@ -147,11 +147,11 @@ test.describe.skip('Form Submit Documentation Page', () => {
 
   test.describe('Server Validation Demo', () => {
     test('displays server validation demo', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="ServerValidationDemo_"]')).toBeVisible()
+      await expect(page.locator('[bf-s^="ServerValidationDemo_"]')).toBeVisible()
     })
 
     test('shows client-side validation error', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ServerValidationDemo_"]')
+      const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
       const error = demo.locator('.client-error')
 
@@ -161,9 +161,9 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('shows server validation error for taken email', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ServerValidationDemo_"]')
+      const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('taken@example.com')
       await button.click()
@@ -175,9 +175,9 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('clears server error when input changes', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ServerValidationDemo_"]')
+      const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('taken@example.com')
       await button.click()
@@ -192,9 +192,9 @@ test.describe.skip('Form Submit Documentation Page', () => {
     })
 
     test('shows success for valid email', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="ServerValidationDemo_"]')
+      const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[data-bf-scope^="Button_"]')
+      const button = demo.locator('[bf-s^="Button_"]')
 
       await input.fill('valid@example.com')
       await button.click()

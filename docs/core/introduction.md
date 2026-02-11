@@ -36,9 +36,9 @@ This single file compiles into two outputs:
 ```tsx
 export function Counter(props) {
   return (
-    <div data-bf-scope="Counter">
-      <p data-bf="slot_0">{props.initial ?? 0}</p>
-      <button data-bf="slot_1">+1</button>
+    <div bf-s="Counter">
+      <p bf="slot_0">{props.initial ?? 0}</p>
+      <button bf="slot_1">+1</button>
     </div>
   )
 }
@@ -49,9 +49,9 @@ export function Counter(props) {
 
 ```go-template
 {{define "Counter"}}
-<div data-bf-scope="{{.ScopeID}}">
-  <p data-bf="slot_0">{{.Initial}}</p>
-  <button data-bf="slot_1">+1</button>
+<div bf-s="{{.ScopeID}}">
+  <p bf="slot_0">{{.Initial}}</p>
+  <button bf="slot_1">+1</button>
 </div>
 {{end}}
 ```
@@ -66,10 +66,10 @@ import { createSignal, createEffect, find, bind } from '@barefootjs/dom'
 export function hydrate(props) {
   const [count, setCount] = createSignal(props.initial ?? 0)
 
-  const el = find('[data-bf="slot_0"]')
+  const el = find('[bf="slot_0"]')
   createEffect(() => { el.textContent = String(count()) })
 
-  bind('[data-bf="slot_1"]', 'click', () => setCount(n => n + 1))
+  bind('[bf="slot_1"]', 'click', () => setCount(n => n + 1))
 }
 ```
 

@@ -169,7 +169,7 @@ function AccordionContent(props: { itemId: string; children?: Child }) {
 
   <AccordionTrigger itemId="faq-2">How does hydration work?</AccordionTrigger>
   <AccordionContent itemId="faq-2">
-    <p>Marker-driven: data-bf-* attributes tell the client JS where to attach.</p>
+    <p>Marker-driven: bf-* attributes tell the client JS where to attach.</p>
   </AccordionContent>
 </Accordion>
 ```

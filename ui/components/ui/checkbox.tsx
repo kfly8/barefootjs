@@ -156,7 +156,7 @@ function Checkbox(props: CheckboxProps) {
 
     // Notify parent if callback provided (works for both modes)
     // Check scope element for callback (parent sets callback there during hydration)
-    const scope = target.closest('[data-bf-scope]')
+    const scope = target.closest('[bf-s]')
     // @ts-ignore - oncheckedChange is set by parent during hydration
     const scopeCallback = scope?.oncheckedChange
     const handler = props.onCheckedChange || scopeCallback

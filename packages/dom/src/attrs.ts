@@ -1,0 +1,36 @@
+/**
+ * BarefootJS - HTML Attribute Constants
+ *
+ * Short attribute names for hydration markers.
+ * These are not data-* attributes (like Angular's ng-, Vue's v-, Alpine's x-).
+ */
+
+/** Component scope boundary: `bf-s="Toggle_h1rn0a"` */
+export const BF_SCOPE = 'bf-s'
+
+/** Slot ID (most common): `bf="s1"` */
+export const BF_SLOT = 'bf'
+
+/** Runtime-only hydration guard: `bf-h` */
+export const BF_HYDRATED = 'bf-h'
+
+/** Serialized props JSON: `bf-p="..."` */
+export const BF_PROPS = 'bf-p'
+
+/** Conditional marker: `bf-c="s0"` */
+export const BF_COND = 'bf-c'
+
+/** Portal ownership: `bf-po="Toggle_h1rn0a"` */
+export const BF_PORTAL_OWNER = 'bf-po'
+
+/** Portal ID: `bf-pi="bf-portal-1"` */
+export const BF_PORTAL_ID = 'bf-pi'
+
+/** Portal placeholder: `bf-pp="bf-portal-1"` */
+export const BF_PORTAL_PLACEHOLDER = 'bf-pp'
+
+/** List item marker: `bf-i` */
+export const BF_ITEM = 'bf-i'
+
+/** Child component prefix in scope value: `~ToggleItem_abc` */
+export const BF_CHILD_PREFIX = '~'

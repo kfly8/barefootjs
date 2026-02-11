@@ -21,7 +21,7 @@ export function PortalExample() {
   // Skip if element is already in an SSR portal (content already at body)
   const moveToBody = (el: HTMLElement) => {
     if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
-      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      const ownerScope = el.closest('[bf-s]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
   }

@@ -79,7 +79,7 @@ Each `case` maps to one of the required `TemplateAdapter` methods. The `text` an
 Elements are the most common node type. You need to:
 
 1. Render the HTML tag and attributes
-2. Insert hydration markers (`data-bf-scope`, `data-bf`)
+2. Insert hydration markers (`bf-s`, `bf`)
 3. Render children recursively
 
 ```typescript
@@ -90,10 +90,10 @@ renderElement(element: IRElement): string {
 
   let hydrationAttrs = ''
   if (element.needsScope) {
-    hydrationAttrs += ' data-bf-scope={__scopeId}'
+    hydrationAttrs += ' bf-s={__scopeId}'
   }
   if (element.slotId) {
-    hydrationAttrs += ` data-bf="${element.slotId}"`
+    hydrationAttrs += ` bf="${element.slotId}"`
   }
 
   if (children) {
@@ -149,7 +149,7 @@ renderExpression(expr: IRExpression): string {
     return 'null'
   }
   if (expr.reactive && expr.slotId) {
-    return `<span data-bf="${expr.slotId}">{${expr.expr}}</span>`
+    return `<span bf="${expr.slotId}">{${expr.expr}}</span>`
   }
   return `{${expr.expr}}`
 }
@@ -234,19 +234,19 @@ The `__bfScope` prop passes the parent's scope ID so nested components can parti
 
 ## Step 8: Implement Hydration Markers
 
-These methods generate the `data-bf-*` attributes in the target language's syntax:
+These methods generate the `bf-*` attributes in the target language's syntax:
 
 ```typescript
 renderScopeMarker(instanceIdExpr: string): string {
-  return `data-bf-scope={${instanceIdExpr}}`
+  return `bf-s={${instanceIdExpr}}`
 }
 
 renderSlotMarker(slotId: string): string {
-  return `data-bf="${slotId}"`
+  return `bf="${slotId}"`
 }
 
 renderCondMarker(condId: string): string {
-  return `data-bf-cond="${condId}"`
+  return `bf-c="${condId}"`
 }
 ```
 
@@ -340,9 +340,9 @@ console.log(output.template)
 //   const setCount = () => {}
 //
 //   return (
-//     <div data-bf-scope={__scopeId}>
-//       <span data-bf="slot_0">{count()}</span>
-//       <button data-bf="slot_1" onClick={() => {}}>+1</button>
+//     <div bf-s={__scopeId}>
+//       <span bf="slot_0">{count()}</span>
+//       <button bf="slot_1" onClick={() => {}}>+1</button>
 //     </div>
 //   )
 // }
@@ -354,13 +354,13 @@ console.log(output.template)
 When building a custom adapter, ensure you handle:
 
 - [ ] All IR node types (`element`, `text`, `expression`, `conditional`, `loop`, `component`, `fragment`, `slot`)
-- [ ] Hydration markers (`data-bf-scope`, `data-bf`, `data-bf-cond`) on interactive elements
+- [ ] Hydration markers (`bf-s`, `bf`, `bf-c`) on interactive elements
 - [ ] Static vs. dynamic attributes
 - [ ] Boolean HTML attributes (`disabled`, `checked`, etc.)
 - [ ] Spread attributes (`{...props}`)
 - [ ] Signal getter stubs for server-side initial values
 - [ ] Nested component scope passing
-- [ ] Props serialization (`data-bf-props` attribute) for client hydration
+- [ ] Props serialization (`bf-p` attribute) for client hydration
 - [ ] Script registration for client JS loading
 - [ ] `/* @client */` directive (skip client-only expressions server-side)
 

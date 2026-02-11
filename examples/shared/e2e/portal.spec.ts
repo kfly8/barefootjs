@@ -38,7 +38,7 @@ export function portalTests(baseUrl: string) {
 
       // Portal content should be a direct child of body (or near body end)
       // Check that it's NOT inside the component scope
-      const componentScope = page.locator('[data-bf-scope^="PortalExample_"]')
+      const componentScope = page.locator('[bf-s^="PortalExample_"]')
       const portalInsideScope = componentScope.locator('[data-testid="portal-content"]')
       await expect(portalInsideScope).toHaveCount(0)
 
@@ -83,7 +83,7 @@ export function portalTests(baseUrl: string) {
 
     test('has valid ScopeID format', async ({ page }) => {
       // ScopeID should be in format: PortalExample_[6 random alphanumeric chars]
-      const scopeId = await page.locator('[data-bf-scope]').first().getAttribute('data-bf-scope')
+      const scopeId = await page.locator('[bf-s]').first().getAttribute('bf-s')
       expect(scopeId).toMatch(/^PortalExample_[a-z0-9]{6}$/)
     })
   })

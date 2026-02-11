@@ -38,7 +38,7 @@ export function Counter({ initial = 0 }) {
 
 The compiler produces two outputs from this source:
 
-1. **Marked Template** — Server-rendered HTML with `data-bf-*` attributes
+1. **Marked Template** — Server-rendered HTML with `bf-*` attributes
 2. **Client JS** — A minimal script that creates signals, binds effects, and attaches event handlers
 
 See [Core Concepts — Two-Phase Compilation](../core-concepts.md#two-phase-compilation) for details.
@@ -100,7 +100,7 @@ export function Toggle() {
 ```tsx
 export function Toggle() {
   return (
-    <button data-bf-scope="Toggle" data-bf="slot_0">
+    <button bf-s="Toggle" bf="slot_0">
       OFF
     </button>
   )
@@ -109,7 +109,7 @@ export function Toggle() {
 <!-- tab:Go Template -->
 ```go-template
 {{define "Toggle"}}
-<button data-bf-scope="{{.ScopeID}}" data-bf="slot_0">
+<button bf-s="{{.ScopeID}}" bf="slot_0">
   OFF
 </button>
 {{end}}
@@ -124,10 +124,10 @@ import { createSignal, createEffect, find, bind } from '@barefootjs/dom'
 export function init() {
   const [on, setOn] = createSignal(false)
 
-  const _slot_0 = find('[data-bf="slot_0"]')
+  const _slot_0 = find('[bf="slot_0"]')
   createEffect(() => { _slot_0.textContent = on() ? 'ON' : 'OFF' })
 
-  bind('[data-bf="slot_0"]', 'click', () => setOn(v => !v))
+  bind('[bf="slot_0"]', 'click', () => setOn(v => !v))
 }
 ```
 

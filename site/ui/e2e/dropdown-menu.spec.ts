@@ -26,7 +26,7 @@ test.describe('DropdownMenu Documentation Page', () => {
 
   test.describe('Basic Demo', () => {
     test('opens menu and shows items', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuBasicDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuBasicDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -39,7 +39,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('has label and separators', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuBasicDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuBasicDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -50,7 +50,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('destructive item has correct styling', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuBasicDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuBasicDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -61,7 +61,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('closes on item click', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuBasicDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuBasicDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -73,7 +73,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('closes on ESC', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuBasicDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuBasicDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -88,7 +88,7 @@ test.describe('DropdownMenu Documentation Page', () => {
 
   test.describe('Checkbox Demo', () => {
     test('opens menu and shows checkbox items', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuCheckboxDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuCheckboxDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -101,7 +101,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('toggles checkbox on click', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuCheckboxDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuCheckboxDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -121,7 +121,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('checkbox item does not close menu', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuCheckboxDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuCheckboxDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -146,7 +146,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     // Only one menu is open at a time, so [data-state="open"] uniquely identifies it.
 
     test('opens menu when avatar trigger is clicked', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -157,7 +157,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('has correct ARIA roles', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
@@ -175,7 +175,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('displays menu label', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -186,7 +186,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('displays separators', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -197,7 +197,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('displays keyboard shortcut', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -208,7 +208,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('closes on ESC', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -221,7 +221,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('closes on click outside', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -235,7 +235,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('closes on item click', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -249,7 +249,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('keyboard navigation with arrow keys', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -273,7 +273,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('Home/End key navigation', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -296,7 +296,7 @@ test.describe('DropdownMenu Documentation Page', () => {
 
   test.describe('Submenu', () => {
     test('opens submenu on hover', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -319,7 +319,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('opens submenu with ArrowRight key', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -336,7 +336,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('closes submenu with ArrowLeft key', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -362,7 +362,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('ESC closes only submenu, not parent menu', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -388,7 +388,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('sub trigger has chevron icon and aria attributes', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -406,7 +406,7 @@ test.describe('DropdownMenu Documentation Page', () => {
 
   test.describe('Checkbox Items (Profile)', () => {
     test('toggles checkbox item on click', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -428,7 +428,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('checkbox item does not close menu', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -450,7 +450,7 @@ test.describe('DropdownMenu Documentation Page', () => {
 
   test.describe('Radio Items', () => {
     test('selects radio item on click', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -480,7 +480,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('radio items are mutually exclusive', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -505,7 +505,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('radio item does not close menu', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -529,7 +529,7 @@ test.describe('DropdownMenu Documentation Page', () => {
 
   test.describe('Destructive Variant', () => {
     test('destructive item has correct styling class', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()
@@ -542,7 +542,7 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
 
     test('destructive item closes menu on click', async ({ page }) => {
-      const demo = page.locator('[data-bf-scope^="DropdownMenuProfileDemo_"]').first()
+      const demo = page.locator('[bf-s^="DropdownMenuProfileDemo_"]').first()
       const trigger = demo.locator('[data-slot="dropdown-menu-trigger"]')
 
       await trigger.click()

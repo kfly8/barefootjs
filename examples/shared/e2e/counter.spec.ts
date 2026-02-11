@@ -56,7 +56,7 @@ export function counterTests(baseUrl: string) {
 
     test('has valid ScopeID format', async ({ page }) => {
       // ScopeID should be in format: Counter_[6 random alphanumeric chars]
-      const scopeId = await page.locator('[data-bf-scope]').first().getAttribute('data-bf-scope')
+      const scopeId = await page.locator('[bf-s]').first().getAttribute('bf-s')
       expect(scopeId).toMatch(/^Counter_[a-z0-9]{6}$/)
     })
   })

@@ -75,7 +75,7 @@ export function jsxToIR(analyzer: AnalyzerContext): IRNode | null {
   // Auto-generate scope wrapper for provider-only roots that lack a scope element.
   // When a component returns only a Provider wrapping children (no native HTML element),
   // findScope() would return null during hydration. Wrapping in a synthetic
-  // <div style="display:contents"> provides the necessary data-bf-scope anchor.
+  // <div style="display:contents"> provides the necessary bf-s anchor.
   if (ir && needsScopeWrapper(ir)) {
     return wrapInScopeElement(ir)
   }

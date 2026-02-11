@@ -34,17 +34,17 @@ test.describe.skip('Switch Documentation Page', () => {
 
   test.describe('Interactive Toggle', () => {
     test('displays interactive switch', async ({ page }) => {
-      const interactiveSwitch = page.locator('[data-bf-scope^="SwitchInteractiveDemo_"]').first()
+      const interactiveSwitch = page.locator('[bf-s^="SwitchInteractiveDemo_"]').first()
       await expect(interactiveSwitch).toBeVisible()
     })
 
     test('shows initial Off state', async ({ page }) => {
-      const interactiveSwitch = page.locator('[data-bf-scope^="SwitchInteractiveDemo_"]').first()
+      const interactiveSwitch = page.locator('[bf-s^="SwitchInteractiveDemo_"]').first()
       await expect(interactiveSwitch.locator('text=Off')).toBeVisible()
     })
 
     test('toggles to On state on click', async ({ page }) => {
-      const interactiveSwitch = page.locator('[data-bf-scope^="SwitchInteractiveDemo_"]').first()
+      const interactiveSwitch = page.locator('[bf-s^="SwitchInteractiveDemo_"]').first()
       const switchButton = interactiveSwitch.locator('button[role="switch"]')
 
       await switchButton.click()
@@ -61,11 +61,11 @@ test.describe.skip('Switch Documentation Page', () => {
 
   test.describe('Settings Panel', () => {
     test('displays settings panel example', async ({ page }) => {
-      await expect(page.locator('[data-bf-scope^="SwitchSettingsPanelDemo_"]').first()).toBeVisible()
+      await expect(page.locator('[bf-s^="SwitchSettingsPanelDemo_"]').first()).toBeVisible()
     })
 
     test('shows Wi-Fi, Bluetooth, and Notifications toggles', async ({ page }) => {
-      const settingsPanel = page.locator('[data-bf-scope^="SwitchSettingsPanelDemo_"]').first()
+      const settingsPanel = page.locator('[bf-s^="SwitchSettingsPanelDemo_"]').first()
       await expect(settingsPanel.locator('text=Wi-Fi')).toBeVisible()
       await expect(settingsPanel.locator('text=Bluetooth')).toBeVisible()
       await expect(settingsPanel.locator('text=Notifications')).toBeVisible()

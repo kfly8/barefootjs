@@ -6,7 +6,7 @@
  * - Correct element rendered per branch (button vs link)
  * - Initial text content
  * - Click increments count
- * - data-active attribute updates reactively
+ * - data-active attribute updates reactively (note: data-active is app-level, not bf attribute)
  * - ScopeID format
  */
 
@@ -51,7 +51,7 @@ export function conditionalReturnTests(baseUrl: string) {
     })
 
     test('has valid ScopeID format', async ({ page }) => {
-      const scopeId = await page.locator('[data-bf-scope]').first().getAttribute('data-bf-scope')
+      const scopeId = await page.locator('[bf-s]').first().getAttribute('bf-s')
       expect(scopeId).toMatch(/^ConditionalReturn_[a-z0-9]{6}$/)
     })
   })
@@ -89,7 +89,7 @@ export function conditionalReturnTests(baseUrl: string) {
     })
 
     test('has valid ScopeID format', async ({ page }) => {
-      const scopeId = await page.locator('[data-bf-scope]').first().getAttribute('data-bf-scope')
+      const scopeId = await page.locator('[bf-s]').first().getAttribute('bf-s')
       expect(scopeId).toMatch(/^ConditionalReturn_[a-z0-9]{6}$/)
     })
   })

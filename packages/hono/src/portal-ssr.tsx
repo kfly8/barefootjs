@@ -69,7 +69,7 @@ export function Portal(props: PortalProps) {
       // BfPortals already rendered (e.g., inside Suspense boundary)
       // Output portal content inline
       return (
-        <div data-bf-portal-id={portalId} data-bf-portal-owner={props.scopeId || ''}>
+        <div bf-pi={portalId} bf-po={props.scopeId || ''}>
           {props.children}
         </div>
       )
@@ -80,7 +80,7 @@ export function Portal(props: PortalProps) {
 
     // Return placeholder for hydration matching
     // Client will find this and know the portal content is at body end
-    return <template data-bf-portal-placeholder={portalId} />
+    return <template bf-pp={portalId} />
   } catch {
     // Outside request context (client-side rendering)
     // Render children normally - they will be moved by createPortal on mount

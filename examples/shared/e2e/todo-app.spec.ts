@@ -27,9 +27,9 @@ export function todoAppTests(baseUrl: string, todosPath: string = '/todos') {
       await page.waitForSelector('.todoapp')
       await page.waitForSelector('.todo-list li', { timeout: 10000 })
       // Wait for TodoItem components to be fully hydrated with event handlers bound
-      // SSR renders as data-bf-scope="TodoApp_xxx_slot_N", hydrated renders as data-bf-scope="TodoItem_xxx"
-      // data-bf-init indicates the component's init function has run and events are bound
-      await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
+      // SSR renders as bf-s="TodoApp_xxx_slot_N", hydrated renders as bf-s="TodoItem_xxx"
+      // bf-h indicates the component's init function has run and events are bound
+      await page.waitForSelector('.todo-list li[bf-s*="TodoItem_"][bf-h]', { timeout: 10000 })
     })
 
     test('displays initial todos', async ({ page }) => {
@@ -174,7 +174,7 @@ export function todoAppTests(baseUrl: string, todosPath: string = '/todos') {
       // Navigate directly to /todos#/active
       await page.goto(`${baseUrl}${todosPath}#/active`)
       await page.waitForSelector('.todoapp')
-      await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
+      await page.waitForSelector('.todo-list li[bf-s*="TodoItem_"][bf-h]', { timeout: 10000 })
 
       // Should show only 2 active todos (not the completed one)
       await expect(page.locator('.todo-list li')).toHaveCount(2)
@@ -193,7 +193,7 @@ export function todoAppTests(baseUrl: string, todosPath: string = '/todos') {
       // Navigate directly to /todos#/completed
       await page.goto(`${baseUrl}${todosPath}#/completed`)
       await page.waitForSelector('.todoapp')
-      await page.waitForSelector('.todo-list li[data-bf-scope^="TodoItem_"][data-bf-init]', { timeout: 10000 })
+      await page.waitForSelector('.todo-list li[bf-s*="TodoItem_"][bf-h]', { timeout: 10000 })
 
       // Should show only 1 completed todo
       await expect(page.locator('.todo-list li')).toHaveCount(1)

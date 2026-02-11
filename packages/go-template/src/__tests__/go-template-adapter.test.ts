@@ -167,7 +167,7 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderElement(element)
-      expect(result).toBe('<div data-bf-scope="{{.ScopeID}}" {{bfIsChild .}} {{bfPropsAttr .}}></div>')
+      expect(result).toBe('<div bf-s="{{bfScopeAttr .}}" {{bfPropsAttr .}}></div>')
     })
 
     test('renders element with slot marker', () => {
@@ -184,7 +184,7 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderElement(element)
-      expect(result).toBe('<span data-bf="s0"></span>')
+      expect(result).toBe('<span bf="s0"></span>')
     })
 
     test('renders void element without closing tag', () => {
@@ -259,7 +259,7 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderExpression(expr)
-      expect(result).toBe('<span data-bf="s0">{{.Count}}</span>')
+      expect(result).toBe('<span bf="s0">{{.Count}}</span>')
     })
   })
 
@@ -538,7 +538,7 @@ describe('GoTemplateAdapter', () => {
       expect(result.extension).toBe('.tmpl')
       expect(result.template).toContain('{{define "Counter"}}')
       expect(result.template).toContain('{{end}}')
-      expect(result.template).toContain('data-bf-scope="{{.ScopeID}}"')
+      expect(result.template).toContain('bf-s="{{bfScopeAttr .}}"')
       expect(result.template).toContain('{{.Count}}')
     })
 

@@ -53,7 +53,7 @@ export function Tooltip(props: { text: string; children?: Child }) {
   const handleMount = (el: HTMLElement) => {
     // Move to document.body to avoid overflow/z-index issues
     if (el.parentNode !== document.body && !isSSRPortal(el)) {
-      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      const ownerScope = el.closest('[bf-s]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
 
@@ -94,7 +94,7 @@ const handleMount = (el: HTMLElement) => {
 }
 ```
 
-SSR portals are marked with `data-bf-portal-id` attributes. After hydration, call `cleanupPortalPlaceholder` to remove the SSR placeholder:
+SSR portals are marked with `bf-pi` attributes. After hydration, call `cleanupPortalPlaceholder` to remove the SSR placeholder:
 
 ```tsx
 import { cleanupPortalPlaceholder } from '@barefootjs/dom'
@@ -111,12 +111,12 @@ The `ownerScope` option solves this by linking the portaled element back to its 
 
 ```tsx
 const handleMount = (el: HTMLElement) => {
-  const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+  const ownerScope = el.closest('[bf-s]') ?? undefined
   createPortal(el, document.body, { ownerScope })
 }
 ```
 
-The portal sets `data-bf-portal-owner` on the moved element, so scoped queries from the owner component still find it.
+The portal sets `bf-po` on the moved element, so scoped queries from the owner component still find it.
 
 
 ## Dialog Example
@@ -131,7 +131,7 @@ function DialogOverlay() {
   const handleMount = (el: HTMLElement) => {
     // Portal to body
     if (el.parentNode !== document.body && !isSSRPortal(el)) {
-      const ownerScope = el.closest('[data-bf-scope]') ?? undefined
+      const ownerScope = el.closest('[bf-s]') ?? undefined
       createPortal(el, document.body, { ownerScope })
     }
 

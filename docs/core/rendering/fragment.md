@@ -37,4 +37,4 @@ For conditional fragments, the compiler uses HTML comment markers as boundaries:
 
 The client runtime uses these comment markers to locate and swap the fragment content when the condition changes.
 
-For component roots that return a fragment, each direct child element is marked with `data-bf-scope` so the runtime can find them during hydration.
+For component roots that return a fragment, each direct child element is marked with `bf-s` so the runtime can find them during hydration.

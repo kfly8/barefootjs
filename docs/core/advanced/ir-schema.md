@@ -35,9 +35,9 @@ The `slotId` and `needsScope` fields in the IR map to HTML attributes in the ren
 
 | IR Field | HTML Output | Purpose |
 |----------|------------|---------|
-| `needsScope: true` | `data-bf-scope="ComponentName"` | Component root boundary |
-| `slotId: "0"` | `data-bf="0"` | Reference for interactive elements |
-| Conditional `slotId` | `data-bf-cond="1"` | Anchor for conditional branches |
+| `needsScope: true` | `bf-s="ComponentName"` | Component root boundary |
+| `slotId: "0"` | `bf="0"` | Reference for interactive elements |
+| Conditional `slotId` | `bf-c="1"` | Anchor for conditional branches |
 
 The client runtime uses these markers to locate elements that need hydration without a full DOM traversal.
 

@@ -54,7 +54,10 @@ func FuncMap() template.FuncMap {
 		// Script collection
 		"bfScripts": BfScripts,
 
-		// Child component marker
+		// Scope attribute value (prepends ~ for child components)
+		"bfScopeAttr": ScopeAttr,
+
+		// Child component marker (kept for backward compatibility)
 		"bfIsChild": IsChild,
 
 		// Props attribute for hydration
@@ -65,29 +68,34 @@ func FuncMap() template.FuncMap {
 	}
 }
 
-// IsChild returns "data-bf-child" if the component is a child (initialized by parent).
+// ScopeAttr returns the scope attribute value for bf-s.
+// Returns "~scopeID" for child components (prefixed with ~) and "scopeID" for root components.
 // Checks the BfIsChild field set by Render(), with fallback to scopeID "_sN" pattern.
-// This marker tells the hydration system to skip auto-hydration and let the parent initialize.
-func IsChild(props interface{}) template.HTMLAttr {
-	// Check BfIsChild field (set by Render for all child components)
+func ScopeAttr(props interface{}) string {
+	scopeID := getStringField(props, "ScopeID")
 	if getBoolField(props, "BfIsChild") {
-		return template.HTMLAttr("data-bf-child")
+		return "~" + scopeID
 	}
 	// Fallback: check scopeID pattern for single child slots (e.g., "Parent_abc123_s4")
-	scopeID := getStringField(props, "ScopeID")
 	for i := 0; i < len(scopeID)-2; i++ {
 		if scopeID[i] == '_' && scopeID[i+1] == 's' && scopeID[i+2] >= '0' && scopeID[i+2] <= '9' {
-			return template.HTMLAttr("data-bf-child")
+			return "~" + scopeID
 		}
 	}
+	return scopeID
+}
+
+// IsChild returns empty string. Child status is now merged into bf-s attribute value via ~ prefix.
+// Deprecated: Use ScopeAttr instead, which merges child status into the bf-s attribute value.
+func IsChild(props interface{}) template.HTMLAttr {
 	return ""
 }
 
-// BfPropsAttr returns a data-bf-props attribute with the JSON-serialized props.
+// BfPropsAttr returns a bf-p attribute with the JSON-serialized props.
 // Only emits the attribute for root components (BfIsRoot == true).
 // Child components receive props from their parent via initChild().
 func BfPropsAttr(props interface{}) template.HTMLAttr {
-	// Only root components should emit data-bf-props
+	// Only root components should emit bf-p
 	if !getBoolField(props, "BfIsRoot") {
 		return ""
 	}
@@ -96,7 +104,7 @@ func BfPropsAttr(props interface{}) template.HTMLAttr {
 		return ""
 	}
 	escaped := template.HTMLEscapeString(string(jsonBytes))
-	return template.HTMLAttr(`data-bf-props="` + escaped + `"`)
+	return template.HTMLAttr(`bf-p="` + escaped + `"`)
 }
 
 // =============================================================================
@@ -573,16 +581,16 @@ func (pc *PortalCollector) Add(ownerID string, content template.HTML) string {
 }
 
 // Render outputs all collected portals as HTML.
-// Each portal is wrapped in a div with data-bf-portal-id and data-bf-portal-owner.
+// Each portal is wrapped in a div with bf-pi (portal ID) and bf-po (portal owner).
 func (pc *PortalCollector) Render() template.HTML {
 	if pc == nil || len(pc.portals) == 0 {
 		return ""
 	}
 	var buf strings.Builder
 	for _, p := range pc.portals {
-		buf.WriteString(`<div data-bf-portal-id="`)
+		buf.WriteString(`<div bf-pi="`)
 		buf.WriteString(p.ID)
-		buf.WriteString(`" data-bf-portal-owner="`)
+		buf.WriteString(`" bf-po="`)
 		buf.WriteString(p.OwnerID)
 		buf.WriteString(`">`)
 		buf.WriteString(string(p.Content))
@@ -746,7 +754,7 @@ func (r *Renderer) Render(opts RenderOptions) string {
 		setBoolField(child, "BfIsChild", true)
 	}
 
-	// Mark the root component so BfPropsAttr emits data-bf-props only for it
+	// Mark the root component so BfPropsAttr emits bf-p only for it
 	setBoolField(opts.Props, "BfIsRoot", true)
 
 	// Render the component template

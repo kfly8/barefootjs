@@ -105,7 +105,7 @@ An expression is reactive if it references:
 - A memo: `doubled()` — same pattern
 - A props reference: `props.value` — detected by `\bprops\.\w+`
 
-Reactive expressions get a `slotId` assigned, which becomes a `data-bf` hydration marker in the output.
+Reactive expressions get a `slotId` assigned, which becomes a `bf` hydration marker in the output.
 
 ### Slot ID Assignment
 
@@ -205,7 +205,7 @@ The generated `init` function follows this structure:
 ```javascript
 function init(scope, props) {
   // 1. Element references
-  const _0 = find(scope, '[data-bf="0"]')
+  const _0 = find(scope, '[bf="0"]')
 
   // 2. Props extraction (with defaults)
   const { label = 'Click' } = props
@@ -264,7 +264,7 @@ For loops that render elements with events, the compiler uses event delegation:
 ```javascript
 // Parent container handles events
 _loopSlot.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-bf="childSlot"]')
+  const el = e.target.closest('[bf="childSlot"]')
   if (!el) return
   const item = items().find(t => t.id === el.dataset.key)
   handleItemClick(item)

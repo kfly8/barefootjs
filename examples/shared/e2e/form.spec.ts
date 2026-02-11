@@ -21,6 +21,8 @@ export function formTests(baseUrl: string) {
   test.describe('Form Component', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(`${baseUrl}/form`)
+      // Wait for Form component to be fully hydrated
+      await page.waitForSelector('.form-container[bf-s][bf-h]', { timeout: 10000 })
     })
 
     test('displays form container with title', async ({ page }) => {
@@ -117,7 +119,7 @@ export function formTests(baseUrl: string) {
 
     test('Form has valid ScopeID format', async ({ page }) => {
       // Form component should have ScopeID in format: Form_[6 random chars]
-      const scopeId = await page.locator('.form-container[data-bf-scope]').getAttribute('data-bf-scope')
+      const scopeId = await page.locator('.form-container[bf-s]').getAttribute('bf-s')
       expect(scopeId).toMatch(/^Form_[a-z0-9]{6}$/)
     })
   })

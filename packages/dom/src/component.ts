@@ -7,6 +7,7 @@
 
 import { getTemplate } from './template'
 import { getComponentInit } from './runtime'
+import { BF_SCOPE, BF_HYDRATED } from './attrs'
 
 // WeakMap to store props update functions for each component element
 // This allows reconcileList to update props when an element is reused
@@ -67,7 +68,7 @@ export function createComponent(
 
   // 4. Set scope ID and key attributes
   const scopeId = `${name}_${generateId()}`
-  element.setAttribute('data-bf-scope', scopeId)
+  element.setAttribute(BF_SCOPE, scopeId)
   if (key !== undefined) {
     element.setAttribute('data-key', String(key))
   }
@@ -82,7 +83,7 @@ export function createComponent(
   }
 
   // 6. Mark element as initialized
-  element.setAttribute('data-bf-init', 'true')
+  element.setAttribute(BF_HYDRATED, 'true')
 
   // 7. Store props and register update function for element reuse in reconcileList
   propsMap.set(element, props)
@@ -141,7 +142,7 @@ function generateId(): string {
  */
 function createPlaceholder(name: string, key?: string | number): HTMLElement {
   const el = document.createElement('div')
-  el.setAttribute('data-bf-scope', `${name}_placeholder`)
+  el.setAttribute(BF_SCOPE, `${name}_placeholder`)
   if (key !== undefined) {
     el.setAttribute('data-key', String(key))
   }
