@@ -46,7 +46,9 @@ export function counterTests(baseUrl: string) {
 
     test('handles multiple operations', async ({ page }) => {
       await page.click('.btn-increment')
+      await expect(page.locator('.counter-value')).toHaveText('1')
       await page.click('.btn-increment')
+      await expect(page.locator('.counter-value')).toHaveText('2')
       await page.click('.btn-increment')
       await expect(page.locator('.counter-value')).toHaveText('3')
       await expect(page.locator('.counter-doubled')).toContainText('6')
