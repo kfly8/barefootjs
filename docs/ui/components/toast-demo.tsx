@@ -18,18 +18,19 @@ import {
 import { Button } from '@ui/components/ui/button'
 
 /**
- * Simple toast demo — minimal notification
+ * Default variant demo
  */
-export function ToastSimpleDemo() {
+export function ToastDefaultDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button onClick={() => setOpen(true)}>Add to calendar</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Default</Button>
       <ToastProvider position="bottom-right">
         <Toast open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastDescription>Event has been created.</ToastDescription>
+            <ToastTitle>Event created</ToastTitle>
+            <ToastDescription>Sunday, December 03, 2023 at 9:00 AM</ToastDescription>
           </div>
           <ToastClose />
         </Toast>
@@ -39,18 +40,18 @@ export function ToastSimpleDemo() {
 }
 
 /**
- * Toast with title demo — title + description notification
+ * Success variant demo
  */
-export function ToastWithTitleDemo() {
+export function ToastSuccessDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button variant="outline" onClick={() => setOpen(true)}>Show Notification</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Success</Button>
       <ToastProvider position="bottom-right">
-        <Toast open={open()} onOpenChange={setOpen}>
+        <Toast variant="success" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Notification</ToastTitle>
+            <ToastTitle>Changes saved</ToastTitle>
             <ToastDescription>Your changes have been saved successfully.</ToastDescription>
           </div>
           <ToastClose />
@@ -61,21 +62,65 @@ export function ToastWithTitleDemo() {
 }
 
 /**
- * Destructive toast demo — error variant with action
+ * Error variant demo
  */
-export function ToastDestructiveDemo() {
+export function ToastErrorDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
     <div>
-      <Button variant="destructive" onClick={() => setOpen(true)}>Show Error</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Error</Button>
       <ToastProvider position="bottom-right">
         <Toast variant="error" open={open()} onOpenChange={setOpen}>
           <div className="flex-1">
-            <ToastTitle>Uh oh! Something went wrong.</ToastTitle>
+            <ToastTitle>Something went wrong</ToastTitle>
             <ToastDescription>There was a problem with your request.</ToastDescription>
           </div>
           <ToastAction altText="Try again">Try again</ToastAction>
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}
+
+/**
+ * Warning variant demo
+ */
+export function ToastWarningDemo() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div>
+      <Button variant="outline" onClick={() => setOpen(true)}>Warning</Button>
+      <ToastProvider position="bottom-right">
+        <Toast variant="warning" open={open()} onOpenChange={setOpen}>
+          <div className="flex-1">
+            <ToastTitle>Heads up</ToastTitle>
+            <ToastDescription>You are about to exceed your storage limit.</ToastDescription>
+          </div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+    </div>
+  )
+}
+
+/**
+ * Info variant demo
+ */
+export function ToastInfoDemo() {
+  const [open, setOpen] = createSignal(false)
+
+  return (
+    <div>
+      <Button variant="outline" onClick={() => setOpen(true)}>Info</Button>
+      <ToastProvider position="bottom-right">
+        <Toast variant="info" open={open()} onOpenChange={setOpen}>
+          <div className="flex-1">
+            <ToastTitle>New update available</ToastTitle>
+            <ToastDescription>A new version has been released.</ToastDescription>
+          </div>
+          <ToastClose />
         </Toast>
       </ToastProvider>
     </div>
@@ -108,60 +153,57 @@ export function ToastWithActionDemo() {
 }
 
 /**
- * All variants demo — for preview at top of page
+ * Position demo — all 6 positions in one example
  */
-export function ToastVariantsDemo() {
-  const [defaultOpen, setDefaultOpen] = createSignal(false)
-  const [successOpen, setSuccessOpen] = createSignal(false)
-  const [errorOpen, setErrorOpen] = createSignal(false)
-  const [warningOpen, setWarningOpen] = createSignal(false)
-  const [infoOpen, setInfoOpen] = createSignal(false)
-
-  const showAll = () => {
-    setDefaultOpen(true)
-    setSuccessOpen(true)
-    setErrorOpen(true)
-    setWarningOpen(true)
-    setInfoOpen(true)
-  }
+export function ToastPositionDemo() {
+  const [topLeft, setTopLeft] = createSignal(false)
+  const [topCenter, setTopCenter] = createSignal(false)
+  const [topRight, setTopRight] = createSignal(false)
+  const [bottomLeft, setBottomLeft] = createSignal(false)
+  const [bottomCenter, setBottomCenter] = createSignal(false)
+  const [bottomRight, setBottomRight] = createSignal(false)
 
   return (
-    <div>
-      <Button onClick={showAll}>Show All Variants</Button>
+    <div className="flex flex-wrap gap-2">
+      <Button variant="outline" onClick={() => setTopLeft(true)}>Top Left</Button>
+      <Button variant="outline" onClick={() => setTopCenter(true)}>Top Center</Button>
+      <Button variant="outline" onClick={() => setTopRight(true)}>Top Right</Button>
+      <Button variant="outline" onClick={() => setBottomLeft(true)}>Bottom Left</Button>
+      <Button variant="outline" onClick={() => setBottomCenter(true)}>Bottom Center</Button>
+      <Button variant="outline" onClick={() => setBottomRight(true)}>Bottom Right</Button>
+      <ToastProvider position="top-left">
+        <Toast open={topLeft()} onOpenChange={setTopLeft}>
+          <div className="flex-1"><ToastDescription>Top Left</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="top-center">
+        <Toast open={topCenter()} onOpenChange={setTopCenter}>
+          <div className="flex-1"><ToastDescription>Top Center</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="top-right">
+        <Toast open={topRight()} onOpenChange={setTopRight}>
+          <div className="flex-1"><ToastDescription>Top Right</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="bottom-left">
+        <Toast open={bottomLeft()} onOpenChange={setBottomLeft}>
+          <div className="flex-1"><ToastDescription>Bottom Left</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
+      <ToastProvider position="bottom-center">
+        <Toast open={bottomCenter()} onOpenChange={setBottomCenter}>
+          <div className="flex-1"><ToastDescription>Bottom Center</ToastDescription></div>
+          <ToastClose />
+        </Toast>
+      </ToastProvider>
       <ToastProvider position="bottom-right">
-        <Toast variant="default" open={defaultOpen()} onOpenChange={setDefaultOpen}>
-          <div className="flex-1">
-            <ToastTitle>Default</ToastTitle>
-            <ToastDescription>This is a default toast.</ToastDescription>
-          </div>
-          <ToastClose />
-        </Toast>
-        <Toast variant="success" open={successOpen()} onOpenChange={setSuccessOpen}>
-          <div className="flex-1">
-            <ToastTitle>Success</ToastTitle>
-            <ToastDescription>Operation completed successfully.</ToastDescription>
-          </div>
-          <ToastClose />
-        </Toast>
-        <Toast variant="error" open={errorOpen()} onOpenChange={setErrorOpen}>
-          <div className="flex-1">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>An error occurred.</ToastDescription>
-          </div>
-          <ToastClose />
-        </Toast>
-        <Toast variant="warning" open={warningOpen()} onOpenChange={setWarningOpen}>
-          <div className="flex-1">
-            <ToastTitle>Warning</ToastTitle>
-            <ToastDescription>Please be careful.</ToastDescription>
-          </div>
-          <ToastClose />
-        </Toast>
-        <Toast variant="info" open={infoOpen()} onOpenChange={setInfoOpen}>
-          <div className="flex-1">
-            <ToastTitle>Info</ToastTitle>
-            <ToastDescription>Here is some information.</ToastDescription>
-          </div>
+        <Toast open={bottomRight()} onOpenChange={setBottomRight}>
+          <div className="flex-1"><ToastDescription>Bottom Right</ToastDescription></div>
           <ToastClose />
         </Toast>
       </ToastProvider>

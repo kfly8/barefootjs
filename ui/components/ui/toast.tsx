@@ -48,7 +48,7 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
-import { XIcon, CircleCheckIcon, CircleXIcon, TriangleAlertIcon, InfoIcon } from './icon'
+import { XIcon } from './icon'
 
 // Type definitions
 type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info'
@@ -108,9 +108,6 @@ function getToastStateClasses(position: ToastPosition) {
     hidden: 'hidden',
   }
 }
-
-// Animation duration in ms (must match CSS transition-duration)
-const ANIMATION_DURATION = 300
 
 // ToastTitle classes
 const toastTitleClasses = 'text-sm font-semibold'
@@ -217,17 +214,23 @@ function Toast(props: ToastProps) {
     const position = (providerEl?.dataset.position ?? 'bottom-right') as ToastPosition
     const stateClasses = getToastStateClasses(position)
     let dismissTimer: ReturnType<typeof setTimeout> | null = null
-    let exitTimer: ReturnType<typeof setTimeout> | null = null
+
+    // Transition to hidden after exit animation completes
+    el.addEventListener('transitionend', () => {
+      if (el.dataset.state === 'exiting') {
+        el.dataset.state = 'hidden'
+        el.className = `${stateClasses.hidden} ${toastBaseClasses} ${toastVariantClass} ${className}`
+      }
+    })
 
     createEffect(() => {
       const isOpen = props.open ?? false
       const duration = props.duration ?? 5000
 
-      // Clear existing timers
-      if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
-      if (exitTimer) { clearTimeout(exitTimer); exitTimer = null }
-
       if (isOpen) {
+        // Clear dismiss timer when entering
+        if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
+
         // Entering state
         el.dataset.state = 'entering'
         el.className = `${stateClasses.entering} ${toastBaseClasses} ${toastVariantClass} ${className}`
@@ -247,18 +250,14 @@ function Toast(props: ToastProps) {
           }, duration)
         }
       } else {
+        if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null }
+
         const currentState = el.dataset.state
         if (currentState === 'visible' || currentState === 'entering') {
-          // Exiting state
+          // Exiting state — transitionend listener handles the rest
           el.dataset.state = 'exiting'
           el.className = `${stateClasses.exiting} ${toastBaseClasses} ${toastVariantClass} ${className}`
-
-          exitTimer = setTimeout(() => {
-            el.dataset.state = 'hidden'
-            el.className = `${stateClasses.hidden} ${toastBaseClasses} ${toastVariantClass} ${className}`
-          }, ANIMATION_DURATION)
         }
-        // If already hidden, stay hidden
       }
     })
   }
@@ -276,10 +275,33 @@ function Toast(props: ToastProps) {
         className={`hidden ${toastBaseClasses} ${toastVariantClass} ${className}`}
         ref={handleMount}
       >
-        {variant === 'success' && <CircleCheckIcon size="md" class={iconClass} />}
-        {variant === 'error' && <CircleXIcon size="md" class={iconClass} />}
-        {variant === 'warning' && <TriangleAlertIcon size="md" class={iconClass} />}
-        {variant === 'info' && <InfoIcon size="md" class={iconClass} />}
+        {variant === 'success' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        )}
+        {variant === 'error' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m15 9-6 6" />
+            <path d="m9 9 6 6" />
+          </svg>
+        )}
+        {variant === 'warning' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+        )}
+        {variant === 'info' && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${iconClass}`} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+        )}
         {props.children}
       </div>
     </ToastContext.Provider>
