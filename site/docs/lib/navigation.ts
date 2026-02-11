@@ -9,6 +9,40 @@ export interface NavItem {
   children?: NavItem[]
 }
 
+/**
+ * Flatten hierarchical navigation into an ordered list.
+ * Parent pages come before their children.
+ */
+export function flattenNavigation(items: NavItem[]): { slug: string; title: string }[] {
+  const result: { slug: string; title: string }[] = []
+  for (const item of items) {
+    result.push({ slug: item.slug, title: item.title })
+    if (item.children) {
+      for (const child of item.children) {
+        result.push({ slug: child.slug, title: child.title })
+      }
+    }
+  }
+  return result
+}
+
+/**
+ * Get prev/next navigation links for a given docs page slug.
+ */
+export function getDocsNavLinks(slug: string): {
+  prev?: { href: string; title: string }
+  next?: { href: string; title: string }
+} {
+  const flat = flattenNavigation(navigation)
+  const index = flat.findIndex(item => item.slug === slug)
+  if (index === -1) return {}
+
+  return {
+    prev: index > 0 ? { href: `/${flat[index - 1].slug}`, title: flat[index - 1].title } : undefined,
+    next: index < flat.length - 1 ? { href: `/${flat[index + 1].slug}`, title: flat[index + 1].title } : undefined,
+  }
+}
+
 export const navigation: NavItem[] = [
   { title: 'Introduction', slug: 'introduction' },
   { title: 'Core Concepts', slug: 'core-concepts' },

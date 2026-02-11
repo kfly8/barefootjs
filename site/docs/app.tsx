@@ -9,6 +9,7 @@
 import { Hono } from 'hono'
 import { renderer } from './renderer'
 import { initHighlighter, renderMarkdown } from './lib/markdown'
+import { getDocsNavLinks } from './lib/navigation'
 import type { Page, ContentMap } from './lib/content'
 
 /**
@@ -28,6 +29,7 @@ export async function createApp(content: ContentMap, pages: Page[]): Promise<Hon
   if (indexContent !== undefined) {
     app.get('/', async (c) => {
       const parsed = await renderMarkdown(indexContent)
+      const navLinks = getDocsNavLinks('')
       return c.render(
         <div dangerouslySetInnerHTML={{ __html: parsed.html }} />,
         {
@@ -35,6 +37,8 @@ export async function createApp(content: ContentMap, pages: Page[]): Promise<Hon
           description: parsed.frontmatter.description,
           slug: '',
           toc: parsed.toc,
+          prev: navLinks.prev,
+          next: navLinks.next,
         }
       )
     })
@@ -61,6 +65,8 @@ export async function createApp(content: ContentMap, pages: Page[]): Promise<Hon
         }
       }
 
+      const navLinks = getDocsNavLinks(page.slug)
+
       return c.render(
         <div dangerouslySetInnerHTML={{ __html: parsed.html }} />,
         {
@@ -69,6 +75,8 @@ export async function createApp(content: ContentMap, pages: Page[]): Promise<Hon
           meta: Object.keys(meta).length > 0 ? meta : undefined,
           slug: page.slug,
           toc: parsed.toc,
+          prev: navLinks.prev,
+          next: navLinks.next,
         }
       )
     })

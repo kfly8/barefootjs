@@ -194,8 +194,11 @@ export async function renderMarkdown(content: string): Promise<ParsedMarkdown> {
     frontmatter.title = extractTitleFromBody(body)
   }
 
-  const html = await marked.parse(body)
+  let html = await marked.parse(body)
   const toc = extractTocFromHtml(html)
+
+  // Strip first H1 from rendered HTML (title is rendered separately in the layout)
+  html = html.replace(/<h1[^>]*>[\s\S]*?<\/h1>\n?/, '')
 
   return {
     frontmatter,

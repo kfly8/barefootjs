@@ -9,6 +9,7 @@
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { navigation, type NavItem } from './lib/navigation'
 import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } from '../shared/components/sidebar'
+import { PageNav, type PageNavLink } from '../shared/components/page-nav'
 import { BfScripts } from '../../packages/hono/src/scripts'
 import { TableOfContents } from '@/components/table-of-contents'
 import type { TocItem } from '../shared/components/table-of-contents'
@@ -23,6 +24,8 @@ declare module 'hono' {
         meta?: Record<string, string>
         slug?: string
         toc?: TocItem[]
+        prev?: PageNavLink
+        next?: PageNavLink
       }
     ): Response | Promise<Response>
   }
@@ -109,7 +112,6 @@ function MdToggleButton({ slug }: { slug: string }) {
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.69C0 12.48.52 13 1.15 13h13.69c.64 0 1.15-.52 1.15-1.15V4.15C16 3.52 15.48 3 14.85 3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.99.5L9.5 8H11V5h2v3h1.5l-2.51 3.5z" />
       </svg>
-      <span>Markdown</span>
     </a>
   )
 }
@@ -120,7 +122,7 @@ import { SearchPlaceholder } from '../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const renderer = jsxRenderer(
-  ({ children, title, description, meta, slug, toc }) => {
+  ({ children, title, description, meta, slug, toc, prev, next }) => {
     const pageTitle = title ? `${title} — BarefootJS` : 'BarefootJS Documentation'
     const currentSlug = slug || ''
 
@@ -166,13 +168,17 @@ export const renderer = jsxRenderer(
             <Sidebar currentSlug={currentSlug} />
 
             <main class="main-content">
-              <div class="doc-title-bar">
-                <MdToggleButton slug={currentSlug} />
-              </div>
               <div class="doc-content-wrapper">
-                <article class="doc-article">
-                  {children}
-                </article>
+                <div class="doc-main-column">
+                  <div class="doc-title-bar">
+                    <h1 class="doc-title">{title}</h1>
+                    <MdToggleButton slug={currentSlug} />
+                    <PageNav prev={prev} next={next} />
+                  </div>
+                  <article class="doc-article">
+                    {children}
+                  </article>
+                </div>
                 {toc && toc.length > 0 && <TableOfContents items={toc} />}
               </div>
             </main>
