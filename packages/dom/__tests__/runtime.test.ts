@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
-import { findScope, find, hydrate, bind, cond } from '../src/runtime'
+import { findScope, find, $c, hydrate, bind, cond } from '../src/runtime'
 import { createSignal } from '../src/reactive'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
@@ -127,15 +127,15 @@ describe('find', () => {
   })
 
   test('finds child scope element before matching scope itself', () => {
-    // AccordionTrigger case: parent scope also matches the selector,
-    // but we want the child scope (ChevronDownIcon)
+    // AccordionTrigger case: parent scope also matches the suffix selector,
+    // but we want the child scope (ChevronDownIcon) returned first
     document.body.innerHTML = `
       <div data-bf-scope="AccordionTrigger_abc_s0">
-        <span data-bf-scope="AccordionTrigger_abc_s0_child">icon</span>
+        <span data-bf-scope="AccordionTrigger_abc_s0_s0">icon</span>
       </div>
     `
     const scope = document.querySelector('[data-bf-scope="AccordionTrigger_abc_s0"]')
-    const el = find(scope, '[data-bf-scope$="_s0_child"]')
+    const el = find(scope, '[data-bf-scope$="_s0"]')
     expect(el).not.toBeNull()
     expect(el?.textContent).toBe('icon')
   })
@@ -151,14 +151,14 @@ describe('find', () => {
   })
 
   test('prioritizes child scope over self-match for scope selectors', () => {
-    // Both parent and child match the selector, child should be returned
+    // Both parent and child match the suffix selector, child should be returned
     document.body.innerHTML = `
       <div data-bf-scope="Parent_abc_s0">
-        <div data-bf-scope="Parent_abc_s0_inner">child</div>
+        <div data-bf-scope="Parent_abc_s0_s0">child</div>
       </div>
     `
     const scope = document.querySelector('[data-bf-scope="Parent_abc_s0"]')
-    const el = find(scope, '[data-bf-scope$="_s0_inner"]')
+    const el = find(scope, '[data-bf-scope$="_s0"]')
     expect(el?.textContent).toBe('child')
     expect(el).not.toBe(scope)
   })
@@ -258,6 +258,58 @@ describe('find', () => {
       expect(portalRoot).not.toBeNull()
       expect(portalRoot?.getAttribute('data-bf-portal-owner')).toBe('Dialog_self')
     })
+  })
+})
+
+describe('$c', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('returns direct child scope only, not nested grandchild with same suffix', () => {
+    // Regression: suffix match [data-bf-scope$="_s3"] was matching grandchild
+    // Demo_abc_s4_s3 in addition to the intended Demo_abc_s3
+    document.body.innerHTML = `
+      <div data-bf-scope="Demo_abc">
+        <div data-bf-scope="Demo_abc_s3">direct child</div>
+        <div data-bf-scope="Demo_abc_s4">
+          <div data-bf-scope="Demo_abc_s4_s3">nested grandchild</div>
+        </div>
+      </div>
+    `
+    const scope = document.querySelector('[data-bf-scope="Demo_abc"]')!
+    const result = $c(scope, 's3')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('data-bf-scope')).toBe('Demo_abc_s3')
+  })
+
+  test('finds child scope by slot ID', () => {
+    document.body.innerHTML = `
+      <div data-bf-scope="Parent_xyz">
+        <div data-bf-scope="Parent_xyz_s1">slot content</div>
+      </div>
+    `
+    const scope = document.querySelector('[data-bf-scope="Parent_xyz"]')!
+    const result = $c(scope, 's1')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('data-bf-scope')).toBe('Parent_xyz_s1')
+  })
+
+  test('finds child scope by component name prefix', () => {
+    document.body.innerHTML = `
+      <div data-bf-scope="App_root">
+        <div data-bf-scope="Counter_abc123">counter</div>
+      </div>
+    `
+    const scope = document.querySelector('[data-bf-scope="App_root"]')!
+    const result = $c(scope, 'Counter')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('data-bf-scope')).toBe('Counter_abc123')
+  })
+
+  test('returns null for null scope', () => {
+    const result = $c(null, 's0')
+    expect(result).toBeNull()
   })
 })
 
