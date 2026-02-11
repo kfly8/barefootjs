@@ -10,7 +10,7 @@ export type { HonoAdapterOptions } from './adapter'
 
 // BfScripts is exported from a separate entry point to avoid JSX runtime issues in tests
 // Usage: import { BfScripts } from '@barefootjs/hono/scripts'
-export type { CollectedScript, CollectedPropsScript } from './scripts'
+export type { CollectedScript } from './scripts'
 
 // Portal components for SSR
 // Usage: import { BfPortals, Portal } from '@barefootjs/hono/portals'

@@ -1,3 +1,8 @@
+---
+title: Introduction
+description: What is BarefootJS, why it exists, and its design philosophy
+---
+
 # Introduction
 
 ## What is BarefootJS?

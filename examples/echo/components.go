@@ -38,6 +38,8 @@ type CounterInput struct {
 // CounterProps is the props type for the Counter component.
 type CounterProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Initial int `json:"initial"`
 	Count int `json:"count"`
@@ -69,6 +71,8 @@ type ToggleItemInput struct {
 // ToggleItemProps is the props type for the ToggleItem component.
 type ToggleItemProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Label interface{} `json:"label"`
 	DefaultOn bool `json:"defaultOn"`
@@ -99,6 +103,8 @@ type ToggleInput struct {
 // ToggleProps is the props type for the Toggle component.
 type ToggleProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	ToggleItems []ToggleItemProps `json:"toggleItems"`
 }
@@ -134,6 +140,8 @@ type TodoItemInput struct {
 // TodoItemProps is the props type for the TodoItem component.
 type TodoItemProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Todo Todo `json:"todo"`
 	OnToggle interface{} `json:"onToggle"`
@@ -168,6 +176,8 @@ type TodoAppInput struct {
 // TodoAppProps is the props type for the TodoApp component.
 type TodoAppProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
@@ -202,6 +212,8 @@ type TodoAppSSRInput struct {
 // TodoAppSSRProps is the props type for the TodoAppSSR component.
 type TodoAppSSRProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
@@ -238,6 +250,8 @@ type ReactiveChildInput struct {
 // ReactiveChildProps is the props type for the ReactiveChild component.
 type ReactiveChildProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Value int `json:"value"`
 	Label string `json:"label"`
@@ -267,6 +281,8 @@ type ReactivePropsInput struct {
 // ReactivePropsProps is the props type for the ReactiveProps component.
 type ReactivePropsProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Count int `json:"count"`
 	Doubled int `json:"doubled"`
@@ -286,12 +302,12 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 		Count: 0,
 		Doubled: 0 * 2,
 		ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{
-			ScopeID: scopeID + "_slot_6",
+			ScopeID: scopeID + "_s6",
 			Value: 0,
 			Label: "Child A",
 		}),
 		ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{
-			ScopeID: scopeID + "_slot_7",
+			ScopeID: scopeID + "_s7",
 			Value: 0 * 2,
 			Label: "Child B (doubled)",
 		}),
@@ -308,6 +324,8 @@ type PropsStyleChildInput struct {
 // PropsStyleChildProps is the props type for the PropsStyleChild component.
 type PropsStyleChildProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Value int `json:"value"`
 	Label string `json:"label"`
@@ -339,6 +357,8 @@ type DestructuredStyleChildInput struct {
 // DestructuredStyleChildProps is the props type for the DestructuredStyleChild component.
 type DestructuredStyleChildProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Value int `json:"value"`
 	Label string `json:"label"`
@@ -368,6 +388,8 @@ type PropsReactivityComparisonInput struct {
 // PropsReactivityComparisonProps is the props type for the PropsReactivityComparison component.
 type PropsReactivityComparisonProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Count int `json:"count"`
 	PropsStyleChildSlot4 PropsStyleChildProps `json:"-"`
@@ -385,12 +407,12 @@ func NewPropsReactivityComparisonProps(in PropsReactivityComparisonInput) PropsR
 		ScopeID: scopeID,
 		Count: 1,
 		PropsStyleChildSlot4: NewPropsStyleChildProps(PropsStyleChildInput{
-			ScopeID: scopeID + "_slot_4",
+			ScopeID: scopeID + "_s4",
 			Value: 1,
 			Label: "Props Style",
 		}),
 		DestructuredStyleChildSlot5: NewDestructuredStyleChildProps(DestructuredStyleChildInput{
-			ScopeID: scopeID + "_slot_5",
+			ScopeID: scopeID + "_s5",
 			Value: 1,
 			Label: "Destructured",
 		}),
@@ -405,6 +427,8 @@ type FormInput struct {
 // FormProps is the props type for the Form component.
 type FormProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Accepted bool `json:"accepted"`
 }
@@ -430,6 +454,8 @@ type PortalExampleInput struct {
 // PortalExampleProps is the props type for the PortalExample component.
 type PortalExampleProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Open bool `json:"open"`
 }
@@ -456,6 +482,8 @@ type ConditionalReturnInput struct {
 // ConditionalReturnProps is the props type for the ConditionalReturn component.
 type ConditionalReturnProps struct {
 	ScopeID string `json:"scopeID"`
+	BfIsRoot bool `json:"-"`
+	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Variant interface{} `json:"variant"`
 	Count int `json:"count"`

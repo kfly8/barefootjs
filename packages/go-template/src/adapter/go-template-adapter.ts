@@ -33,6 +33,19 @@ export interface GoTemplateAdapterOptions {
   packageName?: string
 }
 
+/**
+ * Convert a slot ID (e.g., 's6') to a Go struct field suffix (e.g., 'Slot6').
+ * Keeps field names human-readable regardless of the internal slot ID format.
+ */
+function slotIdToFieldSuffix(slotId: string): string {
+  const match = slotId.match(/^s(\d+)$/)
+  if (match) {
+    return `Slot${match[1]}`
+  }
+  // Fallback for legacy format or non-standard IDs
+  return slotId.replace('slot_', 'Slot')
+}
+
 export class GoTemplateAdapter extends BaseAdapter {
   name = 'go-template'
   extension = '.tmpl'
@@ -287,6 +300,8 @@ export class GoTemplateAdapter extends BaseAdapter {
     lines.push(`// ${propsTypeName} is the props type for the ${componentName} component.`)
     lines.push(`type ${propsTypeName} struct {`)
     lines.push('\tScopeID string `json:"scopeID"`')
+    lines.push('\tBfIsRoot bool `json:"-"`')
+    lines.push('\tBfIsChild bool `json:"-"`')
 
     // Add Scripts field for dynamic script collection
     lines.push('\tScripts *bf.ScriptCollector `json:"-"`')
@@ -522,7 +537,7 @@ export class GoTemplateAdapter extends BaseAdapter {
       // Skip Portal components (handled separately via PortalCollector)
       // Skip components inside loops (handled by nestedComponents)
       if (comp.name !== 'Portal' && !inLoop && comp.slotId) {
-        const suffix = comp.slotId.replace('slot_', 'Slot')
+        const suffix = slotIdToFieldSuffix(comp.slotId)
         result.push({
           name: comp.name,
           slotId: comp.slotId,
@@ -2137,7 +2152,7 @@ export class GoTemplateAdapter extends BaseAdapter {
     }
     // Static children with slotId: use unique field name based on slotId
     if (comp.slotId) {
-      const suffix = comp.slotId.replace('slot_', 'Slot')
+      const suffix = slotIdToFieldSuffix(comp.slotId)
       return `{{template "${comp.name}" .${comp.name}${suffix}}}`
     }
     // Static children without slotId: fallback to .ComponentName
@@ -2242,7 +2257,8 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   renderScopeMarker(instanceIdExpr: string): string {
     // Include bfIsChild to mark child components for parent-first hydration
-    return `data-bf-scope="{{${instanceIdExpr}}}" {{bfIsChild ${instanceIdExpr}}}`
+    // Include bfPropsAttr to serialize props as data-bf-props attribute
+    return `data-bf-scope="{{${instanceIdExpr}}}" {{bfIsChild .}} {{bfPropsAttr .}}`
   }
 
   renderSlotMarker(slotId: string): string {

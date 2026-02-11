@@ -1,0 +1,19 @@
+{
+  "name": "barefootjs-docs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch server.tsx",
+    "build": "bun run build.ts",
+    "deploy": "bun run build && wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "marked": "^15",
+    "shiki": "^3.20.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.1.0",
+    "wrangler": "^4.59.0"
+  }
+}

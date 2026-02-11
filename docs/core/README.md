@@ -45,31 +45,19 @@
 - [Context API](./components/context-api.md) — Sharing state with `createContext` / `useContext`
 - [Portals](./components/portals.md) — Rendering elements outside their parent DOM hierarchy
 
-### 7. Adapters
+### 7. [Adapters](./adapters.md)
 
-- Adapter Architecture
-- Hono Adapter
-- Go Template Adapter
-- Writing a Custom Adapter
+- [Adapter Architecture](./adapters/adapter-architecture.md) — How adapters work, the `TemplateAdapter` interface, and the IR contract
+- [Hono Adapter](./adapters/hono-adapter.md) — Configuration and output format for Hono / JSX-based servers
+- [Go Template Adapter](./adapters/go-template-adapter.md) — Configuration and output format for Go `html/template`
+- [Writing a Custom Adapter](./adapters/custom-adapter.md) — Step-by-step guide to implementing your own adapter
 
-### 8. UI Components
+### 8. [Advanced](./advanced.md)
 
-- Overview & Installation
-- Component Catalog (Button, Dialog, Accordion, Tabs, etc.)
-
-### 9. Advanced
-
-- IR Schema Reference
-- Compiler Internals
-- Error Codes Reference
-- Performance Optimization
-
-### 10. Guides
-
-- Migrating from React
-- Using with Go Backend
-- Deploying to Cloudflare Workers
-- Building a Todo App (Tutorial)
+- [IR Schema Reference](./advanced/ir-schema.md) — Node types, metadata, hydration markers
+- [Compiler Internals](./advanced/compiler-internals.md) — Pipeline phases, reactivity analysis, code generation
+- [Error Codes Reference](./advanced/error-codes.md) — All BF001–BF043 errors with solutions
+- [Performance Optimization](./advanced/performance.md) — Minimal client JS, fast hydration, efficient reactivity
 
 ---
 

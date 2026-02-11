@@ -130,12 +130,12 @@ describe('find', () => {
     // AccordionTrigger case: parent scope also matches the selector,
     // but we want the child scope (ChevronDownIcon)
     document.body.innerHTML = `
-      <div data-bf-scope="AccordionTrigger_abc_slot_0">
-        <span data-bf-scope="AccordionTrigger_abc_slot_0_child">icon</span>
+      <div data-bf-scope="AccordionTrigger_abc_s0">
+        <span data-bf-scope="AccordionTrigger_abc_s0_child">icon</span>
       </div>
     `
-    const scope = document.querySelector('[data-bf-scope="AccordionTrigger_abc_slot_0"]')
-    const el = find(scope, '[data-bf-scope$="_slot_0_child"]')
+    const scope = document.querySelector('[data-bf-scope="AccordionTrigger_abc_s0"]')
+    const el = find(scope, '[data-bf-scope$="_s0_child"]')
     expect(el).not.toBeNull()
     expect(el?.textContent).toBe('icon')
   })
@@ -143,22 +143,22 @@ describe('find', () => {
   test('returns scope itself when looking for scope selector and no child matches', () => {
     // ButtonDemo case: scope element IS the slot element (no children)
     document.body.innerHTML = `
-      <button data-bf-scope="ButtonDemo_xyz_slot_1">click</button>
+      <button data-bf-scope="ButtonDemo_xyz_s1">click</button>
     `
     const scope = document.querySelector('[data-bf-scope]')
-    const el = find(scope, '[data-bf-scope$="_slot_1"]')
+    const el = find(scope, '[data-bf-scope$="_s1"]')
     expect(el).toBe(scope)
   })
 
   test('prioritizes child scope over self-match for scope selectors', () => {
     // Both parent and child match the selector, child should be returned
     document.body.innerHTML = `
-      <div data-bf-scope="Parent_abc_slot_0">
-        <div data-bf-scope="Parent_abc_slot_0_inner">child</div>
+      <div data-bf-scope="Parent_abc_s0">
+        <div data-bf-scope="Parent_abc_s0_inner">child</div>
       </div>
     `
-    const scope = document.querySelector('[data-bf-scope="Parent_abc_slot_0"]')
-    const el = find(scope, '[data-bf-scope$="_slot_0_inner"]')
+    const scope = document.querySelector('[data-bf-scope="Parent_abc_s0"]')
+    const el = find(scope, '[data-bf-scope$="_s0_inner"]')
     expect(el?.textContent).toBe('child')
     expect(el).not.toBe(scope)
   })
@@ -270,8 +270,7 @@ describe('hydrate', () => {
     const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
 
     document.body.innerHTML = `
-      <div data-bf-scope="Counter_abc">content</div>
-      <script type="application/json" data-bf-props="Counter_abc">{"count": 5}</script>
+      <div data-bf-scope="Counter_abc" data-bf-props='{"count": 5}'>content</div>
     `
 
     hydrate('Counter', (props, idx, scope) => {
@@ -324,8 +323,6 @@ describe('hydrate', () => {
     document.body.innerHTML = `
       <div data-bf-scope="Counter_1">first</div>
       <div data-bf-scope="Counter_2">second</div>
-      <script type="application/json" data-bf-props="Counter_1">{}</script>
-      <script type="application/json" data-bf-props="Counter_2">{}</script>
     `
 
     hydrate('Counter', (_, __, scope) => initialized.push(scope))

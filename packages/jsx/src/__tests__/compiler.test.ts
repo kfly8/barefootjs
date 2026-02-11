@@ -353,7 +353,7 @@ describe('Compiler', () => {
   describe('real components', () => {
     test('compiles ButtonDemo component', async () => {
       // Path to the actual button-demo component
-      const docsUiPath = resolve(dirname(import.meta.path), '../../../../docs/ui')
+      const docsUiPath = resolve(dirname(import.meta.path), '../../../../site/ui')
       const buttonDemoPath = resolve(docsUiPath, 'components/button-demo.tsx')
 
       const result = await compileJSX(buttonDemoPath, async (path) => {
@@ -603,9 +603,8 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       // Should import only required functions
       expect(clientJs?.content).toContain('findScope')
-      expect(clientJs?.content).toContain('find')
-      expect(clientJs?.content).toContain('hydrate')
-      expect(clientJs?.content).toContain('registerComponent')
+      expect(clientJs?.content).toContain('$(__scope')  // shorthand finder
+      expect(clientJs?.content).toContain('mount')
       // Should NOT import unused functions
       expect(clientJs?.content).not.toContain('createSignal')
       expect(clientJs?.content).not.toContain('createMemo')
@@ -1071,7 +1070,7 @@ describe('Compiler', () => {
 
       expect(initBody).toEqual([
         'provideContext(MenuContext, { open, setOpen })',
-        "initChild('DropdownTrigger', _slot_0, {})",
+        "initChild('DropdownTrigger', _s0, {})",
       ])
     })
 

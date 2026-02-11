@@ -1,3 +1,8 @@
+---
+title: Core Concepts
+description: Two-phase compilation, signal-based reactivity, and the hydration model
+---
+
 # Core Concepts
 
 BarefootJS has three key ideas: a two-phase compiler, signal-based reactivity, and marker-driven hydration. This page explains how they fit together.
@@ -190,7 +195,7 @@ hydrate("Counter", init)
     ↓
 Find <div data-bf-scope="Counter_a1b2">
     ↓
-Read props from <script data-bf-props="Counter_a1b2">
+Read props from data-bf-props attribute
     ↓
 Run init(): createSignal, createEffect, bind events
     ↓

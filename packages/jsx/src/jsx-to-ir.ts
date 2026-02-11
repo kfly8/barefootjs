@@ -52,7 +52,7 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
 }
 
 function generateSlotId(ctx: TransformContext): string {
-  return `slot_${ctx.slotIdCounter++}`
+  return `s${ctx.slotIdCounter++}`
 }
 
 // =============================================================================
