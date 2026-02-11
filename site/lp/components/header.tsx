@@ -4,8 +4,8 @@
  * Header with logo, navigation, GitHub link, and theme switcher.
  */
 
-import { Logo } from './ui/logo'
-import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { Logo } from '@/components/logo'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export function Header() {
   return (

@@ -1,10 +1,14 @@
 /**
  * HTML layout renderer for the documentation site.
  * Provides the shell: <html>, <head> with meta tags, sidebar navigation, and content area.
+ *
+ * Modernized: uses @barefootjs/hono/jsx, BfScripts, import map, UnoCSS,
+ * compiled ThemeSwitcher and Logo components.
  */
 
-import { jsxRenderer } from 'hono/jsx-renderer'
+import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { navigation, type NavItem } from './lib/navigation'
+import { BfScripts } from '../../packages/hono/src/scripts'
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -20,24 +24,25 @@ declare module 'hono' {
   }
 }
 
-// Theme initialization script — runs before render to prevent FOUC
-const themeInitScript = `
-(function() {
-  var stored = localStorage.getItem('theme');
-  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
-    document.documentElement.classList.add('dark');
+/**
+ * Predictable instance ID generator for consistent SSR.
+ */
+const createPredictableIdGenerator = () => {
+  const counters = new Map<string, number>()
+  return (name: string) => {
+    const count = counters.get(name) || 0
+    counters.set(name, count + 1)
+    return `${name}_${count}`
   }
-})();
-`
+}
 
-// Theme toggle script
-const themeToggleScript = `
-document.getElementById('theme-toggle').addEventListener('click', function() {
-  var isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-});
-`
+function WithPredictableIds({ children }: { children: any }) {
+  const c = useRequestContext()
+  c.set('bfInstanceIdGenerator', createPredictableIdGenerator())
+  return <>{children}</>
+}
+
+import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
 
 // Mobile menu toggle script
 const mobileMenuScript = `
@@ -50,6 +55,13 @@ document.getElementById('sidebar-overlay').addEventListener('click', function() 
   this.classList.remove('overlay-visible');
 });
 `
+
+// Import map for resolving @barefootjs/dom in client JS
+const importMapScript = JSON.stringify({
+  imports: {
+    '@barefootjs/dom': '/static/components/barefoot.js',
+  },
+})
 
 function NavLink({ item, currentSlug, depth = 0 }: { item: NavItem; currentSlug: string; depth?: number }) {
   const isActive = currentSlug === item.slug
@@ -105,65 +117,69 @@ function MdToggleButton({ slug }: { slug: string }) {
   )
 }
 
+// Import compiled shared components
+import { Logo } from '@/components/logo'
+import { ThemeSwitcher } from '@/components/theme-switcher'
+
 export const renderer = jsxRenderer(
   ({ children, title, description, meta, slug }) => {
     const pageTitle = title ? `${title} — BarefootJS` : 'BarefootJS Documentation'
     const currentSlug = slug || ''
 
     return (
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>{pageTitle}</title>
-          {description && <meta name="description" content={description} />}
-          {meta && Object.entries(meta).map(([key, value]) => {
-            if (key.startsWith('og:')) {
-              return <meta property={key} content={value} />
-            }
-            return <meta name={key} content={value} />
-          })}
-          <meta name="author" content="kobaken a.k.a @kfly8" />
-          <link rel="author" href="https://kobaken.co" />
-          <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-          <link rel="stylesheet" href="/static/globals.css" />
-        </head>
-        <body>
-          <div id="sidebar-overlay" class="sidebar-overlay" />
+      <WithPredictableIds>
+        <html lang="en">
+          <head>
+            <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <link rel="icon" type="image/png" sizes="32x32" href="/static/icon-32.png" />
+            <link rel="icon" type="image/png" sizes="64x64" href="/static/icon-64.png" />
+            <title>{pageTitle}</title>
+            {description && <meta name="description" content={description} />}
+            {meta && Object.entries(meta).map(([key, value]) => {
+              if (key.startsWith('og:')) {
+                return <meta property={key} content={value} />
+              }
+              return <meta name={key} content={value} />
+            })}
+            <meta name="author" content="kobaken a.k.a @kfly8" />
+            <link rel="author" href="https://kobaken.co" />
+            <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+            <link rel="stylesheet" href="/static/globals.css" />
+            <link rel="stylesheet" href="/static/uno.css" />
+          </head>
+          <body>
+            <div id="sidebar-overlay" class="sidebar-overlay" />
 
-          <header class="top-header">
-            <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
-              </svg>
-            </button>
-            <a href="/" class="header-logo">BarefootJS</a>
-            <div class="header-actions">
-              <MdToggleButton slug={currentSlug} />
-              <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
-                <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="5" />
-                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                </svg>
-                <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            <header className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] flex items-center gap-3 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+              <button id="mobile-menu-toggle" className="hidden max-md:inline-flex p-1 text-foreground" aria-label="Toggle menu">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
                 </svg>
               </button>
-            </div>
-          </header>
+              <a href="/" className="text-foreground no-underline">
+                <Logo />
+              </a>
+              <div className="ml-auto flex items-center gap-2">
+                <MdToggleButton slug={currentSlug} />
+                <ThemeSwitcher />
+              </div>
+            </header>
 
-          <Sidebar currentSlug={currentSlug} />
+            <Sidebar currentSlug={currentSlug} />
 
-          <main class="main-content">
-            <article class="doc-article">
-              {children}
-            </article>
-          </main>
+            <main class="main-content">
+              <article class="doc-article">
+                {children}
+              </article>
+            </main>
 
-          <script dangerouslySetInnerHTML={{ __html: themeToggleScript }} />
-          <script dangerouslySetInnerHTML={{ __html: mobileMenuScript }} />
-        </body>
-      </html>
+            <script dangerouslySetInnerHTML={{ __html: mobileMenuScript }} />
+            <BfScripts />
+          </body>
+        </html>
+      </WithPredictableIds>
     )
   },
   { stream: true }

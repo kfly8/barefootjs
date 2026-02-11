@@ -3,7 +3,7 @@
 /**
  * Logo Components
  *
- * BarefootJS brand logo components for documentation site.
+ * BarefootJS brand logo components shared across all sites.
  * - Logo: Full logo with icon and text (for desktop header)
  * - LogoIcon: Icon only (for mobile header)
  */

@@ -113,6 +113,7 @@ async function copyTsFiles(srcDir: string, destDir: string, prefix: string = '')
 
 const DOCS_COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const UI_COMPONENTS_DIR = resolve(ROOT_DIR, '../../ui/components')
+const SHARED_COMPONENTS_DIR = resolve(ROOT_DIR, '../shared/components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
@@ -135,11 +136,12 @@ async function discoverComponentFiles(dir: string): Promise<string[]> {
   return files
 }
 
-// Discover all component files from both UI components and docs components
+// Discover all component files from UI, docs, and shared components
 // The compiler handles "use client" filtering
 const uiComponentFiles = await discoverComponentFiles(UI_COMPONENTS_DIR)
 const docsComponentFiles = await discoverComponentFiles(DOCS_COMPONENTS_DIR)
-const componentFiles = [...uiComponentFiles, ...docsComponentFiles]
+const sharedComponentFiles = await discoverComponentFiles(SHARED_COMPONENTS_DIR)
+const componentFiles = [...uiComponentFiles, ...docsComponentFiles, ...sharedComponentFiles]
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
@@ -179,9 +181,10 @@ for (const entryPath of componentFiles) {
     continue // Skip server-only components
   }
 
-  // Determine rootDir based on whether the file is from UI or docs components
+  // Determine rootDir based on whether the file is from UI, docs, or shared components
   const isUiComponent = entryPath.startsWith(UI_COMPONENTS_DIR)
-  const rootDir = isUiComponent ? UI_COMPONENTS_DIR : DOCS_COMPONENTS_DIR
+  const isSharedComponent = entryPath.startsWith(SHARED_COMPONENTS_DIR)
+  const rootDir = isUiComponent ? UI_COMPONENTS_DIR : isSharedComponent ? SHARED_COMPONENTS_DIR : DOCS_COMPONENTS_DIR
 
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
@@ -367,15 +370,13 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// Copy globals.css to dist
+// Concatenate tokens.css + globals.css to dist
 const STYLES_DIR = resolve(ROOT_DIR, 'styles')
-const globalsSource = resolve(STYLES_DIR, 'globals.css')
-const globalsDest = resolve(DIST_DIR, 'globals.css')
-
-if (await Bun.file(globalsSource).exists()) {
-  await Bun.write(globalsDest, Bun.file(globalsSource))
-  console.log('Copied: dist/globals.css')
-}
+const SHARED_STYLES_DIR = resolve(ROOT_DIR, '../shared/styles')
+const tokensCSS = await Bun.file(resolve(SHARED_STYLES_DIR, 'tokens.css')).text()
+const siteGlobalsCSS = await Bun.file(resolve(STYLES_DIR, 'globals.css')).text()
+await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + siteGlobalsCSS)
+console.log('Generated: dist/globals.css (tokens + globals)')
 
 // Copy lib/ directory to dist/
 // These are runtime utilities needed by compiled components

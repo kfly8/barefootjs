@@ -6,8 +6,8 @@
  */
 
 import { createEffect } from '@barefootjs/dom'
-import { ThemeSwitcher } from './theme-switcher'
-import { LogoIcon } from './logo'
+import { ThemeSwitcher } from '@/components/theme-switcher'
+import { LogoIcon } from '@/components/logo'
 import { GitHubIcon, SearchIcon } from '@ui/components/ui/icon'
 
 export function MobileHeader() {

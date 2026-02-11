@@ -5,6 +5,7 @@
   "exports": {
     "./styles/*": "./styles/*",
     "./components/*": "./components/*",
-    "./lib/*": "./lib/*"
+    "./lib/*": "./lib/*",
+    "./lib/theme-init": "./lib/theme-init.ts"
   }
 }

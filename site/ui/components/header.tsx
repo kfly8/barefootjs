@@ -8,8 +8,8 @@
 import { Suspense } from 'hono/jsx'
 import { SearchButton } from './search-button'
 import { AsyncGitHubStars } from './github-stars-async'
-import { ThemeSwitcher } from './theme-switcher'
-import { Logo } from './logo'
+import { ThemeSwitcher } from '@/components/theme-switcher'
+import { Logo } from '@/components/logo'
 import { GitHubIcon } from '@ui/components/ui/icon'
 
 // Loading placeholder for GitHub stars (matches GitHubStars layout)

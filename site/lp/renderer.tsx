@@ -38,16 +38,7 @@ function WithPredictableIds({ children }: { children: any }) {
   return <>{children}</>
 }
 
-// Theme initialization script - runs before page render to prevent FOUC
-const themeInitScript = `
-(function() {
-  const stored = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
-    document.documentElement.classList.add('dark');
-  }
-})();
-`
+import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
 
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
