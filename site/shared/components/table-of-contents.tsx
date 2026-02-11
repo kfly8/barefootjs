@@ -103,8 +103,8 @@ export function TableOfContents({ items }: TableOfContentsProps) {
           {/* Animated active indicator - slides along the left border line */}
           <div
             data-toc-indicator
-            className="absolute w-0.5 bg-primary transition-transform duration-100 ease-out z-10"
-            style={`height: ${ITEM_HEIGHT}px; left: 0;`}
+            className="absolute w-0.5 transition-transform duration-100 ease-out z-10"
+            style={`background-color: var(--gradient-start); height: ${ITEM_HEIGHT}px; left: 0;`}
           />
           <ul className="list-none m-0 p-0 text-sm">
             {items.map(item => (
