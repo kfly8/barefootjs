@@ -204,9 +204,18 @@ createEffect(() => {
 ### Hydration Markers
 
 1. **Marked Template**: Server-side template with hydration markers
-   - `bf-s="ComponentName"` - Component root (scope)
-   - `bf="id"` - Interactive element (slot)
-   - `bf-c="id"` - Conditional element
+
+   | Marker | Purpose | Example |
+   |--------|---------|---------|
+   | `bf-s` | Component scope boundary (`~` prefix = child) | `bf-s="Counter_a1b2"`, `bf-s="~Item_c3d4"` |
+   | `bf` | Interactive element (slot) | `bf="s0"` |
+   | `bf-p` | Serialized props JSON | `bf-p='{"initial":5}'` |
+   | `bf-c` | Conditional element | `bf-c="s2"` |
+   | `bf-po` | Portal owner scope ID | `bf-po="Dialog_a1b2"` |
+   | `bf-pi` | Portal container ID | `bf-pi="bf-portal-1"` |
+   | `bf-pp` | Portal placeholder | `bf-pp="bf-portal-1"` |
+   | `bf-item` | List item marker | `bf-item` |
+   | `bf-i` | Init guard (runtime-only, not in template output) | `bf-i` |
 
 2. **Client JS**: Minimal JavaScript for reactivity
    - Uses `createEffect` for reactive updates

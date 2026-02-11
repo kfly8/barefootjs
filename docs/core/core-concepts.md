@@ -174,17 +174,24 @@ The compiler inserts `bf-*` attributes into the server template. These tell the 
 
 | Marker | Purpose | Example |
 |--------|---------|---------|
-| `bf-s` | Component boundary (`~` prefix = child) | `<div bf-s="Counter_a1b2">`, `<div bf-s="~Item_c3d4">` |
-| `bf` | Interactive element | `<p bf="slot_0">` |
-| `bf-c` | Conditional block | `<div bf-c="slot_2">` |
+| `bf-s` | Component scope boundary (`~` prefix = child) | `<div bf-s="Counter_a1b2">`, `<div bf-s="~Item_c3d4">` |
+| `bf` | Interactive element (slot) | `<p bf="s0">` |
+| `bf-i` | Init guard (runtime-only, prevents double hydration) | `<div bf-s="Counter_a1b2" bf-i>` |
+| `bf-p` | Serialized props JSON | `<div bf-p='{"initial":5}'>` |
+| `bf-c` | Conditional block | `<div bf-c="s2">` |
+| `bf-po` | Portal owner scope ID | `<div bf-po="Dialog_a1b2">` |
+| `bf-pi` | Portal container ID | `<div bf-pi="bf-portal-1">` |
+| `bf-pp` | Portal placeholder | `<template bf-pp="bf-portal-1">` |
+| `bf-item` | List item marker | `<li bf-item>` |
 
 ### Hydration Flow
 
-1. The server renders HTML with markers and embeds component props in a `<script>` tag
+1. The server renders HTML with markers and embeds component props in `bf-p` attributes
 2. The browser loads the client JS
-3. `hydrate()` finds all uninitialized `bf-s` elements
+3. `hydrate()` finds all `bf-s` elements without `bf-i` (uninitialized)
 4. For each scope, the init function runs — creating signals, binding effects, attaching event handlers
-5. The page is now interactive
+5. The runtime sets `bf-i` on the scope element to prevent double initialization
+6. The page is now interactive
 
 ```
 Server HTML (static)
@@ -193,11 +200,13 @@ Client JS loads
     ↓
 hydrate("Counter", init)
     ↓
-Find <div bf-s="Counter_a1b2">
+Find <div bf-s="Counter_a1b2"> without bf-i
     ↓
 Read props from bf-p attribute
     ↓
 Run init(): createSignal, createEffect, bind events
+    ↓
+Set bf-i on scope element (mark as initialized)
     ↓
 Page is interactive
 ```
