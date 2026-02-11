@@ -95,9 +95,10 @@ function belongsToScope(
   const elementScope = (element as HTMLElement).dataset?.bfScope
   if (elementScope) {
     // When looking for child scope elements (data-bf-scope selectors),
-    // include them if they are within the scope (at any depth)
+    // only accept direct child scopes (no intermediate scope between element and search scope)
     if (isLookingForScope) {
-      return scope.contains(element)
+      const parentScope = element.parentElement?.closest('[data-bf-scope]')
+      return parentScope === scope
     }
     // When looking for slot elements (data-bf selectors),
     // exclude component roots to prevent slot ID collision

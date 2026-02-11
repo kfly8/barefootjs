@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
-import { findScope, find, hydrate, bind, cond } from '../src/runtime'
+import { findScope, find, $c, hydrate, bind, cond } from '../src/runtime'
 import { createSignal } from '../src/reactive'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
@@ -258,6 +258,58 @@ describe('find', () => {
       expect(portalRoot).not.toBeNull()
       expect(portalRoot?.getAttribute('data-bf-portal-owner')).toBe('Dialog_self')
     })
+  })
+})
+
+describe('$c', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('returns direct child scope only, not nested grandchild with same suffix', () => {
+    // Regression: suffix match [data-bf-scope$="_s3"] was matching grandchild
+    // Demo_abc_s4_s3 in addition to the intended Demo_abc_s3
+    document.body.innerHTML = `
+      <div data-bf-scope="Demo_abc">
+        <div data-bf-scope="Demo_abc_s3">direct child</div>
+        <div data-bf-scope="Demo_abc_s4">
+          <div data-bf-scope="Demo_abc_s4_s3">nested grandchild</div>
+        </div>
+      </div>
+    `
+    const scope = document.querySelector('[data-bf-scope="Demo_abc"]')!
+    const result = $c(scope, 's3')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('data-bf-scope')).toBe('Demo_abc_s3')
+  })
+
+  test('finds child scope by slot ID', () => {
+    document.body.innerHTML = `
+      <div data-bf-scope="Parent_xyz">
+        <div data-bf-scope="Parent_xyz_s1">slot content</div>
+      </div>
+    `
+    const scope = document.querySelector('[data-bf-scope="Parent_xyz"]')!
+    const result = $c(scope, 's1')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('data-bf-scope')).toBe('Parent_xyz_s1')
+  })
+
+  test('finds child scope by component name prefix', () => {
+    document.body.innerHTML = `
+      <div data-bf-scope="App_root">
+        <div data-bf-scope="Counter_abc123">counter</div>
+      </div>
+    `
+    const scope = document.querySelector('[data-bf-scope="App_root"]')!
+    const result = $c(scope, 'Counter')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('data-bf-scope')).toBe('Counter_abc123')
+  })
+
+  test('returns null for null scope', () => {
+    const result = $c(null, 's0')
+    expect(result).toBeNull()
   })
 })
 
