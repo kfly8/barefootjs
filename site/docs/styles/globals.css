@@ -18,8 +18,8 @@
 }
 
 :root {
-  --sidebar-width: 240px;
-  --content-max-width: 780px;
+  --sidebar-width: 14rem;    /* 224px — matches UI site (w-56) */
+  --content-max-width: 1000px; /* matches UI site (max-w-[1000px]) */
 }
 
 html {
@@ -73,7 +73,7 @@ html.theme-transition *::after {
 
 .sidebar {
   position: fixed;
-  top: var(--header-height);
+  top: 3.5rem; /* top-14 — matches UI site */
   left: 0;
   bottom: 0;
   width: var(--sidebar-width);
@@ -117,30 +117,31 @@ html.theme-transition *::after {
 }
 
 .doc-title {
-  font-size: 2rem;
+  font-size: 1.875rem; /* text-3xl — matches UI site */
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 2.25rem;
+  letter-spacing: -0.05em; /* tracking-tighter — matches UI site */
 }
 
 /* ── Main Content ──────────────────────────────────────────── */
 
 .main-content {
   margin-left: var(--sidebar-width);
-  padding: calc(var(--header-height) + 24px) 24px 48px;
+  padding: 5rem 1.5rem 3rem;
   min-height: 100vh;
 }
 
 .doc-content-wrapper {
   display: flex;
-  gap: 2rem;
-  max-width: calc(var(--content-max-width) + 14rem + 2rem);
+  gap: 4rem;  /* gap-16 — matches UI site */
+  max-width: var(--content-max-width);
   margin: 0 auto;
+  padding: 1.75rem 1rem 0; /* top: compensate for * {margin:0} reset removing h1 default margin */
 }
 
 .doc-main-column {
   flex: 1;
   min-width: 0;
-  max-width: var(--content-max-width);
 }
 
 /* ── Typography ────────────────────────────────────────────── */
@@ -162,7 +163,7 @@ html.theme-transition *::after {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   line-height: 1.3;
-  scroll-margin-top: calc(var(--header-height) + 24px);
+  scroll-margin-top: 5rem;
 }
 
 .doc-article h3 {
@@ -171,7 +172,7 @@ html.theme-transition *::after {
   margin-top: 24px;
   margin-bottom: 10px;
   line-height: 1.35;
-  scroll-margin-top: calc(var(--header-height) + 24px);
+  scroll-margin-top: 5rem;
 }
 
 .doc-article h4 {
@@ -329,7 +330,7 @@ html.dark .shiki span {
 
   .main-content {
     margin-left: 0;
-    padding: calc(var(--header-height) + 16px) 16px 32px;
+    padding: 5rem 0.3rem 3rem; /* matches UI site mobile spacing */
   }
 
 }
