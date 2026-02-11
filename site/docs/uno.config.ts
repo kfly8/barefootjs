@@ -72,6 +72,7 @@ export default defineConfig({
     filesystem: [
       './renderer.tsx',
       './components/**/*.tsx',
+      '../shared/components/**/*.tsx',
       './dist/**/*.tsx',
     ],
   },

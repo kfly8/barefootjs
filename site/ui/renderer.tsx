@@ -22,10 +22,11 @@ import { BfScripts } from '../../packages/hono/src/scripts'
 import { BfPortals } from '../../packages/hono/src/portals'
 import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
 import { SidebarMenu } from '@/components/sidebar-menu'
-import { Header } from '@/components/header'
-import { MobileHeader } from '@/components/mobile-header'
+import { Header } from '../shared/components/header'
 import { MobileMenu } from '@/components/mobile-menu'
 import { MobilePageNav } from '@/components/mobile-page-nav'
+import { SearchButton } from '@/components/search-button'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { CommandPalette } from '@/components/command-palette'
 
 // Import manifest for dependency-aware preloading
@@ -103,8 +104,7 @@ export const renderer = jsxRenderer(
             `}</style>
           </head>
           <body>
-            <Header />
-            <MobileHeader />
+            <Header activePage="ui" searchSlot={<SearchButton />} themeSwitcher={<ThemeSwitcher />} />
             <MobileMenu />
             <MobilePageNav currentPath={currentPath} />
             <CommandPalette />

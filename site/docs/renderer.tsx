@@ -117,8 +117,9 @@ function MdToggleButton({ slug }: { slug: string }) {
   )
 }
 
-// Import compiled shared components
-import { Logo } from '@/components/logo'
+// Import shared components
+import { Header } from '../shared/components/header'
+import { SearchPlaceholder } from '../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const renderer = jsxRenderer(
@@ -152,24 +153,25 @@ export const renderer = jsxRenderer(
           <body>
             <div id="sidebar-overlay" class="sidebar-overlay" />
 
-            <header className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] flex items-center gap-3 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-              <button id="mobile-menu-toggle" className="hidden max-md:inline-flex p-1 text-foreground" aria-label="Toggle menu">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
-                </svg>
-              </button>
-              <a href="/" className="text-foreground no-underline">
-                <Logo />
-              </a>
-              <div className="ml-auto flex items-center gap-2">
-                <MdToggleButton slug={currentSlug} />
-                <ThemeSwitcher />
-              </div>
-            </header>
+            <Header
+              activePage="docs"
+              leftSlot={
+                <button id="mobile-menu-toggle" className="hidden max-md:inline-flex p-1 text-foreground" aria-label="Toggle menu">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+                  </svg>
+                </button>
+              }
+              searchSlot={<SearchPlaceholder />}
+              themeSwitcher={<ThemeSwitcher />}
+            />
 
             <Sidebar currentSlug={currentSlug} />
 
             <main class="main-content">
+              <div class="doc-title-bar">
+                <MdToggleButton slug={currentSlug} />
+              </div>
               <article class="doc-article">
                 {children}
               </article>

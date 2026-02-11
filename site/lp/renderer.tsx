@@ -5,7 +5,9 @@
  */
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
-import { Header } from './components/header'
+import { Header } from '../shared/components/header'
+import { SearchPlaceholder } from '../shared/components/search-placeholder'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -78,7 +80,7 @@ export const renderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
           </head>
           <body>
-            <Header />
+            <Header searchSlot={<SearchPlaceholder />} themeSwitcher={<ThemeSwitcher />} />
             <main>
               {children}
             </main>

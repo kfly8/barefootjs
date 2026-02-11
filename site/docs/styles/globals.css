@@ -151,6 +151,14 @@ html.theme-transition *::after {
   border-color: var(--muted-foreground);
 }
 
+/* ── Document Title Bar ───────────────────────────────────── */
+
+.doc-title-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
 /* ── Main Content ──────────────────────────────────────────── */
 
 .main-content {
