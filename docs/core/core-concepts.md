@@ -174,7 +174,7 @@ The compiler inserts `bf-*` attributes into the server template. These tell the 
 
 | Marker | Purpose | Example |
 |--------|---------|---------|
-| `bf-s` | Component boundary | `<div bf-s="Counter_a1b2">` |
+| `bf-s` | Component boundary (`~` prefix = child) | `<div bf-s="Counter_a1b2">`, `<div bf-s="~Item_c3d4">` |
 | `bf` | Interactive element | `<p bf="slot_0">` |
 | `bf-c` | Conditional block | `<div bf-c="slot_2">` |
 
@@ -209,7 +209,7 @@ Each component only hydrates its own elements. The runtime's `find()` function s
 ```html
 <div bf-s="TodoApp_x1">        <!-- TodoApp scope -->
   <h1 bf="slot_0">Todo</h1>        <!-- belongs to TodoApp -->
-  <div bf-s="TodoItem_y1">     <!-- TodoItem scope (excluded from TodoApp queries) -->
+  <div bf-s="~TodoItem_y1">     <!-- TodoItem scope (~ = child, excluded from TodoApp queries) -->
     <span bf="slot_0">Buy milk</span>
   </div>
 </div>

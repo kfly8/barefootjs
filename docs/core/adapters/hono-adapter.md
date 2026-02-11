@@ -152,7 +152,7 @@ The adapter extends every client component's props with hydration-related fields
 |------|---------|
 | `__instanceId` | Unique instance identifier passed from the parent |
 | `__bfScope` | Parent's scope ID (for nested component communication) |
-| `__bfChild` | Marks this component as a child instance |
+| `__bfChild` | Marks this component as a child instance (adds `~` prefix to `bf-s` value) |
 | `data-key` | Stable key for list-rendered instances |
 
 These props are used internally by the hydration system and do not need to be passed manually when using components.
