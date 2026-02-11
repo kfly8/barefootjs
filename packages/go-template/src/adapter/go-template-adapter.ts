@@ -300,6 +300,8 @@ export class GoTemplateAdapter extends BaseAdapter {
     lines.push(`// ${propsTypeName} is the props type for the ${componentName} component.`)
     lines.push(`type ${propsTypeName} struct {`)
     lines.push('\tScopeID string `json:"scopeID"`')
+    lines.push('\tBfIsRoot bool `json:"-"`')
+    lines.push('\tBfIsChild bool `json:"-"`')
 
     // Add Scripts field for dynamic script collection
     lines.push('\tScripts *bf.ScriptCollector `json:"-"`')
@@ -2255,7 +2257,8 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   renderScopeMarker(instanceIdExpr: string): string {
     // Include bfIsChild to mark child components for parent-first hydration
-    return `data-bf-scope="{{${instanceIdExpr}}}" {{bfIsChild ${instanceIdExpr}}}`
+    // Include bfPropsAttr to serialize props as data-bf-props attribute
+    return `data-bf-scope="{{${instanceIdExpr}}}" {{bfIsChild .}} {{bfPropsAttr .}}`
   }
 
   renderSlotMarker(slotId: string): string {

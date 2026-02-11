@@ -100,12 +100,9 @@ export function Counter({ initial = 0 }: { initial?: number }) {
 ```go-template
 {{define "Counter"}}
 {{template "bf_register_script" "Counter"}}
-<div data-bf-scope="{{.ScopeID}}">
+<div data-bf-scope="{{.ScopeID}}" {{bfIsChild .ScopeID}} {{bfPropsAttr .}}>
   <p data-bf="slot_0">{{.Initial}}</p>
   <button data-bf="slot_1">+1</button>
-  <script data-bf-props="{{.ScopeID}}" type="application/json">
-    {"initial":{{bf_json .Initial}}}
-  </script>
 </div>
 {{end}}
 ```

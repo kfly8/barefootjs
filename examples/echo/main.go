@@ -54,11 +54,11 @@ func defaultLayout(ctx *bf.RenderContext) string {
     <link rel="stylesheet" href="/shared/styles/todo-app.css">%s
 </head>
 <body>%s
-    <div id="app">%s%s</div>
+    <div id="app">%s</div>
     <p><a href="/">← Back</a></p>
     %s%s
 </body>
-</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.PropsScripts, ctx.Portals, ctx.Scripts)
+</html>`, ctx.Title, headingStyle, headingHTML, ctx.ComponentHTML, ctx.Portals, ctx.Scripts)
 }
 
 // In-memory todo storage

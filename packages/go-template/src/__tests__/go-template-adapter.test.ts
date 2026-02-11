@@ -167,7 +167,7 @@ describe('GoTemplateAdapter', () => {
       }
 
       const result = adapter.renderElement(element)
-      expect(result).toBe('<div data-bf-scope="{{.ScopeID}}" {{bfIsChild .ScopeID}}></div>')
+      expect(result).toBe('<div data-bf-scope="{{.ScopeID}}" {{bfIsChild .}} {{bfPropsAttr .}}></div>')
     })
 
     test('renders element with slot marker', () => {
