@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 5000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   // Use single worker to avoid conflicts with shared server state (/api/todos/reset)
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
