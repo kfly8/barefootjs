@@ -4,6 +4,9 @@
 
 import { Marked } from 'marked'
 import { createHighlighter, type Highlighter } from 'shiki'
+import type { TocItem } from '../../shared/components/table-of-contents'
+
+export type { TocItem }
 
 export interface Frontmatter {
   title?: string
@@ -15,6 +18,7 @@ export interface ParsedMarkdown {
   frontmatter: Frontmatter
   html: string
   raw: string
+  toc: TocItem[]
 }
 
 let highlighter: Highlighter | null = null
@@ -133,6 +137,50 @@ function createMarked(): Marked {
   return marked
 }
 
+/**
+ * Extract TOC items (h2/h3) from rendered HTML.
+ * h2 → top-level item, h3 → child item with branch markers.
+ */
+function extractTocFromHtml(html: string): TocItem[] {
+  const headingRegex = /<h([23])\s+id="([^"]*)"[^>]*>([\s\S]*?)<\/h[23]>/g
+  const rawItems: { level: number; id: string; title: string }[] = []
+
+  let match: RegExpExecArray | null
+  while ((match = headingRegex.exec(html)) !== null) {
+    const level = parseInt(match[1], 10)
+    const id = match[2]
+    // Strip HTML tags from title text
+    const title = match[3].replace(/<[^>]*>/g, '').trim()
+    rawItems.push({ level, id, title })
+  }
+
+  const tocItems: TocItem[] = []
+
+  for (let i = 0; i < rawItems.length; i++) {
+    const item = rawItems[i]
+    if (item.level === 2) {
+      tocItems.push({ id: item.id, title: item.title })
+    } else if (item.level === 3) {
+      // Determine branch position among consecutive h3 siblings
+      const prevIsH3 = i > 0 && rawItems[i - 1].level === 3
+      const nextIsH3 = i + 1 < rawItems.length && rawItems[i + 1].level === 3
+
+      let branch: 'start' | 'child' | 'end'
+      if (!prevIsH3 && nextIsH3) {
+        branch = 'start'
+      } else if (prevIsH3 && nextIsH3) {
+        branch = 'child'
+      } else {
+        branch = 'end'
+      }
+
+      tocItems.push({ id: item.id, title: item.title, branch })
+    }
+  }
+
+  return tocItems
+}
+
 const marked = createMarked()
 
 /**
@@ -147,10 +195,12 @@ export async function renderMarkdown(content: string): Promise<ParsedMarkdown> {
   }
 
   const html = await marked.parse(body)
+  const toc = extractTocFromHtml(html)
 
   return {
     frontmatter,
     html,
     raw: content,
+    toc,
   }
 }

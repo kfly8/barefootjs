@@ -34,6 +34,7 @@ export async function createApp(content: ContentMap, pages: Page[]): Promise<Hon
           title: parsed.frontmatter.title || 'Documentation',
           description: parsed.frontmatter.description,
           slug: '',
+          toc: parsed.toc,
         }
       )
     })
@@ -67,6 +68,7 @@ export async function createApp(content: ContentMap, pages: Page[]): Promise<Hon
           description: parsed.frontmatter.description,
           meta: Object.keys(meta).length > 0 ? meta : undefined,
           slug: page.slug,
+          toc: parsed.toc,
         }
       )
     })

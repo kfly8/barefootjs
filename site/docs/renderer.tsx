@@ -10,6 +10,8 @@ import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { navigation, type NavItem } from './lib/navigation'
 import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } from '../shared/components/sidebar'
 import { BfScripts } from '../../packages/hono/src/scripts'
+import { TableOfContents } from '@/components/table-of-contents'
+import type { TocItem } from '../shared/components/table-of-contents'
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -20,6 +22,7 @@ declare module 'hono' {
         description?: string
         meta?: Record<string, string>
         slug?: string
+        toc?: TocItem[]
       }
     ): Response | Promise<Response>
   }
@@ -117,7 +120,7 @@ import { SearchPlaceholder } from '../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const renderer = jsxRenderer(
-  ({ children, title, description, meta, slug }) => {
+  ({ children, title, description, meta, slug, toc }) => {
     const pageTitle = title ? `${title} — BarefootJS` : 'BarefootJS Documentation'
     const currentSlug = slug || ''
 
@@ -166,9 +169,12 @@ export const renderer = jsxRenderer(
               <div class="doc-title-bar">
                 <MdToggleButton slug={currentSlug} />
               </div>
-              <article class="doc-article">
-                {children}
-              </article>
+              <div class="doc-content-wrapper">
+                <article class="doc-article">
+                  {children}
+                </article>
+                {toc && toc.length > 0 && <TableOfContents items={toc} />}
+              </div>
             </main>
 
             <script dangerouslySetInnerHTML={{ __html: mobileMenuScript }} />

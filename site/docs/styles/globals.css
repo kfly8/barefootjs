@@ -118,6 +118,9 @@ html.theme-transition *::after {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 8px;
+  max-width: calc(var(--content-max-width) + 14rem + 2rem);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ── Main Content ──────────────────────────────────────────── */
@@ -128,9 +131,17 @@ html.theme-transition *::after {
   min-height: 100vh;
 }
 
-.doc-article {
-  max-width: var(--content-max-width);
+.doc-content-wrapper {
+  display: flex;
+  gap: 2rem;
+  max-width: calc(var(--content-max-width) + 14rem + 2rem);
   margin: 0 auto;
+}
+
+.doc-article {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--content-max-width);
 }
 
 /* ── Typography ────────────────────────────────────────────── */
@@ -152,6 +163,7 @@ html.theme-transition *::after {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   line-height: 1.3;
+  scroll-margin-top: calc(var(--header-height) + 24px);
 }
 
 .doc-article h3 {
@@ -160,6 +172,7 @@ html.theme-transition *::after {
   margin-top: 24px;
   margin-bottom: 10px;
   line-height: 1.35;
+  scroll-margin-top: calc(var(--header-height) + 24px);
 }
 
 .doc-article h4 {
