@@ -8,6 +8,7 @@
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { navigation, type NavItem } from './lib/navigation'
+import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } from '../shared/components/sidebar'
 import { BfScripts } from '../../packages/hono/src/scripts'
 
 declare module 'hono' {
@@ -63,43 +64,36 @@ const importMapScript = JSON.stringify({
   },
 })
 
-function NavLink({ item, currentSlug, depth = 0 }: { item: NavItem; currentSlug: string; depth?: number }) {
-  const isActive = currentSlug === item.slug
-  const isParentActive = currentSlug.startsWith(item.slug + '/')
-  const activeClass = isActive ? ' nav-link-active' : ''
-  const parentClass = isParentActive ? ' nav-link-parent-active' : ''
-
-  return (
-    <li>
-      <a
-        href={`/${item.slug}`}
-        class={`nav-link nav-link-depth-${depth}${activeClass}${parentClass}`}
-      >
-        {item.title}
-      </a>
-      {item.children && (
-        <ul class="nav-children">
-          {item.children.map((child) => (
-            <NavLink item={child} currentSlug={currentSlug} depth={depth + 1} />
-          ))}
-        </ul>
-      )}
-    </li>
-  )
+/**
+ * Convert docs NavItem[] to shared SidebarEntry[].
+ * - Items without children → SidebarLink
+ * - Items with children → SidebarGroup (parent added as first link)
+ */
+function navToSidebarEntries(items: NavItem[]): SidebarEntry[] {
+  return items.map((item): SidebarEntry => {
+    if (!item.children || item.children.length === 0) {
+      return { title: item.title, href: `/${item.slug}` } satisfies SidebarLink
+    }
+    const parentLink: SidebarLink = { title: item.title, href: `/${item.slug}` }
+    const childLinks: SidebarLink[] = item.children.map(child => ({
+      title: child.title,
+      href: `/${child.slug}`,
+    }))
+    return {
+      title: item.title,
+      links: [parentLink, ...childLinks],
+    } satisfies SidebarGroup
+  })
 }
 
 function Sidebar({ currentSlug }: { currentSlug: string }) {
+  const entries = navToSidebarEntries(navigation)
+  const currentPath = currentSlug === '' ? '/' : `/${currentSlug}`
+
   return (
     <aside id="sidebar" class="sidebar">
-      <div class="sidebar-header">
-        <a href="/" class="sidebar-logo">BarefootJS</a>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-          {navigation.map((item) => (
-            <NavLink item={item} currentSlug={currentSlug} />
-          ))}
-        </ul>
+      <nav className="sidebar-nav p-4">
+        <SidebarNav entries={entries} currentPath={currentPath} />
       </nav>
     </aside>
   )

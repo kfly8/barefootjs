@@ -84,45 +84,6 @@ html.theme-transition *::after {
   z-index: 90;
 }
 
-.sidebar-header {
-  display: none;
-}
-
-.sidebar-nav ul {
-  list-style: none;
-}
-
-.nav-link {
-  display: block;
-  padding: 5px 20px;
-  font-size: 14px;
-  color: var(--muted-foreground);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.nav-link:hover {
-  color: var(--foreground);
-}
-
-.nav-link-depth-1 {
-  padding-left: 32px;
-  font-size: 13px;
-}
-
-.nav-link-active {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.nav-link-parent-active {
-  color: var(--foreground);
-}
-
-.nav-children {
-  margin: 0;
-}
-
 /* ── Sidebar Overlay (mobile) ──────────────────────────────── */
 
 .sidebar-overlay {
