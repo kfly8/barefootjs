@@ -251,11 +251,9 @@ export function hydrate(
       // Mark as initialized immediately to prevent duplicate init
       scopeEl.setAttribute('data-bf-init', 'true')
 
-      // Find corresponding props script by instance ID
-      const propsEl = document.querySelector(
-        `script[data-bf-props="${instanceId}"]`
-      )
-      const props = propsEl ? JSON.parse(propsEl.textContent || '{}') : {}
+      // Read props from data-bf-props attribute on the scope element
+      const propsJson = (scopeEl as HTMLElement).dataset.bfProps
+      const props = propsJson ? JSON.parse(propsJson) : {}
 
       init(props, 0, scopeEl)
     }

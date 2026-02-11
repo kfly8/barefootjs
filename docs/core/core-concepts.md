@@ -195,7 +195,7 @@ hydrate("Counter", init)
     ↓
 Find <div data-bf-scope="Counter_a1b2">
     ↓
-Read props from <script data-bf-props="Counter_a1b2">
+Read props from data-bf-props attribute
     ↓
 Run init(): createSignal, createEffect, bind events
     ↓

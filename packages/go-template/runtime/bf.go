@@ -57,22 +57,46 @@ func FuncMap() template.FuncMap {
 		// Child component marker
 		"bfIsChild": IsChild,
 
+		// Props attribute for hydration
+		"bfPropsAttr": BfPropsAttr,
+
 		// Portal HTML rendering (parses and executes template string)
 		"bfPortalHTML": PortalHTML,
 	}
 }
 
-// IsChild returns "data-bf-child" if the scopeID indicates a child component.
-// Child components have scopeIDs that contain "_sN" pattern (e.g., "Parent_abc123_s4").
+// IsChild returns "data-bf-child" if the component is a child (initialized by parent).
+// Checks the BfIsChild field set by Render(), with fallback to scopeID "_sN" pattern.
 // This marker tells the hydration system to skip auto-hydration and let the parent initialize.
-func IsChild(scopeID string) template.HTMLAttr {
-	// Check for _s followed by a digit (slot pattern)
+func IsChild(props interface{}) template.HTMLAttr {
+	// Check BfIsChild field (set by Render for all child components)
+	if getBoolField(props, "BfIsChild") {
+		return template.HTMLAttr("data-bf-child")
+	}
+	// Fallback: check scopeID pattern for single child slots (e.g., "Parent_abc123_s4")
+	scopeID := getStringField(props, "ScopeID")
 	for i := 0; i < len(scopeID)-2; i++ {
 		if scopeID[i] == '_' && scopeID[i+1] == 's' && scopeID[i+2] >= '0' && scopeID[i+2] <= '9' {
 			return template.HTMLAttr("data-bf-child")
 		}
 	}
 	return ""
+}
+
+// BfPropsAttr returns a data-bf-props attribute with the JSON-serialized props.
+// Only emits the attribute for root components (BfIsRoot == true).
+// Child components receive props from their parent via initChild().
+func BfPropsAttr(props interface{}) template.HTMLAttr {
+	// Only root components should emit data-bf-props
+	if !getBoolField(props, "BfIsRoot") {
+		return ""
+	}
+	jsonBytes, err := json.Marshal(props)
+	if err != nil {
+		return ""
+	}
+	escaped := template.HTMLEscapeString(string(jsonBytes))
+	return template.HTMLAttr(`data-bf-props="` + escaped + `"`)
 }
 
 // =============================================================================
@@ -634,9 +658,6 @@ type RenderContext struct {
 	// ComponentHTML is the rendered component template output
 	ComponentHTML template.HTML
 
-	// PropsScripts contains JSON script tags for hydration (main + children)
-	PropsScripts template.HTML
-
 	// Portals contains collected portal content to render at body end
 	Portals template.HTML
 
@@ -670,8 +691,8 @@ type Renderer struct {
 //	    return fmt.Sprintf(`<!DOCTYPE html>
 //	<html>
 //	<head><title>%s</title></head>
-//	<body>%s%s%s</body>
-//	</html>`, ctx.Title, ctx.ComponentHTML, ctx.PropsScripts, ctx.Scripts)
+//	<body>%s%s</body>
+//	</html>`, ctx.Title, ctx.ComponentHTML, ctx.Scripts)
 //	})
 func NewRenderer(tmpl *template.Template, layout LayoutFunc) *Renderer {
 	return &Renderer{
@@ -714,6 +735,7 @@ func (r *Renderer) Render(opts RenderOptions) string {
 	for _, slice := range childSlices {
 		setScriptsOnSlice(slice, scriptCollector)
 		setPortalsOnSlice(slice, portalCollector)
+		setBoolOnSlice(slice, "BfIsChild", true)
 	}
 
 	// Auto-detect and process single child component props
@@ -721,29 +743,15 @@ func (r *Renderer) Render(opts RenderOptions) string {
 	for _, child := range singleChildren {
 		setScriptsOnSingle(child, scriptCollector)
 		setPortalsOnSingle(child, portalCollector)
+		setBoolField(child, "BfIsChild", true)
 	}
+
+	// Mark the root component so BfPropsAttr emits data-bf-props only for it
+	setBoolField(opts.Props, "BfIsRoot", true)
 
 	// Render the component template
 	var componentBuf strings.Builder
 	r.templates.ExecuteTemplate(&componentBuf, opts.ComponentName, opts.Props)
-
-	// Build props scripts (main + children)
-	var propsScriptsBuf strings.Builder
-	scopeID := getStringField(opts.Props, "ScopeID")
-	if scopeID != "" {
-		propsJSON, _ := json.Marshal(opts.Props)
-		propsScriptsBuf.WriteString(`<script type="application/json" data-bf-props="`)
-		propsScriptsBuf.WriteString(scopeID)
-		propsScriptsBuf.WriteString(`">`)
-		propsScriptsBuf.Write(propsJSON)
-		propsScriptsBuf.WriteString(`</script>`)
-	}
-	for _, slice := range childSlices {
-		propsScriptsBuf.WriteString(buildChildPropsScripts(slice))
-	}
-	for _, child := range singleChildren {
-		propsScriptsBuf.WriteString(buildSingleChildPropsScript(child))
-	}
 
 	// Determine title (default: "{ComponentName} - BarefootJS")
 	title := opts.Title
@@ -759,7 +767,6 @@ func (r *Renderer) Render(opts RenderOptions) string {
 		ComponentName: opts.ComponentName,
 		Props:         opts.Props,
 		ComponentHTML: template.HTML(componentBuf.String()),
-		PropsScripts:  template.HTML(propsScriptsBuf.String()),
 		Portals:       portalCollector.Render(),
 		Scripts:       BfScripts(scriptCollector),
 		Title:         title,
@@ -801,6 +808,35 @@ func setPortalsField(v interface{}, collector *PortalCollector) {
 }
 
 // getStringField extracts a string field from a struct using reflection.
+func setBoolField(v interface{}, fieldName string, val bool) {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return
+	}
+	field := rv.FieldByName(fieldName)
+	if field.IsValid() && field.CanSet() && field.Kind() == reflect.Bool {
+		field.SetBool(val)
+	}
+}
+
+func getBoolField(v interface{}, fieldName string) bool {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return false
+	}
+	field := val.FieldByName(fieldName)
+	if !field.IsValid() || field.Kind() != reflect.Bool {
+		return false
+	}
+	return field.Bool()
+}
+
 func getStringField(v interface{}, fieldName string) string {
 	val := reflect.ValueOf(v)
 	if val.Kind() == reflect.Ptr {
@@ -874,6 +910,26 @@ func setScriptsOnSlice(slice interface{}, collector *ScriptCollector) {
 	}
 }
 
+// setBoolOnSlice sets a bool field on all items in a slice.
+func setBoolOnSlice(slice interface{}, fieldName string, val bool) {
+	v := reflect.ValueOf(slice)
+	if v.Kind() != reflect.Slice {
+		return
+	}
+	for i := 0; i < v.Len(); i++ {
+		item := v.Index(i)
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Struct {
+			field := item.FieldByName(fieldName)
+			if field.IsValid() && field.CanSet() && field.Kind() == reflect.Bool {
+				field.SetBool(val)
+			}
+		}
+	}
+}
+
 // setPortalsOnSlice sets Portals on all items in a slice.
 func setPortalsOnSlice(slice interface{}, collector *PortalCollector) {
 	val := reflect.ValueOf(slice)
@@ -894,32 +950,6 @@ func setPortalsOnSlice(slice interface{}, collector *PortalCollector) {
 	}
 }
 
-// buildChildPropsScripts generates JSON script tags for child component props.
-func buildChildPropsScripts(slice interface{}) string {
-	val := reflect.ValueOf(slice)
-	if val.Kind() != reflect.Slice {
-		return ""
-	}
-
-	var buf strings.Builder
-	for i := 0; i < val.Len(); i++ {
-		item := val.Index(i).Interface()
-		scopeID := getStringField(item, "ScopeID")
-		if scopeID == "" {
-			continue
-		}
-		jsonBytes, err := json.Marshal(item)
-		if err != nil {
-			continue
-		}
-		buf.WriteString(`<script type="application/json" data-bf-props="`)
-		buf.WriteString(scopeID)
-		buf.WriteString(`">`)
-		buf.Write(jsonBytes)
-		buf.WriteString(`</script>`)
-	}
-	return buf.String()
-}
 
 // findSingleChildComponents finds single struct fields containing child component props.
 // Child props are identified by having ScopeID and Scripts fields.
@@ -989,24 +1019,6 @@ func setPortalsOnSingle(child interface{}, collector *PortalCollector) {
 	}
 }
 
-// buildSingleChildPropsScript generates JSON script tag for a single child component.
-func buildSingleChildPropsScript(child interface{}) string {
-	scopeID := getStringField(child, "ScopeID")
-	if scopeID == "" {
-		return ""
-	}
-	jsonBytes, err := json.Marshal(child)
-	if err != nil {
-		return ""
-	}
-	var buf strings.Builder
-	buf.WriteString(`<script type="application/json" data-bf-props="`)
-	buf.WriteString(scopeID)
-	buf.WriteString(`">`)
-	buf.Write(jsonBytes)
-	buf.WriteString(`</script>`)
-	return buf.String()
-}
 
 // =============================================================================
 // Internal Helpers

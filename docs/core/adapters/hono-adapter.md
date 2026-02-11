@@ -95,12 +95,9 @@ export function Counter({ initial = 0, __instanceId, __bfScope }: CounterPropsWi
   const setCount = () => {}
 
   return (
-    <div data-bf-scope={__scopeId}>
+    <div data-bf-scope={__scopeId} {...(__bfPropsJson ? { "data-bf-props": __bfPropsJson } : {})}>
       <p data-bf="slot_0">{count()}</p>
       <button data-bf="slot_1">+1</button>
-      <script data-bf-props={__scopeId} type="application/json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify({ initial }) }}
-      />
     </div>
   )
 }
@@ -111,7 +108,7 @@ Key aspects of the output:
 - **`data-bf-scope`** on the root element identifies the component boundary
 - **`data-bf="slot_N"`** marks elements that the client JS will target
 - **Signal stubs** (`count = () => initial ?? 0`) allow the template to render the initial value server-side
-- **Props script tag** serializes props as JSON for client-side hydration
+- **`data-bf-props`** attribute serializes props as JSON for client-side hydration
 - **Event handlers are removed** — they exist only in the client JS
 
 

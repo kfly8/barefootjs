@@ -270,8 +270,7 @@ describe('hydrate', () => {
     const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
 
     document.body.innerHTML = `
-      <div data-bf-scope="Counter_abc">content</div>
-      <script type="application/json" data-bf-props="Counter_abc">{"count": 5}</script>
+      <div data-bf-scope="Counter_abc" data-bf-props='{"count": 5}'>content</div>
     `
 
     hydrate('Counter', (props, idx, scope) => {
@@ -324,8 +323,6 @@ describe('hydrate', () => {
     document.body.innerHTML = `
       <div data-bf-scope="Counter_1">first</div>
       <div data-bf-scope="Counter_2">second</div>
-      <script type="application/json" data-bf-props="Counter_1">{}</script>
-      <script type="application/json" data-bf-props="Counter_2">{}</script>
     `
 
     hydrate('Counter', (_, __, scope) => initialized.push(scope))

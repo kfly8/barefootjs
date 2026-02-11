@@ -27,12 +27,6 @@ export type CollectedScript = {
   src: string
 }
 
-export type CollectedPropsScript = {
-  name: string
-  instanceId: string
-  props: Record<string, unknown>
-}
-
 /**
  * Renders all collected BarefootJS script tags.
  * Place this component at the end of your <body> element.
@@ -52,7 +46,6 @@ export function BfScripts() {
     c.set('bfScriptsRendered', true)
 
     const scripts: CollectedScript[] = c.get('bfCollectedScripts') || []
-    const propsScripts: CollectedPropsScript[] = c.get('bfCollectedPropsScripts') || []
 
     // Reverse script order so child components load before parents.
     // During SSR, parent components render first and collect their scripts,
@@ -69,13 +62,6 @@ export function BfScripts() {
       <Fragment>
         {orderedScripts.map(({ src }) => (
           <script type="module" src={src} />
-        ))}
-        {propsScripts.map(({ instanceId, props }) => (
-          <script
-            type="application/json"
-            data-bf-props={instanceId}
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(props) }}
-          />
         ))}
       </Fragment>
     )

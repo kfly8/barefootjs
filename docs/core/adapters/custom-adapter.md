@@ -360,7 +360,7 @@ When building a custom adapter, ensure you handle:
 - [ ] Spread attributes (`{...props}`)
 - [ ] Signal getter stubs for server-side initial values
 - [ ] Nested component scope passing
-- [ ] Props serialization (`<script data-bf-props>` tag) for client hydration
+- [ ] Props serialization (`data-bf-props` attribute) for client hydration
 - [ ] Script registration for client JS loading
 - [ ] `/* @client */` directive (skip client-only expressions server-side)
 
