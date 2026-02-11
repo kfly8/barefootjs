@@ -272,7 +272,7 @@ console.log('Generated: dist/static/globals.css (tokens + globals)')
 // ── 5. Generate UnoCSS ───────────────────────────────────────
 console.log('\nGenerating UnoCSS...')
 const unoProc = Bun.spawn(
-  ['bunx', 'unocss', './components/**/*.tsx', './dist/**/*.tsx', '../shared/components/**/*.tsx', '-o', 'dist/uno.css'],
+  ['bunx', 'unocss', './renderer.tsx', './components/**/*.tsx', './dist/**/*.tsx', '../shared/components/**/*.tsx', '-o', 'dist/uno.css'],
   { cwd: ROOT_DIR, stdout: 'inherit', stderr: 'inherit' }
 )
 await unoProc.exited
