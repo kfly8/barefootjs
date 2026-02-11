@@ -21,6 +21,8 @@ export function formTests(baseUrl: string) {
   test.describe('Form Component', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(`${baseUrl}/form`)
+      // Wait for Form component to be fully hydrated
+      await page.waitForSelector('.form-container[bf-s][bf-h]', { timeout: 10000 })
     })
 
     test('displays form container with title', async ({ page }) => {
