@@ -20,6 +20,30 @@ describe('stripTypeScriptSyntax', () => {
     })
   })
 
+  describe('type assertions (as)', () => {
+    test('strips simple type assertion', () => {
+      expect(stripTypeScriptSyntax('e.target as HTMLElement')).toBe('e.target')
+    })
+
+    test('strips union type assertion', () => {
+      expect(stripTypeScriptSyntax('document.activeElement as HTMLElement | null')).toBe('document.activeElement')
+    })
+
+    test('strips 3+ union type assertion', () => {
+      expect(stripTypeScriptSyntax('value as string | number | null')).toBe('value')
+    })
+
+    test('strips generic + union type assertion', () => {
+      expect(stripTypeScriptSyntax('value as Set<string> | null')).toBe('value')
+    })
+
+    test('strips union type assertion in method call result (issue #308)', () => {
+      expect(
+        stripTypeScriptSyntax('someElement.closest(\'[data-slot="trigger"]\') as HTMLElement | null')
+      ).toBe('someElement.closest(\'[data-slot="trigger"]\')')
+    })
+  })
+
   describe('variable declarations with initializer', () => {
     test('strips type annotation but keeps initializer', () => {
       expect(stripTypeScriptSyntax("let x: string = ''")).toBe("let x = ''")

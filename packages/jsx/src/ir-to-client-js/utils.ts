@@ -131,8 +131,8 @@ export function stripTypeScriptSyntax(code: string): string {
   // Non-null assertions: x! => x (but not !== or !=)
   let result = code.replace(/(\w)!(?!=)/g, '$1')
 
-  // Type assertions: "expr as Type"
-  result = result.replace(/\s+as\s+[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?/g, '')
+  // Type assertions: "expr as Type" or "expr as Type | Type2 | ..."
+  result = result.replace(/\s+as\s+[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?(?:\s*\|\s*[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?)*/g, '')
 
   // Parameter type annotations: (param: Type) => (param)
   // Only match TypeScript types (uppercase initial or type keyword) to avoid matching object properties
