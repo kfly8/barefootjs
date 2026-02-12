@@ -38,8 +38,8 @@ export function getDocsNavLinks(slug: string): {
   if (index === -1) return {}
 
   return {
-    prev: index > 0 ? { href: `/${flat[index - 1].slug}`, title: flat[index - 1].title } : undefined,
-    next: index < flat.length - 1 ? { href: `/${flat[index + 1].slug}`, title: flat[index + 1].title } : undefined,
+    prev: index > 0 ? { href: `/docs/${flat[index - 1].slug}`, title: flat[index - 1].title } : undefined,
+    next: index < flat.length - 1 ? { href: `/docs/${flat[index + 1].slug}`, title: flat[index + 1].title } : undefined,
   }
 }
 

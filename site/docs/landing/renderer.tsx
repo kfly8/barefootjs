@@ -1,26 +1,16 @@
 /**
- * BarefootJS Site Renderer
+ * Landing page renderer
  *
- * Minimal layout for the landing page.
+ * Minimal layout for the landing page (no sidebar, no TOC).
+ * Shares the same import map, theme init, and BfScripts as the docs renderer.
  */
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
-import { Header } from '../shared/components/header'
-import { SearchPlaceholder } from '../shared/components/search-placeholder'
+import { Header } from '../../shared/components/header'
+import { SearchPlaceholder } from '../../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
-
-declare module 'hono' {
-  interface ContextRenderer {
-    (
-      content: string | Promise<string>,
-      props?: {
-        title?: string
-        description?: string
-      }
-    ): Response | Promise<Response>
-  }
-}
-import { BfScripts } from '../../packages/hono/src/scripts'
+import { BfScripts } from '../../../packages/hono/src/scripts'
+import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
 
 /**
  * Predictable instance ID generator for consistent SSR.
@@ -40,8 +30,6 @@ function WithPredictableIds({ children }: { children: any }) {
   return <>{children}</>
 }
 
-import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
-
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
   imports: {
@@ -49,7 +37,7 @@ const importMapScript = JSON.stringify({
   },
 })
 
-export const renderer = jsxRenderer(
+export const landingRenderer = jsxRenderer(
   ({ children, title, description }) => {
     const pageTitle = title || 'Barefoot.js'
     const pageDescription = description || 'Reactive JSX for any backend'

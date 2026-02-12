@@ -1,8 +1,8 @@
 /**
  * Shared Header Component
  *
- * Unified header used across all 3 sites (docs, ui, lp).
- * Layout: [leftSlot] Logo | Docs UI --- [searchSlot] GitHub ThemeSwitcher
+ * Unified header used across all sites (docs, ui, lp).
+ * Layout: [leftSlot] Logo | Core UI --- [searchSlot] GitHub ThemeSwitcher
  *
  * Server component (NOT "use client") — interactive parts are passed via slots.
  */
@@ -10,7 +10,7 @@
 import { Logo, LogoIcon } from './logo'
 
 export interface HeaderProps {
-  activePage?: 'docs' | 'ui'
+  activePage?: 'core' | 'ui'
   searchSlot?: any
   leftSlot?: any
   themeSwitcher?: any
@@ -25,7 +25,7 @@ function GitHubIcon() {
 }
 
 export function Header({ activePage, searchSlot, leftSlot, themeSwitcher }: HeaderProps) {
-  const docsClass = activePage === 'docs'
+  const coreClass = activePage === 'core'
     ? 'relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-foreground'
     : 'px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50'
 
@@ -54,9 +54,9 @@ export function Header({ activePage, searchSlot, leftSlot, themeSwitcher }: Head
 
           {/* Navigation links */}
           <nav className="hidden sm:flex items-center gap-1">
-            <a href="https://docs.barefootjs.dev" className={docsClass}>
-              Docs
-              {activePage === 'docs' && (
+            <a href="https://barefootjs.dev/docs/introduction" className={coreClass}>
+              Core
+              {activePage === 'core' && (
                 <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full" style="background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end))" />
               )}
             </a>

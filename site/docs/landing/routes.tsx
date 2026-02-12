@@ -1,21 +1,25 @@
 /**
- * BarefootJS Site Routes
+ * Landing page routes
  *
- * Landing page route.
+ * Renders the landing page at GET /.
  */
 
 import { Hono } from 'hono'
-import { renderer } from './renderer'
+import { landingRenderer } from './renderer'
+import { initHighlighter } from './components/shared/highlighter'
 import { Hero } from './components/hero'
 import { FiveFeaturesSection, UIComponentsSection } from './components/features'
 
 /**
- * Create the site app with routes.
+ * Create the landing page app with routes.
+ * Initializes the LP-specific highlighter for code demos.
  */
-export function createApp() {
+export async function createLandingApp() {
+  await initHighlighter()
+
   const app = new Hono()
 
-  app.use(renderer)
+  app.use(landingRenderer)
 
   // Landing page
   app.get('/', (c) => {

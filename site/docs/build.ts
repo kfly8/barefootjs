@@ -1,5 +1,5 @@
 /**
- * Build script for the BarefootJS documentation site.
+ * Build script for the BarefootJS site (landing page + documentation).
  *
  * Generates:
  * - dist/content.json (bundled markdown from docs/core/)
@@ -8,9 +8,11 @@
  * - dist/components/barefoot.js (Runtime)
  * - dist/components/manifest.json
  * - dist/uno.css (UnoCSS output)
- * - dist/static/globals.css (tokens.css + globals.css concatenated)
+ * - dist/static/globals.css (tokens.css + globals.css + landing.css concatenated)
  * - dist/static/uno.css
  * - dist/static/components/ (client JS for browser)
+ * - dist/static/logos/ (framework logos for LP)
+ * - dist/static/snippets/ (code snippet files for LP)
  */
 
 import { compileJSX } from '@barefootjs/jsx'
@@ -27,8 +29,9 @@ const DIST_STATIC_DIR = resolve(DIST_DIR, 'static')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 const SHARED_DIR = resolve(ROOT_DIR, '../shared')
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
+const LANDING_COMPONENTS_DIR = resolve(ROOT_DIR, 'landing/components')
 
-console.log('Building BarefootJS documentation...\n')
+console.log('Building BarefootJS site...\n')
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 await mkdir(DIST_STATIC_DIR, { recursive: true })
@@ -135,10 +138,11 @@ const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = 
 
 const adapter = new HonoAdapter({ injectScriptCollection: false })
 
-// Discover components from local and shared dirs
+// Discover components from local, shared, and landing dirs
 const localComponentFiles = await discoverComponentFiles(COMPONENTS_DIR)
 const sharedComponentFiles = await discoverComponentFiles(resolve(SHARED_DIR, 'components'))
-const componentFiles = [...localComponentFiles, ...sharedComponentFiles]
+const landingComponentFiles = await discoverComponentFiles(LANDING_COMPONENTS_DIR)
+const componentFiles = [...localComponentFiles, ...sharedComponentFiles, ...landingComponentFiles]
 
 for (const entryPath of componentFiles) {
   const sourceContent = await Bun.file(entryPath).text()
@@ -164,8 +168,11 @@ for (const entryPath of componentFiles) {
 
   // Determine rootDir based on source location
   const isSharedComponent = entryPath.startsWith(resolve(SHARED_DIR, 'components'))
+  const isLandingComponent = entryPath.startsWith(LANDING_COMPONENTS_DIR)
   const rootDir = isSharedComponent
     ? resolve(SHARED_DIR, 'components')
+    : isLandingComponent
+    ? LANDING_COMPONENTS_DIR
     : COMPONENTS_DIR
 
   const relativePath = relative(rootDir, entryPath)
@@ -261,18 +268,19 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// ── 4. CSS: Concatenate tokens.css + globals.css ──────────────
+// ── 4. CSS: Concatenate tokens.css + globals.css + landing.css ─
 const tokensCSS = await Bun.file(resolve(SHARED_DIR, 'styles/tokens.css')).text()
 const globalsCSS = await Bun.file(resolve(ROOT_DIR, 'styles/globals.css')).text()
-const combinedCSS = tokensCSS + '\n' + globalsCSS
+const landingCSS = await Bun.file(resolve(ROOT_DIR, 'styles/landing.css')).text()
+const combinedCSS = tokensCSS + '\n' + globalsCSS + '\n' + landingCSS
 await Bun.write(resolve(DIST_DIR, 'globals.css'), combinedCSS)
 await Bun.write(resolve(DIST_STATIC_DIR, 'globals.css'), combinedCSS)
-console.log('Generated: dist/static/globals.css (tokens + globals)')
+console.log('Generated: dist/static/globals.css (tokens + globals + landing)')
 
 // ── 5. Generate UnoCSS ───────────────────────────────────────
 console.log('\nGenerating UnoCSS...')
 const unoProc = Bun.spawn(
-  ['bunx', 'unocss', './renderer.tsx', './components/**/*.tsx', './dist/**/*.tsx', '../shared/components/**/*.tsx', '-o', 'dist/uno.css'],
+  ['bunx', 'unocss', './renderer.tsx', './landing/**/*.tsx', './components/**/*.tsx', './dist/**/*.tsx', '../shared/components/**/*.tsx', '-o', 'dist/uno.css'],
   { cwd: ROOT_DIR, stdout: 'inherit', stderr: 'inherit' }
 )
 await unoProc.exited
@@ -296,7 +304,24 @@ if (await Bun.file(icon64).exists()) {
   console.log('Copied: dist/icon-64.png, dist/static/icon-64.png')
 }
 
-// ── 7. Copy components/ to static/components/ ────────────────
+// ── 7. Copy .ts modules from landing/components (non-component modules) ──
+async function copyTsModules(srcDir: string, destDir: string): Promise<void> {
+  const entries = await readdir(srcDir, { withFileTypes: true }).catch(() => [])
+  for (const entry of entries) {
+    const srcPath = join(srcDir, entry.name)
+    const destPath = join(destDir, entry.name)
+    if (entry.isDirectory()) {
+      await mkdir(destPath, { recursive: true })
+      await copyTsModules(srcPath, destPath)
+    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.js')) && !entry.name.endsWith('.d.ts')) {
+      await Bun.write(destPath, Bun.file(srcPath))
+      console.log(`Copied: dist/components/${relative(DIST_COMPONENTS_DIR, destPath)}`)
+    }
+  }
+}
+await copyTsModules(LANDING_COMPONENTS_DIR, DIST_COMPONENTS_DIR)
+
+// ── 8. Copy components/ to static/components/ ────────────────
 async function copyDir(src: string, dest: string) {
   await mkdir(dest, { recursive: true })
   const entries = await readdir(src, { withFileTypes: true }).catch(() => [])
@@ -312,5 +337,33 @@ async function copyDir(src: string, dest: string) {
 }
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
+
+// ── 9. Copy LP assets (snippets + logos) ──────────────────────
+const SNIPPETS_SRC = resolve(ROOT_DIR, 'public/static/snippets')
+const SNIPPETS_DEST = resolve(DIST_STATIC_DIR, 'snippets')
+await mkdir(SNIPPETS_DEST, { recursive: true })
+const snippetFiles = await readdir(SNIPPETS_SRC).catch(() => [] as string[])
+for (const file of snippetFiles) {
+  await Bun.write(resolve(SNIPPETS_DEST, file), Bun.file(resolve(SNIPPETS_SRC, file)))
+}
+if (snippetFiles.length > 0) {
+  console.log(`Copied: dist/static/snippets/ (${snippetFiles.length} files)`)
+}
+
+const LOGOS_SRC = resolve(ROOT_DIR, 'assets/logos')
+const DIST_LOGOS_DIR = resolve(DIST_DIR, 'logos')
+const DIST_STATIC_LOGOS_DIR = resolve(DIST_STATIC_DIR, 'logos')
+await mkdir(DIST_LOGOS_DIR, { recursive: true })
+await mkdir(DIST_STATIC_LOGOS_DIR, { recursive: true })
+const logoFiles = await readdir(LOGOS_SRC).catch(() => [] as string[])
+for (const file of logoFiles) {
+  if (file.endsWith('.svg')) {
+    await Bun.write(resolve(DIST_LOGOS_DIR, file), Bun.file(resolve(LOGOS_SRC, file)))
+    await Bun.write(resolve(DIST_STATIC_LOGOS_DIR, file), Bun.file(resolve(LOGOS_SRC, file)))
+  }
+}
+if (logoFiles.length > 0) {
+  console.log(`Copied: dist/logos/, dist/static/logos/ (${logoFiles.length} files)`)
+}
 
 console.log('\nBuild complete!')

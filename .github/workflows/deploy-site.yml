@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: Deploy Site
 
 on:
   push:
@@ -6,13 +6,14 @@ on:
     paths:
       - 'docs/core/**'
       - 'site/docs/**'
-      - '.github/workflows/deploy-docs.yml'
+      - 'site/shared/**'
+      - '.github/workflows/deploy-site.yml'
 
   # Allow manual trigger
   workflow_dispatch:
 
 concurrency:
-  group: deploy-docs
+  group: deploy-site
   cancel-in-progress: true
 
 jobs:
@@ -33,7 +34,7 @@ jobs:
       - name: Build packages
         run: bun run --filter '@barefootjs/dom' build && bun run --filter '@barefootjs/jsx' build
 
-      - name: Build documentation site
+      - name: Build site
         run: cd site/docs && bun run build
 
       - name: Deploy to Cloudflare Workers

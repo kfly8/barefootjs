@@ -3,7 +3,7 @@ import { defineConfig, presetWind } from 'unocss'
 export default defineConfig({
   presets: [presetWind()],
   safelist: [
-    'hidden', 'sm:block', 'sm:hidden',
+    'hidden', 'sm:block', 'sm:hidden', 'lg:block',
     'border-input', 'border-border',
   ],
   theme: {
@@ -66,11 +66,13 @@ export default defineConfig({
     duration: {
       fast: 'var(--duration-fast)',
       normal: 'var(--duration-normal)',
+      slow: 'var(--duration-slow)',
     },
   },
   content: {
     filesystem: [
       './renderer.tsx',
+      './landing/**/*.tsx',
       './components/**/*.tsx',
       '../shared/components/**/*.tsx',
       './dist/**/*.tsx',
