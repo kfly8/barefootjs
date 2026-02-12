@@ -39,6 +39,10 @@ const importMapScript = JSON.stringify({
 
 export const landingRenderer = jsxRenderer(
   ({ children, title, description }) => {
+    const c = useRequestContext()
+    const hostname = new URL(c.req.url).hostname
+    const uiHref = hostname === 'localhost' ? 'http://localhost:3002/' : 'https://ui.barefootjs.dev'
+
     const pageTitle = title || 'Barefoot.js'
     const pageDescription = description || 'Reactive JSX for any backend'
     return (
@@ -68,7 +72,7 @@ export const landingRenderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
           </head>
           <body>
-            <Header searchSlot={<SearchPlaceholder />} themeSwitcher={<ThemeSwitcher />} />
+            <Header logoHref="/" coreHref="/docs/introduction" uiHref={uiHref} searchSlot={<SearchPlaceholder />} themeSwitcher={<ThemeSwitcher />} />
             <main>
               {children}
             </main>

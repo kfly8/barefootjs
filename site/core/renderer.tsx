@@ -124,6 +124,10 @@ import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const renderer = jsxRenderer(
   ({ children, title, description, meta, slug, toc, prev, next }) => {
+    const c = useRequestContext()
+    const hostname = new URL(c.req.url).hostname
+    const uiHref = hostname === 'localhost' ? 'http://localhost:3002/' : 'https://ui.barefootjs.dev'
+
     const pageTitle = title ? `${title} — BarefootJS` : 'BarefootJS Documentation'
     const currentSlug = slug || ''
 
@@ -155,6 +159,9 @@ export const renderer = jsxRenderer(
 
             <Header
               activePage="core"
+              logoHref="/"
+              coreHref="/docs/introduction"
+              uiHref={uiHref}
               leftSlot={
                 <button id="mobile-menu-toggle" className="hidden max-md:inline-flex p-1 text-foreground" aria-label="Toggle menu">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">

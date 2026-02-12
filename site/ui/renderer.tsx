@@ -116,6 +116,10 @@ export const renderer = jsxRenderer(
   ({ children, title, description }) => {
     const c = useRequestContext()
     const currentPath = c.req.path
+    const hostname = new URL(c.req.url).hostname
+    const logoHref = hostname === 'localhost' ? 'http://localhost:3001/' : 'https://barefootjs.dev'
+    const coreHref = hostname === 'localhost' ? 'http://localhost:3001/docs/introduction' : 'https://barefootjs.dev/docs/introduction'
+
     const pageTitle = title || 'BarefootJS Components'
     return (
       <WithPredictableIds>
@@ -150,7 +154,7 @@ export const renderer = jsxRenderer(
             `}</style>
           </head>
           <body>
-            <Header activePage="ui" searchSlot={<SearchButton />} themeSwitcher={<ThemeSwitcher />} />
+            <Header activePage="ui" logoHref={logoHref} coreHref={coreHref} uiHref="/" searchSlot={<SearchButton />} themeSwitcher={<ThemeSwitcher />} />
             <MobileMenu />
             <MobilePageNav currentPath={currentPath} />
             <CommandPalette />
