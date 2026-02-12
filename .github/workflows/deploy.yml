@@ -19,7 +19,7 @@ on:
         type: choice
         options:
           - all
-          - docs
+          - core
           - ui
 
 concurrency:
@@ -27,9 +27,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy-docs:
+  deploy-core:
     if: >-
-      github.event_name == 'workflow_dispatch' && (github.event.inputs.site == 'all' || github.event.inputs.site == 'docs')
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.site == 'all' || github.event.inputs.site == 'core')
       || github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
