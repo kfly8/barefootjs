@@ -10,7 +10,7 @@
     "ui",
     "site/shared",
     "site/ui",
-    "site/docs"
+    "site/core"
   ],
   "scripts": {
     "setup": "bun install && bun run --filter 'barefootjs-echo-example' setup",
