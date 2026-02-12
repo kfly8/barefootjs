@@ -46,6 +46,9 @@ export type { TemplateAdapter, AdapterOutput, AdapterGenerateOptions } from './a
 // Client JS Generator
 export { generateClientJs } from './ir-to-client-js'
 
+// Client JS Combiner (for build scripts)
+export { combineParentChildClientJs } from './combine-client-js'
+
 // Errors
 export { ErrorCodes, createError, formatError, generateCodeFrame } from './errors'
 
