@@ -6,7 +6,7 @@
 import { serveStatic } from 'hono/bun'
 import { resolve, dirname } from 'node:path'
 import { createApp } from './app'
-import { loadContentFromDisk } from './lib/content'
+import { loadContentFromDisk } from './lib/content-loader'
 
 const CONTENT_DIR = resolve(dirname(import.meta.path), '../../docs/core')
 const { pages, content } = await loadContentFromDisk(CONTENT_DIR)

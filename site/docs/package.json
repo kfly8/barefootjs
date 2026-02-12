@@ -12,6 +12,8 @@
     "@barefootjs/hono": "workspace:*",
     "@barefootjs/site-shared": "workspace:*",
     "hono": "^4",
+    "@shikijs/langs": "^3.21.0",
+    "@shikijs/themes": "^3.21.0",
     "marked": "^15",
     "shiki": "^3.20.0"
   },
