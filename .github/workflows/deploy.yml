@@ -1,0 +1,89 @@
+name: Deploy Sites
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'site/**'
+      - 'ui/**'
+      - 'docs/core/**'
+      - '.github/workflows/deploy.yml'
+
+  # Allow manual trigger with site selection
+  workflow_dispatch:
+    inputs:
+      site:
+        description: 'Site to deploy (leave empty to deploy all)'
+        required: false
+        type: choice
+        options:
+          - all
+          - docs
+          - ui
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-docs:
+    if: >-
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.site == 'all' || github.event.inputs.site == 'docs')
+      || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          bun run --filter '@barefootjs/dom' build
+          bun run --filter '@barefootjs/jsx' build
+
+      - name: Build site
+        run: cd site/docs && bun run build
+
+      - name: Deploy to Cloudflare Workers
+        run: cd site/docs && bunx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  deploy-ui:
+    if: >-
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.site == 'all' || github.event.inputs.site == 'ui')
+      || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          bun run --filter '@barefootjs/dom' build
+          bun run --filter '@barefootjs/jsx' build
+          bun run --filter '@barefootjs/hono' build
+
+      - name: Build site
+        run: cd site/ui && bun run build:worker
+
+      - name: Deploy to Cloudflare Workers
+        run: cd site/ui && bunx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

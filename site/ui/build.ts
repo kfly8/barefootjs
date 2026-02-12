@@ -14,7 +14,7 @@
  * - Files without "use client" are processed for dependency resolution only
  */
 
-import { compileJSX } from '@barefootjs/jsx'
+import { compileJSX, combineParentChildClientJs } from '@barefootjs/jsx'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve, join, relative, basename } from 'node:path'
@@ -292,57 +292,26 @@ for (const entryPath of componentFiles) {
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
 console.log('Generated: dist/components/manifest.json')
 
-// Compute relative path from one file to another
-function computeRelativePath(from: string, to: string): string {
-  // from: "components/checkbox-demo-xxx.js"
-  // to:   "components/ui/checkbox-yyy.js"
-  // result: "./ui/checkbox-yyy.js"
-  const fromDir = dirname(from)
-  const toDir = dirname(to)
-  const toFile = basename(to)
-
-  if (fromDir === toDir) {
-    return `./${toFile}`
-  }
-
-  const rel = relative(fromDir, toDir)
-  return `./${rel}/${toFile}`
-}
-
-// Resolve placeholder imports in client JS files
-async function resolveChildImports(manifestData: typeof manifest): Promise<void> {
-  const placeholderRegex = /import '\/\* @bf-child:(\w+) \*\/'/g
-
-  for (const entry of Object.values(manifestData)) {
+// Combine parent-child client JS into single files
+async function combineClientJs(manifestData: typeof manifest): Promise<void> {
+  const files = new Map<string, string>()
+  for (const [name, entry] of Object.entries(manifestData)) {
     if (!entry.clientJs) continue
+    const filePath = resolve(DIST_DIR, entry.clientJs)
+    files.set(name, await Bun.file(filePath).text())
+  }
 
-    const clientJsPath = entry.clientJs
-    const filePath = resolve(DIST_DIR, clientJsPath)
-    let content = await Bun.file(filePath).text()
-
-    let hasChanges = false
-    content = content.replace(placeholderRegex, (_, childName) => {
-      const childKey = childName.toLowerCase()
-      const childEntry = manifestData[childKey]
-      if (!childEntry?.clientJs) {
-        // No client JS - remove import line entirely
-        hasChanges = true
-        return ''
-      }
-      const relativePath = computeRelativePath(clientJsPath, childEntry.clientJs)
-      hasChanges = true
-      return `import '${relativePath}'`
-    })
-
-    if (hasChanges) {
-      await Bun.write(filePath, content)
-      console.log(`Resolved imports: ${clientJsPath}`)
-    }
+  const combined = combineParentChildClientJs(files)
+  for (const [name, content] of combined) {
+    const entry = manifestData[name]
+    if (!entry?.clientJs) continue
+    await Bun.write(resolve(DIST_DIR, entry.clientJs), content)
+    console.log(`Combined: ${entry.clientJs}`)
   }
 }
 
-// Resolve child component import placeholders
-await resolveChildImports(manifest)
+// Combine parent-child client JS
+await combineClientJs(manifest)
 
 // Generate index.ts for re-exporting all components (handles subdirectories)
 async function collectExports(dir: string, prefix: string = ''): Promise<string[]> {

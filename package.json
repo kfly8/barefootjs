@@ -9,7 +9,6 @@
     "examples/*",
     "ui",
     "site/shared",
-    "site/lp",
     "site/ui",
     "site/docs"
   ],
