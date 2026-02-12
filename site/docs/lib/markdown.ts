@@ -1,10 +1,29 @@
 /**
  * Markdown processing with frontmatter parsing and Shiki syntax highlighting.
+ *
+ * Uses fine-grained bundles and JavaScript RegExp engine for Cloudflare Workers compatibility.
+ * The JavaScript engine avoids WASM which has restrictions in Workers environments.
  */
 
 import { Marked } from 'marked'
-import { createHighlighter, type Highlighter } from 'shiki'
+import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import type { TocItem } from '../../shared/components/table-of-contents'
+
+// Fine-grained theme imports
+import githubLight from '@shikijs/themes/github-light'
+import githubDark from '@shikijs/themes/github-dark'
+
+// Fine-grained language imports
+import langTypescript from '@shikijs/langs/typescript'
+import langJavascript from '@shikijs/langs/javascript'
+import langTsx from '@shikijs/langs/tsx'
+import langJsx from '@shikijs/langs/jsx'
+import langShellscript from '@shikijs/langs/shellscript'
+import langJson from '@shikijs/langs/json'
+import langHtml from '@shikijs/langs/html'
+import langCss from '@shikijs/langs/css'
+import langGo from '@shikijs/langs/go'
 
 export type { TocItem }
 
@@ -21,16 +40,17 @@ export interface ParsedMarkdown {
   toc: TocItem[]
 }
 
-let highlighter: Highlighter | null = null
+let highlighter: HighlighterCore | null = null
 
 export async function initHighlighter(): Promise<void> {
   if (highlighter) return
-  highlighter = await createHighlighter({
-    themes: ['github-light', 'github-dark'],
+  highlighter = await createHighlighterCore({
+    themes: [githubLight, githubDark],
     langs: [
-      'typescript', 'javascript', 'tsx', 'jsx',
-      'bash', 'shell', 'json', 'html', 'css', 'go',
+      langTypescript, langJavascript, langTsx, langJsx,
+      langShellscript, langJson, langHtml, langCss, langGo,
     ],
+    engine: createJavaScriptRegexEngine(),
   })
 }
 

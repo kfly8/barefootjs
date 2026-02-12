@@ -17,7 +17,7 @@ import { compileJSX } from '@barefootjs/jsx'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve, join, relative } from 'node:path'
-import { loadContentFromDisk } from './lib/content'
+import { loadContentFromDisk } from './lib/content-loader'
 
 const ROOT_DIR = dirname(import.meta.path)
 const CONTENT_DIR = resolve(ROOT_DIR, '../../docs/core')
