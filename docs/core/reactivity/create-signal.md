@@ -1,4 +1,4 @@
-# `createSignal`
+# createSignal
 
 Creates a reactive value. Returns a getter/setter pair.
 

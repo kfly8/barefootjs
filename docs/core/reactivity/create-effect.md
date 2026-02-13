@@ -1,4 +1,4 @@
-# `createEffect`
+# createEffect
 
 Runs a function immediately and re-runs it whenever any signal read inside it changes.
 
