@@ -1,4 +1,4 @@
-# `untrack`
+# untrack
 
 Executes a function without tracking signal dependencies. Signal reads inside the function do not register the current effect as a subscriber.
 

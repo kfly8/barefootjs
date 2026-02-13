@@ -1,4 +1,4 @@
-# `onMount`
+# onMount
 
 Runs once when the component initializes. Signal accesses inside are **not** tracked.
 

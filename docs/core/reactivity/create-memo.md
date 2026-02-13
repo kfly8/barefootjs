@@ -1,4 +1,4 @@
-# `createMemo`
+# createMemo
 
 Creates a cached derived value. Recomputes only when its dependencies change.
 
