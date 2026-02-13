@@ -18,37 +18,13 @@ import type { Page, ContentMap } from './lib/content'
  * @param content - Map of slug → raw markdown content
  * @param pages   - List of page metadata (slug, name)
  */
-export async function createApp(content: ContentMap, pages: Page[]): Promise<Hono> {
+export async function createDocsApp(content: ContentMap, pages: Page[]): Promise<Hono> {
   await initHighlighter()
 
   const app = new Hono()
   app.use(renderer)
 
-  // Index page (README.md)
-  const indexContent = content['']
-  if (indexContent !== undefined) {
-    app.get('/', async (c) => {
-      const parsed = await renderMarkdown(indexContent)
-      const navLinks = getDocsNavLinks('')
-      return c.render(
-        <div dangerouslySetInnerHTML={{ __html: parsed.html }} />,
-        {
-          title: parsed.frontmatter.title || 'Documentation',
-          description: parsed.frontmatter.description,
-          slug: '',
-          toc: parsed.toc,
-          prev: navLinks.prev,
-          next: navLinks.next,
-        }
-      )
-    })
-    app.get('/README.md', (c) => {
-      c.header('Content-Type', 'text/markdown; charset=utf-8')
-      return c.body(indexContent)
-    })
-  }
-
-  // All other pages: HTML version + raw Markdown version
+  // All pages: HTML version + raw Markdown version
   for (const page of pages.filter((p) => p.slug !== '')) {
     const pageContent = content[page.slug]
     if (pageContent === undefined) continue

@@ -1,18 +1,20 @@
 {
   "name": "barefootjs-site",
   "version": "0.0.1",
+  "private": true,
   "scripts": {
-    "build": "bun run build.ts",
     "dev": "bun run --watch server.tsx",
+    "build": "bun run build.ts",
     "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
     "@barefootjs/dom": "workspace:*",
     "@barefootjs/hono": "workspace:*",
     "@barefootjs/site-shared": "workspace:*",
+    "hono": "^4",
     "@shikijs/langs": "^3.21.0",
     "@shikijs/themes": "^3.21.0",
-    "hono": "^4",
+    "marked": "^15",
     "shiki": "^3.20.0"
   },
   "devDependencies": {

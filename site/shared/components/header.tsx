@@ -1,8 +1,8 @@
 /**
  * Shared Header Component
  *
- * Unified header used across all 3 sites (docs, ui, lp).
- * Layout: [leftSlot] Logo | Docs UI --- [searchSlot] GitHub ThemeSwitcher
+ * Unified header used across all sites (docs, ui, lp).
+ * Layout: [leftSlot] Logo | Core UI --- [searchSlot] GitHub ThemeSwitcher
  *
  * Server component (NOT "use client") — interactive parts are passed via slots.
  */
@@ -10,7 +10,10 @@
 import { Logo, LogoIcon } from './logo'
 
 export interface HeaderProps {
-  activePage?: 'docs' | 'ui'
+  activePage?: 'core' | 'ui'
+  logoHref?: string
+  coreHref?: string
+  uiHref?: string
   searchSlot?: any
   leftSlot?: any
   themeSwitcher?: any
@@ -24,8 +27,16 @@ function GitHubIcon() {
   )
 }
 
-export function Header({ activePage, searchSlot, leftSlot, themeSwitcher }: HeaderProps) {
-  const docsClass = activePage === 'docs'
+export function Header({
+  activePage,
+  logoHref = 'https://barefootjs.dev',
+  coreHref = 'https://barefootjs.dev/docs/introduction',
+  uiHref = 'https://ui.barefootjs.dev',
+  searchSlot,
+  leftSlot,
+  themeSwitcher,
+}: HeaderProps) {
+  const coreClass = activePage === 'core'
     ? 'relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-foreground'
     : 'px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline text-muted-foreground hover:text-foreground hover:bg-accent/50'
 
@@ -42,7 +53,7 @@ export function Header({ activePage, searchSlot, leftSlot, themeSwitcher }: Head
 
           {/* Logo: full on sm+, icon on mobile */}
           <a
-            href="https://barefootjs.dev"
+            href={logoHref}
             className="text-foreground transition-colors no-underline"
           >
             <span className="hidden sm:inline"><Logo /></span>
@@ -54,13 +65,13 @@ export function Header({ activePage, searchSlot, leftSlot, themeSwitcher }: Head
 
           {/* Navigation links */}
           <nav className="hidden sm:flex items-center gap-1">
-            <a href="https://docs.barefootjs.dev" className={docsClass}>
-              Docs
-              {activePage === 'docs' && (
+            <a href={coreHref} className={coreClass}>
+              Core
+              {activePage === 'core' && (
                 <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full" style="background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end))" />
               )}
             </a>
-            <a href="https://ui.barefootjs.dev" className={uiClass}>
+            <a href={uiHref} className={uiClass}>
               UI
               {activePage === 'ui' && (
                 <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full" style="background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end))" />

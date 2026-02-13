@@ -133,7 +133,7 @@ function createMarked(): Marked {
         if (resolvedHref.startsWith('./') || resolvedHref.startsWith('../') || (!resolvedHref.startsWith('http') && resolvedHref.endsWith('.md'))) {
           resolvedHref = resolvedHref.replace(/\.md$/, '')
           if (resolvedHref.startsWith('./')) {
-            resolvedHref = resolvedHref.slice(1)
+            resolvedHref = '/docs' + resolvedHref.slice(1)
           }
         }
 

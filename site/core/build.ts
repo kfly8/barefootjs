@@ -1,27 +1,64 @@
 /**
- * BarefootJS Site build script
+ * Build script for the BarefootJS site (landing page + documentation).
  *
  * Generates:
- * - dist/globals.css (copied)
+ * - dist/content.json (bundled markdown from docs/core/)
+ * - dist/components/{Component}.tsx (Marked Template)
+ * - dist/components/{Component}-{hash}.js (Client JS)
+ * - dist/components/barefoot.js (Runtime)
+ * - dist/components/manifest.json
  * - dist/uno.css (UnoCSS output)
- * - dist/static/ (for Cloudflare Workers)
- * - dist/components/barefoot.js (runtime)
- * - dist/components/{Component}-{hash}.js (client JS for interactive components)
+ * - dist/static/globals.css (tokens.css + globals.css + landing.css concatenated)
+ * - dist/static/uno.css
+ * - dist/static/components/ (client JS for browser)
+ * - dist/static/logos/ (framework logos for LP)
+ * - dist/static/snippets/ (code snippet files for LP)
  */
 
 import { compileJSX } from '@barefootjs/jsx'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve, join, relative } from 'node:path'
+import { loadContentFromDisk } from './lib/content-loader'
 
 const ROOT_DIR = dirname(import.meta.path)
+const CONTENT_DIR = resolve(ROOT_DIR, '../../docs/core')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
+const DIST_STATIC_DIR = resolve(DIST_DIR, 'static')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
+const SHARED_DIR = resolve(ROOT_DIR, '../shared')
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
-const SHARED_COMPONENTS_DIR = resolve(ROOT_DIR, '../shared/components')
+const LANDING_COMPONENTS_DIR = resolve(ROOT_DIR, 'landing/components')
 
-// File type helpers
+console.log('Building BarefootJS site...\n')
+
+await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
+await mkdir(DIST_STATIC_DIR, { recursive: true })
+
+// ── 1. Bundle markdown content ────────────────────────────────
+const { pages, content } = await loadContentFromDisk(CONTENT_DIR)
+await Bun.write(resolve(DIST_DIR, 'content.json'), JSON.stringify(content))
+console.log(`Bundled: ${pages.length} pages → dist/content.json`)
+
+// ── 2. Build and copy barefoot.js runtime ─────────────────────
+const barefootFileName = 'barefoot.js'
+const domDistFile = resolve(DOM_PKG_DIR, 'dist/index.js')
+
+if (!await Bun.file(domDistFile).exists()) {
+  console.log('Building @barefootjs/dom...')
+  const proc = Bun.spawn(['bun', 'run', 'build'], { cwd: DOM_PKG_DIR })
+  await proc.exited
+}
+
+await Bun.write(
+  resolve(DIST_COMPONENTS_DIR, barefootFileName),
+  Bun.file(domDistFile)
+)
+console.log(`Generated: dist/components/${barefootFileName}`)
+
+// ── 3. Compile "use client" components ────────────────────────
+
 function hasUseClientDirective(content: string): boolean {
   let trimmed = content.trimStart()
   while (trimmed.startsWith('/*')) {
@@ -37,19 +74,15 @@ function hasUseClientDirective(content: string): boolean {
   return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
 }
 
-// Generate short hash from content
 function generateHash(content: string): string {
   const hash = Bun.hash(content)
   return hash.toString(16).slice(0, 8)
 }
 
-// Add script collection wrapper to SSR component
 function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
   const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\n"
   const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
-  if (!importMatch) {
-    return content
-  }
+  if (!importMatch) return content
 
   const beforeImports = importMatch[1]
   const existingImports = importMatch[2]
@@ -84,7 +117,6 @@ function addScriptCollection(content: string, componentId: string, clientJsPath:
   return beforeImports + existingImports + importStatement + modifiedRest
 }
 
-// Recursively discover component files
 async function discoverComponentFiles(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
   const files: string[] = []
@@ -99,73 +131,49 @@ async function discoverComponentFiles(dir: string): Promise<string[]> {
   return files
 }
 
-await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
-
-// Build and copy barefoot.js from @barefootjs/dom
-const barefootFileName = 'barefoot.js'
-const domDistFile = resolve(DOM_PKG_DIR, 'dist/index.js')
-
-if (!await Bun.file(domDistFile).exists()) {
-  console.log('Building @barefootjs/dom...')
-  const proc = Bun.spawn(['bun', 'run', 'build'], { cwd: DOM_PKG_DIR })
-  await proc.exited
-}
-
-await Bun.write(
-  resolve(DIST_COMPONENTS_DIR, barefootFileName),
-  Bun.file(domDistFile)
-)
-console.log(`Generated: dist/components/${barefootFileName}`)
-
 // Manifest
 const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = {
   '__barefoot__': { markedTemplate: '', clientJs: `components/${barefootFileName}` }
 }
 
-// Create HonoAdapter
-const adapter = new HonoAdapter({
-  injectScriptCollection: false,
-})
+const adapter = new HonoAdapter({ injectScriptCollection: false })
 
-// Compile client components from local and shared dirs
+// Discover components from local, shared, and landing dirs
 const localComponentFiles = await discoverComponentFiles(COMPONENTS_DIR)
-const sharedComponentFiles = await discoverComponentFiles(SHARED_COMPONENTS_DIR)
-const componentFiles = [...localComponentFiles, ...sharedComponentFiles]
+const sharedComponentFiles = await discoverComponentFiles(resolve(SHARED_DIR, 'components'))
+const landingComponentFiles = await discoverComponentFiles(LANDING_COMPONENTS_DIR)
+const componentFiles = [...localComponentFiles, ...sharedComponentFiles, ...landingComponentFiles]
 
 for (const entryPath of componentFiles) {
   const sourceContent = await Bun.file(entryPath).text()
-  if (!hasUseClientDirective(sourceContent)) {
-    continue
-  }
+  if (!hasUseClientDirective(sourceContent)) continue
 
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
   }, { adapter })
 
-  // Separate errors and warnings
   const errors = result.errors.filter(e => e.severity === 'error')
   const warnings = result.errors.filter(e => e.severity === 'warning')
 
-  // Show warnings but continue
   if (warnings.length > 0) {
     console.warn(`Warnings compiling ${entryPath}:`)
-    for (const warning of warnings) {
-      console.warn(`  ${warning.message}`)
-    }
+    for (const warning of warnings) console.warn(`  ${warning.message}`)
   }
 
-  // Only skip on actual errors
   if (errors.length > 0) {
     console.error(`Errors compiling ${entryPath}:`)
-    for (const error of errors) {
-      console.error(`  ${error.message}`)
-    }
+    for (const error of errors) console.error(`  ${error.message}`)
     continue
   }
 
   // Determine rootDir based on source location
-  const isSharedComponent = entryPath.startsWith(SHARED_COMPONENTS_DIR)
-  const rootDir = isSharedComponent ? SHARED_COMPONENTS_DIR : COMPONENTS_DIR
+  const isSharedComponent = entryPath.startsWith(resolve(SHARED_DIR, 'components'))
+  const isLandingComponent = entryPath.startsWith(LANDING_COMPONENTS_DIR)
+  const rootDir = isSharedComponent
+    ? resolve(SHARED_DIR, 'components')
+    : isLandingComponent
+    ? LANDING_COMPONENTS_DIR
+    : COMPONENTS_DIR
 
   const relativePath = relative(rootDir, entryPath)
   const dirPath = dirname(relativePath)
@@ -179,11 +187,8 @@ for (const entryPath of componentFiles) {
   let clientJsContent = ''
 
   for (const file of result.files) {
-    if (file.type === 'markedTemplate') {
-      markedJsxContent = file.content
-    } else if (file.type === 'clientJs') {
-      clientJsContent = file.content
-    }
+    if (file.type === 'markedTemplate') markedJsxContent = file.content
+    else if (file.type === 'clientJs') clientJsContent = file.content
   }
 
   if (!markedJsxContent && !clientJsContent) {
@@ -206,13 +211,7 @@ for (const entryPath of componentFiles) {
   const clientJsFilename = `${baseNameNoExt}-${hash}.js`
 
   if (hasClientJs) {
-    // Check if client JS references imports from external modules and add them
-    let processedClientJs = clientJsContent
-    if (entryPath.includes('code-demo') && clientJsContent.includes('HONO_OUTPUT') && clientJsContent.includes('ECHO_OUTPUT')) {
-      // Add import for code-examples
-      processedClientJs = `import { HONO_OUTPUT, ECHO_OUTPUT } from './code-examples.js'\n` + processedClientJs
-    }
-    await Bun.write(resolve(outputDir, clientJsFilename), processedClientJs)
+    await Bun.write(resolve(outputDir, clientJsFilename), clientJsContent)
     const clientJsRelativePath = dirPath === '.' ? clientJsFilename : `${dirPath}/${clientJsFilename}`
     console.log(`Generated: dist/components/${clientJsRelativePath}`)
   }
@@ -238,23 +237,6 @@ for (const entryPath of componentFiles) {
     clientJs: clientJsPath,
   }
 }
-
-// Copy .ts files (non-component modules) that may be imported by client components
-async function copyTsModules(srcDir: string, destDir: string): Promise<void> {
-  const entries = await readdir(srcDir, { withFileTypes: true }).catch(() => [])
-  for (const entry of entries) {
-    const srcPath = join(srcDir, entry.name)
-    const destPath = join(destDir, entry.name)
-    if (entry.isDirectory()) {
-      await mkdir(destPath, { recursive: true })
-      await copyTsModules(srcPath, destPath)
-    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.js')) && !entry.name.endsWith('.d.ts')) {
-      await Bun.write(destPath, Bun.file(srcPath))
-      console.log(`Copied: dist/components/${relative(DIST_COMPONENTS_DIR, destPath)}`)
-    }
-  }
-}
-await copyTsModules(COMPONENTS_DIR, DIST_COMPONENTS_DIR)
 
 // Output manifest
 await Bun.write(resolve(DIST_COMPONENTS_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
@@ -286,40 +268,29 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// Concatenate tokens.css + globals.css to dist
-const STYLES_DIR = resolve(ROOT_DIR, 'styles')
-const SHARED_STYLES_DIR = resolve(ROOT_DIR, '../shared/styles')
-const tokensCSS = await Bun.file(resolve(SHARED_STYLES_DIR, 'tokens.css')).text()
-const siteGlobalsCSS = await Bun.file(resolve(STYLES_DIR, 'globals.css')).text()
-await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + siteGlobalsCSS)
-console.log('Generated: dist/globals.css (tokens + globals)')
+// ── 4. CSS: Concatenate tokens.css + globals.css + landing.css ─
+const tokensCSS = await Bun.file(resolve(SHARED_DIR, 'styles/tokens.css')).text()
+const globalsCSS = await Bun.file(resolve(ROOT_DIR, 'styles/globals.css')).text()
+const landingCSS = await Bun.file(resolve(ROOT_DIR, 'styles/landing.css')).text()
+const combinedCSS = tokensCSS + '\n' + globalsCSS + '\n' + landingCSS
+await Bun.write(resolve(DIST_DIR, 'globals.css'), combinedCSS)
+await Bun.write(resolve(DIST_STATIC_DIR, 'globals.css'), combinedCSS)
+console.log('Generated: dist/static/globals.css (tokens + globals + landing)')
 
-// Generate UnoCSS
+// ── 5. Generate UnoCSS ───────────────────────────────────────
 console.log('\nGenerating UnoCSS...')
-const unoProc = Bun.spawn(['bunx', 'unocss', './**/*.tsx', './dist/**/*.tsx', '-o', 'dist/uno.css'], {
-  cwd: ROOT_DIR,
-  stdout: 'inherit',
-  stderr: 'inherit',
-})
+const unoProc = Bun.spawn(
+  ['bunx', 'unocss', './renderer.tsx', './landing/**/*.tsx', './components/**/*.tsx', './dist/**/*.tsx', '../shared/components/**/*.tsx', '-o', 'dist/uno.css'],
+  { cwd: ROOT_DIR, stdout: 'inherit', stderr: 'inherit' }
+)
 await unoProc.exited
-console.log('Generated: dist/uno.css')
-
-// Create dist/static/ directory for Cloudflare Workers compatibility
-const DIST_STATIC_DIR = resolve(DIST_DIR, 'static')
-await mkdir(DIST_STATIC_DIR, { recursive: true })
-
-// Copy CSS files to static/
-await Bun.write(resolve(DIST_STATIC_DIR, 'globals.css'), Bun.file(resolve(DIST_DIR, 'globals.css')))
 await Bun.write(resolve(DIST_STATIC_DIR, 'uno.css'), Bun.file(resolve(DIST_DIR, 'uno.css')))
-console.log('Copied: dist/static/globals.css')
-console.log('Copied: dist/static/uno.css')
+console.log('Generated: dist/static/uno.css')
 
-// Copy icon and logo files
-const IMAGES_DIR = resolve(ROOT_DIR, '../images/logo')
+// ── 6. Copy icon files ───────────────────────────────────────
+const IMAGES_DIR = resolve(ROOT_DIR, '../../images/logo')
 const icon32 = resolve(IMAGES_DIR, 'icon-32.png')
 const icon64 = resolve(IMAGES_DIR, 'icon-64.png')
-const logoLight = resolve(IMAGES_DIR, 'logo-for-light.svg')
-const logoDark = resolve(IMAGES_DIR, 'logo-for-dark.svg')
 
 if (await Bun.file(icon32).exists()) {
   await Bun.write(resolve(DIST_DIR, 'icon-32.png'), Bun.file(icon32))
@@ -332,18 +303,25 @@ if (await Bun.file(icon64).exists()) {
   await Bun.write(resolve(DIST_STATIC_DIR, 'icon-64.png'), Bun.file(icon64))
   console.log('Copied: dist/icon-64.png, dist/static/icon-64.png')
 }
-if (await Bun.file(logoLight).exists()) {
-  await Bun.write(resolve(DIST_DIR, 'logo-for-light.svg'), Bun.file(logoLight))
-  await Bun.write(resolve(DIST_STATIC_DIR, 'logo-for-light.svg'), Bun.file(logoLight))
-  console.log('Copied: dist/logo-for-light.svg, dist/static/logo-for-light.svg')
-}
-if (await Bun.file(logoDark).exists()) {
-  await Bun.write(resolve(DIST_DIR, 'logo-for-dark.svg'), Bun.file(logoDark))
-  await Bun.write(resolve(DIST_STATIC_DIR, 'logo-for-dark.svg'), Bun.file(logoDark))
-  console.log('Copied: dist/logo-for-dark.svg, dist/static/logo-for-dark.svg')
-}
 
-// Copy components/ to static/components/
+// ── 7. Copy .ts modules from landing/components (non-component modules) ──
+async function copyTsModules(srcDir: string, destDir: string): Promise<void> {
+  const entries = await readdir(srcDir, { withFileTypes: true }).catch(() => [])
+  for (const entry of entries) {
+    const srcPath = join(srcDir, entry.name)
+    const destPath = join(destDir, entry.name)
+    if (entry.isDirectory()) {
+      await mkdir(destPath, { recursive: true })
+      await copyTsModules(srcPath, destPath)
+    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.js')) && !entry.name.endsWith('.d.ts')) {
+      await Bun.write(destPath, Bun.file(srcPath))
+      console.log(`Copied: dist/components/${relative(DIST_COMPONENTS_DIR, destPath)}`)
+    }
+  }
+}
+await copyTsModules(LANDING_COMPONENTS_DIR, DIST_COMPONENTS_DIR)
+
+// ── 8. Copy components/ to static/components/ ────────────────
 async function copyDir(src: string, dest: string) {
   await mkdir(dest, { recursive: true })
   const entries = await readdir(src, { withFileTypes: true }).catch(() => [])
@@ -360,11 +338,11 @@ async function copyDir(src: string, dest: string) {
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
 
-// Copy snippets to dist/static/snippets/
+// ── 9. Copy LP assets (snippets + logos) ──────────────────────
 const SNIPPETS_SRC = resolve(ROOT_DIR, 'public/static/snippets')
 const SNIPPETS_DEST = resolve(DIST_STATIC_DIR, 'snippets')
 await mkdir(SNIPPETS_DEST, { recursive: true })
-const snippetFiles = await readdir(SNIPPETS_SRC).catch(() => [])
+const snippetFiles = await readdir(SNIPPETS_SRC).catch(() => [] as string[])
 for (const file of snippetFiles) {
   await Bun.write(resolve(SNIPPETS_DEST, file), Bun.file(resolve(SNIPPETS_SRC, file)))
 }
@@ -372,17 +350,16 @@ if (snippetFiles.length > 0) {
   console.log(`Copied: dist/static/snippets/ (${snippetFiles.length} files)`)
 }
 
-// Copy framework logos (both to dist/logos/ and dist/static/logos/)
-const LOGOS_DIR = resolve(ROOT_DIR, 'assets/logos')
+const LOGOS_SRC = resolve(ROOT_DIR, 'assets/logos')
 const DIST_LOGOS_DIR = resolve(DIST_DIR, 'logos')
 const DIST_STATIC_LOGOS_DIR = resolve(DIST_STATIC_DIR, 'logos')
 await mkdir(DIST_LOGOS_DIR, { recursive: true })
 await mkdir(DIST_STATIC_LOGOS_DIR, { recursive: true })
-const logoFiles = await readdir(LOGOS_DIR).catch(() => [])
+const logoFiles = await readdir(LOGOS_SRC).catch(() => [] as string[])
 for (const file of logoFiles) {
   if (file.endsWith('.svg')) {
-    await Bun.write(resolve(DIST_LOGOS_DIR, file), Bun.file(resolve(LOGOS_DIR, file)))
-    await Bun.write(resolve(DIST_STATIC_LOGOS_DIR, file), Bun.file(resolve(LOGOS_DIR, file)))
+    await Bun.write(resolve(DIST_LOGOS_DIR, file), Bun.file(resolve(LOGOS_SRC, file)))
+    await Bun.write(resolve(DIST_STATIC_LOGOS_DIR, file), Bun.file(resolve(LOGOS_SRC, file)))
   }
 }
 if (logoFiles.length > 0) {

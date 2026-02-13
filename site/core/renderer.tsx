@@ -79,12 +79,12 @@ const importMapScript = JSON.stringify({
 function navToSidebarEntries(items: NavItem[]): SidebarEntry[] {
   return items.map((item): SidebarEntry => {
     if (!item.children || item.children.length === 0) {
-      return { title: item.title, href: `/${item.slug}` } satisfies SidebarLink
+      return { title: item.title, href: `/docs/${item.slug}` } satisfies SidebarLink
     }
-    const parentLink: SidebarLink = { title: item.title, href: `/${item.slug}` }
+    const parentLink: SidebarLink = { title: item.title, href: `/docs/${item.slug}` }
     const childLinks: SidebarLink[] = item.children.map(child => ({
       title: child.title,
-      href: `/${child.slug}`,
+      href: `/docs/${child.slug}`,
     }))
     return {
       title: item.title,
@@ -95,7 +95,7 @@ function navToSidebarEntries(items: NavItem[]): SidebarEntry[] {
 
 function Sidebar({ currentSlug }: { currentSlug: string }) {
   const entries = navToSidebarEntries(navigation)
-  const currentPath = currentSlug === '' ? '/' : `/${currentSlug}`
+  const currentPath = currentSlug === '' ? '/docs' : `/docs/${currentSlug}`
 
   return (
     <aside id="sidebar" class="sidebar">
@@ -107,7 +107,7 @@ function Sidebar({ currentSlug }: { currentSlug: string }) {
 }
 
 function MdToggleButton({ slug }: { slug: string }) {
-  const mdPath = slug === '' ? '/README.md' : `/${slug}.md`
+  const mdPath = slug === '' ? '/docs/README.md' : `/docs/${slug}.md`
   return (
     <a href={mdPath} class="md-toggle-btn" title="View as Markdown">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -124,6 +124,10 @@ import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const renderer = jsxRenderer(
   ({ children, title, description, meta, slug, toc, prev, next }) => {
+    const c = useRequestContext()
+    const hostname = new URL(c.req.url).hostname
+    const uiHref = hostname === 'localhost' ? 'http://localhost:3002/' : 'https://ui.barefootjs.dev'
+
     const pageTitle = title ? `${title} — BarefootJS` : 'BarefootJS Documentation'
     const currentSlug = slug || ''
 
@@ -154,7 +158,10 @@ export const renderer = jsxRenderer(
             <div id="sidebar-overlay" class="sidebar-overlay" />
 
             <Header
-              activePage="docs"
+              activePage="core"
+              logoHref="/"
+              coreHref="/docs/introduction"
+              uiHref={uiHref}
               leftSlot={
                 <button id="mobile-menu-toggle" className="hidden max-md:inline-flex p-1 text-foreground" aria-label="Toggle menu">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">

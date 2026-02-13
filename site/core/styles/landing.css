@@ -1,92 +1,10 @@
-/**
- * BarefootJS Site - Monochrome Theme
+/* BarefootJS Landing Page — landing.css
+ *
+ * LP-specific styles. Base tokens and resets come from tokens.css + globals.css.
  */
 
-:root {
-  /* LP-specific overrides (fonts and base tokens come from shared tokens.css) */
-  --radius: 0.5rem;
+/* ── Gradient text ────────────────────────────────────────── */
 
-  /* Light theme - monochrome */
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
-
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
-
-  /* Monochrome primary */
-  --primary: oklch(0.25 0 0);
-  --primary-foreground: oklch(0.99 0 0);
-
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.25 0 0);
-
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-
-  --accent: oklch(0.92 0 0);
-  --accent-foreground: oklch(0.20 0 0);
-
-  --border: oklch(0.90 0 0);
-  --ring: oklch(0.25 0 0);
-
-  /* Gradient - emerald/yellow-green (brand accent) */
-  --gradient-start: oklch(0.65 0.18 145);
-  --gradient-end: oklch(0.55 0.15 165);
-
-  /* Code block */
-  --code-bg: oklch(0.96 0 0);
-}
-
-.dark {
-  --background: oklch(0.10 0 0);
-  --foreground: oklch(0.95 0 0);
-
-  --card: oklch(0.14 0 0);
-  --card-foreground: oklch(0.95 0 0);
-
-  --primary: oklch(0.95 0 0);
-  --primary-foreground: oklch(0.10 0 0);
-
-  --secondary: oklch(0.18 0 0);
-  --secondary-foreground: oklch(0.90 0 0);
-
-  --muted: oklch(0.20 0 0);
-  --muted-foreground: oklch(0.60 0 0);
-
-  --accent: oklch(0.22 0 0);
-  --accent-foreground: oklch(0.95 0 0);
-
-  --border: oklch(0.25 0 0);
-  --ring: oklch(0.95 0 0);
-
-  --gradient-start: oklch(0.70 0.18 145);
-  --gradient-end: oklch(0.60 0.15 165);
-
-  --code-bg: oklch(0.14 0 0);
-}
-
-/* Base */
-*, ::before, ::after {
-  box-sizing: border-box;
-  border-width: 0;
-  border-style: solid;
-  border-color: var(--border);
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  font-family: var(--font-sans);
-  background-color: var(--background);
-  color: var(--foreground);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  margin: 0;
-  min-height: 100vh;
-}
-
-/* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
   -webkit-background-clip: text;
@@ -94,8 +12,7 @@ body {
   background-clip: text;
 }
 
-/* Buttons */
-a { text-decoration: none; }
+/* ── Buttons ──────────────────────────────────────────────── */
 
 .btn-primary {
   display: inline-flex;
@@ -109,6 +26,7 @@ a { text-decoration: none; }
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius);
   transition: opacity 0.15s ease;
+  text-decoration: none;
 }
 
 .btn-primary:hover { opacity: 0.8; }
@@ -126,6 +44,7 @@ a { text-decoration: none; }
   border-radius: var(--radius);
   border: 1px solid var(--border);
   transition: all 0.15s ease;
+  text-decoration: none;
 }
 
 .btn-secondary:hover {
@@ -133,7 +52,8 @@ a { text-decoration: none; }
   border-color: var(--muted-foreground);
 }
 
-/* Tabs */
+/* ── Tabs ─────────────────────────────────────────────────── */
+
 .tab-btn {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -155,7 +75,8 @@ a { text-decoration: none; }
   border-bottom-color: var(--primary);
 }
 
-/* Code block */
+/* ── Code block ───────────────────────────────────────────── */
+
 .code-block {
   background: var(--code-bg);
   border: 1px solid var(--border);
@@ -182,7 +103,8 @@ a { text-decoration: none; }
   color: var(--foreground);
 }
 
-/* Framework display */
+/* ── Framework display ────────────────────────────────────── */
+
 .framework-display {
   display: inline-flex;
   align-items: center;
@@ -199,7 +121,8 @@ a { text-decoration: none; }
   min-width: 180px;
 }
 
-/* Animation */
+/* ── Animation ────────────────────────────────────────────── */
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -210,29 +133,8 @@ a { text-decoration: none; }
 .fade-in-2 { animation: fadeIn 0.5s ease-out 0.2s forwards; opacity: 0; }
 .fade-in-3 { animation: fadeIn 0.5s ease-out 0.3s forwards; opacity: 0; }
 
-/* Reset */
-button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-}
+/* ── Code Demo - Interactive Before/After ─────────────────── */
 
-code, kbd, samp, pre { font-family: var(--font-mono); }
-
-/* Theme transition */
-html.theme-transition * {
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Code Demo - Interactive Before/After */
 .code-demo {
   --demo-bg: #0d1117;
   --demo-header: #161b22;
@@ -410,7 +312,7 @@ html.theme-transition * {
   font-family: var(--font-mono);
 }
 
-/* Shiki dual theme support - apply CSS variables to color */
+/* Shiki dual theme support */
 .shiki span {
   color: var(--shiki-light);
 }
@@ -424,7 +326,8 @@ html.dark .shiki span {
   color: var(--shiki-dark);
 }
 
-/* Resizer Handle */
+/* ── Resizer Handle ───────────────────────────────────────── */
+
 .resizer {
   width: 1px;
   background: var(--demo-border);
@@ -450,7 +353,8 @@ html.dark .shiki span {
   margin: 0;
 }
 
-/* Features Section */
+/* ── Features Section ─────────────────────────────────────── */
+
 .feature-section {
   padding: 2rem;
   background: var(--card);
@@ -458,7 +362,8 @@ html.dark .shiki span {
   border-radius: var(--radius);
 }
 
-/* Benchmark Chart */
+/* ── Benchmark Chart ──────────────────────────────────────── */
+
 .benchmark-chart {
   background: var(--code-bg);
   padding: 1.5rem;
@@ -507,7 +412,8 @@ html.dark .shiki span {
   min-width: 2.5rem;
 }
 
-/* UI Component Previews */
+/* ── UI Component Previews ────────────────────────────────── */
+
 .ui-preview-container {
   display: flex;
   flex-direction: column;
@@ -752,7 +658,8 @@ html.dark .shiki span {
   background: oklch(0.3 0.08 70);
 }
 
-/* Reactivity Diagram */
+/* ── Reactivity Diagram ───────────────────────────────────── */
+
 .reactivity-diagram {
   padding: 1.5rem;
   background: var(--code-bg);
@@ -836,7 +743,8 @@ html.dark .shiki span {
   border-radius: 9999px;
 }
 
-/* Practical Example Cards */
+/* ── Example Cards ────────────────────────────────────────── */
+
 .example-card {
   background: var(--card);
   border: 1px solid var(--border);

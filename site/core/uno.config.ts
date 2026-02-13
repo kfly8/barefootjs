@@ -14,10 +14,6 @@ export default defineConfig({
         DEFAULT: 'var(--card)',
         foreground: 'var(--card-foreground)',
       },
-      popover: {
-        DEFAULT: 'var(--popover)',
-        foreground: 'var(--popover-foreground)',
-      },
       primary: {
         DEFAULT: 'var(--primary)',
         foreground: 'var(--primary-foreground)',
@@ -72,20 +68,14 @@ export default defineConfig({
       normal: 'var(--duration-normal)',
       slow: 'var(--duration-slow)',
     },
-    easing: {
-      DEFAULT: 'var(--ease-default)',
-      in: 'var(--ease-in)',
-      out: 'var(--ease-out)',
-      'in-out': 'var(--ease-in-out)',
-    },
   },
   content: {
     filesystem: [
-      './*.tsx',
+      './renderer.tsx',
+      './landing/**/*.tsx',
       './components/**/*.tsx',
       '../shared/components/**/*.tsx',
       './dist/**/*.tsx',
     ],
   },
-
 })

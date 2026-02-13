@@ -190,7 +190,7 @@ export async function Hero() {
           </p>
           <div className="fade-in-2 flex flex-wrap gap-3">
             <a
-              href="https://github.com/kfly8/barefootjs#quick-start"
+              href="/docs/introduction"
               className="btn-primary"
             >
               Get Started
