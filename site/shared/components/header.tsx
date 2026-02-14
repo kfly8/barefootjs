@@ -7,7 +7,7 @@
  * Server component (NOT "use client") — interactive parts are passed via slots.
  */
 
-import { Logo, LogoIcon } from './logo'
+import { Logo } from './logo'
 
 export interface HeaderProps {
   activePage?: 'core' | 'ui'
@@ -51,13 +51,12 @@ export function Header({
         <div className="flex items-center gap-3 sm:gap-6">
           {leftSlot}
 
-          {/* Logo: full on sm+, icon on mobile */}
+          {/* Logo */}
           <a
             href={logoHref}
             className="text-foreground transition-colors no-underline"
           >
-            <span className="hidden sm:inline"><Logo /></span>
-            <span className="sm:hidden"><LogoIcon /></span>
+            <Logo />
           </a>
 
           {/* Navigation separator */}
