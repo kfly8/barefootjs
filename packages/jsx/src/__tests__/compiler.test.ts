@@ -583,6 +583,125 @@ describe('Compiler', () => {
       // Should NOT convert grouped expression to arrow function stub
       expect(clientJs?.content).not.toContain('const result = () => {}')
     })
+
+    test('does not default conditional-guard props to {} in client JS', () => {
+      // Regression: optional object props used as conditional guards (e.g. {prev && <a href={prev.href}>})
+      // must NOT be defaulted to {} because {} is truthy — the conditional would always render.
+      // When the prop is undefined (omitted by JSON.stringify during hydration), it must stay falsy.
+      const source = `
+        'use client'
+
+        interface NavLink {
+          href: string
+          title: string
+        }
+        interface Props {
+          prev?: NavLink
+          next?: NavLink
+        }
+
+        export function PageNav({ prev, next }: Props) {
+          return (
+            <div>
+              {prev && <a href={prev.href}>{prev.title}</a>}
+              {next && <a href={next.href}>{next.title}</a>}
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'PageNav.tsx', { adapter })
+      const errors = result.errors.filter(e => e.severity === 'error')
+
+      expect(errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Props used as conditional guards should NOT get ?? {} default
+      expect(content).toContain('const prev = props.prev\n')
+      expect(content).toContain('const next = props.next\n')
+      expect(content).not.toContain('props.prev ?? {}')
+      expect(content).not.toContain('props.next ?? {}')
+    })
+
+    test('defers dynamic text evaluation inside conditional branches', () => {
+      // Regression: when a dynamic text expression (e.g. prev.title) is only inside
+      // a conditional branch, expression evaluation must happen after the element
+      // existence check. Otherwise prev.title throws TypeError when prev is undefined.
+      const source = `
+        'use client'
+
+        interface NavLink {
+          href: string
+          title: string
+        }
+        interface Props {
+          prev?: NavLink
+        }
+
+        export function NavButton({ prev }: Props) {
+          return (
+            <div>
+              {prev && <a href={prev.href}><span>{prev.title}</span></a>}
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'NavButton.tsx', { adapter })
+      const errors = result.errors.filter(e => e.severity === 'error')
+
+      expect(errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // The expression should be inlined inside the element check, not evaluated before it.
+      // Pattern: if (__el_XX) __el_XX.textContent = String(prev.title)
+      // NOT:     const __val = prev.title  (which would throw when prev is undefined)
+      expect(content).toMatch(/if \(__el_\w+\) __el_\w+\.textContent = String\(prev\.title\)/)
+      expect(content).not.toMatch(/const __val = prev\.title/)
+    })
+
+    test('still defaults props with property access to {} when not used as conditional guard', () => {
+      // Ensure the ?? {} default is preserved for destructured props that have
+      // property access but are NOT used as conditional guards.
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface Config { theme: string }
+        interface Props {
+          config: Config
+        }
+
+        export function ThemedBox({ config }: Props) {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <div>
+              <button onClick={() => setOpen(!open())}>toggle</button>
+              {open() && <span>{config.theme}</span>}
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'ThemedBox.tsx', { adapter })
+      const errors = result.errors.filter(e => e.severity === 'error')
+
+      expect(errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // config is accessed with dot notation but NOT used as a conditional guard
+      // (the guard is open()), so it should still get ?? {} to prevent TypeError.
+      expect(content).toContain('props.config ?? {}')
+    })
   })
 
   describe('import optimization', () => {
