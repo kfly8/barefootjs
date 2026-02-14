@@ -351,15 +351,14 @@ test.describe('Switch Documentation Page', () => {
 })
 
 test.describe('Home Page - Switch Link', () => {
-  test('displays Switch component link', async ({ page }) => {
+  test('displays Switch preview card', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/switch"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/switch"] h2')).toContainText('Switch')
+    await expect(page.locator('#components a[href="/docs/components/switch"]')).toBeVisible()
   })
 
   test('navigates to Switch page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/components/switch"]')
+    await page.locator('#components a[href="/docs/components/switch"]').click()
     await expect(page).toHaveURL('/docs/components/switch')
     await expect(page.locator('h1')).toContainText('Switch')
   })
