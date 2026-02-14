@@ -268,7 +268,9 @@ test.describe('Select Documentation Page', () => {
       // Select JST from Asia group
       await trigger.click()
       const content = page.locator('[data-slot="select-content"][data-state="open"]')
-      await content.locator('[data-slot="select-item"]').filter({ hasText: 'Japan Standard Time' }).click()
+      const jstItem = content.locator('[data-slot="select-item"]').filter({ hasText: 'Japan Standard Time' })
+      await jstItem.scrollIntoViewIfNeeded()
+      await jstItem.click()
 
       await expect(valueText).toContainText('jst')
       await expect(trigger.locator('[data-slot="select-value"]')).toContainText('Japan Standard Time')
