@@ -40,6 +40,20 @@ export function emitPropsExtraction(
   propsWithPropertyAccess: Set<string>,
   propsUsedAsLoopArrays: Set<string>
 ): void {
+  // Props used as conditional guards must remain falsy when undefined,
+  // so we must NOT default them to {} (which is truthy).
+  const propsUsedAsConditions = new Set<string>()
+  for (const cond of ctx.conditionalElements) {
+    if (neededProps.has(cond.condition)) {
+      propsUsedAsConditions.add(cond.condition)
+    }
+  }
+  for (const cond of ctx.clientOnlyConditionals) {
+    if (neededProps.has(cond.condition)) {
+      propsUsedAsConditions.add(cond.condition)
+    }
+  }
+
   if (neededProps.size > 0 && !ctx.propsObjectName) {
     for (const propName of neededProps) {
       const prop = ctx.propsParams.find((p) => p.name === propName)
@@ -48,7 +62,7 @@ export function emitPropsExtraction(
         lines.push(`  const ${propName} = props.${propName} ?? ${defaultVal}`)
       } else if (propsUsedAsLoopArrays.has(propName)) {
         lines.push(`  const ${propName} = props.${propName} ?? []`)
-      } else if (propsWithPropertyAccess.has(propName)) {
+      } else if (propsWithPropertyAccess.has(propName) && !propsUsedAsConditions.has(propName)) {
         lines.push(`  const ${propName} = props.${propName} ?? {}`)
       } else if (prop?.optional && prop?.type) {
         const inferredDefault = inferDefaultValue(prop.type)
@@ -197,13 +211,24 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
 
     if (normalElems.length > 0 || conditionalElems.length > 0) {
       lines.push(`  createEffect(() => {`)
-      lines.push(`    const __val = ${expr}`)
-      for (const elem of normalElems) {
-        lines.push(`    if (_${elem.slotId}) _${elem.slotId}.textContent = String(__val)`)
-      }
-      for (const elem of conditionalElems) {
-        lines.push(`    const __el_${elem.slotId} = $(__scope, '${elem.slotId}')`)
-        lines.push(`    if (__el_${elem.slotId}) __el_${elem.slotId}.textContent = String(__val)`)
+      if (normalElems.length > 0) {
+        // Expression is always evaluated for non-conditional elements
+        lines.push(`    const __val = ${expr}`)
+        for (const elem of normalElems) {
+          lines.push(`    if (_${elem.slotId}) _${elem.slotId}.textContent = String(__val)`)
+        }
+        for (const elem of conditionalElems) {
+          lines.push(`    const __el_${elem.slotId} = $(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${elem.slotId}) __el_${elem.slotId}.textContent = String(__val)`)
+        }
+      } else {
+        // Only conditional elements — defer expression evaluation until
+        // after the element existence check to avoid TypeError when the
+        // parent prop is undefined (e.g. prev?.title when prev is undefined).
+        for (const elem of conditionalElems) {
+          lines.push(`    const __el_${elem.slotId} = $(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${elem.slotId}) __el_${elem.slotId}.textContent = String(${expr})`)
+        }
       }
       lines.push(`  })`)
       lines.push('')
