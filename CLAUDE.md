@@ -26,3 +26,9 @@ Adapters: HonoAdapter (`packages/hono/`), GoTemplateAdapter (`packages/go-templa
 ## Specs
 
 - `spec/compiler.md` — Compiler spec: pipeline architecture, IR schema, transformation rules, adapter interface, error codes
+
+## Git Commit (Claude Code Web)
+
+When `CLAUDE_CODE_ENTRYPOINT=remote`, append `Co-authored-by` to every commit.
+
+Before the first commit, run `git log --format='%an <%ae>' | grep -v '^Claude ' | sort -u` and let the user pick via `AskUserQuestion`. Remember the choice for the session.
