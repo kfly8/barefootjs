@@ -3,8 +3,8 @@
 /**
  * Input Component
  *
- * A styled text input component with error state support.
- * Inspired by shadcn/ui with CSS variable theming support.
+ * A styled text input component following shadcn/ui design.
+ * Accepts all native input attributes via ...props spread.
  *
  * @example Basic usage
  * ```tsx
@@ -14,11 +14,6 @@
  * @example With value binding
  * ```tsx
  * <Input value={name} onInput={(e) => setName(e.target.value)} />
- * ```
- *
- * @example With error state
- * ```tsx
- * <Input error describedBy="error-message" />
  * ```
  */
 
@@ -34,94 +29,19 @@ const focusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50 focus
 const errorClasses = 'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
 
 /**
- * Props for the Input component.
+ * Input component following shadcn/ui design.
+ * Accepts all native input attributes.
  */
-interface InputProps extends Pick<InputHTMLAttributes, 'onInput' | 'onChange' | 'onBlur' | 'onFocus'> {
-  /**
-   * Additional CSS class names.
-   */
-  className?: string
-  /**
-   * Input type attribute (text, email, password, etc.).
-   * @default 'text'
-   */
-  type?: string
-  /**
-   * Placeholder text shown when input is empty.
-   * @default ''
-   */
-  placeholder?: string
-  /**
-   * Current value of the input.
-   * @default ''
-   */
-  value?: string
-  /**
-   * Whether the input is disabled.
-   * @default false
-   */
-  disabled?: boolean
-  /**
-   * Whether the input is read-only.
-   * @default false
-   */
-  readOnly?: boolean
-  /**
-   * Whether the input is in an error state.
-   * @default false
-   */
-  error?: boolean
-  /**
-   * ID of the element that describes this input (for accessibility).
-   */
-  describedBy?: string
-}
-
-/**
- * Input component with error state support.
- *
- * @param props.type - Input type attribute
- * @param props.placeholder - Placeholder text
- * @param props.value - Current value
- * @param props.disabled - Whether disabled
- * @param props.readOnly - Whether read-only
- * @param props.error - Whether in error state
- * @param props.describedBy - ID of describing element for accessibility
- */
-function Input({
-  className = '',
-  type = 'text',
-  placeholder = '',
-  value = '',
-  disabled = false,
-  readOnly = false,
-  error = false,
-  describedBy,
-  onInput = () => {},
-  onChange = () => {},
-  onBlur = () => {},
-  onFocus = () => {},
-}: InputProps) {
-  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${className}`
-
+function Input({ className = '', type, ...props }: InputHTMLAttributes) {
   return (
     <input
-      data-slot="input"
       type={type}
-      className={classes}
-      placeholder={placeholder}
-      value={value}
-      disabled={disabled}
-      readonly={readOnly}
-      aria-invalid={error || undefined}
-      {...(describedBy ? { 'aria-describedby': describedBy } : {})}
-      onInput={onInput}
-      onChange={onChange}
-      onBlur={onBlur}
-      onFocus={onFocus}
+      data-slot="input"
+      className={`${baseClasses} ${focusClasses} ${errorClasses} ${className}`}
+      {...props}
     />
   )
 }
 
 export { Input }
-export type { InputProps }
+export type { InputHTMLAttributes as InputProps }

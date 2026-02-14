@@ -17,9 +17,9 @@ export function BasicControlledDemo() {
   return (
     <div className="space-y-2">
       <Input
-        inputValue={text()}
+        value={text()}
         onInput={(e) => setText(e.target.value)}
-        inputPlaceholder="Type something..."
+        placeholder="Type something..."
       />
       <p className="text-sm text-muted-foreground">
         Current value: <span className="current-value font-medium text-foreground">{text()}</span>
@@ -39,9 +39,9 @@ export function CharacterCountDemo() {
   return (
     <div className="space-y-2">
       <Input
-        inputValue={text()}
+        value={text()}
         onInput={(e) => setText(e.target.value)}
-        inputPlaceholder="Type to see character count..."
+        placeholder="Type to see character count..."
       />
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">
@@ -66,9 +66,9 @@ export function LivePreviewDemo() {
   return (
     <div className="space-y-4">
       <Input
-        inputValue={text()}
+        value={text()}
         onInput={(e) => setText(e.target.value)}
-        inputPlaceholder="Type to see live preview..."
+        placeholder="Type to see live preview..."
       />
       <div className="p-3 bg-muted rounded-md space-y-2">
         <p className="text-sm text-muted-foreground">
@@ -93,17 +93,17 @@ export function MultiInputSyncDemo() {
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Input A</label>
         <Input
-          inputValue={text()}
+          value={text()}
           onInput={(e) => setText(e.target.value)}
-          inputPlaceholder="Type here..."
+          placeholder="Type here..."
         />
       </div>
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Input B (synced)</label>
         <Input
-          inputValue={text()}
+          value={text()}
           onInput={(e) => setText(e.target.value)}
-          inputPlaceholder="Or type here..."
+          placeholder="Or type here..."
         />
       </div>
       <p className="text-sm text-muted-foreground">

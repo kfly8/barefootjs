@@ -17,9 +17,9 @@ export function InputBindingDemo() {
   return (
     <div className="space-y-2">
       <Input
-        inputValue={value()}
+        value={value()}
         onInput={(e) => setValue(e.target.value)}
-        inputPlaceholder="Type something..."
+        placeholder="Type something..."
       />
       <p className="text-sm text-muted-foreground">You typed: <span className="typed-value font-medium">{value()}</span></p>
     </div>
@@ -34,7 +34,7 @@ export function InputFocusDemo() {
   return (
     <div className="space-y-2">
       <Input
-        inputPlaceholder="Focus me..."
+        placeholder="Focus me..."
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       />
