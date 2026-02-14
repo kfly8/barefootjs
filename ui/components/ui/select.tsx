@@ -257,11 +257,15 @@ function SelectContent(props: SelectContentProps) {
 
     const ctx = useContext(SelectContext)
 
-    // Position content relative to trigger
+    // Position content relative to trigger, clamped to viewport
     const updatePosition = () => {
       if (!triggerEl) return
       const rect = triggerEl.getBoundingClientRect()
-      el.style.top = `${rect.bottom + 4}px`
+      const gap = 4
+      const top = rect.bottom + gap
+      const availableHeight = window.innerHeight - top - gap
+      el.style.top = `${top}px`
+      el.style.setProperty('--radix-select-content-available-height', `${availableHeight}px`)
       // At least as wide as trigger, but can expand for longer items
       el.style.minWidth = `${rect.width}px`
       if (props.align === 'end') {
