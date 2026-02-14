@@ -84,12 +84,6 @@ html.theme-transition *::after {
   z-index: 90;
 }
 
-/* ── Sidebar Overlay (mobile) ──────────────────────────────── */
-
-.sidebar-overlay {
-  display: none;
-}
-
 /* ── Markdown Toggle Button ────────────────────────────────── */
 
 .md-toggle-btn {
@@ -329,33 +323,13 @@ html.dark .shiki span {
 
 /* ── Responsive ────────────────────────────────────────────── */
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    background: var(--background);
-    z-index: 200;
-  }
-
-  .sidebar.sidebar-open {
-    transform: translateX(0);
-  }
-
-  .sidebar-overlay.overlay-visible {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 150;
-  }
-
-  .mobile-menu-toggle {
-    display: inline-flex;
+    display: none;
   }
 
   .main-content {
     margin-left: 0;
     padding: 5rem 0.3rem 3rem; /* matches UI site mobile spacing */
   }
-
 }
