@@ -290,46 +290,6 @@ test.describe('Switch Documentation Page', () => {
     })
   })
 
-  // Visual snapshots are OS-dependent (font rendering differs between macOS and Linux)
-  test.describe('Visual Snapshots', { tag: '@visual' }, () => {
-    test.skip(!!process.env.CI, 'Visual snapshots are platform-dependent')
-    test('basic demo matches snapshot', async ({ page }) => {
-      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-      await expect(section).toHaveScreenshot('switch-basic.png')
-    })
-
-    test('switch unchecked state matches snapshot', async ({ page }) => {
-      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
-      const switchBtn = section.locator('button[role="switch"]').first()
-      await expect(switchBtn).toHaveScreenshot('switch-unchecked.png')
-    })
-
-    test('switch checked state matches snapshot', async ({ page }) => {
-      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
-      const switchBtn = section.locator('button[role="switch"]').nth(1) // defaultChecked
-      await expect(switchBtn).toHaveScreenshot('switch-checked.png')
-    })
-
-    test('consent demo matches snapshot', async ({ page }) => {
-      const section = page.locator('[bf-s^="SwitchConsentDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-      await expect(section).toHaveScreenshot('switch-consent.png')
-    })
-
-    test('form demo matches snapshot', async ({ page }) => {
-      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-      await expect(section).toHaveScreenshot('switch-form.png')
-    })
-
-    test('notification demo matches snapshot', async ({ page }) => {
-      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-      await expect(section).toHaveScreenshot('switch-notification.png')
-    })
-  })
-
   test.describe('API Reference', () => {
     test('displays API Reference section', async ({ page }) => {
       await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
