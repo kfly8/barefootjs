@@ -16,6 +16,12 @@
       "description": "A button component with variants and sizes"
     },
     {
+      "name": "textarea",
+      "type": "registry:ui",
+      "title": "Textarea",
+      "description": "A multi-line text input field with error state support"
+    },
+    {
       "name": "tooltip",
       "type": "registry:ui",
       "title": "Tooltip",
