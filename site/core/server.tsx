@@ -24,9 +24,11 @@ server.use('/static/*', serveStatic({
 const app = await createApp(content, pages)
 server.route('/', app)
 
+const port = Number(process.env.PORT) || 3001
+
 export default {
-  port: 3001,
+  port,
   fetch: server.fetch,
 }
 
-console.log('Site running at http://localhost:3001')
+console.log(`Site running at http://localhost:${port}`)
