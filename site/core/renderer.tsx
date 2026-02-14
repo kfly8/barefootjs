@@ -110,6 +110,7 @@ import { Header } from '../shared/components/header'
 import { SearchPlaceholder } from '../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 import { MobileMenu } from '@/components/mobile-menu'
+import { MobilePageNav } from './components/mobile-page-nav'
 
 export const renderer = jsxRenderer(
   ({ children, title, description, meta, slug, toc, prev, next }) => {
@@ -154,6 +155,7 @@ export const renderer = jsxRenderer(
             />
 
             <MobileMenu />
+            <MobilePageNav prev={prev} next={next} />
             <Sidebar currentSlug={currentSlug} />
 
             <main class="main-content">
