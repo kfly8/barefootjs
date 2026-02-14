@@ -290,7 +290,9 @@ test.describe('Switch Documentation Page', () => {
     })
   })
 
-  test.describe('Visual Snapshots', () => {
+  // Visual snapshots are OS-dependent (font rendering differs between macOS and Linux)
+  test.describe('Visual Snapshots', { tag: '@visual' }, () => {
+    test.skip(!!process.env.CI, 'Visual snapshots are platform-dependent')
     test('basic demo matches snapshot', async ({ page }) => {
       const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
       await expect(section).toBeVisible()
