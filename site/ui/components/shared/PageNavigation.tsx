@@ -20,6 +20,7 @@ export const componentOrder = [
   { slug: 'select', title: 'Select' },
   { slug: 'switch', title: 'Switch' },
   { slug: 'tabs', title: 'Tabs' },
+  { slug: 'textarea', title: 'Textarea' },
   { slug: 'toast', title: 'Toast' },
   { slug: 'tooltip', title: 'Tooltip' },
 ]

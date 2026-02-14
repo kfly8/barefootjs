@@ -59,7 +59,10 @@ export function emitPropsExtraction(
       const prop = ctx.propsParams.find((p) => p.name === propName)
       const defaultVal = prop?.defaultValue
       if (defaultVal) {
-        lines.push(`  const ${propName} = props.${propName} ?? ${defaultVal}`)
+        // Wrap arrow function defaults in parentheses to avoid operator precedence issues
+        // e.g., `props.onInput ?? () => {}` is a syntax error; must be `props.onInput ?? (() => {})`
+        const wrappedDefault = defaultVal.includes('=>') ? `(${defaultVal})` : defaultVal
+        lines.push(`  const ${propName} = props.${propName} ?? ${wrappedDefault}`)
       } else if (propsUsedAsLoopArrays.has(propName)) {
         lines.push(`  const ${propName} = props.${propName} ?? []`)
       } else if (propsWithPropertyAccess.has(propName) && !propsUsedAsConditions.has(propName)) {
