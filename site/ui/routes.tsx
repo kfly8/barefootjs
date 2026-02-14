@@ -14,6 +14,7 @@ import { ButtonPage } from './pages/button'
 import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
 import { InputPage } from './pages/input'
+import { LabelPage } from './pages/label'
 import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
@@ -189,6 +190,11 @@ export function createApp() {
   // Input documentation
   app.get('/docs/components/input', (c) => {
     return c.render(<InputPage />)
+  })
+
+  // Label documentation
+  app.get('/docs/components/label', (c) => {
+    return c.render(<LabelPage />)
   })
 
   // Switch documentation
