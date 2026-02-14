@@ -11,6 +11,7 @@ import {
   TooltipLeftDemo,
   TooltipDelayDemo,
   TooltipNoDelayDemo,
+  TooltipIconDemo,
 } from '@/components/tooltip-demo'
 import {
   DocPage,
@@ -28,191 +29,142 @@ import { getNavLinks } from '../components/shared/PageNavigation'
 // Table of contents items
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
-  { id: 'features', title: 'Features' },
   { id: 'examples', title: 'Examples' },
   { id: 'basic', title: 'Basic', branch: 'start' },
   { id: 'button-focus', title: 'Button Focus', branch: 'child' },
+  { id: 'icon-buttons', title: 'Icon Buttons', branch: 'child' },
   { id: 'placement', title: 'Placement', branch: 'child' },
   { id: 'delay', title: 'Delay', branch: 'end' },
-  { id: 'accessibility', title: 'Accessibility' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
 // Code examples
-const basicCode = `"use client"
+const previewCode = `import { Tooltip } from "@/components/ui/tooltip"
 
-import { createSignal } from '@barefootjs/dom'
-import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+<Tooltip content="This is a tooltip">
+  <span className="underline decoration-dotted cursor-help">
+    Hover me
+  </span>
+</Tooltip>`
 
-function TooltipBasic() {
-  const [open, setOpen] = createSignal(false)
+const basicCode = `import { Tooltip } from "@/components/ui/tooltip"
 
+export function TooltipBasicDemo() {
   return (
-    <div className="relative inline-block">
-      <TooltipTrigger
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        ariaDescribedby="tooltip-basic"
-      >
-        <span className="underline decoration-dotted cursor-help">
-          Hover me
-        </span>
-      </TooltipTrigger>
-      <TooltipContent open={open()} id="tooltip-basic">
-        This is a tooltip
-      </TooltipContent>
-    </div>
+    <Tooltip content="This is a tooltip" id="tooltip-basic">
+      <span className="underline decoration-dotted cursor-help">
+        Hover me
+      </span>
+    </Tooltip>
   )
 }`
 
-const buttonCode = `"use client"
+const buttonCode = `import { Tooltip } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
 
-import { createSignal } from '@barefootjs/dom'
-import { Button } from '@/components/ui/button'
-import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-
-function TooltipButton() {
-  const [open, setOpen] = createSignal(false)
-
+export function TooltipButtonDemo() {
   return (
-    <div className="relative inline-block">
-      <TooltipTrigger
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
-        ariaDescribedby="tooltip-button"
-      >
-        <Button variant="outline">
-          Hover or Focus
+    <Tooltip content="Keyboard accessible tooltip" id="tooltip-button">
+      <Button>Hover or Focus</Button>
+    </Tooltip>
+  )
+}`
+
+const iconCode = `import { Tooltip } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
+
+export function TooltipIconDemo() {
+  return (
+    <div className="flex items-center gap-2">
+      <Tooltip content="Bold" id="tooltip-icon-bold">
+        <Button variant="outline" size="icon">
+          <span className="font-bold">B</span>
         </Button>
-      </TooltipTrigger>
-      <TooltipContent open={open()} id="tooltip-button">
-        Keyboard accessible tooltip
-      </TooltipContent>
+      </Tooltip>
+      <Tooltip content="Italic" id="tooltip-icon-italic">
+        <Button variant="outline" size="icon">
+          <span className="italic">I</span>
+        </Button>
+      </Tooltip>
+      <Tooltip content="Underline" id="tooltip-icon-underline">
+        <Button variant="outline" size="icon">
+          <span className="underline">U</span>
+        </Button>
+      </Tooltip>
     </div>
   )
 }`
 
-const placementCode = `"use client"
+const placementCode = `import { Tooltip } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
 
-import { createSignal } from '@barefootjs/dom'
-import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-
-function TooltipPlacement() {
-  const [open, setOpen] = createSignal(false)
-
+export function TooltipPlacementDemo() {
   return (
-    <div className="relative inline-block">
-      <TooltipTrigger
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-      >
-        <span>Hover me</span>
-      </TooltipTrigger>
-      {/* Top placement (default) */}
-      <TooltipContent open={open()}>Top</TooltipContent>
-      {/* Right placement */}
-      <TooltipContent placement="right" open={open()}>Right</TooltipContent>
-      {/* Bottom placement */}
-      <TooltipContent placement="bottom" open={open()}>Bottom</TooltipContent>
-      {/* Left placement */}
-      <TooltipContent placement="left" open={open()}>Left</TooltipContent>
+    <div className="flex flex-wrap gap-4">
+      <Tooltip content="Top placement" placement="top">
+        <Button variant="outline">Top</Button>
+      </Tooltip>
+      <Tooltip content="Right placement" placement="right">
+        <Button variant="outline">Right</Button>
+      </Tooltip>
+      <Tooltip content="Bottom placement" placement="bottom">
+        <Button variant="outline">Bottom</Button>
+      </Tooltip>
+      <Tooltip content="Left placement" placement="left">
+        <Button variant="outline">Left</Button>
+      </Tooltip>
     </div>
   )
 }`
 
-const delayCode = `"use client"
+const delayCode = `import { Tooltip } from "@/components/ui/tooltip"
 
-import { createSignal } from '@barefootjs/dom'
-import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-
-function TooltipDelay() {
-  const [open, setOpen] = createSignal(false)
-
+export function TooltipDelayDemo() {
   return (
-    <div className="relative inline-block">
-      {/* With 700ms delay (default) */}
-      <TooltipTrigger
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        delayDuration={700}
-      >
-        <span>Default delay (700ms)</span>
-      </TooltipTrigger>
-      <TooltipContent open={open()}>Delayed tooltip</TooltipContent>
-
-      {/* No delay (immediate) */}
-      <TooltipTrigger
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        delayDuration={0}
-      >
-        <span>No delay</span>
-      </TooltipTrigger>
-      <TooltipContent open={open()}>Immediate tooltip</TooltipContent>
+    <div className="flex flex-wrap gap-8">
+      <Tooltip content="This tooltip has a 700ms delay" delayDuration={700}>
+        <span className="underline decoration-dotted cursor-help">
+          Hover me (700ms delay)
+        </span>
+      </Tooltip>
+      <Tooltip content="This tooltip appears immediately" delayDuration={0}>
+        <span className="underline decoration-dotted cursor-help">
+          Hover me (no delay)
+        </span>
+      </Tooltip>
     </div>
   )
 }`
 
-// Props definitions
-const tooltipTriggerProps: PropDefinition[] = [
+// Props definition
+const tooltipProps: PropDefinition[] = [
   {
-    name: 'onMouseEnter',
-    type: '() => void',
-    description: 'Event handler called when mouse enters the trigger.',
-  },
-  {
-    name: 'onMouseLeave',
-    type: '() => void',
-    description: 'Event handler called when mouse leaves the trigger.',
-  },
-  {
-    name: 'onFocus',
-    type: '() => void',
-    description: 'Event handler called when the trigger receives focus.',
-  },
-  {
-    name: 'onBlur',
-    type: '() => void',
-    description: 'Event handler called when the trigger loses focus.',
-  },
-  {
-    name: 'ariaDescribedby',
+    name: 'content',
     type: 'string',
-    description: 'ID of the tooltip element for accessibility.',
+    description: 'The text content displayed in the tooltip.',
+  },
+  {
+    name: 'placement',
+    type: "'top' | 'right' | 'bottom' | 'left'",
+    defaultValue: "'top'",
+    description: 'Position of the tooltip relative to the trigger element.',
   },
   {
     name: 'delayDuration',
     type: 'number',
-    defaultValue: '700',
-    description: 'Delay in ms before showing tooltip on hover.',
+    defaultValue: '0',
+    description: 'Delay in milliseconds before showing the tooltip on hover.',
   },
   {
     name: 'closeDelay',
     type: 'number',
     defaultValue: '0',
-    description: 'Delay in ms before hiding tooltip after mouse leave.',
-  },
-]
-
-const tooltipContentProps: PropDefinition[] = [
-  {
-    name: 'placement',
-    type: "'top' | 'right' | 'bottom' | 'left'",
-    defaultValue: "'top'",
-    description: 'Position of the tooltip relative to the trigger.',
-  },
-  {
-    name: 'open',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the tooltip is visible.',
+    description: 'Delay in milliseconds before hiding the tooltip after mouse leave.',
   },
   {
     name: 'id',
     type: 'string',
-    description: 'ID for aria-describedby reference.',
+    description: 'ID for aria-describedby accessibility linking.',
   },
 ]
 
@@ -229,7 +181,7 @@ export function TooltipPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<TooltipContent open={open()}>...</TooltipContent>`}>
+        <Example title="" code={previewCode}>
           <div className="flex gap-4">
             <TooltipBasicDemo />
           </div>
@@ -238,17 +190,6 @@ export function TooltipPage() {
         {/* Installation */}
         <Section id="installation" title="Installation">
           <PackageManagerTabs command="barefoot add tooltip" highlightedCommands={installCommands} />
-        </Section>
-
-        {/* Features */}
-        <Section id="features" title="Features">
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong className="text-foreground">Hover trigger</strong> - Shows tooltip on mouse enter, hides on mouse leave</li>
-            <li><strong className="text-foreground">Focus trigger</strong> - Shows tooltip on focus for keyboard accessibility</li>
-            <li><strong className="text-foreground">Placement options</strong> - Top, right, bottom, or left positioning</li>
-            <li><strong className="text-foreground">Arrow indicator</strong> - Visual arrow pointing to the trigger</li>
-            <li><strong className="text-foreground">Accessibility</strong> - role="tooltip", aria-describedby for screen readers</li>
-          </ul>
         </Section>
 
         {/* Examples */}
@@ -260,6 +201,10 @@ export function TooltipPage() {
 
             <Example title="Button Focus" code={buttonCode}>
               <TooltipButtonDemo />
+            </Example>
+
+            <Example title="Icon Buttons" code={iconCode}>
+              <TooltipIconDemo />
             </Example>
 
             <Example title="Placement" code={placementCode}>
@@ -280,32 +225,9 @@ export function TooltipPage() {
           </div>
         </Section>
 
-        {/* Accessibility */}
-        <Section id="accessibility" title="Accessibility">
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-            <li><strong className="text-foreground">Keyboard Support</strong> - Tooltip shows on focus for keyboard users</li>
-            <li><strong className="text-foreground">ARIA</strong> - role="tooltip" on content, aria-describedby on trigger links to tooltip</li>
-            <li><strong className="text-foreground">Screen Readers</strong> - Tooltip content is announced when trigger receives focus</li>
-            <li><strong className="text-foreground">Delay</strong> - Configurable delay prevents tooltips from appearing during quick mouse movements</li>
-            <li><strong className="text-foreground">Visual Indicator</strong> - Arrow points to the trigger element for clear association</li>
-          </ul>
-        </Section>
-
         {/* API Reference */}
         <Section id="api-reference" title="API Reference">
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-4">TooltipTrigger</h3>
-              <PropsTable props={tooltipTriggerProps} />
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-4">TooltipContent</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                The tooltip popup. Use the placement prop to control positioning.
-              </p>
-              <PropsTable props={tooltipContentProps} />
-            </div>
-          </div>
+          <PropsTable props={tooltipProps} />
         </Section>
       </div>
     </DocPage>
