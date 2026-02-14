@@ -1,142 +1,277 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Select Documentation Page', () => {
+test.describe('Select Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/select')
   })
 
   test('displays page header', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Select')
-    await expect(page.locator('text=Displays a select dropdown')).toBeVisible()
+    await expect(page.locator('text=Displays a list of options for the user to pick from')).toBeVisible()
   })
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add select')).toBeVisible()
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
-  })
+  test.describe('Basic Demo', () => {
+    test('renders trigger with placeholder', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
 
-  test.describe('Select Rendering', () => {
-    test('displays select elements', async ({ page }) => {
-      const selects = page.locator('select')
-      await expect(selects.first()).toBeVisible()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+      await expect(trigger).toBeVisible()
+      await expect(trigger.locator('[data-slot="select-value"]')).toContainText('Select a fruit...')
     })
 
-    test('has multiple select examples', async ({ page }) => {
-      const selects = page.locator('select')
-      // Should have at least 4 selects (preview + basic + disabled examples + binding demos)
-      expect(await selects.count()).toBeGreaterThan(3)
-    })
-  })
+    test('click opens dropdown', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
 
-  test.describe('Disabled State', () => {
-    test('displays disabled select', async ({ page }) => {
-      const disabledSelect = page.locator('select[disabled]')
-      await expect(disabledSelect.first()).toBeVisible()
-    })
-  })
+      await trigger.click()
 
-  test.describe('Value Binding', () => {
-    test('displays binding example section', async ({ page }) => {
-      await expect(page.locator('[bf-s^="SelectBindingDemo_"]')).toBeVisible()
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await expect(content).toBeVisible()
+      await expect(content.locator('[data-slot="select-item"][data-value="apple"]')).toBeVisible()
+      await expect(content.locator('[data-slot="select-item"][data-value="banana"]')).toBeVisible()
     })
 
-    test('shows initial empty state', async ({ page }) => {
-      const status = page.locator('[bf-s^="SelectBindingDemo_"] .selected-value')
-      await expect(status).toContainText('None')
+    test('select item updates trigger label and closes dropdown', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+
+      await trigger.click()
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await content.locator('[data-slot="select-item"][data-value="apple"]').click()
+
+      // Dropdown should close
+      await expect(content).toHaveCount(0)
+
+      // Trigger should show selected label
+      await expect(trigger.locator('[data-slot="select-value"]')).toContainText('Apple')
     })
 
-    test('changes value on selection', async ({ page }) => {
-      const bindingSection = page.locator('[bf-s^="SelectBindingDemo_"]')
-      const select = bindingSection.locator('select')
-      const status = bindingSection.locator('.selected-value')
+    test('disabled item cannot be selected', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
 
-      // Initial state
-      await expect(status).toContainText('None')
+      await trigger.click()
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      const disabledItem = content.locator('[data-slot="select-item"]').filter({ hasText: 'Blueberry' })
+      await expect(disabledItem).toHaveAttribute('aria-disabled', 'true')
+
+      // Click should not close the dropdown (pointer-events-none prevents click)
+      // Verify dropdown is still open
+      await expect(content).toBeVisible()
+    })
+
+    test('ESC closes dropdown', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+
+      await trigger.click()
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await expect(content).toBeVisible()
+
+      await page.keyboard.press('Escape')
+      await expect(content).toHaveCount(0)
+    })
+
+    test('click outside closes dropdown', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+
+      await trigger.click()
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await expect(content).toBeVisible()
+
+      await page.locator('h1').click()
+      await expect(content).toHaveCount(0)
+    })
+
+    test('value display updates after selection', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+      const valueText = section.locator('.selected-value')
+
+      // Initially "None"
+      await expect(valueText).toContainText('None')
+
+      // Select Grape
+      await trigger.click()
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await content.locator('[data-slot="select-item"]').filter({ hasText: 'Grape' }).click()
+
+      await expect(valueText).toContainText('grape')
+    })
+
+    test('selected item shows check indicator', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
 
       // Select Apple
-      await select.selectOption('apple')
-      await expect(select).toHaveValue('apple')
-      await expect(status).toContainText('apple')
+      await trigger.click()
+      let content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await content.locator('[data-slot="select-item"][data-value="apple"]').click()
+
+      // Reopen to verify check indicator
+      await trigger.click()
+      content = page.locator('[data-slot="select-content"][data-state="open"]')
+      const appleItem = content.locator('[data-slot="select-item"][data-value="apple"]')
+      await expect(appleItem).toHaveAttribute('data-state', 'checked')
+      await expect(appleItem).toHaveAttribute('aria-selected', 'true')
     })
 
-    test('syncs display with selection', async ({ page }) => {
-      const bindingSection = page.locator('[bf-s^="SelectBindingDemo_"]')
-      const select = bindingSection.locator('select')
-      const status = bindingSection.locator('.selected-value')
+    test('has correct ARIA roles', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
 
-      await select.selectOption('banana')
-      await expect(status).toContainText('banana')
+      await expect(trigger).toHaveAttribute('role', 'combobox')
+      await expect(trigger).toHaveAttribute('aria-haspopup', 'listbox')
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false')
 
-      await select.selectOption('orange')
-      await expect(status).toContainText('orange')
+      await trigger.click()
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await expect(content).toHaveAttribute('role', 'listbox')
+
+      const items = content.locator('[data-slot="select-item"]')
+      await expect(items.first()).toHaveAttribute('role', 'option')
     })
 
-    test('cycles through all options', async ({ page }) => {
-      const bindingSection = page.locator('[bf-s^="SelectBindingDemo_"]')
-      const select = bindingSection.locator('select')
-      const status = bindingSection.locator('.selected-value')
+    test('keyboard navigation with arrow keys', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
 
-      // Initial state (None)
-      await expect(status).toContainText('None')
+      await trigger.click()
 
-      // Apple
-      await select.selectOption('apple')
-      await expect(select).toHaveValue('apple')
-      await expect(status).toContainText('apple')
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      const items = content.locator('[data-slot="select-item"]:not([aria-disabled="true"])')
 
-      // Banana
-      await select.selectOption('banana')
-      await expect(select).toHaveValue('banana')
-      await expect(status).toContainText('banana')
+      // Wait for auto-focus on first item
+      await expect(items.first()).toBeFocused()
 
-      // Orange
-      await select.selectOption('orange')
-      await expect(select).toHaveValue('orange')
-      await expect(status).toContainText('orange')
+      // Arrow down should focus next item
+      await page.keyboard.press('ArrowDown')
+      await expect(items.nth(1)).toBeFocused()
 
-      // Grape
-      await select.selectOption('grape')
-      await expect(select).toHaveValue('grape')
-      await expect(status).toContainText('grape')
+      // Arrow down again
+      await page.keyboard.press('ArrowDown')
+      await expect(items.nth(2)).toBeFocused()
+
+      // Arrow up should go back
+      await page.keyboard.press('ArrowUp')
+      await expect(items.nth(1)).toBeFocused()
+    })
+
+    test('Enter key selects focused item', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+
+      await trigger.click()
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      const items = content.locator('[data-slot="select-item"]:not([aria-disabled="true"])')
+
+      // Wait for auto-focus on first item
+      await expect(items.first()).toBeFocused()
+
+      // Navigate to Banana (second item)
+      await page.keyboard.press('ArrowDown')
+      await expect(items.nth(1)).toBeFocused()
+
+      // Press Enter to select
+      await page.keyboard.press('Enter')
+
+      // Dropdown should close and value should update
+      await expect(content).toHaveCount(0)
+      await expect(trigger.locator('[data-slot="select-value"]')).toContainText('Banana')
     })
   })
 
-  test.describe('Focus State', () => {
-    test('displays focus example section', async ({ page }) => {
-      await expect(page.locator('[bf-s^="SelectFocusDemo_"]')).toBeVisible()
+  test.describe('Form Demo', () => {
+    test('displays three select fields', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectFormDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+
+      const triggers = section.locator('[data-slot="select-trigger"]')
+      await expect(triggers).toHaveCount(3)
     })
 
-    test('shows initial not focused state', async ({ page }) => {
-      const status = page.locator('[bf-s^="SelectFocusDemo_"] .focus-status')
-      await expect(status).toContainText('Not focused')
+    test('shows initial summary', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectFormDemo_"]:not([data-slot])').first()
+      await expect(section.locator('.summary-text')).toContainText('No selections yet')
     })
 
-    test('updates status on focus', async ({ page }) => {
-      const focusSection = page.locator('[bf-s^="SelectFocusDemo_"]')
-      const select = focusSection.locator('select')
-      const status = focusSection.locator('.focus-status')
+    test('selecting values updates summary', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectFormDemo_"]:not([data-slot])').first()
+      const triggers = section.locator('[data-slot="select-trigger"]')
+      const summaryText = section.locator('.summary-text')
 
-      // Focus the select
-      await select.focus()
-      await expect(status).toContainText('Focused')
+      // Select framework (first trigger)
+      await triggers.nth(0).click()
+      let content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await content.locator('[data-slot="select-item"]').filter({ hasText: 'Next.js' }).click()
+
+      await expect(summaryText).toContainText('Next.js')
+
+      // Select role (second trigger)
+      await triggers.nth(1).click()
+      content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await content.locator('[data-slot="select-item"]').filter({ hasText: 'Frontend Developer' }).click()
+
+      await expect(summaryText).toContainText('Frontend Developer')
+      await expect(summaryText).toContainText('Next.js')
+    })
+  })
+
+  test.describe('Grouped Demo', () => {
+    test('group labels visible', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectGroupedDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+
+      const trigger = section.locator('[data-slot="select-trigger"]')
+      await trigger.click()
+
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await expect(content.locator('[data-slot="select-label"]').filter({ hasText: 'North America' })).toBeVisible()
+      await expect(content.locator('[data-slot="select-label"]').filter({ hasText: 'Europe' })).toBeVisible()
+      await expect(content.locator('[data-slot="select-label"]').filter({ hasText: 'Asia' })).toBeVisible()
     })
 
-    test('updates status on blur', async ({ page }) => {
-      const focusSection = page.locator('[bf-s^="SelectFocusDemo_"]')
-      const select = focusSection.locator('select')
-      const status = focusSection.locator('.focus-status')
+    test('separators present', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectGroupedDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
 
-      // Focus then blur
-      await select.focus()
-      await expect(status).toContainText('Focused')
+      await trigger.click()
 
-      await select.blur()
-      await expect(status).toContainText('Not focused')
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      const separators = content.locator('[data-slot="select-separator"]')
+      expect(await separators.count()).toBe(2)
+    })
+
+    test('selection from groups works', async ({ page }) => {
+      const section = page.locator('[bf-s^="SelectGroupedDemo_"]:not([data-slot])').first()
+      const trigger = section.locator('[data-slot="select-trigger"]')
+      const valueText = section.locator('.selected-timezone')
+
+      // Initially "None"
+      await expect(valueText).toContainText('None')
+
+      // Select JST from Asia group
+      await trigger.click()
+      const content = page.locator('[data-slot="select-content"][data-state="open"]')
+      await content.locator('[data-slot="select-item"]').filter({ hasText: 'Japan Standard Time' }).click()
+
+      await expect(valueText).toContainText('jst')
+      await expect(trigger.locator('[data-slot="select-value"]')).toContainText('Japan Standard Time')
     })
   })
 
@@ -145,35 +280,34 @@ test.describe.skip('Select Documentation Page', () => {
       await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
     })
 
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
+    test('displays props tables', async ({ page }) => {
+      await expect(page.locator('h3:text-is("Select")')).toBeVisible()
+      await expect(page.locator('h3:has-text("SelectItem")')).toBeVisible()
+      const tables = page.locator('table')
+      expect(await tables.count()).toBeGreaterThanOrEqual(2)
     })
 
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^options$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^selectValue$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^selectPlaceholder$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^selectDisabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onChange$/ })).toBeVisible()
+    test('displays Select props', async ({ page }) => {
+      const tables = page.locator('table')
+      await expect(tables.first().locator('td').filter({ hasText: /^value$/ })).toBeVisible()
+      await expect(tables.first().locator('td').filter({ hasText: /^onValueChange$/ })).toBeVisible()
+      await expect(tables.first().locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
     })
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
 test.describe.skip('Home Page - Select Link', () => {
   test('displays Select component link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/select"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/select"] h2')).toContainText('Select')
+    const link = page.locator('#components a[href="/docs/components/select"]')
+    await expect(link).toBeVisible()
+    await expect(link.locator('h2')).toContainText('Select')
   })
 
   test('navigates to Select page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/components/select"]')
+    const link = page.locator('#components a[href="/docs/components/select"]')
+    await link.click()
     await expect(page).toHaveURL('/docs/components/select')
     await expect(page.locator('h1')).toContainText('Select')
   })
