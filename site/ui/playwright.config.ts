@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const port = Number(process.env.PORT) || 3002
+const baseURL = `http://localhost:${port}`
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 15000,
@@ -9,7 +12,7 @@ export default defineConfig({
   workers: undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3002',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -19,8 +22,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'bun run server.tsx',
-    url: 'http://localhost:3002',
+    command: `bun run server.tsx`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 10000,
   },

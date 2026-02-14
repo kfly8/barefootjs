@@ -26,4 +26,6 @@ app.use('/r/*', serveStatic({
   root: './dist',
 }))
 
-export default { port: 3002, fetch: app.fetch }
+const port = Number(process.env.PORT) || 3002
+
+export default { port, fetch: app.fetch }
