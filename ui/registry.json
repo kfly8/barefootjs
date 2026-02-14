@@ -14,6 +14,12 @@
       "type": "registry:ui",
       "title": "Button",
       "description": "A button component with variants and sizes"
+    },
+    {
+      "name": "tooltip",
+      "type": "registry:ui",
+      "title": "Tooltip",
+      "description": "A popup that displays contextual information on hover or focus"
     }
   ]
 }

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Tooltip Documentation Page', () => {
+test.describe('Tooltip Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/tooltip')
   })
@@ -13,55 +12,45 @@ test.describe.skip('Tooltip Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add tooltip')).toBeVisible()
-  })
-
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Hover trigger")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Focus trigger")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Placement options")')).toBeVisible()
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
   test.describe('Basic Tooltip', () => {
     test('shows tooltip on hover', async ({ page }) => {
-      const basicDemo = page.locator('[bf-s^="TooltipBasicDemo_"]').first()
-      const trigger = basicDemo.locator('[data-tooltip-trigger]')
-      const tooltip = basicDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipBasicDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
-      // Initially hidden
-      await expect(tooltip).not.toBeVisible()
+      // Initially closed
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
 
       // Hover to show
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
       await expect(tooltip).toContainText('This is a tooltip')
     })
 
     test('hides tooltip on mouse leave', async ({ page }) => {
-      const basicDemo = page.locator('[bf-s^="TooltipBasicDemo_"]').first()
-      const trigger = basicDemo.locator('[data-tooltip-trigger]')
-      const tooltip = basicDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipBasicDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
       // Hover to show
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
 
       // Move mouse away to hide
       await page.mouse.move(0, 0)
-      await expect(tooltip).not.toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
     })
 
     test('has correct accessibility attributes', async ({ page }) => {
-      const basicDemo = page.locator('[bf-s^="TooltipBasicDemo_"]').first()
-      const trigger = basicDemo.locator('[data-tooltip-trigger]')
-      const tooltip = basicDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipBasicDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
-      // Check aria-describedby
+      // Check aria-describedby on trigger
       await expect(trigger).toHaveAttribute('aria-describedby', 'tooltip-basic')
 
       // Check tooltip has correct id
@@ -69,75 +58,135 @@ test.describe.skip('Tooltip Documentation Page', () => {
     })
   })
 
-  test.describe('Button with Hover Support', () => {
+  test.describe('Button Focus', () => {
     test('shows tooltip on hover', async ({ page }) => {
-      const buttonDemo = page.locator('[bf-s^="TooltipButtonDemo_"]').first()
-      const trigger = buttonDemo.locator('[data-tooltip-trigger]')
-      const tooltip = buttonDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipButtonDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
-      // Initially hidden
-      await expect(tooltip).not.toBeVisible()
+      // Initially closed
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
 
       // Hover to show
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
       await expect(tooltip).toContainText('Keyboard accessible tooltip')
     })
 
     test('hides tooltip on mouse leave', async ({ page }) => {
-      const buttonDemo = page.locator('[bf-s^="TooltipButtonDemo_"]').first()
-      const trigger = buttonDemo.locator('[data-tooltip-trigger]')
-      const tooltip = buttonDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipButtonDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
       // Hover to show
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
 
       // Move mouse away to hide
       await page.mouse.move(0, 0)
-      await expect(tooltip).not.toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
+    })
+  })
+
+  test.describe('Icon Buttons', () => {
+    test('shows tooltip on icon button hover', async ({ page }) => {
+      const demo = page.locator('[bf-s^="TooltipIconDemo_"]:not([data-slot])').first()
+      const tooltips = demo.locator('[data-slot="tooltip"]')
+      const firstTooltip = demo.locator('[role="tooltip"]').first()
+
+      // Hover first icon button
+      await tooltips.first().hover()
+      await expect(firstTooltip).toHaveAttribute('data-state', 'open')
+      await expect(firstTooltip).toContainText('Bold')
     })
   })
 
   test.describe('Placement Options', () => {
     test('top placement shows tooltip above trigger', async ({ page }) => {
-      const topDemo = page.locator('[bf-s^="TooltipTopDemo_"]').first()
-      const trigger = topDemo.locator('[data-tooltip-trigger]')
-      const tooltip = topDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipTopDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
       await expect(tooltip).toContainText('Top placement')
     })
 
     test('right placement shows tooltip to the right', async ({ page }) => {
-      const rightDemo = page.locator('[bf-s^="TooltipRightDemo_"]').first()
-      const trigger = rightDemo.locator('[data-tooltip-trigger]')
-      const tooltip = rightDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipRightDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
       await expect(tooltip).toContainText('Right placement')
     })
 
     test('bottom placement shows tooltip below trigger', async ({ page }) => {
-      const bottomDemo = page.locator('[bf-s^="TooltipBottomDemo_"]').first()
-      const trigger = bottomDemo.locator('[data-tooltip-trigger]')
-      const tooltip = bottomDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipBottomDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
       await expect(tooltip).toContainText('Bottom placement')
     })
 
     test('left placement shows tooltip to the left', async ({ page }) => {
-      const leftDemo = page.locator('[bf-s^="TooltipLeftDemo_"]').first()
-      const trigger = leftDemo.locator('[data-tooltip-trigger]')
-      const tooltip = leftDemo.locator('[role="tooltip"]')
+      const demo = page.locator('[bf-s^="TooltipLeftDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
 
       await trigger.hover()
-      await expect(tooltip).toBeVisible()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
       await expect(tooltip).toContainText('Left placement')
+    })
+  })
+
+  test.describe('Delay', () => {
+    test('does not show tooltip before delay duration', async ({ page }) => {
+      const demo = page.locator('[bf-s^="TooltipDelayDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
+
+      // Initially closed
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
+
+      // Hover and immediately check - should NOT be open yet
+      await trigger.hover()
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
+
+      // Wait for delay + buffer
+      await page.waitForTimeout(800)
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
+    })
+
+    test('cancels open timer on mouse leave before delay', async ({ page }) => {
+      const demo = page.locator('[bf-s^="TooltipDelayDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
+
+      // Hover briefly then leave by hovering on page header
+      await trigger.hover()
+      await page.waitForTimeout(300) // Less than 700ms delay
+      await page.locator('h1').hover()
+
+      // Wait past original delay - should still not appear
+      await page.waitForTimeout(600)
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
+    })
+
+    test('immediate tooltip shows without delay when delayDuration is 0', async ({ page }) => {
+      const demo = page.locator('[bf-s^="TooltipNoDelayDemo_"]:not([data-slot])').first()
+      const trigger = demo.locator('[data-slot="tooltip"]')
+      const tooltip = demo.locator('[role="tooltip"]')
+
+      // Initially closed
+      await expect(tooltip).toHaveAttribute('data-state', 'closed')
+
+      // Hover and immediately check - should be open
+      await trigger.hover()
+      await expect(tooltip).toHaveAttribute('data-state', 'open')
     })
   })
 
@@ -146,79 +195,33 @@ test.describe.skip('Tooltip Documentation Page', () => {
       await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
     })
 
-    test('displays TooltipTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("TooltipTrigger")')).toBeVisible()
+    test('displays props table headers', async ({ page }) => {
+      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
+      await expect(page.locator('th:has-text("Type")')).toBeVisible()
+      await expect(page.locator('th:has-text("Default")')).toBeVisible()
+      await expect(page.locator('th:has-text("Description")')).toBeVisible()
     })
 
-    test('displays TooltipContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("TooltipContent")')).toBeVisible()
+    test('displays all props', async ({ page }) => {
+      const propsTable = page.locator('table')
+      await expect(propsTable.locator('td').filter({ hasText: /^content$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^placement$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^delayDuration$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^closeDelay$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^id$/ })).toBeVisible()
     })
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Tooltip with Delay', () => {
-  test.beforeEach(async ({ page }) => {
+test.describe('Navigation - Tooltip Link', () => {
+  test('displays Tooltip link in sidebar navigation', async ({ page }) => {
     await page.goto('/docs/components/tooltip')
+    await expect(page.locator('nav a[href="/docs/components/tooltip"]').last()).toBeVisible()
   })
 
-  test('does not show tooltip before delay duration', async ({ page }) => {
-    const delayDemo = page.locator('[bf-s^="TooltipDelayDemo_"]').first()
-    const trigger = delayDemo.locator('[data-tooltip-trigger]')
-    const tooltip = delayDemo.locator('[role="tooltip"]')
-
-    // Initially hidden
-    await expect(tooltip).not.toBeVisible()
-
-    // Hover and immediately check - should NOT be visible yet
-    await trigger.hover()
-    await expect(tooltip).not.toBeVisible()
-
-    // Wait for delay + buffer
-    await page.waitForTimeout(800)
-    await expect(tooltip).toBeVisible()
-  })
-
-  test('cancels open timer on mouse leave before delay', async ({ page }) => {
-    const delayDemo = page.locator('[bf-s^="TooltipDelayDemo_"]').first()
-    const trigger = delayDemo.locator('[data-tooltip-trigger]')
-    const tooltip = delayDemo.locator('[role="tooltip"]')
-
-    // Hover briefly then leave
-    await trigger.hover()
-    await page.waitForTimeout(300) // Less than 700ms delay
-    await page.mouse.move(0, 0)
-
-    // Wait past original delay - should still not appear
-    await page.waitForTimeout(500)
-    await expect(tooltip).not.toBeVisible()
-  })
-
-  test('immediate tooltip shows without delay when delayDuration is 0', async ({ page }) => {
-    const noDelayDemo = page.locator('[bf-s^="TooltipNoDelayDemo_"]').first()
-    const trigger = noDelayDemo.locator('[data-tooltip-trigger]')
-    const tooltip = noDelayDemo.locator('[role="tooltip"]')
-
-    // Initially hidden
-    await expect(tooltip).not.toBeVisible()
-
-    // Hover and immediately check - should be visible
-    await trigger.hover()
-    await expect(tooltip).toBeVisible()
-  })
-})
-
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Tooltip Link', () => {
-  test('displays Tooltip component link', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/tooltip"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/tooltip"] h2')).toContainText('Tooltip')
-  })
-
-  test('navigates to Tooltip page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.click('a[href="/docs/components/tooltip"]')
+  test('navigates to Tooltip page from sidebar', async ({ page }) => {
+    await page.goto('/docs/components/switch')
+    await page.locator('nav a[href="/docs/components/tooltip"]').last().click()
     await expect(page).toHaveURL('/docs/components/tooltip')
     await expect(page.locator('h1')).toContainText('Tooltip')
   })

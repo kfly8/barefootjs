@@ -4,13 +4,7 @@
  * Tooltip Component
  *
  * A popup that displays contextual information on hover or focus.
- * Inspired by shadcn/ui with CSS variable theming support.
- *
- * Features:
- * - Shows on hover with configurable delay
- * - Shows on focus for keyboard accessibility
- * - Configurable placement (top, right, bottom, left)
- * - Accessibility (role="tooltip", aria-describedby)
+ * Adapted from shadcn/ui v4 with CSS variable theming support.
  *
  * @example Basic tooltip
  * ```tsx
@@ -37,14 +31,21 @@
 import { createSignal } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
-// Type definitions
 type TooltipPlacement = 'top' | 'right' | 'bottom' | 'left'
 
 // Tooltip container classes
 const tooltipContainerClasses = 'relative inline-block'
 
-// Tooltip content classes
-const tooltipContentClasses = 'bg-primary text-primary-foreground text-sm px-3 py-1.5 rounded-md shadow-md whitespace-nowrap'
+// Tooltip content classes (shadcn/ui v4 adapted: whitespace-nowrap instead of w-fit text-balance
+// because our tooltip is absolute-positioned inside an inline-block container, not portaled)
+const tooltipContentBaseClasses = 'z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground whitespace-nowrap'
+
+// Transition classes (same pattern as Dialog/DropdownMenu)
+const tooltipTransitionClasses = 'absolute transition-[opacity,transform] duration-fast ease-out'
+
+// Open/closed state classes
+const tooltipContentOpenClasses = 'opacity-100 scale-100'
+const tooltipContentClosedClasses = 'opacity-0 scale-95 pointer-events-none'
 
 // Placement classes
 const placementClasses: Record<TooltipPlacement, string> = {
@@ -54,7 +55,7 @@ const placementClasses: Record<TooltipPlacement, string> = {
   left: 'right-full top-1/2 -translate-y-1/2 mr-2',
 }
 
-// Arrow classes
+// Arrow classes (CSS border triangle pointing toward trigger)
 const arrowClasses: Record<TooltipPlacement, string> = {
   top: 'top-full left-1/2 -translate-x-1/2 border-t-primary border-l-transparent border-r-transparent border-b-transparent',
   right: 'right-full top-1/2 -translate-y-1/2 border-r-primary border-t-transparent border-b-transparent border-l-transparent',
@@ -91,52 +92,60 @@ interface TooltipProps {
 
 /**
  * Tooltip component that displays on hover/focus.
+ * Uses props.xxx pattern (BF043) for reactivity.
  *
- * @param props.content - Tooltip text
- * @param props.placement - Position relative to trigger
- * @param props.delayDuration - Delay before showing
- * @param props.closeDelay - Delay before hiding
- * @param props.id - ID for accessibility
+ * Timer IDs are stored on the DOM element (dataset) to ensure
+ * they are shared across event handler closures after hydration.
  */
-function Tooltip({
-  content,
-  children,
-  placement = 'top',
-  delayDuration = 0,
-  closeDelay = 0,
-  id,
-}: TooltipProps) {
+function Tooltip(props: TooltipProps) {
   const [open, setOpen] = createSignal(false)
-  let openTimerId: number | undefined = undefined
-  let closeTimerId: number | undefined = undefined
 
-  const handleMouseEnter = () => {
-    if (closeTimerId !== undefined) {
-      clearTimeout(closeTimerId)
-      closeTimerId = undefined
+  const placement = props.placement ?? 'top'
+  const delayDuration = props.delayDuration ?? 0
+  const closeDelay = props.closeDelay ?? 0
+
+  // Helper to get/set timer IDs on the DOM element
+  const getTimer = (el: HTMLElement, key: string): number | undefined => {
+    const val = el.dataset[key]
+    return val ? Number(val) : undefined
+  }
+  const setTimer = (el: HTMLElement, key: string, id: number | undefined) => {
+    el.dataset[key] = id !== undefined ? String(id) : ''
+  }
+
+  const handleMouseEnter = (e: MouseEvent) => {
+    const el = (e.currentTarget ?? e.target) as HTMLElement
+    const closeTimer = getTimer(el, 'closeTimer')
+    if (closeTimer !== undefined) {
+      clearTimeout(closeTimer)
+      setTimer(el, 'closeTimer', undefined)
     }
 
     if (delayDuration > 0) {
-      openTimerId = setTimeout(() => {
+      const timerId = setTimeout(() => {
         setOpen(true)
-        openTimerId = undefined
+        setTimer(el, 'openTimer', undefined)
       }, delayDuration) as unknown as number
+      setTimer(el, 'openTimer', timerId)
     } else {
       setOpen(true)
     }
   }
 
-  const handleMouseLeave = () => {
-    if (openTimerId !== undefined) {
-      clearTimeout(openTimerId)
-      openTimerId = undefined
+  const handleMouseLeave = (e: MouseEvent) => {
+    const el = (e.currentTarget ?? e.target) as HTMLElement
+    const openTimer = getTimer(el, 'openTimer')
+    if (openTimer !== undefined) {
+      clearTimeout(openTimer)
+      setTimer(el, 'openTimer', undefined)
     }
 
     if (closeDelay > 0) {
-      closeTimerId = setTimeout(() => {
+      const timerId = setTimeout(() => {
         setOpen(false)
-        closeTimerId = undefined
+        setTimer(el, 'closeTimer', undefined)
       }, closeDelay) as unknown as number
+      setTimer(el, 'closeTimer', timerId)
     } else {
       setOpen(false)
     }
@@ -153,19 +162,17 @@ function Tooltip({
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
       onBlur={handleBlur}
-      aria-describedby={id}
+      aria-describedby={props.id}
     >
-      <span>{children}</span>
+      <span>{props.children}</span>
       <div
         data-slot="tooltip-content"
         data-state={open() ? 'open' : 'closed'}
-        className={`absolute z-50 ${placementClasses[placement]}`}
+        className={`${tooltipTransitionClasses} ${placementClasses[placement]} ${tooltipContentBaseClasses} ${open() ? tooltipContentOpenClasses : tooltipContentClosedClasses}`}
         role="tooltip"
-        id={id}
+        id={props.id}
       >
-        <div className={tooltipContentClasses}>
-          {content}
-        </div>
+        {props.content}
         <span
           className={`absolute w-0 h-0 border-4 ${arrowClasses[placement]}`}
           aria-hidden="true"
@@ -175,83 +182,5 @@ function Tooltip({
   )
 }
 
-// -----------------------------------------------------------
-// Deprecated exports for backwards compatibility
-// -----------------------------------------------------------
-
-/**
- * Props for TooltipTrigger component.
- * @deprecated Use `Tooltip` component instead which handles state internally.
- */
-interface TooltipTriggerProps {
-  ariaDescribedby?: string
-  children?: Child
-  delayDuration?: number
-  closeDelay?: number
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onFocus?: () => void
-  onBlur?: () => void
-}
-
-/**
- * Tooltip trigger wrapper.
- * @deprecated Use `Tooltip` component instead which handles state internally.
- */
-function TooltipTrigger({
-  ariaDescribedby,
-  children,
-}: TooltipTriggerProps) {
-  return (
-    <span
-      className="inline-block"
-      aria-describedby={ariaDescribedby}
-      data-tooltip-trigger
-    >
-      {children}
-    </span>
-  )
-}
-
-/**
- * Props for TooltipContent component.
- * @deprecated Use `Tooltip` component instead which handles state internally.
- */
-interface TooltipContentProps {
-  placement?: TooltipPlacement
-  open?: boolean
-  id?: string
-  children?: Child
-}
-
-/**
- * Tooltip content container.
- * @deprecated Use `Tooltip` component instead which handles state internally.
- */
-function TooltipContent({
-  placement = 'top',
-  open = false,
-  id,
-  children,
-}: TooltipContentProps) {
-  return (
-    <div
-      className={`absolute z-50 ${placementClasses[placement]}`}
-      role="tooltip"
-      id={id}
-      data-tooltip-content
-      data-tooltip-open={open ? 'true' : 'false'}
-    >
-      <div className={tooltipContentClasses}>
-        {children}
-      </div>
-      <span
-        className={`absolute w-0 h-0 border-4 ${arrowClasses[placement]}`}
-        aria-hidden="true"
-      />
-    </div>
-  )
-}
-
-export { Tooltip, TooltipTrigger, TooltipContent }
-export type { TooltipPlacement, TooltipProps, TooltipTriggerProps, TooltipContentProps }
+export { Tooltip }
+export type { TooltipPlacement, TooltipProps }
