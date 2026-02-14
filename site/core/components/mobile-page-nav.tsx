@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Mobile Page Navigation Component
  *
