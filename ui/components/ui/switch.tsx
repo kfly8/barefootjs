@@ -1,22 +1,23 @@
 "use client"
 
+import { createSignal, createMemo } from '@barefootjs/dom'
+
 /**
  * Switch Component
  *
  * A toggle switch for boolean state.
+ * Supports both controlled and uncontrolled modes.
  * Inspired by shadcn/ui with CSS variable theming support.
  *
- * @example Basic usage
+ * @example Uncontrolled (internal state)
  * ```tsx
- * <Switch checked={isEnabled} onCheckedChange={setIsEnabled} />
+ * <Switch />
+ * <Switch defaultChecked />
  * ```
  *
- * @example With label
+ * @example Controlled (external state)
  * ```tsx
- * <label className="flex items-center gap-2">
- *   <Switch checked={darkMode} onCheckedChange={setDarkMode} />
- *   Dark mode
- * </label>
+ * <Switch checked={isEnabled} onCheckedChange={setIsEnabled} />
  * ```
  *
  * @example Disabled state
@@ -25,34 +26,39 @@
  * ```
  */
 
-// Base classes for the switch track
-const trackBaseClasses = 'peer inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
+// Base classes for the switch track (h-[1.15rem] w-8 border matches shadcn/ui dimensions)
+const trackBaseClasses = 'peer inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent p-0 shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
 
 // Focus visible classes
 const trackFocusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
 
-// Unchecked track classes
-const trackUncheckedClasses = 'bg-input dark:bg-input/80'
-
-// Checked track classes
-const trackCheckedClasses = 'bg-primary'
+// State classes using data-state attribute selectors for reactivity
+const trackStateClasses = [
+  '[&[data-state=unchecked]]:bg-input',
+  'dark:[&[data-state=unchecked]]:bg-input/80',
+  '[&[data-state=checked]]:bg-primary',
+].join(' ')
 
 // Thumb base classes
-const thumbBaseClasses = 'pointer-events-none block size-4 rounded-full ring-0 transition-transform'
+const thumbBaseClasses = 'pointer-events-none block size-4 rounded-full bg-background ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
 
-// Thumb unchecked classes
-const thumbUncheckedClasses = 'translate-x-0 bg-background dark:bg-foreground'
-
-// Thumb checked classes
-const thumbCheckedClasses = 'translate-x-[calc(100%-2px)] bg-background dark:bg-primary-foreground'
+// Thumb state classes using data-state attribute selectors
+const thumbStateClasses = [
+  '[&[data-state=unchecked]]:translate-x-0',
+  '[&[data-state=checked]]:translate-x-[calc(100%-2px)]',
+].join(' ')
 
 /**
  * Props for the Switch component.
  */
 interface SwitchProps {
   /**
-   * Whether the switch is on.
+   * Default checked state (for uncontrolled mode).
    * @default false
+   */
+  defaultChecked?: boolean
+  /**
+   * Controlled checked state. When provided, component is in controlled mode.
    */
   checked?: boolean
   /**
@@ -72,34 +78,82 @@ interface SwitchProps {
 
 /**
  * Switch component for toggling boolean state.
+ * Supports both controlled and uncontrolled modes.
  *
- * @param props.checked - Whether the switch is on
- * @param props.disabled - Whether the switch is disabled
+ * @param props.defaultChecked - Initial value for uncontrolled mode
+ * @param props.checked - Controlled checked state
+ * @param props.disabled - Whether disabled
  * @param props.onCheckedChange - Callback when toggled
  */
-function Switch({
-  class: className = '',
-  checked = false,
-  disabled = false,
-  onCheckedChange,
-}: SwitchProps) {
-  const trackStateClasses = checked ? trackCheckedClasses : trackUncheckedClasses
-  const trackClasses = `${trackBaseClasses} ${trackFocusClasses} ${trackStateClasses} ${className}`
+function Switch(props: SwitchProps) {
+  // Internal state for uncontrolled mode
+  const [internalChecked, setInternalChecked] = createSignal(props.defaultChecked ?? false)
 
-  const thumbStateClasses = checked ? thumbCheckedClasses : thumbUncheckedClasses
+  // Controlled state - synced from parent via DOM attribute
+  const [controlledChecked, setControlledChecked] = createSignal<boolean | undefined>(props.checked)
+
+  // Track if component is in controlled mode (checked prop provided)
+  const isControlled = createMemo(() => props.checked !== undefined)
+
+  // Determine current checked state: use controlled if provided, otherwise internal
+  const isChecked = createMemo(() => isControlled() ? controlledChecked() : internalChecked())
+
+  // Helper function to update switch UI (visual state)
+  const updateSwitchUI = (track: HTMLElement, newValue: boolean) => {
+    const state = newValue ? 'checked' : 'unchecked'
+
+    // Update track ARIA and data attributes
+    track.setAttribute('aria-checked', String(newValue))
+    track.setAttribute('data-state', state)
+
+    // Update thumb data-state
+    const thumb = track.querySelector('[data-slot="switch-thumb"]')
+    if (thumb) {
+      thumb.setAttribute('data-state', state)
+    }
+  }
+
+  // Classes - state styling handled by data-state attribute selectors
+  const trackClasses = `${trackBaseClasses} ${trackFocusClasses} ${trackStateClasses} ${props.class ?? ''}`
+
   const thumbClasses = `${thumbBaseClasses} ${thumbStateClasses}`
+
+  // Click handler that works for both controlled and uncontrolled modes
+  const handleClick = (e: MouseEvent) => {
+    const target = e.currentTarget as HTMLElement
+    const currentChecked = target.getAttribute('aria-checked') === 'true'
+    const newValue = !currentChecked
+
+    // Update state based on mode
+    if (isControlled()) {
+      setControlledChecked(newValue)
+    } else {
+      setInternalChecked(newValue)
+    }
+
+    // Update the UI visually
+    updateSwitchUI(target, newValue)
+
+    // Notify parent if callback provided
+    // Check scope element for callback (parent sets callback there during hydration)
+    const scope = target.closest('[bf-s]')
+    // @ts-ignore - oncheckedChange is set by parent during hydration
+    const scopeCallback = scope?.oncheckedChange
+    const handler = props.onCheckedChange || scopeCallback
+    handler?.(newValue)
+  }
 
   return (
     <button
       data-slot="switch"
-      data-state={checked ? 'checked' : 'unchecked'}
+      data-state={isChecked() ? 'checked' : 'unchecked'}
       role="switch"
-      aria-checked={checked}
-      disabled={disabled}
+      aria-checked={isChecked()}
+      disabled={props.disabled ?? false}
       className={trackClasses}
-      onClick={() => onCheckedChange?.(!checked)}
+      onClick={handleClick}
     >
-      <span data-slot="switch-thumb" className={thumbClasses} />
+      <span data-slot="switch-thumb" data-state={isChecked() ? 'checked' : 'unchecked'} className={thumbClasses} />
     </button>
   )
 }

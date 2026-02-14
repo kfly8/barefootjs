@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Switch Documentation Page', () => {
+test.describe('Switch Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/switch')
   })
@@ -13,11 +12,8 @@ test.describe.skip('Switch Documentation Page', () => {
 
   test('displays installation section', async ({ page }) => {
     await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx barefoot add switch')).toBeVisible()
-  })
-
-  test('displays usage section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Usage")')).toBeVisible()
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
   })
 
   test.describe('Switch Rendering', () => {
@@ -32,43 +28,305 @@ test.describe.skip('Switch Documentation Page', () => {
     })
   })
 
-  test.describe('Interactive Toggle', () => {
-    test('displays interactive switch', async ({ page }) => {
-      const interactiveSwitch = page.locator('[bf-s^="SwitchInteractiveDemo_"]').first()
-      await expect(interactiveSwitch).toBeVisible()
+  test.describe('Preview (Consent Demo)', () => {
+    test('displays preview with switch and button', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchConsentDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+      await expect(section.locator('button[role="switch"]')).toBeVisible()
+      await expect(section.locator('button:has-text("Save preferences")')).toBeVisible()
     })
 
-    test('shows initial Off state', async ({ page }) => {
-      const interactiveSwitch = page.locator('[bf-s^="SwitchInteractiveDemo_"]').first()
-      await expect(interactiveSwitch.locator('text=Off')).toBeVisible()
+    test('button is disabled when unchecked', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchConsentDemo_"]:not([data-slot])').first()
+      const button = section.locator('button:has-text("Save preferences")')
+      await expect(button).toBeDisabled()
     })
 
-    test('toggles to On state on click', async ({ page }) => {
-      const interactiveSwitch = page.locator('[bf-s^="SwitchInteractiveDemo_"]').first()
-      const switchButton = interactiveSwitch.locator('button[role="switch"]')
+    test('button enables when switch is checked', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchConsentDemo_"]:not([data-slot])').first()
+      const switchBtn = section.locator('button[role="switch"]')
+      const button = section.locator('button:has-text("Save preferences")')
 
-      await switchButton.click()
-      await expect(interactiveSwitch.locator('text=On')).toBeVisible()
+      await switchBtn.dispatchEvent('click')
+      await expect(button).toBeEnabled()
+    })
+
+    test('clicking label toggles switch', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchConsentDemo_"]:not([data-slot])').first()
+      const switchBtn = section.locator('button[role="switch"]')
+      const label = section.locator('text=Accept analytics cookies')
+
+      // Initially unchecked
+      await expect(switchBtn).toHaveAttribute('data-state', 'unchecked')
+
+      // Click the label
+      await label.click()
+
+      // Switch should be checked
+      await expect(switchBtn).toHaveAttribute('data-state', 'checked')
+      await expect(switchBtn).toHaveAttribute('aria-checked', 'true')
     })
   })
 
-  test.describe('Disabled State', () => {
-    test('displays disabled switches', async ({ page }) => {
-      const disabledSwitches = page.locator('button[role="switch"][disabled]')
-      await expect(disabledSwitches).toHaveCount(2)
+  test.describe('Basic', () => {
+    test('displays basic example', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Basic")')).toBeVisible()
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+    })
+
+    test('has three switches', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+      await expect(switches).toHaveCount(3)
+    })
+
+    test('first switch starts unchecked', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+      await expect(switches.first()).toHaveAttribute('aria-checked', 'false')
+    })
+
+    test('second switch starts checked (defaultChecked)', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+      await expect(switches.nth(1)).toHaveAttribute('aria-checked', 'true')
+    })
+
+    test('third switch is disabled', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+      await expect(switches.nth(2)).toBeDisabled()
+    })
+
+    test('clicking toggles switch state', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switchBtn = section.locator('button[role="switch"]').first()
+
+      // Initially unchecked
+      await expect(switchBtn).toHaveAttribute('aria-checked', 'false')
+
+      // Click to check
+      await switchBtn.click()
+      await expect(switchBtn).toHaveAttribute('aria-checked', 'true')
+
+      // Click to uncheck
+      await switchBtn.click()
+      await expect(switchBtn).toHaveAttribute('aria-checked', 'false')
     })
   })
 
-  test.describe('Settings Panel', () => {
-    test('displays settings panel example', async ({ page }) => {
-      await expect(page.locator('[bf-s^="SwitchSettingsPanelDemo_"]').first()).toBeVisible()
+  test.describe('Form', () => {
+    test('displays form example with multiple switches', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Form")')).toBeVisible()
+      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+
+      // Should have 3 switches
+      const switches = section.locator('button[role="switch"]')
+      await expect(switches).toHaveCount(3)
     })
 
-    test('shows Wi-Fi, Bluetooth, and Notifications toggles', async ({ page }) => {
-      const settingsPanel = page.locator('[bf-s^="SwitchSettingsPanelDemo_"]').first()
-      await expect(settingsPanel.locator('text=Wi-Fi')).toBeVisible()
-      await expect(settingsPanel.locator('text=Bluetooth')).toBeVisible()
-      await expect(settingsPanel.locator('text=Notifications')).toBeVisible()
+    test('shows notifications heading and description', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
+      await expect(section.locator('h4:has-text("Notifications")')).toBeVisible()
+      await expect(section.locator('text=Configure how you receive')).toBeVisible()
+    })
+
+    test('Push notifications is checked by default', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // Push notifications is the first switch
+      const pushSwitch = switches.first()
+      await expect(pushSwitch).toHaveAttribute('aria-checked', 'true')
+    })
+
+    test('shows enabled items', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
+      await expect(section.locator('text=Enabled:')).toBeVisible()
+      await expect(section.locator('text=Push notifications').first()).toBeVisible()
+    })
+
+    test('updates enabled text when switches are toggled', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+      const enabledText = section.locator('text=/Enabled:/')
+
+      // Click Email digest (second switch)
+      await switches.nth(1).dispatchEvent('click')
+      await expect(enabledText).toContainText('Push notifications')
+      await expect(enabledText).toContainText('Email digest')
+    })
+  })
+
+  test.describe('Notification Preferences', () => {
+    test('displays notification preferences example', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Notification Preferences")')).toBeVisible()
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+    })
+
+    test('shows enable all switch and items', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      await expect(section.locator('text=Enable all')).toBeVisible()
+      await expect(section.locator('text=Receive notifications via email')).toBeVisible()
+    })
+
+    test('can toggle individual channels', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // First switch is "enable all", second is first channel (Email)
+      const emailSwitch = switches.nth(1)
+      await emailSwitch.dispatchEvent('click')
+
+      // Should show "1 enabled"
+      await expect(section.locator('text=1 enabled')).toBeVisible()
+    })
+
+    test('enable all checks all channel switches', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // Click "Enable all" switch (first one)
+      const enableAllSwitch = switches.first()
+      await enableAllSwitch.click()
+
+      // Should show "3 enabled"
+      await expect(section.locator('text=3 enabled')).toBeVisible()
+
+      // All 4 switches should be checked (enable all + 3 channels)
+      for (let i = 0; i < 4; i++) {
+        await expect(switches.nth(i)).toHaveAttribute('data-state', 'checked')
+      }
+    })
+  })
+
+  test.describe('Notification Preferences Detailed Behavior', () => {
+    test('initial state: all unchecked, shows "Enable all"', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // All 4 switches unchecked
+      for (let i = 0; i < 4; i++) {
+        await expect(switches.nth(i)).toHaveAttribute('aria-checked', 'false')
+      }
+      // Shows "Enable all"
+      await expect(section.locator('text=Enable all')).toBeVisible()
+      await expect(section.locator('text=enabled')).not.toBeVisible()
+    })
+
+    test('selecting 1 channel shows "1 enabled"', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      await switches.nth(1).dispatchEvent('click')
+      await expect(section.locator('text=1 enabled')).toBeVisible()
+    })
+
+    test('selecting 2 channels shows "2 enabled"', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      await switches.nth(1).dispatchEvent('click')
+      await switches.nth(2).dispatchEvent('click')
+      await expect(section.locator('text=2 enabled')).toBeVisible()
+    })
+
+    test('selecting all 3 channels shows "3 enabled" and checks "Enable all"', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      await switches.nth(1).dispatchEvent('click')
+      await switches.nth(2).dispatchEvent('click')
+      await switches.nth(3).dispatchEvent('click')
+
+      await expect(section.locator('text=3 enabled')).toBeVisible()
+      await expect(switches.first()).toHaveAttribute('aria-checked', 'true') // Enable all
+    })
+
+    test('deselecting one channel updates count', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // Select 2
+      await switches.nth(1).dispatchEvent('click')
+      await switches.nth(2).dispatchEvent('click')
+      await expect(section.locator('text=2 enabled')).toBeVisible()
+
+      // Deselect 1
+      await switches.nth(1).dispatchEvent('click')
+      await expect(section.locator('text=1 enabled')).toBeVisible()
+    })
+
+    test('deselecting all returns to "Enable all"', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // Select 1, then deselect
+      await switches.nth(1).dispatchEvent('click')
+      await switches.nth(1).dispatchEvent('click')
+
+      await expect(section.locator('text=Enable all')).toBeVisible()
+    })
+
+    test('clicking "Enable all" when partially selected selects all', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      const switches = section.locator('button[role="switch"]')
+
+      // Select 1 channel first
+      await switches.nth(1).dispatchEvent('click')
+      await expect(section.locator('text=1 enabled')).toBeVisible()
+
+      // Click "Enable all"
+      await switches.first().dispatchEvent('click')
+
+      // All should be selected
+      await expect(section.locator('text=3 enabled')).toBeVisible()
+      for (let i = 0; i < 4; i++) {
+        await expect(switches.nth(i)).toHaveAttribute('aria-checked', 'true')
+      }
+    })
+  })
+
+  // Visual snapshots are OS-dependent (font rendering differs between macOS and Linux)
+  test.describe('Visual Snapshots', { tag: '@visual' }, () => {
+    test.skip(!!process.env.CI, 'Visual snapshots are platform-dependent')
+    test('basic demo matches snapshot', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+      await expect(section).toHaveScreenshot('switch-basic.png')
+    })
+
+    test('switch unchecked state matches snapshot', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switchBtn = section.locator('button[role="switch"]').first()
+      await expect(switchBtn).toHaveScreenshot('switch-unchecked.png')
+    })
+
+    test('switch checked state matches snapshot', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchBasicDemo_"]:not([data-slot])').first()
+      const switchBtn = section.locator('button[role="switch"]').nth(1) // defaultChecked
+      await expect(switchBtn).toHaveScreenshot('switch-checked.png')
+    })
+
+    test('consent demo matches snapshot', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchConsentDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+      await expect(section).toHaveScreenshot('switch-consent.png')
+    })
+
+    test('form demo matches snapshot', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchFormDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+      await expect(section).toHaveScreenshot('switch-form.png')
+    })
+
+    test('notification demo matches snapshot', async ({ page }) => {
+      const section = page.locator('[bf-s^="SwitchNotificationDemo_"]:not([data-slot])').first()
+      await expect(section).toBeVisible()
+      await expect(section).toHaveScreenshot('switch-notification.png')
     })
   })
 
@@ -86,6 +344,7 @@ test.describe.skip('Switch Documentation Page', () => {
 
     test('displays all props', async ({ page }) => {
       const propsTable = page.locator('table')
+      await expect(propsTable.locator('td').filter({ hasText: /^defaultChecked$/ })).toBeVisible()
       await expect(propsTable.locator('td').filter({ hasText: /^checked$/ })).toBeVisible()
       await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
       await expect(propsTable.locator('td').filter({ hasText: /^onCheckedChange$/ })).toBeVisible()
@@ -93,17 +352,15 @@ test.describe.skip('Switch Documentation Page', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Switch Link', () => {
-  test('displays Switch component link', async ({ page }) => {
+test.describe('Home Page - Switch Link', () => {
+  test('displays Switch preview card', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/components/switch"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/components/switch"] h2')).toContainText('Switch')
+    await expect(page.locator('#components a[href="/docs/components/switch"]')).toBeVisible()
   })
 
   test('navigates to Switch page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/components/switch"]')
+    await page.locator('#components a[href="/docs/components/switch"]').click()
     await expect(page).toHaveURL('/docs/components/switch')
     await expect(page.locator('h1')).toContainText('Switch')
   })
