@@ -52,18 +52,6 @@ function WithPredictableIds({ children }: { children: any }) {
 
 import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
 
-// Mobile menu toggle script
-const mobileMenuScript = `
-document.getElementById('mobile-menu-toggle').addEventListener('click', function() {
-  document.getElementById('sidebar').classList.toggle('sidebar-open');
-  document.getElementById('sidebar-overlay').classList.toggle('overlay-visible');
-});
-document.getElementById('sidebar-overlay').addEventListener('click', function() {
-  document.getElementById('sidebar').classList.remove('sidebar-open');
-  this.classList.remove('overlay-visible');
-});
-`
-
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
   imports: {
@@ -121,6 +109,7 @@ function MdToggleButton({ slug }: { slug: string }) {
 import { Header } from '../shared/components/header'
 import { SearchPlaceholder } from '../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
+import { MobileMenu } from '@/components/mobile-menu'
 
 export const renderer = jsxRenderer(
   ({ children, title, description, meta, slug, toc, prev, next }) => {
@@ -155,24 +144,16 @@ export const renderer = jsxRenderer(
             <link rel="stylesheet" href="/static/uno.css" />
           </head>
           <body>
-            <div id="sidebar-overlay" class="sidebar-overlay" />
-
             <Header
               activePage="core"
               logoHref="/"
               coreHref="/docs/introduction"
               uiHref={uiHref}
-              leftSlot={
-                <button id="mobile-menu-toggle" className="hidden max-md:inline-flex p-1 text-foreground" aria-label="Toggle menu">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
-                  </svg>
-                </button>
-              }
               searchSlot={<SearchPlaceholder />}
               themeSwitcher={<ThemeSwitcher />}
             />
 
+            <MobileMenu />
             <Sidebar currentSlug={currentSlug} />
 
             <main class="main-content">
@@ -192,7 +173,6 @@ export const renderer = jsxRenderer(
               </div>
             </main>
 
-            <script dangerouslySetInnerHTML={{ __html: mobileMenuScript }} />
             <BfScripts />
           </body>
         </html>
