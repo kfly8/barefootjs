@@ -29,9 +29,7 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const typesCode = `"use client"
-
-import { Input } from '@/components/ui/input'
+const typesCode = `import { Input } from '@/components/ui/input'
 
 function InputTypes() {
   return (
@@ -44,15 +42,13 @@ function InputTypes() {
   )
 }`
 
-const disabledCode = `"use client"
-
-import { Input } from '@/components/ui/input'
+const disabledCode = `import { Input } from '@/components/ui/input'
 
 function InputDisabled() {
   return (
     <div className="flex flex-col gap-2 max-w-sm">
       <Input disabled placeholder="Disabled input" />
-      <Input readOnly value="Read-only value" />
+      <Input disabled value="Disabled with value" />
     </div>
   )
 }`
@@ -126,20 +122,13 @@ const inputProps: PropDefinition[] = [
     description: 'Whether the input is disabled.',
   },
   {
-    name: 'readOnly',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the input is read-only.',
-  },
-  {
-    name: 'error',
-    type: 'boolean',
-    defaultValue: 'false',
-    description: 'Whether the input is in an error state.',
+    name: 'className',
+    type: 'string',
+    description: 'Additional CSS class names.',
   },
   {
     name: 'onInput',
-    type: '(e: Event) => void',
+    type: '(e: InputEvent) => void',
     description: 'Event handler called on each input change.',
   },
   {
@@ -149,12 +138,12 @@ const inputProps: PropDefinition[] = [
   },
   {
     name: 'onBlur',
-    type: '(e: Event) => void',
+    type: '(e: FocusEvent) => void',
     description: 'Event handler called when input loses focus.',
   },
   {
     name: 'onFocus',
-    type: '(e: Event) => void',
+    type: '(e: FocusEvent) => void',
     description: 'Event handler called when input gains focus.',
   },
 ]
@@ -196,7 +185,7 @@ export function InputPage() {
             <Example title="Disabled" code={disabledCode}>
               <div className="flex flex-col gap-2 max-w-sm">
                 <Input disabled placeholder="Disabled input" />
-                <Input readOnly value="Read-only value" />
+                <Input disabled value="Disabled with value" />
               </div>
             </Example>
 

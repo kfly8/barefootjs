@@ -39,10 +39,10 @@ const error = createMemo(() => {
 })
 
 <Input
-  inputValue={name()}
+  value={name()}
   onInput={(e) => setName(e.target.value)}
   onBlur={() => setTouched(true)}
-  inputPlaceholder="Enter your name"
+  placeholder="Enter your name"
 />
 <p className="text-red-400">{error()}</p>`
 
@@ -59,8 +59,8 @@ const error = createMemo(() => {
 const isValid = createMemo(() => touched() && error() === '')
 
 <Input
-  inputType="email"
-  inputValue={email()}
+  type="email"
+  value={email()}
   onInput={(e) => setEmail(e.target.value)}
   onBlur={() => setTouched(true)}
 />
@@ -141,7 +141,7 @@ export function ValidationPage() {
         {/* Preview - Static example */}
         <Example title="" code={requiredFieldCode}>
           <div className="max-w-sm">
-            <Input inputPlaceholder="Enter your name" />
+            <Input placeholder="Enter your name" />
             <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
             </p>

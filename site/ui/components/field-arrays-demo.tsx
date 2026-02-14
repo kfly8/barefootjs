@@ -103,9 +103,9 @@ export function BasicFieldArrayDemo() {
               <div key={field.id} className="field-item flex gap-2 items-start">
                 <div className="flex-1 space-y-1">
                   <Input
-                    inputType="email"
-                    inputValue={field.value}
-                    inputPlaceholder={`Email ${index + 1}`}
+                    type="email"
+                    value={field.value}
+                    placeholder={`Email ${index + 1}`}
                     onInput={(e) => handleChange(field.id, e.target.value)}
                     onBlur={() => handleBlur(field.id)}
                   />
@@ -221,9 +221,9 @@ export function DuplicateValidationDemo() {
           <div key={field.id} className="field-item flex gap-2 items-start">
             <div className="flex-1 space-y-1">
               <Input
-                inputType="email"
-                inputValue={field.value}
-                inputPlaceholder={`Email ${index + 1}`}
+                type="email"
+                value={field.value}
+                placeholder={`Email ${index + 1}`}
                 onInput={(e) => handleChange(field.id, e.target.value)}
                 onBlur={() => handleBlur(field.id)}
               />
@@ -304,9 +304,9 @@ export function MinMaxFieldsDemo() {
           <div key={field.id} className="field-item flex gap-2 items-start">
             <div className="flex-1 space-y-1">
               <Input
-                inputType="email"
-                inputValue={field.value}
-                inputPlaceholder={`Email ${index + 1}`}
+                type="email"
+                value={field.value}
+                placeholder={`Email ${index + 1}`}
                 onInput={(e) => handleChange(field.id, e.target.value)}
                 onBlur={() => handleBlur(field.id)}
               />
