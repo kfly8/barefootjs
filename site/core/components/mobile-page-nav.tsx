@@ -53,19 +53,20 @@ function ChevronRightSmall() {
   )
 }
 
-const navLinkClass = 'flex items-center px-2 py-1.5 w-28 bg-background/95 backdrop-blur rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors no-underline'
+const navLinkClass = 'flex items-center px-2 py-1.5 bg-background/95 backdrop-blur rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors no-underline'
 
 export function MobilePageNav({ prev, next }: MobilePageNavProps) {
   if (!prev && !next) return null
 
   return (
-    <div className="fixed bottom-6 left-18 right-4 z-[10000] sm:hidden flex items-center justify-end gap-2">
+    <div className="fixed bottom-6 left-18 right-4 z-[10000] sm:hidden grid grid-cols-[7rem_7rem] justify-end gap-2">
       {prev && (
         <a href={prev.href} className={navLinkClass} aria-label={`Previous: ${prev.title}`}>
           <ChevronLeftSmall />
           <span className="flex-1 text-center text-xs truncate">{prev.title}</span>
         </a>
       )}
+      {!prev && <div />}
       {next && (
         <a href={next.href} className={navLinkClass} aria-label={`Next: ${next.title}`}>
           <span className="flex-1 text-center text-xs truncate">{next.title}</span>
