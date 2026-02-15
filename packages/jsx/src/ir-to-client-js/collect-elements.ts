@@ -4,7 +4,7 @@
 
 import type { IRNode, IRElement, IREvent } from '../types'
 import type { ClientJsContext, LoopChildEvent } from './types'
-import { attrValueToString } from './utils'
+import { attrValueToString, quotePropName } from './utils'
 import { isReactiveExpression, collectEventHandlersFromIR, collectConditionalBranchEvents, collectConditionalBranchRefs, collectLoopChildEvents } from './reactivity'
 import { irToHtmlTemplate } from './html-template'
 import { expandDynamicPropValue } from './prop-handling'
@@ -168,10 +168,10 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           prop.name.length > 2 &&
           prop.name[2] === prop.name[2].toUpperCase()
         if (isEventHandler) {
-          propsForInit.push(`${prop.name}: ${prop.value}`)
+          propsForInit.push(`${quotePropName(prop.name)}: ${prop.value}`)
         } else if (prop.dynamic) {
           const expandedValue = expandDynamicPropValue(prop.value, ctx)
-          propsForInit.push(`get ${prop.name}() { return ${expandedValue} }`)
+          propsForInit.push(`get ${quotePropName(prop.name)}() { return ${expandedValue} }`)
 
           const hasPropsRef = expandedValue.includes('props.')
           const hasReactiveExpr = isReactiveExpression(expandedValue, ctx)
@@ -186,9 +186,9 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
             })
           }
         } else if (prop.isLiteral) {
-          propsForInit.push(`${prop.name}: ${JSON.stringify(prop.value)}`)
+          propsForInit.push(`${quotePropName(prop.name)}: ${JSON.stringify(prop.value)}`)
         } else {
-          propsForInit.push(`${prop.name}: ${prop.value}`)
+          propsForInit.push(`${quotePropName(prop.name)}: ${prop.value}`)
         }
       }
       const propsExpr =
@@ -256,6 +256,7 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
             slotId: element.slotId,
             attrName: attr.name,
             expression: valueStr,
+            presenceOrUndefined: attr.presenceOrUndefined,
           })
         }
       }

@@ -18,9 +18,12 @@ export const componentOrder = [
   { slug: 'label', title: 'Label' },
   { slug: 'portal', title: 'Portal' },
   { slug: 'select', title: 'Select' },
+  { slug: 'slider', title: 'Slider' },
   { slug: 'switch', title: 'Switch' },
   { slug: 'tabs', title: 'Tabs' },
+  { slug: 'textarea', title: 'Textarea' },
   { slug: 'toast', title: 'Toast' },
+  { slug: 'toggle', title: 'Toggle' },
   { slug: 'tooltip', title: 'Tooltip' },
 ]
 

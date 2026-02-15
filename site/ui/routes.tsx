@@ -15,14 +15,17 @@ import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
 import { InputPage } from './pages/input'
 import { LabelPage } from './pages/label'
+import { SliderPage } from './pages/slider'
 import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
+import { TogglePage } from './pages/toggle'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 
 // Form pattern pages
@@ -104,6 +107,18 @@ export function createApp() {
                 </div>
                 <div className="p-3 text-xs text-muted-foreground">
                   Manage your account settings and preferences.
+                </div>
+              </div>
+            </PreviewCard>
+
+            {/* Slider */}
+            <PreviewCard name="Slider" path="/docs/components/slider">
+              <div className="w-full max-w-48 space-y-3">
+                <div className="relative flex w-full items-center h-5">
+                  <div className="bg-muted relative grow overflow-hidden rounded-full h-1.5 w-full">
+                    <div className="bg-primary absolute h-full" style="width: 60%" />
+                  </div>
+                  <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 border-primary block size-4 rounded-full border bg-white shadow-sm" style="left: 60%" />
                 </div>
               </div>
             </PreviewCard>
@@ -197,6 +212,11 @@ export function createApp() {
     return c.render(<LabelPage />)
   })
 
+  // Slider documentation
+  app.get('/docs/components/slider', (c) => {
+    return c.render(<SliderPage />)
+  })
+
   // Switch documentation
   app.get('/docs/components/switch', (c) => {
     return c.render(<SwitchPage />)
@@ -227,6 +247,11 @@ export function createApp() {
     return c.render(<ToastPage />)
   })
 
+  // Toggle documentation
+  app.get('/docs/components/toggle', (c) => {
+    return c.render(<TogglePage />)
+  })
+
   // Tooltip documentation
   app.get('/docs/components/tooltip', (c) => {
     return c.render(<TooltipPage />)
@@ -235,6 +260,11 @@ export function createApp() {
   // Select documentation
   app.get('/docs/components/select', (c) => {
     return c.render(<SelectPage />)
+  })
+
+  // Textarea documentation
+  app.get('/docs/components/textarea', (c) => {
+    return c.render(<TextareaPage />)
   })
 
   // Portal documentation

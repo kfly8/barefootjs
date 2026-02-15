@@ -6,7 +6,7 @@
 import type { ComponentIR, ConstantInfo, SignalInfo } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
-import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr } from './utils'
+import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName } from './utils'
 import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate } from './html-template'
 
 /**
@@ -59,7 +59,10 @@ export function emitPropsExtraction(
       const prop = ctx.propsParams.find((p) => p.name === propName)
       const defaultVal = prop?.defaultValue
       if (defaultVal) {
-        lines.push(`  const ${propName} = props.${propName} ?? ${defaultVal}`)
+        // Wrap arrow function defaults in parentheses to avoid operator precedence issues
+        // e.g., `props.onInput ?? () => {}` is a syntax error; must be `props.onInput ?? (() => {})`
+        const wrappedDefault = defaultVal.includes('=>') ? `(${defaultVal})` : defaultVal
+        lines.push(`  const ${propName} = props.${propName} ?? ${wrappedDefault}`)
       } else if (propsUsedAsLoopArrays.has(propName)) {
         lines.push(`  const ${propName} = props.${propName} ?? []`)
       } else if (propsWithPropertyAccess.has(propName) && !propsUsedAsConditions.has(propName)) {
@@ -268,6 +271,9 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
           lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
         } else if (isBooleanAttr(htmlAttrName)) {
           lines.push(`      _${slotId}.${htmlAttrName} = !!(${attr.expression})`)
+        } else if (attr.presenceOrUndefined) {
+          lines.push(`      if (${attr.expression}) _${slotId}.setAttribute('${htmlAttrName}', '')`)
+          lines.push(`      else _${slotId}.removeAttribute('${htmlAttrName}')`)
         } else {
           lines.push(`      _${slotId}.setAttribute('${htmlAttrName}', String(${attr.expression}))`)
         }
@@ -382,11 +388,11 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         for (const comp of elem.nestedComponents) {
           const propsEntries = comp.props.map((p) => {
             if (p.isEventHandler) {
-              return `${p.name}: ${p.value}`
+              return `${quotePropName(p.name)}: ${p.value}`
             } else if (p.isLiteral) {
-              return `${p.name}: ${JSON.stringify(p.value)}`
+              return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
             } else {
-              return `get ${p.name}() { return ${p.value} }`
+              return `get ${quotePropName(p.name)}() { return ${p.value} }`
             }
           })
           const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
@@ -418,11 +424,11 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const { name, props } = elem.childComponent
       const propsEntries = props.map((p) => {
         if (p.isEventHandler) {
-          return `${p.name}: ${p.value}`
+          return `${quotePropName(p.name)}: ${p.value}`
         } else if (p.isLiteral) {
-          return `get ${p.name}() { return ${JSON.stringify(p.value)} }`
+          return `get ${quotePropName(p.name)}() { return ${JSON.stringify(p.value)} }`
         } else {
-          return `get ${p.name}() { return ${p.value} }`
+          return `get ${quotePropName(p.name)}() { return ${p.value} }`
         }
       })
       const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
