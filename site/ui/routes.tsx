@@ -22,6 +22,7 @@ import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
+import { TogglePage } from './pages/toggle'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
 import { TextareaPage } from './pages/textarea'
@@ -244,6 +245,11 @@ export function createApp() {
   // Toast documentation
   app.get('/docs/components/toast', (c) => {
     return c.render(<ToastPage />)
+  })
+
+  // Toggle documentation
+  app.get('/docs/components/toggle', (c) => {
+    return c.render(<TogglePage />)
   })
 
   // Tooltip documentation
