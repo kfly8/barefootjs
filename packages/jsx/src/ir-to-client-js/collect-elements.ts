@@ -256,7 +256,7 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
             slotId: element.slotId,
             attrName: attr.name,
             expression: valueStr,
-            booleanPresence: attr.booleanPresence,
+            presenceOrUndefined: attr.presenceOrUndefined,
           })
         }
       }

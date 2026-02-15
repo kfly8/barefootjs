@@ -271,7 +271,7 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
           lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
         } else if (isBooleanAttr(htmlAttrName)) {
           lines.push(`      _${slotId}.${htmlAttrName} = !!(${attr.expression})`)
-        } else if (attr.booleanPresence) {
+        } else if (attr.presenceOrUndefined) {
           lines.push(`      if (${attr.expression}) _${slotId}.setAttribute('${htmlAttrName}', '')`)
           lines.push(`      else _${slotId}.removeAttribute('${htmlAttrName}')`)
         } else {

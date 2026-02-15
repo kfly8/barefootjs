@@ -18,7 +18,7 @@ export function irToHtmlTemplate(node: IRNode): string {
           if (a.dynamic && isBooleanAttr(attrName)) {
             return `\${${a.value} ? '${attrName}' : ''}`
           }
-          if (a.dynamic && a.booleanPresence) {
+          if (a.dynamic && a.presenceOrUndefined) {
             return `\${${a.value} ? '${attrName}' : ''}`
           }
           if (a.dynamic) return `${attrName}="\${${a.value}}"`
@@ -134,7 +134,7 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
           if (a.dynamic && valueStr && isBooleanAttr(attrName)) {
             return `\${${transformExpr(valueStr)} ? '${attrName}' : ''}`
           }
-          if (a.dynamic && valueStr && a.booleanPresence) {
+          if (a.dynamic && valueStr && a.presenceOrUndefined) {
             return `\${${transformExpr(valueStr)} ? '${attrName}' : ''}`
           }
           if (a.dynamic && valueStr) return `${attrName}="\${${transformExpr(valueStr)}}"`
