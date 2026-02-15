@@ -1939,4 +1939,77 @@ describe('Compiler', () => {
       expect(clientJs!.content).not.toContain('"label"')
     })
   })
+
+  describe('child components inside .map() (#344)', () => {
+    test('static array: nested component inside element wrapper generates initChild', () => {
+      const source = `
+        'use client'
+
+        export function RadioGroup() {
+          const items = [{ value: 'a' }, { value: 'b' }]
+          return (
+            <div>
+              {items.map(item => (
+                <div><RadioGroupItem value={item.value} /></div>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'RadioGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("initChild('RadioGroupItem'")
+    })
+
+    test('static array: direct component generates initChild', () => {
+      const source = `
+        'use client'
+
+        export function RadioGroup() {
+          const items = [{ value: 'a' }, { value: 'b' }]
+          return (
+            <div>
+              {items.map(item => (
+                <RadioGroupItem value={item.value} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'RadioGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("initChild('RadioGroupItem'")
+    })
+
+    test('dynamic signal array: component generates reconcileList with createComponent', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function RadioGroup() {
+          const [items, setItems] = createSignal([{ value: 'a' }, { value: 'b' }])
+          return (
+            <div>
+              {items().map(item => (
+                <RadioGroupItem value={item.value} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'RadioGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('reconcileList')
+      expect(clientJs!.content).toContain("createComponent('RadioGroupItem'")
+    })
+  })
 })
