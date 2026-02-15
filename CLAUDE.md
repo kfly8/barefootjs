@@ -2,6 +2,10 @@
 
 JSX → Marked Template + client JS compiler. Signal-based reactivity for any backend.
 
+## Project Setup / Tech Stack
+
+This project primarily uses TypeScript with Go template adapters. Use `bun` instead of `npm` for package management. For CSS, use UnoCSS — note that UnoCSS alpha modifiers do not work with CSS variables, and files must be explicitly included in UnoCSS scanning config.
+
 ## Architecture
 
 2-phase compilation: JSX → IR → Marked Template + Client JS
@@ -22,6 +26,10 @@ Adapters: HonoAdapter (`packages/hono/`), GoTemplateAdapter (`packages/go-templa
 - `site/ui/` — UI component documentation site (Hono + Cloudflare Workers)
 - `site/shared/` — Shared design tokens and components across sites
 - `docs/core/` — Documentation content (Markdown source files)
+
+## Implementation Guidelines
+
+When implementing a feature, match the capability level of existing similar features. For example, if filter() supports arbitrary predicates, find() should too. Always check sibling implementations for parity.
 
 ## Specs
 
