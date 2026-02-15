@@ -665,9 +665,112 @@ export function emitRegistrationAndHydration(
   lines.push('')
 
   const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+
+  // Build inlinable constants map and unsafe local names set (#343)
+  // Local constants computed inside the component function are not available
+  // at module scope where the mount() template callback executes.
+  // We classify each constant as inlinable (can be substituted with its value)
+  // or unsafe (cannot be used in templates).
+  const inlinableConstants = new Map<string, string>()
+  const unsafeLocalNames = new Set<string>()
+
+  const signalGetters = new Set(ctx.signals.map(s => s.getter))
+  const signalSetters = new Set(ctx.signals.map(s => s.setter))
+  const memoNames = new Set(ctx.memos.map(m => m.name))
+
+  // Local functions are not available at module scope
+  for (const fn of ctx.localFunctions) {
+    unsafeLocalNames.add(fn.name)
+  }
+
+  for (const constant of ctx.localConstants) {
+    const trimmedValue = constant.value.trim()
+
+    // Arrow functions cannot be inlined into templates
+    if (trimmedValue.includes('=>')) {
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
+
+    // Module-level constants (createContext, new WeakMap) are already at module scope
+    if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
+      continue
+    }
+
+    // Check if value references signals, setters, or memos (reactive data)
+    let dependsOnReactive = false
+    for (const sigName of signalGetters) {
+      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) {
+        dependsOnReactive = true
+        break
+      }
+    }
+    if (!dependsOnReactive) {
+      for (const setterName of signalSetters) {
+        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) {
+          dependsOnReactive = true
+          break
+        }
+      }
+    }
+    if (!dependsOnReactive) {
+      for (const mName of memoNames) {
+        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) {
+          dependsOnReactive = true
+          break
+        }
+      }
+    }
+
+    if (dependsOnReactive) {
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
+
+    inlinableConstants.set(constant.name, stripTypeScriptSyntax(trimmedValue))
+  }
+
+  // Resolve chained references: replace constant names within values with resolved values
+  let changed = true
+  const maxIterations = inlinableConstants.size + 1
+  let iteration = 0
+  while (changed && iteration < maxIterations) {
+    changed = false
+    iteration++
+    for (const [constName, constValue] of inlinableConstants) {
+      let newValue = constValue
+      for (const [otherName, otherValue] of inlinableConstants) {
+        if (otherName === constName) continue
+        const replaced = newValue.replace(new RegExp(`\\b${otherName}\\b`, 'g'), `(${otherValue})`)
+        if (replaced !== newValue) {
+          newValue = replaced
+          changed = true
+        }
+      }
+      if (newValue !== constValue) {
+        inlinableConstants.set(constName, newValue)
+      }
+    }
+  }
+
+  // After resolution, demote any constant whose value still references an unsafe name
+  const toRemove: string[] = []
+  for (const [constName, constValue] of inlinableConstants) {
+    for (const unsafeName of unsafeLocalNames) {
+      if (new RegExp(`\\b${unsafeName}\\b`).test(constValue)) {
+        toRemove.push(constName)
+        break
+      }
+    }
+  }
+  for (const removeName of toRemove) {
+    inlinableConstants.delete(removeName)
+    unsafeLocalNames.add(removeName)
+  }
+
   let templateArg = ''
-  if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate)) {
-    const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate)
+  if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
+    const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
     if (templateHtml) {
       templateArg = `, (props) => \`${templateHtml}\``
     }
