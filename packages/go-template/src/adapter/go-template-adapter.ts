@@ -2218,7 +2218,7 @@ export class GoTemplateAdapter extends BaseAdapter {
         parts.push(`${attrName}="${output}"`)
       } else if (attr.dynamic) {
         const value = attr.value as string
-        if (isBooleanAttr(attrName)) {
+        if (isBooleanAttr(attrName) || attr.presenceOrUndefined) {
           // Boolean attrs: render attr name only when truthy, omit when falsy
           const { condition: goCond, preamble } = this.convertConditionToGo(value)
           parts.push(`${preamble}{{if ${goCond}}}${attrName}{{end}}`)

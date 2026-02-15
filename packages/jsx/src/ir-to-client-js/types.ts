@@ -139,6 +139,7 @@ export interface ReactiveAttribute {
   slotId: string
   attrName: string
   expression: string
+  presenceOrUndefined?: boolean
 }
 
 export interface ClientOnlyElement {

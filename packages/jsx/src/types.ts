@@ -293,6 +293,7 @@ export interface IRAttribute {
   dynamic: boolean
   isLiteral: boolean // true if value came from a string literal attribute
   loc: SourceLocation
+  presenceOrUndefined?: boolean // true when `expr || undefined` pattern is detected
 }
 
 export interface IREvent {
