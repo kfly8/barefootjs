@@ -1208,13 +1208,14 @@ function processAttributes(
     }
 
     // Regular attribute
-    const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
+    const { value, dynamic, isLiteral, booleanPresence } = getAttributeValue(attr, ctx)
     attrs.push({
       name,
       value,
       dynamic,
       isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
+      booleanPresence,
     })
   }
 
@@ -1224,7 +1225,7 @@ function processAttributes(
 function getAttributeValue(
   attr: ts.JsxAttribute,
   ctx: TransformContext
-): { value: string | IRTemplateLiteral | null; dynamic: boolean; isLiteral: boolean } {
+): { value: string | IRTemplateLiteral | null; dynamic: boolean; isLiteral: boolean; booleanPresence?: boolean } {
   // Boolean attribute: <button disabled />
   if (!attr.initializer) {
     return { value: null, dynamic: false, isLiteral: false }
@@ -1263,6 +1264,14 @@ function getAttributeValue(
           dynamic: true,
           isLiteral: false,
         }
+      }
+    }
+
+    // Detect `expr || undefined` pattern → boolean presence attribute
+    if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
+      if (ts.isIdentifier(expr.right) && expr.right.text === 'undefined') {
+        const baseExpr = expr.left.getText(ctx.sourceFile)
+        return { value: baseExpr, dynamic: true, isLiteral: false, booleanPresence: true }
       }
     }
 

@@ -798,7 +798,7 @@ export class HonoAdapter implements TemplateAdapter {
         parts.push(`${attrName}={${output}}`)
       } else if (attr.dynamic) {
         // Dynamic attribute
-        if (isBooleanAttr(attrName)) {
+        if (isBooleanAttr(attrName) || attr.booleanPresence) {
           // Boolean attrs: pass undefined when falsy so Hono omits the attribute
           // Wrap in parentheses to avoid syntax error when value contains ?? operator
           parts.push(`${attrName}={(${attr.value}) || undefined}`)
