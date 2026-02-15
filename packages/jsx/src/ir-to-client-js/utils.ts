@@ -66,6 +66,18 @@ export function toDomEventProp(eventName: string): string {
 }
 
 /**
+ * Quote a prop name if it is not a valid JS identifier.
+ * Returns the name as-is for valid identifiers (e.g., "checked"),
+ * or JSON-quoted for names with hyphens etc. (e.g., '"aria-label"').
+ */
+export function quotePropName(name: string): string {
+  if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name)) {
+    return name
+  }
+  return JSON.stringify(name)
+}
+
+/**
  * Convert JSX attribute name to HTML attribute name.
  * Handles React-style naming conventions (e.g., className → class).
  */
