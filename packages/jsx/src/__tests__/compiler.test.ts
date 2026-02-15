@@ -1766,6 +1766,109 @@ describe('Compiler', () => {
     })
   })
 
+  describe('mount template local constant inlining (#343)', () => {
+    test('props-derived constant is inlined in mount template', () => {
+      // Local constants computed from props should be inlined in the mount()
+      // template callback, which executes at module scope where locals are unavailable
+      const source = `
+        'use client'
+
+        export function MyItem(props: { disabled?: boolean, onClick?: () => void }) {
+          const isDisabled = props.disabled ?? false
+          return <button disabled={isDisabled || undefined} onClick={props.onClick}>Click</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyItem.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Template should inline the constant value, not reference the local name
+      expect(content).toContain('(props) => `')
+      expect(content).not.toMatch(/\bisDisabled\b.*\?>/)
+      // The inlined expression should reference props directly
+      expect(content).toMatch(/props\.disabled/)
+    })
+
+    test('template literal constant is inlined in mount template', () => {
+      const source = `
+        'use client'
+
+        export function Badge(props: { variant?: string, onClick?: () => void }) {
+          const classes = \`badge \${props.variant ?? 'default'}\`
+          return <span className={classes} onClick={props.onClick}>Label</span>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Badge.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Template should inline the template literal, not reference 'classes'
+      expect(content).toContain('(props) => `')
+      expect(content).not.toMatch(/\bclasses\b/)
+    })
+
+    test('signal-dependent constant prevents template generation', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Display() {
+          const [count, setCount] = createSignal(0)
+          const label = count()
+          return <div onClick={() => setCount(n => n + 1)}>{label}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Display.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // mount() should NOT have a template argument (signal-dependent constant)
+      expect(content).toMatch(/mount\('Display', initDisplay\)/)
+      expect(content).not.toContain('(props) => `')
+    })
+
+    test('issue #343 full reproduction: local constant in disabled attribute', () => {
+      // Exact reproduction from issue #343
+      const source = `
+        'use client'
+
+        export function MyItem(props: { disabled?: boolean, onClick?: () => void }) {
+          const isDisabled = props.disabled ?? false
+          return <button disabled={isDisabled || undefined} onClick={props.onClick}>Click</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyItem.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Must have a template (the component is simple enough)
+      expect(content).toContain('(props) => `')
+      // Template must NOT reference the local variable name 'isDisabled'
+      // It should instead contain the inlined expression with props access
+      const templateMatch = content.match(/\(props\) => `([^`]*)`/)
+      expect(templateMatch).not.toBeNull()
+      const template = templateMatch![1]
+      expect(template).not.toContain('isDisabled')
+      expect(template).toContain('props.disabled')
+    })
+  })
+
   describe('hyphenated prop names in child component (#346)', () => {
     test('quotes hyphenated prop names in initChild', () => {
       const source = `

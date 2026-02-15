@@ -105,14 +105,30 @@ export function addCondAttrToTemplate(html: string, condId: string): string {
  *
  * This is similar to irToHtmlTemplate but:
  * - Expressions are transformed to use the template function's props parameter
+ * - Local constant references are inlined with their resolved values (#343)
  * - bf markers ARE included so client code can find elements
  *
  * @param node - IR node to render
  * @param propNames - Set of prop names to prefix with 'props.'
+ * @param inlinableConstants - Map of constant names to their resolved values for inlining
  */
-export function irToComponentTemplate(node: IRNode, propNames: Set<string>): string {
+export function irToComponentTemplate(
+  node: IRNode,
+  propNames: Set<string>,
+  inlinableConstants?: Map<string, string>
+): string {
   const transformExpr = (expr: string): string => {
     let result = expr
+
+    // First: inline constant references with their resolved values (#343)
+    // Parenthesized to prevent operator precedence issues
+    if (inlinableConstants && inlinableConstants.size > 0) {
+      for (const [constName, constValue] of inlinableConstants) {
+        result = result.replace(new RegExp(`\\b${constName}\\b`, 'g'), `(${constValue})`)
+      }
+    }
+
+    // Then: prefix prop names with 'props.'
     for (const propName of propNames) {
       // Match propName as identifier followed by property/index/call access,
       // but not already prefixed with 'props.' or inside string literals
@@ -148,7 +164,7 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
       }
 
       const attrs = attrParts.join(' ')
-      const children = node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+      const children = node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
       if (children) {
         return `<${node.tag}${attrs ? ' ' + attrs : ''}>${children}</${node.tag}>`
@@ -167,19 +183,19 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
       return `\${${transformExpr(node.expr)}}`
 
     case 'conditional': {
-      const trueBranch = irToComponentTemplate(node.whenTrue, propNames)
-      const falseBranch = irToComponentTemplate(node.whenFalse, propNames)
+      const trueBranch = irToComponentTemplate(node.whenTrue, propNames, inlinableConstants)
+      const falseBranch = irToComponentTemplate(node.whenFalse, propNames, inlinableConstants)
       const trueHtml = node.slotId ? addCondAttrToTemplate(trueBranch, node.slotId) : trueBranch
       const falseHtml = node.slotId ? addCondAttrToTemplate(falseBranch, node.slotId) : falseBranch
       return `\${${transformExpr(node.condition)} ? \`${trueHtml}\` : \`${falseHtml}\`}`
     }
 
     case 'fragment':
-      return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+      return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
     case 'component': {
       if (node.name === 'Portal') {
-        return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+        return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
       }
 
       const keyProp = node.props.find((p) => p.name === 'key')
@@ -188,17 +204,30 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
     }
 
     case 'loop':
-      return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+      return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
     case 'if-statement':
       return ''
 
     case 'provider':
-      return node.children.map((c) => irToComponentTemplate(c, propNames)).join('')
+      return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
     default:
       return ''
   }
+}
+
+/**
+ * Check if an expression references any identifier from the given set.
+ * Used to detect unsafe local variable references in template expressions (#343).
+ */
+function expressionReferencesAny(expr: string, names: Set<string>): boolean {
+  for (const name of names) {
+    if (new RegExp(`\\b${name}\\b`).test(expr)) {
+      return true
+    }
+  }
+  return false
 }
 
 /**
@@ -207,11 +236,26 @@ export function irToComponentTemplate(node: IRNode, propNames: Set<string>): str
  * - Loops (which use dynamic signal arrays)
  * - Child components (which can't be fully represented in templates)
  * - Signal calls in expressions (like todos().length)
+ * - References to local variables not available at module scope (#343)
  *
  * Components that fail this check should not have registerTemplate() generated
  * as the template would reference undefined variables at module scope.
+ *
+ * @param node - IR node to check
+ * @param propNames - Set of prop names (safe to reference via props parameter)
+ * @param inlinableConstants - Constants that can be substituted with their values
+ * @param unsafeLocalNames - Local names that cannot be used in module-scope templates
  */
-export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>): boolean {
+export function canGenerateStaticTemplate(
+  node: IRNode,
+  propNames: Set<string>,
+  inlinableConstants?: Map<string, string>,
+  unsafeLocalNames?: Set<string>
+): boolean {
+  const hasUnsafeRef = (expr: string): boolean => {
+    return !!(unsafeLocalNames && unsafeLocalNames.size > 0 && expressionReferencesAny(expr, unsafeLocalNames))
+  }
+
   switch (node.type) {
     case 'loop':
       return false
@@ -220,6 +264,7 @@ export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>):
       return false
 
     case 'expression':
+      if (hasUnsafeRef(node.expr)) return false
       if (node.expr.includes('()') && !isSimplePropExpression(node.expr, propNames)) {
         return false
       }
@@ -229,34 +274,38 @@ export function canGenerateStaticTemplate(node: IRNode, propNames: Set<string>):
       for (const attr of node.attrs) {
         if (attr.dynamic && attr.value) {
           const valueStr = attrValueToString(attr.value)
-          if (valueStr && valueStr.includes('()') && !isSimplePropExpression(valueStr, propNames)) {
-            return false
+          if (valueStr) {
+            if (hasUnsafeRef(valueStr)) return false
+            if (valueStr.includes('()') && !isSimplePropExpression(valueStr, propNames)) {
+              return false
+            }
           }
         }
       }
-      return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
+      return node.children.every((c) => canGenerateStaticTemplate(c, propNames, inlinableConstants, unsafeLocalNames))
 
     case 'conditional':
+      if (hasUnsafeRef(node.condition)) return false
       if (node.condition.includes('()') && !isSimplePropExpression(node.condition, propNames)) {
         return false
       }
-      return canGenerateStaticTemplate(node.whenTrue, propNames) &&
-             canGenerateStaticTemplate(node.whenFalse, propNames)
+      return canGenerateStaticTemplate(node.whenTrue, propNames, inlinableConstants, unsafeLocalNames) &&
+             canGenerateStaticTemplate(node.whenFalse, propNames, inlinableConstants, unsafeLocalNames)
 
     case 'fragment':
-      return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
+      return node.children.every((c) => canGenerateStaticTemplate(c, propNames, inlinableConstants, unsafeLocalNames))
 
     case 'if-statement':
-      if (!canGenerateStaticTemplate(node.consequent, propNames)) {
+      if (!canGenerateStaticTemplate(node.consequent, propNames, inlinableConstants, unsafeLocalNames)) {
         return false
       }
-      if (node.alternate && !canGenerateStaticTemplate(node.alternate, propNames)) {
+      if (node.alternate && !canGenerateStaticTemplate(node.alternate, propNames, inlinableConstants, unsafeLocalNames)) {
         return false
       }
       return true
 
     case 'provider':
-      return node.children.every((c) => canGenerateStaticTemplate(c, propNames))
+      return node.children.every((c) => canGenerateStaticTemplate(c, propNames, inlinableConstants, unsafeLocalNames))
 
     case 'text':
       return true

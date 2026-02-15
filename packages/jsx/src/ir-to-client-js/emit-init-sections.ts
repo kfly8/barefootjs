@@ -653,6 +653,59 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
   }
 }
 
+// JavaScript built-in identifiers that are always available at any scope
+const JS_BUILTINS = new Set([
+  'true', 'false', 'null', 'undefined', 'NaN', 'Infinity',
+  'typeof', 'instanceof', 'void', 'delete', 'new', 'in', 'of',
+  'this', 'super', 'return', 'throw', 'if', 'else',
+  'for', 'while', 'do', 'switch', 'case', 'break', 'continue',
+  'try', 'catch', 'finally', 'yield', 'await', 'async',
+  'let', 'const', 'var', 'function', 'class',
+  'Math', 'JSON', 'Object', 'Array', 'String', 'Number', 'Boolean',
+  'Date', 'RegExp', 'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise',
+  'Error', 'TypeError', 'RangeError', 'SyntaxError',
+  'console', 'window', 'document', 'globalThis', 'navigator',
+  'parseInt', 'parseFloat', 'isNaN', 'isFinite',
+  'encodeURIComponent', 'decodeURIComponent', 'encodeURI', 'decodeURI',
+  'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+  'requestAnimationFrame', 'cancelAnimationFrame',
+  'Symbol', 'Proxy', 'Reflect', 'BigInt',
+])
+
+/**
+ * Check that an expression value only references identifiers known within
+ * the component scope (or JavaScript built-ins). Returns false if the value
+ * contains references to file-scope variables that won't be available in
+ * the generated client JS module scope.
+ */
+function valueOnlyUsesKnownNames(value: string, knownNames: Set<string>): boolean {
+  // Strip string literal content to avoid false-positive identifier matches.
+  // For template literals, extract only ${...} expression parts.
+  let codeParts = value
+    .replace(/'(?:[^'\\]|\\.)*'/g, '')
+    .replace(/"(?:[^"\\]|\\.)*"/g, '')
+
+  if (codeParts.includes('`')) {
+    const exprParts: string[] = []
+    const templateExprRegex = /\$\{([^}]*)\}/g
+    let match
+    while ((match = templateExprRegex.exec(codeParts)) !== null) {
+      exprParts.push(match[1])
+    }
+    // Keep non-template-literal code, replace template literals with extracted expressions
+    codeParts = codeParts.replace(/`[^`]*`/g, '') + ' ' + exprParts.join(' ')
+  }
+
+  const identifiers = codeParts.matchAll(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g)
+  for (const m of identifiers) {
+    const id = m[1]
+    if (JS_BUILTINS.has(id)) continue
+    if (knownNames.has(id)) continue
+    return false
+  }
+  return true
+}
+
 /** Emit mount() call that registers component, template, and hydrates. */
 export function emitRegistrationAndHydration(
   lines: string[],
@@ -665,9 +718,136 @@ export function emitRegistrationAndHydration(
   lines.push('')
 
   const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+
+  // Build inlinable constants map and unsafe local names set (#343)
+  // Local constants computed inside the component function are not available
+  // at module scope where the mount() template callback executes.
+  // We classify each constant as inlinable (can be substituted with its value)
+  // or unsafe (cannot be used in templates).
+  //
+  // A constant is only inlinable if its value exclusively references:
+  // - Props (via props.xxx or destructured prop names)
+  // - Other component-local names (constants, signals, memos, functions)
+  // - JavaScript built-in globals
+  // File-scope variables (e.g., variant lookup Records) are NOT available in
+  // the generated client JS module scope, so constants referencing them are unsafe.
+  const inlinableConstants = new Map<string, string>()
+  const unsafeLocalNames = new Set<string>()
+
+  const signalGetters = new Set(ctx.signals.map(s => s.getter))
+  const signalSetters = new Set(ctx.signals.map(s => s.setter))
+  const memoNames = new Set(ctx.memos.map(m => m.name))
+
+  // All identifiers known within the component function scope
+  const componentScopeNames = new Set<string>()
+  for (const c of ctx.localConstants) componentScopeNames.add(c.name)
+  for (const s of ctx.signals) { componentScopeNames.add(s.getter); componentScopeNames.add(s.setter) }
+  for (const m of ctx.memos) componentScopeNames.add(m.name)
+  for (const f of ctx.localFunctions) componentScopeNames.add(f.name)
+  for (const p of ctx.propsParams) componentScopeNames.add(p.name)
+  if (ctx.propsObjectName) componentScopeNames.add(ctx.propsObjectName)
+
+  // Local functions are not available at module scope
+  for (const fn of ctx.localFunctions) {
+    unsafeLocalNames.add(fn.name)
+  }
+
+  for (const constant of ctx.localConstants) {
+    const trimmedValue = constant.value.trim()
+
+    // Arrow functions cannot be inlined into templates
+    if (trimmedValue.includes('=>')) {
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
+
+    // Module-level constants (createContext, new WeakMap) are already at module scope
+    if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
+      continue
+    }
+
+    // Check if value references signals, setters, or memos (reactive data)
+    let dependsOnReactive = false
+    for (const sigName of signalGetters) {
+      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) {
+        dependsOnReactive = true
+        break
+      }
+    }
+    if (!dependsOnReactive) {
+      for (const setterName of signalSetters) {
+        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) {
+          dependsOnReactive = true
+          break
+        }
+      }
+    }
+    if (!dependsOnReactive) {
+      for (const mName of memoNames) {
+        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) {
+          dependsOnReactive = true
+          break
+        }
+      }
+    }
+
+    if (dependsOnReactive) {
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
+
+    // Check that the value only references known component-scope identifiers.
+    // File-scope variables (Records, helper objects) are not available in the
+    // client JS module scope where the template callback executes.
+    if (!valueOnlyUsesKnownNames(trimmedValue, componentScopeNames)) {
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
+
+    inlinableConstants.set(constant.name, stripTypeScriptSyntax(trimmedValue))
+  }
+
+  // Resolve chained references: replace constant names within values with resolved values
+  let changed = true
+  const maxIterations = inlinableConstants.size + 1
+  let iteration = 0
+  while (changed && iteration < maxIterations) {
+    changed = false
+    iteration++
+    for (const [constName, constValue] of inlinableConstants) {
+      let newValue = constValue
+      for (const [otherName, otherValue] of inlinableConstants) {
+        if (otherName === constName) continue
+        const replaced = newValue.replace(new RegExp(`\\b${otherName}\\b`, 'g'), `(${otherValue})`)
+        if (replaced !== newValue) {
+          newValue = replaced
+          changed = true
+        }
+      }
+      if (newValue !== constValue) {
+        inlinableConstants.set(constName, newValue)
+      }
+    }
+  }
+
+  // After resolution, demote any constant whose value still references an unsafe name
+  const toRemove: string[] = []
+  for (const [constName, constValue] of inlinableConstants) {
+    for (const unsafeName of unsafeLocalNames) {
+      if (new RegExp(`\\b${unsafeName}\\b`).test(constValue)) {
+        toRemove.push(constName)
+        break
+      }
+    }
+  }
+  for (const removeName of toRemove) {
+    inlinableConstants.delete(removeName)
+    unsafeLocalNames.add(removeName)
+  }
+
   let templateArg = ''
-  if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate)) {
-    const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate)
+  if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
+    const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
     if (templateHtml) {
       templateArg = `, (props) => \`${templateHtml}\``
     }
