@@ -222,12 +222,13 @@ function Slider(props: SliderProps) {
     setValue(root, newValue)
   }
 
-  const rootClasses = `${rootBaseClasses} ${props.disabled ? 'opacity-50 pointer-events-none' : ''} ${props.class ?? ''}`
+  const rootClasses = `${rootBaseClasses} data-[disabled]:opacity-50 data-[disabled]:pointer-events-none ${props.class ?? ''}`
   const thumbClasses = `absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${thumbBaseClasses}`
 
   return (
     <div
       data-slot="slider"
+      data-disabled={props.disabled || undefined}
       className={rootClasses}
       onPointerDown={handlePointerDown}
     >

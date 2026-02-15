@@ -95,8 +95,7 @@ test.describe('Slider Documentation Page', () => {
     test('third slider is disabled', async ({ page }) => {
       const section = page.locator('[bf-s^="SliderBasicDemo_"]:not([data-slot])').first()
       const sliderRoots = section.locator('[data-slot="slider"]')
-      await expect(sliderRoots.nth(2)).toHaveClass(/pointer-events-none/)
-      await expect(sliderRoots.nth(2)).toHaveClass(/opacity-50/)
+      await expect(sliderRoots.nth(2)).toHaveAttribute('data-disabled', '')
     })
 
     test('third slider has value 33', async ({ page }) => {
