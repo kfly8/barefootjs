@@ -359,6 +359,9 @@ function transformComponentElement(
   // (createSignal, createMemo) that requires hydration via findScope().
   const slotId = generateSlotId(ctx)
 
+  // Propagate slotId to loop children so they use the parent's marker
+  propagateSlotIdToLoops(children, slotId)
+
   return {
     type: 'component',
     name,
