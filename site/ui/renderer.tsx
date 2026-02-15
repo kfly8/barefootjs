@@ -24,7 +24,8 @@ import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
 import { SidebarNav, type SidebarEntry } from '../shared/components/sidebar'
 import { Header } from '../shared/components/header'
 import { MobileMenu } from '@/components/mobile-menu'
-import { MobilePageNav } from '@/components/mobile-page-nav'
+import { MobilePageNav } from '../shared/components/mobile-page-nav'
+import { getNavLinks } from '@/components/shared/PageNavigation'
 import { SearchButton } from '@/components/search-button'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 import { CommandPalette } from '@/components/command-palette'
@@ -125,6 +126,10 @@ export const renderer = jsxRenderer(
     const coreHref = hostname === 'localhost' ? 'http://localhost:3001/docs/introduction' : 'https://barefootjs.dev/docs/introduction'
 
     const pageTitle = title || 'BarefootJS Components'
+
+    // Resolve prev/next links for mobile page navigation
+    const slugMatch = currentPath.match(/\/docs\/components\/([^/]+)/)
+    const navLinks = slugMatch ? getNavLinks(slugMatch[1]) : {}
     return (
       <WithPredictableIds>
         <html lang="en">
@@ -160,7 +165,7 @@ export const renderer = jsxRenderer(
           <body>
             <Header activePage="ui" logoHref={logoHref} coreHref={coreHref} uiHref="/" searchSlot={<SearchButton />} themeSwitcher={<ThemeSwitcher />} />
             <MobileMenu />
-            <MobilePageNav currentPath={currentPath} />
+            <MobilePageNav prev={navLinks.prev} next={navLinks.next} />
             <CommandPalette />
             <nav
               className="hidden sm:block fixed top-14 left-0 w-56 h-[calc(100vh-56px)] overflow-y-auto border-r border-border bg-background p-4"
