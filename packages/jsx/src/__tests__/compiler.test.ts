@@ -1377,6 +1377,39 @@ describe('Compiler', () => {
       expect(clientJs.content).not.toContain('newValue: string')
     })
 
+    test('named function references in provider value are emitted in client JS (#342)', () => {
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const TabsContext = createContext()
+
+        export function Tabs(props) {
+          const [value, setValue] = createSignal(props.defaultValue ?? '')
+          const handleValueChange = (newValue) => {
+            setValue(newValue)
+            props.onValueChange?.(newValue)
+          }
+          return (
+            <TabsContext.Provider value={{ value, handleValueChange }}>
+              <div>{props.children}</div>
+            </TabsContext.Provider>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Tabs.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+      expect(clientJs.content).toContain('handleValueChange')
+      // Function must be defined before provideContext call
+      const fnIndex = clientJs.content.indexOf('handleValueChange')
+      const provideIndex = clientJs.content.indexOf('provideContext(TabsContext')
+      expect(fnIndex).toBeLessThan(provideIndex)
+    })
+
     test('self-closing <X.Provider /> produces IRProvider with empty children', () => {
       // Self-closing syntax should work just like the open/close form
       // but with no children (e.g., for provider-only setup components)

@@ -163,6 +163,11 @@ export function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
     extractIdentifiers(attr.expression, used)
   }
 
+  for (const provider of ctx.providerSetups) {
+    extractIdentifiers(provider.contextName, used)
+    extractIdentifiers(provider.valueExpr, used)
+  }
+
   return used
 }
 
