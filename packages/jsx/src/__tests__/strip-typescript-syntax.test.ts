@@ -56,6 +56,12 @@ describe('stripTypeScriptSyntax', () => {
         stripTypeScriptSyntax('{ handler: (e: Event, idx: number) => { handle(e, idx) } }')
       ).toBe('{ handler: (e, idx) => { handle(e, idx) } }')
     })
+
+    test('strips union type annotation from arrow function parameter', () => {
+      expect(
+        stripTypeScriptSyntax('(id: number | undefined) => { use(id) }')
+      ).toBe('(id) => { use(id) }')
+    })
   })
 
   describe('object properties are not stripped', () => {

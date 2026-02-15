@@ -146,10 +146,10 @@ export function stripTypeScriptSyntax(code: string): string {
   // Type assertions: "expr as Type" or "expr as Type | Type2 | ..."
   result = result.replace(/\s+as\s+[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?(?:\s*\|\s*[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?)*/g, '')
 
-  // Parameter type annotations: (param: Type) => (param)
+  // Parameter type annotations: (param: Type) or (param: Type | Type2) => (param)
   // Only match TypeScript types (uppercase initial or type keyword) to avoid matching object properties
   result = result.replace(
-    /([(,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*((?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?)(?=\s*[,)])/g,
+    /([(,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*((?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?(?:\s*\|\s*(?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?)*)(?=\s*[,)])/g,
     '$1$2'
   )
 
