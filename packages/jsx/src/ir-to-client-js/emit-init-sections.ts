@@ -637,7 +637,8 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
     lines.push('')
     lines.push('  // Provide context for child components')
     for (const provider of ctx.providerSetups) {
-      lines.push(`  provideContext(${provider.contextName}, ${provider.valueExpr})`)
+      const jsValueExpr = stripTypeScriptSyntax(provider.valueExpr)
+      lines.push(`  provideContext(${provider.contextName}, ${jsValueExpr})`)
     }
   }
 
@@ -646,7 +647,8 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
     lines.push(`  // Initialize child components with props`)
     for (const child of ctx.childInits) {
       const slotVar = child.slotId ? `_${child.slotId}` : '__scope'
-      lines.push(`  initChild('${child.name}', ${slotVar}, ${child.propsExpr})`)
+      const jsPropsExpr = stripTypeScriptSyntax(child.propsExpr)
+      lines.push(`  initChild('${child.name}', ${slotVar}, ${jsPropsExpr})`)
     }
   }
 }

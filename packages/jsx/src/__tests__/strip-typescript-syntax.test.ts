@@ -44,6 +44,20 @@ describe('stripTypeScriptSyntax', () => {
     })
   })
 
+  describe('arrow function parameter types', () => {
+    test('strips type annotation from arrow function parameter in object literal', () => {
+      expect(
+        stripTypeScriptSyntax('{ onValueChange: (newValue: string) => { setVal(newValue) } }')
+      ).toBe('{ onValueChange: (newValue) => { setVal(newValue) } }')
+    })
+
+    test('strips multiple type annotations from arrow function parameters', () => {
+      expect(
+        stripTypeScriptSyntax('{ handler: (e: Event, idx: number) => { handle(e, idx) } }')
+      ).toBe('{ handler: (e, idx) => { handle(e, idx) } }')
+    })
+  })
+
   describe('variable declarations with initializer', () => {
     test('strips type annotation but keeps initializer', () => {
       expect(stripTypeScriptSyntax("let x: string = ''")).toBe("let x = ''")
