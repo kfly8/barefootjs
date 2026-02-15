@@ -166,8 +166,10 @@ export function stripTypeScriptSyntax(code: string): string {
   result = result.replace(/(let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:[^\n;=]+/g, '$1 $2')
 
   // Multi-variable type annotations: let x: number, y: number
+  // Use a function replacer to strip types from all variables in a single declaration
   result = result.replace(/(let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*,/g, '$1 $2,')
-  result = result.replace(/,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*(?=[,\n;)])/g, ', $1')
+  // Only strip continuation variables that follow a let/const/var declaration (lookbehind)
+  result = result.replace(/(?<=(?:let|const|var)\s+[a-zA-Z_][a-zA-Z0-9_]*[^;]*),\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*(?=[,\n;)])/g, ', $1')
 
   return result
 }
