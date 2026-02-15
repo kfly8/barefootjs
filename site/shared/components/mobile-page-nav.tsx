@@ -1,10 +1,8 @@
-'use client'
-
 /**
- * Mobile Page Navigation Component
+ * Shared Mobile Page Navigation Component
  *
  * Fixed bottom navigation for mobile devices with prev/next buttons.
- * Uses inline SVGs to avoid dependency on UI icon library.
+ * Hidden on desktop (sm:hidden). Uses inline SVGs to avoid dependency on UI icon library.
  */
 
 export interface MobilePageNavLink {
