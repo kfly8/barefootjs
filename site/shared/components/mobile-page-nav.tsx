@@ -1,10 +1,8 @@
-'use client'
-
 /**
- * Mobile Page Navigation Component
+ * Shared Mobile Page Navigation Component
  *
  * Fixed bottom navigation for mobile devices with prev/next buttons.
- * Uses inline SVGs to avoid dependency on UI icon library.
+ * Hidden on desktop (sm:hidden). Uses inline SVGs to avoid dependency on UI icon library.
  */
 
 export interface MobilePageNavLink {
@@ -59,7 +57,7 @@ export function MobilePageNav({ prev, next }: MobilePageNavProps) {
   if (!prev && !next) return null
 
   return (
-    <div className="fixed bottom-6 left-18 right-4 z-[10000] sm:hidden flex items-center gap-2">
+    <div className="fixed bottom-6 left-18 right-4 z-[10000] sm:hidden flex items-center justify-end gap-2">
       {prev && (
         <a href={prev.href} className={navLinkClass} aria-label={`Previous: ${prev.title}`}>
           <ChevronLeftSmall />
