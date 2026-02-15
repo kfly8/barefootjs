@@ -15,6 +15,7 @@ import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
 import { InputPage } from './pages/input'
 import { LabelPage } from './pages/label'
+import { SliderPage } from './pages/slider'
 import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
 import { TabsPage } from './pages/tabs'
@@ -109,6 +110,18 @@ export function createApp() {
               </div>
             </PreviewCard>
 
+            {/* Slider */}
+            <PreviewCard name="Slider" path="/docs/components/slider">
+              <div className="w-full max-w-48 space-y-3">
+                <div className="relative flex w-full items-center h-5">
+                  <div className="bg-muted relative grow overflow-hidden rounded-full h-1.5 w-full">
+                    <div className="bg-primary absolute h-full" style="width: 60%" />
+                  </div>
+                  <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 border-primary block size-4 rounded-full border bg-white shadow-sm" style="left: 60%" />
+                </div>
+              </div>
+            </PreviewCard>
+
             {/* Switch */}
             <PreviewCard name="Switch" path="/docs/components/switch">
               <div className="flex flex-col gap-3">
@@ -196,6 +209,11 @@ export function createApp() {
   // Label documentation
   app.get('/docs/components/label', (c) => {
     return c.render(<LabelPage />)
+  })
+
+  // Slider documentation
+  app.get('/docs/components/slider', (c) => {
+    return c.render(<SliderPage />)
   })
 
   // Switch documentation
