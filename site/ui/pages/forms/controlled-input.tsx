@@ -34,9 +34,9 @@ import { Input } from '@/components/ui/input'
 const [text, setText] = createSignal('')
 
 <Input
-  inputValue={text()}
+  value={text()}
   onInput={(e) => setText(e.target.value)}
-  inputPlaceholder="Type something..."
+  placeholder="Type something..."
 />
 <p>Current value: {text()}</p>`
 
@@ -47,7 +47,7 @@ const charCount = createMemo(() => text().length)
 const remaining = createMemo(() => 100 - text().length)
 
 <Input
-  inputValue={text()}
+  value={text()}
   onInput={(e) => setText(e.target.value)}
 />
 <p>Characters: {charCount()}</p>
@@ -59,11 +59,11 @@ const [text, setText] = createSignal('')
 const uppercase = createMemo(() => text().toUpperCase())
 const wordCount = createMemo(() => {
   const trimmed = text().trim()
-  return trimmed === '' ? 0 : trimmed.split(/\\s+/).length
+  return trimmed === '' ? 0 : trimmed.split(/\\\\s+/).length
 })
 
 <Input
-  inputValue={text()}
+  value={text()}
   onInput={(e) => setText(e.target.value)}
 />
 <p>Uppercase: {uppercase()}</p>
@@ -74,8 +74,8 @@ const multiInputCode = `import { createSignal } from '@barefootjs/dom'
 const [text, setText] = createSignal('')
 
 // Both inputs share the same signal
-<Input inputValue={text()} onInput={(e) => setText(e.target.value)} />
-<Input inputValue={text()} onInput={(e) => setText(e.target.value)} />
+<Input value={text()} onInput={(e) => setText(e.target.value)} />
+<Input value={text()} onInput={(e) => setText(e.target.value)} />
 <p>Shared value: {text()}</p>`
 
 export function ControlledInputPage() {
@@ -90,7 +90,7 @@ export function ControlledInputPage() {
         {/* Preview - Static example (interactive demos are in Examples section) */}
         <Example title="" code={basicCode}>
           <div className="max-w-sm">
-            <Input inputPlaceholder="Type something..." />
+            <Input placeholder="Type something..." />
             <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
             </p>
@@ -144,7 +144,7 @@ export function ControlledInputPage() {
             <div className="p-4 bg-muted rounded-lg">
               <h3 className="font-semibold text-foreground mb-2">Pattern Structure</h3>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li><code className="text-foreground">inputValue={'{signal()}'}</code> - Binds signal value to input</li>
+                <li><code className="text-foreground">value={'{signal()}'}</code> - Binds signal value to input</li>
                 <li><code className="text-foreground">{'onInput={(e) => setSignal(e.target.value)}'}</code> - Updates signal on input</li>
                 <li>Use <code className="text-foreground">createMemo</code> for derived values (character count, transformations)</li>
               </ul>

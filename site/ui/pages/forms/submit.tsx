@@ -55,9 +55,9 @@ const handleSubmit = async () => {
 }
 
 <Input
-  inputValue={email()}
+  value={email()}
   onInput={(e) => setEmail(e.target.value)}
-  inputDisabled={loading()}
+  disabled={loading()}
 />
 <Button onClick={handleSubmit} disabled={!isValid() || loading()}>
   {loading() ? 'Submitting...' : 'Subscribe'}
@@ -149,7 +149,7 @@ export function SubmitPage() {
         {/* Preview - Static example */}
         <Example title="" code={basicSubmitCode}>
           <div className="max-w-sm">
-            <Input inputPlaceholder="Enter your email" />
+            <Input placeholder="Enter your email" />
             <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
             </p>

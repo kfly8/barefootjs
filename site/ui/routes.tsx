@@ -23,6 +23,7 @@ import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 
 // Form pattern pages
@@ -235,6 +236,11 @@ export function createApp() {
   // Select documentation
   app.get('/docs/components/select', (c) => {
     return c.render(<SelectPage />)
+  })
+
+  // Textarea documentation
+  app.get('/docs/components/textarea', (c) => {
+    return c.render(<TextareaPage />)
   })
 
   // Portal documentation

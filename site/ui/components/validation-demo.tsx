@@ -25,10 +25,10 @@ export function RequiredFieldDemo() {
     <div className="space-y-2">
       <label className="text-sm text-muted-foreground">Name *</label>
       <Input
-        inputValue={name()}
+        value={name()}
         onInput={(e) => setName(e.target.value)}
         onBlur={() => setTouched(true)}
-        inputPlaceholder="Enter your name"
+        placeholder="Enter your name"
       />
       <p className="error-message text-sm text-destructive min-h-5">{error()}</p>
     </div>
@@ -53,11 +53,11 @@ export function EmailValidationDemo() {
     <div className="space-y-2">
       <label className="text-sm text-muted-foreground">Email *</label>
       <Input
-        inputType="email"
-        inputValue={email()}
+        type="email"
+        value={email()}
         onInput={(e) => setEmail(e.target.value)}
         onBlur={() => setTouched(true)}
-        inputPlaceholder="Enter your email"
+        placeholder="Enter your email"
       />
       <div className="flex justify-between min-h-5">
         <p className="error-message text-sm text-destructive">{error()}</p>
@@ -100,22 +100,22 @@ export function PasswordConfirmationDemo() {
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Password *</label>
         <Input
-          inputType="password"
-          inputValue={password()}
+          type="password"
+          value={password()}
           onInput={(e) => setPassword(e.target.value)}
           onBlur={() => setPasswordTouched(true)}
-          inputPlaceholder="Enter password (min 8 chars)"
+          placeholder="Enter password (min 8 chars)"
         />
         <p className="password-error text-sm text-destructive min-h-5">{passwordError()}</p>
       </div>
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Confirm Password *</label>
         <Input
-          inputType="password"
-          inputValue={confirmPassword()}
+          type="password"
+          value={confirmPassword()}
           onInput={(e) => setConfirmPassword(e.target.value)}
           onBlur={() => setConfirmTouched(true)}
-          inputPlaceholder="Confirm your password"
+          placeholder="Confirm your password"
         />
         <p className="confirm-error text-sm text-destructive min-h-5">{confirmError()}</p>
       </div>
@@ -205,10 +205,10 @@ export function MultiFieldFormDemo() {
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">Name *</label>
             <Input
-              inputValue={name()}
+              value={name()}
               onInput={(e) => setName(e.target.value)}
               onBlur={() => setNameTouched(true)}
-              inputPlaceholder="Enter your name (min 2 chars)"
+              placeholder="Enter your name (min 2 chars)"
             />
             <p className="name-error text-sm text-destructive min-h-5">{nameError()}</p>
           </div>
@@ -216,11 +216,11 @@ export function MultiFieldFormDemo() {
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">Email *</label>
             <Input
-              inputType="email"
-              inputValue={email()}
+              type="email"
+              value={email()}
               onInput={(e) => setEmail(e.target.value)}
               onBlur={() => setEmailTouched(true)}
-              inputPlaceholder="Enter your email"
+              placeholder="Enter your email"
             />
             <p className="email-error text-sm text-destructive min-h-5">{emailError()}</p>
           </div>
@@ -228,11 +228,11 @@ export function MultiFieldFormDemo() {
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">Password *</label>
             <Input
-              inputType="password"
-              inputValue={password()}
+              type="password"
+              value={password()}
               onInput={(e) => setPassword(e.target.value)}
               onBlur={() => setPasswordTouched(true)}
-              inputPlaceholder="Enter password (min 8 chars)"
+              placeholder="Enter password (min 8 chars)"
             />
             <p className="password-error text-sm text-destructive min-h-5">{passwordError()}</p>
           </div>
@@ -240,11 +240,11 @@ export function MultiFieldFormDemo() {
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">Confirm Password *</label>
             <Input
-              inputType="password"
-              inputValue={confirmPassword()}
+              type="password"
+              value={confirmPassword()}
               onInput={(e) => setConfirmPassword(e.target.value)}
               onBlur={() => setConfirmTouched(true)}
-              inputPlaceholder="Confirm your password"
+              placeholder="Confirm your password"
             />
             <p className="confirm-error text-sm text-destructive min-h-5">{confirmError()}</p>
           </div>

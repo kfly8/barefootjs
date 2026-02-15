@@ -58,12 +58,12 @@ export function BasicSubmitDemo() {
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Email *</label>
         <Input
-          inputType="email"
-          inputValue={email()}
+          type="email"
+          value={email()}
           onInput={(e) => setEmail(e.target.value)}
           onBlur={() => setTouched(true)}
-          inputPlaceholder="Enter your email"
-          inputDisabled={loading()}
+          placeholder="Enter your email"
+          disabled={loading()}
         />
         <p className="error-message text-sm text-destructive min-h-5">{error()}</p>
       </div>
@@ -141,11 +141,11 @@ export function NetworkErrorDemo() {
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Message *</label>
         <Input
-          inputValue={message()}
+          value={message()}
           onInput={(e) => setMessage(e.target.value)}
           onBlur={() => setTouched(true)}
-          inputPlaceholder="Enter your message"
-          inputDisabled={loading()}
+          placeholder="Enter your message"
+          disabled={loading()}
         />
         <p className="validation-error text-sm text-destructive min-h-5">{validationError()}</p>
       </div>
@@ -228,15 +228,15 @@ export function ServerValidationDemo() {
       <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Email *</label>
         <Input
-          inputType="email"
-          inputValue={email()}
+          type="email"
+          value={email()}
           onInput={(e) => {
             setEmail(e.target.value)
             setServerError('')
           }}
           onBlur={() => setTouched(true)}
-          inputPlaceholder="Enter your email"
-          inputDisabled={loading()}
+          placeholder="Enter your email"
+          disabled={loading()}
         />
         <p className="client-error text-sm text-destructive min-h-5">{clientError()}</p>
         {serverError() !== '' ? (

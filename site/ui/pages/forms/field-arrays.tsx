@@ -65,7 +65,7 @@ const handleChange = (id: number, value: string) => {
 {fields().map((field, index) => (
   <div key={field.id}>
     <Input
-      inputValue={field.value}
+      value={field.value}
       onInput={(e) => handleChange(field.id, e.target.value)}
     />
     <Button onClick={() => handleRemove(field.id)}>Remove</Button>
@@ -137,8 +137,8 @@ export function FieldArraysPage() {
         <Example title="" code={basicFieldArrayCode}>
           <div className="max-w-md">
             <div className="space-y-2">
-              <Input inputPlaceholder="Email 1" />
-              <Input inputPlaceholder="Email 2" />
+              <Input placeholder="Email 1" />
+              <Input placeholder="Email 2" />
             </div>
             <p className="text-sm text-muted-foreground mt-2">
               See interactive examples below.
