@@ -275,6 +275,14 @@ export function generateElementRefs(ctx: ClientJsContext): string {
     }
   }
 
+  // Component slots take precedence over regular slots (#360).
+  // When a component contains a loop that inherits the component's slot ID
+  // (via propagateSlotIdToLoops), both need the same DOM element reference.
+  // Component elements use bf-s attributes, so $c() is the correct selector.
+  for (const slotId of componentSlots) {
+    regularSlots.delete(slotId)
+  }
+
   if (regularSlots.size === 0 && componentSlots.size === 0) return ''
 
   const refLines: string[] = []
