@@ -1653,4 +1653,75 @@ describe('Compiler', () => {
       }
     })
   })
+
+  describe('hyphenated prop names in child component (#346)', () => {
+    test('quotes hyphenated prop names in initChild', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        import { Toggle } from './Toggle'
+
+        export function Toolbar() {
+          const [bold, setBold] = createSignal(false)
+          return (
+            <div>
+              <Toggle aria-label="Toggle bold" pressed={bold()} />
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Toolbar.tsx', { adapter })
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('"aria-label"')
+      expect(clientJs!.content).not.toMatch(/[^"]aria-label[^"]/)
+    })
+
+    test('quotes data-* prop names in initChild', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        import { Item } from './Item'
+
+        export function List() {
+          const [active, setActive] = createSignal(false)
+          return (
+            <div>
+              <Item data-testid="item-1" data-state="closed" active={active()} />
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('"data-testid"')
+      expect(clientJs!.content).toContain('"data-state"')
+    })
+
+    test('does not quote camelCase prop names', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        import { Toggle } from './Toggle'
+
+        export function Toolbar() {
+          const [bold, setBold] = createSignal(false)
+          return (
+            <div>
+              <Toggle pressed={bold()} label="Bold" />
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Toolbar.tsx', { adapter })
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // camelCase props should NOT be quoted
+      expect(clientJs!.content).toMatch(/\bpressed\b/)
+      expect(clientJs!.content).toMatch(/\blabel\b/)
+      expect(clientJs!.content).not.toContain('"pressed"')
+      expect(clientJs!.content).not.toContain('"label"')
+    })
+  })
 })

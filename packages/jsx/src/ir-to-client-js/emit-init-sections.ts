@@ -6,7 +6,7 @@
 import type { ComponentIR, ConstantInfo, SignalInfo } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
-import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr } from './utils'
+import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName } from './utils'
 import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate } from './html-template'
 
 /**
@@ -385,11 +385,11 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         for (const comp of elem.nestedComponents) {
           const propsEntries = comp.props.map((p) => {
             if (p.isEventHandler) {
-              return `${p.name}: ${p.value}`
+              return `${quotePropName(p.name)}: ${p.value}`
             } else if (p.isLiteral) {
-              return `${p.name}: ${JSON.stringify(p.value)}`
+              return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
             } else {
-              return `get ${p.name}() { return ${p.value} }`
+              return `get ${quotePropName(p.name)}() { return ${p.value} }`
             }
           })
           const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
@@ -421,11 +421,11 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const { name, props } = elem.childComponent
       const propsEntries = props.map((p) => {
         if (p.isEventHandler) {
-          return `${p.name}: ${p.value}`
+          return `${quotePropName(p.name)}: ${p.value}`
         } else if (p.isLiteral) {
-          return `get ${p.name}() { return ${JSON.stringify(p.value)} }`
+          return `get ${quotePropName(p.name)}() { return ${JSON.stringify(p.value)} }`
         } else {
-          return `get ${p.name}() { return ${p.value} }`
+          return `get ${quotePropName(p.name)}() { return ${p.value} }`
         }
       })
       const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
