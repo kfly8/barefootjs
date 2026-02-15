@@ -1351,6 +1351,32 @@ describe('Compiler', () => {
       expect(clientJs.content).toContain('provideContext(DialogContext')
     })
 
+    test('strips TypeScript type annotations from provider value expression (#341)', () => {
+      const source = `
+        'use client'
+        import { createContext, createSignal, provideContext } from '@barefootjs/dom'
+
+        const Ctx = createContext()
+
+        export function Root() {
+          const [val, setVal] = createSignal('')
+          return (
+            <Ctx.Provider value={{ onValueChange: (newValue: string) => { setVal(newValue) } }}>
+              <div>child</div>
+            </Ctx.Provider>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Root.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+      expect(clientJs.content).toContain('provideContext(Ctx')
+      expect(clientJs.content).not.toContain('newValue: string')
+    })
+
     test('self-closing <X.Provider /> produces IRProvider with empty children', () => {
       // Self-closing syntax should work just like the open/close form
       // but with no children (e.g., for provider-only setup components)

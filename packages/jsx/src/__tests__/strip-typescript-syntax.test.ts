@@ -44,6 +44,40 @@ describe('stripTypeScriptSyntax', () => {
     })
   })
 
+  describe('arrow function parameter types', () => {
+    test('strips type annotation from arrow function parameter in object literal', () => {
+      expect(
+        stripTypeScriptSyntax('{ onValueChange: (newValue: string) => { setVal(newValue) } }')
+      ).toBe('{ onValueChange: (newValue) => { setVal(newValue) } }')
+    })
+
+    test('strips multiple type annotations from arrow function parameters', () => {
+      expect(
+        stripTypeScriptSyntax('{ handler: (e: Event, idx: number) => { handle(e, idx) } }')
+      ).toBe('{ handler: (e, idx) => { handle(e, idx) } }')
+    })
+
+    test('strips union type annotation from arrow function parameter', () => {
+      expect(
+        stripTypeScriptSyntax('(id: number | undefined) => { use(id) }')
+      ).toBe('(id) => { use(id) }')
+    })
+  })
+
+  describe('object properties are not stripped', () => {
+    test('does not strip identifier values in object properties', () => {
+      expect(
+        stripTypeScriptSyntax('{ onCheckedChange: setAccepted, class: "mt-px" }')
+      ).toBe('{ onCheckedChange: setAccepted, class: "mt-px" }')
+    })
+
+    test('does not strip callback values in object properties', () => {
+      expect(
+        stripTypeScriptSyntax('{ get open() { return open() }, onOpenChange: setOpen, duration: 10000 }')
+      ).toBe('{ get open() { return open() }, onOpenChange: setOpen, duration: 10000 }')
+    })
+  })
+
   describe('variable declarations with initializer', () => {
     test('strips type annotation but keeps initializer', () => {
       expect(stripTypeScriptSyntax("let x: string = ''")).toBe("let x = ''")
