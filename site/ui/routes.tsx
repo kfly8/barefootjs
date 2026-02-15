@@ -27,6 +27,7 @@ import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
+import { RadioGroupPage } from './pages/radio-group'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -270,6 +271,11 @@ export function createApp() {
   // Portal documentation
   app.get('/docs/components/portal', (c) => {
     return c.render(<PortalPage />)
+  })
+
+  // Radio Group documentation
+  app.get('/docs/components/radio-group', (c) => {
+    return c.render(<RadioGroupPage />)
   })
 
   // Controlled Input pattern documentation

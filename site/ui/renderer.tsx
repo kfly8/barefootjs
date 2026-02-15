@@ -81,6 +81,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
       { title: 'Input', href: '/docs/components/input' },
       { title: 'Label', href: '/docs/components/label' },
+      { title: 'Radio Group', href: '/docs/components/radio-group' },
       { title: 'Select', href: '/docs/components/select' },
       { title: 'Slider', href: '/docs/components/slider' },
       { title: 'Switch', href: '/docs/components/switch' },
