@@ -2012,4 +2012,117 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain("createComponent('RadioGroupItem'")
     })
   })
+
+  describe('TypeScript syntax guard (#349)', () => {
+    // Guard test: ensures no TypeScript syntax survives in generated client JS.
+    // This catches regressions like #341 where a new emit site forgot to call
+    // stripTypeScriptSyntax(). When tsgo becomes available, this guard remains
+    // valid regardless of the stripping mechanism used.
+
+    test('all TypeScript syntax patterns are stripped from client JS output', () => {
+      const source = `
+        'use client'
+        import { createSignal, createMemo, createEffect, createContext, provideContext, onCleanup } from '@barefootjs/dom'
+
+        interface ItemType {
+          id: number
+          label: string
+          active: boolean
+        }
+
+        type Variant = 'default' | 'outline'
+
+        const Ctx = createContext()
+
+        export function TypeScriptGuard(props: { items: ItemType[], variant: Variant }) {
+          const [selected, setSelected] = createSignal<string | null>(null)
+          const [items, setItems] = createSignal<ItemType[]>([])
+          let timer: ReturnType<typeof setTimeout> | null
+
+          const activeCount = createMemo((): number => {
+            return items().filter(t => t.active).length
+          })
+
+          createEffect(() => {
+            const el = document.getElementById('target') as HTMLElement | null
+            if (el) {
+              el.textContent = String(activeCount())
+            }
+          })
+
+          const handleClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            const id = target.dataset.id!
+            setSelected(id)
+          }
+
+          const handleChange = (newValue: string, index: number) => {
+            setItems(prev => prev.map((item: ItemType, i: number) =>
+              i === index ? { ...item, label: newValue } : item
+            ))
+          }
+
+          onCleanup(() => {
+            if (timer) clearTimeout(timer)
+          })
+
+          return (
+            <Ctx.Provider value={{ onSelect: (id: string) => { setSelected(id) } }}>
+              <div onClick={handleClick}>
+                <span>{activeCount()}</span>
+                {items().filter(t => t.active).map(item => (
+                  <button data-id={item.id}>{item.label}</button>
+                ))}
+              </div>
+            </Ctx.Provider>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'TypeScriptGuard.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const js = clientJs!.content
+
+      // --- Type annotations on parameters ---
+      expect(js).not.toContain('e: MouseEvent')
+      expect(js).not.toContain('newValue: string')
+      expect(js).not.toContain('index: number')
+      expect(js).not.toContain('item: ItemType')
+      expect(js).not.toContain('i: number')
+      expect(js).not.toContain('id: string')
+
+      // --- Type assertions ---
+      expect(js).not.toContain('as HTMLElement')
+      expect(js).not.toContain('as HTMLElement | null')
+
+      // --- Non-null assertions (x! but not !== or !=) ---
+      expect(js).not.toMatch(/\.id!(?!=)/)
+
+      // --- Generic type parameters ---
+      expect(js).not.toContain('<string | null>')
+      expect(js).not.toContain('<ItemType[]>')
+      expect(js).not.toContain('<string>')
+
+      // --- Variable type annotations ---
+      expect(js).not.toMatch(/let\s+\w+\s*:\s*ReturnType/)
+      expect(js).not.toContain(': ReturnType<typeof setTimeout>')
+
+      // --- Return type annotations ---
+      expect(js).not.toMatch(/\)\s*:\s*number\s*=>/)
+
+      // --- Interface / type alias (should not appear at all) ---
+      expect(js).not.toContain('interface ')
+      expect(js).not.toContain('type Variant')
+
+      // --- Sanity: core runtime calls ARE present ---
+      expect(js).toContain('createSignal')
+      expect(js).toContain('createMemo')
+      expect(js).toContain('createEffect')
+      expect(js).toContain('provideContext(Ctx')
+      expect(js).toContain('onCleanup')
+    })
+  })
 })
