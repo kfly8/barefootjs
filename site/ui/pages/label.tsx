@@ -7,7 +7,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -74,8 +73,6 @@ const labelProps: PropDefinition[] = [
 ]
 
 export function LabelPage() {
-  const installCommands = getHighlightedCommands('barefoot add label')
-
   return (
     <DocPage slug="label" toc={tocItems}>
       <div className="space-y-12">
@@ -92,7 +89,7 @@ export function LabelPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add label" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add label" />
         </Section>
 
         {/* Examples */}

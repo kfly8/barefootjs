@@ -10,7 +10,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -182,8 +181,6 @@ const accordionTriggerProps: PropDefinition[] = [
 const accordionContentProps: PropDefinition[] = []
 
 export function AccordionPage() {
-  const installCommands = getHighlightedCommands('barefoot add accordion')
-
   return (
     <DocPage slug="accordion" toc={tocItems}>
       <div className="space-y-12">
@@ -202,7 +199,7 @@ export function AccordionPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add accordion" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add accordion" />
         </Section>
 
         {/* Examples */}

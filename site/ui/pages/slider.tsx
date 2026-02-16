@@ -15,7 +15,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -234,8 +233,6 @@ const sliderProps: PropDefinition[] = [
 ]
 
 export function SliderPage() {
-  const installCommands = getHighlightedCommands('barefoot add slider')
-
   return (
     <DocPage slug="slider" toc={tocItems}>
       <div className="space-y-12">
@@ -252,7 +249,7 @@ export function SliderPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add slider" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add slider" />
         </Section>
 
         {/* Examples */}

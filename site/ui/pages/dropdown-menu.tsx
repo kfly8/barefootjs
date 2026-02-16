@@ -10,7 +10,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -237,8 +236,6 @@ const dropdownMenuShortcutProps: PropDefinition[] = [
 ]
 
 export function DropdownMenuPage() {
-  const installCommands = getHighlightedCommands('barefoot add dropdown-menu')
-
   return (
     <DocPage slug="dropdown-menu" toc={tocItems}>
       <div className="space-y-12">
@@ -257,7 +254,7 @@ export function DropdownMenuPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add dropdown-menu" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add dropdown-menu" />
         </Section>
 
         {/* Features */}

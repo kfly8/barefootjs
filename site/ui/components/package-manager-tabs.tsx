@@ -5,125 +5,48 @@
  * A tabbed interface for displaying installation commands
  * for different package managers (pnpm, npm, yarn, bun).
  *
- * This component is compiled by BarefootJS to enable client-side
- * interactivity (tab switching).
+ * Uses value switching (single code display area) instead of
+ * HTML switching (4 separate TabsContent panels) to minimize
+ * serialized props and client JS complexity.
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@ui/components/ui/tabs'
 import { CopyButton } from './copy-button'
-
-interface HighlightedCommands {
-  pnpm: string
-  npm: string
-  yarn: string
-  bun: string
-}
 
 interface PackageManagerTabsProps {
   command: string
-  /** Pre-highlighted HTML for each package manager command (server-side rendered) */
-  highlightedCommands?: HighlightedCommands
 }
 
-export function PackageManagerTabs({ command, highlightedCommands }: PackageManagerTabsProps) {
+const tabTriggerBase = 'inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none'
+const tabTriggerFocus = 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
+const tabTriggerActive = 'bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30'
+const tabTriggerInactive = 'text-foreground dark:text-muted-foreground'
+
+export function PackageManagerTabs(props: PackageManagerTabsProps) {
   const [selected, setSelected] = createSignal('bun')
 
-  const isPnpmSelected = createMemo(() => selected() === 'pnpm')
-  const isNpmSelected = createMemo(() => selected() === 'npm')
-  const isYarnSelected = createMemo(() => selected() === 'yarn')
-  const isBunSelected = createMemo(() => selected() === 'bun')
-
-  const pnpmCommand = `pnpm dlx ${command}`
-  const npmCommand = `npx ${command}`
-  const yarnCommand = `yarn dlx ${command}`
-  const bunCommand = `bunx --bun ${command}`
+  const fullCommand = createMemo(() => {
+    const prefix = selected() === 'bun' ? 'bunx --bun'
+      : selected() === 'pnpm' ? 'pnpm dlx'
+      : selected() === 'yarn' ? 'yarn dlx'
+      : 'npx'
+    return `${prefix} ${props.command}`
+  })
 
   return (
-    <Tabs value={selected()} onValueChange={(v) => setSelected(v)}>
-      <TabsList>
-        <TabsTrigger
-          value="pnpm"
-          selected={isPnpmSelected()}
-          onClick={() => setSelected('pnpm')}
-        >
-          pnpm
-        </TabsTrigger>
-        <TabsTrigger
-          value="npm"
-          selected={isNpmSelected()}
-          onClick={() => setSelected('npm')}
-        >
-          npm
-        </TabsTrigger>
-        <TabsTrigger
-          value="yarn"
-          selected={isYarnSelected()}
-          onClick={() => setSelected('yarn')}
-        >
-          yarn
-        </TabsTrigger>
-        <TabsTrigger
-          value="bun"
-          selected={isBunSelected()}
-          onClick={() => setSelected('bun')}
-        >
-          bun
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="pnpm" selected={isPnpmSelected()}>
-        <div className="relative group">
-          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            {highlightedCommands ? (
-              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.pnpm }} />
-            ) : (
-              <code>{pnpmCommand}</code>
-            )}
-          </pre>
-          <CopyButton code={pnpmCommand} />
-        </div>
-      </TabsContent>
-      <TabsContent value="npm" selected={isNpmSelected()}>
-        <div className="relative group">
-          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            {highlightedCommands ? (
-              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.npm }} />
-            ) : (
-              <code>{npmCommand}</code>
-            )}
-          </pre>
-          <CopyButton code={npmCommand} />
-        </div>
-      </TabsContent>
-      <TabsContent value="yarn" selected={isYarnSelected()}>
-        <div className="relative group">
-          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            {highlightedCommands ? (
-              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.yarn }} />
-            ) : (
-              <code>{yarnCommand}</code>
-            )}
-          </pre>
-          <CopyButton code={yarnCommand} />
-        </div>
-      </TabsContent>
-      <TabsContent value="bun" selected={isBunSelected()}>
-        <div className="relative group">
-          <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
-            {highlightedCommands ? (
-              <code dangerouslySetInnerHTML={{ __html: highlightedCommands.bun }} />
-            ) : (
-              <code>{bunCommand}</code>
-            )}
-          </pre>
-          <CopyButton code={bunCommand} />
-        </div>
-      </TabsContent>
-    </Tabs>
+    <div className="flex flex-col gap-2 w-full">
+      <div role="tablist" className="bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]">
+        <button role="tab" aria-selected={selected() === 'bun'} data-state={selected() === 'bun' ? 'active' : 'inactive'} onClick={() => setSelected('bun')} className={`${tabTriggerBase} ${tabTriggerFocus} ${selected() === 'bun' ? tabTriggerActive : tabTriggerInactive}`} tabindex={selected() === 'bun' ? 0 : -1}>bun</button>
+        <button role="tab" aria-selected={selected() === 'npm'} data-state={selected() === 'npm' ? 'active' : 'inactive'} onClick={() => setSelected('npm')} className={`${tabTriggerBase} ${tabTriggerFocus} ${selected() === 'npm' ? tabTriggerActive : tabTriggerInactive}`} tabindex={selected() === 'npm' ? 0 : -1}>npm</button>
+        <button role="tab" aria-selected={selected() === 'pnpm'} data-state={selected() === 'pnpm' ? 'active' : 'inactive'} onClick={() => setSelected('pnpm')} className={`${tabTriggerBase} ${tabTriggerFocus} ${selected() === 'pnpm' ? tabTriggerActive : tabTriggerInactive}`} tabindex={selected() === 'pnpm' ? 0 : -1}>pnpm</button>
+        <button role="tab" aria-selected={selected() === 'yarn'} data-state={selected() === 'yarn' ? 'active' : 'inactive'} onClick={() => setSelected('yarn')} className={`${tabTriggerBase} ${tabTriggerFocus} ${selected() === 'yarn' ? tabTriggerActive : tabTriggerInactive}`} tabindex={selected() === 'yarn' ? 0 : -1}>yarn</button>
+      </div>
+      <div className="relative group">
+        <pre className="p-4 pr-12 bg-muted rounded-lg overflow-x-auto text-sm font-mono border border-border">
+          <code>{fullCommand()}</code>
+        </pre>
+        <CopyButton code={fullCommand()} />
+      </div>
+    </div>
   )
 }

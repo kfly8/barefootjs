@@ -10,7 +10,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -193,8 +192,6 @@ const tabsContentProps: PropDefinition[] = [
 ]
 
 export function TabsPage() {
-  const installCommands = getHighlightedCommands('barefoot add tabs')
-
   return (
     <DocPage slug="tabs" toc={tocItems}>
       <div className="space-y-12">
@@ -213,7 +210,7 @@ export function TabsPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add tabs" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add tabs" />
         </Section>
 
         {/* Examples */}

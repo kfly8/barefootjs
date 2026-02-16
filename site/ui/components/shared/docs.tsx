@@ -17,27 +17,6 @@ import { PageNav } from '../../../shared/components/page-nav'
 // Re-export TocItem for convenience
 export type { TocItem }
 
-// Type for pre-highlighted commands (matches PackageManagerTabs prop)
-export interface HighlightedCommands {
-  pnpm: string
-  npm: string
-  yarn: string
-  bun: string
-}
-
-/**
- * Generate pre-highlighted HTML for package manager commands.
- * Use this on server-side pages to pass to PackageManagerTabs.
- */
-export function getHighlightedCommands(command: string): HighlightedCommands {
-  return {
-    pnpm: highlight(`pnpm dlx ${command}`, 'bash'),
-    npm: highlight(`npx ${command}`, 'bash'),
-    yarn: highlight(`yarn dlx ${command}`, 'bash'),
-    bun: highlight(`bunx --bun ${command}`, 'bash'),
-  }
-}
-
 // Documentation page wrapper with TOC sidebar and footer navigation
 export interface DocPageProps {
   slug: string

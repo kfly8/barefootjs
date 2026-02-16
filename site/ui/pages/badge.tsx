@@ -11,7 +11,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -106,8 +105,6 @@ const badgeProps: PropDefinition[] = [
 ]
 
 export function BadgePage() {
-  const installCommands = getHighlightedCommands('barefoot add badge')
-
   return (
     <DocPage slug="badge" toc={tocItems}>
       <div className="space-y-12">
@@ -124,7 +121,7 @@ export function BadgePage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add badge" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add badge" />
         </Section>
 
         {/* Examples */}
