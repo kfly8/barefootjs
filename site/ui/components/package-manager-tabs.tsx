@@ -41,7 +41,7 @@ export function PackageManagerTabs({ command, highlightedCommands }: PackageMana
 
   const pnpmCommand = `pnpm dlx ${command}`
   const npmCommand = `npx ${command}`
-  const yarnCommand = `npx ${command}`
+  const yarnCommand = `yarn dlx ${command}`
   const bunCommand = `bunx --bun ${command}`
 
   return (

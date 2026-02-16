@@ -33,7 +33,7 @@ export function getHighlightedCommands(command: string): HighlightedCommands {
   return {
     pnpm: highlight(`pnpm dlx ${command}`, 'bash'),
     npm: highlight(`npx ${command}`, 'bash'),
-    yarn: highlight(`npx ${command}`, 'bash'),
+    yarn: highlight(`yarn dlx ${command}`, 'bash'),
     bun: highlight(`bunx --bun ${command}`, 'bash'),
   }
 }

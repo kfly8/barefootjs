@@ -179,6 +179,20 @@ test.describe('RadioGroup Documentation Page', () => {
       await expect(section.locator('text=/Selected plan:.*business/')).toBeVisible()
     })
 
+    test('clicking card area selects the radio', async ({ page }) => {
+      const section = page.locator('[bf-s^="RadioGroupCardDemo_"]:not([data-slot])').first()
+      const radios = section.locator('button[role="radio"]')
+
+      // Click on the card text area (label), not the radio button directly
+      const cardLabels = section.locator('label.flex')
+      await cardLabels.nth(1).click()
+
+      // "business" (second radio) should now be selected
+      await expect(radios.nth(1)).toHaveAttribute('aria-checked', 'true')
+      await expect(radios.first()).toHaveAttribute('aria-checked', 'false')
+      await expect(section.locator('text=/Selected plan:.*business/')).toBeVisible()
+    })
+
     test('displays plan details', async ({ page }) => {
       const section = page.locator('[bf-s^="RadioGroupCardDemo_"]:not([data-slot])').first()
       await expect(section.locator('text=Startup').first()).toBeVisible()
