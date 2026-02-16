@@ -2011,5 +2011,36 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain('reconcileList')
       expect(clientJs!.content).toContain("createComponent('RadioGroupItem'")
     })
+
+    test('no duplicate variable declaration when .map() slot ID matches component slot ID (#360)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Parent() {
+          const [items, setItems] = createSignal([{ name: 'a' }, { name: 'b' }])
+          return (
+            <Wrapper>
+              {items().map(item => <span>{item.name}</span>)}
+            </Wrapper>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Parent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Each slot variable should be declared at most once
+      const slotDeclarations = content.match(/const _s\d+ =/g) || []
+      const uniqueDeclarations = new Set(slotDeclarations)
+      expect(slotDeclarations.length).toBe(uniqueDeclarations.size)
+
+      // Component slot ref ($c) and reconcileList should both be present
+      expect(content).toContain('$c(__scope')
+      expect(content).toContain('reconcileList')
+    })
   })
 })
