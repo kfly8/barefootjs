@@ -22,7 +22,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -342,8 +341,6 @@ const cardFooterProps: PropDefinition[] = [
 ]
 
 export function CardPage() {
-  const installCommands = getHighlightedCommands('barefoot add card')
-
   return (
     <DocPage slug="card" toc={tocItems}>
       <div className="space-y-12">
@@ -376,7 +373,7 @@ export function CardPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add card" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add card" />
         </Section>
 
         {/* Examples */}

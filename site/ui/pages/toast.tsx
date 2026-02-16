@@ -18,7 +18,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -169,8 +168,6 @@ const toastActionProps: PropDefinition[] = [
 ]
 
 export function ToastPage() {
-  const installCommands = getHighlightedCommands('barefoot add toast')
-
   return (
     <DocPage slug="toast" toc={tocItems}>
       <div className="space-y-12">
@@ -189,7 +186,7 @@ export function ToastPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add toast" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add toast" />
         </Section>
 
         {/* Features */}

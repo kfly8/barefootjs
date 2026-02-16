@@ -10,7 +10,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -114,8 +113,6 @@ const portalReturnProps: PropDefinition[] = [
 ]
 
 export function PortalPage() {
-  const installCommands = getHighlightedCommands('barefoot add portal')
-
   return (
     <DocPage slug="portal" toc={tocItems}>
       <div className="space-y-12">
@@ -134,7 +131,7 @@ export function PortalPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add portal" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add portal" />
         </Section>
 
         {/* Features */}

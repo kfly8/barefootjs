@@ -14,7 +14,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -151,8 +150,6 @@ const toggleProps: PropDefinition[] = [
 ]
 
 export function TogglePage() {
-  const installCommands = getHighlightedCommands('barefoot add toggle')
-
   return (
     <DocPage slug="toggle" toc={tocItems}>
       <div className="space-y-12">
@@ -169,7 +166,7 @@ export function TogglePage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add toggle" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add toggle" />
         </Section>
 
         {/* Examples */}

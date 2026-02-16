@@ -13,7 +13,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -95,9 +94,6 @@ const buttonProps: PropDefinition[] = [
 ]
 
 export function ButtonPage() {
-  // Generate highlighted commands inside component (after Shiki is initialized)
-  const installCommands = getHighlightedCommands('barefoot add button')
-
   return (
     <DocPage slug="button" toc={tocItems}>
       <div className="space-y-12">
@@ -130,7 +126,7 @@ function ButtonExample() {
         </Example>
 
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add button" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add button" />
         </Section>
 
         <Section id="examples" title="Examples">

@@ -105,34 +105,34 @@ export function RadioGroupCardDemo() {
     <div className="space-y-4">
       <RadioGroup defaultValue="startup" onValueChange={setPlan} class="grid-cols-1 sm:grid-cols-3">
         <div className="relative">
-          <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
+          <label className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
             <RadioGroupItem value="startup" />
             <div className="space-y-1">
               <span className="text-sm font-medium leading-none">Startup</span>
               <p className="text-xl font-bold text-foreground">$29<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               <p className="text-sm text-muted-foreground">For small teams getting started</p>
             </div>
-          </div>
+          </label>
         </div>
         <div className="relative">
-          <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
+          <label className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
             <RadioGroupItem value="business" />
             <div className="space-y-1">
               <span className="text-sm font-medium leading-none">Business</span>
               <p className="text-xl font-bold text-foreground">$99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               <p className="text-sm text-muted-foreground">For growing companies</p>
             </div>
-          </div>
+          </label>
         </div>
         <div className="relative">
-          <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
+          <label className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
             <RadioGroupItem value="enterprise" />
             <div className="space-y-1">
               <span className="text-sm font-medium leading-none">Enterprise</span>
               <p className="text-xl font-bold text-foreground">$299<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               <p className="text-sm text-muted-foreground">For large organizations</p>
             </div>
-          </div>
+          </label>
         </div>
       </RadioGroup>
       <div className="text-sm text-muted-foreground pt-2 border-t">

@@ -15,7 +15,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -222,8 +221,6 @@ const checkboxProps: PropDefinition[] = [
 ]
 
 export function CheckboxPage() {
-  const installCommands = getHighlightedCommands('barefoot add checkbox')
-
   return (
     <DocPage slug="checkbox" toc={tocItems}>
       <div className="space-y-12">
@@ -240,7 +237,7 @@ export function CheckboxPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add checkbox" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add checkbox" />
         </Section>
 
         {/* Examples */}

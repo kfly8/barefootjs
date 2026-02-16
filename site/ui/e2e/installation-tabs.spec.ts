@@ -25,9 +25,7 @@ test.describe('Installation Tabs (PackageManagerTabs)', () => {
     await expect(page.locator('text=bunx --bun barefoot add checkbox')).toBeVisible()
   })
 
-  // Skip: tabs click behavior not working consistently
-  // Same issue as tabs.spec.ts - child component init issue
-  test.skip('clicking npm tab switches content', async ({ page }) => {
+  test('clicking npm tab switches content', async ({ page }) => {
     const tablist = page.locator('[role="tablist"]').first()
     const npmTab = tablist.getByRole('tab', { name: 'npm', exact: true })
 
@@ -37,7 +35,7 @@ test.describe('Installation Tabs (PackageManagerTabs)', () => {
     await expect(page.locator('text=npx barefoot add checkbox')).toBeVisible()
   })
 
-  test.skip('clicking pnpm tab switches content', async ({ page }) => {
+  test('clicking pnpm tab switches content', async ({ page }) => {
     const tablist = page.locator('[role="tablist"]').first()
     const pnpmTab = tablist.getByRole('tab', { name: 'pnpm' })
 
@@ -47,7 +45,7 @@ test.describe('Installation Tabs (PackageManagerTabs)', () => {
     await expect(page.locator('text=pnpm dlx barefoot add checkbox')).toBeVisible()
   })
 
-  test.skip('clicking yarn tab switches content', async ({ page }) => {
+  test('clicking yarn tab switches content', async ({ page }) => {
     const tablist = page.locator('[role="tablist"]').first()
     const yarnTab = tablist.getByRole('tab', { name: 'yarn' })
 
@@ -57,7 +55,7 @@ test.describe('Installation Tabs (PackageManagerTabs)', () => {
     await expect(page.locator('text=yarn dlx barefoot add checkbox')).toBeVisible()
   })
 
-  test.skip('switching tabs updates aria-selected correctly', async ({ page }) => {
+  test('switching tabs updates aria-selected correctly', async ({ page }) => {
     const tablist = page.locator('[role="tablist"]').first()
     const bunTab = tablist.getByRole('tab', { name: 'bun' })
     const npmTab = tablist.getByRole('tab', { name: 'npm', exact: true })

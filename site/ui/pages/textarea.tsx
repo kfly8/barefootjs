@@ -11,7 +11,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -133,8 +132,6 @@ const textareaProps: PropDefinition[] = [
 ]
 
 export function TextareaPage() {
-  const installCommands = getHighlightedCommands('barefoot add textarea')
-
   return (
     <DocPage slug="textarea" toc={tocItems}>
       <div className="space-y-12">
@@ -153,7 +150,7 @@ export function TextareaPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add textarea" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add textarea" />
         </Section>
 
         {/* Examples */}

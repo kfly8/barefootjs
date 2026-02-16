@@ -10,7 +10,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -269,8 +268,6 @@ const dialogDescriptionProps: PropDefinition[] = [
 const dialogCloseProps: PropDefinition[] = []
 
 export function DialogPage() {
-  const installCommands = getHighlightedCommands('barefoot add dialog')
-
   return (
     <DocPage slug="dialog" toc={tocItems}>
       <div className="space-y-12">
@@ -289,7 +286,7 @@ export function DialogPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add dialog" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add dialog" />
         </Section>
 
         {/* Features */}

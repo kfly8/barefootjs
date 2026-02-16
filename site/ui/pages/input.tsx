@@ -11,7 +11,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -149,8 +148,6 @@ const inputProps: PropDefinition[] = [
 ]
 
 export function InputPage() {
-  const installCommands = getHighlightedCommands('barefoot add input')
-
   return (
     <DocPage slug="input" toc={tocItems}>
       <div className="space-y-12">
@@ -167,7 +164,7 @@ export function InputPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add input" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add input" />
         </Section>
 
         {/* Examples */}

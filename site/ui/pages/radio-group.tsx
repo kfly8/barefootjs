@@ -14,7 +14,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -197,8 +196,6 @@ const radioGroupItemProps: PropDefinition[] = [
 ]
 
 export function RadioGroupPage() {
-  const installCommands = getHighlightedCommands('barefoot add radio-group')
-
   return (
     <DocPage slug="radio-group" toc={tocItems}>
       <div className="space-y-12">
@@ -215,7 +212,7 @@ export function RadioGroupPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add radio-group" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add radio-group" />
         </Section>
 
         {/* Examples */}

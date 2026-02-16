@@ -322,7 +322,7 @@ describe('hydrate', () => {
     const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
 
     document.body.innerHTML = `
-      <div bf-s="Counter_abc" bf-p='{"count": 5}'>content</div>
+      <div bf-s="Counter_abc" bf-p='{"Counter": {"count": 5}}'>content</div>
     `
 
     hydrate('Counter', (props, idx, scope) => {

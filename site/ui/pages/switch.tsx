@@ -15,7 +15,6 @@ import {
   Example,
   PropsTable,
   PackageManagerTabs,
-  getHighlightedCommands,
   type PropDefinition,
   type TocItem,
 } from '../components/shared/docs'
@@ -215,8 +214,6 @@ const switchProps: PropDefinition[] = [
 ]
 
 export function SwitchPage() {
-  const installCommands = getHighlightedCommands('barefoot add switch')
-
   return (
     <DocPage slug="switch" toc={tocItems}>
       <div className="space-y-12">
@@ -233,7 +230,7 @@ export function SwitchPage() {
 
         {/* Installation */}
         <Section id="installation" title="Installation">
-          <PackageManagerTabs command="barefoot add switch" highlightedCommands={installCommands} />
+          <PackageManagerTabs command="barefoot add switch" />
         </Section>
 
         {/* Examples */}
