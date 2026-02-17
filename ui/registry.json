@@ -52,6 +52,12 @@
       "description": "A visual divider that separates content horizontally or vertically"
     },
     {
+      "name": "drawer",
+      "type": "registry:ui",
+      "title": "Drawer",
+      "description": "A draggable panel that slides from the edge of the screen"
+    },
+    {
       "name": "sheet",
       "type": "registry:ui",
       "title": "Sheet",

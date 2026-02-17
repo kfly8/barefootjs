@@ -319,7 +319,7 @@ function emitBranchBindings(
   }
 
   for (const ref of refs) {
-    lines.push(`      if (_${ref.slotId}) (${ref.callback})(_${ref.slotId})`)
+    lines.push(`      if (_${ref.slotId}) (${stripTypeScriptSyntax(ref.callback)})(_${ref.slotId})`)
   }
 }
 
@@ -614,7 +614,7 @@ export function emitRefCallbacks(
 ): void {
   for (const elem of ctx.refElements) {
     if (conditionalSlotIds.has(elem.slotId)) continue
-    lines.push(`  if (_${elem.slotId}) (${elem.callback})(_${elem.slotId})`)
+    lines.push(`  if (_${elem.slotId}) (${stripTypeScriptSyntax(elem.callback)})(_${elem.slotId})`)
   }
 }
 
