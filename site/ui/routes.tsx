@@ -28,6 +28,8 @@ import { TogglePage } from './pages/toggle'
 import { ToggleGroupPage } from './pages/toggle-group'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+import { ResizablePage } from './pages/resizable'
+import { ScrollAreaPage } from './pages/scroll-area'
 import { SeparatorPage } from './pages/separator'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
@@ -313,6 +315,16 @@ export function createApp() {
   // Radio Group documentation
   app.get('/docs/components/radio-group', (c) => {
     return c.render(<RadioGroupPage />)
+  })
+
+  // Resizable documentation
+  app.get('/docs/components/resizable', (c) => {
+    return c.render(<ResizablePage />)
+  })
+
+  // Scroll Area documentation
+  app.get('/docs/components/scroll-area', (c) => {
+    return c.render(<ScrollAreaPage />)
   })
 
   // Sheet documentation

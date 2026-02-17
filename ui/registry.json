@@ -68,6 +68,18 @@
       "type": "registry:ui",
       "title": "Tooltip",
       "description": "A popup that displays contextual information on hover or focus"
+    },
+    {
+      "name": "resizable",
+      "type": "registry:ui",
+      "title": "Resizable",
+      "description": "Accessible resizable panel groups and layouts with drag and keyboard support"
+    },
+    {
+      "name": "scroll-area",
+      "type": "registry:ui",
+      "title": "Scroll Area",
+      "description": "Augments native scroll functionality for custom, cross-browser styling"
     }
   ]
 }

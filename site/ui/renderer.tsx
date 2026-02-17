@@ -86,6 +86,8 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Pagination', href: '/docs/components/pagination' },
       { title: 'Popover', href: '/docs/components/popover' },
       { title: 'Radio Group', href: '/docs/components/radio-group' },
+      { title: 'Resizable', href: '/docs/components/resizable' },
+      { title: 'Scroll Area', href: '/docs/components/scroll-area' },
       { title: 'Select', href: '/docs/components/select' },
       { title: 'Separator', href: '/docs/components/separator' },
       { title: 'Sheet', href: '/docs/components/sheet' },
