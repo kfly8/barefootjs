@@ -103,6 +103,14 @@ a {
   text-decoration: inherit;
 }
 
+/* Reset list browser defaults */
+ol,
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* Reset button browser defaults */
 button {
   border-width: 0;
