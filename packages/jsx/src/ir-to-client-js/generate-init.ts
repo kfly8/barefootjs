@@ -168,6 +168,11 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
 
   emitEarlyConstants(lines, earlyConstants)
 
+  // Emit functions/handlers before signals so that signal initializers can
+  // reference local functions (e.g. `createSignal(toArray(props.x))`).
+  // Arrow-function bodies are lazy and don't depend on signals at definition time. (#365)
+  emitFunctionsAndHandlers(lines, ctx, usedIdentifiers, outputConstants, usedFunctions, neededProps)
+
   const controlledSignals: Array<{ signal: typeof ctx.signals[0]; propName: string }> = []
   for (const signal of ctx.signals) {
     const controlledPropName = getControlledPropName(signal, ctx.propsParams)
@@ -176,8 +181,6 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
     }
   }
   emitSignalsAndMemos(lines, ctx, controlledSignals, lateConstants)
-
-  emitFunctionsAndHandlers(lines, ctx, usedIdentifiers, outputConstants, usedFunctions, neededProps)
 
   const elementRefs = generateElementRefs(ctx)
   if (elementRefs) {
