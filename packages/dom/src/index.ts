@@ -9,6 +9,7 @@ export {
   BF_PORTAL_PLACEHOLDER,
   BF_ITEM,
   BF_CHILD_PREFIX,
+  BF_SCOPE_COMMENT_PREFIX,
 } from './attrs'
 
 export {

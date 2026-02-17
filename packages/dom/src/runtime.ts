@@ -7,7 +7,7 @@
 
 import { createEffect } from './reactive'
 import { registerTemplate } from './template'
-import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX } from './attrs'
+import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX, BF_SCOPE_COMMENT_PREFIX } from './attrs'
 
 // --- unwrap ---
 
@@ -22,6 +22,43 @@ import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_
  */
 export function unwrap<T>(prop: T | (() => T)): T {
   return typeof prop === 'function' ? (prop as () => T)() : prop
+}
+
+// --- Comment scope registry ---
+
+/**
+ * Registry for elements that serve as scope proxies for comment-based scopes.
+ * Maps an element to its comment node and the sibling range boundary.
+ */
+interface CommentScopeInfo {
+  commentNode: Comment
+  scopeId: string
+}
+const commentScopeRegistry = new WeakMap<Element, CommentScopeInfo>()
+
+/**
+ * Get the scope ID for an element from the comment scope registry.
+ * Used by createPortal to resolve scope IDs for comment-based scopes.
+ */
+export function getPortalScopeId(element: Element): string | null {
+  const info = commentScopeRegistry.get(element)
+  return info?.scopeId ?? null
+}
+
+/**
+ * Find the end boundary for a comment-based scope.
+ * The boundary is the next bf-scope: comment or the end of the parent's children.
+ */
+function getCommentScopeBoundary(commentNode: Comment): Node | null {
+  let node: Node | null = commentNode.nextSibling
+  while (node) {
+    if (node.nodeType === Node.COMMENT_NODE &&
+        (node as Comment).nodeValue?.startsWith(BF_SCOPE_COMMENT_PREFIX)) {
+      return node
+    }
+    node = node.nextSibling
+  }
+  return null // End of parent's children
 }
 
 // --- findScope ---
@@ -77,9 +114,83 @@ export function findScope(
 
   if (scope) {
     scope.setAttribute(BF_HYDRATED, 'true')
+    return scope
   }
 
-  return scope
+  // Fallback: search for comment-based scope markers (<!--bf-scope:Name_xxx-->)
+  return findScopeByComment(name, idx, searchRoot)
+}
+
+/**
+ * Find a scope element by walking comment nodes for bf-scope: markers.
+ * Returns the first element sibling after the comment (or parent element).
+ */
+function findScopeByComment(
+  name: string,
+  idx: number,
+  searchRoot: Element | Document
+): Element | null {
+  const prefix = BF_SCOPE_COMMENT_PREFIX
+  const walker = document.createTreeWalker(
+    searchRoot,
+    NodeFilter.SHOW_COMMENT
+  )
+  let matchIdx = 0
+
+  while (walker.nextNode()) {
+    const comment = walker.currentNode as Comment
+    const value = comment.nodeValue
+    if (!value?.startsWith(prefix)) continue
+
+    // Extract scope ID from comment value: "bf-scope:Name_xxx" or "bf-scope:~Name_xxx|propsJson"
+    let scopeId = value.slice(prefix.length)
+    // Strip child prefix
+    if (scopeId.startsWith(BF_CHILD_PREFIX)) {
+      scopeId = scopeId.slice(1)
+    }
+    // Strip props JSON suffix
+    const pipeIdx = scopeId.indexOf('|')
+    if (pipeIdx >= 0) {
+      scopeId = scopeId.slice(0, pipeIdx)
+    }
+
+    if (!scopeId.startsWith(`${name}_`)) continue
+
+    // Check if already initialized
+    if ((comment as unknown as Record<string, boolean>).__bfInitialized) continue
+
+    if (matchIdx === idx) {
+      // Mark as initialized
+      ;(comment as unknown as Record<string, boolean>).__bfInitialized = true
+
+      // Find the scope proxy element: first element sibling after the comment
+      let proxyEl: Element | null = null
+      let node: Node | null = comment.nextSibling
+      while (node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          proxyEl = node as Element
+          break
+        }
+        node = node.nextSibling
+      }
+      // If no element sibling, use parent element
+      if (!proxyEl) {
+        proxyEl = comment.parentElement
+      }
+
+      if (proxyEl) {
+        commentScopeRegistry.set(proxyEl, {
+          commentNode: comment,
+          scopeId,
+        })
+      }
+
+      return proxyEl
+    }
+    matchIdx++
+  }
+
+  return null
 }
 
 // --- find ---
@@ -124,7 +235,32 @@ function belongsToScope(
 
   // Element doesn't have its own scope - check if nearest scope matches
   const nearestScope = element.closest(`[${BF_SCOPE}]`)
-  return nearestScope === scope
+  if (nearestScope === scope) return true
+
+  // For comment-based scopes, the scope element has no bf-s attribute.
+  // Check if element is within the comment scope range.
+  const commentInfo = commentScopeRegistry.get(scope)
+  if (commentInfo) {
+    return isInCommentScopeRange(element, commentInfo.commentNode)
+  }
+
+  return false
+}
+
+/**
+ * Check if an element is within the range of a comment-based scope.
+ * The range is from the comment node to the next bf-scope: comment (or end of parent).
+ */
+function isInCommentScopeRange(element: Element, commentNode: Comment): boolean {
+  const boundary = getCommentScopeBoundary(commentNode)
+  let node: Node | null = commentNode.nextSibling
+  while (node && node !== boundary) {
+    if (node === element || (node.nodeType === Node.ELEMENT_NODE && (node as Element).contains(element))) {
+      return true
+    }
+    node = node.nextSibling
+  }
+  return false
 }
 
 /**
@@ -161,6 +297,17 @@ export function find(
   // Detect if we're looking for scope elements (child components)
   // vs slot elements (internal structure)
   const isLookingForScope = selector.includes(BF_SCOPE)
+
+  // Check if scope was resolved via comment-based marker
+  const commentInfo = commentScopeRegistry.get(scope)
+  if (commentInfo) {
+    // Search within the comment scope range (siblings between comment markers)
+    const found = findInCommentScopeRange(commentInfo.commentNode, selector, isLookingForScope)
+    if (found) return found
+
+    // Also search portals owned by this scope
+    return findInPortals(commentInfo.scopeId, selector)
+  }
 
   // For non-scope selectors, check if scope itself matches first
   if (!isLookingForScope && scope.matches?.(selector)) return scope
@@ -199,22 +346,64 @@ export function find(
     }
 
     // Search in portals owned by this scope
-    // Portals are elements with bf-po matching this scope's ID
-    const portals = document.querySelectorAll(`[${BF_PORTAL_OWNER}="${scopeId}"]`)
-    for (const portal of portals) {
-      if (portal.matches?.(selector)) return portal
-      // Search within portal, excluding elements inside nested component scopes
-      const matches = portal.querySelectorAll(selector)
-      for (const match of matches) {
-        const nearestScope = match.closest(`[${BF_SCOPE}]`)
-        // Include if no nested scope, or if the match is inside a portal-specific scope
-        if (!nearestScope) {
-          return match
+    return findInPortals(scopeId, selector)
+  }
+
+  return null
+}
+
+/**
+ * Search for an element within a comment-based scope range.
+ * Walks siblings from the comment node to the next bf-scope: comment.
+ */
+function findInCommentScopeRange(
+  commentNode: Comment,
+  selector: string,
+  isLookingForScope: boolean
+): Element | null {
+  const boundary = getCommentScopeBoundary(commentNode)
+  let node: Node | null = commentNode.nextSibling
+
+  while (node && node !== boundary) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as Element
+      // Check if this element matches
+      if (el.matches?.(selector)) return el
+      // Search within this element
+      if (!isLookingForScope) {
+        // For slot searches, find first match that's not in a nested scope
+        const matches = el.querySelectorAll(selector)
+        for (const match of matches) {
+          const nearestScope = match.closest(`[${BF_SCOPE}]`)
+          if (!nearestScope) return match
         }
+      } else {
+        // For scope searches, just find matching descendants
+        const match = el.querySelector(selector)
+        if (match) return match
+      }
+    }
+    node = node.nextSibling
+  }
+  return null
+}
+
+/**
+ * Search in portals owned by a scope.
+ */
+function findInPortals(scopeId: string, selector: string): Element | null {
+  const portals = document.querySelectorAll(`[${BF_PORTAL_OWNER}="${scopeId}"]`)
+  for (const portal of portals) {
+    if (portal.matches?.(selector)) return portal
+    // Search within portal, excluding elements inside nested component scopes
+    const matches = portal.querySelectorAll(selector)
+    for (const match of matches) {
+      const nearestScope = match.closest(`[${BF_SCOPE}]`)
+      if (!nearestScope) {
+        return match
       }
     }
   }
-
   return null
 }
 
@@ -281,6 +470,9 @@ export function hydrate(
 
       init(props, 0, scopeEl)
     }
+
+    // Also hydrate comment-based scope markers (<!--bf-scope:Name_xxx-->)
+    hydrateCommentScopes(name, init, initializedScopes)
   }
 
   // Immediately hydrate elements already in DOM
@@ -289,6 +481,77 @@ export function hydrate(
   // Re-hydrate after next frame (for Suspense streaming support)
   // Hono's streaming script moves template content into document after initial script execution
   requestAnimationFrame(doHydrate)
+}
+
+/**
+ * Hydrate components using comment-based scope markers.
+ * Walks all comments in the document looking for <!--bf-scope:Name_xxx--> markers.
+ */
+function hydrateCommentScopes(
+  name: string,
+  init: (props: Record<string, unknown>, idx: number, scope: Element) => void,
+  alreadyInitialized: Set<string>
+): void {
+  const prefix = BF_SCOPE_COMMENT_PREFIX
+  const walker = document.createTreeWalker(document, NodeFilter.SHOW_COMMENT)
+
+  while (walker.nextNode()) {
+    const comment = walker.currentNode as Comment
+    const value = comment.nodeValue
+    if (!value?.startsWith(prefix)) continue
+
+    // Parse scope ID and props from comment value
+    let rest = value.slice(prefix.length)
+
+    // Skip child components (~ prefix)
+    if (rest.startsWith(BF_CHILD_PREFIX)) continue
+
+    // Split scope ID from props JSON
+    let scopeId = rest
+    let propsJson = ''
+    const pipeIdx = rest.indexOf('|')
+    if (pipeIdx >= 0) {
+      scopeId = rest.slice(0, pipeIdx)
+      propsJson = rest.slice(pipeIdx + 1)
+    }
+
+    if (!scopeId.startsWith(`${name}_`)) continue
+
+    // Skip if already initialized
+    if ((comment as unknown as Record<string, boolean>).__bfInitialized) continue
+    if (alreadyInitialized.has(scopeId)) continue
+
+    // Mark as initialized
+    ;(comment as unknown as Record<string, boolean>).__bfInitialized = true
+    alreadyInitialized.add(scopeId)
+
+    // Find the scope proxy element: first element sibling after the comment
+    let proxyEl: Element | null = null
+    let node: Node | null = comment.nextSibling
+    while (node) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        proxyEl = node as Element
+        break
+      }
+      node = node.nextSibling
+    }
+    if (!proxyEl) {
+      proxyEl = comment.parentElement
+    }
+
+    if (proxyEl) {
+      commentScopeRegistry.set(proxyEl, {
+        commentNode: comment,
+        scopeId,
+      })
+
+      // Parse props from comment
+      const parsed = propsJson ? JSON.parse(propsJson) : {}
+      const props = parsed[name] ?? {}
+
+      init(props, 0, proxyEl)
+    }
+  }
 }
 
 // --- bind ---
