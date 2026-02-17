@@ -786,7 +786,10 @@ export class HonoAdapter implements TemplateAdapter {
     if (fragment.needsScopeComment) {
       // Emit comment-based scope marker for fragment roots
       const scopeExpr = '${__bfChild ? `~${__scopeId}` : __scopeId}'
-      const propsExpr = '${__bfPropsJson ? `|${__bfPropsJson}` : ""}'
+      // Only include props JSON if this component has props to serialize
+      const propsExpr = this.currentComponentHasProps
+        ? '${__bfPropsJson ? `|${__bfPropsJson}` : ""}'
+        : ''
       return `<>{bfComment(\`scope:${scopeExpr}${propsExpr}\`)}${children}</>`
     }
     return `<>${children}</>`
