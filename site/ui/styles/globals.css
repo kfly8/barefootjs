@@ -97,6 +97,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Reset anchor browser defaults */
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
 /* Reset button browser defaults */
 button {
   border-width: 0;
