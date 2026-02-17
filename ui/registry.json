@@ -46,6 +46,12 @@
       "description": "A visual divider that separates content horizontally or vertically"
     },
     {
+      "name": "sheet",
+      "type": "registry:ui",
+      "title": "Sheet",
+      "description": "A panel that slides in from the edge of the screen"
+    },
+    {
       "name": "toggle-group",
       "type": "registry:ui",
       "title": "Toggle Group",

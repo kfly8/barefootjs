@@ -33,6 +33,7 @@ import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
 import { RadioGroupPage } from './pages/radio-group'
+import { SheetPage } from './pages/sheet'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -306,6 +307,11 @@ export function createApp() {
   // Radio Group documentation
   app.get('/docs/components/radio-group', (c) => {
     return c.render(<RadioGroupPage />)
+  })
+
+  // Sheet documentation
+  app.get('/docs/components/sheet', (c) => {
+    return c.render(<SheetPage />)
   })
 
   // Controlled Input pattern documentation
