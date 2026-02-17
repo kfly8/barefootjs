@@ -18,6 +18,7 @@ import { LabelPage } from './pages/label'
 import { SliderPage } from './pages/slider'
 import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
+import { CollapsiblePage } from './pages/collapsible'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { DropdownMenuPage } from './pages/dropdown-menu'
@@ -197,6 +198,11 @@ export function createApp() {
   // Card documentation
   app.get('/docs/components/card', (c) => {
     return c.render(<CardPage />)
+  })
+
+  // Collapsible documentation
+  app.get('/docs/components/collapsible', (c) => {
+    return c.render(<CollapsiblePage />)
   })
 
   // Checkbox documentation

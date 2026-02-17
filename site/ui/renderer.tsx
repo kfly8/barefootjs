@@ -77,6 +77,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Button', href: '/docs/components/button' },
       { title: 'Card', href: '/docs/components/card' },
       { title: 'Checkbox', href: '/docs/components/checkbox' },
+      { title: 'Collapsible', href: '/docs/components/collapsible' },
       { title: 'Dialog', href: '/docs/components/dialog' },
       { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
       { title: 'Input', href: '/docs/components/input' },
