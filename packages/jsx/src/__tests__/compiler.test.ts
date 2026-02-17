@@ -1869,6 +1869,117 @@ describe('Compiler', () => {
     })
   })
 
+  describe('multi-level variable inlining (#366)', () => {
+    test('two-level chain: props.variant → variant → outlineShadow', () => {
+      const source = `
+        'use client'
+
+        export function MyButton(props: { variant?: string, onClick?: () => void, children?: any }) {
+          const variant = props.variant ?? 'default'
+          const outlineShadow = variant === 'outline' ? 'shadow-sm' : ''
+          return <button className={outlineShadow} onClick={props.onClick}>{props.children}</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyButton.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Must not contain corrupted props.(props. syntax
+      expect(content).not.toContain('props.(props.')
+      // Local constants should be fully resolved
+      const templateMatch = content.match(/\(props\) => `([^`]*)`/)
+      expect(templateMatch).not.toBeNull()
+      const template = templateMatch![1]
+      expect(template).not.toContain('outlineShadow')
+      // props.variant should appear as valid syntax
+      expect(template).toContain('props.variant')
+    })
+
+    test('three-level chain: props.kind → kind → color → classes', () => {
+      const source = `
+        'use client'
+
+        export function Tag(props: { kind?: string, onClick?: () => void }) {
+          const kind = props.kind ?? 'info'
+          const color = kind === 'error' ? 'red' : 'blue'
+          const classes = 'tag-' + color
+          return <span className={classes} onClick={props.onClick}>Tag</span>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Tag.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      expect(content).not.toContain('props.(props.')
+      const templateMatch = content.match(/\(props\) => `([^`]*)`/)
+      expect(templateMatch).not.toBeNull()
+      const template = templateMatch![1]
+      expect(template).not.toContain('classes')
+      expect(template).toContain('props.kind')
+    })
+
+    test('template literal with multi-level chain', () => {
+      const source = `
+        'use client'
+
+        export function Card(props: { variant?: string, onClick?: () => void }) {
+          const variant = props.variant ?? 'default'
+          const classes = \`card card-\${variant}\`
+          return <div className={classes} onClick={props.onClick}>Content</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Card.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Must not contain corrupted props.(props. syntax
+      expect(content).not.toContain('props.(props.')
+      // The mount call should contain props.variant properly resolved
+      expect(content).toContain('props.variant')
+      // Local constant 'classes' should not appear in mount template
+      expect(content).not.toMatch(/mount\([^)]*\bclasses\b/)
+    })
+
+    test('constant name matching property suffix does not corrupt props access', () => {
+      const source = `
+        'use client'
+
+        export function Widget(props: { size?: string, label?: string, onClick?: () => void }) {
+          const size = props.size ?? 'md'
+          return <div data-size={size} onClick={props.onClick}>{props.label}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Widget.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      expect(content).not.toContain('props.(props.')
+      const templateMatch = content.match(/\(props\) => `([^`]*)`/)
+      expect(templateMatch).not.toBeNull()
+      const template = templateMatch![1]
+      // props.size should be valid and not corrupted
+      expect(template).toContain('props.size')
+      // Should not have double-wrapped props references
+      expect(template).not.toMatch(/props\.\(props\./)
+    })
+  })
+
   describe('hyphenated prop names in child component (#346)', () => {
     test('quotes hyphenated prop names in initChild', () => {
       const source = `

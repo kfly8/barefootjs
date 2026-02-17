@@ -818,7 +818,7 @@ export function emitRegistrationAndHydration(
       let newValue = constValue
       for (const [otherName, otherValue] of inlinableConstants) {
         if (otherName === constName) continue
-        const replaced = newValue.replace(new RegExp(`\\b${otherName}\\b`, 'g'), `(${otherValue})`)
+        const replaced = newValue.replace(new RegExp(`(?<!\\.)\\b${otherName}\\b`, 'g'), `(${otherValue})`)
         if (replaced !== newValue) {
           newValue = replaced
           changed = true
