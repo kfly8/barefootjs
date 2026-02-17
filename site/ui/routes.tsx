@@ -26,6 +26,7 @@ import { TogglePage } from './pages/toggle'
 import { ToggleGroupPage } from './pages/toggle-group'
 import { TooltipPage } from './pages/tooltip'
 import { SelectPage } from './pages/select'
+import { SeparatorPage } from './pages/separator'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { RadioGroupPage } from './pages/radio-group'
@@ -267,6 +268,11 @@ export function createApp() {
   // Select documentation
   app.get('/docs/components/select', (c) => {
     return c.render(<SelectPage />)
+  })
+
+  // Separator documentation
+  app.get('/docs/components/separator', (c) => {
+    return c.render(<SeparatorPage />)
   })
 
   // Textarea documentation
