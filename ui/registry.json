@@ -28,6 +28,12 @@
       "description": "An interactive component which expands/collapses a panel"
     },
     {
+      "name": "pagination",
+      "type": "registry:ui",
+      "title": "Pagination",
+      "description": "Pagination with page navigation, next and previous links"
+    },
+    {
       "name": "textarea",
       "type": "registry:ui",
       "title": "Textarea",

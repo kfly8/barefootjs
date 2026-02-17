@@ -1,0 +1,191 @@
+/**
+ * Pagination Component
+ *
+ * Navigation component for paginated content.
+ * Built with accessible nav, list, and link elements.
+ *
+ * @example
+ * ```tsx
+ * <Pagination>
+ *   <PaginationContent>
+ *     <PaginationItem>
+ *       <PaginationPrevious href="#" />
+ *     </PaginationItem>
+ *     <PaginationItem>
+ *       <PaginationLink href="#" isActive>1</PaginationLink>
+ *     </PaginationItem>
+ *     <PaginationItem>
+ *       <PaginationLink href="#">2</PaginationLink>
+ *     </PaginationItem>
+ *     <PaginationItem>
+ *       <PaginationEllipsis />
+ *     </PaginationItem>
+ *     <PaginationItem>
+ *       <PaginationNext href="#" />
+ *     </PaginationItem>
+ *   </PaginationContent>
+ * </Pagination>
+ * ```
+ */
+
+import type { Child } from '../../types'
+import { ChevronLeftIcon, ChevronRightIcon, EllipsisIcon } from './icon'
+
+// Button variant/size classes (from button.tsx)
+const buttonBaseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
+
+const variantClasses = {
+  outline: 'border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+  ghost: 'text-foreground hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+}
+
+const sizeClasses = {
+  default: 'h-9 px-4 py-2 has-[>svg]:px-3',
+  icon: 'size-9',
+}
+
+interface PaginationProps {
+  className?: string
+  children?: Child
+}
+
+function Pagination({ className = '', children }: PaginationProps) {
+  return (
+    <nav
+      role="navigation"
+      aria-label="pagination"
+      data-slot="pagination"
+      className={`mx-auto flex w-full justify-center ${className}`}
+    >
+      {children}
+    </nav>
+  )
+}
+
+interface PaginationContentProps {
+  className?: string
+  children?: Child
+}
+
+function PaginationContent({ className = '', children }: PaginationContentProps) {
+  return (
+    <ul
+      data-slot="pagination-content"
+      className={`flex flex-row items-center gap-1 ${className}`}
+    >
+      {children}
+    </ul>
+  )
+}
+
+interface PaginationItemProps {
+  className?: string
+  children?: Child
+}
+
+function PaginationItem({ className = '', children }: PaginationItemProps) {
+  return <li data-slot="pagination-item" className={className}>{children}</li>
+}
+
+interface PaginationLinkProps {
+  isActive?: boolean
+  size?: 'default' | 'icon'
+  className?: string
+  href?: string
+  children?: Child
+  onClick?: (e: Event) => void
+  'aria-label'?: string
+}
+
+function PaginationLink({
+  className = '',
+  isActive,
+  size = 'icon',
+  children,
+  ...props
+}: PaginationLinkProps) {
+  const variant = isActive ? 'outline' : 'ghost'
+  const classes = `${buttonBaseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`
+
+  return (
+    <a
+      aria-current={isActive ? 'page' : undefined}
+      data-slot="pagination-link"
+      data-active={isActive}
+      className={classes}
+      {...props}
+    >
+      {children}
+    </a>
+  )
+}
+
+interface PaginationPrevNextProps {
+  className?: string
+  href?: string
+  children?: Child
+  onClick?: (e: Event) => void
+  'aria-label'?: string
+}
+
+function PaginationPrevious({
+  className = '',
+  ...props
+}: PaginationPrevNextProps) {
+  return (
+    <PaginationLink
+      aria-label="Go to previous page"
+      size="default"
+      className={`gap-1 px-2.5 sm:pl-2.5 ${className}`}
+      {...props}
+    >
+      <ChevronLeftIcon size="sm" />
+      <span className="hidden sm:block">Previous</span>
+    </PaginationLink>
+  )
+}
+
+function PaginationNext({
+  className = '',
+  ...props
+}: PaginationPrevNextProps) {
+  return (
+    <PaginationLink
+      aria-label="Go to next page"
+      size="default"
+      className={`gap-1 px-2.5 sm:pr-2.5 ${className}`}
+      {...props}
+    >
+      <span className="hidden sm:block">Next</span>
+      <ChevronRightIcon size="sm" />
+    </PaginationLink>
+  )
+}
+
+interface PaginationEllipsisProps {
+  className?: string
+}
+
+function PaginationEllipsis({ className = '' }: PaginationEllipsisProps) {
+  return (
+    <span
+      aria-hidden
+      data-slot="pagination-ellipsis"
+      className={`flex size-9 items-center justify-center ${className}`}
+    >
+      <EllipsisIcon size="sm" />
+      <span className="sr-only">More pages</span>
+    </span>
+  )
+}
+
+export {
+  Pagination,
+  PaginationContent,
+  PaginationLink,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+}
+export type { PaginationLinkProps }
