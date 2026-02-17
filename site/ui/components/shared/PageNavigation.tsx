@@ -23,6 +23,7 @@ export const componentOrder = [
   { slug: 'radio-group', title: 'Radio Group' },
   { slug: 'select', title: 'Select' },
   { slug: 'separator', title: 'Separator' },
+  { slug: 'sheet', title: 'Sheet' },
   { slug: 'slider', title: 'Slider' },
   { slug: 'switch', title: 'Switch' },
   { slug: 'tabs', title: 'Tabs' },

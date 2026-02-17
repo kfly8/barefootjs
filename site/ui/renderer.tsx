@@ -87,6 +87,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Radio Group', href: '/docs/components/radio-group' },
       { title: 'Select', href: '/docs/components/select' },
       { title: 'Separator', href: '/docs/components/separator' },
+      { title: 'Sheet', href: '/docs/components/sheet' },
       { title: 'Slider', href: '/docs/components/slider' },
       { title: 'Switch', href: '/docs/components/switch' },
       { title: 'Tabs', href: '/docs/components/tabs' },
