@@ -19,6 +19,7 @@ export const componentOrder = [
   { slug: 'input', title: 'Input' },
   { slug: 'label', title: 'Label' },
   { slug: 'pagination', title: 'Pagination' },
+  { slug: 'popover', title: 'Popover' },
   { slug: 'portal', title: 'Portal' },
   { slug: 'radio-group', title: 'Radio Group' },
   { slug: 'select', title: 'Select' },
