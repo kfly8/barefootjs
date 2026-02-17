@@ -10,6 +10,7 @@ import { renderer } from './renderer'
 
 // Component pages
 import { BadgePage } from './pages/badge'
+import { BreadcrumbPage } from './pages/breadcrumb'
 import { ButtonPage } from './pages/button'
 import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
@@ -184,6 +185,11 @@ export function createApp() {
   // Badge documentation
   app.get('/docs/components/badge', (c) => {
     return c.render(<BadgePage />)
+  })
+
+  // Breadcrumb documentation
+  app.get('/docs/components/breadcrumb', (c) => {
+    return c.render(<BreadcrumbPage />)
   })
 
   // Button documentation

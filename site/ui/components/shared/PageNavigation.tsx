@@ -9,6 +9,7 @@
 export const componentOrder = [
   { slug: 'accordion', title: 'Accordion' },
   { slug: 'badge', title: 'Badge' },
+  { slug: 'breadcrumb', title: 'Breadcrumb' },
   { slug: 'button', title: 'Button' },
   { slug: 'card', title: 'Card' },
   { slug: 'checkbox', title: 'Checkbox' },
