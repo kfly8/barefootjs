@@ -34,6 +34,12 @@
       "description": "Pagination with page navigation, next and previous links"
     },
     {
+      "name": "popover",
+      "type": "registry:ui",
+      "title": "Popover",
+      "description": "A floating panel that appears relative to a trigger element"
+    },
+    {
       "name": "textarea",
       "type": "registry:ui",
       "title": "Textarea",

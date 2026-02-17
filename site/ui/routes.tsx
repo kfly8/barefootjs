@@ -32,6 +32,7 @@ import { SeparatorPage } from './pages/separator'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
+import { PopoverPage } from './pages/popover'
 import { RadioGroupPage } from './pages/radio-group'
 import { SheetPage } from './pages/sheet'
 
@@ -302,6 +303,11 @@ export function createApp() {
   // Pagination documentation
   app.get('/docs/components/pagination', (c) => {
     return c.render(<PaginationPage />)
+  })
+
+  // Popover documentation
+  app.get('/docs/components/popover', (c) => {
+    return c.render(<PopoverPage />)
   })
 
   // Radio Group documentation
