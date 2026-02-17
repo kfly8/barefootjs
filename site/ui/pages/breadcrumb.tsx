@@ -38,6 +38,7 @@ const previewCode = `import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
+  BreadcrumbEllipsis,
 } from '@/components/ui/breadcrumb'
 
 function BreadcrumbPreview() {
@@ -46,6 +47,10 @@ function BreadcrumbPreview() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink href="#">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbEllipsis />
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
