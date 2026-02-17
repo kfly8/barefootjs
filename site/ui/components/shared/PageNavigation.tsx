@@ -16,6 +16,7 @@ export const componentOrder = [
   { slug: 'collapsible', title: 'Collapsible' },
   { slug: 'dialog', title: 'Dialog' },
   { slug: 'dropdown-menu', title: 'Dropdown Menu' },
+  { slug: 'hover-card', title: 'Hover Card' },
   { slug: 'input', title: 'Input' },
   { slug: 'label', title: 'Label' },
   { slug: 'pagination', title: 'Pagination' },

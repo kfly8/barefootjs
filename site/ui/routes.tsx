@@ -35,6 +35,7 @@ import { PaginationPage } from './pages/pagination'
 import { PopoverPage } from './pages/popover'
 import { RadioGroupPage } from './pages/radio-group'
 import { SheetPage } from './pages/sheet'
+import { HoverCardPage } from './pages/hover-card'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -313,6 +314,11 @@ export function createApp() {
   // Radio Group documentation
   app.get('/docs/components/radio-group', (c) => {
     return c.render(<RadioGroupPage />)
+  })
+
+  // Hover Card documentation
+  app.get('/docs/components/hover-card', (c) => {
+    return c.render(<HoverCardPage />)
   })
 
   // Sheet documentation
