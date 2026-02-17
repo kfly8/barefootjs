@@ -31,6 +31,7 @@ import { SelectPage } from './pages/select'
 import { SeparatorPage } from './pages/separator'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
+import { PaginationPage } from './pages/pagination'
 import { RadioGroupPage } from './pages/radio-group'
 
 // Form pattern pages
@@ -295,6 +296,11 @@ export function createApp() {
   // Portal documentation
   app.get('/docs/components/portal', (c) => {
     return c.render(<PortalPage />)
+  })
+
+  // Pagination documentation
+  app.get('/docs/components/pagination', (c) => {
+    return c.render(<PaginationPage />)
   })
 
   // Radio Group documentation
