@@ -10,6 +10,12 @@
       "description": "A polymorphic component that merges props with child element"
     },
     {
+      "name": "breadcrumb",
+      "type": "registry:ui",
+      "title": "Breadcrumb",
+      "description": "Displays the path to the current resource using a hierarchy of links"
+    },
+    {
       "name": "button",
       "type": "registry:ui",
       "title": "Button",

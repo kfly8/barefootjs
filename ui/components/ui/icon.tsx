@@ -62,6 +62,7 @@ const strokePaths = {
   'menu': 'M4 6h16M4 12h16M4 18h16',
   'arrow-left': 'm12 19-7-7 7-7M19 12H5',
   'arrow-right': 'M5 12h14m-7-7 7 7-7 7',
+  'ellipsis': 'M5 12h.01M12 12h.01M19 12h.01',
 } as const
 
 export type IconName = keyof typeof strokePaths | 'github' | 'search' | 'settings' | 'globe' | 'log-out' | 'circle-help'
@@ -218,6 +219,15 @@ export function ArrowRightIcon({ size, class: className = '' }: IconProps) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
       <path d={strokePaths['arrow-right']} />
+    </svg>
+  )
+}
+
+export function EllipsisIcon({ size, class: className = '' }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <path d={strokePaths['ellipsis']} />
     </svg>
   )
 }
