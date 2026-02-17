@@ -27,7 +27,7 @@ export function AlertDialogBasicDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div>
+    <>
       <AlertDialog open={open()} onOpenChange={setOpen}>
         <AlertDialogTrigger>
           Show Dialog
@@ -50,7 +50,7 @@ export function AlertDialogBasicDemo() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }
 
@@ -61,7 +61,7 @@ export function AlertDialogDestructiveDemo() {
   const [open, setOpen] = createSignal(false)
 
   return (
-    <div>
+    <>
       <AlertDialog open={open()} onOpenChange={setOpen}>
         <AlertDialogTrigger asChild>
           <button
@@ -91,6 +91,6 @@ export function AlertDialogDestructiveDemo() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }
