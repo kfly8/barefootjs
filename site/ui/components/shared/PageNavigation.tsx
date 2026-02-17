@@ -22,6 +22,8 @@ export const componentOrder = [
   { slug: 'popover', title: 'Popover' },
   { slug: 'portal', title: 'Portal' },
   { slug: 'radio-group', title: 'Radio Group' },
+  { slug: 'resizable', title: 'Resizable' },
+  { slug: 'scroll-area', title: 'Scroll Area' },
   { slug: 'select', title: 'Select' },
   { slug: 'separator', title: 'Separator' },
   { slug: 'sheet', title: 'Sheet' },
