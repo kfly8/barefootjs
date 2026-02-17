@@ -36,6 +36,7 @@ import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
 import { PopoverPage } from './pages/popover'
 import { RadioGroupPage } from './pages/radio-group'
+import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
 
 // Form pattern pages
@@ -325,6 +326,11 @@ export function createApp() {
   // Scroll Area documentation
   app.get('/docs/components/scroll-area', (c) => {
     return c.render(<ScrollAreaPage />)
+  })
+
+  // Drawer documentation
+  app.get('/docs/components/drawer', (c) => {
+    return c.render(<DrawerPage />)
   })
 
   // Sheet documentation
