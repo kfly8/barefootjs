@@ -24,7 +24,7 @@ test.describe('Popover Documentation Page', () => {
 
       const content = page.locator('[data-slot="popover-content"][data-state="open"]')
       await expect(content).toBeVisible()
-      await expect(content.locator('text=Dimensions')).toBeVisible()
+      await expect(content.getByRole('heading', { name: 'Dimensions' })).toBeVisible()
     })
 
     test('closes on ESC', async ({ page }) => {
@@ -91,8 +91,8 @@ test.describe('Popover Documentation Page', () => {
       await trigger.click()
 
       const content = page.locator('[data-slot="popover-content"][data-state="open"]')
-      await expect(content.locator('text=Width')).toBeVisible()
-      await expect(content.locator('text=Height')).toBeVisible()
+      await expect(content.getByText('Width', { exact: true })).toBeVisible()
+      await expect(content.getByText('Height', { exact: true })).toBeVisible()
     })
   })
 
@@ -118,7 +118,7 @@ test.describe('Popover Documentation Page', () => {
 
       const content = page.locator('[data-slot="popover-content"][data-state="open"]')
       await expect(content).toBeVisible()
-      await expect(content.locator('text=Notifications')).toBeVisible()
+      await expect(content.getByRole('heading', { name: 'Notifications' })).toBeVisible()
     })
 
     test('PopoverClose button closes popover', async ({ page }) => {
