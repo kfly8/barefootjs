@@ -2156,4 +2156,60 @@ describe('Compiler', () => {
       expect(js).toContain('onCleanup')
     })
   })
+
+  describe('function declarations hoisted after usage (#365)', () => {
+    test('function declaration used in createSignal initializer is emitted before the signal', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function ToggleGroup(props) {
+          function toArray(value) {
+            return Array.isArray(value) ? value : value ? [value] : []
+          }
+          const [selected, setSelected] = createSignal(toArray(props.defaultValue))
+          return <div data-state={selected().length > 0 ? 'on' : 'off'}>{props.children}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'ToggleGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+      expect(clientJs.content).toContain('toArray')
+
+      // toArray must be defined before the signal declaration
+      const fnIndex = clientJs.content.indexOf('toArray')
+      const signalIndex = clientJs.content.indexOf('const [selected')
+      expect(signalIndex).toBeGreaterThan(-1)
+      expect(fnIndex).toBeLessThan(signalIndex)
+    })
+
+    test('arrow-function constant used in createSignal initializer is emitted before the signal', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function MyComponent(props) {
+          const normalize = (val) => val == null ? '' : String(val)
+          const [value, setValue] = createSignal(normalize(props.defaultValue))
+          return <input value={value()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyComponent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+      expect(clientJs.content).toContain('normalize')
+
+      // normalize must be defined before the signal declaration
+      const fnIndex = clientJs.content.indexOf('normalize')
+      const signalIndex = clientJs.content.indexOf('const [value')
+      expect(signalIndex).toBeGreaterThan(-1)
+      expect(fnIndex).toBeLessThan(signalIndex)
+    })
+  })
 })
