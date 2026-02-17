@@ -49,6 +49,11 @@ const toggleSizeClasses: Record<ToggleSize, string> = {
 // ToggleGroupItem extra classes from shadcn/ui (applied on top of toggle base)
 const toggleGroupItemClasses = 'w-auto min-w-0 shrink-0 rounded-none shadow-none first:rounded-l-md last:rounded-r-md focus:z-10 focus-visible:z-10 data-[variant=outline]:border-l-0 data-[variant=outline]:first:border-l'
 
+function normalizeToArray(value: string | string[] | undefined): string[] {
+  if (value === undefined) return []
+  return Array.isArray(value) ? value : value ? [value] : []
+}
+
 // Context for parent-child state sharing
 interface ToggleGroupContextValue {
   type: () => 'single' | 'multiple'
@@ -90,19 +95,13 @@ interface ToggleGroupProps {
  * Manages selection state and provides context to ToggleGroupItem children.
  */
 function ToggleGroup(props: ToggleGroupProps) {
-  // Inline array normalization (avoids hoisting issues with compiled JS)
-  const defaultArr: string[] = props.defaultValue === undefined ? []
-    : Array.isArray(props.defaultValue) ? props.defaultValue
-    : props.defaultValue ? [props.defaultValue] : []
-
   // Internal state for uncontrolled mode
-  const [internalValue, setInternalValue] = createSignal(defaultArr)
+  const [internalValue, setInternalValue] = createSignal(normalizeToArray(props.defaultValue))
 
   // Controlled state
-  const controlledArr: string[] | undefined = props.value !== undefined
-    ? (Array.isArray(props.value) ? props.value : props.value ? [props.value] : [])
-    : undefined
-  const [controlledValue, setControlledValue] = createSignal<string[] | undefined>(controlledArr)
+  const [controlledValue, setControlledValue] = createSignal<string[] | undefined>(
+    props.value !== undefined ? normalizeToArray(props.value) : undefined
+  )
 
   // Track if component is in controlled mode
   const isControlled = createMemo(() => props.value !== undefined)
@@ -110,7 +109,6 @@ function ToggleGroup(props: ToggleGroupProps) {
   // Determine current value
   const currentValue = createMemo(() => isControlled() ? (controlledValue() ?? []) : internalValue())
 
-  // Group classes — use props.variant directly to avoid compiler inlining issues with intermediate variables
   const groupClasses = `group/toggle-group flex w-fit items-center rounded-md ${(props.variant ?? 'default') === 'outline' ? 'shadow-xs' : ''} ${props.class ?? ''}`
 
   const handleItemToggle = (itemValue: string) => {
