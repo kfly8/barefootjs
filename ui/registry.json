@@ -22,6 +22,12 @@
       "description": "A multi-line text input field with error state support"
     },
     {
+      "name": "separator",
+      "type": "registry:ui",
+      "title": "Separator",
+      "description": "A visual divider that separates content horizontally or vertically"
+    },
+    {
       "name": "toggle-group",
       "type": "registry:ui",
       "title": "Toggle Group",

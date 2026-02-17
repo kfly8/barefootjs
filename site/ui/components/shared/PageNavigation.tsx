@@ -19,6 +19,7 @@ export const componentOrder = [
   { slug: 'portal', title: 'Portal' },
   { slug: 'radio-group', title: 'Radio Group' },
   { slug: 'select', title: 'Select' },
+  { slug: 'separator', title: 'Separator' },
   { slug: 'slider', title: 'Slider' },
   { slug: 'switch', title: 'Switch' },
   { slug: 'tabs', title: 'Tabs' },
