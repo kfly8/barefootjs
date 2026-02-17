@@ -18,6 +18,7 @@ export const componentOrder = [
   { slug: 'dialog', title: 'Dialog' },
   { slug: 'drawer', title: 'Drawer' },
   { slug: 'dropdown-menu', title: 'Dropdown Menu' },
+  { slug: 'hover-card', title: 'Hover Card' },
   { slug: 'input', title: 'Input' },
   { slug: 'label', title: 'Label' },
   { slug: 'pagination', title: 'Pagination' },

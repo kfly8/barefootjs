@@ -83,6 +83,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Dialog', href: '/docs/components/dialog' },
       { title: 'Drawer', href: '/docs/components/drawer' },
       { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
+      { title: 'Hover Card', href: '/docs/components/hover-card' },
       { title: 'Input', href: '/docs/components/input' },
       { title: 'Label', href: '/docs/components/label' },
       { title: 'Pagination', href: '/docs/components/pagination' },
