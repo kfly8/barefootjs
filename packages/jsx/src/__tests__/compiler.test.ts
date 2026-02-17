@@ -963,11 +963,13 @@ describe('Compiler', () => {
       expect(ir!.type).toBe('fragment')
       if (ir!.type === 'fragment') {
         expect(ir!.transparent).toBeFalsy()
-        // Non-transparent fragment should have needsScope on element children
+        // Non-transparent fragment uses comment-based scope marker
+        expect(ir!.needsScopeComment).toBe(true)
+        // Element children should NOT have needsScope (scope is via comment)
         const divChild = ir!.children.find(c => c.type === 'element')
         expect(divChild).toBeDefined()
         if (divChild && divChild.type === 'element') {
-          expect(divChild.needsScope).toBe(true)
+          expect(divChild.needsScope).toBe(false)
         }
       }
     })
@@ -1514,11 +1516,14 @@ describe('Compiler', () => {
       expect(ir).not.toBeNull()
       expect(ir!.type).toBe('fragment')
       if (ir!.type === 'fragment') {
-        // Element child gets needsScope via fragment post-processing
+        // Fragment uses comment-based scope marker
+        expect(ir!.needsScopeComment).toBe(true)
+
+        // Element children do NOT get needsScope (scope is via comment)
         const header = ir!.children.find(c => c.type === 'element' && c.tag === 'header')
         expect(header).toBeDefined()
         if (header?.type === 'element') {
-          expect(header.needsScope).toBe(true)
+          expect(header.needsScope).toBe(false)
         }
 
         // Component child stays as IRComponent (no wrapper div)

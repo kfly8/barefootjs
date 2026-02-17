@@ -4,6 +4,12 @@
   "homepage": "https://ui.barefootjs.dev",
   "items": [
     {
+      "name": "alert-dialog",
+      "type": "registry:ui",
+      "title": "Alert Dialog",
+      "description": "A modal dialog that interrupts the user with important content and expects a response"
+    },
+    {
       "name": "slot",
       "type": "registry:ui",
       "title": "Slot",

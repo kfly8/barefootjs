@@ -241,6 +241,8 @@ export interface IRFragment {
   children: IRNode[]
   /** When true, this fragment just passes through children (Context Provider pattern) */
   transparent?: boolean
+  /** When true, emit a comment-based scope marker instead of bf-s attributes on children */
+  needsScopeComment?: boolean
   loc: SourceLocation
 }
 

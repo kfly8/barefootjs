@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
+import { AlertDialogPage } from './pages/alert-dialog'
 import { BadgePage } from './pages/badge'
 import { BreadcrumbPage } from './pages/breadcrumb'
 import { ButtonPage } from './pages/button'
@@ -188,6 +189,11 @@ export function createApp() {
         </div>
       </div>
     )
+  })
+
+  // Alert Dialog documentation
+  app.get('/docs/components/alert-dialog', (c) => {
+    return c.render(<AlertDialogPage />)
   })
 
   // Badge documentation
