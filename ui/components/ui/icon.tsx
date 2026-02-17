@@ -227,7 +227,9 @@ export function EllipsisIcon({ size, class: className = '' }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
-      <path d={strokePaths['ellipsis']} />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+      <circle cx="5" cy="12" r="1" />
     </svg>
   )
 }

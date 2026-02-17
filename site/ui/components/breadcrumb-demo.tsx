@@ -15,7 +15,7 @@ import {
 } from '@ui/components/ui/breadcrumb'
 
 /**
- * Preview demo: simple 3-level breadcrumb.
+ * Preview demo: breadcrumb with ellipsis (matches shadcn/ui preview).
  */
 export function BreadcrumbPreviewDemo() {
   return (
@@ -23,6 +23,10 @@ export function BreadcrumbPreviewDemo() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink href="#">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbEllipsis />
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

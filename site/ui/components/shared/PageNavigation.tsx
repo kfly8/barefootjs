@@ -8,6 +8,7 @@
 // Component order for navigation (alphabetical)
 export const componentOrder = [
   { slug: 'accordion', title: 'Accordion' },
+  { slug: 'alert-dialog', title: 'Alert Dialog' },
   { slug: 'badge', title: 'Badge' },
   { slug: 'breadcrumb', title: 'Breadcrumb' },
   { slug: 'button', title: 'Button' },
@@ -15,6 +16,7 @@ export const componentOrder = [
   { slug: 'checkbox', title: 'Checkbox' },
   { slug: 'collapsible', title: 'Collapsible' },
   { slug: 'dialog', title: 'Dialog' },
+  { slug: 'drawer', title: 'Drawer' },
   { slug: 'dropdown-menu', title: 'Dropdown Menu' },
   { slug: 'hover-card', title: 'Hover Card' },
   { slug: 'input', title: 'Input' },
@@ -23,6 +25,8 @@ export const componentOrder = [
   { slug: 'popover', title: 'Popover' },
   { slug: 'portal', title: 'Portal' },
   { slug: 'radio-group', title: 'Radio Group' },
+  { slug: 'resizable', title: 'Resizable' },
+  { slug: 'scroll-area', title: 'Scroll Area' },
   { slug: 'select', title: 'Select' },
   { slug: 'separator', title: 'Separator' },
   { slug: 'sheet', title: 'Sheet' },

@@ -1,0 +1,103 @@
+import { test, expect } from '@playwright/test'
+
+test.describe('Scroll Area Documentation Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/docs/components/scroll-area')
+  })
+
+  test('displays page header', async ({ page }) => {
+    await expect(page.locator('h1')).toContainText('Scroll Area')
+    await expect(page.locator('text=Augments native scroll functionality')).toBeVisible()
+  })
+
+  test('displays installation section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
+    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
+    await expect(page.locator('button:has-text("bun")')).toBeVisible()
+  })
+
+  test.describe('ScrollArea Rendering', () => {
+    test('displays scroll area elements', async ({ page }) => {
+      const scrollAreas = page.locator('[data-slot="scroll-area"]')
+      await expect(scrollAreas.first()).toBeVisible()
+    })
+
+    test('has multiple scroll area examples', async ({ page }) => {
+      const scrollAreas = page.locator('[data-slot="scroll-area"]')
+      // Preview + Tags + Horizontal + Both Axes
+      expect(await scrollAreas.count()).toBeGreaterThanOrEqual(3)
+    })
+  })
+
+  test.describe('Preview (Tags Demo)', () => {
+    test('displays tags list in scrollable area', async ({ page }) => {
+      // ScrollArea root has data-slot="scroll-area", so use that directly
+      const scrollArea = page.locator('[data-slot="scroll-area"]').first()
+      await expect(scrollArea).toBeVisible()
+      await expect(scrollArea.locator('text=Tags')).toBeVisible()
+    })
+
+    test('shows version tags', async ({ page }) => {
+      const scrollArea = page.locator('[data-slot="scroll-area"]').first()
+      await expect(scrollArea.locator('[data-tag="v1.2.0-beta.50"]')).toBeVisible()
+    })
+
+    test('has scrollable viewport', async ({ page }) => {
+      const scrollArea = page.locator('[data-slot="scroll-area"]').first()
+      const viewport = scrollArea.locator('[data-slot="scroll-area-viewport"]')
+      await expect(viewport).toBeVisible()
+
+      // Viewport should have overflow scroll
+      const overflowStyle = await viewport.evaluate(
+        (el) => window.getComputedStyle(el).overflow
+      )
+      expect(overflowStyle).toContain('scroll')
+    })
+
+    test('has vertical scrollbar', async ({ page }) => {
+      const scrollArea = page.locator('[data-slot="scroll-area"]').first()
+      const scrollbar = scrollArea.locator('[data-slot="scroll-area-scrollbar"][data-orientation="vertical"]')
+      await expect(scrollbar).toBeAttached()
+    })
+  })
+
+  test.describe('Horizontal Demo', () => {
+    test('displays horizontal scroll example', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Horizontal Scrolling")')).toBeVisible()
+    })
+
+    test('shows artwork titles', async ({ page }) => {
+      // The horizontal demo has whitespace-nowrap content
+      await expect(page.locator('text=Sunset Horizon')).toBeVisible()
+    })
+  })
+
+  test.describe('Both Axes Demo', () => {
+    test('displays both axes example', async ({ page }) => {
+      await expect(page.locator('h3:has-text("Both Axes")')).toBeVisible()
+    })
+
+    test('shows changelog content', async ({ page }) => {
+      await expect(page.locator('h4:has-text("Changelog")')).toBeVisible()
+    })
+  })
+
+  test.describe('API Reference', () => {
+    test('displays API Reference section', async ({ page }) => {
+      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
+    })
+
+    test('displays props table headers', async ({ page }) => {
+      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
+      await expect(page.locator('th:has-text("Type")')).toBeVisible()
+      await expect(page.locator('th:has-text("Default")')).toBeVisible()
+      await expect(page.locator('th:has-text("Description")')).toBeVisible()
+    })
+
+    test('displays scroll area props', async ({ page }) => {
+      const propsTable = page.locator('table')
+      await expect(propsTable.locator('td').filter({ hasText: /^class$/ })).toBeVisible()
+      await expect(propsTable.locator('td').filter({ hasText: /^type$/ })).toBeVisible()
+    })
+  })
+})

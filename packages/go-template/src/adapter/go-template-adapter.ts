@@ -2188,7 +2188,12 @@ export class GoTemplateAdapter extends BaseAdapter {
   }
 
   private renderFragment(fragment: IRFragment): string {
-    return this.renderChildren(fragment.children)
+    const children = this.renderChildren(fragment.children)
+    if (fragment.needsScopeComment) {
+      // Emit comment-based scope marker for fragment roots
+      return `{{bfScopeComment .}}${children}`
+    }
+    return children
   }
 
   private renderSlot(slot: IRSlot): string {
