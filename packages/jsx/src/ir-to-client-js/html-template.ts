@@ -124,7 +124,7 @@ export function irToComponentTemplate(
     // Parenthesized to prevent operator precedence issues
     if (inlinableConstants && inlinableConstants.size > 0) {
       for (const [constName, constValue] of inlinableConstants) {
-        result = result.replace(new RegExp(`\\b${constName}\\b`, 'g'), `(${constValue})`)
+        result = result.replace(new RegExp(`(?<!\\.)\\b${constName}\\b`, 'g'), `(${constValue})`)
       }
     }
 
