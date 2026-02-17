@@ -79,6 +79,19 @@ export function findScope(
 ): Element | null {
   const parentEl = parent as HTMLElement
 
+  // Check comment scope registry first.
+  // For fragment root components, the scope is identified by a comment marker,
+  // not by the bf-s attribute on the proxy element.
+  // This must be checked before the bf-s check to prevent the proxy element
+  // from being incorrectly accepted and marked as hydrated (bf-h),
+  // which would block child component initialization via initChild.
+  if (parentEl) {
+    const commentInfo = commentScopeRegistry.get(parentEl)
+    if (commentInfo && commentInfo.scopeId.startsWith(`${name}_`)) {
+      return parentEl
+    }
+  }
+
   // Check if parent is the scope element itself
   // This handles two cases:
   // 1. Scope ID starts with component name (e.g., "AddTodoForm_abc123")
