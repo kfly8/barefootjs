@@ -1,0 +1,349 @@
+import { test, expect } from '@playwright/test'
+
+// Click position for overlay outside the alert dialog area.
+const OVERLAY_CLICK_POSITION = { x: 10, y: 10 }
+
+test.describe('AlertDialog Documentation Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/docs/components/alert-dialog')
+  })
+
+  test('displays page header', async ({ page }) => {
+    await expect(page.locator('h1')).toContainText('Alert Dialog')
+    await expect(page.locator('text=A modal dialog that interrupts the user')).toBeVisible()
+  })
+
+  test('displays installation section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
+  })
+
+  test('displays features section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
+    await expect(page.locator('strong:has-text("ESC key to close")')).toBeVisible()
+    await expect(page.locator('strong:has-text("No outside click dismiss")')).toBeVisible()
+    await expect(page.locator('strong:has-text("Scroll lock")')).toBeVisible()
+    await expect(page.locator('strong:has-text("Focus trap")')).toBeVisible()
+  })
+
+  test.describe('Basic AlertDialog', () => {
+    test('opens alert dialog when trigger is clicked', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      // AlertDialog is portaled to body
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(alertDialog).toBeVisible()
+      await expect(alertDialog.locator('text=Are you absolutely sure?')).toBeVisible()
+    })
+
+    test('has role="alertdialog" instead of role="dialog"', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][data-state="open"]')
+      await expect(alertDialog).toBeVisible()
+      await expect(alertDialog).toHaveAttribute('role', 'alertdialog')
+    })
+
+    test('closes alert dialog when Cancel button is clicked', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const openDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+
+      const cancelButton = openDialog.locator('button:has-text("Cancel")')
+      await cancelButton.click()
+
+      const closedDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
+    })
+
+    test('closes alert dialog when Action button is clicked', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const openDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+
+      const actionButton = openDialog.locator('button:has-text("Continue")')
+      await actionButton.click()
+
+      const closedDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
+    })
+
+    test('closes alert dialog when ESC key is pressed', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const openDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+
+      await page.keyboard.press('Escape')
+
+      const closedDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
+    })
+
+    test('does NOT close when overlay is clicked', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const openDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+
+      // Click the overlay
+      const overlay = page.locator('[data-slot="alert-dialog-overlay"][data-state="open"]').first()
+      await overlay.click({ position: OVERLAY_CLICK_POSITION })
+
+      // Alert dialog should STILL be open (key difference from Dialog)
+      await expect(openDialog).toBeVisible()
+      await expect(openDialog).toHaveCSS('opacity', '1')
+    })
+
+    test('has correct accessibility attributes', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(alertDialog).toBeVisible()
+      await expect(alertDialog).toHaveAttribute('aria-modal', 'true')
+      await expect(alertDialog).toHaveAttribute('aria-labelledby', 'alert-basic-title')
+      await expect(alertDialog).toHaveAttribute('aria-describedby', 'alert-basic-description')
+    })
+
+    test('focuses first focusable element when opened', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(alertDialog).toBeVisible()
+
+      // First focusable element (Cancel button) should be focused
+      const cancelButton = alertDialog.locator('button:has-text("Cancel")')
+      await expect(cancelButton).toBeFocused()
+    })
+
+    test('traps focus within alert dialog', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(alertDialog).toBeVisible()
+
+      const cancelButton = alertDialog.locator('button:has-text("Cancel")')
+      await expect(cancelButton).toBeFocused()
+
+      // Focus on alert dialog container
+      await alertDialog.focus()
+
+      // Tab should move focus to the first focusable element
+      await page.keyboard.press('Tab')
+      await expect(cancelButton).toBeFocused()
+    })
+  })
+
+  test.describe('AlertDialog Animations', () => {
+    test('open animation plays', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      const closedDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
+
+      await trigger.click()
+
+      const openDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+      await expect(openDialog).toHaveCSS('opacity', '1')
+
+      const transform = await openDialog.evaluate((el) => getComputedStyle(el).transform)
+      expect(transform).toMatch(/^matrix\(1, 0, 0, 1,/)
+    })
+
+    test('close via ESC - animation plays', async ({ page }) => {
+      const basicDemo = page.locator('[bf-s^="AlertDialogBasicDemo_"]').first()
+      const trigger = basicDemo.locator('button:has-text("Show Dialog")')
+
+      await trigger.click()
+
+      const openDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="open"]')
+      await expect(openDialog).toBeVisible()
+
+      await page.keyboard.press('Escape')
+
+      const closedDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-basic-title"][data-state="closed"]').first()
+      await expect(closedDialog).toHaveCSS('opacity', '0')
+    })
+  })
+
+  test.describe('Destructive AlertDialog', () => {
+    test('opens destructive alert dialog', async ({ page }) => {
+      const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+      const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-destructive-title"]')
+      await expect(alertDialog).toBeVisible()
+      await expect(alertDialog.locator('text=Delete Account').first()).toBeVisible()
+    })
+
+    test('has destructive styling on trigger button', async ({ page }) => {
+      const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+      const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+      await expect(trigger).toBeVisible()
+      await expect(trigger).toHaveClass(/bg-destructive/)
+    })
+
+    test('closes destructive dialog when Cancel is clicked', async ({ page }) => {
+      const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+      const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-destructive-title"]')
+      await expect(alertDialog).toBeVisible()
+
+      const cancelButton = alertDialog.locator('button:has-text("Cancel")')
+      await cancelButton.click()
+
+      await expect(alertDialog).toHaveCSS('opacity', '0')
+    })
+
+    test('closes destructive dialog when Delete action is clicked', async ({ page }) => {
+      const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+      const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-destructive-title"]')
+      await expect(alertDialog).toBeVisible()
+
+      const deleteButton = alertDialog.locator('button:has-text("Delete")')
+      await deleteButton.click()
+
+      await expect(alertDialog).toHaveCSS('opacity', '0')
+    })
+
+    test('does NOT close destructive dialog when overlay is clicked', async ({ page }) => {
+      const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+      const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+      await trigger.click()
+
+      const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-destructive-title"]')
+      await expect(alertDialog).toBeVisible()
+
+      // Click the overlay
+      const overlay = page.locator('[data-slot="alert-dialog-overlay"][data-state="open"]').first()
+      await overlay.click({ position: OVERLAY_CLICK_POSITION })
+
+      // Alert dialog should STILL be open
+      await expect(alertDialog).toBeVisible()
+      await expect(alertDialog).toHaveCSS('opacity', '1')
+    })
+  })
+
+  test.describe('API Reference', () => {
+    test('displays API Reference section', async ({ page }) => {
+      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
+    })
+
+    test('displays AlertDialogTrigger props', async ({ page }) => {
+      await expect(page.locator('h3:has-text("AlertDialogTrigger")')).toBeVisible()
+    })
+
+    test('displays AlertDialogContent props', async ({ page }) => {
+      await expect(page.locator('h3:has-text("AlertDialogContent")')).toBeVisible()
+    })
+
+    test('displays AlertDialogTitle props', async ({ page }) => {
+      await expect(page.locator('h3:has-text("AlertDialogTitle")')).toBeVisible()
+    })
+
+    test('displays AlertDialogDescription props', async ({ page }) => {
+      await expect(page.locator('h3:has-text("AlertDialogDescription")')).toBeVisible()
+    })
+
+    test('displays AlertDialogCancel props', async ({ page }) => {
+      await expect(page.locator('h3:has-text("AlertDialogCancel")')).toBeVisible()
+    })
+
+    test('displays AlertDialogAction props', async ({ page }) => {
+      await expect(page.locator('h3:has-text("AlertDialogAction")')).toBeVisible()
+    })
+  })
+})
+
+test.describe('AlertDialogTrigger asChild', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/docs/components/alert-dialog')
+  })
+
+  test('custom button renders as trigger with destructive styling', async ({ page }) => {
+    const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+    const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+    await expect(trigger).toBeVisible()
+    await expect(trigger).toHaveClass(/bg-destructive/)
+  })
+
+  test('display:contents wrapper is present on asChild trigger', async ({ page }) => {
+    const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+    const triggerWrapper = destructiveDemo.locator('[data-slot="alert-dialog-trigger"]')
+
+    await expect(triggerWrapper).toBeVisible()
+    await expect(triggerWrapper).toHaveCSS('display', 'contents')
+  })
+
+  test('clicking asChild trigger opens alert dialog', async ({ page }) => {
+    const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+    const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+    await trigger.click()
+
+    const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-destructive-title"]')
+    await expect(alertDialog).toBeVisible()
+  })
+
+  test('alert dialog can be closed and reopened via asChild trigger', async ({ page }) => {
+    const destructiveDemo = page.locator('[bf-s^="AlertDialogDestructiveDemo_"]').first()
+    const trigger = destructiveDemo.locator('button:has-text("Delete Account")')
+
+    // Open
+    await trigger.click()
+    const alertDialog = page.locator('[role="alertdialog"][aria-labelledby="alert-destructive-title"]')
+    await expect(alertDialog).toBeVisible()
+
+    // Close via Cancel
+    const cancelButton = alertDialog.locator('button:has-text("Cancel")')
+    await cancelButton.click()
+    await expect(alertDialog).toHaveCSS('opacity', '0')
+
+    // Reopen
+    await trigger.click()
+    await expect(alertDialog).toBeVisible()
+    await expect(alertDialog).toHaveCSS('opacity', '1')
+  })
+})
