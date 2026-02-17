@@ -22,6 +22,12 @@
       "description": "A button component with variants and sizes"
     },
     {
+      "name": "collapsible",
+      "type": "registry:ui",
+      "title": "Collapsible",
+      "description": "An interactive component which expands/collapses a panel"
+    },
+    {
       "name": "textarea",
       "type": "registry:ui",
       "title": "Textarea",
