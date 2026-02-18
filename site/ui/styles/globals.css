@@ -1,3 +1,9 @@
+/* CSS Cascade Layer ordering for UnoCSS + component class overrides.
+ * Priority (lowest → highest): preflights < shortcuts < components < default
+ * Component base classes go into @layer components (via layer-components: prefix).
+ * User override classes stay in @layer default, so they always win. */
+@layer preflights, shortcuts, components, default;
+
 /**
  * BarefootJS Design System - CSS Variables
  *
