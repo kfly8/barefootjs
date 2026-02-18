@@ -81,15 +81,8 @@ const alertDialogFooterClasses = 'flex flex-col-reverse gap-2 sm:flex-row sm:jus
 // AlertDialogCancel classes (outline style like DialogClose)
 const alertDialogCancelClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2'
 
-// AlertDialogAction base classes (no color — variant handles color)
-const alertDialogActionBaseClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2'
-
-// AlertDialogAction variant classes
-type AlertDialogActionVariant = 'default' | 'destructive'
-const alertDialogActionVariantClasses: Record<AlertDialogActionVariant, string> = {
-  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  destructive: 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
-}
+// AlertDialogAction classes (primary style)
+const alertDialogActionClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2'
 
 /**
  * Props for AlertDialog component.
@@ -450,8 +443,6 @@ function AlertDialogCancel(props: AlertDialogCancelProps) {
  * Props for AlertDialogAction component.
  */
 interface AlertDialogActionProps {
-  /** Visual style variant */
-  variant?: AlertDialogActionVariant
   /** Button content */
   children?: Child
   /** Additional CSS classes */
@@ -478,7 +469,7 @@ function AlertDialogAction(props: AlertDialogActionProps) {
     <button
       data-slot="alert-dialog-action"
       type="button"
-      className={`${alertDialogActionBaseClasses} ${alertDialogActionVariantClasses[props.variant ?? 'default']} ${props.class ?? ''}`}
+      className={`${alertDialogActionClasses} ${props.class ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -509,5 +500,4 @@ export type {
   AlertDialogFooterProps,
   AlertDialogCancelProps,
   AlertDialogActionProps,
-  AlertDialogActionVariant,
 }
