@@ -188,7 +188,7 @@ for (const entryPath of componentFiles) {
 
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
-  }, { adapter })
+  }, { adapter, cssLayerPrefix: isUiComponent ? 'components' : undefined })
 
   // Separate errors and warnings
   const errors = result.errors.filter(e => e.severity === 'error')

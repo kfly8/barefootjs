@@ -49,6 +49,9 @@ export { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
 // Client JS Combiner (for build scripts)
 export { combineParentChildClientJs } from './combine-client-js'
 
+// CSS Layer Prefixer
+export { applyCssLayerPrefix } from './css-layer-prefixer'
+
 // Errors
 export { ErrorCodes, createError, formatError, generateCodeFrame } from './errors'
 

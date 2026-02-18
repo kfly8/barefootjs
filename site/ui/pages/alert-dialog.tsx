@@ -112,7 +112,7 @@ function DestructiveAlertDialog() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction class="bg-destructive ...">
+          <AlertDialogAction variant="destructive">
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -185,6 +185,12 @@ const alertDialogDescriptionProps: PropDefinition[] = [
 const alertDialogCancelProps: PropDefinition[] = []
 
 const alertDialogActionProps: PropDefinition[] = [
+  {
+    name: 'variant',
+    type: "'default' | 'destructive'",
+    defaultValue: "'default'",
+    description: 'Visual style variant. Use "destructive" for dangerous actions like delete.',
+  },
   {
     name: 'onClick',
     type: '() => void',
