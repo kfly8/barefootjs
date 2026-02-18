@@ -15,6 +15,7 @@ import type { TemplateAdapter } from './adapters/interface'
 import { analyzeComponent, listExportedComponents } from './analyzer'
 import { jsxToIR } from './jsx-to-ir'
 import { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
+import { applyCssLayerPrefix } from './css-layer-prefixer'
 
 /**
  * Extended compile options with required adapter
@@ -71,6 +72,11 @@ export async function compileJSX(
 
   // Pre-compute client JS analysis for adapter optimization
   componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
+
+  // Apply CSS layer prefix if configured
+  if (options.cssLayerPrefix) {
+    applyCssLayerPrefix(componentIR, options.cssLayerPrefix)
+  }
 
   if (options?.outputIR) {
     files.push({
@@ -139,6 +145,11 @@ function compileMultipleComponentsSync(
 
     // Pre-compute client JS analysis for adapter optimization
     componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
+
+    // Apply CSS layer prefix if configured
+    if (options.cssLayerPrefix) {
+      applyCssLayerPrefix(componentIR, options.cssLayerPrefix)
+    }
 
     const adapterOutput = adapter.generate(componentIR)
     const fullContent = adapterOutput.template
@@ -346,6 +357,11 @@ export function compileJSXSync(
 
   // Pre-compute client JS analysis for adapter optimization
   componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
+
+  // Apply CSS layer prefix if configured
+  if (options.cssLayerPrefix) {
+    applyCssLayerPrefix(componentIR, options.cssLayerPrefix)
+  }
 
   if (options.outputIR) {
     files.push({

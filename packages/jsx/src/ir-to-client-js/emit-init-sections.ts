@@ -546,15 +546,11 @@ export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext):
             lines.push(`        _${slotId}.classList.add('hidden')`)
             lines.push(`      }`)
           } else {
+            // Update data-state and aria-selected attributes.
+            // Visual styling is driven by CSS data-[state=active/inactive]: selectors.
             lines.push(`      _${slotId}.setAttribute('aria-selected', String(${value}))`)
             lines.push(`      _${slotId}.setAttribute('data-state', ${value} ? 'active' : 'inactive')`)
-            lines.push(`      if (${value}) {`)
-            lines.push(`        _${slotId}.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-background/50')`)
-            lines.push(`        _${slotId}.classList.add('bg-background', 'text-foreground', 'shadow-sm')`)
-            lines.push(`      } else {`)
-            lines.push(`        _${slotId}.classList.add('text-muted-foreground', 'hover:text-foreground', 'hover:bg-background/50')`)
-            lines.push(`        _${slotId}.classList.remove('bg-background', 'text-foreground', 'shadow-sm')`)
-            lines.push(`      }`)
+            lines.push(`      _${slotId}.setAttribute('tabindex', ${value} ? '0' : '-1')`)
           }
         } else {
           lines.push(`      _${slotId}.setAttribute('${prop.propName}', String(${value}))`)

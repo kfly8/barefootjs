@@ -85,7 +85,7 @@ export function AlertDialogDestructiveDemo() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction class="bg-destructive text-white hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
