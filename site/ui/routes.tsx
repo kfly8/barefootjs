@@ -90,6 +90,7 @@ export function createApp() {
 
         {/* Component Showcase */}
         <div className="space-y-6" id="components">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">Components</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Button */}
@@ -186,6 +187,55 @@ export function createApp() {
                 </div>
               </div>
             </PreviewCard>
+
+            {/* Select */}
+            <PreviewCard name="Select" path="/docs/components/select">
+              <div className="w-full max-w-48 space-y-2">
+                <div className="flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">Select a fruit...</span>
+                  <span className="text-muted-foreground text-xs">▼</span>
+                </div>
+              </div>
+            </PreviewCard>
+          </div>
+        </div>
+
+        {/* Form Patterns */}
+        <div className="space-y-6" id="form-patterns">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">Form Patterns</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a
+              href="/docs/forms/controlled-input"
+              className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2"
+            >
+              <h2 className="text-sm font-medium text-foreground group-hover:text-foreground">Controlled Input</h2>
+              <p className="text-xs text-muted-foreground">Signal ↔ input value synchronization</p>
+            </a>
+
+            <a
+              href="/docs/forms/validation"
+              className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2"
+            >
+              <h2 className="text-sm font-medium text-foreground group-hover:text-foreground">Form Validation</h2>
+              <p className="text-xs text-muted-foreground">Client-side validation and error state management</p>
+            </a>
+
+            <a
+              href="/docs/forms/submit"
+              className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2"
+            >
+              <h2 className="text-sm font-medium text-foreground group-hover:text-foreground">Form Submit</h2>
+              <p className="text-xs text-muted-foreground">Async submit handling with loading and error states</p>
+            </a>
+
+            <a
+              href="/docs/forms/field-arrays"
+              className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2"
+            >
+              <h2 className="text-sm font-medium text-foreground group-hover:text-foreground">Field Arrays</h2>
+              <p className="text-xs text-muted-foreground">Dynamic list of form inputs with add/remove</p>
+            </a>
           </div>
         </div>
       </div>

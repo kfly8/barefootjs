@@ -298,12 +298,12 @@ test.describe('Select Documentation Page', () => {
   })
 })
 
-test.describe.skip('Home Page - Select Link', () => {
+test.describe('Home Page - Select Link', () => {
   test('displays Select component link', async ({ page }) => {
     await page.goto('/')
     const link = page.locator('#components a[href="/docs/components/select"]')
     await expect(link).toBeVisible()
-    await expect(link.locator('h2')).toContainText('Select')
+    await expect(link).toContainText('Select')
   })
 
   test('navigates to Select page on click', async ({ page }) => {

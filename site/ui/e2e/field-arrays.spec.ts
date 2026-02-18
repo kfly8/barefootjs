@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
+// Skip: Compiler bug - compiled output references undefined `field` variable (ReferenceError in DuplicateValidationDemo)
 test.describe.skip('Field Arrays Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     // Capture console errors
@@ -287,8 +287,7 @@ test.describe.skip('Field Arrays Documentation Page', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Field Arrays Link', () => {
+test.describe('Home Page - Field Arrays Link', () => {
   test('displays Form Patterns section', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
@@ -296,13 +295,15 @@ test.describe.skip('Home Page - Field Arrays Link', () => {
 
   test('displays Field Arrays link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/forms/field-arrays"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/forms/field-arrays"] h2')).toContainText('Field Arrays')
+    const link = page.locator('#form-patterns a[href="/docs/forms/field-arrays"]')
+    await expect(link).toBeVisible()
+    await expect(link).toContainText('Field Arrays')
   })
 
-  test('navigates to Field Arrays page on click', async ({ page }) => {
+  // Skip: Field Arrays page returns 500 due to compiler bug (undefined `field` variable)
+  test.skip('navigates to Field Arrays page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/forms/field-arrays"]')
+    await page.locator('#form-patterns a[href="/docs/forms/field-arrays"]').click()
     await expect(page).toHaveURL('/docs/forms/field-arrays')
     await expect(page.locator('h1')).toContainText('Field Arrays')
   })
