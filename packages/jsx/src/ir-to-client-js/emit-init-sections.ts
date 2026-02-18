@@ -556,6 +556,11 @@ export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext):
             lines.push(`        _${slotId}.classList.remove('bg-background', 'text-foreground', 'shadow-sm')`)
             lines.push(`      }`)
           }
+        } else if (prop.propName === 'value') {
+          lines.push(`      const __val = String(${value})`)
+          lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
+        } else if (isBooleanAttr(prop.propName)) {
+          lines.push(`      _${slotId}.${prop.propName} = !!(${value})`)
         } else {
           lines.push(`      _${slotId}.setAttribute('${prop.propName}', String(${value}))`)
         }
@@ -595,6 +600,11 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       for (const prop of props) {
         if (prop.attrName === 'class') {
           lines.push(`      ${varName}.setAttribute('class', ${prop.expression})`)
+        } else if (prop.attrName === 'value') {
+          lines.push(`      const __val = String(${prop.expression})`)
+          lines.push(`      if (${varName}.value !== __val) ${varName}.value = __val`)
+        } else if (isBooleanAttr(prop.attrName)) {
+          lines.push(`      ${varName}.${prop.attrName} = !!(${prop.expression})`)
         } else {
           lines.push(`      ${varName}.setAttribute('${prop.attrName}', ${prop.expression})`)
         }

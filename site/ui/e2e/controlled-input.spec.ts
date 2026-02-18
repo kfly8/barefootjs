@@ -151,8 +151,7 @@ test.describe('Controlled Input Documentation Page', () => {
       await expect(page.locator('[bf-s^="MultiInputSyncDemo_"]')).toBeVisible()
     })
 
-    // Skip: Two-way signal binding between inputs not syncing in compiled output
-    test.skip('syncs value between inputs', async ({ page }) => {
+    test('syncs value between inputs', async ({ page }) => {
       const demo = page.locator('[bf-s^="MultiInputSyncDemo_"]')
       const inputs = demo.locator('input')
       const inputA = inputs.first()

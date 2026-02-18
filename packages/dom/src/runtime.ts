@@ -595,7 +595,14 @@ export function bind(
     } else if (typeof value === 'function') {
       // Reactive prop - create effect to update attribute
       const getter = value as () => unknown
-      if (BOOLEAN_PROPS.includes(key)) {
+      if (key === 'value') {
+        createEffect(() => {
+          const val = String(getter() ?? '')
+          if ((el as HTMLInputElement).value !== val) {
+            ;(el as HTMLInputElement).value = val
+          }
+        })
+      } else if (BOOLEAN_PROPS.includes(key)) {
         createEffect(() => {
           ;(el as unknown as Record<string, unknown>)[key] = !!getter()
         })
