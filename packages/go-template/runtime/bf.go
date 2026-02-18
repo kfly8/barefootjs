@@ -533,19 +533,10 @@ func ScopeComment(props interface{}) template.HTML {
 	scopeAttr := ScopeAttr(props)
 	propsJSON := ""
 	if getBoolField(props, "BfIsRoot") {
-		// Build namespaced props JSON (same as BfPropsAttr but without the attribute wrapper)
-		scopeID := getStringField(props, "ScopeID")
-		componentName := extractComponentName(scopeID)
-		if componentName != "" {
-			pJSON, err := json.Marshal(props)
-			if err == nil {
-				nsJSON, err := json.Marshal(map[string]json.RawMessage{
-					componentName: pJSON,
-				})
-				if err == nil {
-					propsJSON = "|" + string(nsJSON)
-				}
-			}
+		// Build flat props JSON (same as BfPropsAttr but without the attribute wrapper)
+		pJSON, err := json.Marshal(props)
+		if err == nil {
+			propsJSON = "|" + string(pJSON)
 		}
 	}
 	return template.HTML("<!--bf-scope:" + scopeAttr + propsJSON + "-->")
