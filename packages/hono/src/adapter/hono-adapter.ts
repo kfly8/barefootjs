@@ -165,7 +165,7 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push('  __instanceId?: string')
       lines.push('  __bfScope?: string')
       lines.push('  __bfChild?: boolean')
-      lines.push('  __bfParentPropsNs?: string')
+      lines.push('  __bfParentProps?: string')
       lines.push('  "data-key"?: string | number')
       lines.push('}')
     }
@@ -218,10 +218,10 @@ export class HonoAdapter implements TemplateAdapter {
       // Accept all props as a single object, then destructure hydration props out
       fullPropsDestructure = `__allProps`
       typeAnnotation = propsTypeName
-        ? `: ${propsTypeName} & { __instanceId?: string; __bfScope?: string; __bfChild?: boolean; __bfParentPropsNs?: string; "data-key"?: string | number }`
-        : `: Record<string, unknown> & { __instanceId?: string; __bfScope?: string; __bfChild?: boolean; __bfParentPropsNs?: string; "data-key"?: string | number }`
+        ? `: ${propsTypeName} & { __instanceId?: string; __bfScope?: string; __bfChild?: boolean; __bfParentProps?: string; "data-key"?: string | number }`
+        : `: Record<string, unknown> & { __instanceId?: string; __bfScope?: string; __bfChild?: boolean; __bfParentProps?: string; "data-key"?: string | number }`
       // Extract hydration props and create the props object for component use
-      propsExtraction = `  const { __instanceId, __bfScope, __bfChild, __bfParentPropsNs, "data-key": __dataKey, ...${propsObjectName} } = __allProps`
+      propsExtraction = `  const { __instanceId, __bfScope, __bfChild, __bfParentProps, "data-key": __dataKey, ...${propsObjectName} } = __allProps`
     } else {
       // Destructured props pattern (current behavior)
       // Convert 'class' to 'className' (React convention, avoids JS reserved word)
@@ -236,7 +236,7 @@ export class HonoAdapter implements TemplateAdapter {
 
       // Build full destructure with hydration props
       // Rest props must be at the end in TypeScript
-      const hydrationProps = '__instanceId, __bfScope, __bfChild, __bfParentPropsNs, "data-key": __dataKey'
+      const hydrationProps = '__instanceId, __bfScope, __bfChild, __bfParentProps, "data-key": __dataKey'
       const parts: string[] = []
       if (propsParams) {
         parts.push(propsParams)
@@ -256,11 +256,14 @@ export class HonoAdapter implements TemplateAdapter {
     const signalInits = this.generateSignalInitializers(ir)
 
     // Generate props serialization for hydration (for components with props)
+    // Only serialize props that the client JS init function actually reads
+    const clientUsedProps = new Set(ir.metadata.clientAnalysis?.usedProps ?? [])
+    const needsInit = ir.metadata.clientAnalysis?.needsInit ?? false
     const propsToSerialize = ir.metadata.propsParams.filter(p => {
       // Skip function props and internal props
-      return !p.name.startsWith('on') && !p.name.startsWith('__')
+      return !p.name.startsWith('on') && !p.name.startsWith('__') && clientUsedProps.has(p.name)
     })
-    const hasPropsToSerialize = propsToSerialize.length > 0 && hasClientInteractivity
+    const hasPropsToSerialize = propsToSerialize.length > 0 && hasClientInteractivity && needsInit
 
     // Check if root is an if-statement (early return pattern)
     const isIfStatement = ir.root.type === 'if-statement'
@@ -305,9 +308,8 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push(signalInits)
     }
 
-    // Generate props serialization code (namespaced format)
-    // Each component writes its own props under its name key: {"CompA": {...}, "CompB": {...}}
-    // This allows multiple components sharing the same DOM element to each have their own props.
+    // Generate props serialization code (flat format)
+    // Only the outermost component reads bf-p via hydrate(); children get props via initChild().
     if (hasPropsToSerialize) {
       lines.push('')
       lines.push(`  // Serialize props for client hydration`)
@@ -318,13 +320,11 @@ export class HonoAdapter implements TemplateAdapter {
         const propAccess = propsObjectName ? `${propsObjectName}.${p.name}` : p.name
         lines.push(`  if (typeof ${propAccess} !== 'function' && !(typeof ${propAccess} === 'object' && ${propAccess} !== null && 'isEscaped' in ${propAccess})) __hydrateProps['${p.name}'] = ${propAccess}`)
       }
-      lines.push(`  const __bfPropsNsObj: Record<string, unknown> = __bfParentPropsNs ? JSON.parse(__bfParentPropsNs) : {}`)
-      lines.push(`  if (Object.keys(__hydrateProps).length > 0) __bfPropsNsObj['${name}'] = __hydrateProps`)
-      lines.push(`  const __bfPropsJson = Object.keys(__bfPropsNsObj).length > 0 ? JSON.stringify(__bfPropsNsObj) : undefined`)
+      lines.push(`  const __bfPropsJson = __bfParentProps || (Object.keys(__hydrateProps).length > 0 ? JSON.stringify(__hydrateProps) : undefined)`)
     } else if (hasClientInteractivity && isRootComponent) {
-      // No own props, but root is a component — pass through parent's namespace
+      // No own props, but root is a component — pass through parent's props
       lines.push('')
-      lines.push(`  const __bfPropsJson = __bfParentPropsNs`)
+      lines.push(`  const __bfPropsJson = __bfParentProps`)
     }
 
     lines.push('')
@@ -749,12 +749,12 @@ export class HonoAdapter implements TemplateAdapter {
       // Root component: if it has a slotId, include it so client JS can find it
       // with [bf-s$="_sX"] selector. Otherwise pass parent's scope directly.
       // Note: Do NOT add __bfChild here - the root is the main hydration target, not a child.
-      // Pass __bfParentPropsNs so child component can merge parent's namespaced props
-      const propsNsAttr = this.currentComponentHasProps ? ' __bfParentPropsNs={__bfPropsJson}' : ''
+      // Pass __bfParentProps so child component can use parent's serialized props
+      const propsPassAttr = this.currentComponentHasProps ? ' __bfParentProps={__bfPropsJson}' : ''
       if (comp.slotId) {
-        scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}${propsNsAttr}`
+        scopeAttr = ` __instanceId={\`\${__scopeId}_${comp.slotId}\`}${propsPassAttr}`
       } else {
-        scopeAttr = ` __instanceId={__scopeId}${propsNsAttr}`
+        scopeAttr = ` __instanceId={__scopeId}${propsPassAttr}`
       }
     } else if (ctx?.isInsideLoop) {
       // Components inside loops should generate their own unique scope IDs

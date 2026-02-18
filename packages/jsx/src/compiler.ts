@@ -14,7 +14,7 @@ import type {
 import type { TemplateAdapter } from './adapters/interface'
 import { analyzeComponent, listExportedComponents } from './analyzer'
 import { jsxToIR } from './jsx-to-ir'
-import { generateClientJs } from './ir-to-client-js'
+import { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
 
 /**
  * Extended compile options with required adapter
@@ -68,6 +68,9 @@ export async function compileJSX(
     root: ir,
     errors: [],
   }
+
+  // Pre-compute client JS analysis for adapter optimization
+  componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
 
   if (options?.outputIR) {
     files.push({
@@ -133,6 +136,9 @@ function compileMultipleComponentsSync(
       root: ir,
       errors: [],
     }
+
+    // Pre-compute client JS analysis for adapter optimization
+    componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
 
     const adapterOutput = adapter.generate(componentIR)
     const fullContent = adapterOutput.template
@@ -337,6 +343,9 @@ export function compileJSXSync(
     root: ir,
     errors: [],
   }
+
+  // Pre-compute client JS analysis for adapter optimization
+  componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
 
   if (options.outputIR) {
     files.push({

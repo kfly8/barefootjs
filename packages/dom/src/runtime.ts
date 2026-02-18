@@ -476,10 +476,9 @@ export function hydrate(
       // Mark as initialized immediately to prevent duplicate init
       scopeEl.setAttribute(BF_HYDRATED, 'true')
 
-      // Read props from bf-p attribute (namespaced format: {"CompA": {...}, "CompB": {...}})
+      // Read props from bf-p attribute (flat format: {"propName": value, ...})
       const propsJson = scopeEl.getAttribute(BF_PROPS)
-      const parsed = propsJson ? JSON.parse(propsJson) : {}
-      const props = parsed[name] ?? {}
+      const props = propsJson ? JSON.parse(propsJson) : {}
 
       init(props, 0, scopeEl)
     }

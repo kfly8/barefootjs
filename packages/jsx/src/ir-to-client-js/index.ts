@@ -8,6 +8,8 @@ import type { ComponentIR } from '../types'
 import type { ClientJsContext } from './types'
 import { collectElements } from './collect-elements'
 import { generateInitFunction } from './generate-init'
+import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
+import { valueReferencesReactiveData } from './prop-handling'
 
 /** Public entry point: IR → client JS string. Returns '' if no client JS is needed. */
 export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
@@ -19,6 +21,52 @@ export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]):
   }
 
   return generateInitFunction(ir, ctx, siblingComponents)
+}
+
+/**
+ * Pre-pass analysis: determine whether a component needs a client JS init function,
+ * and which props the init function actually reads. This runs BEFORE the adapter
+ * so the adapter can use the results to optimize bf-p serialization.
+ */
+export function analyzeClientNeeds(ir: ComponentIR): { needsInit: boolean; usedProps: string[] } {
+  const ctx = createContext(ir)
+  collectElements(ir.root, ctx)
+
+  if (!needsClientJs(ctx)) {
+    return { needsInit: false, usedProps: [] }
+  }
+
+  // Replicate the props-detection logic from generate-init.ts
+  const usedIdentifiers = collectUsedIdentifiers(ctx)
+  const usedFunctions = collectUsedFunctions(ctx)
+  for (const fn of usedFunctions) {
+    usedIdentifiers.add(fn)
+  }
+
+  const neededProps = new Set<string>()
+
+  // Transitive props via constants
+  for (const constant of ctx.localConstants) {
+    if (usedIdentifiers.has(constant.name)) {
+      const trimmedValue = constant.value.trim()
+      if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) continue
+      if (!trimmedValue.includes('=>') && constant.name !== 'props') {
+        const refs = valueReferencesReactiveData(constant.value, ctx)
+        for (const propName of refs.usedProps) {
+          neededProps.add(propName)
+        }
+      }
+    }
+  }
+
+  // Direct identifier matches
+  for (const id of usedIdentifiers) {
+    if (ctx.propsParams.some(p => p.name === id)) {
+      neededProps.add(id)
+    }
+  }
+
+  return { needsInit: true, usedProps: [...neededProps] }
 }
 
 /** Initialize an empty ClientJsContext from component IR metadata. */

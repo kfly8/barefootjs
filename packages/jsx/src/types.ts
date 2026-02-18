@@ -398,6 +398,11 @@ export interface IRMetadata {
   imports: ImportInfo[]
   localFunctions: FunctionInfo[]
   localConstants: ConstantInfo[]
+  /** Pre-computed client JS analysis for adapter use */
+  clientAnalysis?: {
+    needsInit: boolean
+    usedProps: string[]
+  }
 }
 
 // =============================================================================

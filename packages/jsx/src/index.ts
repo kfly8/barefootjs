@@ -44,7 +44,7 @@ export { BaseAdapter } from './adapters/interface'
 export type { TemplateAdapter, AdapterOutput, AdapterGenerateOptions } from './adapters/interface'
 
 // Client JS Generator
-export { generateClientJs } from './ir-to-client-js'
+export { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
 
 // Client JS Combiner (for build scripts)
 export { combineParentChildClientJs } from './combine-client-js'
