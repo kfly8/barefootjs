@@ -556,6 +556,11 @@ export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext):
             lines.push(`        _${slotId}.classList.remove('bg-background', 'text-foreground', 'shadow-sm')`)
             lines.push(`      }`)
           }
+        // Use DOM property assignment for value and boolean attrs.
+        // setAttribute('value', x) only sets the initial HTML attribute; after user
+        // interaction the DOM property diverges, so .value = x is required.
+        // Boolean attrs (disabled, checked, etc.) treat any attribute presence as
+        // truthy, so setAttribute('disabled', 'false') still disables the element.
         } else if (prop.propName === 'value') {
           lines.push(`      const __val = String(${value})`)
           lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
@@ -600,6 +605,7 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       for (const prop of props) {
         if (prop.attrName === 'class') {
           lines.push(`      ${varName}.setAttribute('class', ${prop.expression})`)
+        // Use DOM property assignment for value and boolean attrs (see emitReactivePropBindings)
         } else if (prop.attrName === 'value') {
           lines.push(`      const __val = String(${prop.expression})`)
           lines.push(`      if (${varName}.value !== __val) ${varName}.value = __val`)

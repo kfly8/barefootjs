@@ -595,6 +595,8 @@ export function bind(
     } else if (typeof value === 'function') {
       // Reactive prop - create effect to update attribute
       const getter = value as () => unknown
+      // Use DOM property for value: setAttribute('value', x) only sets the
+      // initial HTML attribute; after user interaction the property diverges.
       if (key === 'value') {
         createEffect(() => {
           const val = String(getter() ?? '')
