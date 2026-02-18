@@ -47,11 +47,8 @@ const tabsTriggerBaseClasses = 'inline-flex h-[calc(100%-1px)] flex-1 items-cent
 // TabsTrigger focus classes
 const tabsTriggerFocusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
 
-// TabsTrigger active classes
-const tabsTriggerActiveClasses = 'bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30'
-
-// TabsTrigger inactive classes
-const tabsTriggerInactiveClasses = 'text-foreground dark:text-muted-foreground'
+// TabsTrigger state classes (driven by data-state attribute, no runtime class switching)
+const tabsTriggerStateClasses = 'text-foreground data-[state=active]:bg-background data-[state=active]:shadow-sm dark:text-muted-foreground dark:data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30'
 
 // TabsContent classes
 const tabsContentClasses = 'flex-1 outline-none'
@@ -188,8 +185,7 @@ function TabsTrigger({
     }
   }
 
-  const stateClasses = selected ? tabsTriggerActiveClasses : tabsTriggerInactiveClasses
-  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${stateClasses} ${className}`
+  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${tabsTriggerStateClasses} ${className}`
 
   return (
     <button
