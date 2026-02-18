@@ -91,8 +91,8 @@ func IsChild(props interface{}) template.HTMLAttr {
 	return ""
 }
 
-// BfPropsAttr returns a bf-p attribute with the JSON-serialized props in namespaced format.
-// Output format: bf-p='{"ComponentName": {...props...}}'
+// BfPropsAttr returns a bf-p attribute with the JSON-serialized props in flat format.
+// Output format: bf-p='{"propName": value, ...}'
 // Only emits the attribute for root components (BfIsRoot == true).
 // Child components receive props from their parent via initChild().
 func BfPropsAttr(props interface{}) template.HTMLAttr {
@@ -101,38 +101,13 @@ func BfPropsAttr(props interface{}) template.HTMLAttr {
 		return ""
 	}
 
-	// Extract component name from ScopeID (format: "ComponentName_randomID")
-	scopeID := getStringField(props, "ScopeID")
-	componentName := extractComponentName(scopeID)
-	if componentName == "" {
-		return ""
-	}
-
 	propsJSON, err := json.Marshal(props)
 	if err != nil {
 		return ""
 	}
 
-	// Wrap in namespaced format: {"ComponentName": {...props...}}
-	namespacedJSON, err := json.Marshal(map[string]json.RawMessage{
-		componentName: propsJSON,
-	})
-	if err != nil {
-		return ""
-	}
-
-	escaped := template.HTMLEscapeString(string(namespacedJSON))
+	escaped := template.HTMLEscapeString(string(propsJSON))
 	return template.HTMLAttr(`bf-p="` + escaped + `"`)
-}
-
-// extractComponentName extracts the component name from a ScopeID.
-// ScopeID format: "ComponentName_randomID" (e.g., "Toggle_abc123" → "Toggle")
-func extractComponentName(scopeID string) string {
-	lastUnderscore := strings.LastIndex(scopeID, "_")
-	if lastUnderscore <= 0 {
-		return ""
-	}
-	return scopeID[:lastUnderscore]
 }
 
 // =============================================================================
