@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
+import { AlertDialogPage } from './pages/alert-dialog'
 import { BadgePage } from './pages/badge'
 import { BreadcrumbPage } from './pages/breadcrumb'
 import { ButtonPage } from './pages/button'
@@ -36,7 +37,9 @@ import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
 import { PopoverPage } from './pages/popover'
 import { RadioGroupPage } from './pages/radio-group'
+import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
+import { HoverCardPage } from './pages/hover-card'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -189,6 +192,11 @@ export function createApp() {
     )
   })
 
+  // Alert Dialog documentation
+  app.get('/docs/components/alert-dialog', (c) => {
+    return c.render(<AlertDialogPage />)
+  })
+
   // Badge documentation
   app.get('/docs/components/badge', (c) => {
     return c.render(<BadgePage />)
@@ -317,6 +325,11 @@ export function createApp() {
     return c.render(<RadioGroupPage />)
   })
 
+  // Hover Card documentation
+  app.get('/docs/components/hover-card', (c) => {
+    return c.render(<HoverCardPage />)
+  })
+
   // Resizable documentation
   app.get('/docs/components/resizable', (c) => {
     return c.render(<ResizablePage />)
@@ -325,6 +338,11 @@ export function createApp() {
   // Scroll Area documentation
   app.get('/docs/components/scroll-area', (c) => {
     return c.render(<ScrollAreaPage />)
+  })
+
+  // Drawer documentation
+  app.get('/docs/components/drawer', (c) => {
+    return c.render(<DrawerPage />)
   })
 
   // Sheet documentation

@@ -118,6 +118,8 @@ function hasRootScopeElement(ir: IRNode): boolean {
     case 'element':
       return ir.needsScope
     case 'fragment':
+      // Comment-based scope marker counts as having a scope
+      if (ir.needsScopeComment) return true
       return ir.children.some(c => c.type === 'element' && (c as IRElement).needsScope)
     case 'provider':
       return ir.children.some(c => hasRootScopeElement(c))
@@ -459,22 +461,21 @@ function transformFragment(
   // Detect transparent fragment (Context Provider pattern)
   const isTransparent = isFragmentRoot && isTransparentFragment(node, ctx)
 
+  // When using comment-based scope, children should NOT get needsScope from ctx.isRoot
+  if (isFragmentRoot && !isTransparent) {
+    ctx.isRoot = false
+  }
+
   const children = transformChildren(node.children, ctx)
 
-  // If this was the root fragment and NOT transparent, ensure all direct element children have needsScope
-  // Transparent fragments skip this because they just pass through children
-  if (isFragmentRoot && !isTransparent) {
-    for (const child of children) {
-      if (child.type === 'element') {
-        child.needsScope = true
-      }
-    }
-  }
+  // Fragment root gets a comment-based scope marker instead of element attributes
+  const needsScopeComment = (isFragmentRoot && !isTransparent) || undefined
 
   return {
     type: 'fragment',
     children,
     transparent: isTransparent || undefined,
+    needsScopeComment,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }

@@ -4,6 +4,12 @@
   "homepage": "https://ui.barefootjs.dev",
   "items": [
     {
+      "name": "alert-dialog",
+      "type": "registry:ui",
+      "title": "Alert Dialog",
+      "description": "A modal dialog that interrupts the user with important content and expects a response"
+    },
+    {
       "name": "slot",
       "type": "registry:ui",
       "title": "Slot",
@@ -52,6 +58,12 @@
       "description": "A visual divider that separates content horizontally or vertically"
     },
     {
+      "name": "drawer",
+      "type": "registry:ui",
+      "title": "Drawer",
+      "description": "A draggable panel that slides from the edge of the screen"
+    },
+    {
       "name": "sheet",
       "type": "registry:ui",
       "title": "Sheet",
@@ -62,6 +74,12 @@
       "type": "registry:ui",
       "title": "Toggle Group",
       "description": "A set of two-state buttons that can be toggled on or off"
+    },
+    {
+      "name": "hover-card",
+      "type": "registry:ui",
+      "title": "Hover Card",
+      "description": "A floating card that appears on hover to display rich content"
     },
     {
       "name": "tooltip",

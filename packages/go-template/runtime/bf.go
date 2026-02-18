@@ -65,6 +65,9 @@ func FuncMap() template.FuncMap {
 
 		// Portal HTML rendering (parses and executes template string)
 		"bfPortalHTML": PortalHTML,
+
+		// Scope comment for fragment roots
+		"bfScopeComment": ScopeComment,
 	}
 }
 
@@ -521,6 +524,31 @@ func capitalize(s string) string {
 // The "bf-" prefix is automatically added.
 func Comment(content string) template.HTML {
 	return template.HTML("<!--bf-" + content + "-->")
+}
+
+// ScopeComment outputs a comment-based scope marker for fragment root components.
+// Format: <!--bf-scope:ScopeID--> or <!--bf-scope:~ScopeID|PropsJSON-->
+// Uses the same logic as ScopeAttr for child prefix and BfPropsAttr for props.
+func ScopeComment(props interface{}) template.HTML {
+	scopeAttr := ScopeAttr(props)
+	propsJSON := ""
+	if getBoolField(props, "BfIsRoot") {
+		// Build namespaced props JSON (same as BfPropsAttr but without the attribute wrapper)
+		scopeID := getStringField(props, "ScopeID")
+		componentName := extractComponentName(scopeID)
+		if componentName != "" {
+			pJSON, err := json.Marshal(props)
+			if err == nil {
+				nsJSON, err := json.Marshal(map[string]json.RawMessage{
+					componentName: pJSON,
+				})
+				if err == nil {
+					propsJSON = "|" + string(nsJSON)
+				}
+			}
+		}
+	}
+	return template.HTML("<!--bf-scope:" + scopeAttr + propsJSON + "-->")
 }
 
 // PortalHTML parses and executes a template string with the provided data.

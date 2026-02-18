@@ -73,6 +73,7 @@ const menuEntries: SidebarEntry[] = [
     title: 'Components',
     links: [
       { title: 'Accordion', href: '/docs/components/accordion' },
+      { title: 'Alert Dialog', href: '/docs/components/alert-dialog' },
       { title: 'Badge', href: '/docs/components/badge' },
       { title: 'Breadcrumb', href: '/docs/components/breadcrumb' },
       { title: 'Button', href: '/docs/components/button' },
@@ -80,7 +81,9 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Checkbox', href: '/docs/components/checkbox' },
       { title: 'Collapsible', href: '/docs/components/collapsible' },
       { title: 'Dialog', href: '/docs/components/dialog' },
+      { title: 'Drawer', href: '/docs/components/drawer' },
       { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
+      { title: 'Hover Card', href: '/docs/components/hover-card' },
       { title: 'Input', href: '/docs/components/input' },
       { title: 'Label', href: '/docs/components/label' },
       { title: 'Pagination', href: '/docs/components/pagination' },
