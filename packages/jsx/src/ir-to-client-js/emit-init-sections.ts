@@ -462,20 +462,29 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         eventsByName.get(ev.eventName)!.push(ev)
       }
 
+      // Non-bubbling events need addEventListener with capture for delegation
+      const NON_BUBBLING_EVENTS = new Set(['blur', 'focus', 'load', 'unload'])
+
       for (const [eventName, events] of eventsByName) {
-        lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${toDomEventProp(eventName)} = (e) => {`)
+        const useCapture = NON_BUBBLING_EVENTS.has(eventName)
+        if (useCapture) {
+          lines.push(`  if (_${elem.slotId}) _${elem.slotId}.addEventListener('${eventName}', (e) => {`)
+        } else {
+          lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${toDomEventProp(eventName)} = (e) => {`)
+        }
         lines.push(`    const target = e.target`)
         for (const ev of events) {
           lines.push(`    const ${ev.childSlotId}El = target.closest('[bf="${ev.childSlotId}"]')`)
           lines.push(`    if (${ev.childSlotId}El) {`)
+          // Pass event `e` to handler functions so they can access e.target etc.
           const handlerCall = ev.handler.trim().startsWith('(') || ev.handler.trim().startsWith('function')
-            ? `(${ev.handler})()`
+            ? `(${ev.handler})(e)`
             : ev.handler
           if (elem.key) {
             const keyWithItem = elem.key.replace(new RegExp(`\\b${elem.param}\\b`, 'g'), 'item')
-            lines.push(`      const li = ${ev.childSlotId}El.closest('[key]')`)
+            lines.push(`      const li = ${ev.childSlotId}El.closest('[data-key]')`)
             lines.push(`      if (li) {`)
-            lines.push(`        const key = li.getAttribute('key')`)
+            lines.push(`        const key = li.getAttribute('data-key')`)
             lines.push(`        const ${elem.param} = ${elem.array}.find(item => String(${keyWithItem}) === key)`)
             lines.push(`        if (${elem.param}) ${handlerCall}`)
             lines.push(`      }`)
@@ -490,7 +499,11 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           lines.push(`      return`)
           lines.push(`    }`)
         }
-        lines.push(`  }`)
+        if (useCapture) {
+          lines.push(`  }, true)`)
+        } else {
+          lines.push(`  }`)
+        }
         lines.push('')
       }
     }

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Compiler bug - compiled output references undefined `field` variable (ReferenceError in DuplicateValidationDemo)
-test.describe.skip('Field Arrays Documentation Page', () => {
+test.describe('Field Arrays Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     // Capture console errors
     page.on('console', msg => {
@@ -300,8 +299,7 @@ test.describe('Home Page - Field Arrays Link', () => {
     await expect(link).toContainText('Field Arrays')
   })
 
-  // Skip: Field Arrays page returns 500 due to compiler bug (undefined `field` variable)
-  test.skip('navigates to Field Arrays page on click', async ({ page }) => {
+  test('navigates to Field Arrays page on click', async ({ page }) => {
     await page.goto('/')
     await page.locator('#form-patterns a[href="/docs/forms/field-arrays"]').click()
     await expect(page).toHaveURL('/docs/forms/field-arrays')

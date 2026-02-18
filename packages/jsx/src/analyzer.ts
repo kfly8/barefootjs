@@ -148,6 +148,7 @@ function visit(
   // Module-level functions (outside component)
   if (ts.isFunctionDeclaration(node) && node.name && !isComponentFunction(node)) {
     collectFunction(node, ctx, true)
+    return // Body is captured as string; don't walk internals
   }
 
   // Default export: export default ComponentName

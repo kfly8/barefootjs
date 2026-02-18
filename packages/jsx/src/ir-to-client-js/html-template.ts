@@ -6,6 +6,11 @@ import type { IRNode } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import { toHtmlAttrName, attrValueToString } from './utils'
 
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
+  'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
+])
+
 /** Convert an IR node tree to an HTML template string (for conditionals/loops). */
 export function irToHtmlTemplate(node: IRNode): string {
   switch (node.type) {
@@ -13,7 +18,8 @@ export function irToHtmlTemplate(node: IRNode): string {
       const attrParts = node.attrs
         .map((a) => {
           if (a.name === '...') return ''
-          const attrName = toHtmlAttrName(a.name)
+          // Convert JSX `key` to `data-key` so reconcileList can match elements
+          const attrName = a.name === 'key' ? 'data-key' : toHtmlAttrName(a.name)
           if (a.value === null) return attrName
           if (a.dynamic && isBooleanAttr(attrName)) {
             return `\${${a.value} ? '${attrName}' : ''}`
@@ -33,7 +39,8 @@ export function irToHtmlTemplate(node: IRNode): string {
       const attrs = attrParts.join(' ')
       const children = node.children.map(irToHtmlTemplate).join('')
 
-      if (children) {
+      // Non-void elements must use open+close tags (HTML parsers ignore self-closing on div, span, etc.)
+      if (children || !VOID_ELEMENTS.has(node.tag)) {
         return `<${node.tag}${attrs ? ' ' + attrs : ''}>${children}</${node.tag}>`
       }
       return `<${node.tag}${attrs ? ' ' + attrs : ''} />`
@@ -73,8 +80,12 @@ export function irToHtmlTemplate(node: IRNode): string {
       return `<div${keyAttr}${scopeAttr}></div>`
     }
 
-    case 'loop':
-      return node.children.map(irToHtmlTemplate).join('')
+    case 'loop': {
+      // Generate inline .map().join('') so loop variables are properly scoped
+      const childTemplate = node.children.map(irToHtmlTemplate).join('')
+      const indexParam = node.index ? `, ${node.index}` : ''
+      return `\${${node.array}.map((${node.param}${indexParam}) => \`${childTemplate}\`).join('')}`
+    }
 
     case 'if-statement':
       return ''
@@ -166,7 +177,7 @@ export function irToComponentTemplate(
       const attrs = attrParts.join(' ')
       const children = node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
-      if (children) {
+      if (children || !VOID_ELEMENTS.has(node.tag)) {
         return `<${node.tag}${attrs ? ' ' + attrs : ''}>${children}</${node.tag}>`
       }
       return `<${node.tag}${attrs ? ' ' + attrs : ''} />`

@@ -848,6 +848,7 @@ export function insert(
                          sampleFalse.includes(`<!--bf-cond-start:${id}-->`)
 
   let prevCond: boolean | undefined
+  let prevHtml: string | undefined
 
   createEffect(() => {
     const currCond = Boolean(conditionFn())
@@ -858,6 +859,10 @@ export function insert(
     // Select the appropriate branch
     const branch = currCond ? whenTrue : whenFalse
 
+    // Always evaluate the template to track signals used inside it
+    // (e.g., signal-based arrays in .map() expressions)
+    const html = branch.template()
+
     if (isFirstRun) {
       // Hydration mode: check if existing DOM matches expected branch
       // If the existing element doesn't match the expected branch,
@@ -866,13 +871,11 @@ export function insert(
       if (existingEl) {
         // Check if the existing element type matches what we expect
         // For simple cases, compare tag names from templates
-        const expectedTemplate = branch.template()
-        const expectedTag = getFirstTagFromTemplate(expectedTemplate)
+        const expectedTag = getFirstTagFromTemplate(html)
         const actualTag = existingEl.tagName.toLowerCase()
 
         if (expectedTag && actualTag !== expectedTag) {
           // DOM doesn't match expected branch - need to swap
-          const html = branch.template()
           if (isFragmentCond) {
             updateFragmentConditional(scope, id, html)
           } else {
@@ -882,7 +885,6 @@ export function insert(
       } else if (isFragmentCond) {
         // For @client fragment conditionals, SSR renders only comment markers.
         // We need to insert the actual content on first run.
-        const html = branch.template()
         updateFragmentConditional(scope, id, html)
       }
 
@@ -891,16 +893,17 @@ export function insert(
 
       // Auto-focus on first run too (for components created via createComponent with editing=true)
       autoFocusConditionalElement(scope, id)
+      prevHtml = html
       return
     }
 
-    if (currCond === prevVal) {
+    // Skip if neither condition nor template output changed
+    if (currCond === prevVal && html === prevHtml) {
       return
     }
+    prevHtml = html
 
-    // Condition changed: swap DOM and bind events
-    const html = branch.template()
-
+    // Condition or content changed: swap DOM and bind events
     if (isFragmentCond) {
       updateFragmentConditional(scope, id, html)
     } else {

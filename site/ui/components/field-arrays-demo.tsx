@@ -4,10 +4,13 @@
  *
  * Interactive demos for dynamic form field array patterns.
  * Demonstrates add/remove fields, per-item validation, and cross-field validation.
+ *
+ * Note: Signal-based loops use native HTML elements instead of components
+ * to ensure correct client-side rendering. Components cannot be dynamically
+ * created from loop templates. See html-template.ts for details.
  */
 
 import { createSignal, createMemo } from '@barefootjs/dom'
-import { Input } from '@ui/components/ui/input'
 import { Button } from '@ui/components/ui/button'
 
 type EmailField = {
@@ -16,6 +19,12 @@ type EmailField = {
   touched: boolean
   error: string
 }
+
+// Input styles (matching @ui/components/ui/input)
+const inputClasses = 'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+
+// Remove button styles (matching @ui/components/ui/button variant=destructive size=icon)
+const removeButtonClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive touch-action-manipulation bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 size-9'
 
 /**
  * Validates an email and returns error message
@@ -53,7 +62,7 @@ export function BasicFieldArrayDemo() {
   })
 
   const handleAdd = () => {
-    setFields([...fields(), createField(nextId())])
+    setFields([...fields(), createField(nextId(), '', false)])
     setNextId(nextId() + 1)
   }
 
@@ -96,47 +105,52 @@ export function BasicFieldArrayDemo() {
           <p className="text-success font-medium">Emails submitted successfully!</p>
           <p className="text-sm text-muted-foreground mt-2">{fields().map(f => f.value).join(', ')}</p>
         </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="field-list space-y-3">
-            {fields().map((field, index) => (
-              <div key={field.id} className="field-item flex gap-2 items-start">
-                <div className="flex-1 space-y-1">
-                  <Input
-                    type="email"
-                    value={field.value}
-                    placeholder={`Email ${index + 1}`}
-                    onInput={(e) => handleChange(field.id, e.target.value)}
-                    onBlur={() => handleBlur(field.id)}
-                  />
-                  <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  disabled={fields().length <= 1}
-                  onClick={() => handleRemove(field.id)}
-                >
-                  X
-                </Button>
-              </div>
-            ))}
-          </div>
+      ) : null}
 
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleAdd}>
-              + Add Email
-            </Button>
-            <Button onClick={handleSubmit}>
-              Submit
-            </Button>
+      <div className="field-list space-y-3">
+        {fields().map((field, index) => (
+          <div key={field.id} className="field-item flex gap-2 items-start">
+            <div className="flex-1 space-y-1">
+              <input
+                type="email"
+                data-slot="input"
+                className={inputClasses}
+                value={field.value}
+                placeholder={`Email ${index + 1}`}
+                onInput={(e) => handleChange(field.id, e.target.value)}
+                onBlur={() => handleBlur(field.id)}
+              />
+              <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
+            </div>
+            <button
+              type="button"
+              data-slot="button"
+              className={removeButtonClasses}
+              disabled={fields().length <= 1}
+              onClick={() => handleRemove(field.id)}
+            >
+              X
+            </button>
           </div>
+        ))}
+      </div>
 
-          <p className="field-count text-sm text-muted-foreground">
-            {fields().length} email(s) added
-          </p>
+      {!submitted() ? (
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleAdd}>
+            + Add Email
+          </Button>
+          <Button onClick={handleSubmit}>
+            Submit
+          </Button>
         </div>
-      )}
+      ) : null}
+
+      {!submitted() ? (
+        <p className="field-count text-sm text-muted-foreground">
+          {fields().length} email(s) added
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -185,7 +199,7 @@ export function DuplicateValidationDemo() {
   })
 
   const handleAdd = () => {
-    const newFields = [...fields(), createField(nextId())]
+    const newFields = [...fields(), createField(nextId(), '', false)]
     setFields(updateAllErrors(newFields))
     setNextId(nextId() + 1)
   }
@@ -220,8 +234,10 @@ export function DuplicateValidationDemo() {
         {fields().map((field, index) => (
           <div key={field.id} className="field-item flex gap-2 items-start">
             <div className="flex-1 space-y-1">
-              <Input
+              <input
                 type="email"
+                data-slot="input"
+                className={inputClasses}
                 value={field.value}
                 placeholder={`Email ${index + 1}`}
                 onInput={(e) => handleChange(field.id, e.target.value)}
@@ -229,14 +245,15 @@ export function DuplicateValidationDemo() {
               />
               <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
             </div>
-            <Button
-              variant="destructive"
-              size="icon"
+            <button
+              type="button"
+              data-slot="button"
+              className={removeButtonClasses}
               disabled={fields().length <= 1}
               onClick={() => handleRemove(field.id)}
             >
               X
-            </Button>
+            </button>
           </div>
         ))}
       </div>
@@ -271,7 +288,7 @@ export function MinMaxFieldsDemo() {
 
   const handleAdd = () => {
     if (canAdd()) {
-      setFields([...fields(), createField(nextId())])
+      setFields([...fields(), createField(nextId(), '', false)])
       setNextId(nextId() + 1)
     }
   }
@@ -303,8 +320,10 @@ export function MinMaxFieldsDemo() {
         {fields().map((field, index) => (
           <div key={field.id} className="field-item flex gap-2 items-start">
             <div className="flex-1 space-y-1">
-              <Input
+              <input
                 type="email"
+                data-slot="input"
+                className={inputClasses}
                 value={field.value}
                 placeholder={`Email ${index + 1}`}
                 onInput={(e) => handleChange(field.id, e.target.value)}
@@ -312,14 +331,15 @@ export function MinMaxFieldsDemo() {
               />
               <p className="field-error text-sm text-destructive min-h-5">{field.error}</p>
             </div>
-            <Button
-              variant="destructive"
-              size="icon"
+            <button
+              type="button"
+              data-slot="button"
+              className={removeButtonClasses}
               disabled={!canRemove()}
               onClick={() => handleRemove(field.id)}
             >
               X
-            </Button>
+            </button>
           </div>
         ))}
       </div>
