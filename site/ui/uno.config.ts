@@ -3,8 +3,9 @@ import { defineConfig, presetWind } from 'unocss'
 export default defineConfig({
   presets: [presetWind()],
   // Wrap UnoCSS output in CSS @layer blocks for cascade ordering.
-  // Order: preflights < components < default
-  // Component base classes (layer-components:) override preflights,
+  // Order: preflights < base < shortcuts < components < default
+  // Base resets (globals.css) go into @layer base.
+  // Component base classes (layer-components:) override base resets,
   // and user override classes (default) beat component classes.
   outputToCssLayers: true,
   layers: {
