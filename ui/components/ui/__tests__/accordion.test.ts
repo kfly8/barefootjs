@@ -1,10 +1,9 @@
 import { describe, test, expect } from 'bun:test'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { renderToTest } from '../src/index'
+import { renderToTest } from '@barefootjs/test'
 
-const uiDir = resolve(__dirname, '../../../ui/components/ui')
-const accordionSource = readFileSync(resolve(uiDir, 'accordion.tsx'), 'utf-8')
+const accordionSource = readFileSync(resolve(__dirname, '../accordion.tsx'), 'utf-8')
 
 // ---------------------------------------------------------------------------
 // Accordion (stateless container — destructured props, no signals)

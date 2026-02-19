@@ -8,5 +8,8 @@
   "peerDependencies": {
     "@barefootjs/jsx": "workspace:*",
     "@barefootjs/dom": "workspace:*"
+  },
+  "devDependencies": {
+    "@barefootjs/test": "workspace:*"
   }
 }
