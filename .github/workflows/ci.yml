@@ -41,7 +41,29 @@ jobs:
           cd ../go-template && bun run build
 
       - name: Run unit tests
-        run: bun test packages/ ui/components/ui/__tests__/
+        run: bun test packages/
+
+  test-ui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          cd packages/dom && bun run build
+          cd ../jsx && bun run build
+
+      - name: Run UI component IR tests
+        run: bun test ui/components/ui/__tests__/
 
   e2e-hono:
     runs-on: ubuntu-latest
