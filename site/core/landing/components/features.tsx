@@ -22,8 +22,8 @@ const fiveFeatures = [
   },
   {
     num: '04',
-    title: 'Zero VDOM',
-    description: 'Direct DOM updates',
+    title: 'Clean Overrides',
+    description: 'Your styles always win',
   },
   {
     num: '05',

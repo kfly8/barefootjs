@@ -45,7 +45,17 @@ export function getDocsNavLinks(slug: string): {
 
 export const navigation: NavItem[] = [
   { title: 'Introduction', slug: 'introduction' },
-  { title: 'Core Concepts', slug: 'core-concepts' },
+  {
+    title: 'Core Concepts',
+    slug: 'core-concepts',
+    children: [
+      { title: 'Two-Phase Compilation', slug: 'core-concepts/compilation' },
+      { title: 'Signal-Based Reactivity', slug: 'core-concepts/reactivity' },
+      { title: 'Hydration Model', slug: 'core-concepts/hydration' },
+      { title: '"use client" Directive', slug: 'core-concepts/use-client' },
+      { title: 'Clean Overrides', slug: 'core-concepts/clean-overrides' },
+    ],
+  },
   {
     title: 'Reactivity',
     slug: 'reactivity',

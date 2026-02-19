@@ -1,0 +1,66 @@
+---
+title: Hydration Model
+description: Marker-driven hydration that makes server-rendered HTML interactive
+---
+
+# Hydration Model
+
+Hydration is the process of making server-rendered HTML interactive. BarefootJS uses a **marker-driven** approach.
+
+## Hydration Markers
+
+The compiler inserts `bf-*` attributes into the server template. These tell the client JS where to attach behavior:
+
+| Marker | Purpose | Example |
+|--------|---------|---------|
+| `bf-s` | Component scope boundary (`~` prefix = child) | `<div bf-s="Counter_a1b2">`, `<div bf-s="~Item_c3d4">` |
+| `bf` | Interactive element (slot) | `<p bf="s0">` |
+| `bf-h` | Hydration guard (runtime-only, prevents double hydration) | `<div bf-s="Counter_a1b2" bf-h>` |
+| `bf-p` | Serialized props JSON | `<div bf-p='{"initial":5}'>` |
+| `bf-c` | Conditional block | `<div bf-c="s2">` |
+| `bf-po` | Portal owner scope ID | `<div bf-po="Dialog_a1b2">` |
+| `bf-pi` | Portal container ID | `<div bf-pi="bf-portal-1">` |
+| `bf-pp` | Portal placeholder | `<template bf-pp="bf-portal-1">` |
+| `bf-i` | List item marker | `<li bf-i>` |
+
+## Hydration Flow
+
+1. The server renders HTML with markers and embeds component props in `bf-p` attributes
+2. The browser loads the client JS
+3. `hydrate()` finds all `bf-s` elements without `bf-h` (uninitialized)
+4. For each scope, the init function runs — creating signals, binding effects, attaching event handlers
+5. The runtime sets `bf-h` on the scope element to prevent double initialization
+6. The page is now interactive
+
+```
+Server HTML (static)
+    ↓
+Client JS loads
+    ↓
+hydrate("Counter", init)
+    ↓
+Find <div bf-s="Counter_a1b2"> without bf-h
+    ↓
+Read props from bf-p attribute
+    ↓
+Run init(): createSignal, createEffect, bind events
+    ↓
+Set bf-h on scope element (mark as initialized)
+    ↓
+Page is interactive
+```
+
+## Scoped Queries
+
+Each component only hydrates its own elements. The runtime's `find()` function searches within a scope boundary, excluding nested component scopes. This prevents components from interfering with each other.
+
+```html
+<div bf-s="TodoApp_x1">        <!-- TodoApp scope -->
+  <h1 bf="slot_0">Todo</h1>        <!-- belongs to TodoApp -->
+  <div bf-s="~TodoItem_y1">     <!-- TodoItem scope (~ = child, excluded from TodoApp queries) -->
+    <span bf="slot_0">Buy milk</span>
+  </div>
+</div>
+```
+
+When TodoApp's init calls `find(scope, '[bf="slot_0"]')`, it finds the `<h1>`, not the `<span>` inside TodoItem.
