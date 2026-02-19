@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('ThemeSwitcher', () => {
+test.describe('ThemeSwitcher', () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage before each test
     await page.goto('/')
@@ -80,8 +79,9 @@ test.describe.skip('ThemeSwitcher', () => {
     }
   })
 
-  test('header contains BarefootJS link', async ({ page }) => {
-    await expect(page.locator('header a:has-text("BarefootJS")')).toBeVisible()
-    await expect(page.locator('header a:has-text("BarefootJS")')).toHaveAttribute('href', '/')
+  test('header contains logo and UI link', async ({ page }) => {
+    await expect(page.locator('header a:has(svg)').first()).toBeVisible()
+    await expect(page.locator('header a:has-text("UI")')).toBeVisible()
+    await expect(page.locator('header a:has-text("UI")')).toHaveAttribute('href', '/')
   })
 })

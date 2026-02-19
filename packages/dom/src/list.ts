@@ -223,6 +223,9 @@ function syncElementState(target: HTMLElement, source: HTMLElement): void {
 /**
  * Reconcile list using template string mode (original implementation).
  * Re-renders HTML for each item, preserves focus state.
+ *
+ * On first run after SSR, detects server-rendered children (no data-key)
+ * and preserves them by tagging with data-key instead of replacing.
  */
 function reconcileListTemplates<T>(
   container: HTMLElement,
@@ -230,6 +233,23 @@ function reconcileListTemplates<T>(
   getKey: ((item: T, index: number) => string) | null,
   renderItem: (item: T, index: number) => string
 ): void {
+  // HYDRATION: If container has children but none have data-key,
+  // this is the first run after SSR. Tag existing elements and return
+  // to preserve server-rendered content (which includes real component elements).
+  const firstChild = container.firstElementChild as HTMLElement | null
+  if (firstChild && firstChild.dataset.key === undefined) {
+    for (let i = 0; i < items.length && i < container.children.length; i++) {
+      const child = container.children[i] as HTMLElement
+      const key = getKey ? getKey(items[i], i) : String(i)
+      child.setAttribute('data-key', key)
+    }
+    // Remove extra children (if SSR rendered more than current items)
+    while (container.children.length > items.length) {
+      container.lastElementChild?.remove()
+    }
+    return
+  }
+
   // Save focus state before DOM manipulation
   const activeElement = document.activeElement as HTMLElement | null
   const focusedKey = activeElement?.closest('[data-key]')?.getAttribute('data-key')

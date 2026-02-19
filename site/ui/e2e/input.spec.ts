@@ -128,5 +128,3 @@ test.describe('Input Documentation Page', () => {
   })
 })
 
-// Note: Input does not have a PreviewCard on the Home Page yet.
-// Home Page tests will be added when a PreviewCard is created.

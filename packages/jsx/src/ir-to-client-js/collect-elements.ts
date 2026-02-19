@@ -74,7 +74,10 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       break
 
     case 'loop':
-      if (node.slotId) {
+      // Loops inside conditionals are handled by the conditional template's inline .map()
+      // expression. Don't collect them separately — insert() re-renders the branch when
+      // template output changes (tracked via signal reads in the template function).
+      if (node.slotId && !insideConditional) {
         const childHandlers: string[] = []
         const childEvents: LoopChildEvent[] = []
         for (const child of node.children) {

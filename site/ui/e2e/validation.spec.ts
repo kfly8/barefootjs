@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Form Validation Documentation Page', () => {
+test.describe('Form Validation Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/forms/validation')
   })
@@ -226,8 +225,7 @@ test.describe.skip('Form Validation Documentation Page', () => {
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Form Validation Link', () => {
+test.describe('Home Page - Form Validation Link', () => {
   test('displays Form Patterns section', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
@@ -235,13 +233,14 @@ test.describe.skip('Home Page - Form Validation Link', () => {
 
   test('displays Form Validation link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/forms/validation"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/forms/validation"] h2')).toContainText('Form Validation')
+    const link = page.locator('#form-patterns a[href="/docs/forms/validation"]')
+    await expect(link).toBeVisible()
+    await expect(link).toContainText('Form Validation')
   })
 
   test('navigates to Form Validation page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/forms/validation"]')
+    await page.locator('#form-patterns a[href="/docs/forms/validation"]').click()
     await expect(page).toHaveURL('/docs/forms/validation')
     await expect(page.locator('h1')).toContainText('Form Validation')
   })

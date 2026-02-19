@@ -595,7 +595,16 @@ export function bind(
     } else if (typeof value === 'function') {
       // Reactive prop - create effect to update attribute
       const getter = value as () => unknown
-      if (BOOLEAN_PROPS.includes(key)) {
+      // Use DOM property for value: setAttribute('value', x) only sets the
+      // initial HTML attribute; after user interaction the property diverges.
+      if (key === 'value') {
+        createEffect(() => {
+          const val = String(getter() ?? '')
+          if ((el as HTMLInputElement).value !== val) {
+            ;(el as HTMLInputElement).value = val
+          }
+        })
+      } else if (BOOLEAN_PROPS.includes(key)) {
         createEffect(() => {
           ;(el as unknown as Record<string, unknown>)[key] = !!getter()
         })
@@ -853,17 +862,16 @@ export function insert(
       // Hydration mode: check if existing DOM matches expected branch
       // If the existing element doesn't match the expected branch,
       // we need to swap the DOM first (e.g., SSR rendered whenFalse but now we need whenTrue)
+      const html = branch.template()
       const existingEl = scope.querySelector(`[${BF_COND}="${id}"]`)
       if (existingEl) {
         // Check if the existing element type matches what we expect
         // For simple cases, compare tag names from templates
-        const expectedTemplate = branch.template()
-        const expectedTag = getFirstTagFromTemplate(expectedTemplate)
+        const expectedTag = getFirstTagFromTemplate(html)
         const actualTag = existingEl.tagName.toLowerCase()
 
         if (expectedTag && actualTag !== expectedTag) {
           // DOM doesn't match expected branch - need to swap
-          const html = branch.template()
           if (isFragmentCond) {
             updateFragmentConditional(scope, id, html)
           } else {
@@ -873,7 +881,6 @@ export function insert(
       } else if (isFragmentCond) {
         // For @client fragment conditionals, SSR renders only comment markers.
         // We need to insert the actual content on first run.
-        const html = branch.template()
         updateFragmentConditional(scope, id, html)
       }
 
@@ -885,13 +892,15 @@ export function insert(
       return
     }
 
+    // Skip if condition hasn't changed.
+    // Reactive updates within a branch are handled by the effect system,
+    // not by DOM replacement. Only replace DOM when the branch switches.
     if (currCond === prevVal) {
       return
     }
 
-    // Condition changed: swap DOM and bind events
+    // Branch changed: swap DOM and bind events
     const html = branch.template()
-
     if (isFragmentCond) {
       updateFragmentConditional(scope, id, html)
     } else {

@@ -2328,4 +2328,96 @@ describe('Compiler', () => {
       expect(fnIndex).toBeLessThan(signalIndex)
     })
   })
+
+  describe('module-level function scope isolation', () => {
+    test('module-level helper function internals are not leaked as component constants', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        function computeError(field: { value: string }, allFields: { id: number; value: string }[]) {
+          const basicError = field.value === '' ? 'Required' : ''
+          const isDuplicate = allFields.some(f => f.id !== 0 && f.value === field.value)
+          return isDuplicate ? 'Duplicate' : basicError
+        }
+
+        export function MyComponent() {
+          const [items, setItems] = createSignal([{ id: 1, value: '' }])
+          const error = computeError(items()[0], items())
+          return <div>{error}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyComponent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+
+      // The helper function itself should be emitted (as arrow function constant)
+      expect(clientJs!.content).toContain('const computeError')
+
+      // Internal declarations should appear only once (inside the function body),
+      // not duplicated at the init function's top level
+      const content = clientJs!.content
+      const basicErrorCount = content.split('const basicError').length - 1
+      const isDuplicateCount = content.split('const isDuplicate').length - 1
+      expect(basicErrorCount).toBe(1) // only inside computeError body
+      expect(isDuplicateCount).toBe(1) // only inside computeError body
+    })
+  })
+
+  describe('child component value/boolean prop binding', () => {
+    test('compiles child component value prop using .value = (emitReactivePropBindings)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        import { Input } from './Input'
+
+        export function MultiInputSync() {
+          const [text, setText] = createSignal('')
+          return (
+            <div>
+              <Input value={text()} onInput={(e) => setText(e.target.value)} />
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'MultiInputSync.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should use .value = for value prop, not setAttribute
+      expect(clientJs!.content).toContain('.value =')
+      expect(clientJs!.content).not.toContain("setAttribute('value'")
+    })
+
+    test('compiles child component disabled prop using .disabled = !! (emitReactivePropBindings)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        import { Input } from './Input'
+
+        export function DisabledInput() {
+          const [isLoading, setIsLoading] = createSignal(false)
+          return (
+            <div>
+              <Input disabled={isLoading()} />
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'DisabledInput.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should use .disabled = !! for boolean prop, not setAttribute
+      expect(clientJs!.content).toContain('.disabled = !!')
+      expect(clientJs!.content).not.toContain("setAttribute('disabled'")
+    })
+  })
 })

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Form Submit Documentation Page', () => {
+test.describe('Form Submit Documentation Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/forms/submit')
   })
@@ -56,7 +55,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
 
     test('button is disabled when form is invalid', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await expect(button).toBeDisabled()
     })
@@ -64,7 +63,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('button is enabled when form is valid', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('test@example.com')
       await expect(button).not.toBeDisabled()
@@ -73,7 +72,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('shows loading state during submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('test@example.com')
       await button.click()
@@ -87,15 +86,15 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('shows success toast after submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('test@example.com')
       await button.click()
 
-      // Wait for submission to complete
-      const toast = demo.locator('[data-toast-variant="success"]')
+      // Toast is rendered via Portal to document.body, scoped by bf-s to this demo
+      const toast = page.locator('[data-slot="toast"][bf-s*="BasicSubmitDemo"]')
       await expect(toast).toBeVisible({ timeout: 5000 })
-      await expect(toast.locator('[data-toast-title]')).toContainText('Success')
+      await expect(toast.locator('[data-slot="toast-title"]')).toContainText('Success')
     })
 
     test('form resets after successful submission', async ({ page }) => {
@@ -104,9 +103,9 @@ test.describe.skip('Form Submit Documentation Page', () => {
 
       await input.fill('test@example.com')
 
-      // Wait for success toast to appear (indicates submission completed)
-      const toast = demo.locator('[data-toast-variant="success"]')
-      const button = demo.locator('[bf-s^="Button_"]')
+      // Toast is rendered via Portal to document.body, scoped by bf-s to this demo
+      const toast = page.locator('[data-slot="toast"][bf-s*="BasicSubmitDemo"]')
+      const button = demo.locator('button:has(.button-text)')
       await button.click()
 
       await expect(toast).toBeVisible({ timeout: 5000 })
@@ -123,7 +122,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('shows loading state during submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="NetworkErrorDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('Test message')
       await button.click()
@@ -135,7 +134,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('completes submission and returns to idle state', async ({ page }) => {
       const demo = page.locator('[bf-s^="NetworkErrorDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('Test message')
       await button.click()
@@ -163,7 +162,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('shows server validation error for taken email', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('taken@example.com')
       await button.click()
@@ -177,7 +176,7 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('clears server error when input changes', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('taken@example.com')
       await button.click()
@@ -194,20 +193,19 @@ test.describe.skip('Form Submit Documentation Page', () => {
     test('shows success for valid email', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('valid@example.com')
       await button.click()
 
-      // Wait for success toast
-      const successToast = demo.locator('[data-toast-variant="success"]')
+      // Toast is rendered via Portal to document.body, scoped by bf-s to this demo
+      const successToast = page.locator('[data-slot="toast"][bf-s*="ServerValidationDemo"]')
       await expect(successToast).toBeVisible({ timeout: 5000 })
     })
   })
 })
 
-// Skip: Focus on Button during issue #126 design phase
-test.describe.skip('Home Page - Form Submit Link', () => {
+test.describe('Home Page - Form Submit Link', () => {
   test('displays Form Patterns section', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
@@ -215,13 +213,14 @@ test.describe.skip('Home Page - Form Submit Link', () => {
 
   test('displays Form Submit link', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('a[href="/docs/forms/submit"]')).toBeVisible()
-    await expect(page.locator('a[href="/docs/forms/submit"] h2')).toContainText('Form Submit')
+    const link = page.locator('#form-patterns a[href="/docs/forms/submit"]')
+    await expect(link).toBeVisible()
+    await expect(link).toContainText('Form Submit')
   })
 
   test('navigates to Form Submit page on click', async ({ page }) => {
     await page.goto('/')
-    await page.click('a[href="/docs/forms/submit"]')
+    await page.locator('#form-patterns a[href="/docs/forms/submit"]').click()
     await expect(page).toHaveURL('/docs/forms/submit')
     await expect(page.locator('h1')).toContainText('Form Submit')
   })
