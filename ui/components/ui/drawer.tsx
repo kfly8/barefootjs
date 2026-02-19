@@ -42,6 +42,7 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
+import { buttonBaseClasses, buttonVariantClasses, buttonSizeClasses } from './button'
 
 // Context for Drawer -> children state sharing
 interface DrawerContextValue {
@@ -53,9 +54,6 @@ const DrawerContext = createContext<DrawerContextValue>()
 
 // Direction variants
 type DrawerDirection = 'top' | 'right' | 'bottom' | 'left'
-
-// DrawerTrigger classes
-const drawerTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
 // DrawerOverlay base classes
 const drawerOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/80 transition-opacity duration-200'
@@ -103,8 +101,8 @@ const drawerDescriptionClasses = 'text-muted-foreground text-sm'
 // DrawerFooter classes
 const drawerFooterClasses = 'mt-auto flex flex-col gap-2 p-4'
 
-// DrawerClose classes
-const drawerCloseClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2'
+// DrawerClose classes: button outline variant
+const drawerCloseClasses = `${buttonBaseClasses} ${buttonVariantClasses.outline} ${buttonSizeClasses.default}`
 
 /**
  * Props for Drawer component.
@@ -188,7 +186,7 @@ function DrawerTrigger(props: DrawerTriggerProps) {
     <button
       data-slot="drawer-trigger"
       type="button"
-      className={`${drawerTriggerClasses} ${props.class ?? ''}`}
+      className={`${buttonBaseClasses} ${buttonVariantClasses.default} ${buttonSizeClasses.default} ${props.class ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >

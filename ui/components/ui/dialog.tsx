@@ -38,6 +38,7 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
+import { buttonBaseClasses, buttonVariantClasses, buttonSizeClasses } from './button'
 
 // Context for Dialog → children state sharing
 interface DialogContextValue {
@@ -50,9 +51,6 @@ const DialogContext = createContext<DialogContextValue>()
 // Scope ID context for SSR portal support
 // This is set by Dialog and used by DialogOverlay/DialogContent
 let currentDialogScopeId: string | undefined = undefined
-
-// DialogTrigger classes
-const dialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
 // DialogOverlay base classes (aligned with shadcn/ui)
 // Portal: element is moved to document.body during hydration
@@ -83,8 +81,8 @@ const dialogDescriptionClasses = 'text-muted-foreground text-sm'
 // DialogFooter classes
 const dialogFooterClasses = 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'
 
-// DialogClose classes
-const dialogCloseClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2'
+// DialogClose classes: button outline variant
+const dialogCloseClasses = `${buttonBaseClasses} ${buttonVariantClasses.outline} ${buttonSizeClasses.default}`
 
 /**
  * Props for Dialog component.
@@ -173,7 +171,7 @@ function DialogTrigger(props: DialogTriggerProps) {
     <button
       data-slot="dialog-trigger"
       type="button"
-      className={`${dialogTriggerClasses} ${props.class ?? ''}`}
+      className={`${buttonBaseClasses} ${buttonVariantClasses.default} ${buttonSizeClasses.default} ${props.class ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >

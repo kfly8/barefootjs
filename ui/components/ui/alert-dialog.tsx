@@ -40,6 +40,7 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
+import { buttonBaseClasses, buttonVariantClasses, buttonSizeClasses } from './button'
 
 // Context for AlertDialog → children state sharing
 interface AlertDialogContextValue {
@@ -48,9 +49,6 @@ interface AlertDialogContextValue {
 }
 
 const AlertDialogContext = createContext<AlertDialogContextValue>()
-
-// AlertDialogTrigger classes
-const alertDialogTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
 // AlertDialogOverlay base classes (aligned with shadcn/ui)
 const alertDialogOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/80 transition-opacity duration-200'
@@ -78,11 +76,11 @@ const alertDialogDescriptionClasses = 'text-muted-foreground text-sm'
 // AlertDialogFooter classes
 const alertDialogFooterClasses = 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'
 
-// AlertDialogCancel classes (outline style like DialogClose)
-const alertDialogCancelClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2'
+// AlertDialogCancel classes: button outline variant
+const alertDialogCancelClasses = `${buttonBaseClasses} ${buttonVariantClasses.outline} ${buttonSizeClasses.default}`
 
-// AlertDialogAction classes (primary style)
-const alertDialogActionClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2'
+// AlertDialogAction classes: button default variant
+const alertDialogActionClasses = `${buttonBaseClasses} ${buttonVariantClasses.default} ${buttonSizeClasses.default}`
 
 /**
  * Props for AlertDialog component.
@@ -159,7 +157,7 @@ function AlertDialogTrigger(props: AlertDialogTriggerProps) {
     <button
       data-slot="alert-dialog-trigger"
       type="button"
-      className={`${alertDialogTriggerClasses} ${props.class ?? ''}`}
+      className={`${buttonBaseClasses} ${buttonVariantClasses.default} ${buttonSizeClasses.default} ${props.class ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >

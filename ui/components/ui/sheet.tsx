@@ -40,6 +40,7 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
+import { buttonBaseClasses, buttonVariantClasses, buttonSizeClasses } from './button'
 
 // Context for Sheet -> children state sharing
 interface SheetContextValue {
@@ -51,9 +52,6 @@ const SheetContext = createContext<SheetContextValue>()
 
 // Side variants
 type SheetSide = 'top' | 'right' | 'bottom' | 'left'
-
-// SheetTrigger classes
-const sheetTriggerClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:pointer-events-none disabled:opacity-50'
 
 // SheetOverlay base classes
 const sheetOverlayBaseClasses = 'fixed inset-0 z-50 bg-black/80 transition-opacity duration-200'
@@ -101,8 +99,8 @@ const sheetDescriptionClasses = 'text-muted-foreground text-sm'
 // SheetFooter classes
 const sheetFooterClasses = 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'
 
-// SheetClose classes
-const sheetCloseClasses = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2'
+// SheetClose classes: button outline variant
+const sheetCloseClasses = `${buttonBaseClasses} ${buttonVariantClasses.outline} ${buttonSizeClasses.default}`
 
 // Close button (X) classes
 const closeButtonClasses = 'absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none'
@@ -189,7 +187,7 @@ function SheetTrigger(props: SheetTriggerProps) {
     <button
       data-slot="sheet-trigger"
       type="button"
-      className={`${sheetTriggerClasses} ${props.class ?? ''}`}
+      className={`${buttonBaseClasses} ${buttonVariantClasses.default} ${buttonSizeClasses.default} ${props.class ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >

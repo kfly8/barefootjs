@@ -116,5 +116,5 @@ function Button({
   return <button className={classes} {...props}>{children}</button>
 }
 
-export { Button }
+export { Button, baseClasses as buttonBaseClasses, variantClasses as buttonVariantClasses, sizeClasses as buttonSizeClasses }
 export type { ButtonVariant, ButtonSize, ButtonProps }
