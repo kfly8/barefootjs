@@ -1603,9 +1603,10 @@ function hasDynamicContent(children: IRNode[]): boolean {
     if (child.type === 'loop') {
       return true
     }
-    if (child.type === 'element' && hasDynamicContent(child.children)) {
-      return true
-    }
+    // Don't recurse into child elements — they handle their own dynamic content
+    // with their own slotIds. Propagating up would cause unnecessary bf markers
+    // on ancestor elements, risking ID collisions when those ancestors are passed
+    // as props.children into a child component scope.
     if (child.type === 'fragment' && hasDynamicContent(child.children)) {
       return true
     }
