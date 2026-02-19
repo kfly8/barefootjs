@@ -16,10 +16,11 @@
 
 ### 3. [Core Concepts](./core-concepts.md)
 
-- Two-Phase Compilation
-- Signal-Based Reactivity
-- Hydration Model
-- The `"use client"` Directive
+- [Two-Phase Compilation](./core-concepts/compilation.md) — JSX → IR → server template + client JS
+- [Signal-Based Reactivity](./core-concepts/reactivity.md) — Fine-grained reactivity with signals, effects, and memos
+- [Hydration Model](./core-concepts/hydration.md) — Marker-driven hydration for server-rendered HTML
+- [`"use client"` Directive](./core-concepts/use-client.md) — Marking components for client-side interactivity
+- [Clean Overrides](./core-concepts/clean-overrides.md) — CSS Cascade Layers for reliable style overrides
 
 ### 4. [Reactivity](./reactivity.md)
 
