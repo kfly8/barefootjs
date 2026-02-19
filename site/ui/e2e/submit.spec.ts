@@ -33,8 +33,7 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(error).toHaveText('')
     })
 
-    // Skip: Blur event handler not triggering validation in compiled output
-    test.skip('shows validation error on blur when empty', async ({ page }) => {
+    test('shows validation error on blur when empty', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
       const error = demo.locator('.error-message')
@@ -44,8 +43,7 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(error).toHaveText('Email is required')
     })
 
-    // Skip: Blur event handler not triggering validation in compiled output
-    test.skip('shows format error for invalid email', async ({ page }) => {
+    test('shows format error for invalid email', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
       const error = demo.locator('.error-message')
@@ -55,29 +53,26 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(error).toHaveText('Invalid email format')
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('button is disabled when form is invalid', async ({ page }) => {
+    test('button is disabled when form is invalid', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await expect(button).toBeDisabled()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('button is enabled when form is valid', async ({ page }) => {
+    test('button is enabled when form is valid', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('test@example.com')
       await expect(button).not.toBeDisabled()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('shows loading state during submission', async ({ page }) => {
+    test('shows loading state during submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('test@example.com')
       await button.click()
@@ -88,31 +83,29 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(input).toBeDisabled()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('shows success toast after submission', async ({ page }) => {
+    test('shows success toast after submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('test@example.com')
       await button.click()
 
-      // Wait for submission to complete
-      const toast = demo.locator('[data-toast-variant="success"]')
+      // Toast is rendered via Portal to document.body, scoped by bf-s to this demo
+      const toast = page.locator('[data-slot="toast"][bf-s*="BasicSubmitDemo"]')
       await expect(toast).toBeVisible({ timeout: 5000 })
-      await expect(toast.locator('[data-toast-title]')).toContainText('Success')
+      await expect(toast.locator('[data-slot="toast-title"]')).toContainText('Success')
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('form resets after successful submission', async ({ page }) => {
+    test('form resets after successful submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicSubmitDemo_"]')
       const input = demo.locator('input')
 
       await input.fill('test@example.com')
 
-      // Wait for success toast to appear (indicates submission completed)
-      const toast = demo.locator('[data-toast-variant="success"]')
-      const button = demo.locator('[bf-s^="Button_"]')
+      // Toast is rendered via Portal to document.body, scoped by bf-s to this demo
+      const toast = page.locator('[data-slot="toast"][bf-s*="BasicSubmitDemo"]')
+      const button = demo.locator('button:has(.button-text)')
       await button.click()
 
       await expect(toast).toBeVisible({ timeout: 5000 })
@@ -126,11 +119,10 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(page.locator('[bf-s^="NetworkErrorDemo_"]')).toBeVisible()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('shows loading state during submission', async ({ page }) => {
+    test('shows loading state during submission', async ({ page }) => {
       const demo = page.locator('[bf-s^="NetworkErrorDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('Test message')
       await button.click()
@@ -139,11 +131,10 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(button).toBeDisabled()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('completes submission and returns to idle state', async ({ page }) => {
+    test('completes submission and returns to idle state', async ({ page }) => {
       const demo = page.locator('[bf-s^="NetworkErrorDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('Test message')
       await button.click()
@@ -158,8 +149,7 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(page.locator('[bf-s^="ServerValidationDemo_"]')).toBeVisible()
     })
 
-    // Skip: Blur event handler not triggering validation in compiled output
-    test.skip('shows client-side validation error', async ({ page }) => {
+    test('shows client-side validation error', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
       const error = demo.locator('.client-error')
@@ -169,11 +159,10 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(error).toHaveText('Invalid email format')
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('shows server validation error for taken email', async ({ page }) => {
+    test('shows server validation error for taken email', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('taken@example.com')
       await button.click()
@@ -184,11 +173,10 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(serverError).toContainText('already registered')
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('clears server error when input changes', async ({ page }) => {
+    test('clears server error when input changes', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('taken@example.com')
       await button.click()
@@ -202,17 +190,16 @@ test.describe('Form Submit Documentation Page', () => {
       await expect(serverError).not.toBeVisible()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('shows success for valid email', async ({ page }) => {
+    test('shows success for valid email', async ({ page }) => {
       const demo = page.locator('[bf-s^="ServerValidationDemo_"]')
       const input = demo.locator('input')
-      const button = demo.locator('[bf-s^="Button_"]')
+      const button = demo.locator('button:has(.button-text)')
 
       await input.fill('valid@example.com')
       await button.click()
 
-      // Wait for success toast
-      const successToast = demo.locator('[data-toast-variant="success"]')
+      // Toast is rendered via Portal to document.body, scoped by bf-s to this demo
+      const successToast = page.locator('[data-slot="toast"][bf-s*="ServerValidationDemo"]')
       await expect(successToast).toBeVisible({ timeout: 5000 })
     })
   })
