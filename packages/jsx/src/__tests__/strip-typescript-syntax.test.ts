@@ -42,6 +42,18 @@ describe('stripTypeScriptSyntax', () => {
         stripTypeScriptSyntax('someElement.closest(\'[data-slot="trigger"]\') as HTMLElement | null')
       ).toBe('someElement.closest(\'[data-slot="trigger"]\')')
     })
+
+    test('strips string literal union type assertion', () => {
+      expect(
+        stripTypeScriptSyntax("handleOrientationClasses[groupDir as 'horizontal' | 'vertical']")
+      ).toBe('handleOrientationClasses[groupDir]')
+    })
+
+    test('strips single string literal type assertion', () => {
+      expect(
+        stripTypeScriptSyntax("value as 'active'")
+      ).toBe('value')
+    })
   })
 
   describe('arrow function parameter types', () => {

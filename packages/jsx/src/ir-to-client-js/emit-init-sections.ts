@@ -275,7 +275,8 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
           lines.push(`      if (${attr.expression}) _${slotId}.setAttribute('${htmlAttrName}', '')`)
           lines.push(`      else _${slotId}.removeAttribute('${htmlAttrName}')`)
         } else {
-          lines.push(`      _${slotId}.setAttribute('${htmlAttrName}', String(${attr.expression}))`)
+          // Handle null/undefined: remove attribute instead of setting "undefined"
+          lines.push(`      { const __v = ${attr.expression}; if (__v != null) _${slotId}.setAttribute('${htmlAttrName}', String(__v)); else _${slotId}.removeAttribute('${htmlAttrName}') }`)
         }
       }
       lines.push(`    }`)
@@ -621,7 +622,8 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
         } else if (isBooleanAttr(prop.attrName)) {
           lines.push(`      ${varName}.${prop.attrName} = !!(${prop.expression})`)
         } else {
-          lines.push(`      ${varName}.setAttribute('${prop.attrName}', ${prop.expression})`)
+          // Handle null/undefined: remove attribute instead of setting "undefined"
+          lines.push(`      { const __v = ${prop.expression}; if (__v != null) ${varName}.setAttribute('${prop.attrName}', String(__v)); else ${varName}.removeAttribute('${prop.attrName}') }`)
         }
       }
       lines.push(`    }`)
