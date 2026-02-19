@@ -143,8 +143,7 @@ test.describe('Form Validation Documentation Page', () => {
       await expect(page.locator('[bf-s^="MultiFieldFormDemo_"]')).toBeVisible()
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('shows all field errors on submit with empty form', async ({ page }) => {
+    test('shows all field errors on submit with empty form', async ({ page }) => {
       // Use direct CSS selectors since nested locators may have issues with bf-s on children
       const demo = page.locator('[bf-s^="MultiFieldFormDemo_"]')
       await expect(demo).toBeVisible()
@@ -177,8 +176,7 @@ test.describe('Form Validation Documentation Page', () => {
       await expect(nameError).toHaveText('Name must be at least 2 characters')
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('submits successfully with valid data', async ({ page }) => {
+    test('submits successfully with valid data', async ({ page }) => {
       const demo = page.locator('[bf-s^="MultiFieldFormDemo_"]')
       await expect(demo).toBeVisible()
 
@@ -202,8 +200,7 @@ test.describe('Form Validation Documentation Page', () => {
       await expect(successMessage).toContainText('john@example.com')
     })
 
-    // Skip: Compiler renders disabled={false} as disabled="false" which HTML treats as disabled
-    test.skip('clears errors when valid values are entered', async ({ page }) => {
+    test('clears errors when valid values are entered', async ({ page }) => {
       const demo = page.locator('[bf-s^="MultiFieldFormDemo_"]')
       await expect(demo).toBeVisible()
 

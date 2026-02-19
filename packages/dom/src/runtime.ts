@@ -848,7 +848,6 @@ export function insert(
                          sampleFalse.includes(`<!--bf-cond-start:${id}-->`)
 
   let prevCond: boolean | undefined
-  let prevHtml: string | undefined
 
   createEffect(() => {
     const currCond = Boolean(conditionFn())
@@ -859,14 +858,11 @@ export function insert(
     // Select the appropriate branch
     const branch = currCond ? whenTrue : whenFalse
 
-    // Always evaluate the template to track signals used inside it
-    // (e.g., signal-based arrays in .map() expressions)
-    const html = branch.template()
-
     if (isFirstRun) {
       // Hydration mode: check if existing DOM matches expected branch
       // If the existing element doesn't match the expected branch,
       // we need to swap the DOM first (e.g., SSR rendered whenFalse but now we need whenTrue)
+      const html = branch.template()
       const existingEl = scope.querySelector(`[${BF_COND}="${id}"]`)
       if (existingEl) {
         // Check if the existing element type matches what we expect
@@ -893,17 +889,18 @@ export function insert(
 
       // Auto-focus on first run too (for components created via createComponent with editing=true)
       autoFocusConditionalElement(scope, id)
-      prevHtml = html
       return
     }
 
-    // Skip if neither condition nor template output changed
-    if (currCond === prevVal && html === prevHtml) {
+    // Skip if condition hasn't changed.
+    // Reactive updates within a branch are handled by the effect system,
+    // not by DOM replacement. Only replace DOM when the branch switches.
+    if (currCond === prevVal) {
       return
     }
-    prevHtml = html
 
-    // Condition or content changed: swap DOM and bind events
+    // Branch changed: swap DOM and bind events
+    const html = branch.template()
     if (isFragmentCond) {
       updateFragmentConditional(scope, id, html)
     } else {
