@@ -83,8 +83,7 @@ test.describe('Tabs Documentation Page', () => {
       await expect(tabs.locator('text=Account Settings')).toBeVisible()
     })
 
-    test.skip('switches to Password tab on click', async ({ page }) => {
-      // Skip: tabs click behavior not working consistently in CI
+    test('switches to Password tab on click', async ({ page }) => {
       const tabs = await findTabsDemo(page, ['Account', 'Password'])
       const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
 
@@ -116,8 +115,7 @@ test.describe('Tabs Documentation Page', () => {
       await expect(tabs.locator('button[role="tab"]:has-text("Notifications")')).toBeVisible()
     })
 
-    test.skip('switches between multiple tabs', async ({ page }) => {
-      // Skip: tabs click behavior not working consistently in CI
+    test('switches between multiple tabs', async ({ page }) => {
       const tabs = await findTabsDemo(page, ['Overview', 'Notifications'])
 
       // Click Analytics
@@ -182,11 +180,7 @@ test.describe('Home Page - Tabs Link', () => {
   })
 })
 
-// Skip: Keyboard navigation requires child component init calls
-// which is not yet supported in the current compiler architecture.
-// When a component like TabsTrigger is used inside another component (tabs-demo),
-// its init function is not called because it receives the parent's scope prefix.
-test.describe.skip('Tabs Keyboard Navigation', () => {
+test.describe('Tabs Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/tabs')
   })
