@@ -144,7 +144,9 @@ export function stripTypeScriptSyntax(code: string): string {
   let result = code.replace(/(\w)!(?!=)/g, '$1')
 
   // Type assertions: "expr as Type" or "expr as Type | Type2 | ..."
-  result = result.replace(/\s+as\s+[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?(?:\s*\|\s*[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\[\])?)*/g, '')
+  // Supports identifier types (HTMLElement), string literal types ('horizontal'), and generics (Set<string>)
+  const tsTypeAtom = `(?:[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\\[\\])?|'[^']*'|"[^"]*")`
+  result = result.replace(new RegExp(`\\s+as\\s+${tsTypeAtom}(?:\\s*\\|\\s*${tsTypeAtom})*`, 'g'), '')
 
   // Parameter type annotations: (param: Type) or (param: Type | Type2) => (param)
   // Only match TypeScript types (uppercase initial or type keyword) to avoid matching object properties

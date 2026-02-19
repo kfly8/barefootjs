@@ -27,7 +27,7 @@ export function irToHtmlTemplate(node: IRNode): string {
           if (a.dynamic && a.presenceOrUndefined) {
             return `\${${a.value} ? '${attrName}' : ''}`
           }
-          if (a.dynamic) return `${attrName}="\${${a.value}}"`
+          if (a.dynamic) return `\${(${a.value}) != null ? '${attrName}="' + (${a.value}) + '"' : ''}`
           return `${attrName}="${a.value}"`
         })
         .filter(Boolean)
@@ -164,7 +164,7 @@ export function irToComponentTemplate(
           if (a.dynamic && valueStr && a.presenceOrUndefined) {
             return `\${${transformExpr(valueStr)} ? '${attrName}' : ''}`
           }
-          if (a.dynamic && valueStr) return `${attrName}="\${${transformExpr(valueStr)}}"`
+          if (a.dynamic && valueStr) return `\${(${transformExpr(valueStr)}) != null ? '${attrName}="' + (${transformExpr(valueStr)}) + '"' : ''}`
           if (valueStr) return `${attrName}="${valueStr}"`
           return attrName
         })
