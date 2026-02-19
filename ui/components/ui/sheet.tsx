@@ -40,7 +40,6 @@
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
 import type { Child } from '../../types'
-import { buttonBaseClasses, buttonVariantClasses, buttonSizeClasses } from './button'
 
 // Context for Sheet -> children state sharing
 interface SheetContextValue {
@@ -99,8 +98,11 @@ const sheetDescriptionClasses = 'text-muted-foreground text-sm'
 // SheetFooter classes
 const sheetFooterClasses = 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'
 
-// SheetClose classes: button outline variant
-const sheetCloseClasses = `${buttonBaseClasses} ${buttonVariantClasses.outline} ${buttonSizeClasses.default}`
+// SheetTrigger classes (synced with button.tsx default variant)
+const sheetTriggerClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive touch-action-manipulation bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3'
+
+// SheetClose classes (synced with button.tsx outline variant)
+const sheetCloseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive touch-action-manipulation border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 px-4 py-2 has-[>svg]:px-3'
 
 // Close button (X) classes
 const closeButtonClasses = 'absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none'
@@ -187,7 +189,7 @@ function SheetTrigger(props: SheetTriggerProps) {
     <button
       data-slot="sheet-trigger"
       type="button"
-      className={`${buttonBaseClasses} ${buttonVariantClasses.default} ${buttonSizeClasses.default} ${props.class ?? ''}`}
+      className={`${sheetTriggerClasses} ${props.class ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >
