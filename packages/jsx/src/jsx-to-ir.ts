@@ -39,6 +39,7 @@ interface TransformContext {
   filePath: string
   slotIdCounter: number
   isRoot: boolean
+  insideComponentChildren: boolean
 }
 
 function createTransformContext(analyzer: AnalyzerContext): TransformContext {
@@ -48,11 +49,13 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
     filePath: analyzer.filePath,
     slotIdCounter: 0,
     isRoot: true,
+    insideComponentChildren: false,
   }
 }
 
 function generateSlotId(ctx: TransformContext): string {
-  return `s${ctx.slotIdCounter++}`
+  const id = `s${ctx.slotIdCounter++}`
+  return ctx.insideComponentChildren ? `^${id}` : id
 }
 
 // =============================================================================
@@ -354,11 +357,20 @@ function transformComponentElement(
   // for root components via isRootOfClientComponent / __instanceId.
   ctx.isRoot = false
 
+  // Mark children as parent-owned so their slot IDs get the ^ prefix.
+  // Elements passed as children to a component are owned by the parent scope,
+  // not the child component's scope. The ^ prefix tells the runtime to search
+  // all descendants (ignoring scope boundaries) when looking up these elements.
+  const prevInsideComponentChildren = ctx.insideComponentChildren
+  ctx.insideComponentChildren = true
   const children = transformChildren(node.children, ctx)
+  ctx.insideComponentChildren = prevInsideComponentChildren
 
   // Always assign slotId to child components.
   // Even if no reactive props are passed from parent, the child may have internal state
   // (createSignal, createMemo) that requires hydration via findScope().
+  // Note: Component's own slotId is generated AFTER restoring the flag,
+  // so it does NOT get the ^ prefix.
   const slotId = generateSlotId(ctx)
 
   // Propagate slotId to loop children so they use the parent's marker

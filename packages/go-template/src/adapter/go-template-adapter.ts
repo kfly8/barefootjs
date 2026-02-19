@@ -38,12 +38,14 @@ export interface GoTemplateAdapterOptions {
  * Keeps field names human-readable regardless of the internal slot ID format.
  */
 function slotIdToFieldSuffix(slotId: string): string {
-  const match = slotId.match(/^s(\d+)$/)
+  // Strip parent-owned prefix (^) for Go struct field names
+  const cleanId = slotId.startsWith('^') ? slotId.slice(1) : slotId
+  const match = cleanId.match(/^s(\d+)$/)
   if (match) {
     return `Slot${match[1]}`
   }
   // Fallback for legacy format or non-standard IDs
-  return slotId.replace('slot_', 'Slot')
+  return cleanId.replace('slot_', 'Slot')
 }
 
 export class GoTemplateAdapter extends BaseAdapter {

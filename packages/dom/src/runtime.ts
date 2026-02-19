@@ -7,7 +7,7 @@
 
 import { createEffect } from './reactive'
 import { registerTemplate } from './template'
-import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX, BF_SCOPE_COMMENT_PREFIX } from './attrs'
+import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_PROPS, BF_COND, BF_PORTAL_OWNER, BF_CHILD_PREFIX, BF_SCOPE_COMMENT_PREFIX, BF_PARENT_OWNED_PREFIX } from './attrs'
 
 // --- unwrap ---
 
@@ -1079,12 +1079,70 @@ export function mount(
  * Shorthand for find(scope, '[bf="id"]').
  * Used by compiler-generated code for regular slot element references.
  *
+ * For parent-owned slots (^-prefixed IDs like '^s3'), searches all descendants
+ * ignoring scope boundaries. This handles elements passed as children to child
+ * components — they are owned by the parent but rendered inside the child's scope.
+ *
  * @param scope - The scope element to search within
- * @param id - The slot ID (e.g., 's0')
+ * @param id - The slot ID (e.g., 's0' or '^s3')
  * @returns The matching element or null
  */
 export function $(scope: Element | null, id: string): Element | null {
+  if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
+    return findParentOwned(scope, id)
+  }
   return find(scope, `[${BF_SLOT}="${id}"]`)
+}
+
+/**
+ * Find a parent-owned slot element that may be rendered inside a child component's scope.
+ * Unlike regular find(), this searches ALL descendants without scope boundary checks,
+ * because the ^ prefix guarantees the element is owned by this (parent) scope.
+ */
+function findParentOwned(scope: Element | null, id: string): Element | null {
+  if (!scope) return null
+  const selector = `[${BF_SLOT}="${id}"]`
+
+  // Check scope itself
+  if (scope.matches?.(selector)) return scope
+
+  // Search ALL descendants (no belongsToScope check — ^ guarantees parent ownership)
+  const match = scope.querySelector(selector)
+  if (match) return match
+
+  // Fragment root siblings
+  const scopeId = scope.getAttribute(BF_SCOPE)
+  if (scopeId) {
+    const parent = scope.parentElement
+    if (parent) {
+      const siblings = parent.querySelectorAll(`[${BF_SCOPE}="${scopeId}"]`)
+      for (const sibling of siblings) {
+        if (sibling === scope) continue
+        const siblingMatch = sibling.querySelector(selector)
+        if (siblingMatch) return siblingMatch
+      }
+    }
+    // Search portals
+    return findInPortals(scopeId, selector)
+  }
+
+  // Comment-based scope
+  const commentInfo = commentScopeRegistry.get(scope)
+  if (commentInfo) {
+    const boundary = getCommentScopeBoundary(commentInfo.commentNode)
+    let node: Node | null = commentInfo.commentNode.nextSibling
+    while (node && node !== boundary) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as Element
+        if (el.matches?.(selector)) return el
+        const innerMatch = el.querySelector(selector)
+        if (innerMatch) return innerMatch
+      }
+      node = node.nextSibling
+    }
+  }
+
+  return null
 }
 
 /**

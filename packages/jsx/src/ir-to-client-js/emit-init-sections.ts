@@ -6,7 +6,7 @@
 import type { ComponentIR, ConstantInfo, SignalInfo } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
-import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName } from './utils'
+import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
 import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate } from './html-template'
 
 /**
@@ -218,19 +218,22 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         // Expression is always evaluated for non-conditional elements
         lines.push(`    const __val = ${expr}`)
         for (const elem of normalElems) {
-          lines.push(`    if (_${elem.slotId}) _${elem.slotId}.textContent = String(__val)`)
+          const v = varSlotId(elem.slotId)
+          lines.push(`    if (_${v}) _${v}.textContent = String(__val)`)
         }
         for (const elem of conditionalElems) {
-          lines.push(`    const __el_${elem.slotId} = $(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${elem.slotId}) __el_${elem.slotId}.textContent = String(__val)`)
+          const v = varSlotId(elem.slotId)
+          lines.push(`    const __el_${v} = $(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${v}) __el_${v}.textContent = String(__val)`)
         }
       } else {
         // Only conditional elements — defer expression evaluation until
         // after the element existence check to avoid TypeError when the
         // parent prop is undefined (e.g. prev?.title when prev is undefined).
         for (const elem of conditionalElems) {
-          lines.push(`    const __el_${elem.slotId} = $(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${elem.slotId}) __el_${elem.slotId}.textContent = String(${expr})`)
+          const v = varSlotId(elem.slotId)
+          lines.push(`    const __el_${v} = $(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${v}) __el_${v}.textContent = String(${expr})`)
         }
       }
       lines.push(`  })`)
@@ -262,21 +265,22 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
     }
 
     for (const [slotId, attrs] of attrsBySlot) {
+      const v = varSlotId(slotId)
       lines.push(`  createEffect(() => {`)
-      lines.push(`    if (_${slotId}) {`)
+      lines.push(`    if (_${v}) {`)
       for (const attr of attrs) {
         const htmlAttrName = toHtmlAttrName(attr.attrName)
         if (htmlAttrName === 'value') {
           lines.push(`      const __val = String(${attr.expression})`)
-          lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
+          lines.push(`      if (_${v}.value !== __val) _${v}.value = __val`)
         } else if (isBooleanAttr(htmlAttrName)) {
-          lines.push(`      _${slotId}.${htmlAttrName} = !!(${attr.expression})`)
+          lines.push(`      _${v}.${htmlAttrName} = !!(${attr.expression})`)
         } else if (attr.presenceOrUndefined) {
-          lines.push(`      if (${attr.expression}) _${slotId}.setAttribute('${htmlAttrName}', '')`)
-          lines.push(`      else _${slotId}.removeAttribute('${htmlAttrName}')`)
+          lines.push(`      if (${attr.expression}) _${v}.setAttribute('${htmlAttrName}', '')`)
+          lines.push(`      else _${v}.removeAttribute('${htmlAttrName}')`)
         } else {
           // Handle null/undefined: remove attribute instead of setting "undefined"
-          lines.push(`      { const __v = ${attr.expression}; if (__v != null) _${slotId}.setAttribute('${htmlAttrName}', String(__v)); else _${slotId}.removeAttribute('${htmlAttrName}') }`)
+          lines.push(`      { const __v = ${attr.expression}; if (__v != null) _${v}.setAttribute('${htmlAttrName}', String(__v)); else _${v}.removeAttribute('${htmlAttrName}') }`)
         }
       }
       lines.push(`    }`)
@@ -309,18 +313,20 @@ function emitBranchBindings(
   }
 
   for (const slotId of allSlotIds) {
-    lines.push(`      const _${slotId} = $(__branchScope, '${slotId}')`)
+    lines.push(`      const _${varSlotId(slotId)} = $(__branchScope, '${slotId}')`)
   }
 
   for (const [slotId, slotEvents] of eventsBySlot) {
+    const v = varSlotId(slotId)
     for (const event of slotEvents) {
       const wrappedHandler = wrapHandlerInBlock(event.handler)
-      lines.push(`      if (_${slotId}) _${slotId}.${eventPropFn(event.eventName)} = ${wrappedHandler}`)
+      lines.push(`      if (_${v}) _${v}.${eventPropFn(event.eventName)} = ${wrappedHandler}`)
     }
   }
 
   for (const ref of refs) {
-    lines.push(`      if (_${ref.slotId}) (${stripTypeScriptSyntax(ref.callback)})(_${ref.slotId})`)
+    const v = varSlotId(ref.slotId)
+    lines.push(`      if (_${v}) (${stripTypeScriptSyntax(ref.callback)})(_${v})`)
   }
 }
 
@@ -374,9 +380,10 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
     if (elem.isStaticArray) {
       if (elem.childComponent) {
         const { name } = elem.childComponent
+        const v = varSlotId(elem.slotId)
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
-        lines.push(`  if (_${elem.slotId}) {`)
-        lines.push(`    const __childScopes = _${elem.slotId}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
+        lines.push(`  if (_${v}) {`)
+        lines.push(`    const __childScopes = _${v}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
         lines.push(`    __childScopes.forEach((childScope, __idx) => {`)
         lines.push(`      const __childProps = ${elem.array}[__idx] || {}`)
         lines.push(`      initChild('${name}', childScope, __childProps)`)
@@ -386,6 +393,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       }
 
       if (elem.nestedComponents && elem.nestedComponents.length > 0) {
+        const v = varSlotId(elem.slotId)
         for (const comp of elem.nestedComponents) {
           const propsEntries = comp.props.map((p) => {
             if (p.isEventHandler) {
@@ -403,9 +411,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
             : `[bf-s^="~${comp.name}_"]:not([bf-h]), [bf-s^="${comp.name}_"]:not([bf-h])`
 
           lines.push(`  // Initialize nested ${comp.name} in static array`)
-          lines.push(`  if (_${elem.slotId}) {`)
+          lines.push(`  if (_${v}) {`)
           lines.push(`    ${elem.array}.forEach((${elem.param}, __idx) => {`)
-          lines.push(`      const __iterEl = _${elem.slotId}.children[__idx]`)
+          lines.push(`      const __iterEl = _${v}.children[__idx]`)
           lines.push(`      if (__iterEl) {`)
           lines.push(`        const __compEl = __iterEl.querySelector('${selector}')`)
           lines.push(`        if (__compEl) initChild('${comp.name}', __compEl, ${propsExpr})`)
@@ -420,6 +428,8 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
     }
 
     const keyFn = elem.key ? `(${elem.param}) => String(${elem.key})` : 'null'
+
+    const vLoop = varSlotId(elem.slotId)
 
     if (elem.childComponent) {
       const { name, props } = elem.childComponent
@@ -439,7 +449,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const chainedExpr = buildChainedArrayExpr(elem)
 
       lines.push(`  createEffect(() => {`)
-      lines.push(`    reconcileList(_${elem.slotId}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
+      lines.push(`    reconcileList(_${vLoop}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
       lines.push(`      createComponent('${name}', ${propsExpr}, ${keyExpr})`)
       lines.push(`    )`)
       lines.push(`  })`)
@@ -449,7 +459,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const indexParamTemplate = elem.index || '__idx'
       lines.push(`  createEffect(() => {`)
       lines.push(`    const __arr = ${chainedExprTemplate}`)
-      lines.push(`    reconcileList(_${elem.slotId}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
+      lines.push(`    reconcileList(_${vLoop}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
       lines.push(`  })`)
     }
     lines.push('')
@@ -469,9 +479,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       for (const [eventName, events] of eventsByName) {
         const useCapture = NON_BUBBLING_EVENTS.has(eventName)
         if (useCapture) {
-          lines.push(`  if (_${elem.slotId}) _${elem.slotId}.addEventListener('${eventName}', (e) => {`)
+          lines.push(`  if (_${vLoop}) _${vLoop}.addEventListener('${eventName}', (e) => {`)
         } else {
-          lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${toDomEventProp(eventName)} = (e) => {`)
+          lines.push(`  if (_${vLoop}) _${vLoop}.${toDomEventProp(eventName)} = (e) => {`)
         }
         lines.push(`    const target = e.target`)
         for (const ev of events) {
@@ -526,7 +536,8 @@ export function emitEventHandlers(
       if (elem.slotId === '__scope') {
         lines.push(`  if (__scope) __scope.${eventProp} = ${wrappedHandler}`)
       } else {
-        lines.push(`  if (_${elem.slotId}) _${elem.slotId}.${eventProp} = ${wrappedHandler}`)
+        const v = varSlotId(elem.slotId)
+        lines.push(`  if (_${v}) _${v}.${eventProp} = ${wrappedHandler}`)
       }
     }
   }
@@ -548,23 +559,24 @@ export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext):
     }
 
     for (const [slotId, props] of propsBySlot) {
-      lines.push(`    if (_${slotId}) {`)
+      const v = varSlotId(slotId)
+      lines.push(`    if (_${v}) {`)
       for (const prop of props) {
         const value = `${prop.expression}()`
         if (prop.propName === 'selected') {
           if (prop.componentName === 'TabsContent') {
-            lines.push(`      _${slotId}.setAttribute('data-state', ${value} ? 'active' : 'inactive')`)
+            lines.push(`      _${v}.setAttribute('data-state', ${value} ? 'active' : 'inactive')`)
             lines.push(`      if (${value}) {`)
-            lines.push(`        _${slotId}.classList.remove('hidden')`)
+            lines.push(`        _${v}.classList.remove('hidden')`)
             lines.push(`      } else {`)
-            lines.push(`        _${slotId}.classList.add('hidden')`)
+            lines.push(`        _${v}.classList.add('hidden')`)
             lines.push(`      }`)
           } else {
             // Update data-state and aria-selected attributes.
             // Visual styling is driven by CSS data-[state=active/inactive]: selectors.
-            lines.push(`      _${slotId}.setAttribute('aria-selected', String(${value}))`)
-            lines.push(`      _${slotId}.setAttribute('data-state', ${value} ? 'active' : 'inactive')`)
-            lines.push(`      _${slotId}.setAttribute('tabindex', ${value} ? '0' : '-1')`)
+            lines.push(`      _${v}.setAttribute('aria-selected', String(${value}))`)
+            lines.push(`      _${v}.setAttribute('data-state', ${value} ? 'active' : 'inactive')`)
+            lines.push(`      _${v}.setAttribute('tabindex', ${value} ? '0' : '-1')`)
           }
         // Use DOM property assignment for value and boolean attrs.
         // setAttribute('value', x) only sets the initial HTML attribute; after user
@@ -573,11 +585,11 @@ export function emitReactivePropBindings(lines: string[], ctx: ClientJsContext):
         // truthy, so setAttribute('disabled', 'false') still disables the element.
         } else if (prop.propName === 'value') {
           lines.push(`      const __val = String(${value})`)
-          lines.push(`      if (_${slotId}.value !== __val) _${slotId}.value = __val`)
+          lines.push(`      if (_${v}.value !== __val) _${v}.value = __val`)
         } else if (isBooleanAttr(prop.propName)) {
-          lines.push(`      _${slotId}.${prop.propName} = !!(${value})`)
+          lines.push(`      _${v}.${prop.propName} = !!(${value})`)
         } else {
-          lines.push(`      _${slotId}.setAttribute('${prop.propName}', String(${value}))`)
+          lines.push(`      _${v}.setAttribute('${prop.propName}', String(${value}))`)
         }
       }
       lines.push(`    }`)
@@ -605,7 +617,7 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
 
     for (const [, props] of propsByComponent) {
       const first = props[0]
-      const varSuffix = first.slotId ? first.slotId.replace(/-/g, '_') : first.componentName
+      const varSuffix = first.slotId ? varSlotId(first.slotId).replace(/-/g, '_') : first.componentName
       const varName = `__${first.componentName}_${varSuffix}El`
       const selectorBase = first.slotId
         ? `$c(__scope, '${first.slotId}')`
@@ -641,7 +653,8 @@ export function emitRefCallbacks(
 ): void {
   for (const elem of ctx.refElements) {
     if (conditionalSlotIds.has(elem.slotId)) continue
-    lines.push(`  if (_${elem.slotId}) (${stripTypeScriptSyntax(elem.callback)})(_${elem.slotId})`)
+    const v = varSlotId(elem.slotId)
+    lines.push(`  if (_${v}) (${stripTypeScriptSyntax(elem.callback)})(_${v})`)
   }
 }
 
@@ -673,9 +686,9 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
     lines.push('')
     lines.push(`  // Initialize child components with props`)
     for (const child of ctx.childInits) {
-      const slotVar = child.slotId ? `_${child.slotId}` : '__scope'
+      const scopeRef = child.slotId ? `_${varSlotId(child.slotId)}` : '__scope'
       const jsPropsExpr = stripTypeScriptSyntax(child.propsExpr)
-      lines.push(`  initChild('${child.name}', ${slotVar}, ${jsPropsExpr})`)
+      lines.push(`  initChild('${child.name}', ${scopeRef}, ${jsPropsExpr})`)
     }
   }
 }

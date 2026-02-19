@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
-import { findScope, find, $c, hydrate, bind, cond } from '../src/runtime'
+import { findScope, find, $, $c, hydrate, bind, cond } from '../src/runtime'
 import { createSignal } from '../src/reactive'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
@@ -590,5 +590,74 @@ describe('cond', () => {
     const btn2 = scope.querySelector('[bf="btn"]') as HTMLElement
     btn2.click()
     expect(clicks).toEqual(['clicked', 'clicked'])
+  })
+})
+
+describe('$ (parent-owned slots)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('finds ^-prefixed slot inside child scope', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <div bf-s="~Child_xyz">
+          <button bf="^s3">Click</button>
+        </div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')
+    const btn = $(scope, '^s3')
+    expect(btn).not.toBeNull()
+    expect(btn?.textContent).toBe('Click')
+  })
+
+  test('finds ^-prefixed slot in deeply nested child scopes', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <div bf-s="~Child_xyz">
+          <div bf-s="~GrandChild_def">
+            <input bf="^s5" type="text" />
+          </div>
+        </div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')
+    const input = $(scope, '^s5')
+    expect(input).not.toBeNull()
+    expect(input?.getAttribute('type')).toBe('text')
+  })
+
+  test('finds ^-prefixed slot in portals', () => {
+    document.body.innerHTML = `
+      <div bf-s="Dialog_abc">
+        <button bf="s0">Open</button>
+      </div>
+      <div bf-po="Dialog_abc">
+        <button bf="^s2">Close</button>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Dialog_abc"]')
+    const closeBtn = $(scope, '^s2')
+    expect(closeBtn).not.toBeNull()
+    expect(closeBtn?.textContent).toBe('Close')
+  })
+
+  test('does NOT find regular slot in child scope (existing behavior preserved)', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <div bf-s="~Child_xyz">
+          <button bf="s3">Click</button>
+        </div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')
+    const btn = $(scope, 's3')
+    expect(btn).toBeNull()
+  })
+
+  test('returns null for null scope with ^-prefixed slot', () => {
+    const el = $(null, '^s0')
+    expect(el).toBeNull()
   })
 })

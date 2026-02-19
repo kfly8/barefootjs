@@ -35,5 +35,8 @@ export const BF_ITEM = 'bf-i'
 /** Child component prefix in scope value: `~ToggleItem_abc` */
 export const BF_CHILD_PREFIX = '~'
 
+/** Parent-owned slot prefix in bf value: `bf="^s3"` */
+export const BF_PARENT_OWNED_PREFIX = '^'
+
 /** Comment-based scope marker prefix: `<!--bf-scope:ComponentName_abc123-->` */
 export const BF_SCOPE_COMMENT_PREFIX = 'bf-scope:'
