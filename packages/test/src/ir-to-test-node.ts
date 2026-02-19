@@ -1,0 +1,346 @@
+/**
+ * IR → TestNode conversion.
+ *
+ * Recursively transforms each IRNode variant into a TestNode.
+ */
+
+import type {
+  IRNode,
+  IRElement,
+  IRText,
+  IRExpression,
+  IRConditional,
+  IRLoop,
+  IRComponent,
+  IRFragment,
+  IRSlot,
+  IRIfStatement,
+  IRProvider,
+} from '@barefootjs/jsx'
+
+type IRAttribute = IRElement['attrs'][number]
+type IRTemplateLiteral = Exclude<IRAttribute['value'], string | null>
+import { TestNode } from './test-node'
+
+export function irNodeToTestNode(node: IRNode): TestNode {
+  switch (node.type) {
+    case 'element':
+      return convertElement(node)
+    case 'text':
+      return convertText(node)
+    case 'expression':
+      return convertExpression(node)
+    case 'conditional':
+      return convertConditional(node)
+    case 'loop':
+      return convertLoop(node)
+    case 'component':
+      return convertComponent(node)
+    case 'fragment':
+      return convertFragment(node)
+    case 'slot':
+      return convertSlot(node)
+    case 'if-statement':
+      return convertIfStatement(node)
+    case 'provider':
+      return convertProvider(node)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Element
+// ---------------------------------------------------------------------------
+
+function convertElement(node: IRElement): TestNode {
+  const props: Record<string, string | boolean | null> = {}
+  const aria: Record<string, string> = {}
+  let role: string | null = null
+  let dataState: string | null = null
+  let classes: string[] = []
+
+  for (const attr of node.attrs) {
+    const value = resolveAttrValue(attr)
+
+    if (attr.name === 'className' || attr.name === 'class') {
+      if (typeof value === 'string') {
+        classes = value.split(/\s+/).filter(Boolean)
+      }
+      continue
+    }
+
+    if (attr.name === 'role') {
+      if (typeof value === 'string') role = value
+      continue
+    }
+
+    if (attr.name.startsWith('aria-')) {
+      const key = attr.name.slice(5) // strip "aria-"
+      if (typeof value === 'string') aria[key] = value
+      else if (value === true) aria[key] = 'true'
+      continue
+    }
+
+    if (attr.name === 'data-state') {
+      if (typeof value === 'string') dataState = value
+      continue
+    }
+
+    props[attr.name] = value
+  }
+
+  const events = node.events.map(e => e.name)
+  const children = node.children.map(irNodeToTestNode)
+
+  return new TestNode({
+    tag: node.tag,
+    type: 'element',
+    children,
+    text: null,
+    props,
+    classes,
+    role,
+    aria,
+    dataState,
+    events,
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Text
+// ---------------------------------------------------------------------------
+
+function convertText(node: IRText): TestNode {
+  return new TestNode({
+    tag: null,
+    type: 'text',
+    children: [],
+    text: node.value,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Expression
+// ---------------------------------------------------------------------------
+
+function convertExpression(node: IRExpression): TestNode {
+  return new TestNode({
+    tag: null,
+    type: 'expression',
+    children: [],
+    text: node.expr,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: node.reactive,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Conditional
+// ---------------------------------------------------------------------------
+
+function convertConditional(node: IRConditional): TestNode {
+  const children: TestNode[] = [irNodeToTestNode(node.whenTrue)]
+  if (node.whenFalse) {
+    children.push(irNodeToTestNode(node.whenFalse))
+  }
+
+  return new TestNode({
+    tag: null,
+    type: 'conditional',
+    children,
+    text: node.condition,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: node.reactive,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Loop
+// ---------------------------------------------------------------------------
+
+function convertLoop(node: IRLoop): TestNode {
+  const children = node.children.map(irNodeToTestNode)
+
+  return new TestNode({
+    tag: null,
+    type: 'loop',
+    children,
+    text: node.array,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+function convertComponent(node: IRComponent): TestNode {
+  const props: Record<string, string | boolean | null> = {}
+  for (const prop of node.props) {
+    props[prop.name] = prop.value
+  }
+
+  const children = node.children.map(irNodeToTestNode)
+
+  return new TestNode({
+    tag: null,
+    type: 'component',
+    children,
+    text: null,
+    props,
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: node.name,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Fragment
+// ---------------------------------------------------------------------------
+
+function convertFragment(node: IRFragment): TestNode {
+  const children = node.children.map(irNodeToTestNode)
+
+  return new TestNode({
+    tag: null,
+    type: 'fragment',
+    children,
+    text: null,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Slot
+// ---------------------------------------------------------------------------
+
+function convertSlot(_node: IRSlot): TestNode {
+  return new TestNode({
+    tag: null,
+    type: 'text',
+    children: [],
+    text: `<slot:${_node.name}>`,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// IfStatement
+// ---------------------------------------------------------------------------
+
+function convertIfStatement(node: IRIfStatement): TestNode {
+  const children: TestNode[] = [irNodeToTestNode(node.consequent)]
+  if (node.alternate) {
+    children.push(irNodeToTestNode(node.alternate))
+  }
+
+  return new TestNode({
+    tag: null,
+    type: 'conditional',
+    children,
+    text: node.condition,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+function convertProvider(node: IRProvider): TestNode {
+  // Transparent — just pass through children
+  const children = node.children.map(irNodeToTestNode)
+
+  if (children.length === 1) return children[0]
+
+  return new TestNode({
+    tag: null,
+    type: 'fragment',
+    children,
+    text: null,
+    props: {},
+    classes: [],
+    role: null,
+    aria: {},
+    dataState: null,
+    events: [],
+    reactive: false,
+    componentName: null,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Attribute value resolution
+// ---------------------------------------------------------------------------
+
+function resolveAttrValue(attr: IRAttribute): string | boolean | null {
+  if (attr.value === null) return true // boolean attribute
+
+  if (typeof attr.value === 'string') return attr.value
+
+  // IRTemplateLiteral
+  return resolveTemplateLiteral(attr.value)
+}
+
+function resolveTemplateLiteral(tl: IRTemplateLiteral): string {
+  return tl.parts
+    .map(part => {
+      if (part.type === 'string') return part.value
+      // Ternary: represent as placeholder
+      return `{${part.condition}}`
+    })
+    .join('')
+}
