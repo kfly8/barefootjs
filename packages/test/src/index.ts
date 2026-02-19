@@ -9,3 +9,5 @@ export { TestNode } from './test-node'
 export type { TestNodeData, TestNodeQuery } from './test-node'
 
 export { toStructure } from './structure'
+
+export { resolveConstants } from './resolve-constants'

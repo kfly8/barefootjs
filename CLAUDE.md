@@ -27,6 +27,19 @@ Adapters: HonoAdapter (`packages/hono/`), GoTemplateAdapter (`packages/go-templa
 - `site/shared/` — Shared design tokens and components across sites
 - `docs/core/` — Documentation content (Markdown source files)
 
+## Testing
+
+| Layer | Verifies | Tool | Speed |
+|-------|----------|------|-------|
+| IR test (`@barefootjs/test`) | Structure, a11y, signals, compiler errors | `bun test` | ms |
+| Compiler unit test (`packages/jsx/`) | IR generation, adapter output, error codes | `bun test` | ms |
+| E2E (`site/ui/e2e/`) | User interactions, hydration, visual rendering | Playwright | seconds |
+
+- **New UI component**: Write IR test in `packages/test/__tests__/` using `renderToTest()`.
+- **Compiler change**: Write unit test in `packages/jsx/src/__tests__/`.
+- **Interaction behavior**: Write E2E in `site/ui/e2e/` only for click/keyboard/hover that IR tests cannot cover.
+- **Hydration correctness** is a compiler invariant. If E2E reveals a hydration bug, fix it in `packages/jsx/`, not in `ui/`.
+
 ## Implementation Guidelines
 
 When implementing a feature, match the capability level of existing similar features. For example, if filter() supports arbitrary predicates, find() should too. Always check sibling implementations for parity.
