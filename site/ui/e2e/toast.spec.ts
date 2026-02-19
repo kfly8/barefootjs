@@ -200,7 +200,7 @@ test.describe('Toast Documentation Page', () => {
       await expect(toast.locator('svg').first()).toBeVisible()
     })
 
-    test.skip('default toast has no variant icon', async ({ page }) => {
+    test('default toast has no variant icon', async ({ page }) => {
       const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
       const trigger = demo.locator('button:has-text("Default")')
 
@@ -209,6 +209,9 @@ test.describe('Toast Documentation Page', () => {
       const toast = page.locator('[data-slot="toast"][data-variant="default"][data-state="visible"]').first()
       await expect(toast).toBeVisible()
       // Default variant should not have a variant icon (only the close button icon)
+      // The close button's SVG is inside [data-slot="toast-close"], so variant icons are direct children
+      const variantIcon = toast.locator(':scope > svg')
+      await expect(variantIcon).toHaveCount(0)
     })
   })
 

@@ -81,10 +81,7 @@ test.describe('Pagination Documentation Page', () => {
       await expect(page1Link).toHaveAttribute('data-active', 'true')
     })
 
-    // Compiler limitation: reactive prop updates to stateless child components
-    // (PaginationLink) don't propagate to data-active attribute.
-    // The compiled JS sets setAttribute('isActive', ...) but doesn't update data-active.
-    test.skip('clicking page link updates active state', async ({ page }) => {
+    test('clicking page link updates active state', async ({ page }) => {
       const section = page.locator('[bf-s^="PaginationDynamicDemo_"]:not([data-slot])').first()
 
       const page2Link = section.locator('[data-slot="pagination-link"]', { hasText: '2' })
@@ -96,8 +93,7 @@ test.describe('Pagination Documentation Page', () => {
       await expect(page1Link).toHaveAttribute('data-active', 'false')
     })
 
-    // Same compiler limitation as above
-    test.skip('clicking Next button updates active state', async ({ page }) => {
+    test('clicking Next button updates active state', async ({ page }) => {
       const section = page.locator('[bf-s^="PaginationDynamicDemo_"]:not([data-slot])').first()
 
       const nextBtn = section.locator('a[aria-label="Go to next page"]')

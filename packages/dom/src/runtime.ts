@@ -600,8 +600,14 @@ export function bind(
       if (key === 'value') {
         createEffect(() => {
           const val = String(getter() ?? '')
-          if ((el as HTMLInputElement).value !== val) {
-            ;(el as HTMLInputElement).value = val
+          const input = el as HTMLInputElement
+          if (input.value !== val) {
+            const start = input.selectionStart
+            const end = input.selectionEnd
+            input.value = val
+            if (document.activeElement === el && start !== null) {
+              input.setSelectionRange(start, end)
+            }
           }
         })
       } else if (BOOLEAN_PROPS.includes(key)) {
