@@ -48,10 +48,7 @@ test.describe('Controlled Input Documentation Page', () => {
       await expect(display).toHaveText('abcdefghij')
     })
 
-    // Skip: Known edge case - cursor position is not preserved during controlled input updates.
-    // When value is synchronized via signal, cursor moves to end of input.
-    // This is a validation finding for Issue #75.
-    test.skip('handles typing in middle of text', async ({ page }) => {
+    test('handles typing in middle of text', async ({ page }) => {
       const demo = page.locator('[bf-s^="BasicControlledDemo_"]')
       const input = demo.locator('input')
       const display = demo.locator('.current-value')
@@ -59,13 +56,10 @@ test.describe('Controlled Input Documentation Page', () => {
       await input.fill('Hello World')
       await expect(display).toHaveText('Hello World')
 
-      // Move cursor to middle and type
+      // Move cursor to position 5 (after "Hello") and type
       await input.focus()
-      await input.press('Home')
-      for (let i = 0; i < 5; i++) {
-        await input.press('ArrowRight')
-      }
-      await input.type(' Beautiful')
+      await input.evaluate((el: HTMLInputElement) => el.setSelectionRange(5, 5))
+      await input.pressSequentially(' Beautiful')
       await expect(display).toHaveText('Hello Beautiful World')
     })
   })

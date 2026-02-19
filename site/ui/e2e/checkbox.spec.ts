@@ -300,10 +300,7 @@ test.describe('Checkbox Documentation Page', () => {
       }
     })
 
-    // TODO: This test reveals an issue with conditional rendering in current implementation
-    // The "Mark as read" element uses {selectedCount() > 0 && ...} pattern
-    // which may not work correctly with the current signal system
-    test.skip('"Mark as read" appears only when selection > 0', async ({ page }) => {
+    test('"Mark as read" appears only when selection > 0', async ({ page }) => {
       const section = page.locator('[bf-s^="CheckboxEmailListDemo_"]:not([data-slot])').first()
       const checkboxes = section.locator('button[role="checkbox"]')
 

@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Pagination Component
  *
@@ -97,25 +99,21 @@ interface PaginationLinkProps {
   'aria-label'?: string
 }
 
-function PaginationLink({
-  className = '',
-  isActive,
-  size = 'icon',
-  children,
-  ...props
-}: PaginationLinkProps) {
-  const variant = isActive ? 'outline' : 'ghost'
-  const classes = `${buttonBaseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`
+function PaginationLink(props: PaginationLinkProps) {
+  const size = props.size ?? 'icon'
+  const className = props.className ?? ''
 
   return (
     <a
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={props.isActive ? 'page' : undefined}
       data-slot="pagination-link"
-      data-active={isActive}
-      className={classes}
-      {...props}
+      data-active={props.isActive}
+      className={`${buttonBaseClasses} ${props.isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size]} ${className}`}
+      href={props.href}
+      onClick={props.onClick}
+      aria-label={props['aria-label']}
     >
-      {children}
+      {props.children}
     </a>
   )
 }
@@ -128,37 +126,35 @@ interface PaginationPrevNextProps {
   'aria-label'?: string
 }
 
-function PaginationPrevious({
-  className = '',
-  ...props
-}: PaginationPrevNextProps) {
+function PaginationPrevious(props: PaginationPrevNextProps) {
+  const className = props.className ?? ''
   return (
-    <PaginationLink
+    <a
       aria-label="Go to previous page"
-      size="default"
-      className={`gap-1 px-2.5 sm:pl-2.5 ${className}`}
-      {...props}
+      data-slot="pagination-link"
+      className={`${buttonBaseClasses} ${variantClasses.ghost} ${sizeClasses.default} gap-1 px-2.5 sm:pl-2.5 ${className}`}
+      href={props.href}
+      onClick={props.onClick}
     >
       <ChevronLeftIcon size="sm" />
       <span className="hidden sm:block">Previous</span>
-    </PaginationLink>
+    </a>
   )
 }
 
-function PaginationNext({
-  className = '',
-  ...props
-}: PaginationPrevNextProps) {
+function PaginationNext(props: PaginationPrevNextProps) {
+  const className = props.className ?? ''
   return (
-    <PaginationLink
+    <a
       aria-label="Go to next page"
-      size="default"
-      className={`gap-1 px-2.5 sm:pr-2.5 ${className}`}
-      {...props}
+      data-slot="pagination-link"
+      className={`${buttonBaseClasses} ${variantClasses.ghost} ${sizeClasses.default} gap-1 px-2.5 sm:pr-2.5 ${className}`}
+      href={props.href}
+      onClick={props.onClick}
     >
       <span className="hidden sm:block">Next</span>
       <ChevronRightIcon size="sm" />
-    </PaginationLink>
+    </a>
   )
 }
 
