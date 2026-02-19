@@ -41,7 +41,7 @@ jobs:
           cd ../go-template && bun run build
 
       - name: Run unit tests
-        run: bun test packages/
+        run: bun test packages/ ui/components/ui/__tests__/
 
   e2e-hono:
     runs-on: ubuntu-latest
