@@ -21,8 +21,6 @@ When a component defines base classes and a user passes override classes, both h
 
 If `bg-primary` is generated after `bg-red-500` in the CSS output, the user's override silently fails. This is fragile and order-dependent.
 
-Libraries like shadcn/ui solve this with `cn()` (powered by `tailwind-merge`), which detects conflicting Tailwind classes at runtime and keeps only the last one. This works but adds a runtime dependency and requires every component to remember to use `cn()`.
-
 ## The Solution
 
 CSS Cascade Layers provide a spec-level mechanism for controlling style priority. Styles in a named `@layer` always lose to un-layered styles, regardless of specificity or source order.
@@ -99,20 +97,9 @@ Result: bg-red-500 wins. Always.
 
 - **Zero runtime cost** — Prefixing happens at compile time. No JS runs in the browser to merge classes.
 - **Works with any CSS tool** — The `layer-components:` prefix convention is supported by UnoCSS. Any tool that supports CSS Cascade Layers can use this approach.
-- **No merge function needed** — No `cn()`, no `tailwind-merge`, no runtime class conflict detection. The CSS cascade handles it.
+- **No merge function needed** — The CSS cascade handles class conflict resolution natively.
 - **Language-independent** — The prefixing is applied to the IR, so Go, Rust, and Node adapters all benefit equally.
-- **Preserves both classes** — Unlike `tailwind-merge` which removes the "losing" class, both classes remain in the DOM. DevTools shows exactly what was applied and what was overridden.
-
-## Comparison with shadcn/ui
-
-| Aspect | shadcn/ui | BarefootJS |
-|--------|-----------|------------|
-| Mechanism | `cn()` with `tailwind-merge` | CSS Cascade Layers |
-| When it runs | Runtime (every render) | Compile time (once) |
-| Bundle cost | ~3.5 kB (tailwind-merge) | 0 kB |
-| Override method | Detects + removes conflicting classes | CSS spec cascade priority |
-| Requires wrapper | Every component must use `cn()` | Automatic via compiler |
-| Works without JS | No (JS must run to merge) | Yes (pure CSS) |
+- **Preserves both classes** — Both classes remain in the DOM. DevTools shows exactly what was applied and what was overridden.
 
 ## Configuration
 
