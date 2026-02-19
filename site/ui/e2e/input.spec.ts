@@ -60,10 +60,7 @@ test.describe('Input Documentation Page', () => {
       await expect(section).toBeVisible()
     })
 
-    // Interactive value binding tests are skipped due to compiler limitations
-    // with child component event handler hydration.
-    // See: https://github.com/kfly8/barefootjs/issues/27
-    test.skip('updates output when typing', async ({ page }) => {
+    test('updates output when typing', async ({ page }) => {
       const section = page.locator('[bf-s^="InputBindingDemo_"]:not([data-slot])').first()
       const input = section.locator('input[data-slot="input"]')
       const output = section.locator('.typed-value')
@@ -81,9 +78,7 @@ test.describe('Input Documentation Page', () => {
       await expect(section.locator('.focus-status')).toBeVisible()
     })
 
-    // Interactive focus tests are skipped due to compiler limitations
-    // with child component event handler hydration.
-    test.skip('shows focused state on focus', async ({ page }) => {
+    test('shows focused state on focus', async ({ page }) => {
       const section = page.locator('[bf-s^="InputFocusDemo_"]:not([data-slot])').first()
       const input = section.locator('input[data-slot="input"]')
       const status = section.locator('.focus-status')
@@ -93,7 +88,7 @@ test.describe('Input Documentation Page', () => {
       await expect(status).toContainText('Focused')
     })
 
-    test.skip('shows not focused state on blur', async ({ page }) => {
+    test('shows not focused state on blur', async ({ page }) => {
       const section = page.locator('[bf-s^="InputFocusDemo_"]:not([data-slot])').first()
       const input = section.locator('input[data-slot="input"]')
       const status = section.locator('.focus-status')
