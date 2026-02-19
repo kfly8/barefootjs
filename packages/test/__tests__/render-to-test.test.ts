@@ -42,10 +42,13 @@ describe('Button', () => {
     expect(button).not.toBeNull()
   })
 
-  test('button has dynamic className (from classes variable)', () => {
+  test('button has resolved base classes from constants', () => {
     const button = result.find({ tag: 'button' })!
-    // className is a dynamic expression referencing the `classes` local variable
-    expect(button.classes).toContain('classes')
+    // Constants are resolved: baseClasses string is expanded,
+    // variantClasses[variant] and sizeClasses[size] are unresolvable (skipped)
+    expect(button.classes).toContain('inline-flex')
+    expect(button.classes).toContain('items-center')
+    expect(button.classes).toContain('rounded-md')
   })
 
   test('contains a Slot component for asChild', () => {

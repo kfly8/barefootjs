@@ -9,6 +9,7 @@ import { analyzeComponent, jsxToIR } from '@barefootjs/jsx'
 import type { IRMetadata, CompilerError } from '@barefootjs/jsx'
 import { TestNode, type TestNodeQuery } from './test-node'
 import { irNodeToTestNode } from './ir-to-test-node'
+import { resolveConstants } from './resolve-constants'
 import { toStructure } from './structure'
 
 export interface TestResult {
@@ -27,8 +28,8 @@ export interface TestResult {
   toStructure(): string
 }
 
-export function renderToTest(source: string, filePath: string): TestResult {
-  const ctx = analyzeComponent(source, filePath)
+export function renderToTest(source: string, filePath: string, componentName?: string): TestResult {
+  const ctx = analyzeComponent(source, filePath, componentName)
 
   // Collect errors from analysis phase
   const errors: TestResult['errors'] = ctx.errors.map(toSimpleError)
@@ -48,7 +49,8 @@ export function renderToTest(source: string, filePath: string): TestResult {
   }
 
   const metadata = buildMetadata(ctx)
-  const root = irNodeToTestNode(ir)
+  const constantMap = resolveConstants(metadata.localConstants)
+  const root = irNodeToTestNode(ir, constantMap)
   const signals = metadata.signals.map(s => s.getter)
 
   return {

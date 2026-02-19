@@ -22,28 +22,33 @@ type IRAttribute = IRElement['attrs'][number]
 type IRTemplateLiteral = Exclude<IRAttribute['value'], string | null>
 import { TestNode } from './test-node'
 
-export function irNodeToTestNode(node: IRNode): TestNode {
+export function irNodeToTestNode(node: IRNode, constantMap?: Map<string, string>): TestNode {
+  const cmap = constantMap ?? new Map<string, string>()
+  return convert(node, cmap)
+}
+
+function convert(node: IRNode, cmap: Map<string, string>): TestNode {
   switch (node.type) {
     case 'element':
-      return convertElement(node)
+      return convertElement(node, cmap)
     case 'text':
       return convertText(node)
     case 'expression':
       return convertExpression(node)
     case 'conditional':
-      return convertConditional(node)
+      return convertConditional(node, cmap)
     case 'loop':
-      return convertLoop(node)
+      return convertLoop(node, cmap)
     case 'component':
-      return convertComponent(node)
+      return convertComponent(node, cmap)
     case 'fragment':
-      return convertFragment(node)
+      return convertFragment(node, cmap)
     case 'slot':
       return convertSlot(node)
     case 'if-statement':
-      return convertIfStatement(node)
+      return convertIfStatement(node, cmap)
     case 'provider':
-      return convertProvider(node)
+      return convertProvider(node, cmap)
   }
 }
 
@@ -51,7 +56,7 @@ export function irNodeToTestNode(node: IRNode): TestNode {
 // Element
 // ---------------------------------------------------------------------------
 
-function convertElement(node: IRElement): TestNode {
+function convertElement(node: IRElement, cmap: Map<string, string>): TestNode {
   const props: Record<string, string | boolean | null> = {}
   const aria: Record<string, string> = {}
   let role: string | null = null
@@ -63,6 +68,13 @@ function convertElement(node: IRElement): TestNode {
 
     if (attr.name === 'className' || attr.name === 'class') {
       if (typeof value === 'string') {
+        if (attr.dynamic && cmap.size > 0) {
+          const resolved = resolveClassValue(value, cmap)
+          if (resolved !== null) {
+            classes = resolved.split(/\s+/).filter(Boolean)
+            continue
+          }
+        }
         classes = value.split(/\s+/).filter(Boolean)
       }
       continue
@@ -89,7 +101,7 @@ function convertElement(node: IRElement): TestNode {
   }
 
   const events = node.events.map(e => e.name)
-  const children = node.children.map(irNodeToTestNode)
+  const children = node.children.map(c => convert(c, cmap))
 
   return new TestNode({
     tag: node.tag,
@@ -153,10 +165,10 @@ function convertExpression(node: IRExpression): TestNode {
 // Conditional
 // ---------------------------------------------------------------------------
 
-function convertConditional(node: IRConditional): TestNode {
-  const children: TestNode[] = [irNodeToTestNode(node.whenTrue)]
+function convertConditional(node: IRConditional, cmap: Map<string, string>): TestNode {
+  const children: TestNode[] = [convert(node.whenTrue, cmap)]
   if (node.whenFalse) {
-    children.push(irNodeToTestNode(node.whenFalse))
+    children.push(convert(node.whenFalse, cmap))
   }
 
   return new TestNode({
@@ -179,8 +191,8 @@ function convertConditional(node: IRConditional): TestNode {
 // Loop
 // ---------------------------------------------------------------------------
 
-function convertLoop(node: IRLoop): TestNode {
-  const children = node.children.map(irNodeToTestNode)
+function convertLoop(node: IRLoop, cmap: Map<string, string>): TestNode {
+  const children = node.children.map(c => convert(c, cmap))
 
   return new TestNode({
     tag: null,
@@ -202,13 +214,13 @@ function convertLoop(node: IRLoop): TestNode {
 // Component
 // ---------------------------------------------------------------------------
 
-function convertComponent(node: IRComponent): TestNode {
+function convertComponent(node: IRComponent, cmap: Map<string, string>): TestNode {
   const props: Record<string, string | boolean | null> = {}
   for (const prop of node.props) {
     props[prop.name] = prop.value
   }
 
-  const children = node.children.map(irNodeToTestNode)
+  const children = node.children.map(c => convert(c, cmap))
 
   return new TestNode({
     tag: null,
@@ -230,8 +242,8 @@ function convertComponent(node: IRComponent): TestNode {
 // Fragment
 // ---------------------------------------------------------------------------
 
-function convertFragment(node: IRFragment): TestNode {
-  const children = node.children.map(irNodeToTestNode)
+function convertFragment(node: IRFragment, cmap: Map<string, string>): TestNode {
+  const children = node.children.map(c => convert(c, cmap))
 
   return new TestNode({
     tag: null,
@@ -274,10 +286,10 @@ function convertSlot(_node: IRSlot): TestNode {
 // IfStatement
 // ---------------------------------------------------------------------------
 
-function convertIfStatement(node: IRIfStatement): TestNode {
-  const children: TestNode[] = [irNodeToTestNode(node.consequent)]
+function convertIfStatement(node: IRIfStatement, cmap: Map<string, string>): TestNode {
+  const children: TestNode[] = [convert(node.consequent, cmap)]
   if (node.alternate) {
-    children.push(irNodeToTestNode(node.alternate))
+    children.push(convert(node.alternate, cmap))
   }
 
   return new TestNode({
@@ -300,9 +312,9 @@ function convertIfStatement(node: IRIfStatement): TestNode {
 // Provider
 // ---------------------------------------------------------------------------
 
-function convertProvider(node: IRProvider): TestNode {
+function convertProvider(node: IRProvider, cmap: Map<string, string>): TestNode {
   // Transparent — just pass through children
-  const children = node.children.map(irNodeToTestNode)
+  const children = node.children.map(c => convert(c, cmap))
 
   if (children.length === 1) return children[0]
 
@@ -320,6 +332,28 @@ function convertProvider(node: IRProvider): TestNode {
     reactive: false,
     componentName: null,
   })
+}
+
+// ---------------------------------------------------------------------------
+// Constant-based class value resolution
+// ---------------------------------------------------------------------------
+
+function resolveClassValue(value: string, cmap: Map<string, string>): string | null {
+  // Simple identifier lookup
+  if (cmap.has(value)) {
+    return cmap.get(value)!
+  }
+
+  // Template literal: `...${var}...`
+  if (value.startsWith('`') && value.endsWith('`')) {
+    const inner = value.slice(1, -1)
+    return inner.replace(/\$\{([^}]+)\}/g, (_, expr) => {
+      const trimmed = expr.trim()
+      return cmap.get(trimmed) ?? ''
+    })
+  }
+
+  return null
 }
 
 // ---------------------------------------------------------------------------
