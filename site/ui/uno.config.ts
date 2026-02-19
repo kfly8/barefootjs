@@ -2,6 +2,17 @@ import { defineConfig, presetWind } from 'unocss'
 
 export default defineConfig({
   presets: [presetWind()],
+  // Wrap UnoCSS output in CSS @layer blocks for cascade ordering.
+  // Order: preflights < base < shortcuts < components < default
+  // Base resets (globals.css) go into @layer base.
+  // Component base classes (layer-components:) override base resets,
+  // and user override classes (default) beat component classes.
+  outputToCssLayers: true,
+  layers: {
+    preflights: -2,
+    components: -1,
+    default: 0,
+  },
   // Safelist responsive classes used in dynamic contexts
   safelist: [
     'hidden', 'sm:block', 'sm:hidden', 'lg:block', 'sm:pl-56',

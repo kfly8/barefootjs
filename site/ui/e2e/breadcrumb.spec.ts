@@ -82,7 +82,8 @@ test.describe('Breadcrumb Documentation Page', () => {
       await expect(ellipsis).toHaveAttribute('aria-hidden', 'true')
 
       // Should contain sr-only "More" text
-      const srOnly = ellipsis.locator('.sr-only')
+      // Class may be prefixed (layer-components:sr-only) by CSS layer prefixer
+      const srOnly = ellipsis.locator('[class*="sr-only"]')
       await expect(srOnly).toHaveText('More')
     })
   })

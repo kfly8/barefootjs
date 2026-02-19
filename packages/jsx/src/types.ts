@@ -442,6 +442,12 @@ export interface ErrorSuggestion {
 export interface CompileOptions {
   outputIR?: boolean // Output *.ir.json
   sourceMaps?: boolean
+  /** CSS layer prefix for component classes.
+   * When set, static class strings and class-related constants
+   * are prefixed with `layer-{value}:` for CSS cascade priority.
+   * Example: 'components' → classes prefixed with 'layer-components:'
+   */
+  cssLayerPrefix?: string
 }
 
 export interface FileOutput {
