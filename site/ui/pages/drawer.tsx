@@ -132,26 +132,12 @@ import {
   DrawerClose,
 } from '@/components/ui/drawer'
 
-// Interactive controls as a separate component with own scope
-function GoalControl() {
+function GoalDrawer() {
+  const [open, setOpen] = createSignal(false)
   const [goal, setGoal] = createSignal(350)
   const adjustGoal = (amount) => {
     setGoal((prev) => Math.max(100, prev + amount))
   }
-  return (
-    <div className="p-4 pb-0">
-      <div className="flex items-center justify-center space-x-4">
-        <button onClick={() => adjustGoal(-10)}>-</button>
-        <span className="text-7xl font-bold">{goal()}</span>
-        <button onClick={() => adjustGoal(10)}>+</button>
-      </div>
-      <p className="text-muted-foreground text-sm text-center mt-1">kcal/day</p>
-    </div>
-  )
-}
-
-function GoalDrawer() {
-  const [open, setOpen] = createSignal(false)
 
   return (
     <Drawer open={open()} onOpenChange={setOpen}>
@@ -169,7 +155,14 @@ function GoalDrawer() {
             Set your daily activity goal.
           </DrawerDescription>
         </DrawerHeader>
-        <GoalControl />
+        <div className="p-4 pb-0">
+          <div className="flex items-center justify-center space-x-4">
+            <button onClick={() => adjustGoal(-10)}>-</button>
+            <span className="text-7xl font-bold">{goal()}</span>
+            <button onClick={() => adjustGoal(10)}>+</button>
+          </div>
+          <p className="text-muted-foreground text-sm text-center mt-1">kcal/day</p>
+        </div>
         <DrawerFooter>
           <DrawerClose>Submit</DrawerClose>
           <DrawerClose>Cancel</DrawerClose>
