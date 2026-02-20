@@ -42,10 +42,8 @@ import type { Child } from '../../types'
 interface ContextMenuContextValue {
   open: () => boolean
   onOpenChange: (open: boolean) => void
-  posX: () => number
-  posY: () => number
-  setPosX: (x: number) => void
-  setPosY: (y: number) => void
+  position: () => { x: number; y: number }
+  setPosition: (pos: { x: number; y: number }) => void
 }
 
 const ContextMenuContext = createContext<ContextMenuContextValue>()
@@ -130,17 +128,14 @@ interface ContextMenuProps {
  * @param props.onOpenChange - Callback when open state should change
  */
 function ContextMenu(props: ContextMenuProps) {
-  const [posX, setPosX] = createSignal(0)
-  const [posY, setPosY] = createSignal(0)
+  const [position, setPosition] = createSignal({ x: 0, y: 0 })
 
   return (
     <ContextMenuContext.Provider value={{
       open: () => props.open ?? false,
       onOpenChange: props.onOpenChange ?? (() => {}),
-      posX,
-      posY,
-      setPosX,
-      setPosY,
+      position,
+      setPosition,
     }}>
       <div data-slot="context-menu" className={props.class ?? ''}>
         {props.children}
@@ -171,8 +166,7 @@ function ContextMenuTrigger(props: ContextMenuTriggerProps) {
 
     el.addEventListener('contextmenu', (e: MouseEvent) => {
       e.preventDefault()
-      ctx.setPosX(e.clientX)
-      ctx.setPosY(e.clientY)
+      ctx.setPosition({ x: e.clientX, y: e.clientY })
       ctx.onOpenChange(true)
     })
   }
@@ -224,13 +218,13 @@ function ContextMenuContent(props: ContextMenuContentProps) {
       const viewportHeight = window.innerHeight
 
       // Flip horizontally if menu would overflow right edge
-      let x = ctx.posX()
+      let x = ctx.position().x
       if (x + menuWidth > viewportWidth) {
         x = Math.max(0, viewportWidth - menuWidth)
       }
 
       // Flip vertically if menu would overflow bottom edge
-      let y = ctx.posY()
+      let y = ctx.position().y
       if (y + menuHeight > viewportHeight) {
         y = Math.max(0, viewportHeight - menuHeight)
       }
