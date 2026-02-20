@@ -21,6 +21,7 @@ import { SliderPage } from './pages/slider'
 import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
 import { CollapsiblePage } from './pages/collapsible'
+import { CommandPage } from './pages/command'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { ContextMenuPage } from './pages/context-menu'
@@ -109,6 +110,10 @@ export function createApp() {
             <a href="/docs/components/collapsible" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Collapsible</h3>
               <p className="text-xs text-muted-foreground">Expandable content section</p>
+            </a>
+            <a href="/docs/components/command" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Command</h3>
+              <p className="text-xs text-muted-foreground">Search and command menu</p>
             </a>
             <a href="/docs/components/context-menu" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Context Menu</h3>
@@ -282,6 +287,11 @@ export function createApp() {
   // Collapsible documentation
   app.get('/docs/components/collapsible', (c) => {
     return c.render(<CollapsiblePage />)
+  })
+
+  // Command documentation
+  app.get('/docs/components/command', (c) => {
+    return c.render(<CommandPage />)
   })
 
   // Checkbox documentation
