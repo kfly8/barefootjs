@@ -4,6 +4,7 @@
 import { readFileSync, existsSync } from 'fs'
 import path from 'path'
 import type { MetaIndex, MetaIndexEntry, ComponentMeta } from './lib/types'
+import { generateTestTemplate } from './lib/test-template'
 
 const ROOT = path.resolve(import.meta.dir, '..')
 const META_DIR = path.join(ROOT, 'ui/meta')
@@ -221,18 +222,38 @@ function runTest(componentName?: string) {
   }
 }
 
+// --- test:template command ---
+
+function printTestTemplate(componentName: string) {
+  // Try standard component path first
+  const standardPath = path.join(ROOT, 'ui/components/ui', `${componentName}.tsx`)
+  if (!existsSync(standardPath)) {
+    console.error(`Error: Source file not found: ui/components/ui/${componentName}.tsx`)
+    process.exit(1)
+  }
+  console.log(generateTestTemplate(standardPath))
+}
+
 // --- main ---
 
 function printUsage() {
   console.log(`Usage: barefoot <command> [options]
 
 Commands:
-  search <query>       Search components by name, category, description, or tags
-  show <component>     Show detailed component metadata
-  test [component]     Find and show test commands for a component
+  search <query>         Search components by name, category, description, or tags
+  show <component>       Show detailed component metadata
+  test [component]       Find and show test commands for a component
+  test:template <name>   Generate an IR test file for a component
 
 Options:
-  --json               Output in JSON format`)
+  --json                 Output in JSON format
+
+Workflow:
+  1. barefoot search <query>        — Find components
+  2. barefoot show <component>      — Learn props and usage
+  3. (implement)                    — Write the component
+  4. barefoot test:template <name>  — Generate IR test
+  5. bun test <path>                — Run and verify`)
 }
 
 switch (command) {
@@ -256,6 +277,14 @@ switch (command) {
 
   case 'test':
     runTest(query || undefined)
+    break
+
+  case 'test:template':
+    if (!query) {
+      console.error('Error: Component name required. Usage: barefoot test:template <component>')
+      process.exit(1)
+    }
+    printTestTemplate(query)
     break
 
   default:
