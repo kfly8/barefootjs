@@ -18,7 +18,23 @@ interface SeparatorProps {
   className?: string
 }
 
-/** Renders a horizontal or vertical separator line. */
+/**
+ * Separator Component
+ *
+ * A visual divider that separates content horizontally or vertically.
+ * Can be decorative (no semantic meaning) or act as a true separator
+ * with appropriate ARIA role and orientation.
+ *
+ * @example Horizontal separator
+ * ```tsx
+ * <Separator className="my-4" />
+ * ```
+ *
+ * @example Vertical separator
+ * ```tsx
+ * <Separator orientation="vertical" />
+ * ```
+ */
 function Separator({
   orientation = 'horizontal',
   decorative = true,
