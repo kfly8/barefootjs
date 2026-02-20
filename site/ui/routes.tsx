@@ -23,6 +23,7 @@ import { AccordionPage } from './pages/accordion'
 import { CollapsiblePage } from './pages/collapsible'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
+import { ContextMenuPage } from './pages/context-menu'
 import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
 import { TogglePage } from './pages/toggle'
@@ -107,6 +108,10 @@ export function createApp() {
             <a href="/docs/components/collapsible" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Collapsible</h3>
               <p className="text-xs text-muted-foreground">Expandable content section</p>
+            </a>
+            <a href="/docs/components/context-menu" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Context Menu</h3>
+              <p className="text-xs text-muted-foreground">Right-click menu at cursor position</p>
             </a>
             <a href="/docs/components/dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Dialog</h3>
@@ -312,6 +317,11 @@ export function createApp() {
   // Dialog documentation
   app.get('/docs/components/dialog', (c) => {
     return c.render(<DialogPage />)
+  })
+
+  // Context Menu documentation
+  app.get('/docs/components/context-menu', (c) => {
+    return c.render(<ContextMenuPage />)
   })
 
   // Dropdown Menu documentation

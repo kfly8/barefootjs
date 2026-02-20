@@ -34,6 +34,12 @@
       "description": "An interactive component which expands/collapses a panel"
     },
     {
+      "name": "context-menu",
+      "type": "registry:ui",
+      "title": "Context Menu",
+      "description": "A menu triggered by right-click, displayed at the cursor position"
+    },
+    {
       "name": "pagination",
       "type": "registry:ui",
       "title": "Pagination",

@@ -15,6 +15,7 @@ export const componentOrder = [
   { slug: 'card', title: 'Card' },
   { slug: 'checkbox', title: 'Checkbox' },
   { slug: 'collapsible', title: 'Collapsible' },
+  { slug: 'context-menu', title: 'Context Menu' },
   { slug: 'dialog', title: 'Dialog' },
   { slug: 'drawer', title: 'Drawer' },
   { slug: 'dropdown-menu', title: 'Dropdown Menu' },
