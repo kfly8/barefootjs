@@ -2327,6 +2327,25 @@ describe('Compiler', () => {
       expect(signalIndex).toBeGreaterThan(-1)
       expect(fnIndex).toBeLessThan(signalIndex)
     })
+
+    test('object literal createSignal initializer is parenthesized in getter output', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function MyComponent() {
+          const [position, setPosition] = createSignal({ x: 0, y: 0 })
+          return <div>{position().x}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyComponent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const markedTemplate = result.files.find(f => f.type === 'markedTemplate')
+      expect(markedTemplate).toBeDefined()
+      expect(markedTemplate!.content).toContain('const position = () => ({ x: 0, y: 0 })')
+    })
   })
 
   describe('module-level function scope isolation', () => {

@@ -12,6 +12,25 @@ import { HonoAdapter } from '../src/adapter'
 const adapter = new HonoAdapter({ injectScriptCollection: false })
 
 describe('HonoAdapter', () => {
+  test('parenthesizes object literal signal initializers in generated getters', () => {
+    const source = `
+      'use client'
+      import { createSignal } from '@barefootjs/dom'
+
+      export function Example() {
+        const [position, setPosition] = createSignal({ x: 0, y: 0 })
+        return <div>{position().x}</div>
+      }
+    `
+
+    const result = compileJSXSync(source, 'Example.tsx', { adapter })
+
+    expect(result.errors.filter(e => e.severity === 'error')).toHaveLength(0)
+    const markedTemplate = result.files.find(f => f.type === 'markedTemplate')
+    expect(markedTemplate).toBeDefined()
+    expect(markedTemplate?.content).toContain('const position = () => ({ x: 0, y: 0 })')
+  })
+
   describe('localFunctions', () => {
     test('includes helper functions in generated template', () => {
       const source = `
