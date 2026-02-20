@@ -21,9 +21,8 @@ describe('ContextMenu', () => {
     expect(result.componentName).toBe('ContextMenu')
   })
 
-  test('has signals: posX, posY', () => {
-    expect(result.signals).toContain('posX')
-    expect(result.signals).toContain('posY')
+  test('has signals: position', () => {
+    expect(result.signals).toContain('position')
   })
 
   test('renders as div with data-slot=context-menu', () => {
