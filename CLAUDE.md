@@ -46,9 +46,11 @@ When building or modifying UI components, use the `barefoot` CLI first for compo
 
 1. `bun run barefoot search <query>` — Find components by name/category/tags
 2. `bun run barefoot show <component>` — Get props, examples, accessibility info
-3. Implement the component
-4. `bun run barefoot test:template <name>` — Generate IR test from source
-5. `bun test <path>` — Run and verify
+3. `bun run barefoot scaffold <name> <comp...>` — Generate skeleton + basic IR test
+4. Implement the component
+5. `bun test <path>` — Verify compilation
+6. `bun run barefoot test:template <name>` — Regenerate richer IR test
+7. `bun test <path>` — Final verification
 
 ## Implementation Guidelines
 

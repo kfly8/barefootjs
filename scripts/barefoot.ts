@@ -5,6 +5,7 @@ import { readFileSync, existsSync } from 'fs'
 import path from 'path'
 import type { MetaIndex, MetaIndexEntry, ComponentMeta } from './lib/types'
 import { generateTestTemplate } from './lib/test-template'
+import { scaffold } from './lib/scaffold'
 
 const ROOT = path.resolve(import.meta.dir, '..')
 const META_DIR = path.join(ROOT, 'ui/meta')
@@ -234,26 +235,62 @@ function printTestTemplate(componentName: string) {
   console.log(generateTestTemplate(standardPath))
 }
 
+// --- scaffold command ---
+
+function runScaffold(componentName: string, useComponents: string[]) {
+  const { writeFileSync, mkdirSync } = require('fs')
+
+  const result = scaffold(componentName, useComponents)
+
+  // Write component file
+  const componentAbsPath = path.join(ROOT, result.componentPath)
+  if (existsSync(componentAbsPath)) {
+    console.error(`Error: ${result.componentPath} already exists. Delete it first or choose a different name.`)
+    process.exit(1)
+  }
+
+  // Write test file
+  const testAbsPath = path.join(ROOT, result.testPath)
+  const testDir = path.dirname(testAbsPath)
+  if (!existsSync(testDir)) {
+    mkdirSync(testDir, { recursive: true })
+  }
+
+  writeFileSync(componentAbsPath, result.componentCode)
+  writeFileSync(testAbsPath, result.testCode)
+
+  console.log(`Created:`)
+  console.log(`  ${result.componentPath}`)
+  console.log(`  ${result.testPath}`)
+  console.log(``)
+  console.log(`Next steps:`)
+  console.log(`  1. Implement the component in ${result.componentPath}`)
+  console.log(`  2. bun test ${result.testPath}`)
+  console.log(`  3. bun run barefoot test:template ${componentName}  (regenerate richer test)`)
+}
+
 // --- main ---
 
 function printUsage() {
   console.log(`Usage: barefoot <command> [options]
 
 Commands:
-  search <query>         Search components by name, category, description, or tags
-  show <component>       Show detailed component metadata
-  test [component]       Find and show test commands for a component
-  test:template <name>   Generate an IR test file for a component
+  search <query>              Search components by name/category/tags
+  show <component>            Show detailed component metadata
+  scaffold <name> <comp...>   Generate component skeleton + IR test
+  test [component]            Find and show test commands
+  test:template <name>        Generate IR test from existing source
 
 Options:
-  --json                 Output in JSON format
+  --json                      Output in JSON format
 
 Workflow:
-  1. barefoot search <query>        — Find components
-  2. barefoot show <component>      — Learn props and usage
-  3. (implement)                    — Write the component
-  4. barefoot test:template <name>  — Generate IR test
-  5. bun test <path>                — Run and verify`)
+  1. barefoot search <query>               — Find components
+  2. barefoot show <component>             — Learn props and usage
+  3. barefoot scaffold <name> <comp...>    — Generate skeleton + test
+  4. Implement the component
+  5. bun test <path>                       — Verify
+  6. barefoot test:template <name>         — Regenerate richer test`)
 }
 
 switch (command) {
@@ -286,6 +323,18 @@ switch (command) {
     }
     printTestTemplate(query)
     break
+
+  case 'scaffold': {
+    const scaffoldArgs = filteredArgs.slice(1)
+    if (scaffoldArgs.length < 2) {
+      console.error('Usage: barefoot scaffold <component-name> <use-component1> [use-component2] ...')
+      console.error('Example: barefoot scaffold settings-form input switch button')
+      process.exit(1)
+    }
+    const [scaffoldName, ...useComponents] = scaffoldArgs
+    runScaffold(scaffoldName, useComponents)
+    break
+  }
 
   default:
     printUsage()
