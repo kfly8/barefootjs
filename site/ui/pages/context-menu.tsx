@@ -40,10 +40,9 @@ import {
 
 function BasicContextMenu() {
   const [open, setOpen] = createSignal(false)
-  const [position, setPosition] = createSignal({ x: 0, y: 0 })
 
   return (
-    <ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}>
+    <ContextMenu open={open()} onOpenChange={setOpen}>
       <ContextMenuTrigger>
         <div className="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm">
           Right-click here
@@ -86,12 +85,11 @@ import {
 
 function CheckboxContextMenu() {
   const [open, setOpen] = createSignal(false)
-  const [position, setPosition] = createSignal({ x: 0, y: 0 })
   const [showBookmarks, setShowBookmarks] = createSignal(true)
   const [showFullUrls, setShowFullUrls] = createSignal(false)
 
   return (
-    <ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}>
+    <ContextMenu open={open()} onOpenChange={setOpen}>
       <ContextMenuTrigger>
         <div className="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm">
           Right-click here
@@ -123,16 +121,6 @@ const contextMenuProps: PropDefinition[] = [
     name: 'onOpenChange',
     type: '(open: boolean) => void',
     description: 'Callback when open state should change.',
-  },
-  {
-    name: 'position',
-    type: '{ x: number; y: number }',
-    description: 'Mouse coordinates for menu placement.',
-  },
-  {
-    name: 'onPositionChange',
-    type: '(pos: { x: number; y: number }) => void',
-    description: 'Callback when position changes (on right-click).',
   },
 ]
 
@@ -247,7 +235,7 @@ export function ContextMenuPage() {
         />
 
         {/* Preview */}
-        <Example title="" code={`<ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}><ContextMenuTrigger>...</ContextMenuTrigger><ContextMenuContent>...</ContextMenuContent></ContextMenu>`}>
+        <Example title="" code={`<ContextMenu open={open()} onOpenChange={setOpen}><ContextMenuTrigger>...</ContextMenuTrigger><ContextMenuContent>...</ContextMenuContent></ContextMenu>`}>
           <div className="flex gap-4">
             <ContextMenuFullDemo />
           </div>

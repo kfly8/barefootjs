@@ -22,9 +22,8 @@
  * @example Basic context menu
  * ```tsx
  * const [open, setOpen] = createSignal(false)
- * const [position, setPosition] = createSignal({ x: 0, y: 0 })
  *
- * <ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}>
+ * <ContextMenu open={open()} onOpenChange={setOpen}>
  *   <ContextMenuTrigger>
  *     <div>Right-click here</div>
  *   </ContextMenuTrigger>
@@ -43,8 +42,10 @@ import type { Child } from '../../types'
 interface ContextMenuContextValue {
   open: () => boolean
   onOpenChange: (open: boolean) => void
-  position: () => { x: number; y: number }
-  setPosition: (pos: { x: number; y: number }) => void
+  posX: () => number
+  posY: () => number
+  setPosX: (x: number) => void
+  setPosY: (y: number) => void
 }
 
 const ContextMenuContext = createContext<ContextMenuContextValue>()
@@ -114,10 +115,6 @@ interface ContextMenuProps {
   open?: boolean
   /** Callback when open state should change */
   onOpenChange?: (open: boolean) => void
-  /** Mouse position for menu placement */
-  position?: { x: number; y: number }
-  /** Callback when position changes (on right-click) */
-  onPositionChange?: (pos: { x: number; y: number }) => void
   /** ContextMenuTrigger and ContextMenuContent */
   children?: Child
   /** Additional CSS classes */
@@ -126,20 +123,24 @@ interface ContextMenuProps {
 
 /**
  * ContextMenu root component.
- * Provides open state and position to children via context.
+ * Provides open state to children via context.
+ * Mouse position is managed internally.
  *
  * @param props.open - Whether the context menu is open
  * @param props.onOpenChange - Callback when open state should change
- * @param props.position - Mouse coordinates for positioning
- * @param props.onPositionChange - Callback when position changes
  */
 function ContextMenu(props: ContextMenuProps) {
+  const [posX, setPosX] = createSignal(0)
+  const [posY, setPosY] = createSignal(0)
+
   return (
     <ContextMenuContext.Provider value={{
       open: () => props.open ?? false,
       onOpenChange: props.onOpenChange ?? (() => {}),
-      position: () => props.position ?? { x: 0, y: 0 },
-      setPosition: props.onPositionChange ?? (() => {}),
+      posX,
+      posY,
+      setPosX,
+      setPosY,
     }}>
       <div data-slot="context-menu" className={props.class ?? ''}>
         {props.children}
@@ -170,7 +171,8 @@ function ContextMenuTrigger(props: ContextMenuTriggerProps) {
 
     el.addEventListener('contextmenu', (e: MouseEvent) => {
       e.preventDefault()
-      ctx.setPosition({ x: e.clientX, y: e.clientY })
+      ctx.setPosX(e.clientX)
+      ctx.setPosY(e.clientY)
       ctx.onOpenChange(true)
     })
   }
@@ -216,20 +218,19 @@ function ContextMenuContent(props: ContextMenuContentProps) {
 
     // Position content at mouse coordinates
     const updatePosition = () => {
-      const pos = ctx.position()
       const menuWidth = el.offsetWidth
       const menuHeight = el.offsetHeight
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
 
       // Flip horizontally if menu would overflow right edge
-      let x = pos.x
+      let x = ctx.posX()
       if (x + menuWidth > viewportWidth) {
         x = Math.max(0, viewportWidth - menuWidth)
       }
 
       // Flip vertically if menu would overflow bottom edge
-      let y = pos.y
+      let y = ctx.posY()
       if (y + menuHeight > viewportHeight) {
         y = Math.max(0, viewportHeight - menuHeight)
       }

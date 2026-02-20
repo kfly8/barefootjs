@@ -33,10 +33,9 @@ import {
  */
 export function ContextMenuBasicDemo() {
   const [open, setOpen] = createSignal(false)
-  const [position, setPosition] = createSignal({ x: 0, y: 0 })
 
   return (
-    <ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}>
+    <ContextMenu open={open()} onOpenChange={setOpen}>
       <ContextMenuTrigger>
         <div className="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
           Right-click here
@@ -74,12 +73,11 @@ export function ContextMenuBasicDemo() {
  */
 export function ContextMenuCheckboxDemo() {
   const [open, setOpen] = createSignal(false)
-  const [position, setPosition] = createSignal({ x: 0, y: 0 })
   const [showBookmarks, setShowBookmarks] = createSignal(true)
   const [showFullUrls, setShowFullUrls] = createSignal(false)
 
   return (
-    <ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}>
+    <ContextMenu open={open()} onOpenChange={setOpen}>
       <ContextMenuTrigger>
         <div className="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
           Right-click here
@@ -104,13 +102,12 @@ export function ContextMenuCheckboxDemo() {
  */
 export function ContextMenuFullDemo() {
   const [open, setOpen] = createSignal(false)
-  const [position, setPosition] = createSignal({ x: 0, y: 0 })
   const [showBookmarks, setShowBookmarks] = createSignal(true)
   const [showToolbar, setShowToolbar] = createSignal(false)
   const [person, setPerson] = createSignal('pedro')
 
   return (
-    <ContextMenu open={open()} onOpenChange={setOpen} position={position()} onPositionChange={setPosition}>
+    <ContextMenu open={open()} onOpenChange={setOpen}>
       <ContextMenuTrigger>
         <div className="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
           Right-click here
