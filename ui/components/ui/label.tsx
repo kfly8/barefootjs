@@ -1,3 +1,21 @@
+/**
+ * Label Component
+ *
+ * A text label associated with a form control.
+ * Supports disabled state via parent group data attributes
+ * and peer-based styling for disabled siblings.
+ *
+ * @example Basic usage
+ * ```tsx
+ * <Label>Email</Label>
+ * ```
+ *
+ * @example With form control
+ * ```tsx
+ * <Label for="email">Email address</Label>
+ * <Input id="email" type="email" />
+ * ```
+ */
 import type { LabelHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
