@@ -7,6 +7,14 @@ import type { IRTemplateLiteral } from '../types'
 import type { LoopElement } from './types'
 
 /**
+ * Strip ^ prefix from slot ID for use as JavaScript variable name.
+ * `^s3` → `s3` (since `_^s3` is not a valid identifier)
+ */
+export function varSlotId(slotId: string): string {
+  return slotId.startsWith('^') ? slotId.slice(1) : slotId
+}
+
+/**
  * Convert an attribute value to a string expression.
  * Handles both string values and IRTemplateLiteral.
  */

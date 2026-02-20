@@ -4,7 +4,7 @@
 
 import type { ComponentIR, ConstantInfo } from '../types'
 import type { ClientJsContext } from './types'
-import { stripTypeScriptSyntax } from './utils'
+import { stripTypeScriptSyntax, varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
 import { valueReferencesReactiveData, getControlledPropName, detectPropsWithPropertyAccess } from './prop-handling'
 import { IMPORT_PLACEHOLDER, MODULE_CONSTANTS_PLACEHOLDER, detectUsedImports, collectUserDomImports } from './imports'
@@ -292,12 +292,12 @@ export function generateElementRefs(ctx: ClientJsContext): string {
 
   // Regular element slots use $() shorthand for find(scope, '[bf="id"]')
   for (const slotId of regularSlots) {
-    refLines.push(`  const _${slotId} = $(__scope, '${slotId}')`)
+    refLines.push(`  const _${varSlotId(slotId)} = $(__scope, '${slotId}')`)
   }
 
   // Component slots use $c() shorthand for find(scope, '[bf-s$="_id"]')
   for (const slotId of componentSlots) {
-    refLines.push(`  const _${slotId} = $c(__scope, '${slotId}')`)
+    refLines.push(`  const _${varSlotId(slotId)} = $c(__scope, '${slotId}')`)
   }
 
   return refLines.join('\n')
