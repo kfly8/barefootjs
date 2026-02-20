@@ -40,6 +40,7 @@ import { RadioGroupPage } from './pages/radio-group'
 import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
 import { HoverCardPage } from './pages/hover-card'
+import { MenubarPage } from './pages/menubar'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -131,6 +132,10 @@ export function createApp() {
             <a href="/docs/components/label" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Label</h3>
               <p className="text-xs text-muted-foreground">Accessible label for form controls</p>
+            </a>
+            <a href="/docs/components/menubar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Menubar</h3>
+              <p className="text-xs text-muted-foreground">Desktop application menu bar</p>
             </a>
             <a href="/docs/components/pagination" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Pagination</h3>
@@ -357,6 +362,11 @@ export function createApp() {
   // Portal documentation
   app.get('/docs/components/portal', (c) => {
     return c.render(<PortalPage />)
+  })
+
+  // Menubar documentation
+  app.get('/docs/components/menubar', (c) => {
+    return c.render(<MenubarPage />)
   })
 
   // Pagination documentation

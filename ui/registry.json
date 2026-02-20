@@ -94,6 +94,12 @@
       "description": "Accessible resizable panel groups and layouts with drag and keyboard support"
     },
     {
+      "name": "menubar",
+      "type": "registry:ui",
+      "title": "Menubar",
+      "description": "A visually persistent menu common in desktop applications"
+    },
+    {
       "name": "scroll-area",
       "type": "registry:ui",
       "title": "Scroll Area",

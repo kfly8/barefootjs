@@ -86,6 +86,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Hover Card', href: '/docs/components/hover-card' },
       { title: 'Input', href: '/docs/components/input' },
       { title: 'Label', href: '/docs/components/label' },
+      { title: 'Menubar', href: '/docs/components/menubar' },
       { title: 'Pagination', href: '/docs/components/pagination' },
       { title: 'Popover', href: '/docs/components/popover' },
       { title: 'Radio Group', href: '/docs/components/radio-group' },

@@ -21,6 +21,7 @@ export const componentOrder = [
   { slug: 'hover-card', title: 'Hover Card' },
   { slug: 'input', title: 'Input' },
   { slug: 'label', title: 'Label' },
+  { slug: 'menubar', title: 'Menubar' },
   { slug: 'pagination', title: 'Pagination' },
   { slug: 'popover', title: 'Popover' },
   { slug: 'portal', title: 'Portal' },
