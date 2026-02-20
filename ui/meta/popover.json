@@ -1,0 +1,147 @@
+{
+  "name": "popover",
+  "title": "Popover",
+  "category": "overlay",
+  "description": "Popover Components A floating panel that appears relative to a trigger element. Inspired by shadcn/ui Popover with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root Popover manages open state, children consume via context. Features: - ESC key to close - Click outside to close - Non-modal (no scroll lock, no focus trap) - Accessibility (aria-expanded, data-state)",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the popover is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "PopoverTrigger and PopoverContent"
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "PopoverTrigger",
+      "description": "Props for PopoverTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "PopoverContent",
+      "description": "Props for PopoverContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Popover content"
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'center' | 'end'",
+          "required": false,
+          "description": "Alignment relative to trigger"
+        },
+        {
+          "name": "side",
+          "type": "'top' | 'bottom'",
+          "required": false,
+          "description": "Side relative to trigger"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "PopoverClose",
+      "description": "Props for PopoverClose component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic popover",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<Popover open={open()} onOpenChange={setOpen}>\n  <PopoverTrigger>\n    <button>Open</button>\n  </PopoverTrigger>\n  <PopoverContent>\n    <p>Popover content here.</p>\n  </PopoverContent>\n</Popover>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-expanded"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "dropdown-menu",
+    "hover-card",
+    "tooltip"
+  ],
+  "source": "ui/components/ui/popover.tsx"
+}

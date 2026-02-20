@@ -1,0 +1,60 @@
+{
+  "name": "icon",
+  "title": "Icon",
+  "category": "display",
+  "description": "Icon Components SVG icons based on Lucide icon definitions. Each icon component directly returns an SVG element. Based on lucide-static v0.562.0 icon definitions.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "size",
+      "type": "IconSize",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "variants": {
+    "IconSize": [
+      "sm",
+      "md",
+      "lg",
+      "xl"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Using a specific icon",
+      "code": "<CheckIcon size=\"md\" />\n<ChevronDownIcon size=\"sm\" className=\"text-muted-foreground\" />"
+    },
+    {
+      "title": "Using the generic Icon component",
+      "code": "<Icon name=\"check\" size=\"lg\" />\n<Icon name=\"x\" size=\"sm\" className=\"text-destructive\" />"
+    },
+    {
+      "title": "Available sizes",
+      "code": "<CheckIcon size=\"sm\" />  // 16px\n<CheckIcon size=\"md\" />  // 20px (default)\n<CheckIcon size=\"lg\" />  // 24px\n<CheckIcon size=\"xl\" />  // 32px"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-hidden"
+    ],
+    "dataAttributes": []
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "button"
+  ],
+  "source": "ui/components/ui/icon.tsx"
+}

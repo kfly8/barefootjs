@@ -1,0 +1,104 @@
+{
+  "name": "slider",
+  "title": "Slider",
+  "category": "input",
+  "description": "Slider Component An input for selecting a numeric value from a range. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultValue",
+      "type": "number",
+      "required": false,
+      "default": "0",
+      "description": "Default value (for uncontrolled mode)."
+    },
+    {
+      "name": "value",
+      "type": "number",
+      "required": false,
+      "description": "Controlled value. When provided, the component is in controlled mode."
+    },
+    {
+      "name": "min",
+      "type": "number",
+      "required": false,
+      "default": "0",
+      "description": "Minimum value."
+    },
+    {
+      "name": "max",
+      "type": "number",
+      "required": false,
+      "default": "100",
+      "description": "Maximum value."
+    },
+    {
+      "name": "step",
+      "type": "number",
+      "required": false,
+      "default": "1",
+      "description": "Step increment."
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Whether the slider is disabled."
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: number) => void",
+      "required": false,
+      "description": "Callback when the value changes."
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes for the root element."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Uncontrolled (internal state)",
+      "code": "<Slider />\n<Slider defaultValue={50} />"
+    },
+    {
+      "title": "Controlled (external state)",
+      "code": "<Slider value={volume()} onValueChange={setVolume} />"
+    },
+    {
+      "title": "Custom range and step",
+      "code": "<Slider min={0} max={10} step={0.5} defaultValue={5} />"
+    }
+  ],
+  "accessibility": {
+    "role": "slider",
+    "ariaAttributes": [
+      "aria-valuenow",
+      "aria-valuemin",
+      "aria-valuemax"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-disabled"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "input",
+    "switch"
+  ],
+  "source": "ui/components/ui/slider.tsx"
+}

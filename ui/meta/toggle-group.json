@@ -1,0 +1,146 @@
+{
+  "name": "toggle-group",
+  "title": "Toggle Group",
+  "category": "input",
+  "description": "ToggleGroup Component A group of toggle buttons where selection can be single or multiple. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "type",
+      "type": "'single' | 'multiple'",
+      "required": true,
+      "description": "Selection mode: 'single' allows one item, 'multiple' allows many."
+    },
+    {
+      "name": "defaultValue",
+      "type": "string | string[]",
+      "required": false,
+      "description": "Default selected value(s) for uncontrolled mode."
+    },
+    {
+      "name": "value",
+      "type": "string | string[]",
+      "required": false,
+      "description": "Controlled selected value(s)."
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string | string[]) => void",
+      "required": false,
+      "description": "Callback when value changes."
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the entire group is disabled."
+    },
+    {
+      "name": "variant",
+      "type": "ToggleVariant",
+      "required": false,
+      "description": "Visual variant applied to all items."
+    },
+    {
+      "name": "size",
+      "type": "ToggleSize",
+      "required": false,
+      "description": "Size applied to all items."
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes."
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "ToggleGroupItem children."
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "ToggleGroupItem",
+      "description": "Props for the ToggleGroupItem component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Value for this toggle item."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this item is disabled."
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes."
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children to render inside the toggle item."
+        }
+      ]
+    }
+  ],
+  "variants": {
+    "ToggleVariant": [
+      "default",
+      "outline"
+    ],
+    "ToggleSize": [
+      "default",
+      "sm",
+      "lg"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Single selection (uncontrolled)",
+      "code": "<ToggleGroup type=\"single\" defaultValue=\"center\">\n  <ToggleGroupItem value=\"left\">Left</ToggleGroupItem>\n  <ToggleGroupItem value=\"center\">Center</ToggleGroupItem>\n  <ToggleGroupItem value=\"right\">Right</ToggleGroupItem>\n</ToggleGroup>"
+    },
+    {
+      "title": "Multiple selection (controlled)",
+      "code": "<ToggleGroup type=\"multiple\" value={formats()} onValueChange={setFormats}>\n  <ToggleGroupItem value=\"bold\">Bold</ToggleGroupItem>\n  <ToggleGroupItem value=\"italic\">Italic</ToggleGroupItem>\n</ToggleGroup>"
+    }
+  ],
+  "accessibility": {
+    "role": "group",
+    "ariaAttributes": [
+      "aria-invalid",
+      "aria-pressed"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "toggle",
+    "radio-group",
+    "tabs"
+  ],
+  "source": "ui/components/ui/toggle-group.tsx"
+}

@@ -1,0 +1,136 @@
+{
+  "name": "hover-card",
+  "title": "Hover Card",
+  "category": "overlay",
+  "description": "HoverCard Components A floating card that appears on hover to show rich content. Combines Popover's context/portal/positioning with Tooltip's hover/timer pattern. State management uses createContext/useContext for parent-child communication. Timer IDs are stored on DOM elements (dataset) to ensure they are shared across event handler closures after hydration. Features: - Hover to open with configurable delay (700ms default) - Close delay (300ms default) allows moving to content - ESC key to close - Portal to body for overflow clipping escape - Accessibility (aria-expanded, data-state)",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the hover card is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "HoverCardTrigger and HoverCardContent"
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    },
+    {
+      "name": "openDelay",
+      "type": "number",
+      "required": false,
+      "default": "700",
+      "description": "Delay in ms before opening on hover."
+    },
+    {
+      "name": "closeDelay",
+      "type": "number",
+      "required": false,
+      "default": "300",
+      "description": "Delay in ms before closing after mouse leave."
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "HoverCardTrigger",
+      "description": "Props for HoverCardTrigger component.",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether to render child element as trigger"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "HoverCardContent",
+      "description": "Props for HoverCardContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Hover card content"
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'center' | 'end'",
+          "required": false,
+          "description": "Alignment relative to trigger"
+        },
+        {
+          "name": "side",
+          "type": "'top' | 'bottom'",
+          "required": false,
+          "description": "Side relative to trigger"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic hover card",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<HoverCard open={open()} onOpenChange={setOpen}>\n  <HoverCardTrigger>\n    <a href=\"#\">@username</a>\n  </HoverCardTrigger>\n  <HoverCardContent>\n    <p>User profile information</p>\n  </HoverCardContent>\n</HoverCard>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-expanded"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "tooltip",
+    "popover"
+  ],
+  "source": "ui/components/ui/hover-card.tsx"
+}

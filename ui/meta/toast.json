@@ -1,0 +1,212 @@
+{
+  "name": "toast",
+  "title": "Toast",
+  "category": "overlay",
+  "description": "Toast Components A non-blocking notification component that displays brief messages. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Toast root manages open state and animation, children consume via context. Features: - Variants: default, success, error, warning, info - Auto-dismiss with configurable duration - Manual dismiss via close button or context - Portal rendering to document.body - Reactive enter/exit animations via createEffect - Position options: top-right, top-center, top-left, bottom-right, bottom-center, bottom-left - Accessibility: role=\"status\", aria-live=\"polite\"",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "position",
+      "type": "ToastPosition",
+      "required": false,
+      "default": "bottom-right",
+      "description": "Position of the toast container."
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Toast components"
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "Toast",
+      "description": "Props for Toast component.",
+      "props": [
+        {
+          "name": "variant",
+          "type": "ToastVariant",
+          "required": false,
+          "default": "default",
+          "description": "Visual variant of the toast."
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Whether the toast is visible."
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "required": false,
+          "description": "Callback when open state changes (e.g., on auto-dismiss)"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "required": false,
+          "default": "5000",
+          "description": "Auto-dismiss duration in ms. Set to 0 to disable auto-dismiss."
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Toast content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "ToastTitle",
+      "description": "Props for ToastTitle component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Title text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "ToastDescription",
+      "description": "Title text for the toast. / function ToastTitle({ class: className = '', children }: ToastTitleProps) { return ( <div data-slot=\"toast-title\" className={`${toastTitleClasses} ${className}`}> {children} </div> ) } /** Props for ToastDescription component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Description text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "ToastClose",
+      "description": "Props for ToastClose component.",
+      "props": [
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "ToastAction",
+      "description": "Props for ToastAction component.",
+      "props": [
+        {
+          "name": "altText",
+          "type": "string",
+          "required": true,
+          "description": "Accessible text describing the action"
+        },
+        {
+          "name": "onClick",
+          "type": "() => void",
+          "required": false,
+          "description": "Click handler"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "variants": {
+    "ToastVariant": [
+      "default",
+      "success",
+      "error",
+      "warning",
+      "info"
+    ],
+    "ToastPosition": [
+      "top-right",
+      "top-center",
+      "top-left",
+      "bottom-right",
+      "bottom-center",
+      "bottom-left"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Basic toast",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<ToastProvider position=\"bottom-right\">\n  <Toast open={open()} onOpenChange={setOpen}>\n    <div className=\"flex-1\">\n      <ToastTitle>Success!</ToastTitle>\n      <ToastDescription>Your changes have been saved.</ToastDescription>\n    </div>\n    <ToastClose />\n  </Toast>\n</ToastProvider>"
+    },
+    {
+      "title": "Toast with action",
+      "code": "<Toast open={open()} onOpenChange={setOpen}>\n  <div className=\"flex-1\">\n    <ToastTitle>Item deleted</ToastTitle>\n    <ToastDescription>The item has been removed.</ToastDescription>\n  </div>\n  <ToastAction altText=\"Undo\" onClick={handleUndo}>Undo</ToastAction>\n  <ToastClose />\n</Toast>"
+    }
+  ],
+  "accessibility": {
+    "role": "status, variant",
+    "ariaAttributes": [
+      "aria-live",
+      "aria-hidden",
+      "aria-label"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "icon"
+    ],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "alert-dialog",
+    "dialog"
+  ],
+  "source": "ui/components/ui/toast.tsx"
+}

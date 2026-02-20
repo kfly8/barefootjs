@@ -1,0 +1,529 @@
+{
+  "version": 1,
+  "generatedAt": "2026-02-20T12:36:16.295Z",
+  "components": [
+    {
+      "name": "accordion",
+      "title": "Accordion",
+      "category": "navigation",
+      "description": "Accordion Components A vertically stacked set of interactive headings that reveal content. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. AccordionItem manages open state, children consume via context.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "AccordionItem",
+        "AccordionTrigger",
+        "AccordionContent"
+      ]
+    },
+    {
+      "name": "alert-dialog",
+      "title": "Alert Dialog",
+      "category": "overlay",
+      "description": "AlertDialog Components A modal dialog for critical confirmations that require explicit user action. Unlike Dialog, AlertDialog does NOT close on overlay click — users must choose an action (Cancel or Action). Follows the WAI-ARIA alertdialog pattern and shadcn/ui's AlertDialog design. Features: - ESC key to close - Overlay does NOT close on click (key difference from Dialog) - Focus trap (Tab/Shift+Tab cycles within modal) - Accessibility (role=\"alertdialog\", aria-modal=\"true\")",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "AlertDialogTrigger",
+        "AlertDialogOverlay",
+        "AlertDialogContent",
+        "AlertDialogHeader",
+        "AlertDialogTitle",
+        "AlertDialogDescription",
+        "AlertDialogFooter",
+        "AlertDialogCancel",
+        "AlertDialogAction"
+      ]
+    },
+    {
+      "name": "badge",
+      "title": "Badge",
+      "category": "display",
+      "description": "Badge Component A small status indicator component with multiple visual variants. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "breadcrumb",
+      "title": "Breadcrumb",
+      "category": "navigation",
+      "description": "Breadcrumb Components A composable breadcrumb navigation component. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "multi-component",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "BreadcrumbList",
+        "BreadcrumbItem",
+        "BreadcrumbLink",
+        "BreadcrumbPage",
+        "BreadcrumbSeparator",
+        "BreadcrumbEllipsis"
+      ]
+    },
+    {
+      "name": "button",
+      "title": "Button",
+      "category": "input",
+      "description": "Button Component A versatile button component with multiple visual variants and sizes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "card",
+      "title": "Card",
+      "category": "layout",
+      "description": "Card Components A flexible container component with composable sub-components. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "multi-component"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "CardHeader",
+        "CardTitle",
+        "CardDescription",
+        "CardContent",
+        "CardImage",
+        "CardAction",
+        "CardFooter"
+      ]
+    },
+    {
+      "name": "checkbox",
+      "title": "Checkbox",
+      "category": "input",
+      "description": "Checkbox Component An accessible checkbox with custom styling. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true
+    },
+    {
+      "name": "collapsible",
+      "title": "Collapsible",
+      "category": "navigation",
+      "description": "Collapsible Components An interactive component which expands/collapses a panel. Simpler than Accordion — single panel, no multi-item management. State management uses createContext/useContext for parent-child communication.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "CollapsibleTrigger",
+        "CollapsibleContent"
+      ]
+    },
+    {
+      "name": "dialog",
+      "title": "Dialog",
+      "category": "overlay",
+      "description": "Dialog Components A modal dialog that displays content in a layer above the page. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Dialog root manages open state, children consume via context. Features: - ESC key to close - Click outside (overlay) to close - Focus trap (Tab/Shift+Tab cycles within modal) - Accessibility (role=\"dialog\", aria-modal=\"true\")",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "DialogTrigger",
+        "DialogOverlay",
+        "DialogContent",
+        "DialogHeader",
+        "DialogTitle",
+        "DialogDescription",
+        "DialogFooter",
+        "DialogClose"
+      ]
+    },
+    {
+      "name": "drawer",
+      "title": "Drawer",
+      "category": "overlay",
+      "description": "Drawer Components A panel that slides in from the edge of the screen, typically from the bottom. Similar to Sheet but designed for mobile-friendly interactions with a handle bar. Inspired by shadcn/ui (Vaul-based) with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Drawer root manages open state, children consume via context. Features: - ESC key to close - Click outside (overlay) to close - Focus trap (Tab/Shift+Tab cycles within panel) - Accessibility (role=\"dialog\", aria-modal=\"true\") - Slide animation from any edge (top, right, bottom, left) - Handle bar indicator (for top/bottom directions) - No built-in close button (X) by default",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "DrawerTrigger",
+        "DrawerOverlay",
+        "DrawerContent",
+        "DrawerHandle",
+        "DrawerHeader",
+        "DrawerTitle",
+        "DrawerDescription",
+        "DrawerFooter",
+        "DrawerClose"
+      ]
+    },
+    {
+      "name": "dropdown-menu",
+      "title": "Dropdown Menu",
+      "category": "overlay",
+      "description": "DropdownMenu Components An action menu triggered by a button, avatar, or any element. Inspired by shadcn/ui DropdownMenu with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root DropdownMenu manages open state, children consume via context. Features: - ESC key to close - Arrow key navigation - Accessibility (role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select - Destructive variant for dangerous actions",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "DropdownMenuTrigger",
+        "DropdownMenuContent",
+        "DropdownMenuItem",
+        "DropdownMenuCheckboxItem",
+        "DropdownMenuRadioGroup",
+        "DropdownMenuRadioItem",
+        "DropdownMenuSub",
+        "DropdownMenuSubTrigger",
+        "DropdownMenuSubContent",
+        "DropdownMenuLabel",
+        "DropdownMenuSeparator",
+        "DropdownMenuShortcut",
+        "DropdownMenuGroup"
+      ]
+    },
+    {
+      "name": "hover-card",
+      "title": "Hover Card",
+      "category": "overlay",
+      "description": "HoverCard Components A floating card that appears on hover to show rich content. Combines Popover's context/portal/positioning with Tooltip's hover/timer pattern. State management uses createContext/useContext for parent-child communication. Timer IDs are stored on DOM elements (dataset) to ensure they are shared across event handler closures after hydration. Features: - Hover to open with configurable delay (700ms default) - Close delay (300ms default) allows moving to content - ESC key to close - Portal to body for overflow clipping escape - Accessibility (aria-expanded, data-state)",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "HoverCardTrigger",
+        "HoverCardContent"
+      ]
+    },
+    {
+      "name": "icon",
+      "title": "Icon",
+      "category": "display",
+      "description": "Icon Components SVG icons based on Lucide icon definitions. Each icon component directly returns an SVG element. Based on lucide-static v0.562.0 icon definitions.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "input",
+      "title": "Input",
+      "category": "input",
+      "description": "Input Component A styled text input component following shadcn/ui design. Accepts all native input attributes via ...props spread.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "label",
+      "title": "Label",
+      "category": "input",
+      "description": "Label Component A text label associated with a form control. Supports disabled state via parent group data attributes and peer-based styling for disabled siblings.",
+      "tags": [],
+      "stateful": false
+    },
+    {
+      "name": "pagination",
+      "title": "Pagination",
+      "category": "navigation",
+      "description": "Pagination Component Navigation component for paginated content. Built with accessible nav, list, and link elements.",
+      "tags": [
+        "multi-component",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "PaginationContent",
+        "PaginationItem",
+        "PaginationLink",
+        "PaginationEllipsis"
+      ]
+    },
+    {
+      "name": "popover",
+      "title": "Popover",
+      "category": "overlay",
+      "description": "Popover Components A floating panel that appears relative to a trigger element. Inspired by shadcn/ui Popover with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root Popover manages open state, children consume via context. Features: - ESC key to close - Click outside to close - Non-modal (no scroll lock, no focus trap) - Accessibility (aria-expanded, data-state)",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "PopoverTrigger",
+        "PopoverContent",
+        "PopoverClose"
+      ]
+    },
+    {
+      "name": "portal",
+      "title": "Portal",
+      "category": "display",
+      "description": "Portal Component A component that renders its children into a different part of the DOM tree. Useful for modals, tooltips, and dropdowns that need to render outside their parent container to avoid overflow or z-index issues. Uses @barefootjs/dom's createPortal utility for client-side portal mounting.",
+      "tags": [
+        "portal"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "radio-group",
+      "title": "Radio Group",
+      "category": "input",
+      "description": "RadioGroup Component A set of checkable buttons where only one can be checked at a time. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "RadioGroupItem"
+      ]
+    },
+    {
+      "name": "resizable",
+      "title": "Resizable",
+      "category": "layout",
+      "description": "Resizable Panel Components Accessible resizable panel groups with drag and keyboard support. Inspired by shadcn/ui wrapping react-resizable-panels.",
+      "tags": [
+        "multi-component",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "ResizablePanel",
+        "ResizableHandle"
+      ]
+    },
+    {
+      "name": "scroll-area",
+      "title": "Scroll Area",
+      "category": "layout",
+      "description": "ScrollArea Component Augments native scroll with custom, cross-browser styled scrollbars. Hides native scrollbars and renders overlay thumb indicators.",
+      "tags": [
+        "stateful",
+        "multi-component"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "ScrollBar"
+      ]
+    },
+    {
+      "name": "select",
+      "title": "Select",
+      "category": "input",
+      "description": "Select Components A custom select dropdown with multiple sub-components. Inspired by shadcn/ui Select with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root Select manages open/value state, children consume via context. Features: - ESC key to close - Arrow key navigation - Type-ahead search - Accessibility (role=\"combobox\", role=\"listbox\", role=\"option\") - Controlled/uncontrolled value - Portal for Content (escape overflow clipping) - data-state attribute-driven styling",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "SelectTrigger",
+        "SelectValue",
+        "SelectContent",
+        "SelectItem",
+        "SelectGroup",
+        "SelectLabel",
+        "SelectSeparator"
+      ]
+    },
+    {
+      "name": "separator",
+      "title": "Separator",
+      "category": "layout",
+      "description": "Separator Component A visual divider that separates content horizontally or vertically. Can be decorative (no semantic meaning) or act as a true separator with appropriate ARIA role and orientation.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "sheet",
+      "title": "Sheet",
+      "category": "overlay",
+      "description": "Sheet Components A panel that slides in from the edge of the screen. Extends the Dialog pattern with side-based positioning and slide animations. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Sheet root manages open state, children consume via context. Features: - ESC key to close - Click outside (overlay) to close - Focus trap (Tab/Shift+Tab cycles within panel) - Accessibility (role=\"dialog\", aria-modal=\"true\") - Slide animation from any edge (top, right, bottom, left) - Built-in close button (configurable via showCloseButton)",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "SheetTrigger",
+        "SheetOverlay",
+        "SheetContent",
+        "SheetHeader",
+        "SheetTitle",
+        "SheetDescription",
+        "SheetFooter",
+        "SheetClose"
+      ]
+    },
+    {
+      "name": "slider",
+      "title": "Slider",
+      "category": "input",
+      "description": "Slider Component An input for selecting a numeric value from a range. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true
+    },
+    {
+      "name": "slot",
+      "title": "Slot",
+      "category": "display",
+      "description": "Slot Component A polymorphic component that merges its props with its child element. Inspired by @radix-ui/react-slot. This enables the `asChild` pattern used by components like Button and Badge.",
+      "tags": [],
+      "stateful": false
+    },
+    {
+      "name": "switch",
+      "title": "Switch",
+      "category": "input",
+      "description": "Switch Component A toggle switch for boolean state. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true
+    },
+    {
+      "name": "tabs",
+      "title": "Tabs",
+      "category": "navigation",
+      "description": "Tabs Components A set of layered sections of content displayed one at a time. Inspired by shadcn/ui with CSS variable theming support. Design Decision: Props-based state management instead of Context. The parent component should use signals to track state and pass `selected` prop to TabsTrigger and TabsContent for matching.",
+      "tags": [
+        "multi-component",
+        "controlled",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "TabsList",
+        "TabsTrigger",
+        "TabsContent"
+      ]
+    },
+    {
+      "name": "textarea",
+      "title": "Textarea",
+      "category": "input",
+      "description": "Textarea Component A styled multi-line text input component with error state support. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
+      "name": "toast",
+      "title": "Toast",
+      "category": "overlay",
+      "description": "Toast Components A non-blocking notification component that displays brief messages. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Toast root manages open state and animation, children consume via context. Features: - Variants: default, success, error, warning, info - Auto-dismiss with configurable duration - Manual dismiss via close button or context - Portal rendering to document.body - Reactive enter/exit animations via createEffect - Position options: top-right, top-center, top-left, bottom-right, bottom-center, bottom-left - Accessibility: role=\"status\", aria-live=\"polite\"",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "Toast",
+        "ToastTitle",
+        "ToastDescription",
+        "ToastClose",
+        "ToastAction"
+      ]
+    },
+    {
+      "name": "toggle-group",
+      "title": "Toggle Group",
+      "category": "input",
+      "description": "ToggleGroup Component A group of toggle buttons where selection can be single or multiple. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "ToggleGroupItem"
+      ]
+    },
+    {
+      "name": "toggle",
+      "title": "Toggle",
+      "category": "input",
+      "description": "Toggle Component A two-state button that can be either on or off. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "aria"
+      ],
+      "stateful": true
+    },
+    {
+      "name": "tooltip",
+      "title": "Tooltip",
+      "category": "overlay",
+      "description": "Tooltip Component A popup that displays contextual information on hover or focus. Adapted from shadcn/ui v4 with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "aria"
+      ],
+      "stateful": true
+    }
+  ]
+}

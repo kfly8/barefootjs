@@ -1,0 +1,116 @@
+{
+  "name": "resizable",
+  "title": "Resizable",
+  "category": "layout",
+  "description": "Resizable Panel Components Accessible resizable panel groups with drag and keyboard support. Inspired by shadcn/ui wrapping react-resizable-panels.",
+  "tags": [
+    "multi-component",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "direction",
+      "type": "'horizontal' | 'vertical'",
+      "required": true,
+      "description": "Layout direction."
+    },
+    {
+      "name": "children",
+      "type": "any",
+      "required": false,
+      "description": "Panel children."
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes."
+    },
+    {
+      "name": "onLayout",
+      "type": "(sizes: number[]) => void",
+      "required": false,
+      "description": "Callback when panel sizes change."
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "ResizablePanel",
+      "description": "",
+      "props": [
+        {
+          "name": "defaultSize",
+          "type": "number",
+          "required": false,
+          "description": "Initial size as percentage (0-100)."
+        },
+        {
+          "name": "minSize",
+          "type": "number",
+          "required": false,
+          "description": "Minimum size as percentage."
+        },
+        {
+          "name": "maxSize",
+          "type": "number",
+          "required": false,
+          "description": "Maximum size as percentage."
+        },
+        {
+          "name": "children",
+          "type": "any",
+          "required": false,
+          "description": "Panel content."
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes."
+        }
+      ]
+    },
+    {
+      "name": "ResizableHandle",
+      "description": "",
+      "props": [
+        {
+          "name": "withHandle",
+          "type": "boolean",
+          "required": false,
+          "description": "Show visible grip dots."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Disable drag interaction."
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes."
+        }
+      ]
+    }
+  ],
+  "examples": [],
+  "accessibility": {
+    "role": "separator",
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot",
+      "data-disabled"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "scroll-area"
+  ],
+  "source": "ui/components/ui/resizable.tsx"
+}

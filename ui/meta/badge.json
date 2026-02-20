@@ -1,0 +1,72 @@
+{
+  "name": "badge",
+  "title": "Badge",
+  "category": "display",
+  "description": "Badge Component A small status indicator component with multiple visual variants. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "variant",
+      "type": "BadgeVariant",
+      "required": false,
+      "default": "default",
+      "description": "Visual style of the badge."
+    },
+    {
+      "name": "asChild",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "When true, renders child element with badge styling instead of `<span>`. Useful for creating badge-styled links or custom elements."
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Children to render inside the badge."
+    }
+  ],
+  "variants": {
+    "BadgeVariant": [
+      "default",
+      "secondary",
+      "destructive",
+      "outline"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Badge>New</Badge>"
+    },
+    {
+      "title": "With variant",
+      "code": "<Badge variant=\"destructive\">Error</Badge>"
+    },
+    {
+      "title": "As a link (polymorphic rendering)",
+      "code": "<Badge asChild>\n  <a href=\"/status\">Active</a>\n</Badge>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-invalid"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "slot"
+    ],
+    "external": []
+  },
+  "related": [
+    "button"
+  ],
+  "source": "ui/components/ui/badge.tsx"
+}

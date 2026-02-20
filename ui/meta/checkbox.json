@@ -1,0 +1,94 @@
+{
+  "name": "checkbox",
+  "title": "Checkbox",
+  "category": "input",
+  "description": "Checkbox Component An accessible checkbox with custom styling. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultChecked",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Default checked state (for uncontrolled mode)."
+    },
+    {
+      "name": "checked",
+      "type": "boolean",
+      "required": false,
+      "description": "Controlled checked state. When provided, component is in controlled mode."
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Whether the checkbox is disabled."
+    },
+    {
+      "name": "error",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Whether the checkbox is in an error state."
+    },
+    {
+      "name": "onCheckedChange",
+      "type": "(checked: boolean) => void",
+      "required": false,
+      "description": "Callback when the checked state changes."
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Uncontrolled (internal state)",
+      "code": "<Checkbox />\n<Checkbox defaultChecked />"
+    },
+    {
+      "title": "Controlled (external state)",
+      "code": "<Checkbox checked={isChecked} onCheckedChange={setIsChecked} />"
+    },
+    {
+      "title": "With label",
+      "code": "<label className=\"flex items-center gap-2\">\n  <Checkbox />\n  I agree to the terms\n</label>"
+    },
+    {
+      "title": "Disabled state",
+      "code": "<Checkbox checked disabled />"
+    }
+  ],
+  "accessibility": {
+    "role": "checkbox",
+    "ariaAttributes": [
+      "aria-invalid",
+      "aria-checked"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "switch",
+    "radio-group",
+    "toggle"
+  ],
+  "source": "ui/components/ui/checkbox.tsx"
+}

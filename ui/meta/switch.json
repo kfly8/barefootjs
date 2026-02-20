@@ -1,0 +1,81 @@
+{
+  "name": "switch",
+  "title": "Switch",
+  "category": "input",
+  "description": "Switch Component A toggle switch for boolean state. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultChecked",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Default checked state (for uncontrolled mode)."
+    },
+    {
+      "name": "checked",
+      "type": "boolean",
+      "required": false,
+      "description": "Controlled checked state. When provided, component is in controlled mode."
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Whether the switch is disabled."
+    },
+    {
+      "name": "onCheckedChange",
+      "type": "(checked: boolean) => void",
+      "required": false,
+      "description": "Callback when the switch is toggled."
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes for the switch track."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Uncontrolled (internal state)",
+      "code": "<Switch />\n<Switch defaultChecked />"
+    },
+    {
+      "title": "Controlled (external state)",
+      "code": "<Switch checked={isEnabled} onCheckedChange={setIsEnabled} />"
+    },
+    {
+      "title": "Disabled state",
+      "code": "<Switch checked disabled />"
+    }
+  ],
+  "accessibility": {
+    "role": "switch",
+    "ariaAttributes": [
+      "aria-checked"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "checkbox",
+    "toggle"
+  ],
+  "source": "ui/components/ui/switch.tsx"
+}

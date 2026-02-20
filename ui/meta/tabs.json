@@ -1,0 +1,162 @@
+{
+  "name": "tabs",
+  "title": "Tabs",
+  "category": "navigation",
+  "description": "Tabs Components A set of layered sections of content displayed one at a time. Inspired by shadcn/ui with CSS variable theming support. Design Decision: Props-based state management instead of Context. The parent component should use signals to track state and pass `selected` prop to TabsTrigger and TabsContent for matching.",
+  "tags": [
+    "multi-component",
+    "controlled",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "value",
+      "type": "string",
+      "required": false,
+      "description": "Currently selected tab value"
+    },
+    {
+      "name": "defaultValue",
+      "type": "string",
+      "required": false,
+      "description": "Default selected value (uncontrolled)"
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when tab changes"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Tab components (TabsList and TabsContent)"
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "TabsList",
+      "description": "Props for TabsList component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "TabsTrigger components"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "TabsTrigger",
+      "description": "Props for TabsTrigger component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Value that identifies this tab"
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this tab is currently selected"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this tab is disabled"
+        },
+        {
+          "name": "onClick",
+          "type": "() => void",
+          "required": false,
+          "description": "Click handler"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Tab label"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "TabsContent",
+      "description": "Props for TabsContent component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Value that identifies which tab this content belongs to"
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this content is currently visible"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Content to display"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic tabs",
+      "code": "const [activeTab, setActiveTab] = useState('account')\n\n<Tabs value={activeTab} onValueChange={setActiveTab}>\n  <TabsList>\n    <TabsTrigger value=\"account\" selected={activeTab === 'account'} onClick={() => setActiveTab('account')}>\n      Account\n    </TabsTrigger>\n    <TabsTrigger value=\"password\" selected={activeTab === 'password'} onClick={() => setActiveTab('password')}>\n      Password\n    </TabsTrigger>\n  </TabsList>\n  <TabsContent value=\"account\" selected={activeTab === 'account'}>\n    Account settings here\n  </TabsContent>\n  <TabsContent value=\"password\" selected={activeTab === 'password'}>\n    Password settings here\n  </TabsContent>\n</Tabs>"
+    }
+  ],
+  "accessibility": {
+    "role": "tablist, tab, tabpanel",
+    "ariaAttributes": [
+      "aria-selected"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot",
+      "data-value"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "accordion",
+    "toggle-group"
+  ],
+  "source": "ui/components/ui/tabs.tsx"
+}

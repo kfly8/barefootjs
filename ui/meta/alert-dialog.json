@@ -1,0 +1,271 @@
+{
+  "name": "alert-dialog",
+  "title": "Alert Dialog",
+  "category": "overlay",
+  "description": "AlertDialog Components A modal dialog for critical confirmations that require explicit user action. Unlike Dialog, AlertDialog does NOT close on overlay click — users must choose an action (Cancel or Action). Follows the WAI-ARIA alertdialog pattern and shadcn/ui's AlertDialog design. Features: - ESC key to close - Overlay does NOT close on click (key difference from Dialog) - Focus trap (Tab/Shift+Tab cycles within modal) - Accessibility (role=\"alertdialog\", aria-modal=\"true\")",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the alert dialog is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "scopeId",
+      "type": "string",
+      "required": false,
+      "description": "Scope ID for SSR portal support (explicit)"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "AlertDialog content"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "AlertDialogTrigger",
+      "description": "Props for AlertDialogTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogOverlay",
+      "description": "Props for AlertDialogOverlay component.",
+      "props": [
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogContent",
+      "description": "Props for AlertDialogContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "AlertDialog content"
+        },
+        {
+          "name": "ariaLabelledby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the title element for aria-labelledby"
+        },
+        {
+          "name": "ariaDescribedby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the description element for aria-describedby"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogHeader",
+      "description": "Props for AlertDialogHeader component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogTitle",
+      "description": "Props for AlertDialogTitle component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-labelledby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Title text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogDescription",
+      "description": "Props for AlertDialogDescription component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-describedby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Description text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogFooter",
+      "description": "Props for AlertDialogFooter component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Footer content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogCancel",
+      "description": "Props for AlertDialogCancel component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AlertDialogAction",
+      "description": "Props for AlertDialogAction component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        },
+        {
+          "name": "onClick",
+          "type": "() => void",
+          "required": false,
+          "description": "Click handler for the action"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic alert dialog",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<AlertDialog open={open()} onOpenChange={setOpen}>\n  <AlertDialogTrigger>Delete</AlertDialogTrigger>\n  <AlertDialogOverlay />\n  <AlertDialogContent ariaLabelledby=\"alert-title\" ariaDescribedby=\"alert-desc\">\n    <AlertDialogHeader>\n      <AlertDialogTitle id=\"alert-title\">Are you sure?</AlertDialogTitle>\n      <AlertDialogDescription id=\"alert-desc\">\n        This action cannot be undone.\n      </AlertDialogDescription>\n    </AlertDialogHeader>\n    <AlertDialogFooter>\n      <AlertDialogCancel>Cancel</AlertDialogCancel>\n      <AlertDialogAction>Continue</AlertDialogAction>\n    </AlertDialogFooter>\n  </AlertDialogContent>\n</AlertDialog>"
+    }
+  ],
+  "accessibility": {
+    "role": "alertdialog, dialog",
+    "ariaAttributes": [
+      "aria-modal",
+      "aria-invalid",
+      "aria-labelledby",
+      "aria-describedby"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "dialog",
+    "drawer",
+    "sheet"
+  ],
+  "source": "ui/components/ui/alert-dialog.tsx"
+}

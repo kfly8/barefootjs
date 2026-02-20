@@ -1,0 +1,175 @@
+{
+  "name": "breadcrumb",
+  "title": "Breadcrumb",
+  "category": "navigation",
+  "description": "Breadcrumb Components A composable breadcrumb navigation component. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "multi-component",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Breadcrumb content (typically BreadcrumbList)"
+    },
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "BreadcrumbList",
+      "description": "Breadcrumb navigation wrapper. / function Breadcrumb({ children, className = '' }: BreadcrumbProps) { return ( <nav data-slot=\"breadcrumb\" aria-label=\"breadcrumb\" className={className || undefined}> {children} </nav> ) } /** Props for BreadcrumbList component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "List items"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "BreadcrumbItem",
+      "description": "Props for BreadcrumbItem component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "BreadcrumbLink",
+      "description": "Individual breadcrumb item. / function BreadcrumbItem({ children, className = '' }: BreadcrumbItemProps) { return ( <li data-slot=\"breadcrumb-item\" className={`${breadcrumbItemClasses} ${className}`}> {children} </li> ) } /** Props for BreadcrumbLink component.",
+      "props": [
+        {
+          "name": "href",
+          "type": "string",
+          "required": false,
+          "description": "Link URL"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "When true, renders child element with link styling instead of `<a>`."
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Link content"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "BreadcrumbPage",
+      "description": "Props for BreadcrumbPage component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Page title"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "BreadcrumbSeparator",
+      "description": "Props for BreadcrumbSeparator component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Custom separator content. Defaults to ChevronRightIcon."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "BreadcrumbEllipsis",
+      "description": "Props for BreadcrumbEllipsis component.",
+      "props": [
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Breadcrumb>\n  <BreadcrumbList>\n    <BreadcrumbItem>\n      <BreadcrumbLink href=\"/\">Home</BreadcrumbLink>\n    </BreadcrumbItem>\n    <BreadcrumbSeparator />\n    <BreadcrumbItem>\n      <BreadcrumbPage>Current Page</BreadcrumbPage>\n    </BreadcrumbItem>\n  </BreadcrumbList>\n</Breadcrumb>"
+    },
+    {
+      "title": "With asChild link",
+      "code": "<BreadcrumbLink asChild>\n  <a href=\"/docs\">Documentation</a>\n</BreadcrumbLink>"
+    }
+  ],
+  "accessibility": {
+    "role": "link, presentation",
+    "ariaAttributes": [
+      "aria-label",
+      "aria-disabled",
+      "aria-current",
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "slot",
+      "icon"
+    ],
+    "external": []
+  },
+  "related": [
+    "pagination",
+    "tabs"
+  ],
+  "source": "ui/components/ui/breadcrumb.tsx"
+}

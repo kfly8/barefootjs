@@ -1,0 +1,111 @@
+{
+  "name": "radio-group",
+  "title": "Radio Group",
+  "category": "input",
+  "description": "RadioGroup Component A set of checkable buttons where only one can be checked at a time. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultValue",
+      "type": "string",
+      "required": false,
+      "description": "Default selected value (for uncontrolled mode)."
+    },
+    {
+      "name": "value",
+      "type": "string",
+      "required": false,
+      "description": "Controlled selected value. When provided, component is in controlled mode."
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when the selected value changes."
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the entire group is disabled."
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes."
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "RadioGroupItem children."
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "RadioGroupItem",
+      "description": "Props for the RadioGroupItem component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Value for this radio item."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this item is disabled."
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes."
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Uncontrolled (internal state)",
+      "code": "<RadioGroup defaultValue=\"default\">\n  <RadioGroupItem value=\"default\" />\n  <RadioGroupItem value=\"comfortable\" />\n  <RadioGroupItem value=\"compact\" />\n</RadioGroup>"
+    },
+    {
+      "title": "Controlled (external state)",
+      "code": "<RadioGroup value={selected()} onValueChange={setSelected}>\n  <RadioGroupItem value=\"option-1\" />\n  <RadioGroupItem value=\"option-2\" />\n</RadioGroup>"
+    }
+  ],
+  "accessibility": {
+    "role": "radiogroup, radio",
+    "ariaAttributes": [
+      "aria-invalid",
+      "aria-checked"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "checkbox",
+    "toggle-group",
+    "select"
+  ],
+  "source": "ui/components/ui/radio-group.tsx"
+}

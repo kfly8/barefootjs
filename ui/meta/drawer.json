@@ -1,0 +1,265 @@
+{
+  "name": "drawer",
+  "title": "Drawer",
+  "category": "overlay",
+  "description": "Drawer Components A panel that slides in from the edge of the screen, typically from the bottom. Similar to Sheet but designed for mobile-friendly interactions with a handle bar. Inspired by shadcn/ui (Vaul-based) with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Drawer root manages open state, children consume via context. Features: - ESC key to close - Click outside (overlay) to close - Focus trap (Tab/Shift+Tab cycles within panel) - Accessibility (role=\"dialog\", aria-modal=\"true\") - Slide animation from any edge (top, right, bottom, left) - Handle bar indicator (for top/bottom directions) - No built-in close button (X) by default",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the drawer is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "scopeId",
+      "type": "string",
+      "required": false,
+      "description": "Scope ID for SSR portal support (explicit)"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Drawer content"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "DrawerTrigger",
+      "description": "Props for DrawerTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerOverlay",
+      "description": "Props for DrawerOverlay component.",
+      "props": [
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerContent",
+      "description": "Props for DrawerContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Drawer content"
+        },
+        {
+          "name": "direction",
+          "type": "DrawerDirection",
+          "required": false,
+          "description": "Which edge the drawer slides from"
+        },
+        {
+          "name": "ariaLabelledby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the title element for aria-labelledby"
+        },
+        {
+          "name": "ariaDescribedby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the description element for aria-describedby"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerHandle",
+      "description": "Props for DrawerHandle component.",
+      "props": [
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerHeader",
+      "description": "Props for DrawerHeader component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header content (typically DrawerTitle and DrawerDescription)"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerTitle",
+      "description": "Props for DrawerTitle component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-labelledby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Title text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerDescription",
+      "description": "Props for DrawerDescription component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-describedby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Description text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerFooter",
+      "description": "Props for DrawerFooter component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Footer content (typically action buttons)"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "DrawerClose",
+      "description": "Props for DrawerClose component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic drawer",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<Drawer open={open()} onOpenChange={setOpen}>\n  <DrawerTrigger>Open Drawer</DrawerTrigger>\n  <DrawerOverlay />\n  <DrawerContent direction=\"bottom\" ariaLabelledby=\"drawer-title\">\n    <DrawerHandle />\n    <DrawerHeader>\n      <DrawerTitle id=\"drawer-title\">Drawer Title</DrawerTitle>\n      <DrawerDescription>Drawer description here.</DrawerDescription>\n    </DrawerHeader>\n    <DrawerFooter>\n      <DrawerClose>Close</DrawerClose>\n    </DrawerFooter>\n  </DrawerContent>\n</Drawer>"
+    }
+  ],
+  "accessibility": {
+    "role": "dialog",
+    "ariaAttributes": [
+      "aria-modal",
+      "aria-invalid",
+      "aria-labelledby",
+      "aria-describedby"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "dialog",
+    "sheet",
+    "alert-dialog"
+  ],
+  "source": "ui/components/ui/drawer.tsx"
+}

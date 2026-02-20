@@ -1,0 +1,267 @@
+{
+  "name": "sheet",
+  "title": "Sheet",
+  "category": "overlay",
+  "description": "Sheet Components A panel that slides in from the edge of the screen. Extends the Dialog pattern with side-based positioning and slide animations. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Sheet root manages open state, children consume via context. Features: - ESC key to close - Click outside (overlay) to close - Focus trap (Tab/Shift+Tab cycles within panel) - Accessibility (role=\"dialog\", aria-modal=\"true\") - Slide animation from any edge (top, right, bottom, left) - Built-in close button (configurable via showCloseButton)",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the sheet is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "scopeId",
+      "type": "string",
+      "required": false,
+      "description": "Scope ID for SSR portal support (explicit)"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Sheet content"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "SheetTrigger",
+      "description": "Props for SheetTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetOverlay",
+      "description": "Props for SheetOverlay component.",
+      "props": [
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetContent",
+      "description": "Props for SheetContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Sheet content"
+        },
+        {
+          "name": "side",
+          "type": "SheetSide",
+          "required": false,
+          "description": "Which edge the sheet slides from"
+        },
+        {
+          "name": "showCloseButton",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether to show the built-in close button (X)"
+        },
+        {
+          "name": "ariaLabelledby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the title element for aria-labelledby"
+        },
+        {
+          "name": "ariaDescribedby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the description element for aria-describedby"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetHeader",
+      "description": "Props for SheetHeader component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header content (typically SheetTitle and SheetDescription)"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetTitle",
+      "description": "Props for SheetTitle component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-labelledby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Title text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetDescription",
+      "description": "Props for SheetDescription component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-describedby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Description text"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetFooter",
+      "description": "Props for SheetFooter component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Footer content (typically action buttons)"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "SheetClose",
+      "description": "Props for SheetClose component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "variants": {
+    "SheetSide": [
+      "top",
+      "right",
+      "bottom",
+      "left"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Basic sheet",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<Sheet open={open()} onOpenChange={setOpen}>\n  <SheetTrigger>Open Sheet</SheetTrigger>\n  <SheetOverlay />\n  <SheetContent side=\"right\" ariaLabelledby=\"sheet-title\">\n    <SheetHeader>\n      <SheetTitle id=\"sheet-title\">Sheet Title</SheetTitle>\n      <SheetDescription>Sheet description here.</SheetDescription>\n    </SheetHeader>\n    <SheetFooter>\n      <SheetClose>Close</SheetClose>\n    </SheetFooter>\n  </SheetContent>\n</Sheet>"
+    }
+  ],
+  "accessibility": {
+    "role": "dialog",
+    "ariaAttributes": [
+      "aria-modal",
+      "aria-invalid",
+      "aria-labelledby",
+      "aria-describedby"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "dialog",
+    "drawer",
+    "alert-dialog"
+  ],
+  "source": "ui/components/ui/sheet.tsx"
+}

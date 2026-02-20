@@ -1,0 +1,150 @@
+{
+  "name": "accordion",
+  "title": "Accordion",
+  "category": "navigation",
+  "description": "Accordion Components A vertically stacked set of interactive headings that reveal content. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. AccordionItem manages open state, children consume via context.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "AccordionItem components"
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "AccordionItem",
+      "description": "Props for AccordionItem component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Unique identifier for this item"
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this item is open"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this item is disabled"
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "required": false,
+          "description": "Callback when open state changes"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "AccordionTrigger and AccordionContent"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AccordionTrigger",
+      "description": "Props for AccordionTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger label"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "AccordionContent",
+      "description": "Props for AccordionContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Content to display"
+        },
+        {
+          "name": "class",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic accordion",
+      "code": "const [openItem, setOpenItem] = createSignal<string | null>(null)\n\n<Accordion>\n  <AccordionItem value=\"item-1\" open={openItem() === 'item-1'} onOpenChange={(v) => setOpenItem(v ? 'item-1' : null)}>\n    <AccordionTrigger>Section 1</AccordionTrigger>\n    <AccordionContent>Content for section 1</AccordionContent>\n  </AccordionItem>\n</Accordion>"
+    }
+  ],
+  "accessibility": {
+    "role": "region",
+    "ariaAttributes": [
+      "aria-expanded",
+      "aria-disabled"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state",
+      "data-value"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "icon"
+    ],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "collapsible",
+    "tabs"
+  ],
+  "source": "ui/components/ui/accordion.tsx"
+}

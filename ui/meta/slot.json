@@ -1,0 +1,54 @@
+{
+  "name": "slot",
+  "title": "Slot",
+  "category": "display",
+  "description": "Slot Component A polymorphic component that merges its props with its child element. Inspired by @radix-ui/react-slot. This enables the `asChild` pattern used by components like Button and Badge.",
+  "tags": [],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Child element to merge props with"
+    },
+    {
+      "name": "class",
+      "type": "string",
+      "required": false,
+      "description": "CSS class to merge with child's class"
+    },
+    {
+      "name": "key",
+      "type": "string]: unknown",
+      "required": true,
+      "description": ""
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "// Slot merges its props with the child element\n<Slot className=\"custom-class\" data-active=\"true\">\n  <a href=\"/home\">Home</a>\n</Slot>\n// Renders: <a href=\"/home\" className=\"custom-class\" data-active=\"true\">Home</a>"
+    },
+    {
+      "title": "asChild pattern (used by Button, Badge, etc.)",
+      "code": "// Button component internally uses Slot when asChild is true\n<Button asChild>\n  <a href=\"/home\">Go Home</a>\n</Button>\n// Renders: <a href=\"/home\" className=\"btn-classes...\">Go Home</a>\n\n// Without asChild, renders a button element\n<Button>Click me</Button>\n// Renders: <button className=\"btn-classes...\">Click me</button>"
+    },
+    {
+      "title": "Class merging",
+      "code": "// Classes from Slot and child are merged\n<Slot className=\"slot-class\">\n  <div className=\"child-class\">Content</div>\n</Slot>\n// Renders: <div className=\"slot-class child-class\">Content</div>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": []
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "button"
+  ],
+  "source": "ui/components/ui/slot.tsx"
+}

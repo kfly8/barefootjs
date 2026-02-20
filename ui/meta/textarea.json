@@ -1,0 +1,43 @@
+{
+  "name": "textarea",
+  "title": "Textarea",
+  "category": "input",
+  "description": "Textarea Component A styled multi-line text input component with error state support. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Textarea placeholder=\"Type your message here.\" />"
+    },
+    {
+      "title": "With value binding",
+      "code": "<Textarea value={message} onInput={(e) => setMessage(e.target.value)} />"
+    },
+    {
+      "title": "With error state",
+      "code": "<Textarea error describedBy=\"error-message\" />"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-invalid",
+      "aria-describedby"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "input",
+    "label"
+  ],
+  "source": "ui/components/ui/textarea.tsx"
+}

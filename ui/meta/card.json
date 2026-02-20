@@ -1,0 +1,194 @@
+{
+  "name": "card",
+  "title": "Card",
+  "category": "layout",
+  "description": "Card Components A flexible container component with composable sub-components. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "multi-component"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Card content (typically CardHeader, CardContent, CardFooter)"
+    },
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "CardHeader",
+      "description": "Props for CardHeader component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header content (typically CardTitle and CardDescription)"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "CardTitle",
+      "description": "Props for CardTitle component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Title text"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "CardDescription",
+      "description": "Props for CardDescription component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Description text"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "CardContent",
+      "description": "Props for CardContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Main content"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "CardImage",
+      "description": "Props for CardImage component.",
+      "props": [
+        {
+          "name": "src",
+          "type": "string",
+          "required": true,
+          "description": "Image source URL"
+        },
+        {
+          "name": "alt",
+          "type": "string",
+          "required": true,
+          "description": "Alternative text for the image"
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "required": false,
+          "description": "Image width"
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "required": false,
+          "description": "Image height"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "CardAction",
+      "description": "Props for CardAction component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Action content (typically buttons)"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    },
+    {
+      "name": "CardFooter",
+      "description": "Props for CardFooter component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Footer content (typically action buttons)"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "description": "Additional CSS classes"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic card with header and content",
+      "code": "<Card>\n  <CardHeader>\n    <CardTitle>Card Title</CardTitle>\n    <CardDescription>Card description here</CardDescription>\n  </CardHeader>\n  <CardContent>\n    <p>Card content goes here.</p>\n  </CardContent>\n</Card>"
+    },
+    {
+      "title": "Card with footer",
+      "code": "<Card>\n  <CardHeader>\n    <CardTitle>Confirm Action</CardTitle>\n  </CardHeader>\n  <CardContent>Are you sure?</CardContent>\n  <CardFooter>\n    <Button variant=\"outline\">Cancel</Button>\n    <Button>Confirm</Button>\n  </CardFooter>\n</Card>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "separator"
+  ],
+  "source": "ui/components/ui/card.tsx"
+}
