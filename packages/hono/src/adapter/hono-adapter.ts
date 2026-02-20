@@ -446,7 +446,8 @@ export class HonoAdapter implements TemplateAdapter {
 
     for (const signal of ir.metadata.signals) {
       // Create a getter that returns the initial value for SSR
-      lines.push(`  const ${signal.getter} = () => ${signal.initialValue}`)
+      const initialValue = signal.initialValue.trim().startsWith('{') ? `(${signal.initialValue})` : signal.initialValue
+      lines.push(`  const ${signal.getter} = () => ${initialValue}`)
       // Create a no-op setter for SSR (in case it's passed to child components)
       lines.push(`  const ${signal.setter} = () => {}`)
     }
