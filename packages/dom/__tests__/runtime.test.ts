@@ -311,6 +311,32 @@ describe('$c', () => {
     const result = $c(null, 's0')
     expect(result).toBeNull()
   })
+
+  test('strips ^ prefix defensively for slot IDs', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <div bf-s="~DialogTrigger_Parent_abc_s0">trigger</div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')!
+    // Even if ^ accidentally reaches $c, it should still find the element
+    const result = $c(scope, '^s0')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('bf-s')).toBe('~DialogTrigger_Parent_abc_s0')
+  })
+
+  test('strips ^ prefix defensively for component name IDs', () => {
+    document.body.innerHTML = `
+      <div bf-s="App_root">
+        <div bf-s="~Counter_abc123">counter</div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="App_root"]')!
+    // ^ prefix on component name should be stripped
+    const result = $c(scope, '^Counter')
+    expect(result).not.toBeNull()
+    expect(result?.getAttribute('bf-s')).toBe('~Counter_abc123')
+  })
 })
 
 describe('hydrate', () => {

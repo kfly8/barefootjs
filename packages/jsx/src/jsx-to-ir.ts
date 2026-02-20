@@ -53,8 +53,12 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
   }
 }
 
-function generateSlotId(ctx: TransformContext): string {
+function generateSlotId(ctx: TransformContext, forComponent: boolean = false): string {
   const id = `s${ctx.slotIdCounter++}`
+  // Component elements' own slot IDs never get ^ prefix.
+  // The ^ prefix is only for native HTML elements and expressions
+  // passed as children into a child component's scope.
+  if (forComponent) return id
   return ctx.insideComponentChildren ? `^${id}` : id
 }
 
@@ -369,9 +373,9 @@ function transformComponentElement(
   // Always assign slotId to child components.
   // Even if no reactive props are passed from parent, the child may have internal state
   // (createSignal, createMemo) that requires hydration via findScope().
-  // Note: Component's own slotId is generated AFTER restoring the flag,
-  // so it does NOT get the ^ prefix.
-  const slotId = generateSlotId(ctx)
+  // Component slot IDs never get ^ prefix (forComponent=true).
+  // ^ is reserved for native elements owned by the parent but rendered in child scope.
+  const slotId = generateSlotId(ctx, true)
 
   // Propagate slotId to loop children so they use the parent's marker
   propagateSlotIdToLoops(children, slotId)
@@ -402,7 +406,8 @@ function transformSelfClosingComponent(
   // Always assign slotId to child components.
   // Even if no reactive props are passed from parent, the child may have internal state
   // (createSignal, createMemo) that requires hydration via findScope().
-  const slotId = generateSlotId(ctx)
+  // Component slot IDs never get ^ prefix (forComponent=true).
+  const slotId = generateSlotId(ctx, true)
 
   return {
     type: 'component',

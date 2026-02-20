@@ -2539,5 +2539,73 @@ describe('Compiler', () => {
       expect(span).toBeDefined()
       expect(span.slotId).toMatch(/^\^s\d+$/)
     })
+
+    test('nested component slotId does NOT get ^ prefix when inside another component children', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Parent() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <Outer>
+                <Inner>
+                  <button onClick={() => setCount(c => c + 1)}>Click</button>
+                </Inner>
+              </Outer>
+            </div>
+          )
+        }
+      `
+      const ctx = analyzeComponent(source, 'Parent.tsx')
+      const ir = jsxToIR(ctx)
+      const div = ir as any
+
+      const outer = div.children.find((c: any) => c.type === 'component' && c.name === 'Outer')
+      expect(outer).toBeDefined()
+      // Outer's own slotId should NOT have ^ prefix
+      expect(outer.slotId).toMatch(/^s\d+$/)
+      expect(outer.slotId).not.toContain('^')
+
+      const inner = outer.children.find((c: any) => c.type === 'component' && c.name === 'Inner')
+      expect(inner).toBeDefined()
+      // Inner's own slotId should NOT have ^ prefix (this was the bug)
+      expect(inner.slotId).toMatch(/^s\d+$/)
+      expect(inner.slotId).not.toContain('^')
+
+      // But the button (native element) inside Inner SHOULD have ^ prefix
+      const button = inner.children.find((c: any) => c.type === 'element' && c.tag === 'button')
+      expect(button).toBeDefined()
+      expect(button.slotId).toMatch(/^\^s\d+$/)
+    })
+
+    test('self-closing component inside component children does NOT get ^ prefix', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Parent() {
+          const [open, setOpen] = createSignal(false)
+          return (
+            <div>
+              <Outer>
+                <SelfClosing />
+              </Outer>
+            </div>
+          )
+        }
+      `
+      const ctx = analyzeComponent(source, 'Parent.tsx')
+      const ir = jsxToIR(ctx)
+      const div = ir as any
+
+      const outer = div.children.find((c: any) => c.type === 'component' && c.name === 'Outer')
+      const selfClosing = outer.children.find((c: any) => c.type === 'component' && c.name === 'SelfClosing')
+      expect(selfClosing).toBeDefined()
+      // Self-closing component's slotId should NOT have ^ prefix
+      expect(selfClosing.slotId).toMatch(/^s\d+$/)
+      expect(selfClosing.slotId).not.toContain('^')
+    })
   })
 })

@@ -1155,12 +1155,15 @@ function findParentOwned(scope: Element | null, id: string): Element | null {
  * @returns The matching element or null
  */
 export function $c(scope: Element | null, id: string): Element | null {
+  // Strip ^ prefix defensively — component slot IDs should never have it,
+  // but guard against compiler edge cases to avoid silent initialization failures.
+  const cleanId = id.startsWith(BF_PARENT_OWNED_PREFIX) ? id.slice(1) : id
   // Slot IDs start with 's' + digit; component names start with uppercase
-  if (/^s\d/.test(id)) {
-    return find(scope, `[${BF_SCOPE}$="_${id}"]`)
+  if (/^s\d/.test(cleanId)) {
+    return find(scope, `[${BF_SCOPE}$="_${cleanId}"]`)
   }
   // Component name prefix match - support both child (~Name_) and root (Name_) scopes
-  return find(scope, `[${BF_SCOPE}^="${BF_CHILD_PREFIX}${id}_"], [${BF_SCOPE}^="${id}_"]`)
+  return find(scope, `[${BF_SCOPE}^="${BF_CHILD_PREFIX}${cleanId}_"], [${BF_SCOPE}^="${cleanId}_"]`)
 }
 
 // --- updateClientMarker ---
