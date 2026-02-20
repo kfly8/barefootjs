@@ -40,18 +40,6 @@ Adapters: HonoAdapter (`packages/hono/`), GoTemplateAdapter (`packages/go-templa
 - **Interaction behavior**: Write E2E in `site/ui/e2e/` only for click/keyboard/hover that IR tests cannot cover.
 - **Hydration correctness** is a compiler invariant. If E2E reveals a hydration bug, fix it in `packages/jsx/`, not in `ui/`.
 
-## Component Development Workflow
-
-When building or modifying UI components, use the `barefoot` CLI first for component discovery.
-
-1. `bun run barefoot search <query>` — Find components by name/category/tags
-2. `bun run barefoot show <component>` — Get props, examples, accessibility info
-3. `bun run barefoot scaffold <name> <comp...>` — Generate skeleton + basic IR test
-4. Implement the component
-5. `bun test <path>` — Verify compilation
-6. `bun run barefoot test:template <name>` — Regenerate richer IR test
-7. `bun test <path>` — Final verification
-
 ## Implementation Guidelines
 
 When implementing a feature, match the capability level of existing similar features. For example, if filter() supports arbitrary predicates, find() should too. Always check sibling implementations for parity.
