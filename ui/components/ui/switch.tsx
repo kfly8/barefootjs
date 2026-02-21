@@ -1,5 +1,6 @@
 "use client"
 
+import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
 import { createSignal, createMemo } from '@barefootjs/dom'
 
 /**
@@ -51,7 +52,7 @@ const thumbStateClasses = [
 /**
  * Props for the Switch component.
  */
-interface SwitchProps {
+interface SwitchProps extends ButtonHTMLAttributes {
   /**
    * Default checked state (for uncontrolled mode).
    * @default false
@@ -62,18 +63,9 @@ interface SwitchProps {
    */
   checked?: boolean
   /**
-   * Whether the switch is disabled.
-   * @default false
-   */
-  disabled?: boolean
-  /**
    * Callback when the switch is toggled.
    */
   onCheckedChange?: (checked: boolean) => void
-  /**
-   * Additional CSS classes for the switch track.
-   */
-  class?: string
 }
 
 /**
@@ -114,7 +106,7 @@ function Switch(props: SwitchProps) {
   }
 
   // Classes - state styling handled by data-state attribute selectors
-  const trackClasses = `${trackBaseClasses} ${trackFocusClasses} ${trackStateClasses} ${props.class ?? ''}`
+  const trackClasses = `${trackBaseClasses} ${trackFocusClasses} ${trackStateClasses} ${props.className ?? ''}`
 
   const thumbClasses = `${thumbBaseClasses} ${thumbStateClasses}`
 
@@ -148,6 +140,7 @@ function Switch(props: SwitchProps) {
       data-slot="switch"
       data-state={isChecked() ? 'checked' : 'unchecked'}
       role="switch"
+      id={props.id}
       aria-checked={isChecked()}
       disabled={props.disabled ?? false}
       className={trackClasses}

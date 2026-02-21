@@ -39,6 +39,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for Sheet -> children state sharing
@@ -146,15 +147,13 @@ function Sheet(props: SheetProps) {
 /**
  * Props for SheetTrigger component.
  */
-interface SheetTriggerProps {
+interface SheetTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -189,7 +188,8 @@ function SheetTrigger(props: SheetTriggerProps) {
     <button
       data-slot="sheet-trigger"
       type="button"
-      className={`${sheetTriggerClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${sheetTriggerClasses} ${props.className ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >
@@ -201,9 +201,7 @@ function SheetTrigger(props: SheetTriggerProps) {
 /**
  * Props for SheetOverlay component.
  */
-interface SheetOverlayProps {
-  /** Additional CSS classes */
-  class?: string
+interface SheetOverlayProps extends HTMLBaseAttributes {
 }
 
 /**
@@ -225,7 +223,7 @@ function SheetOverlay(props: SheetOverlayProps) {
     createEffect(() => {
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${sheetOverlayBaseClasses} ${isOpen ? sheetOverlayOpenClasses : sheetOverlayClosedClasses} ${props.class ?? ''}`
+      el.className = `${sheetOverlayBaseClasses} ${isOpen ? sheetOverlayOpenClasses : sheetOverlayClosedClasses} ${props.className ?? ''}`
     })
 
     el.addEventListener('click', () => {
@@ -237,7 +235,8 @@ function SheetOverlay(props: SheetOverlayProps) {
     <div
       data-slot="sheet-overlay"
       data-state="closed"
-      className={`${sheetOverlayBaseClasses} ${sheetOverlayClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${sheetOverlayBaseClasses} ${sheetOverlayClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     />
   )
@@ -246,7 +245,7 @@ function SheetOverlay(props: SheetOverlayProps) {
 /**
  * Props for SheetContent component.
  */
-interface SheetContentProps {
+interface SheetContentProps extends HTMLBaseAttributes {
   /** Sheet content */
   children?: Child
   /** Which edge the sheet slides from */
@@ -257,8 +256,6 @@ interface SheetContentProps {
   ariaLabelledby?: string
   /** ID of the description element for aria-describedby */
   ariaDescribedby?: string
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -295,7 +292,7 @@ function SheetContent(props: SheetContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${sheetContentBaseClasses} ${sideClasses[side]} ${isOpen ? sideOpenClasses[side] : sideClosedClasses[side]} ${props.class ?? ''}`
+      el.className = `${sheetContentBaseClasses} ${sideClasses[side]} ${isOpen ? sideOpenClasses[side] : sideClosedClasses[side]} ${props.className ?? ''}`
 
       if (isOpen) {
         // Scroll lock
@@ -364,7 +361,8 @@ function SheetContent(props: SheetContentProps) {
       aria-labelledby={props.ariaLabelledby}
       aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${sheetContentBaseClasses} ${sideClasses[side]} ${sideClosedClasses[side]} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${sheetContentBaseClasses} ${sideClasses[side]} ${sideClosedClasses[side]} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -389,11 +387,9 @@ function SheetContent(props: SheetContentProps) {
 /**
  * Props for SheetHeader component.
  */
-interface SheetHeaderProps {
+interface SheetHeaderProps extends HTMLBaseAttributes {
   /** Header content (typically SheetTitle and SheetDescription) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -401,9 +397,9 @@ interface SheetHeaderProps {
  *
  * @param props.children - Header content
  */
-function SheetHeader({ class: className = '', children }: SheetHeaderProps) {
+function SheetHeader({ children, className = '', ...props }: SheetHeaderProps) {
   return (
-    <div data-slot="sheet-header" className={`${sheetHeaderClasses} ${className}`}>
+    <div data-slot="sheet-header" className={`${sheetHeaderClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -412,13 +408,9 @@ function SheetHeader({ class: className = '', children }: SheetHeaderProps) {
 /**
  * Props for SheetTitle component.
  */
-interface SheetTitleProps {
-  /** ID for aria-labelledby reference */
-  id?: string
+interface SheetTitleProps extends HTMLBaseAttributes {
   /** Title text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -426,9 +418,9 @@ interface SheetTitleProps {
  *
  * @param props.id - ID for accessibility
  */
-function SheetTitle({ class: className = '', id, children }: SheetTitleProps) {
+function SheetTitle({ children, className = '', ...props }: SheetTitleProps) {
   return (
-    <h2 data-slot="sheet-title" id={id} className={`${sheetTitleClasses} ${className}`}>
+    <h2 data-slot="sheet-title" className={`${sheetTitleClasses} ${className}`} {...props}>
       {children}
     </h2>
   )
@@ -437,13 +429,9 @@ function SheetTitle({ class: className = '', id, children }: SheetTitleProps) {
 /**
  * Props for SheetDescription component.
  */
-interface SheetDescriptionProps {
-  /** ID for aria-describedby reference */
-  id?: string
+interface SheetDescriptionProps extends HTMLBaseAttributes {
   /** Description text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -451,9 +439,9 @@ interface SheetDescriptionProps {
  *
  * @param props.id - ID for accessibility
  */
-function SheetDescription({ class: className = '', id, children }: SheetDescriptionProps) {
+function SheetDescription({ children, className = '', ...props }: SheetDescriptionProps) {
   return (
-    <p data-slot="sheet-description" id={id} className={`${sheetDescriptionClasses} ${className}`}>
+    <p data-slot="sheet-description" className={`${sheetDescriptionClasses} ${className}`} {...props}>
       {children}
     </p>
   )
@@ -462,11 +450,9 @@ function SheetDescription({ class: className = '', id, children }: SheetDescript
 /**
  * Props for SheetFooter component.
  */
-interface SheetFooterProps {
+interface SheetFooterProps extends HTMLBaseAttributes {
   /** Footer content (typically action buttons) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -474,9 +460,9 @@ interface SheetFooterProps {
  *
  * @param props.children - Footer content
  */
-function SheetFooter({ class: className = '', children }: SheetFooterProps) {
+function SheetFooter({ children, className = '', ...props }: SheetFooterProps) {
   return (
-    <div data-slot="sheet-footer" className={`${sheetFooterClasses} ${className}`}>
+    <div data-slot="sheet-footer" className={`${sheetFooterClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -485,11 +471,9 @@ function SheetFooter({ class: className = '', children }: SheetFooterProps) {
 /**
  * Props for SheetClose component.
  */
-interface SheetCloseProps {
+interface SheetCloseProps extends ButtonHTMLAttributes {
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -509,7 +493,8 @@ function SheetClose(props: SheetCloseProps) {
     <button
       data-slot="sheet-close"
       type="button"
-      className={`${sheetCloseClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${sheetCloseClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

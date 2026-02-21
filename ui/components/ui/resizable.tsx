@@ -18,6 +18,8 @@
  * ```
  */
 
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
+
 // CSS classes matching shadcn/ui
 const groupBaseClasses = 'flex h-full w-full'
 const panelClasses = 'overflow-hidden'
@@ -31,18 +33,16 @@ const handleOrientationClasses = {
 
 const gripClasses = 'bg-border z-10 flex h-4 w-3 items-center justify-center rounded-sm border'
 
-interface ResizablePanelGroupProps {
+interface ResizablePanelGroupProps extends HTMLBaseAttributes {
   /** Layout direction. */
   direction: 'horizontal' | 'vertical'
   /** Panel children. */
   children?: any
-  /** Additional CSS classes. */
-  class?: string
   /** Callback when panel sizes change. */
   onLayout?: (sizes: number[]) => void
 }
 
-interface ResizablePanelProps {
+interface ResizablePanelProps extends HTMLBaseAttributes {
   /** Initial size as percentage (0-100). */
   defaultSize?: number
   /** Minimum size as percentage. */
@@ -51,17 +51,13 @@ interface ResizablePanelProps {
   maxSize?: number
   /** Panel content. */
   children?: any
-  /** Additional CSS classes. */
-  class?: string
 }
 
-interface ResizableHandleProps {
+interface ResizableHandleProps extends HTMLBaseAttributes {
   /** Show visible grip dots. */
   withHandle?: boolean
   /** Disable drag interaction. */
   disabled?: boolean
-  /** Additional CSS classes. */
-  class?: string
 }
 
 /**
@@ -94,9 +90,7 @@ function GripVerticalIcon() {
 /**
  * Container for resizable panels. Manages layout and drag coordination.
  */
-function ResizablePanelGroup(props: ResizablePanelGroupProps) {
-  const direction = props.direction
-
+function ResizablePanelGroup({ direction, children, className = '', onLayout, ...props }: ResizablePanelGroupProps) {
   const handleMount = (el: HTMLElement) => {
     // Initialize panel sizes from defaultSize attributes
     const panels = el.querySelectorAll(':scope > [data-slot="resizable-panel"]') as NodeListOf<HTMLElement>
@@ -146,7 +140,7 @@ function ResizablePanelGroup(props: ResizablePanelGroupProps) {
     applyPanelSizes(sizes)
 
     // Notify parent
-    props.onLayout?.(sizes)
+    onLayout?.(sizes)
 
     // Set up drag handlers on each handle
     const handles = el.querySelectorAll(':scope > [data-slot="resizable-handle"]') as NodeListOf<HTMLElement>
@@ -205,7 +199,7 @@ function ResizablePanelGroup(props: ResizablePanelGroupProps) {
           currentSizes[handleIndex] = newBefore
           currentSizes[handleIndex + 1] = newAfter
           applyPanelSizes(currentSizes)
-          props.onLayout?.(currentSizes)
+          onLayout?.(currentSizes)
         }
 
         const onUp = () => {
@@ -271,7 +265,7 @@ function ResizablePanelGroup(props: ResizablePanelGroupProps) {
         currentSizes[handleIndex] = newBefore
         currentSizes[handleIndex + 1] = newAfter
         applyPanelSizes(currentSizes)
-        props.onLayout?.(currentSizes)
+        onLayout?.(currentSizes)
       })
     })
   }
@@ -280,10 +274,11 @@ function ResizablePanelGroup(props: ResizablePanelGroupProps) {
     <div
       data-slot="resizable-panel-group"
       data-panel-group-direction={direction}
-      className={`${groupBaseClasses} ${direction === 'vertical' ? 'flex-col' : ''} ${props.class ?? ''}`}
+      className={`${groupBaseClasses} ${direction === 'vertical' ? 'flex-col' : ''} ${className}`}
       ref={handleMount}
+      {...props}
     >
-      {props.children}
+      {children}
     </div>
   )
 }
@@ -291,16 +286,17 @@ function ResizablePanelGroup(props: ResizablePanelGroupProps) {
 /**
  * A panel within a ResizablePanelGroup.
  */
-function ResizablePanel(props: ResizablePanelProps) {
+function ResizablePanel({ defaultSize, minSize, maxSize, children, className = '', ...props }: ResizablePanelProps) {
   return (
     <div
       data-slot="resizable-panel"
-      data-default-size={props.defaultSize}
-      data-min-size={props.minSize}
-      data-max-size={props.maxSize}
-      className={`${panelClasses} ${props.class ?? ''}`}
+      data-default-size={defaultSize}
+      data-min-size={minSize}
+      data-max-size={maxSize}
+      className={`${panelClasses} ${className}`}
+      {...props}
     >
-      {props.children}
+      {children}
     </div>
   )
 }
@@ -308,7 +304,7 @@ function ResizablePanel(props: ResizablePanelProps) {
 /**
  * A draggable handle between ResizablePanels.
  */
-function ResizableHandle(props: ResizableHandleProps) {
+function ResizableHandle({ withHandle, disabled, className = '', ...props }: ResizableHandleProps) {
   // Determine orientation from parent (defaults to horizontal group → vertical handle)
   // The parent sets data-panel-group-direction; handle reads it at mount
   const handleRef = (el: HTMLElement) => {
@@ -324,13 +320,14 @@ function ResizableHandle(props: ResizableHandleProps) {
     <div
       data-slot="resizable-handle"
       data-resize-handle-state="inactive"
-      data-disabled={props.disabled || undefined}
+      data-disabled={disabled || undefined}
       role="separator"
-      tabindex={props.disabled ? -1 : 0}
-      className={`${handleBaseClasses} ${props.class ?? ''}`}
+      tabindex={disabled ? -1 : 0}
+      className={`${handleBaseClasses} ${className}`}
       ref={handleRef}
+      {...props}
     >
-      {props.withHandle && (
+      {withHandle && (
         <div className={gripClasses}>
           <GripVerticalIcon />
         </div>

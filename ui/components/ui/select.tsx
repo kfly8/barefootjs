@@ -35,6 +35,7 @@
  */
 
 import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for parent-child state sharing
@@ -79,7 +80,7 @@ const selectSeparatorClasses = '-mx-1 my-1 h-px bg-border'
 /**
  * Props for Select component.
  */
-interface SelectProps {
+interface SelectProps extends HTMLBaseAttributes {
   /** Controlled value */
   value?: string
   /** Callback when value changes */
@@ -92,8 +93,6 @@ interface SelectProps {
   disabled?: boolean
   /** SelectTrigger and SelectContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -114,7 +113,7 @@ function Select(props: SelectProps) {
       onValueChange: props.onValueChange ?? (() => {}),
       disabled: () => props.disabled ?? false,
     }}>
-      <div data-slot="select" className={`relative inline-block ${props.class ?? ''}`}>
+      <div data-slot="select" id={props.id} className={`relative inline-block ${props.className ?? ''}`}>
         {props.children}
       </div>
     </SelectContext.Provider>
@@ -124,9 +123,7 @@ function Select(props: SelectProps) {
 /**
  * Props for SelectTrigger component.
  */
-interface SelectTriggerProps {
-  /** Additional CSS classes */
-  class?: string
+interface SelectTriggerProps extends ButtonHTMLAttributes {
   /** Trigger content (typically SelectValue) */
   children?: Child
 }
@@ -161,13 +158,14 @@ function SelectTrigger(props: SelectTriggerProps) {
     })
   }
 
-  const classes = `${selectTriggerBaseClasses} ${selectTriggerFocusClasses} ${selectTriggerDisabledClasses} ${selectTriggerDataStateClasses} ${props.class ?? ''}`
+  const classes = `${selectTriggerBaseClasses} ${selectTriggerFocusClasses} ${selectTriggerDisabledClasses} ${selectTriggerDataStateClasses} ${props.className ?? ''}`
 
   return (
     <button
       data-slot="select-trigger"
       type="button"
       role="combobox"
+      id={props.id}
       aria-expanded="false"
       aria-haspopup="listbox"
       aria-autocomplete="none"
@@ -186,7 +184,7 @@ function SelectTrigger(props: SelectTriggerProps) {
 /**
  * Props for SelectValue component.
  */
-interface SelectValueProps {
+interface SelectValueProps extends HTMLBaseAttributes {
   /** Placeholder text when no value is selected */
   placeholder?: string
 }
@@ -221,7 +219,7 @@ function SelectValue(props: SelectValueProps) {
   }
 
   return (
-    <span data-slot="select-value" className="pointer-events-none truncate" ref={handleMount}>
+    <span data-slot="select-value" id={props.id} className="pointer-events-none truncate" ref={handleMount}>
       {props.placeholder ?? ''}
     </span>
   )
@@ -230,13 +228,11 @@ function SelectValue(props: SelectValueProps) {
 /**
  * Props for SelectContent component.
  */
-interface SelectContentProps {
+interface SelectContentProps extends HTMLBaseAttributes {
   /** SelectItem, SelectGroup, SelectLabel, SelectSeparator components */
   children?: Child
   /** Alignment relative to trigger */
   align?: 'start' | 'end'
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -290,7 +286,7 @@ function SelectContent(props: SelectContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${selectContentBaseClasses} ${isOpen ? selectContentOpenClasses : selectContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${selectContentBaseClasses} ${isOpen ? selectContentOpenClasses : selectContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         updatePosition()
@@ -402,8 +398,9 @@ function SelectContent(props: SelectContentProps) {
       data-slot="select-content"
       data-state="closed"
       role="listbox"
+      id={props.id}
       tabindex={-1}
-      className={`${selectContentBaseClasses} ${selectContentClosedClasses} ${props.class ?? ''}`}
+      className={`${selectContentBaseClasses} ${selectContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -414,15 +411,13 @@ function SelectContent(props: SelectContentProps) {
 /**
  * Props for SelectItem component.
  */
-interface SelectItemProps {
+interface SelectItemProps extends HTMLBaseAttributes {
   /** The value for this item */
   value: string
   /** Whether this item is disabled */
   disabled?: boolean
   /** Item content (label text) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -467,10 +462,11 @@ function SelectItem(props: SelectItemProps) {
       data-value={props.value}
       data-state="unchecked"
       role="option"
+      id={props.id}
       aria-selected="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${selectItemBaseClasses} ${stateClasses} ${props.class ?? ''}`}
+      className={`${selectItemBaseClasses} ${stateClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span data-slot="select-item-indicator" className={selectIndicatorClasses} style="display:none">
@@ -484,20 +480,18 @@ function SelectItem(props: SelectItemProps) {
 /**
  * Props for SelectGroup component.
  */
-interface SelectGroupProps {
+interface SelectGroupProps extends HTMLBaseAttributes {
   /** Grouped items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Semantic grouping of related select items.
  */
-function SelectGroup(props: SelectGroupProps) {
+function SelectGroup({ children, className = '', ...props }: SelectGroupProps) {
   return (
-    <div data-slot="select-group" role="group" className={props.class ?? ''}>
-      {props.children}
+    <div data-slot="select-group" role="group" className={className} {...props}>
+      {children}
     </div>
   )
 }
@@ -505,20 +499,18 @@ function SelectGroup(props: SelectGroupProps) {
 /**
  * Props for SelectLabel component.
  */
-interface SelectLabelProps {
+interface SelectLabelProps extends HTMLBaseAttributes {
   /** Label text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Section label inside the select dropdown.
  */
-function SelectLabel(props: SelectLabelProps) {
+function SelectLabel({ children, className = '', ...props }: SelectLabelProps) {
   return (
-    <div data-slot="select-label" className={`${selectLabelClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <div data-slot="select-label" className={`${selectLabelClasses} ${className}`} {...props}>
+      {children}
     </div>
   )
 }
@@ -526,17 +518,15 @@ function SelectLabel(props: SelectLabelProps) {
 /**
  * Props for SelectSeparator component.
  */
-interface SelectSeparatorProps {
-  /** Additional CSS classes */
-  class?: string
+interface SelectSeparatorProps extends HTMLBaseAttributes {
 }
 
 /**
  * Visual separator between select item groups.
  */
-function SelectSeparator(props: SelectSeparatorProps) {
+function SelectSeparator({ className = '', ...props }: SelectSeparatorProps) {
   return (
-    <div data-slot="select-separator" role="separator" className={`${selectSeparatorClasses} ${props.class ?? ''}`} />
+    <div data-slot="select-separator" role="separator" className={`${selectSeparatorClasses} ${className}`} {...props} />
   )
 }
 

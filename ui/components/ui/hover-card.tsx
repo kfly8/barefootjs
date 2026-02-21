@@ -33,6 +33,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for parent-child state sharing
@@ -64,15 +65,13 @@ const hoverCardContentClosedClasses = 'opacity-0 scale-95 pointer-events-none'
 /**
  * Props for HoverCard component.
  */
-interface HoverCardProps {
+interface HoverCardProps extends HTMLBaseAttributes {
   /** Whether the hover card is open */
   open?: boolean
   /** Callback when open state should change */
   onOpenChange?: (open: boolean) => void
   /** HoverCardTrigger and HoverCardContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
   /**
    * Delay in ms before opening on hover.
    * @default 700
@@ -104,7 +103,8 @@ function HoverCard(props: HoverCardProps) {
     }}>
       <div
         data-slot="hover-card"
-        className={`${hoverCardClasses} ${props.class ?? ''}`}
+        id={props.id}
+        className={`${hoverCardClasses} ${props.className ?? ''}`}
       >
         {props.children}
       </div>
@@ -115,13 +115,11 @@ function HoverCard(props: HoverCardProps) {
 /**
  * Props for HoverCardTrigger component.
  */
-interface HoverCardTriggerProps {
+interface HoverCardTriggerProps extends HTMLBaseAttributes {
   /** Whether to render child element as trigger */
   asChild?: boolean
   /** Trigger content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -187,6 +185,7 @@ function HoverCardTrigger(props: HoverCardTriggerProps) {
     return (
       <span
         data-slot="hover-card-trigger"
+        id={props.id}
         aria-expanded="false"
         style="display:contents"
         ref={handleMount}
@@ -199,8 +198,9 @@ function HoverCardTrigger(props: HoverCardTriggerProps) {
   return (
     <span
       data-slot="hover-card-trigger"
+      id={props.id}
       aria-expanded="false"
-      className={`inline-flex items-center ${props.class ?? ''}`}
+      className={`inline-flex items-center ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -211,15 +211,13 @@ function HoverCardTrigger(props: HoverCardTriggerProps) {
 /**
  * Props for HoverCardContent component.
  */
-interface HoverCardContentProps {
+interface HoverCardContentProps extends HTMLBaseAttributes {
   /** Hover card content */
   children?: Child
   /** Alignment relative to trigger */
   align?: 'start' | 'center' | 'end'
   /** Side relative to trigger */
   side?: 'top' | 'bottom'
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -315,7 +313,7 @@ function HoverCardContent(props: HoverCardContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${hoverCardContentBaseClasses} ${isOpen ? hoverCardContentOpenClasses : hoverCardContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${hoverCardContentBaseClasses} ${isOpen ? hoverCardContentOpenClasses : hoverCardContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         updatePosition()
@@ -346,8 +344,9 @@ function HoverCardContent(props: HoverCardContentProps) {
   return (
     <div
       data-slot="hover-card-content"
+      id={props.id}
       data-state="closed"
-      className={`${hoverCardContentBaseClasses} ${hoverCardContentClosedClasses} ${props.class ?? ''}`}
+      className={`${hoverCardContentBaseClasses} ${hoverCardContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

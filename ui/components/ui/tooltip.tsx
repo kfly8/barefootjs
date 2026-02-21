@@ -29,6 +29,7 @@
  */
 
 import { createSignal } from '@barefootjs/dom'
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 type TooltipPlacement = 'top' | 'right' | 'bottom' | 'left'
@@ -66,7 +67,7 @@ const arrowClasses: Record<TooltipPlacement, string> = {
 /**
  * Props for Tooltip component.
  */
-interface TooltipProps {
+interface TooltipProps extends HTMLBaseAttributes {
   /** Tooltip content text */
   content: string
   /** Trigger element */
@@ -86,8 +87,6 @@ interface TooltipProps {
    * @default 0
    */
   closeDelay?: number
-  /** ID for accessibility (aria-describedby) */
-  id?: string
 }
 
 /**
@@ -157,7 +156,8 @@ function Tooltip(props: TooltipProps) {
   return (
     <span
       data-slot="tooltip"
-      className={tooltipContainerClasses}
+      id={props.id}
+      className={`${tooltipContainerClasses} ${props.className ?? ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}

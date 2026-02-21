@@ -1,5 +1,6 @@
 "use client"
 
+import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
 import { createSignal, createMemo } from '@barefootjs/dom'
 
 /**
@@ -59,7 +60,7 @@ const stateClasses = [
 /**
  * Props for the Checkbox component.
  */
-interface CheckboxProps {
+interface CheckboxProps extends ButtonHTMLAttributes {
   /**
    * Default checked state (for uncontrolled mode).
    * @default false
@@ -70,11 +71,6 @@ interface CheckboxProps {
    */
   checked?: boolean
   /**
-   * Whether the checkbox is disabled.
-   * @default false
-   */
-  disabled?: boolean
-  /**
    * Whether the checkbox is in an error state.
    * @default false
    */
@@ -83,10 +79,6 @@ interface CheckboxProps {
    * Callback when the checked state changes.
    */
   onCheckedChange?: (checked: boolean) => void
-  /**
-   * Additional CSS classes.
-   */
-  class?: string
 }
 
 /**
@@ -134,7 +126,7 @@ function Checkbox(props: CheckboxProps) {
   }
 
   // Classes - state styling handled by data-state attribute selectors
-  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${props.class ?? ''} grid place-content-center`
+  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${props.className ?? ''} grid place-content-center`
 
   // Click handler that works for both controlled and uncontrolled modes
   const handleClick = (e: MouseEvent) => {
@@ -168,6 +160,7 @@ function Checkbox(props: CheckboxProps) {
       data-slot="checkbox"
       data-state={isChecked() ? 'checked' : 'unchecked'}
       role="checkbox"
+      id={props.id}
       aria-checked={isChecked()}
       aria-invalid={props.error || undefined}
       disabled={props.disabled ?? false}

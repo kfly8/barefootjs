@@ -31,6 +31,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for parent-child state sharing
@@ -60,15 +61,13 @@ const popoverContentClosedClasses = 'opacity-0 scale-95 pointer-events-none'
 /**
  * Props for Popover component.
  */
-interface PopoverProps {
+interface PopoverProps extends HTMLBaseAttributes {
   /** Whether the popover is open */
   open?: boolean
   /** Callback when open state should change */
   onOpenChange?: (open: boolean) => void
   /** PopoverTrigger and PopoverContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -84,7 +83,7 @@ function Popover(props: PopoverProps) {
       open: () => props.open ?? false,
       onOpenChange: props.onOpenChange ?? (() => {}),
     }}>
-      <div data-slot="popover" className={`${popoverClasses} ${props.class ?? ''}`}>
+      <div data-slot="popover" id={props.id} className={`${popoverClasses} ${props.className ?? ''}`}>
         {props.children}
       </div>
     </PopoverContext.Provider>
@@ -94,15 +93,13 @@ function Popover(props: PopoverProps) {
 /**
  * Props for PopoverTrigger component.
  */
-interface PopoverTriggerProps {
+interface PopoverTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Trigger content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -143,8 +140,9 @@ function PopoverTrigger(props: PopoverTriggerProps) {
       data-slot="popover-trigger"
       type="button"
       aria-expanded="false"
+      id={props.id}
       disabled={props.disabled ?? false}
-      className={`${popoverTriggerClasses} ${props.class ?? ''}`}
+      className={`${popoverTriggerClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -155,15 +153,13 @@ function PopoverTrigger(props: PopoverTriggerProps) {
 /**
  * Props for PopoverContent component.
  */
-interface PopoverContentProps {
+interface PopoverContentProps extends HTMLBaseAttributes {
   /** Popover content */
   children?: Child
   /** Alignment relative to trigger */
   align?: 'start' | 'center' | 'end'
   /** Side relative to trigger */
   side?: 'top' | 'bottom'
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -221,7 +217,7 @@ function PopoverContent(props: PopoverContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${popoverContentBaseClasses} ${isOpen ? popoverContentOpenClasses : popoverContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${popoverContentBaseClasses} ${isOpen ? popoverContentOpenClasses : popoverContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         updatePosition()
@@ -264,7 +260,8 @@ function PopoverContent(props: PopoverContentProps) {
       data-slot="popover-content"
       data-state="closed"
       tabindex={-1}
-      className={`${popoverContentBaseClasses} ${popoverContentClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${popoverContentBaseClasses} ${popoverContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -275,11 +272,9 @@ function PopoverContent(props: PopoverContentProps) {
 /**
  * Props for PopoverClose component.
  */
-interface PopoverCloseProps {
+interface PopoverCloseProps extends ButtonHTMLAttributes {
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -299,7 +294,8 @@ function PopoverClose(props: PopoverCloseProps) {
     <button
       data-slot="popover-close"
       type="button"
-      className={props.class ?? ''}
+      id={props.id}
+      className={props.className ?? ''}
       ref={handleMount}
     >
       {props.children}

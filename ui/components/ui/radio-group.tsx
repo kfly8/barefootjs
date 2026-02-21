@@ -25,6 +25,7 @@
  * ```
  */
 
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import { createContext, useContext, createSignal, createEffect, createMemo } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
@@ -48,7 +49,7 @@ const itemClasses = `${itemBaseClasses} ${itemFocusClasses} ${itemStateClasses} 
 /**
  * Props for the RadioGroup component.
  */
-interface RadioGroupProps {
+interface RadioGroupProps extends HTMLBaseAttributes {
   /** Default selected value (for uncontrolled mode). */
   defaultValue?: string
   /** Controlled selected value. When provided, component is in controlled mode. */
@@ -57,8 +58,6 @@ interface RadioGroupProps {
   onValueChange?: (value: string) => void
   /** Whether the entire group is disabled. */
   disabled?: boolean
-  /** Additional CSS classes. */
-  class?: string
   /** RadioGroupItem children. */
   children?: Child
 }
@@ -96,7 +95,8 @@ function RadioGroup(props: RadioGroupProps) {
       <div
         data-slot="radio-group"
         role="radiogroup"
-        className={`grid gap-3 ${props.class ?? ''}`}
+        id={props.id}
+        className={`grid gap-3 ${props.className ?? ''}`}
       >
         {props.children}
       </div>
@@ -107,13 +107,11 @@ function RadioGroup(props: RadioGroupProps) {
 /**
  * Props for the RadioGroupItem component.
  */
-interface RadioGroupItemProps {
+interface RadioGroupItemProps extends ButtonHTMLAttributes {
   /** Value for this radio item. */
   value: string
   /** Whether this item is disabled. */
   disabled?: boolean
-  /** Additional CSS classes. */
-  class?: string
 }
 
 /**
@@ -154,7 +152,8 @@ function RadioGroupItem(props: RadioGroupItemProps) {
       role="radio"
       aria-checked="false"
       disabled={props.disabled ?? false}
-      className={`${itemClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${itemClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span data-slot="radio-group-indicator" className="flex items-center justify-center">

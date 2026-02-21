@@ -22,6 +22,7 @@
  * ```
  */
 
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import { createContext, useContext, createEffect } from '@barefootjs/dom'
 import type { Child } from '../../types'
 import { ChevronDownIcon } from './icon'
@@ -61,11 +62,9 @@ const accordionContentInnerClasses = 'overflow-hidden text-sm'
 /**
  * Props for Accordion component.
  */
-interface AccordionProps {
+interface AccordionProps extends HTMLBaseAttributes {
   /** AccordionItem components */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -74,11 +73,12 @@ interface AccordionProps {
  * @param props.children - AccordionItem components
  */
 function Accordion({
-  class: className = '',
   children,
+  className = '',
+  ...props
 }: AccordionProps) {
   return (
-    <div data-slot="accordion" className={`${accordionClasses} ${className}`}>
+    <div data-slot="accordion" className={`${accordionClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -87,7 +87,7 @@ function Accordion({
 /**
  * Props for AccordionItem component.
  */
-interface AccordionItemProps {
+interface AccordionItemProps extends HTMLBaseAttributes {
   /** Unique identifier for this item */
   value: string
   /** Whether this item is open */
@@ -98,8 +98,6 @@ interface AccordionItemProps {
   onOpenChange?: (open: boolean) => void
   /** AccordionTrigger and AccordionContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -119,9 +117,10 @@ function AccordionItem(props: AccordionItemProps) {
     }}>
       <div
         data-slot="accordion-item"
+        id={props.id}
         data-state={props.open ? 'open' : 'closed'}
         data-value={props.value}
-        className={`${accordionItemClasses} ${props.class ?? ''}`}
+        className={`${accordionItemClasses} ${props.className ?? ''}`}
       >
         {props.children}
       </div>
@@ -132,15 +131,13 @@ function AccordionItem(props: AccordionItemProps) {
 /**
  * Props for AccordionTrigger component.
  */
-interface AccordionTriggerProps {
+interface AccordionTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Trigger label */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -230,7 +227,7 @@ function AccordionTrigger(props: AccordionTriggerProps) {
     )
   }
 
-  const className = props.class ?? ''
+  const className = props.className ?? ''
   const classes = `${accordionTriggerBaseClasses} ${accordionTriggerFocusClasses} ${className}`
   const iconClasses = 'text-muted-foreground pointer-events-none shrink-0 translate-y-0.5 transition-transform duration-normal'
 
@@ -238,6 +235,7 @@ function AccordionTrigger(props: AccordionTriggerProps) {
     <h3 className="flex">
       <button
         data-slot="accordion-trigger"
+        id={props.id}
         className={classes}
         disabled={props.disabled}
         aria-expanded="false"
@@ -254,11 +252,9 @@ function AccordionTrigger(props: AccordionTriggerProps) {
 /**
  * Props for AccordionContent component.
  */
-interface AccordionContentProps {
+interface AccordionContentProps extends HTMLBaseAttributes {
   /** Content to display */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -276,11 +272,12 @@ function AccordionContent(props: AccordionContentProps) {
     })
   }
 
-  const className = props.class ?? ''
+  const className = props.className ?? ''
 
   return (
     <div
       data-slot="accordion-content"
+      id={props.id}
       role="region"
       data-state="closed"
       className={`${accordionContentBaseClasses} ${accordionContentClosedClasses}`}

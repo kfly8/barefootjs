@@ -25,6 +25,7 @@
  * ```
  */
 
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import { createContext, useContext, createSignal, createEffect, createMemo } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
@@ -69,7 +70,7 @@ const ToggleGroupContext = createContext<ToggleGroupContextValue>()
 /**
  * Props for the ToggleGroup component.
  */
-interface ToggleGroupProps {
+interface ToggleGroupProps extends HTMLBaseAttributes {
   /** Selection mode: 'single' allows one item, 'multiple' allows many. */
   type: 'single' | 'multiple'
   /** Default selected value(s) for uncontrolled mode. */
@@ -84,8 +85,6 @@ interface ToggleGroupProps {
   variant?: ToggleVariant
   /** Size applied to all items. */
   size?: ToggleSize
-  /** Additional CSS classes. */
-  class?: string
   /** ToggleGroupItem children. */
   children?: Child
 }
@@ -109,7 +108,7 @@ function ToggleGroup(props: ToggleGroupProps) {
   // Determine current value
   const currentValue = createMemo(() => isControlled() ? (controlledValue() ?? []) : internalValue())
 
-  const groupClasses = `group/toggle-group flex w-fit items-center rounded-md ${(props.variant ?? 'default') === 'outline' ? 'shadow-xs' : ''} ${props.class ?? ''}`
+  const groupClasses = `group/toggle-group flex w-fit items-center rounded-md ${(props.variant ?? 'default') === 'outline' ? 'shadow-xs' : ''} ${props.className ?? ''}`
 
   const handleItemToggle = (itemValue: string) => {
     const current = currentValue()
@@ -155,6 +154,7 @@ function ToggleGroup(props: ToggleGroupProps) {
         data-variant={props.variant ?? 'default'}
         data-size={props.size ?? 'default'}
         role="group"
+        id={props.id}
         className={groupClasses}
       >
         {props.children}
@@ -166,13 +166,11 @@ function ToggleGroup(props: ToggleGroupProps) {
 /**
  * Props for the ToggleGroupItem component.
  */
-interface ToggleGroupItemProps {
+interface ToggleGroupItemProps extends ButtonHTMLAttributes {
   /** Value for this toggle item. */
   value: string
   /** Whether this item is disabled. */
   disabled?: boolean
-  /** Additional CSS classes. */
-  class?: string
   /** Children to render inside the toggle item. */
   children?: Child
 }
@@ -220,7 +218,8 @@ function ToggleGroupItem(props: ToggleGroupItemProps) {
       data-state="off"
       aria-pressed="false"
       disabled={props.disabled ?? false}
-      className={`${toggleBaseClasses} ${toggleGroupItemClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${toggleBaseClasses} ${toggleGroupItemClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

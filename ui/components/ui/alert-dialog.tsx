@@ -39,6 +39,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for AlertDialog → children state sharing
@@ -120,15 +121,13 @@ function AlertDialog(props: AlertDialogProps) {
 /**
  * Props for AlertDialogTrigger component.
  */
-interface AlertDialogTriggerProps {
+interface AlertDialogTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -159,7 +158,8 @@ function AlertDialogTrigger(props: AlertDialogTriggerProps) {
     <button
       data-slot="alert-dialog-trigger"
       type="button"
-      className={`${alertDialogTriggerClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${alertDialogTriggerClasses} ${props.className ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >
@@ -171,9 +171,7 @@ function AlertDialogTrigger(props: AlertDialogTriggerProps) {
 /**
  * Props for AlertDialogOverlay component.
  */
-interface AlertDialogOverlayProps {
-  /** Additional CSS classes */
-  class?: string
+interface AlertDialogOverlayProps extends HTMLBaseAttributes {
 }
 
 /**
@@ -194,7 +192,7 @@ function AlertDialogOverlay(props: AlertDialogOverlayProps) {
     createEffect(() => {
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${alertDialogOverlayBaseClasses} ${isOpen ? alertDialogOverlayOpenClasses : alertDialogOverlayClosedClasses} ${props.class ?? ''}`
+      el.className = `${alertDialogOverlayBaseClasses} ${isOpen ? alertDialogOverlayOpenClasses : alertDialogOverlayClosedClasses} ${props.className ?? ''}`
     })
   }
 
@@ -202,7 +200,8 @@ function AlertDialogOverlay(props: AlertDialogOverlayProps) {
     <div
       data-slot="alert-dialog-overlay"
       data-state="closed"
-      className={`${alertDialogOverlayBaseClasses} ${alertDialogOverlayClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${alertDialogOverlayBaseClasses} ${alertDialogOverlayClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     />
   )
@@ -211,15 +210,13 @@ function AlertDialogOverlay(props: AlertDialogOverlayProps) {
 /**
  * Props for AlertDialogContent component.
  */
-interface AlertDialogContentProps {
+interface AlertDialogContentProps extends HTMLBaseAttributes {
   /** AlertDialog content */
   children?: Child
   /** ID of the title element for aria-labelledby */
   ariaLabelledby?: string
   /** ID of the description element for aria-describedby */
   ariaDescribedby?: string
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -247,7 +244,7 @@ function AlertDialogContent(props: AlertDialogContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${alertDialogContentBaseClasses} ${isOpen ? alertDialogContentOpenClasses : alertDialogContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${alertDialogContentBaseClasses} ${isOpen ? alertDialogContentOpenClasses : alertDialogContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         // Scroll lock
@@ -308,7 +305,8 @@ function AlertDialogContent(props: AlertDialogContentProps) {
       aria-labelledby={props.ariaLabelledby}
       aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${alertDialogContentBaseClasses} ${alertDialogContentClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${alertDialogContentBaseClasses} ${alertDialogContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -319,19 +317,17 @@ function AlertDialogContent(props: AlertDialogContentProps) {
 /**
  * Props for AlertDialogHeader component.
  */
-interface AlertDialogHeaderProps {
+interface AlertDialogHeaderProps extends HTMLBaseAttributes {
   /** Header content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Header section of the alert dialog.
  */
-function AlertDialogHeader({ class: className = '', children }: AlertDialogHeaderProps) {
+function AlertDialogHeader({ className = '', children, ...props }: AlertDialogHeaderProps) {
   return (
-    <div data-slot="alert-dialog-header" className={`${alertDialogHeaderClasses} ${className}`}>
+    <div data-slot="alert-dialog-header" className={`${alertDialogHeaderClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -340,21 +336,17 @@ function AlertDialogHeader({ class: className = '', children }: AlertDialogHeade
 /**
  * Props for AlertDialogTitle component.
  */
-interface AlertDialogTitleProps {
-  /** ID for aria-labelledby reference */
-  id?: string
+interface AlertDialogTitleProps extends HTMLBaseAttributes {
   /** Title text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Title of the alert dialog.
  */
-function AlertDialogTitle({ class: className = '', id, children }: AlertDialogTitleProps) {
+function AlertDialogTitle({ className = '', children, ...props }: AlertDialogTitleProps) {
   return (
-    <h2 data-slot="alert-dialog-title" id={id} className={`${alertDialogTitleClasses} ${className}`}>
+    <h2 data-slot="alert-dialog-title" className={`${alertDialogTitleClasses} ${className}`} {...props}>
       {children}
     </h2>
   )
@@ -363,21 +355,17 @@ function AlertDialogTitle({ class: className = '', id, children }: AlertDialogTi
 /**
  * Props for AlertDialogDescription component.
  */
-interface AlertDialogDescriptionProps {
-  /** ID for aria-describedby reference */
-  id?: string
+interface AlertDialogDescriptionProps extends HTMLBaseAttributes {
   /** Description text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Description text for the alert dialog.
  */
-function AlertDialogDescription({ class: className = '', id, children }: AlertDialogDescriptionProps) {
+function AlertDialogDescription({ className = '', children, ...props }: AlertDialogDescriptionProps) {
   return (
-    <p data-slot="alert-dialog-description" id={id} className={`${alertDialogDescriptionClasses} ${className}`}>
+    <p data-slot="alert-dialog-description" className={`${alertDialogDescriptionClasses} ${className}`} {...props}>
       {children}
     </p>
   )
@@ -386,19 +374,17 @@ function AlertDialogDescription({ class: className = '', id, children }: AlertDi
 /**
  * Props for AlertDialogFooter component.
  */
-interface AlertDialogFooterProps {
+interface AlertDialogFooterProps extends HTMLBaseAttributes {
   /** Footer content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Footer section of the alert dialog.
  */
-function AlertDialogFooter({ class: className = '', children }: AlertDialogFooterProps) {
+function AlertDialogFooter({ className = '', children, ...props }: AlertDialogFooterProps) {
   return (
-    <div data-slot="alert-dialog-footer" className={`${alertDialogFooterClasses} ${className}`}>
+    <div data-slot="alert-dialog-footer" className={`${alertDialogFooterClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -407,11 +393,9 @@ function AlertDialogFooter({ class: className = '', children }: AlertDialogFoote
 /**
  * Props for AlertDialogCancel component.
  */
-interface AlertDialogCancelProps {
+interface AlertDialogCancelProps extends ButtonHTMLAttributes {
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -431,7 +415,8 @@ function AlertDialogCancel(props: AlertDialogCancelProps) {
     <button
       data-slot="alert-dialog-cancel"
       type="button"
-      className={`${alertDialogCancelClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${alertDialogCancelClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -442,11 +427,9 @@ function AlertDialogCancel(props: AlertDialogCancelProps) {
 /**
  * Props for AlertDialogAction component.
  */
-interface AlertDialogActionProps {
+interface AlertDialogActionProps extends ButtonHTMLAttributes {
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
   /** Click handler for the action */
   onClick?: () => void
 }
@@ -469,7 +452,8 @@ function AlertDialogAction(props: AlertDialogActionProps) {
     <button
       data-slot="alert-dialog-action"
       type="button"
-      className={`${alertDialogActionClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${alertDialogActionClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

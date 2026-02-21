@@ -1,5 +1,6 @@
 "use client"
 
+import type { ButtonHTMLAttributes } from '@barefootjs/jsx'
 import { createSignal, createMemo } from '@barefootjs/dom'
 
 /**
@@ -51,7 +52,7 @@ const sizeClasses: Record<ToggleSize, string> = {
 /**
  * Props for the Toggle component.
  */
-interface ToggleProps {
+interface ToggleProps extends ButtonHTMLAttributes {
   /**
    * Default pressed state (for uncontrolled mode).
    * @default false
@@ -61,11 +62,6 @@ interface ToggleProps {
    * Controlled pressed state. When provided, component is in controlled mode.
    */
   pressed?: boolean
-  /**
-   * Whether the toggle is disabled.
-   * @default false
-   */
-  disabled?: boolean
   /**
    * Visual variant of the toggle.
    * @default 'default'
@@ -80,10 +76,6 @@ interface ToggleProps {
    * Callback when the pressed state changes.
    */
   onPressedChange?: (pressed: boolean) => void
-  /**
-   * Additional CSS classes.
-   */
-  class?: string
   /**
    * Children to render inside the toggle.
    */
@@ -119,7 +111,7 @@ function Toggle(props: ToggleProps) {
   const size = props.size ?? 'default'
 
   // Classes
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.class ?? ''}`
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.className ?? ''}`
 
   // Click handler that works for both controlled and uncontrolled modes
   const handleClick = (e: MouseEvent) => {
@@ -150,6 +142,7 @@ function Toggle(props: ToggleProps) {
     <button
       data-slot="toggle"
       data-state={isPressed() ? 'on' : 'off'}
+      id={props.id}
       aria-pressed={isPressed()}
       disabled={props.disabled ?? false}
       className={classes}
