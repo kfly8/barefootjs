@@ -561,6 +561,9 @@ function transformExpression(
 
   const expr = node.expression
 
+  // Check for bare signal/memo identifier (BF044)
+  checkBareSignalOrMemoIdentifier(expr, ctx)
+
   // Check for @client directive in prefix style: {/* @client */ expr}
   // getFullText() includes leading trivia (comments, whitespace)
   const fullText = node.getFullText(ctx.sourceFile)
@@ -1264,6 +1267,9 @@ function getAttributeValue(
   if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
     const expr = attr.initializer.expression
 
+    // Check for bare signal/memo identifier (BF044)
+    checkBareSignalOrMemoIdentifier(expr, ctx)
+
     // Template literal with ternaries: `...${cond ? 'a' : 'b'}...`
     if (ts.isTemplateExpression(expr)) {
       const parts = parseTemplateLiteral(expr, ctx)
@@ -1448,6 +1454,56 @@ function templateLiteralToString(value: string | IRTemplateLiteral | null): stri
 // =============================================================================
 // Helpers
 // =============================================================================
+
+/**
+ * Check if a bare identifier is a signal getter or memo name.
+ * Emits BF044 error when a signal/memo getter is passed without calling it.
+ * e.g., value={count} instead of value={count()}
+ */
+function checkBareSignalOrMemoIdentifier(
+  expr: ts.Expression,
+  ctx: TransformContext
+): void {
+  if (!ts.isIdentifier(expr)) return
+
+  const name = expr.text
+
+  for (const signal of ctx.analyzer.signals) {
+    if (signal.getter === name) {
+      ctx.analyzer.errors.push(
+        createError(ErrorCodes.SIGNAL_GETTER_NOT_CALLED,
+          getSourceLocation(expr, ctx.sourceFile, ctx.filePath),
+          {
+            message: `Signal getter '${name}' passed without calling it`,
+            suggestion: {
+              message: `Signal getters must be called to read the value. Use \`${name}()\` instead of \`${name}\`.`,
+              replacement: `${name}()`,
+            },
+          }
+        )
+      )
+      return
+    }
+  }
+
+  for (const memo of ctx.analyzer.memos) {
+    if (memo.name === name) {
+      ctx.analyzer.errors.push(
+        createError(ErrorCodes.SIGNAL_GETTER_NOT_CALLED,
+          getSourceLocation(expr, ctx.sourceFile, ctx.filePath),
+          {
+            message: `Memo getter '${name}' passed without calling it`,
+            suggestion: {
+              message: `Memo getters must be called to read the value. Use \`${name}()\` instead of \`${name}\`.`,
+              replacement: `${name}()`,
+            },
+          }
+        )
+      )
+      return
+    }
+  }
+}
 
 /**
  * Check if array expression is a signal or memo getter call.

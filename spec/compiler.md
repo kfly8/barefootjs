@@ -293,6 +293,7 @@ interface TemplateAdapter {
 | BF030 | Type inference failed |
 | BF031 | Props type mismatch |
 | BF043 | Props destructuring breaks reactivity |
+| BF044 | Signal/memo getter passed without calling it |
 
 ### Error Format
 
@@ -369,6 +370,34 @@ error[BF021]: Expression cannot be compiled to server template: Sort comparator 
 ```
 
 When `@client` is present, the compiler skips SSR for that expression without emitting an error.
+
+### Signal/Memo Getter Not Called (BF044)
+
+When a signal getter or memo is passed as a bare identifier (without calling it), the compiler emits a **BF044** error. This catches the common mistake of writing `value={count}` instead of `value={count()}`.
+
+```
+error[BF044]: Signal getter 'count' passed without calling it
+
+  --> src/components/Counter.tsx:7:24
+   |
+ 7 |           return <div value={count} />
+   |                        ^^^^^
+   |
+   = help: Signal getters must be called to read the value. Use `count()` instead of `count`.
+```
+
+**Detected patterns:**
+
+| Pattern | Detected? | Reason |
+|---------|-----------|--------|
+| `value={count}` | Yes (BF044) | Signal getter without `()` |
+| `{count}` | Yes (BF044) | Signal getter in JSX children |
+| `value={doubled}` | Yes (BF044) | Memo without `()` |
+| `value={count()}` | No | Correct usage |
+| `onClick={handler}` | No | Event handlers filtered before check |
+| `onChange={setCount}` | No | Setter, not getter |
+| `value={props.checked}` | No | Property access, not bare identifier |
+| `value={count() + 1}` | No | Expression, not bare identifier |
 
 ---
 
