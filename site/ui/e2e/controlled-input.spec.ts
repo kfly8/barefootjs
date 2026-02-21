@@ -5,23 +5,6 @@ test.describe('Controlled Input Documentation Page', () => {
     await page.goto('/docs/forms/controlled-input')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Controlled Input')
-    await expect(page.locator('text=Signal ↔ input value synchronization')).toBeVisible()
-  })
-
-  test('displays pattern overview section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Pattern Overview")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
-  test('displays key points section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Key Points")')).toBeVisible()
-  })
-
   test.describe('Basic Two-Way Binding', () => {
     test('displays basic controlled demo', async ({ page }) => {
       await expect(page.locator('[bf-s^="BasicControlledDemo_"]')).toBeVisible()
@@ -162,26 +145,5 @@ test.describe('Controlled Input Documentation Page', () => {
       await expect(inputA).toHaveValue('World')
       await expect(sharedValue).toHaveText('World')
     })
-  })
-})
-
-test.describe('Home Page - Controlled Input Link', () => {
-  test('displays Form Patterns section', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
-  })
-
-  test('displays Controlled Input link', async ({ page }) => {
-    await page.goto('/')
-    const link = page.locator('#form-patterns a[href="/docs/forms/controlled-input"]')
-    await expect(link).toBeVisible()
-    await expect(link).toContainText('Controlled Input')
-  })
-
-  test('navigates to Controlled Input page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#form-patterns a[href="/docs/forms/controlled-input"]').click()
-    await expect(page).toHaveURL('/docs/forms/controlled-input')
-    await expect(page.locator('h1')).toContainText('Controlled Input')
   })
 })

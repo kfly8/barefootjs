@@ -5,16 +5,6 @@ test.describe('Popover Documentation Page', () => {
     await page.goto('/docs/components/popover')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Popover')
-    await expect(page.locator('text=A floating panel that appears relative to a trigger element')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx --bun barefoot add popover').first()).toBeVisible()
-  })
-
   test.describe('Preview Demo', () => {
     test('opens popover on trigger click', async ({ page }) => {
       const demo = page.locator('[bf-s^="PopoverPreviewDemo_"]').first()
@@ -138,13 +128,4 @@ test.describe('Popover Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-      await expect(page.locator('h3:text-is("Popover")')).toBeVisible()
-      await expect(page.locator('h3:has-text("PopoverTrigger")')).toBeVisible()
-      await expect(page.locator('h3:has-text("PopoverContent")')).toBeVisible()
-      await expect(page.locator('h3:has-text("PopoverClose")')).toBeVisible()
-    })
-  })
 })

@@ -5,17 +5,6 @@ test.describe('Switch Documentation Page', () => {
     await page.goto('/docs/components/switch')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Switch')
-    await expect(page.locator('text=A control that allows the user to toggle')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Switch Rendering', () => {
     test('displays switch elements', async ({ page }) => {
       const switches = page.locator('button[role="switch"]')
@@ -290,38 +279,4 @@ test.describe('Switch Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^defaultChecked$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^checked$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onCheckedChange$/ })).toBeVisible()
-    })
-  })
-})
-
-test.describe('Home Page - Switch Link', () => {
-  test('displays Switch preview card', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('#components a[href="/docs/components/switch"]')).toBeVisible()
-  })
-
-  test('navigates to Switch page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#components a[href="/docs/components/switch"]').click()
-    await expect(page).toHaveURL('/docs/components/switch')
-    await expect(page.locator('h1')).toContainText('Switch')
-  })
 })

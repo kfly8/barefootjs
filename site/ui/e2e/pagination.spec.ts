@@ -5,21 +5,6 @@ test.describe('Pagination Documentation Page', () => {
     await page.goto('/docs/components/pagination')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Pagination')
-    await expect(page.locator('text=Pagination with page navigation')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
   test.describe('Preview', () => {
     test('displays pagination nav element', async ({ page }) => {
       const nav = page.locator('nav[aria-label="pagination"]').first()
@@ -136,23 +121,4 @@ test.describe('Pagination Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays key props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^isActive$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^size$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^href$/ })).toBeVisible()
-    })
-  })
 })

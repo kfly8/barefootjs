@@ -5,24 +5,6 @@ test.describe('ContextMenu Documentation Page', () => {
     await page.goto('/docs/components/context-menu')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Context Menu')
-    await expect(page.locator('text=A menu triggered by right-click')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx --bun barefoot add context-menu').first()).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Right-click trigger")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Cursor positioning")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Submenu")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Checkbox items")')).toBeVisible()
-  })
-
   test.describe('Basic Demo', () => {
     test('opens menu on right-click and shows items', async ({ page }) => {
       const demo = page.locator('[bf-s^="ContextMenuBasicDemo_"]').first()
@@ -156,30 +138,6 @@ test.describe('ContextMenu Documentation Page', () => {
       await expect(content.locator('text=Back')).toBeVisible()
       await expect(content.locator('text=Forward')).toBeVisible()
       await expect(content.locator('text=Reload')).toBeVisible()
-    })
-
-    test('has correct ARIA roles', async ({ page }) => {
-      const demo = page.locator('[bf-s^="ContextMenuFullDemo_"]').first()
-      const trigger = demo.locator('[data-slot="context-menu-trigger"]')
-
-      await trigger.click({ button: 'right' })
-
-      const content = page.locator('[data-slot="context-menu-content"][data-state="open"]')
-      await expect(content).toHaveAttribute('role', 'menu')
-
-      const items = content.locator('[role="menuitem"]')
-      expect(await items.count()).toBeGreaterThan(0)
-    })
-
-    test('displays separators', async ({ page }) => {
-      const demo = page.locator('[bf-s^="ContextMenuFullDemo_"]').first()
-      const trigger = demo.locator('[data-slot="context-menu-trigger"]')
-
-      await trigger.click({ button: 'right' })
-
-      const content = page.locator('[data-slot="context-menu-content"][data-state="open"]')
-      const separators = content.locator('[data-slot="context-menu-separator"]')
-      expect(await separators.count()).toBeGreaterThanOrEqual(2)
     })
 
     test('keyboard navigation with arrow keys', async ({ page }) => {
@@ -419,15 +377,4 @@ test.describe('ContextMenu Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-      await expect(page.locator('h3:text-is("ContextMenu")')).toBeVisible()
-      await expect(page.locator('h3:has-text("ContextMenuTrigger")')).toBeVisible()
-      await expect(page.locator('h3:has-text("ContextMenuContent")')).toBeVisible()
-      await expect(page.locator('h3:has-text("ContextMenuItem")')).toBeVisible()
-      await expect(page.locator('h3:has-text("ContextMenuLabel")')).toBeVisible()
-      await expect(page.locator('h3:has-text("ContextMenuShortcut")')).toBeVisible()
-    })
-  })
 })

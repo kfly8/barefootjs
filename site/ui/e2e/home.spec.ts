@@ -18,9 +18,23 @@ test.describe('Home Page', () => {
   })
 
   test('displays component preview cards', async ({ page }) => {
+    await expect(page.locator('#components a[href="/docs/components/accordion"]')).toBeVisible()
     await expect(page.locator('#components a[href="/docs/components/button"]')).toBeVisible()
     await expect(page.locator('#components a[href="/docs/components/card"]')).toBeVisible()
+    await expect(page.locator('#components a[href="/docs/components/command"]')).toBeVisible()
+    await expect(page.locator('#components a[href="/docs/components/dialog"]')).toBeVisible()
+    await expect(page.locator('#components a[href="/docs/components/select"]')).toBeVisible()
+    await expect(page.locator('#components a[href="/docs/components/slider"]')).toBeVisible()
+    await expect(page.locator('#components a[href="/docs/components/switch"]')).toBeVisible()
     await expect(page.locator('#components a[href="/docs/components/tabs"]')).toBeVisible()
+  })
+
+  test('displays form patterns section', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
+    await expect(page.locator('#form-patterns a[href="/docs/forms/controlled-input"]')).toBeVisible()
+    await expect(page.locator('#form-patterns a[href="/docs/forms/field-arrays"]')).toBeVisible()
+    await expect(page.locator('#form-patterns a[href="/docs/forms/submit"]')).toBeVisible()
+    await expect(page.locator('#form-patterns a[href="/docs/forms/validation"]')).toBeVisible()
   })
 
   test('navigates to Button page on click', async ({ page }) => {

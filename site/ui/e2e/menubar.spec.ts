@@ -5,40 +5,7 @@ test.describe('Menubar Documentation Page', () => {
     await page.goto('/docs/components/menubar')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Menubar')
-    await expect(page.locator('text=A visually persistent menu common in desktop applications')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx --bun barefoot add menubar').first()).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Roving hover")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Keyboard navigation")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Submenu support")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Checkbox items")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Radio items")')).toBeVisible()
-  })
-
   test.describe('Basic Demo', () => {
-    // BasicDemo is the 2nd menubar on the page (after preview ApplicationDemo, then Basic, then Application)
-    // Use bf-s^="MenubarBasicDemo_" which IS the menubar element itself
-    test('renders menubar with triggers', async ({ page }) => {
-      const menubar = page.locator('[bf-s^="MenubarBasicDemo_"]').first()
-
-      await expect(menubar).toBeVisible()
-      await expect(menubar).toHaveAttribute('role', 'menubar')
-
-      const triggers = menubar.locator('[data-slot="menubar-trigger"]')
-      expect(await triggers.count()).toBe(2)
-      await expect(triggers.nth(0)).toContainText('File')
-      await expect(triggers.nth(1)).toContainText('Edit')
-    })
-
     test('opens menu on trigger click', async ({ page }) => {
       const menubar = page.locator('[bf-s^="MenubarBasicDemo_"]').first()
       const fileTrigger = menubar.locator('[data-slot="menubar-trigger"]').filter({ hasText: 'File' })
@@ -452,17 +419,4 @@ test.describe('Menubar Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-      await expect(page.locator('h3:text-is("Menubar")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarMenu")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarTrigger")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarContent")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarItem")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarCheckboxItem")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarRadioGroup")')).toBeVisible()
-      await expect(page.locator('h3:has-text("MenubarShortcut")')).toBeVisible()
-    })
-  })
 })

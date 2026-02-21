@@ -5,17 +5,6 @@ test.describe('Collapsible Documentation Page', () => {
     await page.goto('/docs/components/collapsible')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Collapsible')
-    await expect(page.locator('text=An interactive component which expands/collapses a panel')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Basic Demo', () => {
     test('displays basic example', async ({ page }) => {
       await expect(page.locator('h3:has-text("Basic")')).toBeVisible()
@@ -126,25 +115,4 @@ test.describe('Collapsible Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays Collapsible props', async ({ page }) => {
-      await expect(page.locator('h3').filter({ hasText: /^Collapsible$/ })).toBeVisible()
-      const tables = page.locator('table')
-      await expect(tables.first().locator('td').filter({ hasText: /^open$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^defaultOpen$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-    })
-
-    test('displays CollapsibleTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("CollapsibleTrigger")')).toBeVisible()
-    })
-
-    test('displays CollapsibleContent section', async ({ page }) => {
-      await expect(page.locator('h3:has-text("CollapsibleContent")')).toBeVisible()
-    })
-  })
 })

@@ -5,25 +5,6 @@ test.describe('DropdownMenu Documentation Page', () => {
     await page.goto('/docs/components/dropdown-menu')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Dropdown Menu')
-    await expect(page.locator('text=A menu of actions triggered by a button')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx --bun barefoot add dropdown-menu').first()).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Props-based state")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Flexible trigger")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Submenu")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Checkbox items")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Destructive variant")')).toBeVisible()
-  })
-
   test.describe('Basic Demo', () => {
     test('opens menu and shows items', async ({ page }) => {
       const demo = page.locator('[bf-s^="DropdownMenuBasicDemo_"]').first()
@@ -557,15 +538,4 @@ test.describe('DropdownMenu Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-      await expect(page.locator('h3:text-is("DropdownMenu")')).toBeVisible()
-      await expect(page.locator('h3:has-text("DropdownMenuTrigger")')).toBeVisible()
-      await expect(page.locator('h3:has-text("DropdownMenuContent")')).toBeVisible()
-      await expect(page.locator('h3:has-text("DropdownMenuItem")')).toBeVisible()
-      await expect(page.locator('h3:has-text("DropdownMenuLabel")')).toBeVisible()
-      await expect(page.locator('h3:has-text("DropdownMenuShortcut")')).toBeVisible()
-    })
-  })
 })

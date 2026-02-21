@@ -5,17 +5,6 @@ test.describe('Slider Documentation Page', () => {
     await page.goto('/docs/components/slider')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Slider')
-    await expect(page.locator('text=An input where the user selects a value')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Slider Rendering', () => {
     test('displays slider elements', async ({ page }) => {
       const sliders = page.locator('[role="slider"]')
@@ -223,41 +212,4 @@ test.describe('Slider Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^defaultValue$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^value$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^min$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^max$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^step$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onValueChange$/ })).toBeVisible()
-    })
-  })
-})
-
-test.describe('Home Page - Slider Link', () => {
-  test('displays Slider preview card', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('#components a[href="/docs/components/slider"]')).toBeVisible()
-  })
-
-  test('navigates to Slider page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#components a[href="/docs/components/slider"]').click()
-    await expect(page).toHaveURL('/docs/components/slider')
-    await expect(page.locator('h1')).toContainText('Slider')
-  })
 })

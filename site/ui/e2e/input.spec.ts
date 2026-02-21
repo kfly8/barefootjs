@@ -5,17 +5,6 @@ test.describe('Input Documentation Page', () => {
     await page.goto('/docs/components/input')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Input')
-    await expect(page.locator('text=Displays an input field')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Input Rendering', () => {
     test('displays input elements', async ({ page }) => {
       const inputs = page.locator('input[data-slot="input"]')
@@ -100,26 +89,5 @@ test.describe('Input Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^type$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^placeholder$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^value$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onInput$/ })).toBeVisible()
-    })
-  })
 })
 

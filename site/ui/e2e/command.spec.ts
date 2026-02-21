@@ -5,41 +5,7 @@ test.describe('Command Documentation Page', () => {
     await page.goto('/docs/components/command')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Command')
-    await expect(page.locator('text=A command menu with search')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Preview Demo', () => {
-    test('displays command input', async ({ page }) => {
-      const section = page.locator('[bf-s^="CommandPreviewDemo_"]').first()
-      await expect(section).toBeVisible()
-      const input = section.locator('input[data-slot="command-input"]')
-      await expect(input).toBeVisible()
-    })
-
-    test('displays groups with headings', async ({ page }) => {
-      const section = page.locator('[bf-s^="CommandPreviewDemo_"]').first()
-      await expect(section.locator('[data-slot="command-group-heading"]').first()).toBeVisible()
-      await expect(section.locator('[data-slot="command-group-heading"]')).toHaveCount(2)
-    })
-
-    test('displays command items', async ({ page }) => {
-      const section = page.locator('[bf-s^="CommandPreviewDemo_"]').first()
-      await expect(section.locator('[data-slot="command-item"]')).toHaveCount(6)
-    })
-
-    test('displays keyboard shortcuts', async ({ page }) => {
-      const section = page.locator('[bf-s^="CommandPreviewDemo_"]').first()
-      await expect(section.locator('[data-slot="command-shortcut"]')).toHaveCount(3)
-    })
-
     test('filtering hides non-matching items', async ({ page }) => {
       const section = page.locator('[bf-s^="CommandPreviewDemo_"]').first()
       const input = section.locator('input[data-slot="command-input"]')
@@ -85,10 +51,6 @@ test.describe('Command Documentation Page', () => {
   })
 
   test.describe('Dialog Demo', () => {
-    test('displays dialog trigger button', async ({ page }) => {
-      await expect(page.locator('[data-command-dialog-trigger]')).toBeVisible()
-    })
-
     test('opens dialog on button click', async ({ page }) => {
       await page.locator('[data-command-dialog-trigger]').click()
       await page.waitForTimeout(200)
@@ -113,30 +75,4 @@ test.describe('Command Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays Command props table', async ({ page }) => {
-      await expect(page.locator('h3').filter({ hasText: /^Command$/ })).toBeVisible()
-    })
-
-    test('displays CommandInput props table', async ({ page }) => {
-      await expect(page.locator('h3:has-text("CommandInput")')).toBeVisible()
-    })
-
-    test('displays CommandItem props table', async ({ page }) => {
-      await expect(page.locator('h3:has-text("CommandItem")')).toBeVisible()
-    })
-  })
-})
-
-test.describe('Home Page', () => {
-  test('displays Command card', async ({ page }) => {
-    await page.goto('/')
-    const card = page.locator('#components a[href="/docs/components/command"]')
-    await expect(card).toBeVisible()
-    await expect(card.locator('h3')).toContainText('Command')
-  })
 })

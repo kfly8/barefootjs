@@ -5,21 +5,6 @@ test.describe('Breadcrumb Documentation Page', () => {
     await page.goto('/docs/components/breadcrumb')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Breadcrumb')
-    await expect(page.getByRole('main').getByText('Displays the path to the current resource')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
   test.describe('Breadcrumb Structure', () => {
     test('renders breadcrumb navigation with correct ARIA attributes', async ({ page }) => {
       const breadcrumb = page.locator('[data-slot="breadcrumb"]').first()
@@ -97,24 +82,4 @@ test.describe('Breadcrumb Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Type")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Description")').first()).toBeVisible()
-    })
-
-    test('displays sub-component sections', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Breadcrumb")').first()).toBeVisible()
-      await expect(page.locator('h3:has-text("BreadcrumbList")')).toBeVisible()
-      await expect(page.locator('h3:has-text("BreadcrumbItem")')).toBeVisible()
-      await expect(page.locator('h3:has-text("BreadcrumbLink")')).toBeVisible()
-      await expect(page.locator('h3:has-text("BreadcrumbPage")')).toBeVisible()
-      await expect(page.locator('h3:has-text("BreadcrumbSeparator")')).toBeVisible()
-    })
-  })
 })

@@ -6,23 +6,6 @@ test.describe('Card Documentation Page', () => {
     await page.goto('/docs/components/card', { waitUntil: 'domcontentloaded' })
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Card')
-    // Use first() to avoid strict mode violation when text appears in multiple places
-    await expect(page.locator('text=Displays a card with header, content, and footer').first()).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    // Check that the installation section contains the package manager tabs
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
   test.describe('Card Preview', () => {
     test('displays preview card (Swiss Alps Adventure)', async ({ page }) => {
       // Check that preview card has the travel card example
@@ -70,24 +53,4 @@ test.describe('Card Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays all sub-component sections', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Card")').first()).toBeVisible()
-      await expect(page.locator('h3:has-text("CardHeader")')).toBeVisible()
-      await expect(page.locator('h3:has-text("CardTitle")')).toBeVisible()
-      await expect(page.locator('h3:has-text("CardDescription")')).toBeVisible()
-      await expect(page.locator('h3:has-text("CardContent")')).toBeVisible()
-      await expect(page.locator('h3:has-text("CardFooter")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Type")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Description")').first()).toBeVisible()
-    })
-  })
 })

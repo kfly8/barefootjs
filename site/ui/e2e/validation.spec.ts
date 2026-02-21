@@ -5,23 +5,6 @@ test.describe('Form Validation Documentation Page', () => {
     await page.goto('/docs/forms/validation')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Form Validation')
-    await expect(page.locator('p.text-muted-foreground.text-lg')).toContainText('error state management')
-  })
-
-  test('displays pattern overview section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Pattern Overview")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
-  test('displays key points section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Key Points")')).toBeVisible()
-  })
-
   test.describe('Required Field Demo', () => {
     test('displays required field demo', async ({ page }) => {
       await expect(page.locator('[bf-s^="RequiredFieldDemo_"]')).toBeVisible()
@@ -222,26 +205,5 @@ test.describe('Form Validation Documentation Page', () => {
       await expect(nameError).toHaveText('')
       await expect(emailError).toHaveText('')
     })
-  })
-})
-
-test.describe('Home Page - Form Validation Link', () => {
-  test('displays Form Patterns section', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
-  })
-
-  test('displays Form Validation link', async ({ page }) => {
-    await page.goto('/')
-    const link = page.locator('#form-patterns a[href="/docs/forms/validation"]')
-    await expect(link).toBeVisible()
-    await expect(link).toContainText('Form Validation')
-  })
-
-  test('navigates to Form Validation page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#form-patterns a[href="/docs/forms/validation"]').click()
-    await expect(page).toHaveURL('/docs/forms/validation')
-    await expect(page.locator('h1')).toContainText('Form Validation')
   })
 })

@@ -21,9 +21,15 @@ describe('Checkbox', () => {
     expect(result.componentName).toBe('Checkbox')
   })
 
-  test('has signals: internalChecked, controlledChecked', () => {
+  test('has signals: internalChecked, controlledChecked (createSignal)', () => {
     expect(result.signals).toContain('internalChecked')
     expect(result.signals).toContain('controlledChecked')
+  })
+
+  test('isControlled and isChecked are memos, not in signals', () => {
+    // isControlled and isChecked are created via createMemo, not createSignal
+    expect(result.signals).not.toContain('isControlled')
+    expect(result.signals).not.toContain('isChecked')
   })
 
   test('renders as <button>', () => {

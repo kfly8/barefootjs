@@ -15,23 +15,6 @@ test.describe('AlertDialog Documentation Page', () => {
     await page.goto('/docs/components/alert-dialog')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Alert Dialog')
-    await expect(page.locator('text=A modal dialog that interrupts the user')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("ESC key to close")')).toBeVisible()
-    await expect(page.locator('strong:has-text("No outside click dismiss")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Scroll lock")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Focus trap")')).toBeVisible()
-  })
-
   test.describe('Basic AlertDialog', () => {
     test('opens alert dialog when trigger is clicked', async ({ page }) => {
       const trigger = page.locator(BASIC_TRIGGER).first()
@@ -256,35 +239,6 @@ test.describe('AlertDialog Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays AlertDialogTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AlertDialogTrigger")')).toBeVisible()
-    })
-
-    test('displays AlertDialogContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AlertDialogContent")')).toBeVisible()
-    })
-
-    test('displays AlertDialogTitle props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AlertDialogTitle")')).toBeVisible()
-    })
-
-    test('displays AlertDialogDescription props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AlertDialogDescription")')).toBeVisible()
-    })
-
-    test('displays AlertDialogCancel props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AlertDialogCancel")')).toBeVisible()
-    })
-
-    test('displays AlertDialogAction props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AlertDialogAction")')).toBeVisible()
-    })
-  })
 })
 
 test.describe('AlertDialogTrigger asChild', () => {

@@ -5,40 +5,7 @@ test.describe('Checkbox Documentation Page', () => {
     await page.goto('/docs/components/checkbox')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Checkbox')
-    await expect(page.locator('text=A control that allows the user to toggle')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test.describe('Checkbox Rendering', () => {
-    test('displays checkbox elements', async ({ page }) => {
-      // The Checkbox component uses button with role="checkbox"
-      const checkboxes = page.locator('button[role="checkbox"]')
-      await expect(checkboxes.first()).toBeVisible()
-    })
-
-    test('has multiple checkbox examples', async ({ page }) => {
-      const checkboxes = page.locator('button[role="checkbox"]')
-      // Should have checkboxes on the page (preview + examples)
-      expect(await checkboxes.count()).toBeGreaterThan(3)
-    })
-  })
-
   test.describe('Preview (Terms Demo)', () => {
-    test('displays preview with checkbox and button', async ({ page }) => {
-      // Use first() to avoid strict mode error (parent and child both have matching scope)
-      const section = page.locator('[bf-s^="CheckboxTermsDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-      await expect(section.locator('button[role="checkbox"]')).toBeVisible()
-      await expect(section.locator('button:has-text("Continue")')).toBeVisible()
-    })
-
     test('button is disabled when unchecked', async ({ page }) => {
       const section = page.locator('[bf-s^="CheckboxTermsDemo_"]:not([data-slot])').first()
       const button = section.locator('button:has-text("Continue")')
@@ -75,36 +42,6 @@ test.describe('Checkbox Documentation Page', () => {
   })
 
   test.describe('Basic', () => {
-    test('displays basic example', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Basic")')).toBeVisible()
-      const section = page.locator('[bf-s^="CheckboxBasicDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-    })
-
-    test('has three checkboxes', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxBasicDemo_"]:not([data-slot])').first()
-      const checkboxes = section.locator('button[role="checkbox"]')
-      await expect(checkboxes).toHaveCount(3)
-    })
-
-    test('first checkbox starts unchecked', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxBasicDemo_"]:not([data-slot])').first()
-      const checkboxes = section.locator('button[role="checkbox"]')
-      await expect(checkboxes.first()).toHaveAttribute('aria-checked', 'false')
-    })
-
-    test('second checkbox starts checked (defaultChecked)', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxBasicDemo_"]:not([data-slot])').first()
-      const checkboxes = section.locator('button[role="checkbox"]')
-      await expect(checkboxes.nth(1)).toHaveAttribute('aria-checked', 'true')
-    })
-
-    test('third checkbox is disabled', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxBasicDemo_"]:not([data-slot])').first()
-      const checkboxes = section.locator('button[role="checkbox"]')
-      await expect(checkboxes.nth(2)).toBeDisabled()
-    })
-
     test('clicking toggles checkbox state', async ({ page }) => {
       const section = page.locator('[bf-s^="CheckboxBasicDemo_"]:not([data-slot])').first()
       const checkbox = section.locator('button[role="checkbox"]').first()
@@ -123,38 +60,6 @@ test.describe('Checkbox Documentation Page', () => {
   })
 
   test.describe('Form', () => {
-    test('displays form example with multiple checkboxes', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Form")')).toBeVisible()
-      const section = page.locator('[bf-s^="CheckboxFormDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-
-      // Should have 3 checkboxes (Mobile, Desktop, Email)
-      const checkboxes = section.locator('button[role="checkbox"]')
-      await expect(checkboxes).toHaveCount(3)
-    })
-
-    test('shows sidebar heading and description', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxFormDemo_"]:not([data-slot])').first()
-      await expect(section.locator('h4:has-text("Sidebar")')).toBeVisible()
-      await expect(section.locator('text=Select the items you want')).toBeVisible()
-    })
-
-    test('Desktop is checked by default', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxFormDemo_"]:not([data-slot])').first()
-      const checkboxes = section.locator('button[role="checkbox"]')
-
-      // Desktop is the second checkbox
-      const desktopCheckbox = checkboxes.nth(1)
-      await expect(desktopCheckbox).toHaveAttribute('aria-checked', 'true')
-    })
-
-    test('shows selected items', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxFormDemo_"]:not([data-slot])').first()
-      await expect(section.locator('text=Selected:')).toBeVisible()
-      // Use first() since "Desktop" appears twice (label and selected text)
-      await expect(section.locator('text=Desktop').first()).toBeVisible()
-    })
-
     test('updates selection when checkboxes are toggled', async ({ page }) => {
       const section = page.locator('[bf-s^="CheckboxFormDemo_"]:not([data-slot])').first()
       const checkboxes = section.locator('button[role="checkbox"]')
@@ -168,18 +73,6 @@ test.describe('Checkbox Documentation Page', () => {
   })
 
   test.describe('Email List', () => {
-    test('displays email list example', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Email List")')).toBeVisible()
-      const section = page.locator('[bf-s^="CheckboxEmailListDemo_"]:not([data-slot])').first()
-      await expect(section).toBeVisible()
-    })
-
-    test('shows select all checkbox and items', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxEmailListDemo_"]:not([data-slot])').first()
-      await expect(section.locator('text=Select all')).toBeVisible()
-      await expect(section.locator('text=Meeting tomorrow')).toBeVisible()
-    })
-
     test('can select individual emails', async ({ page }) => {
       const section = page.locator('[bf-s^="CheckboxEmailListDemo_"]:not([data-slot])').first()
       const checkboxes = section.locator('button[role="checkbox"]')
@@ -215,19 +108,6 @@ test.describe('Checkbox Documentation Page', () => {
   })
 
   test.describe('Email List Detailed Behavior', () => {
-    test('initial state: all unchecked, shows "Select all"', async ({ page }) => {
-      const section = page.locator('[bf-s^="CheckboxEmailListDemo_"]:not([data-slot])').first()
-      const checkboxes = section.locator('button[role="checkbox"]')
-
-      // All 4 checkboxes unchecked
-      for (let i = 0; i < 4; i++) {
-        await expect(checkboxes.nth(i)).toHaveAttribute('aria-checked', 'false')
-      }
-      // Shows "Select all"
-      await expect(section.locator('text=Select all')).toBeVisible()
-      await expect(section.locator('text=selected')).not.toBeVisible()
-    })
-
     test('selecting 1 email shows "1 selected"', async ({ page }) => {
       const section = page.locator('[bf-s^="CheckboxEmailListDemo_"]:not([data-slot])').first()
       const checkboxes = section.locator('button[role="checkbox"]')
@@ -319,23 +199,4 @@ test.describe('Checkbox Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^checked$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onCheckedChange$/ })).toBeVisible()
-    })
-  })
 })

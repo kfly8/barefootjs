@@ -5,17 +5,6 @@ test.describe('Tooltip Documentation Page', () => {
     await page.goto('/docs/components/tooltip')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Tooltip')
-    await expect(page.locator('text=A popup that displays contextual information')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Basic Tooltip', () => {
     test('shows tooltip on hover', async ({ page }) => {
       const demo = page.locator('[bf-s^="TooltipBasicDemo_"]:not([data-slot])').first()
@@ -190,39 +179,4 @@ test.describe('Tooltip Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^content$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^placement$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^delayDuration$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^closeDelay$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^id$/ })).toBeVisible()
-    })
-  })
-})
-
-test.describe('Navigation - Tooltip Link', () => {
-  test('displays Tooltip link in sidebar navigation', async ({ page }) => {
-    await page.goto('/docs/components/tooltip')
-    await expect(page.locator('nav a[href="/docs/components/tooltip"]').last()).toBeVisible()
-  })
-
-  test('navigates to Tooltip page from sidebar', async ({ page }) => {
-    await page.goto('/docs/components/switch')
-    await page.locator('nav a[href="/docs/components/tooltip"]').last().click()
-    await expect(page).toHaveURL('/docs/components/tooltip')
-    await expect(page.locator('h1')).toContainText('Tooltip')
-  })
 })

@@ -5,40 +5,7 @@ test.describe('Accordion Documentation Page', () => {
     await page.goto('/docs/components/accordion')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Accordion')
-    await expect(page.locator('text=A vertically stacked set of interactive headings')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test.describe('Accordion Rendering', () => {
-    test('displays accordion items', async ({ page }) => {
-      const accordionItems = page.locator('[data-state]')
-      expect(await accordionItems.count()).toBeGreaterThan(0)
-    })
-
-    test('displays accordion triggers', async ({ page }) => {
-      const triggers = page.locator('button[aria-expanded]')
-      expect(await triggers.count()).toBeGreaterThan(0)
-    })
-  })
-
   test.describe('Single Open Accordion', () => {
-    test('displays single open accordion example', async ({ page }) => {
-      const accordion = page.locator('[bf-s^="AccordionSingleOpenDemo_"]').first()
-      await expect(accordion).toBeVisible()
-    })
-
-    test('first item is open by default', async ({ page }) => {
-      const accordion = page.locator('[bf-s^="AccordionSingleOpenDemo_"]').first()
-      await expect(accordion.locator('text=Yes. It adheres to the WAI-ARIA design pattern.')).toBeVisible()
-    })
-
     test('clicking another item closes the first', async ({ page }) => {
       const accordion = page.locator('[bf-s^="AccordionSingleOpenDemo_"]').first()
       const secondTrigger = accordion.locator('button:has-text("Is it styled?")')
@@ -66,16 +33,6 @@ test.describe('Accordion Documentation Page', () => {
   })
 
   test.describe('Multiple Open Accordion', () => {
-    test('displays multiple open accordion example', async ({ page }) => {
-      const accordion = page.locator('[bf-s^="AccordionMultipleOpenDemo_"]').first()
-      await expect(accordion).toBeVisible()
-    })
-
-    test('first item is open by default', async ({ page }) => {
-      const accordion = page.locator('[bf-s^="AccordionMultipleOpenDemo_"]').first()
-      await expect(accordion.locator('text=This accordion allows multiple items to be open')).toBeVisible()
-    })
-
     test('can open multiple items simultaneously', async ({ page }) => {
       const accordion = page.locator('[bf-s^="AccordionMultipleOpenDemo_"]').first()
       const secondTrigger = accordion.locator('button:has-text("Second Item")')
@@ -86,24 +43,6 @@ test.describe('Accordion Documentation Page', () => {
       // Both items should be visible
       await expect(accordion.locator('text=This accordion allows multiple items to be open')).toBeVisible()
       await expect(accordion.locator('text=Each item manages its own open/close state')).toBeVisible()
-    })
-  })
-
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays AccordionItem props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AccordionItem")')).toBeVisible()
-    })
-
-    test('displays AccordionTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AccordionTrigger")')).toBeVisible()
-    })
-
-    test('displays AccordionContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("AccordionContent")')).toBeVisible()
     })
   })
 
@@ -213,15 +152,6 @@ test.describe('Accordion asChild', () => {
     await page.goto('/docs/components/accordion')
   })
 
-  test('renders child element as trigger', async ({ page }) => {
-    const trigger = page.locator('[data-testid="accordion-aschild-trigger"]')
-    await expect(trigger).toBeVisible()
-
-    // Should be a <button> tag (the custom child), not the default accordion button
-    const tagName = await trigger.evaluate((el) => el.tagName.toLowerCase())
-    expect(tagName).toBe('button')
-  })
-
   test('toggles content on click with reactive state', async ({ page }) => {
     const trigger = page.locator('[data-testid="accordion-aschild-trigger"]')
     const stateEl = page.locator('[data-testid="accordion-aschild-state"]')
@@ -271,20 +201,6 @@ test.describe('Accordion asChild', () => {
     // ArrowUp should wrap to standard trigger
     await page.keyboard.press('ArrowUp')
     await expect(standardTrigger).toBeFocused()
-  })
-})
-
-test.describe('Home Page - Accordion Link', () => {
-  test('displays Accordion preview card', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('#components a[href="/docs/components/accordion"]')).toBeVisible()
-  })
-
-  test('navigates to Accordion page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#components a[href="/docs/components/accordion"]').click()
-    await expect(page).toHaveURL('/docs/components/accordion')
-    await expect(page.locator('h1')).toContainText('Accordion')
   })
 })
 

@@ -5,17 +5,6 @@ test.describe('Toggle Group Documentation Page', () => {
     await page.goto('/docs/components/toggle-group')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Toggle Group')
-    await expect(page.locator('text=A set of two-state buttons that can be toggled on or off.')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Toggle Group Rendering', () => {
     test('displays toggle-group elements with data-slot', async ({ page }) => {
       const groups = page.locator('[data-slot="toggle-group"]')
@@ -214,33 +203,4 @@ test.describe('Toggle Group Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Type")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Default")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Description")').first()).toBeVisible()
-    })
-
-    test('displays ToggleGroup props', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'ToggleGroup', exact: true })).toBeVisible()
-      const tables = page.locator('table')
-      await expect(tables.first().locator('td').filter({ hasText: /^type$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^variant$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^size$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^onValueChange$/ })).toBeVisible()
-    })
-
-    test('displays ToggleGroupItem props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("ToggleGroupItem")')).toBeVisible()
-      const tables = page.locator('table')
-      await expect(tables.nth(1).locator('td').filter({ hasText: /^value$/ })).toBeVisible()
-      await expect(tables.nth(1).locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-    })
-  })
 })

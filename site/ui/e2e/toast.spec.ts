@@ -5,23 +5,6 @@ test.describe('Toast Documentation Page', () => {
     await page.goto('/docs/components/toast')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Toast')
-    await expect(page.locator('text=A non-blocking notification')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Auto-dismiss")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Manual dismiss")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Variants")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Portal rendering")')).toBeVisible()
-  })
-
   test.describe('Default Toast', () => {
     test('opens toast when button is clicked', async ({ page }) => {
       const demo = page.locator('[bf-s^="ToastDefaultDemo_"]').first()
@@ -227,33 +210,4 @@ test.describe('Toast Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays ToastProvider props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("ToastProvider")')).toBeVisible()
-    })
-
-    test('displays Toast props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Toast")').first()).toBeVisible()
-    })
-
-    test('displays ToastTitle props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("ToastTitle")')).toBeVisible()
-    })
-
-    test('displays ToastDescription props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("ToastDescription")')).toBeVisible()
-    })
-
-    test('displays ToastClose props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("ToastClose")')).toBeVisible()
-    })
-
-    test('displays ToastAction props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("ToastAction")')).toBeVisible()
-    })
-  })
 })

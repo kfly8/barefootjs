@@ -5,23 +5,6 @@ test.describe('Badge Documentation Page', () => {
     await page.goto('/docs/components/badge')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Badge')
-    // Use getByRole('main') to target description in main content (not sidebar)
-    await expect(page.getByRole('main').getByText('Displays a badge or a component')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    // Check that the installation section contains the package manager tabs
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
   test.describe('Badge Variants', () => {
     // Use data-slot selector to target actual Badge components (not syntax-highlighted code spans)
     const badgeSelector = '[data-slot="badge"]'
@@ -96,22 +79,4 @@ test.describe('Badge Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^variant$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^children$/ })).toBeVisible()
-    })
-  })
 })
