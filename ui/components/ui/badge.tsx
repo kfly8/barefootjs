@@ -74,7 +74,7 @@ interface BadgeProps extends HTMLBaseAttributes {
  * @param props.asChild - Render child element instead of span
  */
 function Badge({
-  class: className = '',
+  className = '',
   variant = 'default',
   asChild = false,
   children,

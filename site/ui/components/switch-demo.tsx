@@ -103,7 +103,7 @@ export function SwitchConsentDemo() {
         <Switch
           checked={accepted()}
           onCheckedChange={setAccepted}
-          class="mt-px"
+          className="mt-px"
         />
         <div
           className="grid gap-1.5 leading-none cursor-pointer select-none"

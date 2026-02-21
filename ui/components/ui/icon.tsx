@@ -34,7 +34,6 @@ export type IconSize = 'sm' | 'md' | 'lg' | 'xl'
 
 export interface IconProps extends HTMLBaseAttributes {
   size?: IconSize
-  class?: string
 }
 
 // Map size to pixel values
@@ -72,7 +71,7 @@ export type IconName = keyof typeof strokePaths | 'github' | 'search' | 'setting
 // Icons that need butt linecap for proper visual centering
 const buttLinecapIcons = ['plus', 'minus'] as const
 
-export function CheckIcon({ size, class: className = '', ...props }: IconProps) {
+export function CheckIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -81,7 +80,7 @@ export function CheckIcon({ size, class: className = '', ...props }: IconProps) 
   )
 }
 
-export function ChevronDownIcon({ size, class: className = '', ...props }: IconProps) {
+export function ChevronDownIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -90,7 +89,7 @@ export function ChevronDownIcon({ size, class: className = '', ...props }: IconP
   )
 }
 
-export function ChevronUpIcon({ size, class: className = '', ...props }: IconProps) {
+export function ChevronUpIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -99,7 +98,7 @@ export function ChevronUpIcon({ size, class: className = '', ...props }: IconPro
   )
 }
 
-export function ChevronLeftIcon({ size, class: className = '', ...props }: IconProps) {
+export function ChevronLeftIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -108,7 +107,7 @@ export function ChevronLeftIcon({ size, class: className = '', ...props }: IconP
   )
 }
 
-export function ChevronRightIcon({ size, class: className = '', ...props }: IconProps) {
+export function ChevronRightIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -117,7 +116,7 @@ export function ChevronRightIcon({ size, class: className = '', ...props }: Icon
   )
 }
 
-export function XIcon({ size, class: className = '', ...props }: IconProps) {
+export function XIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -126,7 +125,7 @@ export function XIcon({ size, class: className = '', ...props }: IconProps) {
   )
 }
 
-export function PlusIcon({ size, class: className = '', ...props }: IconProps) {
+export function PlusIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="butt" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -135,7 +134,7 @@ export function PlusIcon({ size, class: className = '', ...props }: IconProps) {
   )
 }
 
-export function MinusIcon({ size, class: className = '', ...props }: IconProps) {
+export function MinusIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="butt" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -144,7 +143,7 @@ export function MinusIcon({ size, class: className = '', ...props }: IconProps) 
   )
 }
 
-export function SunIcon({ size, class: className = '', ...props }: IconProps) {
+export function SunIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -153,7 +152,7 @@ export function SunIcon({ size, class: className = '', ...props }: IconProps) {
   )
 }
 
-export function MoonIcon({ size, class: className = '', ...props }: IconProps) {
+export function MoonIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -162,7 +161,7 @@ export function MoonIcon({ size, class: className = '', ...props }: IconProps) {
   )
 }
 
-export function MonitorIcon({ size, class: className = '', ...props }: IconProps) {
+export function MonitorIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -171,7 +170,7 @@ export function MonitorIcon({ size, class: className = '', ...props }: IconProps
   )
 }
 
-export function CopyIcon({ size, class: className = '', ...props }: IconProps) {
+export function CopyIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -180,7 +179,7 @@ export function CopyIcon({ size, class: className = '', ...props }: IconProps) {
   )
 }
 
-export function ClipboardIcon({ size, class: className = '', ...props }: IconProps) {
+export function ClipboardIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -189,7 +188,7 @@ export function ClipboardIcon({ size, class: className = '', ...props }: IconPro
   )
 }
 
-export function ClipboardCheckIcon({ size, class: className = '', ...props }: IconProps) {
+export function ClipboardCheckIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -198,7 +197,7 @@ export function ClipboardCheckIcon({ size, class: className = '', ...props }: Ic
   )
 }
 
-export function MenuIcon({ size, class: className = '', ...props }: IconProps) {
+export function MenuIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -207,7 +206,7 @@ export function MenuIcon({ size, class: className = '', ...props }: IconProps) {
   )
 }
 
-export function ArrowLeftIcon({ size, class: className = '', ...props }: IconProps) {
+export function ArrowLeftIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -216,7 +215,7 @@ export function ArrowLeftIcon({ size, class: className = '', ...props }: IconPro
   )
 }
 
-export function ArrowRightIcon({ size, class: className = '', ...props }: IconProps) {
+export function ArrowRightIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -225,7 +224,7 @@ export function ArrowRightIcon({ size, class: className = '', ...props }: IconPr
   )
 }
 
-export function EllipsisIcon({ size, class: className = '', ...props }: IconProps) {
+export function EllipsisIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -236,7 +235,7 @@ export function EllipsisIcon({ size, class: className = '', ...props }: IconProp
   )
 }
 
-export function GitHubIcon({ size, class: className = '', ...props }: IconProps) {
+export function GitHubIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="currentColor" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -245,7 +244,7 @@ export function GitHubIcon({ size, class: className = '', ...props }: IconProps)
   )
 }
 
-export function SettingsIcon({ size, class: className = '', ...props }: IconProps) {
+export function SettingsIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -255,7 +254,7 @@ export function SettingsIcon({ size, class: className = '', ...props }: IconProp
   )
 }
 
-export function GlobeIcon({ size, class: className = '', ...props }: IconProps) {
+export function GlobeIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -266,7 +265,7 @@ export function GlobeIcon({ size, class: className = '', ...props }: IconProps) 
   )
 }
 
-export function LogOutIcon({ size, class: className = '', ...props }: IconProps) {
+export function LogOutIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -277,7 +276,7 @@ export function LogOutIcon({ size, class: className = '', ...props }: IconProps)
   )
 }
 
-export function CircleHelpIcon({ size, class: className = '', ...props }: IconProps) {
+export function CircleHelpIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -288,7 +287,7 @@ export function CircleHelpIcon({ size, class: className = '', ...props }: IconPr
   )
 }
 
-export function SearchIcon({ size, class: className = '', ...props }: IconProps) {
+export function SearchIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -298,7 +297,7 @@ export function SearchIcon({ size, class: className = '', ...props }: IconProps)
   )
 }
 
-export function CircleCheckIcon({ size, class: className = '', ...props }: IconProps) {
+export function CircleCheckIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -308,7 +307,7 @@ export function CircleCheckIcon({ size, class: className = '', ...props }: IconP
   )
 }
 
-export function CircleXIcon({ size, class: className = '', ...props }: IconProps) {
+export function CircleXIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -319,7 +318,7 @@ export function CircleXIcon({ size, class: className = '', ...props }: IconProps
   )
 }
 
-export function TriangleAlertIcon({ size, class: className = '', ...props }: IconProps) {
+export function TriangleAlertIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -330,7 +329,7 @@ export function TriangleAlertIcon({ size, class: className = '', ...props }: Ico
   )
 }
 
-export function InfoIcon({ size, class: className = '', ...props }: IconProps) {
+export function InfoIcon({ size, className = '', ...props }: IconProps) {
   const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
@@ -342,31 +341,31 @@ export function InfoIcon({ size, class: className = '', ...props }: IconProps) {
 }
 
 // Generic Icon component for dynamic icon selection
-export function Icon({ name, size = 'md', class: className = '', ...props }: { name: IconName } & IconProps) {
+export function Icon({ name, size = 'md', className = '', ...props }: { name: IconName } & IconProps) {
   const s = sizeMap[size]
 
   if (name === 'github') {
-    return <GitHubIcon size={size} class={className} {...props} />
+    return <GitHubIcon size={size} className={className} {...props} />
   }
 
   if (name === 'search') {
-    return <SearchIcon size={size} class={className} {...props} />
+    return <SearchIcon size={size} className={className} {...props} />
   }
 
   if (name === 'settings') {
-    return <SettingsIcon size={size} class={className} {...props} />
+    return <SettingsIcon size={size} className={className} {...props} />
   }
 
   if (name === 'globe') {
-    return <GlobeIcon size={size} class={className} {...props} />
+    return <GlobeIcon size={size} className={className} {...props} />
   }
 
   if (name === 'log-out') {
-    return <LogOutIcon size={size} class={className} {...props} />
+    return <LogOutIcon size={size} className={className} {...props} />
   }
 
   if (name === 'circle-help') {
-    return <CircleHelpIcon size={size} class={className} {...props} />
+    return <CircleHelpIcon size={size} className={className} {...props} />
   }
 
   const path = strokePaths[name as keyof typeof strokePaths]

@@ -30,7 +30,7 @@ export function HoverCardPreviewDemo() {
           @barefootjs
         </a>
       </HoverCardTrigger>
-      <HoverCardContent align="start" class="w-80">
+      <HoverCardContent align="start" className="w-80">
         <div className="flex justify-between space-x-4">
           <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground text-lg font-bold shrink-0">
             B

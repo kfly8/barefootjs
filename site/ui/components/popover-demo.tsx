@@ -29,7 +29,7 @@ export function PopoverPreviewDemo() {
           Open popover
         </span>
       </PopoverTrigger>
-      <PopoverContent class="w-80">
+      <PopoverContent className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Dimensions</h4>
@@ -125,7 +125,7 @@ export function PopoverFormDemo() {
           <span>Settings</span>
         </span>
       </PopoverTrigger>
-      <PopoverContent align="start" class="w-80">
+      <PopoverContent align="start" className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Notifications</h4>
@@ -156,7 +156,7 @@ export function PopoverFormDemo() {
             </div>
           </div>
           <div className="flex justify-between">
-            <PopoverClose class="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent">
+            <PopoverClose className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent">
               <span>Cancel</span>
             </PopoverClose>
             <button
