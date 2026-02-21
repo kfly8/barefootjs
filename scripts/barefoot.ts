@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// CLI for agent-driven UI component discovery: search, show, test
+// CLI for agent-driven UI component discovery: search, docs, test
 
 import { readFileSync, existsSync } from 'fs'
 import path from 'path'
@@ -85,7 +85,7 @@ function printSearchResults(results: MetaIndexEntry[]) {
   console.log(`\n${results.length} component(s) found. (* = stateful)`)
 }
 
-// --- show command ---
+// --- docs command ---
 
 function printComponent(meta: ComponentMeta) {
   if (jsonFlag) {
@@ -276,7 +276,7 @@ function printUsage() {
 
 Commands:
   search <query>              Search components by name/category/tags
-  show <component>            Show detailed component metadata
+  docs <component>            Show component documentation (props, examples, a11y)
   scaffold <name> <comp...>   Generate component skeleton + IR test
   test [component]            Find and show test commands
   test:template <name>        Generate IR test from existing source
@@ -286,7 +286,7 @@ Options:
 
 Workflow:
   1. barefoot search <query>               — Find components
-  2. barefoot show <component>             — Learn props and usage
+  2. barefoot docs <component>             — Learn props and usage
   3. barefoot scaffold <name> <comp...>    — Generate skeleton + test
   4. Implement the component
   5. bun test <path>                       — Verify
@@ -304,9 +304,9 @@ switch (command) {
     }
     break
 
-  case 'show':
+  case 'docs':
     if (!query) {
-      console.error('Error: Component name required. Usage: barefoot show <component>')
+      console.error('Error: Component name required. Usage: barefoot docs <component>')
       process.exit(1)
     }
     printComponent(loadComponent(query))

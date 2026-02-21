@@ -9,7 +9,7 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 ## Workflow
 
 1. `bun run barefoot search <query>` — Find components by name/category/tags
-2. `bun run barefoot show <component>` — Get props, examples, accessibility info
+2. `bun run barefoot docs <component>` — Get props, examples, accessibility info
 3. `bun run barefoot scaffold <name> <comp...>` — Generate skeleton + basic IR test
 4. Implement the component
 5. `bun test <path>` — Verify compilation
@@ -18,7 +18,7 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 
 ## Rules
 
-- Use `barefoot search` and `barefoot show` for component discovery. Do not read source files to learn component APIs.
+- Use `barefoot search` and `barefoot docs` for component discovery. Do not read source files to learn component APIs.
 - New components go in `ui/components/ui/<name>.tsx`.
 - IR tests go in `ui/components/ui/__tests__/<name>.test.ts`.
 - Stateful components (using signals) must have `"use client"` as the first line.
