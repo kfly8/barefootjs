@@ -95,16 +95,19 @@ interface PaginationLinkProps extends AnchorHTMLAttributes {
   children?: Child
 }
 
-function PaginationLink({ isActive, size = 'icon', className = '', children, ...props }: PaginationLinkProps) {
+function PaginationLink(props: PaginationLinkProps) {
+  const size = props.size ?? 'icon'
   return (
     <a
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={props.isActive ? 'page' : undefined}
       data-slot="pagination-link"
-      data-active={isActive}
-      className={`${buttonBaseClasses} ${isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size]} ${className}`}
-      {...props}
+      data-active={props.isActive}
+      id={props.id}
+      className={`${buttonBaseClasses} ${props.isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size]} ${props.className ?? ''}`}
+      href={props.href}
+      onClick={props.onClick}
     >
-      {children}
+      {props.children}
     </a>
   )
 }
