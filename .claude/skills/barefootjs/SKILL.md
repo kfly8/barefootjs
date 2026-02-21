@@ -27,3 +27,4 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 - Use `for` attribute on `<Label>` (not `htmlFor`).
 - Event handlers have typed `e.target` — write `onInput={e => setValue(e.target.value)}` directly. Do not cast with `as HTMLInputElement`.
 - Use `className` in JSX (not `class`). `class` is a JS reserved keyword.
+- Signal getters must be called in JSX: `value={name()}` (not `value={name}`).
