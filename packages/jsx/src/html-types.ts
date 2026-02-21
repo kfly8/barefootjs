@@ -111,8 +111,8 @@ export interface HTMLBaseAttributes extends BaseEventAttributes {
   onKeyPress?: (event: KeyboardEvent) => void
   onFocus?: (event: FocusEvent) => void
   onBlur?: (event: FocusEvent) => void
-  onInput?: (event: InputEvent) => void
-  onChange?: (event: Event) => void
+  onInput?: InputEventHandler<HTMLElement>
+  onChange?: ChangeEventHandler<HTMLElement>
   onTouchStart?: (event: TouchEvent) => void
   onTouchEnd?: (event: TouchEvent) => void
   onTouchMove?: (event: TouchEvent) => void
@@ -185,7 +185,7 @@ export interface ButtonHTMLAttributes extends HTMLBaseAttributes {
 // Input Element Attributes
 // ============================================================================
 
-export interface InputHTMLAttributes extends HTMLBaseAttributes {
+export interface InputHTMLAttributes extends Omit<HTMLBaseAttributes, 'onInput' | 'onChange'> {
   accept?: string
   alt?: string
   autocomplete?: string
@@ -218,9 +218,9 @@ export interface InputHTMLAttributes extends HTMLBaseAttributes {
   value?: string | ReadonlyArray<string> | number
   width?: number | string
 
-  // Event handlers - using native DOM event types for Hono JSX compatibility
-  onInput?: (event: InputEvent) => void
-  onChange?: (event: Event) => void
+  // Event handlers
+  onInput?: InputEventHandler<HTMLInputElement>
+  onChange?: ChangeEventHandler<HTMLInputElement>
   onBlur?: (event: FocusEvent) => void
   onFocus?: (event: FocusEvent) => void
   onKeyDown?: (event: KeyboardEvent) => void
@@ -232,7 +232,7 @@ export interface InputHTMLAttributes extends HTMLBaseAttributes {
 // Textarea Element Attributes
 // ============================================================================
 
-export interface TextareaHTMLAttributes extends HTMLBaseAttributes {
+export interface TextareaHTMLAttributes extends Omit<HTMLBaseAttributes, 'onInput' | 'onChange'> {
   autocomplete?: string
   autofocus?: boolean | null
   cols?: number
@@ -248,9 +248,9 @@ export interface TextareaHTMLAttributes extends HTMLBaseAttributes {
   value?: string
   wrap?: 'hard' | 'soft' | 'off'
 
-  // Event handlers - using native DOM event types for Hono JSX compatibility
-  onInput?: (event: InputEvent) => void
-  onChange?: (event: Event) => void
+  // Event handlers
+  onInput?: InputEventHandler<HTMLTextAreaElement>
+  onChange?: ChangeEventHandler<HTMLTextAreaElement>
   onBlur?: (event: FocusEvent) => void
   onFocus?: (event: FocusEvent) => void
   onKeyDown?: (event: KeyboardEvent) => void
@@ -262,7 +262,7 @@ export interface TextareaHTMLAttributes extends HTMLBaseAttributes {
 // Select Element Attributes
 // ============================================================================
 
-export interface SelectHTMLAttributes extends HTMLBaseAttributes {
+export interface SelectHTMLAttributes extends Omit<HTMLBaseAttributes, 'onChange'> {
   autocomplete?: string
   autofocus?: boolean | null
   disabled?: boolean | null
@@ -273,8 +273,8 @@ export interface SelectHTMLAttributes extends HTMLBaseAttributes {
   size?: number
   value?: string | ReadonlyArray<string>
 
-  // Event handlers - using native DOM event types for Hono JSX compatibility
-  onChange?: (event: Event) => void
+  // Event handlers
+  onChange?: ChangeEventHandler<HTMLSelectElement>
   onBlur?: (event: FocusEvent) => void
   onFocus?: (event: FocusEvent) => void
 }
