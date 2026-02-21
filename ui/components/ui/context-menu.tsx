@@ -36,6 +36,7 @@
  */
 
 import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for parent-child state sharing
@@ -108,15 +109,13 @@ const contextMenuShortcutClasses = 'ml-auto text-xs tracking-widest text-muted-f
 /**
  * Props for ContextMenu component.
  */
-interface ContextMenuProps {
+interface ContextMenuProps extends HTMLBaseAttributes {
   /** Whether the context menu is open */
   open?: boolean
   /** Callback when open state should change */
   onOpenChange?: (open: boolean) => void
   /** ContextMenuTrigger and ContextMenuContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -137,7 +136,7 @@ function ContextMenu(props: ContextMenuProps) {
       position,
       setPosition,
     }}>
-      <div data-slot="context-menu" className={props.class ?? ''}>
+      <div data-slot="context-menu" id={props.id} className={props.className ?? ''}>
         {props.children}
       </div>
     </ContextMenuContext.Provider>
@@ -147,11 +146,9 @@ function ContextMenu(props: ContextMenuProps) {
 /**
  * Props for ContextMenuTrigger component.
  */
-interface ContextMenuTriggerProps {
+interface ContextMenuTriggerProps extends HTMLBaseAttributes {
   /** Trigger content (the right-clickable area) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -174,6 +171,7 @@ function ContextMenuTrigger(props: ContextMenuTriggerProps) {
   return (
     <span
       data-slot="context-menu-trigger"
+      id={props.id}
       style="display:contents"
       ref={handleMount}
     >
@@ -185,11 +183,9 @@ function ContextMenuTrigger(props: ContextMenuTriggerProps) {
 /**
  * Props for ContextMenuContent component.
  */
-interface ContextMenuContentProps {
+interface ContextMenuContentProps extends HTMLBaseAttributes {
   /** ContextMenuItem, ContextMenuLabel, ContextMenuSeparator components */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -244,7 +240,7 @@ function ContextMenuContent(props: ContextMenuContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${contextMenuContentBaseClasses} ${isOpen ? contextMenuContentOpenClasses : contextMenuContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${contextMenuContentBaseClasses} ${isOpen ? contextMenuContentOpenClasses : contextMenuContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         updatePosition()
@@ -351,8 +347,9 @@ function ContextMenuContent(props: ContextMenuContentProps) {
       data-slot="context-menu-content"
       data-state="closed"
       role="menu"
+      id={props.id}
       tabindex={-1}
-      className={`${contextMenuContentBaseClasses} ${contextMenuContentClosedClasses} ${props.class ?? ''}`}
+      className={`${contextMenuContentBaseClasses} ${contextMenuContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -363,7 +360,7 @@ function ContextMenuContent(props: ContextMenuContentProps) {
 /**
  * Props for ContextMenuItem component.
  */
-interface ContextMenuItemProps {
+interface ContextMenuItemProps extends HTMLBaseAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Callback when item is selected (menu auto-closes) */
@@ -372,8 +369,6 @@ interface ContextMenuItemProps {
   variant?: 'default' | 'destructive'
   /** Item content (text, icons, shortcuts) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -407,9 +402,10 @@ function ContextMenuItem(props: ContextMenuItemProps) {
     <div
       data-slot="context-menu-item"
       role="menuitem"
+      id={props.id}
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${contextMenuItemBaseClasses} ${stateClasses} ${props.class ?? ''}`}
+      className={`${contextMenuItemBaseClasses} ${stateClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -420,7 +416,7 @@ function ContextMenuItem(props: ContextMenuItemProps) {
 /**
  * Props for ContextMenuCheckboxItem component.
  */
-interface ContextMenuCheckboxItemProps {
+interface ContextMenuCheckboxItemProps extends HTMLBaseAttributes {
   /** Whether the checkbox is checked */
   checked?: boolean
   /** Callback when checked state changes */
@@ -429,8 +425,6 @@ interface ContextMenuCheckboxItemProps {
   disabled?: boolean
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -455,10 +449,11 @@ function ContextMenuCheckboxItem(props: ContextMenuCheckboxItemProps) {
     <div
       data-slot="context-menu-item"
       role="menuitemcheckbox"
+      id={props.id}
       aria-checked={String(props.checked ?? false)}
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${contextMenuCheckableItemClasses} ${isDisabled ? contextMenuItemDisabledClasses : contextMenuItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${contextMenuCheckableItemClasses} ${isDisabled ? contextMenuItemDisabledClasses : contextMenuItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span className={contextMenuIndicatorClasses}>
@@ -474,15 +469,13 @@ function ContextMenuCheckboxItem(props: ContextMenuCheckboxItemProps) {
 /**
  * Props for ContextMenuRadioGroup component.
  */
-interface ContextMenuRadioGroupProps {
+interface ContextMenuRadioGroupProps extends HTMLBaseAttributes {
   /** Currently selected value */
   value?: string
   /** Callback when value changes */
   onValueChange?: (value: string) => void
   /** RadioItem children */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -494,7 +487,7 @@ function ContextMenuRadioGroup(props: ContextMenuRadioGroupProps) {
       value: () => props.value ?? '',
       onValueChange: props.onValueChange ?? (() => {}),
     }}>
-      <div data-slot="context-menu-radio-group" role="group" className={props.class ?? ''}>
+      <div data-slot="context-menu-radio-group" role="group" id={props.id} className={props.className ?? ''}>
         {props.children}
       </div>
     </ContextMenuRadioGroupContext.Provider>
@@ -504,15 +497,13 @@ function ContextMenuRadioGroup(props: ContextMenuRadioGroupProps) {
 /**
  * Props for ContextMenuRadioItem component.
  */
-interface ContextMenuRadioItemProps {
+interface ContextMenuRadioItemProps extends HTMLBaseAttributes {
   /** Value for this radio item */
   value: string
   /** Whether disabled */
   disabled?: boolean
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -539,10 +530,11 @@ function ContextMenuRadioItem(props: ContextMenuRadioItemProps) {
     <div
       data-slot="context-menu-item"
       role="menuitemradio"
+      id={props.id}
       aria-checked="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${contextMenuCheckableItemClasses} ${isDisabled ? contextMenuItemDisabledClasses : contextMenuItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${contextMenuCheckableItemClasses} ${isDisabled ? contextMenuItemDisabledClasses : contextMenuItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span className={contextMenuIndicatorClasses} data-slot="context-menu-radio-indicator">
@@ -556,11 +548,9 @@ function ContextMenuRadioItem(props: ContextMenuRadioItemProps) {
 /**
  * Props for ContextMenuSub component.
  */
-interface ContextMenuSubProps {
+interface ContextMenuSubProps extends HTMLBaseAttributes {
   /** SubTrigger and SubContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -574,7 +564,7 @@ function ContextMenuSub(props: ContextMenuSubProps) {
       subOpen,
       onSubOpenChange: setSubOpen,
     }}>
-      <div data-slot="context-menu-sub" className={`relative ${props.class ?? ''}`}>
+      <div data-slot="context-menu-sub" id={props.id} className={`relative ${props.className ?? ''}`}>
         {props.children}
       </div>
     </ContextMenuSubContext.Provider>
@@ -584,13 +574,11 @@ function ContextMenuSub(props: ContextMenuSubProps) {
 /**
  * Props for ContextMenuSubTrigger component.
  */
-interface ContextMenuSubTriggerProps {
+interface ContextMenuSubTriggerProps extends HTMLBaseAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Trigger content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -633,11 +621,12 @@ function ContextMenuSubTrigger(props: ContextMenuSubTriggerProps) {
       data-slot="context-menu-item"
       data-sub-trigger="true"
       role="menuitem"
+      id={props.id}
       aria-haspopup="menu"
       aria-expanded="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${contextMenuSubTriggerClasses} ${isDisabled ? contextMenuItemDisabledClasses : contextMenuItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${contextMenuSubTriggerClasses} ${isDisabled ? contextMenuItemDisabledClasses : contextMenuItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -649,11 +638,9 @@ function ContextMenuSubTrigger(props: ContextMenuSubTriggerProps) {
 /**
  * Props for ContextMenuSubContent component.
  */
-interface ContextMenuSubContentProps {
+interface ContextMenuSubContentProps extends HTMLBaseAttributes {
   /** SubContent items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -726,9 +713,10 @@ function ContextMenuSubContent(props: ContextMenuSubContentProps) {
       data-slot="context-menu-sub-content"
       data-state="closed"
       role="menu"
+      id={props.id}
       tabindex={-1}
       style="display:none"
-      className={`${contextMenuSubContentBaseClasses} left-full top-0 ${props.class ?? ''}`}
+      className={`${contextMenuSubContentBaseClasses} left-full top-0 ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -739,11 +727,9 @@ function ContextMenuSubContent(props: ContextMenuSubContentProps) {
 /**
  * Props for ContextMenuLabel component.
  */
-interface ContextMenuLabelProps {
+interface ContextMenuLabelProps extends HTMLBaseAttributes {
   /** Label text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -751,10 +737,10 @@ interface ContextMenuLabelProps {
  *
  * @param props.children - Label content
  */
-function ContextMenuLabel(props: ContextMenuLabelProps) {
+function ContextMenuLabel({ children, className = '', ...props }: ContextMenuLabelProps) {
   return (
-    <div data-slot="context-menu-label" className={`${contextMenuLabelClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <div data-slot="context-menu-label" className={`${contextMenuLabelClasses} ${className}`} {...props}>
+      {children}
     </div>
   )
 }
@@ -762,28 +748,24 @@ function ContextMenuLabel(props: ContextMenuLabelProps) {
 /**
  * Props for ContextMenuSeparator component.
  */
-interface ContextMenuSeparatorProps {
-  /** Additional CSS classes */
-  class?: string
+interface ContextMenuSeparatorProps extends HTMLBaseAttributes {
 }
 
 /**
  * Visual separator between menu item groups.
  */
-function ContextMenuSeparator(props: ContextMenuSeparatorProps) {
+function ContextMenuSeparator({ className = '', ...props }: ContextMenuSeparatorProps) {
   return (
-    <div data-slot="context-menu-separator" role="separator" className={`${contextMenuSeparatorClasses} ${props.class ?? ''}`} />
+    <div data-slot="context-menu-separator" role="separator" className={`${contextMenuSeparatorClasses} ${className}`} {...props} />
   )
 }
 
 /**
  * Props for ContextMenuShortcut component.
  */
-interface ContextMenuShortcutProps {
+interface ContextMenuShortcutProps extends HTMLBaseAttributes {
   /** Shortcut text (e.g., "Ctrl+Q") */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -791,10 +773,10 @@ interface ContextMenuShortcutProps {
  *
  * @param props.children - Shortcut text
  */
-function ContextMenuShortcut(props: ContextMenuShortcutProps) {
+function ContextMenuShortcut({ children, className = '', ...props }: ContextMenuShortcutProps) {
   return (
-    <span data-slot="context-menu-shortcut" className={`${contextMenuShortcutClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <span data-slot="context-menu-shortcut" className={`${contextMenuShortcutClasses} ${className}`} {...props}>
+      {children}
     </span>
   )
 }
@@ -802,11 +784,9 @@ function ContextMenuShortcut(props: ContextMenuShortcutProps) {
 /**
  * Props for ContextMenuGroup component.
  */
-interface ContextMenuGroupProps {
+interface ContextMenuGroupProps extends HTMLBaseAttributes {
   /** Grouped menu items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -814,10 +794,10 @@ interface ContextMenuGroupProps {
  *
  * @param props.children - Grouped items
  */
-function ContextMenuGroup(props: ContextMenuGroupProps) {
+function ContextMenuGroup({ children, className = '', ...props }: ContextMenuGroupProps) {
   return (
-    <div data-slot="context-menu-group" role="group" className={props.class ?? ''}>
-      {props.children}
+    <div data-slot="context-menu-group" role="group" className={className} {...props}>
+      {children}
     </div>
   )
 }

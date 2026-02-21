@@ -37,6 +37,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for Dialog → children state sharing
@@ -130,15 +131,13 @@ const DialogRoot = Dialog
 /**
  * Props for DialogTrigger component.
  */
-interface DialogTriggerProps {
+interface DialogTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -173,7 +172,8 @@ function DialogTrigger(props: DialogTriggerProps) {
     <button
       data-slot="dialog-trigger"
       type="button"
-      className={`${dialogTriggerClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${dialogTriggerClasses} ${props.className ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >
@@ -185,9 +185,7 @@ function DialogTrigger(props: DialogTriggerProps) {
 /**
  * Props for DialogOverlay component.
  */
-interface DialogOverlayProps {
-  /** Additional CSS classes */
-  class?: string
+interface DialogOverlayProps extends HTMLBaseAttributes {
 }
 
 /**
@@ -209,7 +207,7 @@ function DialogOverlay(props: DialogOverlayProps) {
     createEffect(() => {
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${dialogOverlayBaseClasses} ${isOpen ? dialogOverlayOpenClasses : dialogOverlayClosedClasses} ${props.class ?? ''}`
+      el.className = `${dialogOverlayBaseClasses} ${isOpen ? dialogOverlayOpenClasses : dialogOverlayClosedClasses} ${props.className ?? ''}`
     })
 
     el.addEventListener('click', () => {
@@ -221,7 +219,8 @@ function DialogOverlay(props: DialogOverlayProps) {
     <div
       data-slot="dialog-overlay"
       data-state="closed"
-      className={`${dialogOverlayBaseClasses} ${dialogOverlayClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${dialogOverlayBaseClasses} ${dialogOverlayClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     />
   )
@@ -230,15 +229,13 @@ function DialogOverlay(props: DialogOverlayProps) {
 /**
  * Props for DialogContent component.
  */
-interface DialogContentProps {
+interface DialogContentProps extends HTMLBaseAttributes {
   /** Dialog content */
   children?: Child
   /** ID of the title element for aria-labelledby */
   ariaLabelledby?: string
   /** ID of the description element for aria-describedby */
   ariaDescribedby?: string
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -270,7 +267,7 @@ function DialogContent(props: DialogContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${dialogContentBaseClasses} ${isOpen ? dialogContentOpenClasses : dialogContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${dialogContentBaseClasses} ${isOpen ? dialogContentOpenClasses : dialogContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         // Scroll lock
@@ -331,7 +328,8 @@ function DialogContent(props: DialogContentProps) {
       aria-labelledby={props.ariaLabelledby}
       aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${dialogContentBaseClasses} ${dialogContentClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${dialogContentBaseClasses} ${dialogContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -342,11 +340,9 @@ function DialogContent(props: DialogContentProps) {
 /**
  * Props for DialogHeader component.
  */
-interface DialogHeaderProps {
+interface DialogHeaderProps extends HTMLBaseAttributes {
   /** Header content (typically DialogTitle and DialogDescription) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -354,9 +350,9 @@ interface DialogHeaderProps {
  *
  * @param props.children - Header content
  */
-function DialogHeader({ class: className = '', children }: DialogHeaderProps) {
+function DialogHeader({ className = '', children, ...props }: DialogHeaderProps) {
   return (
-    <div data-slot="dialog-header" className={`${dialogHeaderClasses} ${className}`}>
+    <div data-slot="dialog-header" className={`${dialogHeaderClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -365,13 +361,11 @@ function DialogHeader({ class: className = '', children }: DialogHeaderProps) {
 /**
  * Props for DialogTitle component.
  */
-interface DialogTitleProps {
+interface DialogTitleProps extends HTMLBaseAttributes {
   /** ID for aria-labelledby reference */
   id?: string
   /** Title text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -379,9 +373,9 @@ interface DialogTitleProps {
  *
  * @param props.id - ID for accessibility
  */
-function DialogTitle({ class: className = '', id, children }: DialogTitleProps) {
+function DialogTitle({ className = '', id, children, ...props }: DialogTitleProps) {
   return (
-    <h2 data-slot="dialog-title" id={id} className={`${dialogTitleClasses} ${className}`}>
+    <h2 data-slot="dialog-title" id={id} className={`${dialogTitleClasses} ${className}`} {...props}>
       {children}
     </h2>
   )
@@ -390,13 +384,11 @@ function DialogTitle({ class: className = '', id, children }: DialogTitleProps) 
 /**
  * Props for DialogDescription component.
  */
-interface DialogDescriptionProps {
+interface DialogDescriptionProps extends HTMLBaseAttributes {
   /** ID for aria-describedby reference */
   id?: string
   /** Description text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -404,9 +396,9 @@ interface DialogDescriptionProps {
  *
  * @param props.id - ID for accessibility
  */
-function DialogDescription({ class: className = '', id, children }: DialogDescriptionProps) {
+function DialogDescription({ className = '', id, children, ...props }: DialogDescriptionProps) {
   return (
-    <p data-slot="dialog-description" id={id} className={`${dialogDescriptionClasses} ${className}`}>
+    <p data-slot="dialog-description" id={id} className={`${dialogDescriptionClasses} ${className}`} {...props}>
       {children}
     </p>
   )
@@ -415,11 +407,9 @@ function DialogDescription({ class: className = '', id, children }: DialogDescri
 /**
  * Props for DialogFooter component.
  */
-interface DialogFooterProps {
+interface DialogFooterProps extends HTMLBaseAttributes {
   /** Footer content (typically action buttons) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -427,9 +417,9 @@ interface DialogFooterProps {
  *
  * @param props.children - Footer content
  */
-function DialogFooter({ class: className = '', children }: DialogFooterProps) {
+function DialogFooter({ className = '', children, ...props }: DialogFooterProps) {
   return (
-    <div data-slot="dialog-footer" className={`${dialogFooterClasses} ${className}`}>
+    <div data-slot="dialog-footer" className={`${dialogFooterClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -438,11 +428,9 @@ function DialogFooter({ class: className = '', children }: DialogFooterProps) {
 /**
  * Props for DialogClose component.
  */
-interface DialogCloseProps {
+interface DialogCloseProps extends ButtonHTMLAttributes {
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -462,7 +450,8 @@ function DialogClose(props: DialogCloseProps) {
     <button
       data-slot="dialog-close"
       type="button"
-      className={`${dialogCloseClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${dialogCloseClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

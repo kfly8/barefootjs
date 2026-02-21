@@ -1,3 +1,5 @@
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
+
 /** The direction the separator is rendered in. */
 type SeparatorOrientation = 'horizontal' | 'vertical'
 
@@ -9,13 +11,11 @@ const orientationClasses: Record<SeparatorOrientation, string> = {
 }
 
 /** Props for the Separator component. */
-interface SeparatorProps {
+interface SeparatorProps extends HTMLBaseAttributes {
   /** The separator orientation. */
   orientation?: SeparatorOrientation
   /** Whether the separator is purely decorative. */
   decorative?: boolean
-  /** Additional CSS classes applied to the separator. */
-  className?: string
 }
 
 /**
@@ -39,6 +39,7 @@ function Separator({
   orientation = 'horizontal',
   decorative = true,
   className = '',
+  ...props
 }: SeparatorProps) {
   return (
     <div
@@ -47,6 +48,7 @@ function Separator({
       role={decorative ? 'none' : 'separator'}
       aria-orientation={decorative ? undefined : orientation}
       className={`${baseClasses} ${orientationClasses[orientation]} ${className}`}
+      {...props}
     />
   )
 }

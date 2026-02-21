@@ -1,5 +1,6 @@
 "use client"
 
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import { createSignal, createMemo } from '@barefootjs/dom'
 
 /**
@@ -41,7 +42,7 @@ const thumbBaseClasses = 'border-primary ring-ring/50 block size-4 shrink-0 roun
 /**
  * Props for the Slider component.
  */
-interface SliderProps {
+interface SliderProps extends HTMLBaseAttributes {
   /**
    * Default value (for uncontrolled mode).
    * @default 0
@@ -75,10 +76,6 @@ interface SliderProps {
    * Callback when the value changes.
    */
   onValueChange?: (value: number) => void
-  /**
-   * Additional CSS classes for the root element.
-   */
-  class?: string
 }
 
 /**
@@ -222,12 +219,13 @@ function Slider(props: SliderProps) {
     setValue(root, newValue)
   }
 
-  const rootClasses = `${rootBaseClasses} data-[disabled]:opacity-50 data-[disabled]:pointer-events-none ${props.class ?? ''}`
+  const rootClasses = `${rootBaseClasses} data-[disabled]:opacity-50 data-[disabled]:pointer-events-none ${props.className ?? ''}`
   const thumbClasses = `absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${thumbBaseClasses}`
 
   return (
     <div
       data-slot="slider"
+      id={props.id}
       data-disabled={props.disabled || undefined}
       className={rootClasses}
       onPointerDown={handlePointerDown}

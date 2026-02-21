@@ -36,31 +36,7 @@ const errorClasses = 'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-de
 /**
  * Props for the Textarea component.
  */
-interface TextareaProps extends Pick<TextareaHTMLAttributes, 'onInput' | 'onChange' | 'onBlur' | 'onFocus'> {
-  /**
-   * Additional CSS class names.
-   */
-  className?: string
-  /**
-   * Placeholder text shown when textarea is empty.
-   * @default ''
-   */
-  placeholder?: string
-  /**
-   * Current value of the textarea.
-   * @default ''
-   */
-  value?: string
-  /**
-   * Whether the textarea is disabled.
-   * @default false
-   */
-  disabled?: boolean
-  /**
-   * Whether the textarea is read-only.
-   * @default false
-   */
-  readOnly?: boolean
+interface TextareaProps extends TextareaHTMLAttributes {
   /**
    * Whether the textarea is in an error state.
    * @default false
@@ -70,10 +46,6 @@ interface TextareaProps extends Pick<TextareaHTMLAttributes, 'onInput' | 'onChan
    * ID of the element that describes this textarea (for accessibility).
    */
   describedBy?: string
-  /**
-   * Number of visible text rows.
-   */
-  rows?: number
 }
 
 /**
@@ -92,7 +64,7 @@ function Textarea({
   placeholder = '',
   value = '',
   disabled = false,
-  readOnly = false,
+  readonly = false,
   error = false,
   describedBy,
   rows,
@@ -100,6 +72,7 @@ function Textarea({
   onChange = () => {},
   onBlur = () => {},
   onFocus = () => {},
+  ...props
 }: TextareaProps) {
   const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${className}`
 
@@ -110,7 +83,7 @@ function Textarea({
       placeholder={placeholder}
       value={value}
       disabled={disabled}
-      readonly={readOnly}
+      readonly={readonly}
       rows={rows}
       aria-invalid={error || undefined}
       {...(describedBy ? { 'aria-describedby': describedBy } : {})}
@@ -118,6 +91,7 @@ function Textarea({
       onChange={onChange}
       onBlur={onBlur}
       onFocus={onFocus}
+      {...props}
     />
   )
 }

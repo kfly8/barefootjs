@@ -98,6 +98,29 @@ test.describe('Tabs Documentation Page', () => {
       // Account content should be hidden
       await expect(tabs.locator('text=Account Settings')).not.toBeVisible()
     })
+
+    test('data-state updates reactively on tab switch', async ({ page }) => {
+      const tabs = await findTabsDemo(page, ['Account', 'Password'])
+      const accountTab = tabs.locator('button[role="tab"]:has-text("Account")')
+      const passwordTab = tabs.locator('button[role="tab"]:has-text("Password")')
+      const accountContent = tabs.locator('[data-slot="tabs-content"][data-value="account"]')
+      const passwordContent = tabs.locator('[data-slot="tabs-content"][data-value="password"]')
+
+      // Initially Account is active
+      await expect(accountTab).toHaveAttribute('data-state', 'active')
+      await expect(passwordTab).toHaveAttribute('data-state', 'inactive')
+      await expect(accountContent).toHaveAttribute('data-state', 'active')
+      await expect(passwordContent).toHaveAttribute('data-state', 'inactive')
+
+      // Switch to Password
+      await passwordTab.click()
+
+      // data-state should update reactively
+      await expect(passwordTab).toHaveAttribute('data-state', 'active')
+      await expect(accountTab).toHaveAttribute('data-state', 'inactive')
+      await expect(passwordContent).toHaveAttribute('data-state', 'active')
+      await expect(accountContent).toHaveAttribute('data-state', 'inactive')
+    })
   })
 
   test.describe('Multiple Tabs', () => {

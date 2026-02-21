@@ -19,6 +19,7 @@
  * ```
  */
 
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import { createContext, useContext, createSignal, createEffect } from '@barefootjs/dom'
 import type { Child } from '../../types'
 
@@ -46,7 +47,7 @@ const collapsibleContentInnerClasses = 'overflow-hidden'
 /**
  * Props for Collapsible component.
  */
-interface CollapsibleProps {
+interface CollapsibleProps extends HTMLBaseAttributes {
   /** Controlled open state */
   open?: boolean
   /** Default open state for uncontrolled mode */
@@ -57,8 +58,6 @@ interface CollapsibleProps {
   disabled?: boolean
   /** Child components */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -92,10 +91,11 @@ function Collapsible(props: CollapsibleProps) {
       disabled: () => props.disabled ?? false,
     }}>
       <div
+        id={props.id}
         data-slot="collapsible"
         data-state={props.defaultOpen ? 'open' : 'closed'}
         data-disabled={props.disabled || undefined}
-        className={props.class ?? ''}
+        className={props.className ?? ''}
         ref={handleMount}
       >
         {props.children}
@@ -107,13 +107,11 @@ function Collapsible(props: CollapsibleProps) {
 /**
  * Props for CollapsibleTrigger component.
  */
-interface CollapsibleTriggerProps {
+interface CollapsibleTriggerProps extends ButtonHTMLAttributes {
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Trigger content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -153,9 +151,10 @@ function CollapsibleTrigger(props: CollapsibleTriggerProps) {
 
   return (
     <button
+      id={props.id}
       data-slot="collapsible-trigger"
       type="button"
-      className={props.class ?? ''}
+      className={props.className ?? ''}
       aria-expanded="false"
       ref={handleMount}
     >
@@ -167,11 +166,9 @@ function CollapsibleTrigger(props: CollapsibleTriggerProps) {
 /**
  * Props for CollapsibleContent component.
  */
-interface CollapsibleContentProps {
+interface CollapsibleContentProps extends HTMLBaseAttributes {
   /** Content to display */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -189,10 +186,11 @@ function CollapsibleContent(props: CollapsibleContentProps) {
     })
   }
 
-  const className = props.class ?? ''
+  const className = props.className ?? ''
 
   return (
     <div
+      id={props.id}
       data-slot="collapsible-content"
       role="region"
       data-state="closed"

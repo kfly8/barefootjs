@@ -38,6 +38,7 @@ import {
   DialogOverlay,
   DialogContent,
 } from './dialog'
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for Command → children state sharing
@@ -70,50 +71,40 @@ const commandDialogCommandClasses = '[&_[data-slot=command-input-wrapper]]:h-12'
 
 // --- Props ---
 
-interface CommandProps {
+interface CommandProps extends HTMLBaseAttributes {
   /** Custom filter function */
   filter?: (value: string, search: string, keywords?: string[]) => boolean
   /** Callback when an item is selected */
   onValueChange?: (value: string) => void
-  /** Additional CSS classes */
-  class?: string
   /** Children */
   children?: Child
 }
 
-interface CommandInputProps {
+interface CommandInputProps extends HTMLBaseAttributes {
   /** Placeholder text */
   placeholder?: string
   /** Whether disabled */
   disabled?: boolean
-  /** Additional CSS classes */
-  class?: string
 }
 
-interface CommandListProps {
-  /** Additional CSS classes */
-  class?: string
+interface CommandListProps extends HTMLBaseAttributes {
   /** Children */
   children?: Child
 }
 
-interface CommandEmptyProps {
-  /** Additional CSS classes */
-  class?: string
+interface CommandEmptyProps extends HTMLBaseAttributes {
   /** Children */
   children?: Child
 }
 
-interface CommandGroupProps {
+interface CommandGroupProps extends HTMLBaseAttributes {
   /** Group heading text */
   heading?: string
-  /** Additional CSS classes */
-  class?: string
   /** Children */
   children?: Child
 }
 
-interface CommandItemProps {
+interface CommandItemProps extends HTMLBaseAttributes {
   /** Value for filtering and selection (defaults to textContent) */
   value?: string
   /** Keywords for search matching */
@@ -122,33 +113,25 @@ interface CommandItemProps {
   disabled?: boolean
   /** Callback when selected */
   onSelect?: (value: string) => void
-  /** Additional CSS classes */
-  class?: string
   /** Children */
   children?: Child
 }
 
-interface CommandSeparatorProps {
-  /** Additional CSS classes */
-  class?: string
+interface CommandSeparatorProps extends HTMLBaseAttributes {
 }
 
-interface CommandShortcutProps {
-  /** Additional CSS classes */
-  class?: string
+interface CommandShortcutProps extends HTMLBaseAttributes {
   /** Children */
   children?: Child
 }
 
-interface CommandDialogProps {
+interface CommandDialogProps extends HTMLBaseAttributes {
   /** Whether the dialog is open */
   open?: boolean
   /** Callback when open state changes */
   onOpenChange?: (open: boolean) => void
   /** Command filter function */
   filter?: (value: string, search: string, keywords?: string[]) => boolean
-  /** Additional CSS classes for Command */
-  class?: string
   /** Children */
   children?: Child
 }
@@ -235,7 +218,8 @@ function Command(props: CommandProps) {
     }}>
       <div
         data-slot="command"
-        className={`${commandRootClasses} ${props.class ?? ''}`}
+        id={props.id}
+        className={`${commandRootClasses} ${props.className ?? ''}`}
         ref={handleMount}
       >
         {props.children}
@@ -276,10 +260,11 @@ function CommandInput(props: CommandInputProps) {
       <svg className="mr-2 size-4 shrink-0 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
       <input
         data-slot="command-input"
+        id={props.id}
         type="text"
         placeholder={props.placeholder}
         disabled={props.disabled ?? false}
-        className={`${commandInputClasses} ${props.class ?? ''}`}
+        className={`${commandInputClasses} ${props.className ?? ''}`}
         autocomplete="off"
       />
     </div>
@@ -289,12 +274,13 @@ function CommandInput(props: CommandInputProps) {
 /**
  * Scrollable container for command items and groups.
  */
-function CommandList({ class: className = '', children }: CommandListProps) {
+function CommandList({ className = '', children, ...props }: CommandListProps) {
   return (
     <div
       data-slot="command-list"
       role="listbox"
       className={`${commandListClasses} ${className}`}
+      {...props}
     >
       {children}
     </div>
@@ -323,8 +309,9 @@ function CommandEmpty(props: CommandEmptyProps) {
   return (
     <div
       data-slot="command-empty"
+      id={props.id}
       hidden
-      className={`${commandEmptyClasses} ${props.class ?? ''}`}
+      className={`${commandEmptyClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -355,8 +342,9 @@ function CommandGroup(props: CommandGroupProps) {
   return (
     <div
       data-slot="command-group"
+      id={props.id}
       role="group"
-      className={`${commandGroupClasses} ${props.class ?? ''}`}
+      className={`${commandGroupClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.heading && (
@@ -423,10 +411,11 @@ function CommandItem(props: CommandItemProps) {
   return (
     <div
       data-slot="command-item"
+      id={props.id}
       role="option"
       data-disabled={isDisabled || undefined}
       data-selected="false"
-      className={`${commandItemClasses} ${props.class ?? ''}`}
+      className={`${commandItemClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -437,12 +426,13 @@ function CommandItem(props: CommandItemProps) {
 /**
  * Visual separator between command groups.
  */
-function CommandSeparator({ class: className = '' }: CommandSeparatorProps) {
+function CommandSeparator({ className = '', ...props }: CommandSeparatorProps) {
   return (
     <div
       data-slot="command-separator"
       role="separator"
       className={`${commandSeparatorClasses} ${className}`}
+      {...props}
     />
   )
 }
@@ -450,11 +440,12 @@ function CommandSeparator({ class: className = '' }: CommandSeparatorProps) {
 /**
  * Keyboard shortcut label displayed alongside a command item.
  */
-function CommandShortcut({ class: className = '', children }: CommandShortcutProps) {
+function CommandShortcut({ className = '', children, ...props }: CommandShortcutProps) {
   return (
     <span
       data-slot="command-shortcut"
       className={`${commandShortcutClasses} ${className}`}
+      {...props}
     >
       {children}
     </span>
@@ -469,8 +460,8 @@ function CommandDialog(props: CommandDialogProps) {
   return (
     <Dialog open={props.open ?? false} onOpenChange={props.onOpenChange ?? (() => {})}>
       <DialogOverlay />
-      <DialogContent class={`${commandDialogContentClasses} max-w-lg p-0`}>
-        <Command filter={props.filter} class={commandDialogCommandClasses}>
+      <DialogContent className={`${commandDialogContentClasses} max-w-lg p-0`}>
+        <Command id={props.id} filter={props.filter} className={commandDialogCommandClasses}>
           {props.children}
         </Command>
       </DialogContent>

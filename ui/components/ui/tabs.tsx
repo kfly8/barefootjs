@@ -33,6 +33,8 @@
  * ```
  */
 
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
+
 import type { Child } from '../../types'
 
 // Tabs container classes
@@ -56,7 +58,7 @@ const tabsContentClasses = 'flex-1 outline-none'
 /**
  * Props for Tabs component.
  */
-interface TabsProps {
+interface TabsProps extends HTMLBaseAttributes {
   /** Currently selected tab value */
   value?: string
   /** Default selected value (uncontrolled) */
@@ -65,8 +67,6 @@ interface TabsProps {
   onValueChange?: (value: string) => void
   /** Tab components (TabsList and TabsContent) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -77,13 +77,14 @@ interface TabsProps {
  * @param props.onValueChange - Callback when tab changes
  */
 function Tabs({
-  class: className = '',
+  className = '',
   value,
   defaultValue,
   children,
+  ...props
 }: TabsProps) {
   return (
-    <div data-slot="tabs" data-value={value || defaultValue} className={`${tabsClasses} ${className}`}>
+    <div data-slot="tabs" data-value={value || defaultValue} className={`${tabsClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -92,11 +93,9 @@ function Tabs({
 /**
  * Props for TabsList component.
  */
-interface TabsListProps {
+interface TabsListProps extends HTMLBaseAttributes {
   /** TabsTrigger components */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -105,11 +104,12 @@ interface TabsListProps {
  * @param props.children - TabsTrigger components
  */
 function TabsList({
-  class: className = '',
+  className = '',
   children,
+  ...props
 }: TabsListProps) {
   return (
-    <div data-slot="tabs-list" role="tablist" className={`${tabsListClasses} ${className}`}>
+    <div data-slot="tabs-list" role="tablist" className={`${tabsListClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -118,7 +118,7 @@ function TabsList({
 /**
  * Props for TabsTrigger component.
  */
-interface TabsTriggerProps {
+interface TabsTriggerProps extends ButtonHTMLAttributes {
   /** Value that identifies this tab */
   value: string
   /** Whether this tab is currently selected */
@@ -129,8 +129,6 @@ interface TabsTriggerProps {
   onClick?: () => void
   /** Tab label */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -141,14 +139,7 @@ interface TabsTriggerProps {
  * @param props.disabled - Whether disabled
  * @param props.onClick - Click handler
  */
-function TabsTrigger({
-  class: className = '',
-  value,
-  selected = false,
-  disabled = false,
-  onClick,
-  children,
-}: TabsTriggerProps) {
+function TabsTrigger(props: TabsTriggerProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = e.currentTarget as HTMLElement
     const tabList = target.closest('[role="tablist"]')
@@ -185,22 +176,24 @@ function TabsTrigger({
     }
   }
 
-  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${tabsTriggerStateClasses} ${className}`
+  const selected = props.selected ?? false
+  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${tabsTriggerStateClasses} ${props.className ?? ''}`
 
   return (
     <button
       data-slot="tabs-trigger"
       role="tab"
       aria-selected={selected}
-      disabled={disabled}
+      disabled={props.disabled ?? false}
       data-state={selected ? 'active' : 'inactive'}
-      data-value={value}
+      data-value={props.value}
       tabindex={selected ? 0 : -1}
+      id={props.id}
       className={classes}
-      onClick={onClick}
+      onClick={props.onClick}
       onKeyDown={handleKeyDown}
     >
-      {children}
+      {props.children}
     </button>
   )
 }
@@ -208,15 +201,13 @@ function TabsTrigger({
 /**
  * Props for TabsContent component.
  */
-interface TabsContentProps {
+interface TabsContentProps extends HTMLBaseAttributes {
   /** Value that identifies which tab this content belongs to */
   value: string
   /** Whether this content is currently visible */
   selected?: boolean
   /** Content to display */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -225,14 +216,10 @@ interface TabsContentProps {
  * @param props.value - Tab identifier
  * @param props.selected - Whether visible
  */
-function TabsContent({
-  class: className = '',
-  value,
-  selected = false,
-  children,
-}: TabsContentProps) {
+function TabsContent(props: TabsContentProps) {
+  const selected = props.selected ?? false
   const visibilityClass = selected ? '' : 'hidden'
-  const classes = `${tabsContentClasses} ${visibilityClass} ${className}`
+  const classes = `${tabsContentClasses} ${visibilityClass} ${props.className ?? ''}`
 
   return (
     <div
@@ -240,10 +227,11 @@ function TabsContent({
       role="tabpanel"
       tabindex={0}
       data-state={selected ? 'active' : 'inactive'}
-      data-value={value}
+      data-value={props.value}
+      id={props.id}
       className={classes}
     >
-      {children}
+      {props.children}
     </div>
   )
 }

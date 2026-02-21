@@ -41,6 +41,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for Drawer -> children state sharing
@@ -145,15 +146,13 @@ function Drawer(props: DrawerProps) {
 /**
  * Props for DrawerTrigger component.
  */
-interface DrawerTriggerProps {
+interface DrawerTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -188,7 +187,8 @@ function DrawerTrigger(props: DrawerTriggerProps) {
     <button
       data-slot="drawer-trigger"
       type="button"
-      className={`${drawerTriggerClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${drawerTriggerClasses} ${props.className ?? ''}`}
       disabled={props.disabled ?? false}
       ref={handleMount}
     >
@@ -200,9 +200,7 @@ function DrawerTrigger(props: DrawerTriggerProps) {
 /**
  * Props for DrawerOverlay component.
  */
-interface DrawerOverlayProps {
-  /** Additional CSS classes */
-  class?: string
+interface DrawerOverlayProps extends HTMLBaseAttributes {
 }
 
 /**
@@ -224,7 +222,7 @@ function DrawerOverlay(props: DrawerOverlayProps) {
     createEffect(() => {
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${drawerOverlayBaseClasses} ${isOpen ? drawerOverlayOpenClasses : drawerOverlayClosedClasses} ${props.class ?? ''}`
+      el.className = `${drawerOverlayBaseClasses} ${isOpen ? drawerOverlayOpenClasses : drawerOverlayClosedClasses} ${props.className ?? ''}`
     })
 
     el.addEventListener('click', () => {
@@ -236,7 +234,8 @@ function DrawerOverlay(props: DrawerOverlayProps) {
     <div
       data-slot="drawer-overlay"
       data-state="closed"
-      className={`${drawerOverlayBaseClasses} ${drawerOverlayClosedClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${drawerOverlayBaseClasses} ${drawerOverlayClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     />
   )
@@ -245,7 +244,7 @@ function DrawerOverlay(props: DrawerOverlayProps) {
 /**
  * Props for DrawerContent component.
  */
-interface DrawerContentProps {
+interface DrawerContentProps extends HTMLBaseAttributes {
   /** Drawer content */
   children?: Child
   /** Which edge the drawer slides from */
@@ -254,8 +253,6 @@ interface DrawerContentProps {
   ariaLabelledby?: string
   /** ID of the description element for aria-describedby */
   ariaDescribedby?: string
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -290,7 +287,7 @@ function DrawerContent(props: DrawerContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${drawerContentBaseClasses} ${directionClasses[direction]} ${isOpen ? directionOpenClasses[direction] : directionClosedClasses[direction]} ${props.class ?? ''}`
+      el.className = `${drawerContentBaseClasses} ${directionClasses[direction]} ${isOpen ? directionOpenClasses[direction] : directionClosedClasses[direction]} ${props.className ?? ''}`
 
       if (isOpen) {
         // Scroll lock
@@ -351,7 +348,8 @@ function DrawerContent(props: DrawerContentProps) {
       aria-labelledby={props.ariaLabelledby}
       aria-describedby={props.ariaDescribedby}
       tabindex={-1}
-      className={`${drawerContentBaseClasses} ${directionClasses[direction]} ${directionClosedClasses[direction]} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${drawerContentBaseClasses} ${directionClasses[direction]} ${directionClosedClasses[direction]} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -362,20 +360,19 @@ function DrawerContent(props: DrawerContentProps) {
 /**
  * Props for DrawerHandle component.
  */
-interface DrawerHandleProps {
-  /** Additional CSS classes */
-  class?: string
+interface DrawerHandleProps extends HTMLBaseAttributes {
 }
 
 /**
  * Visual handle indicator for the drawer.
  * Displays a small horizontal bar, typically at the top of bottom drawers.
  */
-function DrawerHandle({ class: className = '' }: DrawerHandleProps) {
+function DrawerHandle({ className = '', ...props }: DrawerHandleProps) {
   return (
     <div
       data-slot="drawer-handle"
       className={`mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-muted ${className}`}
+      {...props}
     />
   )
 }
@@ -383,11 +380,9 @@ function DrawerHandle({ class: className = '' }: DrawerHandleProps) {
 /**
  * Props for DrawerHeader component.
  */
-interface DrawerHeaderProps {
+interface DrawerHeaderProps extends HTMLBaseAttributes {
   /** Header content (typically DrawerTitle and DrawerDescription) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -396,9 +391,9 @@ interface DrawerHeaderProps {
  *
  * @param props.children - Header content
  */
-function DrawerHeader({ class: className = '', children }: DrawerHeaderProps) {
+function DrawerHeader({ className = '', children, ...props }: DrawerHeaderProps) {
   return (
-    <div data-slot="drawer-header" className={`${drawerHeaderClasses} ${className}`}>
+    <div data-slot="drawer-header" className={`${drawerHeaderClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -407,13 +402,9 @@ function DrawerHeader({ class: className = '', children }: DrawerHeaderProps) {
 /**
  * Props for DrawerTitle component.
  */
-interface DrawerTitleProps {
-  /** ID for aria-labelledby reference */
-  id?: string
+interface DrawerTitleProps extends HTMLBaseAttributes {
   /** Title text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -421,9 +412,9 @@ interface DrawerTitleProps {
  *
  * @param props.id - ID for accessibility
  */
-function DrawerTitle({ class: className = '', id, children }: DrawerTitleProps) {
+function DrawerTitle({ className = '', children, ...props }: DrawerTitleProps) {
   return (
-    <h2 data-slot="drawer-title" id={id} className={`${drawerTitleClasses} ${className}`}>
+    <h2 data-slot="drawer-title" className={`${drawerTitleClasses} ${className}`} {...props}>
       {children}
     </h2>
   )
@@ -432,13 +423,9 @@ function DrawerTitle({ class: className = '', id, children }: DrawerTitleProps) 
 /**
  * Props for DrawerDescription component.
  */
-interface DrawerDescriptionProps {
-  /** ID for aria-describedby reference */
-  id?: string
+interface DrawerDescriptionProps extends HTMLBaseAttributes {
   /** Description text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -446,9 +433,9 @@ interface DrawerDescriptionProps {
  *
  * @param props.id - ID for accessibility
  */
-function DrawerDescription({ class: className = '', id, children }: DrawerDescriptionProps) {
+function DrawerDescription({ className = '', children, ...props }: DrawerDescriptionProps) {
   return (
-    <p data-slot="drawer-description" id={id} className={`${drawerDescriptionClasses} ${className}`}>
+    <p data-slot="drawer-description" className={`${drawerDescriptionClasses} ${className}`} {...props}>
       {children}
     </p>
   )
@@ -457,11 +444,9 @@ function DrawerDescription({ class: className = '', id, children }: DrawerDescri
 /**
  * Props for DrawerFooter component.
  */
-interface DrawerFooterProps {
+interface DrawerFooterProps extends HTMLBaseAttributes {
   /** Footer content (typically action buttons) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -469,9 +454,9 @@ interface DrawerFooterProps {
  *
  * @param props.children - Footer content
  */
-function DrawerFooter({ class: className = '', children }: DrawerFooterProps) {
+function DrawerFooter({ className = '', children, ...props }: DrawerFooterProps) {
   return (
-    <div data-slot="drawer-footer" className={`${drawerFooterClasses} ${className}`}>
+    <div data-slot="drawer-footer" className={`${drawerFooterClasses} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -480,11 +465,9 @@ function DrawerFooter({ class: className = '', children }: DrawerFooterProps) {
 /**
  * Props for DrawerClose component.
  */
-interface DrawerCloseProps {
+interface DrawerCloseProps extends ButtonHTMLAttributes {
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -504,7 +487,8 @@ function DrawerClose(props: DrawerCloseProps) {
     <button
       data-slot="drawer-close"
       type="button"
-      className={`${drawerCloseClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${drawerCloseClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

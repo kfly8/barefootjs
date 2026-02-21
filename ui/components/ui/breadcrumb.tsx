@@ -29,6 +29,7 @@
  * ```
  */
 
+import type { AnchorHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 import { Slot } from './slot'
 import { ChevronRightIcon, EllipsisIcon } from './icon'
@@ -54,19 +55,17 @@ const breadcrumbEllipsisClasses = 'flex size-5 items-center justify-center [&>sv
 /**
  * Props for Breadcrumb component.
  */
-interface BreadcrumbProps {
+interface BreadcrumbProps extends HTMLBaseAttributes {
   /** Breadcrumb content (typically BreadcrumbList) */
   children?: Child
-  /** Additional CSS classes */
-  className?: string
 }
 
 /**
  * Breadcrumb navigation wrapper.
  */
-function Breadcrumb({ children, className = '' }: BreadcrumbProps) {
+function Breadcrumb({ children, className = '', ...props }: BreadcrumbProps) {
   return (
-    <nav data-slot="breadcrumb" aria-label="breadcrumb" className={className || undefined}>
+    <nav data-slot="breadcrumb" aria-label="breadcrumb" className={className || undefined} {...props}>
       {children}
     </nav>
   )
@@ -75,19 +74,17 @@ function Breadcrumb({ children, className = '' }: BreadcrumbProps) {
 /**
  * Props for BreadcrumbList component.
  */
-interface BreadcrumbListProps {
+interface BreadcrumbListProps extends HTMLBaseAttributes {
   /** List items */
   children?: Child
-  /** Additional CSS classes */
-  className?: string
 }
 
 /**
  * Ordered list wrapper for breadcrumb items.
  */
-function BreadcrumbList({ children, className = '' }: BreadcrumbListProps) {
+function BreadcrumbList({ children, className = '', ...props }: BreadcrumbListProps) {
   return (
-    <ol data-slot="breadcrumb-list" className={`${breadcrumbListClasses} ${className}`}>
+    <ol data-slot="breadcrumb-list" className={`${breadcrumbListClasses} ${className}`} {...props}>
       {children}
     </ol>
   )
@@ -96,19 +93,17 @@ function BreadcrumbList({ children, className = '' }: BreadcrumbListProps) {
 /**
  * Props for BreadcrumbItem component.
  */
-interface BreadcrumbItemProps {
+interface BreadcrumbItemProps extends HTMLBaseAttributes {
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  className?: string
 }
 
 /**
  * Individual breadcrumb item.
  */
-function BreadcrumbItem({ children, className = '' }: BreadcrumbItemProps) {
+function BreadcrumbItem({ children, className = '', ...props }: BreadcrumbItemProps) {
   return (
-    <li data-slot="breadcrumb-item" className={`${breadcrumbItemClasses} ${className}`}>
+    <li data-slot="breadcrumb-item" className={`${breadcrumbItemClasses} ${className}`} {...props}>
       {children}
     </li>
   )
@@ -117,15 +112,11 @@ function BreadcrumbItem({ children, className = '' }: BreadcrumbItemProps) {
 /**
  * Props for BreadcrumbLink component.
  */
-interface BreadcrumbLinkProps {
-  /** Link URL */
-  href?: string
+interface BreadcrumbLinkProps extends AnchorHTMLAttributes {
   /** When true, renders child element with link styling instead of `<a>`. */
   asChild?: boolean
   /** Link content */
   children?: Child
-  /** Additional CSS classes */
-  className?: string
 }
 
 /**
@@ -143,17 +134,15 @@ function BreadcrumbLink({ className = '', asChild = false, children, ...props }:
 /**
  * Props for BreadcrumbPage component.
  */
-interface BreadcrumbPageProps {
+interface BreadcrumbPageProps extends HTMLBaseAttributes {
   /** Page title */
   children?: Child
-  /** Additional CSS classes */
-  className?: string
 }
 
 /**
  * Current page indicator in breadcrumb.
  */
-function BreadcrumbPage({ children, className = '' }: BreadcrumbPageProps) {
+function BreadcrumbPage({ children, className = '', ...props }: BreadcrumbPageProps) {
   return (
     <span
       data-slot="breadcrumb-page"
@@ -161,6 +150,7 @@ function BreadcrumbPage({ children, className = '' }: BreadcrumbPageProps) {
       aria-disabled="true"
       aria-current="page"
       className={`${breadcrumbPageClasses} ${className}`}
+      {...props}
     >
       {children}
     </span>
@@ -170,23 +160,22 @@ function BreadcrumbPage({ children, className = '' }: BreadcrumbPageProps) {
 /**
  * Props for BreadcrumbSeparator component.
  */
-interface BreadcrumbSeparatorProps {
+interface BreadcrumbSeparatorProps extends HTMLBaseAttributes {
   /** Custom separator content. Defaults to ChevronRightIcon. */
   children?: Child
-  /** Additional CSS classes */
-  className?: string
 }
 
 /**
  * Separator between breadcrumb items.
  */
-function BreadcrumbSeparator({ children, className = '' }: BreadcrumbSeparatorProps) {
+function BreadcrumbSeparator({ children, className = '', ...props }: BreadcrumbSeparatorProps) {
   return (
     <li
       data-slot="breadcrumb-separator"
       role="presentation"
       aria-hidden="true"
       className={`${breadcrumbSeparatorClasses} ${className}`}
+      {...props}
     >
       {children ?? <ChevronRightIcon />}
     </li>
@@ -196,21 +185,20 @@ function BreadcrumbSeparator({ children, className = '' }: BreadcrumbSeparatorPr
 /**
  * Props for BreadcrumbEllipsis component.
  */
-interface BreadcrumbEllipsisProps {
-  /** Additional CSS classes */
-  className?: string
+interface BreadcrumbEllipsisProps extends HTMLBaseAttributes {
 }
 
 /**
  * Ellipsis indicator for truncated breadcrumb paths.
  */
-function BreadcrumbEllipsis({ className = '' }: BreadcrumbEllipsisProps) {
+function BreadcrumbEllipsis({ className = '', ...props }: BreadcrumbEllipsisProps) {
   return (
     <span
       data-slot="breadcrumb-ellipsis"
       role="presentation"
       aria-hidden="true"
       className={`${breadcrumbEllipsisClasses} ${className}`}
+      {...props}
     >
       <EllipsisIcon />
       <span className="sr-only">More</span>

@@ -103,6 +103,25 @@ test.describe('Pagination Documentation Page', () => {
       await expect(page2Link).toHaveAttribute('data-active', 'true')
     })
 
+    test('data-active and aria-current update reactively on page change', async ({ page }) => {
+      const section = page.locator('[bf-s^="PaginationDynamicDemo_"]:not([data-slot])').first()
+
+      const page1Link = section.locator('[data-slot="pagination-link"]', { hasText: '1' })
+      const page3Link = section.locator('[data-slot="pagination-link"]', { hasText: '3' })
+
+      // Initially page 1 is active
+      await expect(page1Link).toHaveAttribute('data-active', 'true')
+      await expect(page1Link).toHaveAttribute('aria-current', 'page')
+
+      // Click page 3
+      await page3Link.dispatchEvent('click')
+
+      // Page 3 should become active, page 1 inactive
+      await expect(page3Link).toHaveAttribute('data-active', 'true')
+      await expect(page3Link).toHaveAttribute('aria-current', 'page')
+      await expect(page1Link).toHaveAttribute('data-active', 'false')
+    })
+
     test('has Previous and Next buttons', async ({ page }) => {
       const section = page.locator('[bf-s^="PaginationDynamicDemo_"]:not([data-slot])').first()
       await expect(section.locator('a[aria-label="Go to previous page"]')).toBeVisible()

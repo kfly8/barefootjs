@@ -37,6 +37,7 @@
  */
 
 import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Context for parent-child state sharing
@@ -113,15 +114,13 @@ const dropdownMenuShortcutClasses = 'ml-auto text-xs tracking-widest text-muted-
 /**
  * Props for DropdownMenu component.
  */
-interface DropdownMenuProps {
+interface DropdownMenuProps extends HTMLBaseAttributes {
   /** Whether the dropdown menu is open */
   open?: boolean
   /** Callback when open state should change */
   onOpenChange?: (open: boolean) => void
   /** DropdownMenuTrigger and DropdownMenuContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -137,7 +136,7 @@ function DropdownMenu(props: DropdownMenuProps) {
       open: () => props.open ?? false,
       onOpenChange: props.onOpenChange ?? (() => {}),
     }}>
-      <div data-slot="dropdown-menu" className={`${dropdownMenuClasses} ${props.class ?? ''}`}>
+      <div data-slot="dropdown-menu" id={props.id} className={`${dropdownMenuClasses} ${props.className ?? ''}`}>
         {props.children}
       </div>
     </DropdownMenuContext.Provider>
@@ -147,15 +146,13 @@ function DropdownMenu(props: DropdownMenuProps) {
 /**
  * Props for DropdownMenuTrigger component.
  */
-interface DropdownMenuTriggerProps {
+interface DropdownMenuTriggerProps extends ButtonHTMLAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Render child element as trigger instead of built-in button */
   asChild?: boolean
   /** Trigger content (any element: button, avatar, icon, etc.) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -196,10 +193,11 @@ function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
     <button
       data-slot="dropdown-menu-trigger"
       type="button"
+      id={props.id}
       aria-expanded="false"
       aria-haspopup="menu"
       disabled={props.disabled ?? false}
-      className={`${dropdownMenuTriggerClasses} ${props.class ?? ''}`}
+      className={`${dropdownMenuTriggerClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -210,13 +208,11 @@ function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
 /**
  * Props for DropdownMenuContent component.
  */
-interface DropdownMenuContentProps {
+interface DropdownMenuContentProps extends HTMLBaseAttributes {
   /** DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator components */
   children?: Child
   /** Alignment relative to trigger */
   align?: 'start' | 'end'
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -262,7 +258,7 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
 
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${dropdownMenuContentBaseClasses} ${isOpen ? dropdownMenuContentOpenClasses : dropdownMenuContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${dropdownMenuContentBaseClasses} ${isOpen ? dropdownMenuContentOpenClasses : dropdownMenuContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         updatePosition()
@@ -368,8 +364,9 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
       data-slot="dropdown-menu-content"
       data-state="closed"
       role="menu"
+      id={props.id}
       tabindex={-1}
-      className={`${dropdownMenuContentBaseClasses} ${dropdownMenuContentClosedClasses} ${props.class ?? ''}`}
+      className={`${dropdownMenuContentBaseClasses} ${dropdownMenuContentClosedClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -380,7 +377,7 @@ function DropdownMenuContent(props: DropdownMenuContentProps) {
 /**
  * Props for DropdownMenuItem component.
  */
-interface DropdownMenuItemProps {
+interface DropdownMenuItemProps extends HTMLBaseAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Callback when item is selected (menu auto-closes) */
@@ -389,8 +386,6 @@ interface DropdownMenuItemProps {
   variant?: 'default' | 'destructive'
   /** Item content (text, icons, shortcuts) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -429,9 +424,10 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     <div
       data-slot="dropdown-menu-item"
       role="menuitem"
+      id={props.id}
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${dropdownMenuItemBaseClasses} ${stateClasses} ${props.class ?? ''}`}
+      className={`${dropdownMenuItemBaseClasses} ${stateClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -442,7 +438,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
 /**
  * Props for DropdownMenuCheckboxItem component.
  */
-interface DropdownMenuCheckboxItemProps {
+interface DropdownMenuCheckboxItemProps extends HTMLBaseAttributes {
   /** Whether the checkbox is checked */
   checked?: boolean
   /** Callback when checked state changes */
@@ -451,8 +447,6 @@ interface DropdownMenuCheckboxItemProps {
   disabled?: boolean
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -477,10 +471,11 @@ function DropdownMenuCheckboxItem(props: DropdownMenuCheckboxItemProps) {
     <div
       data-slot="dropdown-menu-item"
       role="menuitemcheckbox"
+      id={props.id}
       aria-checked={String(props.checked ?? false)}
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${dropdownMenuCheckableItemClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${dropdownMenuCheckableItemClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span className={dropdownMenuIndicatorClasses}>
@@ -496,15 +491,13 @@ function DropdownMenuCheckboxItem(props: DropdownMenuCheckboxItemProps) {
 /**
  * Props for DropdownMenuRadioGroup component.
  */
-interface DropdownMenuRadioGroupProps {
+interface DropdownMenuRadioGroupProps extends HTMLBaseAttributes {
   /** Currently selected value */
   value?: string
   /** Callback when value changes */
   onValueChange?: (value: string) => void
   /** RadioItem children */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -516,7 +509,7 @@ function DropdownMenuRadioGroup(props: DropdownMenuRadioGroupProps) {
       value: () => props.value ?? '',
       onValueChange: props.onValueChange ?? (() => {}),
     }}>
-      <div data-slot="dropdown-menu-radio-group" role="group" className={props.class ?? ''}>
+      <div data-slot="dropdown-menu-radio-group" role="group" id={props.id} className={props.className ?? ''}>
         {props.children}
       </div>
     </DropdownMenuRadioGroupContext.Provider>
@@ -526,15 +519,13 @@ function DropdownMenuRadioGroup(props: DropdownMenuRadioGroupProps) {
 /**
  * Props for DropdownMenuRadioItem component.
  */
-interface DropdownMenuRadioItemProps {
+interface DropdownMenuRadioItemProps extends HTMLBaseAttributes {
   /** Value for this radio item */
   value: string
   /** Whether disabled */
   disabled?: boolean
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -561,10 +552,11 @@ function DropdownMenuRadioItem(props: DropdownMenuRadioItemProps) {
     <div
       data-slot="dropdown-menu-item"
       role="menuitemradio"
+      id={props.id}
       aria-checked="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${dropdownMenuCheckableItemClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${dropdownMenuCheckableItemClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span className={dropdownMenuIndicatorClasses} data-slot="dropdown-menu-radio-indicator">
@@ -578,11 +570,9 @@ function DropdownMenuRadioItem(props: DropdownMenuRadioItemProps) {
 /**
  * Props for DropdownMenuSub component.
  */
-interface DropdownMenuSubProps {
+interface DropdownMenuSubProps extends HTMLBaseAttributes {
   /** SubTrigger and SubContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -596,7 +586,7 @@ function DropdownMenuSub(props: DropdownMenuSubProps) {
       subOpen,
       onSubOpenChange: setSubOpen,
     }}>
-      <div data-slot="dropdown-menu-sub" className={`relative ${props.class ?? ''}`}>
+      <div data-slot="dropdown-menu-sub" id={props.id} className={`relative ${props.className ?? ''}`}>
         {props.children}
       </div>
     </DropdownMenuSubContext.Provider>
@@ -606,13 +596,11 @@ function DropdownMenuSub(props: DropdownMenuSubProps) {
 /**
  * Props for DropdownMenuSubTrigger component.
  */
-interface DropdownMenuSubTriggerProps {
+interface DropdownMenuSubTriggerProps extends HTMLBaseAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Trigger content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -655,11 +643,12 @@ function DropdownMenuSubTrigger(props: DropdownMenuSubTriggerProps) {
       data-slot="dropdown-menu-item"
       data-sub-trigger="true"
       role="menuitem"
+      id={props.id}
       aria-haspopup="menu"
       aria-expanded="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${dropdownMenuSubTriggerClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${dropdownMenuSubTriggerClasses} ${isDisabled ? dropdownMenuItemDisabledClasses : dropdownMenuItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -671,11 +660,9 @@ function DropdownMenuSubTrigger(props: DropdownMenuSubTriggerProps) {
 /**
  * Props for DropdownMenuSubContent component.
  */
-interface DropdownMenuSubContentProps {
+interface DropdownMenuSubContentProps extends HTMLBaseAttributes {
   /** SubContent items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -748,9 +735,10 @@ function DropdownMenuSubContent(props: DropdownMenuSubContentProps) {
       data-slot="dropdown-menu-sub-content"
       data-state="closed"
       role="menu"
+      id={props.id}
       tabindex={-1}
       style="display:none"
-      className={`${dropdownMenuSubContentBaseClasses} left-full top-0 ${props.class ?? ''}`}
+      className={`${dropdownMenuSubContentBaseClasses} left-full top-0 ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -761,11 +749,9 @@ function DropdownMenuSubContent(props: DropdownMenuSubContentProps) {
 /**
  * Props for DropdownMenuLabel component.
  */
-interface DropdownMenuLabelProps {
+interface DropdownMenuLabelProps extends HTMLBaseAttributes {
   /** Label text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -773,10 +759,10 @@ interface DropdownMenuLabelProps {
  *
  * @param props.children - Label content
  */
-function DropdownMenuLabel(props: DropdownMenuLabelProps) {
+function DropdownMenuLabel({ children, className = '', ...props }: DropdownMenuLabelProps) {
   return (
-    <div data-slot="dropdown-menu-label" className={`${dropdownMenuLabelClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <div data-slot="dropdown-menu-label" className={`${dropdownMenuLabelClasses} ${className}`} {...props}>
+      {children}
     </div>
   )
 }
@@ -784,28 +770,24 @@ function DropdownMenuLabel(props: DropdownMenuLabelProps) {
 /**
  * Props for DropdownMenuSeparator component.
  */
-interface DropdownMenuSeparatorProps {
-  /** Additional CSS classes */
-  class?: string
+interface DropdownMenuSeparatorProps extends HTMLBaseAttributes {
 }
 
 /**
  * Visual separator between menu item groups.
  */
-function DropdownMenuSeparator(props: DropdownMenuSeparatorProps) {
+function DropdownMenuSeparator({ className = '', ...props }: DropdownMenuSeparatorProps) {
   return (
-    <div data-slot="dropdown-menu-separator" role="separator" className={`${dropdownMenuSeparatorClasses} ${props.class ?? ''}`} />
+    <div data-slot="dropdown-menu-separator" role="separator" className={`${dropdownMenuSeparatorClasses} ${className}`} {...props} />
   )
 }
 
 /**
  * Props for DropdownMenuShortcut component.
  */
-interface DropdownMenuShortcutProps {
+interface DropdownMenuShortcutProps extends HTMLBaseAttributes {
   /** Shortcut text (e.g., "Ctrl+Q") */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -813,10 +795,10 @@ interface DropdownMenuShortcutProps {
  *
  * @param props.children - Shortcut text
  */
-function DropdownMenuShortcut(props: DropdownMenuShortcutProps) {
+function DropdownMenuShortcut({ children, className = '', ...props }: DropdownMenuShortcutProps) {
   return (
-    <span data-slot="dropdown-menu-shortcut" className={`${dropdownMenuShortcutClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <span data-slot="dropdown-menu-shortcut" className={`${dropdownMenuShortcutClasses} ${className}`} {...props}>
+      {children}
     </span>
   )
 }
@@ -824,11 +806,9 @@ function DropdownMenuShortcut(props: DropdownMenuShortcutProps) {
 /**
  * Props for DropdownMenuGroup component.
  */
-interface DropdownMenuGroupProps {
+interface DropdownMenuGroupProps extends HTMLBaseAttributes {
   /** Grouped menu items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -836,10 +816,10 @@ interface DropdownMenuGroupProps {
  *
  * @param props.children - Grouped items
  */
-function DropdownMenuGroup(props: DropdownMenuGroupProps) {
+function DropdownMenuGroup({ children, className = '', ...props }: DropdownMenuGroupProps) {
   return (
-    <div data-slot="dropdown-menu-group" role="group" className={props.class ?? ''}>
-      {props.children}
+    <div data-slot="dropdown-menu-group" role="group" className={className} {...props}>
+      {children}
     </div>
   )
 }

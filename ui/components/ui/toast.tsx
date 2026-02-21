@@ -47,6 +47,7 @@
  */
 
 import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 import { XIcon } from './icon'
 
@@ -124,7 +125,7 @@ const toastActionClasses = 'inline-flex items-center justify-center rounded-md t
 /**
  * Props for ToastProvider component.
  */
-interface ToastProviderProps {
+interface ToastProviderProps extends HTMLBaseAttributes {
   /**
    * Position of the toast container.
    * @default 'bottom-right'
@@ -132,8 +133,6 @@ interface ToastProviderProps {
   position?: ToastPosition
   /** Toast components */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -156,8 +155,9 @@ function ToastProvider(props: ToastProviderProps) {
   return (
     <div
       data-slot="toast-provider"
+      id={props.id}
       data-position={position}
-      className={`${toastProviderClasses} ${positionClasses[position]} ${props.class ?? ''}`}
+      className={`${toastProviderClasses} ${positionClasses[position]} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -168,7 +168,7 @@ function ToastProvider(props: ToastProviderProps) {
 /**
  * Props for Toast component.
  */
-interface ToastProps {
+interface ToastProps extends HTMLBaseAttributes {
   /**
    * Visual variant of the toast.
    * @default 'default'
@@ -188,8 +188,6 @@ interface ToastProps {
   duration?: number
   /** Toast content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -203,7 +201,7 @@ interface ToastProps {
  */
 function Toast(props: ToastProps) {
   const variant = props.variant ?? 'default'
-  const className = props.class ?? ''
+  const className = props.className ?? ''
 
   const dismiss = () => {
     props.onOpenChange?.(false)
@@ -268,6 +266,7 @@ function Toast(props: ToastProps) {
     <ToastContext.Provider value={{ dismiss }}>
       <div
         data-slot="toast"
+        id={props.id}
         data-variant={variant}
         data-state="hidden"
         role={variant === 'error' ? 'alert' : 'status'}
@@ -311,19 +310,17 @@ function Toast(props: ToastProps) {
 /**
  * Props for ToastTitle component.
  */
-interface ToastTitleProps {
+interface ToastTitleProps extends HTMLBaseAttributes {
   /** Title text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Title text for the toast.
  */
-function ToastTitle({ class: className = '', children }: ToastTitleProps) {
+function ToastTitle({ className = '', children, ...props }: ToastTitleProps) {
   return (
-    <div data-slot="toast-title" className={`${toastTitleClasses} ${className}`}>
+    <div data-slot="toast-title" {...props} className={`${toastTitleClasses} ${className}`}>
       {children}
     </div>
   )
@@ -332,19 +329,17 @@ function ToastTitle({ class: className = '', children }: ToastTitleProps) {
 /**
  * Props for ToastDescription component.
  */
-interface ToastDescriptionProps {
+interface ToastDescriptionProps extends HTMLBaseAttributes {
   /** Description text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Description text for the toast.
  */
-function ToastDescription({ class: className = '', children }: ToastDescriptionProps) {
+function ToastDescription({ className = '', children, ...props }: ToastDescriptionProps) {
   return (
-    <div data-slot="toast-description" className={`${toastDescriptionClasses} ${className}`}>
+    <div data-slot="toast-description" {...props} className={`${toastDescriptionClasses} ${className}`}>
       {children}
     </div>
   )
@@ -353,9 +348,7 @@ function ToastDescription({ class: className = '', children }: ToastDescriptionP
 /**
  * Props for ToastClose component.
  */
-interface ToastCloseProps {
-  /** Additional CSS classes */
-  class?: string
+interface ToastCloseProps extends ButtonHTMLAttributes {
 }
 
 /**
@@ -375,9 +368,10 @@ function ToastClose(props: ToastCloseProps) {
   return (
     <button
       data-slot="toast-close"
+      id={props.id}
       type="button"
       aria-label="Close"
-      className={`${toastCloseClasses} ${props.class ?? ''}`}
+      className={`${toastCloseClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <XIcon size="sm" class="pointer-events-none" />
@@ -388,15 +382,13 @@ function ToastClose(props: ToastCloseProps) {
 /**
  * Props for ToastAction component.
  */
-interface ToastActionProps {
+interface ToastActionProps extends ButtonHTMLAttributes {
   /** Accessible text describing the action */
   altText: string
   /** Click handler */
   onClick?: () => void
   /** Button content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -419,9 +411,10 @@ function ToastAction(props: ToastActionProps) {
   return (
     <button
       data-slot="toast-action"
+      id={props.id}
       type="button"
       aria-label={props.altText}
-      className={`${toastActionClasses} ${props.class ?? ''}`}
+      className={`${toastActionClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}

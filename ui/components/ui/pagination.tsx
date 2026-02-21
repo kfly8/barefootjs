@@ -30,6 +30,7 @@
  * ```
  */
 
+import type { AnchorHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 import { ChevronLeftIcon, ChevronRightIcon, EllipsisIcon } from './icon'
 
@@ -46,95 +47,82 @@ const sizeClasses = {
   icon: 'size-9',
 }
 
-interface PaginationProps {
-  className?: string
+interface PaginationProps extends HTMLBaseAttributes {
   children?: Child
 }
 
-function Pagination({ className = '', children }: PaginationProps) {
+function Pagination({ className = '', children, ...props }: PaginationProps) {
   return (
     <nav
       role="navigation"
       aria-label="pagination"
       data-slot="pagination"
       className={`mx-auto flex w-full justify-center ${className}`}
+      {...props}
     >
       {children}
     </nav>
   )
 }
 
-interface PaginationContentProps {
-  className?: string
+interface PaginationContentProps extends HTMLBaseAttributes {
   children?: Child
 }
 
-function PaginationContent({ className = '', children }: PaginationContentProps) {
+function PaginationContent({ className = '', children, ...props }: PaginationContentProps) {
   return (
     <ul
       data-slot="pagination-content"
       className={`flex flex-row items-center gap-1 ${className}`}
+      {...props}
     >
       {children}
     </ul>
   )
 }
 
-interface PaginationItemProps {
-  className?: string
+interface PaginationItemProps extends HTMLBaseAttributes {
   children?: Child
 }
 
-function PaginationItem({ className = '', children }: PaginationItemProps) {
-  return <li data-slot="pagination-item" className={className}>{children}</li>
+function PaginationItem({ className = '', children, ...props }: PaginationItemProps) {
+  return <li data-slot="pagination-item" className={className} {...props}>{children}</li>
 }
 
-interface PaginationLinkProps {
+interface PaginationLinkProps extends AnchorHTMLAttributes {
   isActive?: boolean
   size?: 'default' | 'icon'
-  className?: string
-  href?: string
   children?: Child
-  onClick?: (e: Event) => void
-  'aria-label'?: string
 }
 
 function PaginationLink(props: PaginationLinkProps) {
   const size = props.size ?? 'icon'
-  const className = props.className ?? ''
-
   return (
     <a
       aria-current={props.isActive ? 'page' : undefined}
       data-slot="pagination-link"
       data-active={props.isActive}
-      className={`${buttonBaseClasses} ${props.isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size]} ${className}`}
+      id={props.id}
+      className={`${buttonBaseClasses} ${props.isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size]} ${props.className ?? ''}`}
       href={props.href}
       onClick={props.onClick}
-      aria-label={props['aria-label']}
     >
       {props.children}
     </a>
   )
 }
 
-interface PaginationPrevNextProps {
-  className?: string
-  href?: string
+interface PaginationPrevNextProps extends AnchorHTMLAttributes {
   children?: Child
-  onClick?: (e: Event) => void
-  'aria-label'?: string
 }
 
-function PaginationPrevious(props: PaginationPrevNextProps) {
-  const className = props.className ?? ''
+function PaginationPrevious({ className = '', children, ...props }: PaginationPrevNextProps) {
   return (
     <a
       aria-label="Go to previous page"
       data-slot="pagination-link"
       className={`${buttonBaseClasses} ${variantClasses.ghost} ${sizeClasses.default} gap-1 px-2.5 sm:pl-2.5 ${className}`}
-      href={props.href}
-      onClick={props.onClick}
+      {...props}
     >
       <ChevronLeftIcon size="sm" />
       <span className="hidden sm:block">Previous</span>
@@ -142,15 +130,13 @@ function PaginationPrevious(props: PaginationPrevNextProps) {
   )
 }
 
-function PaginationNext(props: PaginationPrevNextProps) {
-  const className = props.className ?? ''
+function PaginationNext({ className = '', children, ...props }: PaginationPrevNextProps) {
   return (
     <a
       aria-label="Go to next page"
       data-slot="pagination-link"
       className={`${buttonBaseClasses} ${variantClasses.ghost} ${sizeClasses.default} gap-1 px-2.5 sm:pr-2.5 ${className}`}
-      href={props.href}
-      onClick={props.onClick}
+      {...props}
     >
       <span className="hidden sm:block">Next</span>
       <ChevronRightIcon size="sm" />
@@ -158,16 +144,16 @@ function PaginationNext(props: PaginationPrevNextProps) {
   )
 }
 
-interface PaginationEllipsisProps {
-  className?: string
+interface PaginationEllipsisProps extends HTMLBaseAttributes {
 }
 
-function PaginationEllipsis({ className = '' }: PaginationEllipsisProps) {
+function PaginationEllipsis({ className = '', ...props }: PaginationEllipsisProps) {
   return (
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
       className={`flex size-9 items-center justify-center ${className}`}
+      {...props}
     >
       <EllipsisIcon size="sm" />
       <span className="sr-only">More pages</span>

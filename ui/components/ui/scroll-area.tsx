@@ -1,5 +1,6 @@
 "use client"
 
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import { createSignal, onCleanup } from '@barefootjs/dom'
 
 /**
@@ -29,20 +30,16 @@ const thumbClasses = 'bg-border relative rounded-full flex-1'
 
 type ScrollAreaType = 'hover' | 'scroll' | 'auto' | 'always'
 
-interface ScrollAreaProps {
+interface ScrollAreaProps extends HTMLBaseAttributes {
   /** Content to display inside the scrollable area. */
   children?: any
-  /** Additional CSS classes for the root element. */
-  class?: string
   /** When to show scrollbars. @default 'hover' */
   type?: ScrollAreaType
 }
 
-interface ScrollBarProps {
+interface ScrollBarProps extends HTMLBaseAttributes {
   /** Scroll direction. @default 'vertical' */
   orientation?: 'vertical' | 'horizontal'
-  /** Additional CSS classes. */
-  class?: string
 }
 
 /**
@@ -184,7 +181,8 @@ function ScrollArea(props: ScrollAreaProps) {
   return (
     <div
       data-slot="scroll-area"
-      className={`${rootClasses} ${props.class ?? ''}`}
+      id={props.id}
+      className={`${rootClasses} ${props.className ?? ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       ref={handleMount}
@@ -237,8 +235,7 @@ function ScrollArea(props: ScrollAreaProps) {
  * ScrollBar — standalone scrollbar component for custom configurations.
  * Not typically used directly; ScrollArea includes both scrollbars.
  */
-function ScrollBar(props: ScrollBarProps) {
-  const orientation = props.orientation ?? 'vertical'
+function ScrollBar({ orientation = 'vertical', className = '', ...props }: ScrollBarProps) {
   const posClasses = orientation === 'vertical'
     ? 'absolute right-0 top-0 bottom-0'
     : 'absolute bottom-0 left-0 right-0'
@@ -247,7 +244,8 @@ function ScrollBar(props: ScrollBarProps) {
     <div
       data-slot="scroll-area-scrollbar"
       data-orientation={orientation}
-      className={`${posClasses} ${scrollbarOrientationClasses[orientation]} ${props.class ?? ''}`}
+      className={`${posClasses} ${scrollbarOrientationClasses[orientation]} ${className}`}
+      {...props}
     >
       <div data-slot="scroll-area-thumb" className={thumbClasses} />
     </div>

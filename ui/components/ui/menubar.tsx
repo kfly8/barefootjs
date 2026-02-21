@@ -40,6 +40,7 @@
  */
 
 import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 
 // Bar-level context: coordinates which menu is active
@@ -91,11 +92,9 @@ const menubarShortcutClasses = 'ml-auto text-xs tracking-widest text-muted-foreg
 
 // --- Menubar (root) ---
 
-interface MenubarProps {
+interface MenubarProps extends HTMLBaseAttributes {
   /** MenubarMenu children */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -144,7 +143,8 @@ function Menubar(props: MenubarProps) {
       <div
         data-slot="menubar"
         role="menubar"
-        className={`${menubarClasses} ${props.class ?? ''}`}
+        id={props.id}
+        className={`${menubarClasses} ${props.className ?? ''}`}
         ref={handleMount}
       >
         {props.children}
@@ -155,13 +155,11 @@ function Menubar(props: MenubarProps) {
 
 // --- MenubarMenu ---
 
-interface MenubarMenuProps {
+interface MenubarMenuProps extends HTMLBaseAttributes {
   /** Unique value identifying this menu */
   value?: string
   /** MenubarTrigger and MenubarContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -171,7 +169,7 @@ interface MenubarMenuProps {
  */
 function MenubarMenu(props: MenubarMenuProps) {
   return (
-    <div data-slot="menubar-menu" data-value={props.value ?? ''} className={props.class ?? ''}>
+    <div data-slot="menubar-menu" data-value={props.value ?? ''} id={props.id} className={props.className ?? ''}>
       {props.children}
     </div>
   )
@@ -179,11 +177,9 @@ function MenubarMenu(props: MenubarMenuProps) {
 
 // --- MenubarTrigger ---
 
-interface MenubarTriggerProps {
+interface MenubarTriggerProps extends HTMLBaseAttributes {
   /** Trigger content (text label) */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -203,7 +199,7 @@ function MenubarTrigger(props: MenubarTriggerProps) {
       const isOpen = barCtx.activeMenu() === menuValue
       el.dataset.state = isOpen ? 'open' : 'closed'
       el.setAttribute('aria-expanded', String(isOpen))
-      const baseClasses = `${menubarTriggerBaseClasses} ${isOpen ? menubarTriggerOpenClasses : menubarTriggerDefaultClasses} ${props.class ?? ''}`
+      const baseClasses = `${menubarTriggerBaseClasses} ${isOpen ? menubarTriggerOpenClasses : menubarTriggerDefaultClasses} ${props.className ?? ''}`
       el.className = baseClasses
     })
 
@@ -253,7 +249,8 @@ function MenubarTrigger(props: MenubarTriggerProps) {
       aria-haspopup="menu"
       aria-expanded="false"
       data-state="closed"
-      className={`${menubarTriggerBaseClasses} ${menubarTriggerDefaultClasses} ${props.class ?? ''}`}
+      className={`${menubarTriggerBaseClasses} ${menubarTriggerDefaultClasses} ${props.className ?? ''}`}
+      id={props.id}
       ref={handleMount}
     >
       {props.children}
@@ -263,13 +260,11 @@ function MenubarTrigger(props: MenubarTriggerProps) {
 
 // --- MenubarContent ---
 
-interface MenubarContentProps {
+interface MenubarContentProps extends HTMLBaseAttributes {
   /** Menu items */
   children?: Child
   /** Alignment relative to trigger */
   align?: 'start' | 'end'
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -314,7 +309,7 @@ function MenubarContent(props: MenubarContentProps) {
 
       const isOpen = barCtx.activeMenu() === menuValue
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${menubarContentBaseClasses} ${isOpen ? menubarContentOpenClasses : menubarContentClosedClasses} ${props.class ?? ''}`
+      el.className = `${menubarContentBaseClasses} ${isOpen ? menubarContentOpenClasses : menubarContentClosedClasses} ${props.className ?? ''}`
 
       if (isOpen) {
         updatePosition()
@@ -423,7 +418,8 @@ function MenubarContent(props: MenubarContentProps) {
       data-state="closed"
       role="menu"
       tabindex={-1}
-      className={`${menubarContentBaseClasses} ${menubarContentClosedClasses} ${props.class ?? ''}`}
+      className={`${menubarContentBaseClasses} ${menubarContentClosedClasses} ${props.className ?? ''}`}
+      id={props.id}
       ref={handleMount}
     >
       {props.children}
@@ -433,7 +429,7 @@ function MenubarContent(props: MenubarContentProps) {
 
 // --- MenubarItem ---
 
-interface MenubarItemProps {
+interface MenubarItemProps extends HTMLBaseAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Callback when item is selected (menu auto-closes) */
@@ -442,8 +438,6 @@ interface MenubarItemProps {
   variant?: 'default' | 'destructive'
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -477,9 +471,10 @@ function MenubarItem(props: MenubarItemProps) {
     <div
       data-slot="menubar-item"
       role="menuitem"
+      id={props.id}
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${menubarItemBaseClasses} ${stateClasses} ${props.class ?? ''}`}
+      className={`${menubarItemBaseClasses} ${stateClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
@@ -489,7 +484,7 @@ function MenubarItem(props: MenubarItemProps) {
 
 // --- MenubarCheckboxItem ---
 
-interface MenubarCheckboxItemProps {
+interface MenubarCheckboxItemProps extends HTMLBaseAttributes {
   /** Whether the checkbox is checked */
   checked?: boolean
   /** Callback when checked state changes */
@@ -498,8 +493,6 @@ interface MenubarCheckboxItemProps {
   disabled?: boolean
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -523,10 +516,11 @@ function MenubarCheckboxItem(props: MenubarCheckboxItemProps) {
     <div
       data-slot="menubar-item"
       role="menuitemcheckbox"
+      id={props.id}
       aria-checked={String(props.checked ?? false)}
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${menubarCheckableItemClasses} ${isDisabled ? menubarItemDisabledClasses : menubarItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${menubarCheckableItemClasses} ${isDisabled ? menubarItemDisabledClasses : menubarItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span className={menubarIndicatorClasses}>
@@ -541,15 +535,13 @@ function MenubarCheckboxItem(props: MenubarCheckboxItemProps) {
 
 // --- MenubarRadioGroup ---
 
-interface MenubarRadioGroupProps {
+interface MenubarRadioGroupProps extends HTMLBaseAttributes {
   /** Currently selected value */
   value?: string
   /** Callback when value changes */
   onValueChange?: (value: string) => void
   /** RadioItem children */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -561,7 +553,7 @@ function MenubarRadioGroup(props: MenubarRadioGroupProps) {
       value: () => props.value ?? '',
       onValueChange: props.onValueChange ?? (() => {}),
     }}>
-      <div data-slot="menubar-radio-group" role="group" className={props.class ?? ''}>
+      <div data-slot="menubar-radio-group" role="group" id={props.id} className={props.className ?? ''}>
         {props.children}
       </div>
     </MenubarRadioGroupContext.Provider>
@@ -570,15 +562,13 @@ function MenubarRadioGroup(props: MenubarRadioGroupProps) {
 
 // --- MenubarRadioItem ---
 
-interface MenubarRadioItemProps {
+interface MenubarRadioItemProps extends HTMLBaseAttributes {
   /** Value for this radio item */
   value: string
   /** Whether disabled */
   disabled?: boolean
   /** Item content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -604,10 +594,11 @@ function MenubarRadioItem(props: MenubarRadioItemProps) {
     <div
       data-slot="menubar-item"
       role="menuitemradio"
+      id={props.id}
       aria-checked="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${menubarCheckableItemClasses} ${isDisabled ? menubarItemDisabledClasses : menubarItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${menubarCheckableItemClasses} ${isDisabled ? menubarItemDisabledClasses : menubarItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span className={menubarIndicatorClasses} data-slot="menubar-radio-indicator">
@@ -620,11 +611,9 @@ function MenubarRadioItem(props: MenubarRadioItemProps) {
 
 // --- MenubarSub ---
 
-interface MenubarSubProps {
+interface MenubarSubProps extends HTMLBaseAttributes {
   /** SubTrigger and SubContent */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -638,7 +627,7 @@ function MenubarSub(props: MenubarSubProps) {
       subOpen,
       onSubOpenChange: setSubOpen,
     }}>
-      <div data-slot="menubar-sub" className={`relative ${props.class ?? ''}`}>
+      <div data-slot="menubar-sub" id={props.id} className={`relative ${props.className ?? ''}`}>
         {props.children}
       </div>
     </MenubarSubContext.Provider>
@@ -647,13 +636,11 @@ function MenubarSub(props: MenubarSubProps) {
 
 // --- MenubarSubTrigger ---
 
-interface MenubarSubTriggerProps {
+interface MenubarSubTriggerProps extends HTMLBaseAttributes {
   /** Whether disabled */
   disabled?: boolean
   /** Trigger content */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -698,7 +685,8 @@ function MenubarSubTrigger(props: MenubarSubTriggerProps) {
       aria-expanded="false"
       aria-disabled={isDisabled || undefined}
       tabindex={isDisabled ? -1 : 0}
-      className={`${menubarSubTriggerClasses} ${isDisabled ? menubarItemDisabledClasses : menubarItemDefaultClasses} ${props.class ?? ''}`}
+      className={`${menubarSubTriggerClasses} ${isDisabled ? menubarItemDisabledClasses : menubarItemDefaultClasses} ${props.className ?? ''}`}
+      id={props.id}
       ref={handleMount}
     >
       {props.children}
@@ -709,11 +697,9 @@ function MenubarSubTrigger(props: MenubarSubTriggerProps) {
 
 // --- MenubarSubContent ---
 
-interface MenubarSubContentProps {
+interface MenubarSubContentProps extends HTMLBaseAttributes {
   /** SubContent items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
@@ -786,7 +772,8 @@ function MenubarSubContent(props: MenubarSubContentProps) {
       role="menu"
       tabindex={-1}
       style="display:none"
-      className={`${menubarSubContentBaseClasses} left-full top-0 ${props.class ?? ''}`}
+      className={`${menubarSubContentBaseClasses} left-full top-0 ${props.className ?? ''}`}
+      id={props.id}
       ref={handleMount}
     >
       {props.children}
@@ -796,76 +783,68 @@ function MenubarSubContent(props: MenubarSubContentProps) {
 
 // --- MenubarLabel ---
 
-interface MenubarLabelProps {
+interface MenubarLabelProps extends HTMLBaseAttributes {
   /** Label text */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Section label inside the menu.
  */
-function MenubarLabel(props: MenubarLabelProps) {
+function MenubarLabel({ children, className = '', ...props }: MenubarLabelProps) {
   return (
-    <div data-slot="menubar-label" className={`${menubarLabelClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <div data-slot="menubar-label" className={`${menubarLabelClasses} ${className}`} {...props}>
+      {children}
     </div>
   )
 }
 
 // --- MenubarSeparator ---
 
-interface MenubarSeparatorProps {
-  /** Additional CSS classes */
-  class?: string
+interface MenubarSeparatorProps extends HTMLBaseAttributes {
 }
 
 /**
  * Visual separator between menu item groups.
  */
-function MenubarSeparator(props: MenubarSeparatorProps) {
+function MenubarSeparator({ className = '', ...props }: MenubarSeparatorProps) {
   return (
-    <div data-slot="menubar-separator" role="separator" className={`${menubarSeparatorClasses} ${props.class ?? ''}`} />
+    <div data-slot="menubar-separator" role="separator" className={`${menubarSeparatorClasses} ${className}`} {...props} />
   )
 }
 
 // --- MenubarShortcut ---
 
-interface MenubarShortcutProps {
+interface MenubarShortcutProps extends HTMLBaseAttributes {
   /** Shortcut text (e.g., "Ctrl+T") */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Keyboard shortcut indicator displayed inside a menu item.
  */
-function MenubarShortcut(props: MenubarShortcutProps) {
+function MenubarShortcut({ children, className = '', ...props }: MenubarShortcutProps) {
   return (
-    <span data-slot="menubar-shortcut" className={`${menubarShortcutClasses} ${props.class ?? ''}`}>
-      {props.children}
+    <span data-slot="menubar-shortcut" className={`${menubarShortcutClasses} ${className}`} {...props}>
+      {children}
     </span>
   )
 }
 
 // --- MenubarGroup ---
 
-interface MenubarGroupProps {
+interface MenubarGroupProps extends HTMLBaseAttributes {
   /** Grouped menu items */
   children?: Child
-  /** Additional CSS classes */
-  class?: string
 }
 
 /**
  * Semantic grouping of related menu items.
  */
-function MenubarGroup(props: MenubarGroupProps) {
+function MenubarGroup({ children, className = '', ...props }: MenubarGroupProps) {
   return (
-    <div data-slot="menubar-group" role="group" className={props.class ?? ''}>
-      {props.children}
+    <div data-slot="menubar-group" role="group" className={className} {...props}>
+      {children}
     </div>
   )
 }
