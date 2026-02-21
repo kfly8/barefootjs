@@ -1210,6 +1210,19 @@ function processAttributes(
 
     const name = attr.name.getText(ctx.sourceFile)
 
+    // BF050: class= is not valid in JSX; use className= instead
+    if (name === 'class') {
+      ctx.analyzer.errors.push(
+        createError(ErrorCodes.CLASS_ATTRIBUTE, getSourceLocation(attr, ctx.sourceFile, ctx.filePath), {
+          suggestion: {
+            message: 'Use `className` instead of `class` in JSX attributes.',
+            replacement: 'className',
+          },
+        })
+      )
+      continue
+    }
+
     // Ref attribute
     if (name === 'ref') {
       if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
@@ -1412,6 +1425,20 @@ function processComponentProps(
     if (!ts.isJsxAttribute(attr)) continue
 
     const name = attr.name.getText(ctx.sourceFile)
+
+    // BF050: class= is not valid in JSX; use className= instead
+    if (name === 'class') {
+      ctx.analyzer.errors.push(
+        createError(ErrorCodes.CLASS_ATTRIBUTE, getSourceLocation(attr, ctx.sourceFile, ctx.filePath), {
+          suggestion: {
+            message: 'Use `className` instead of `class` in JSX attributes.',
+            replacement: 'className',
+          },
+        })
+      )
+      continue
+    }
+
     const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
 
     // For component props, convert IRTemplateLiteral back to string expression

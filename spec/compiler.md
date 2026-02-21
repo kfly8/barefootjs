@@ -294,6 +294,7 @@ interface TemplateAdapter {
 | BF031 | Props type mismatch |
 | BF043 | Props destructuring breaks reactivity |
 | BF044 | Signal/memo getter passed without calling it |
+| BF050 | `class` attribute used in JSX; use `className` instead |
 
 ### Error Format
 

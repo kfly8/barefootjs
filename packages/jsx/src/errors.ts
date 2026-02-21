@@ -40,6 +40,9 @@ export const ErrorCodes = {
   INVALID_COMPONENT_NAME: 'BF042',
   PROPS_DESTRUCTURING: 'BF043',
   SIGNAL_GETTER_NOT_CALLED: 'BF044',
+
+  // Attribute errors (BF050-BF059)
+  CLASS_ATTRIBUTE: 'BF050',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
@@ -78,6 +81,9 @@ const errorMessages: Record<ErrorCode, string> = {
     'Props destructuring in function parameters breaks reactivity. Use props object directly.',
   [ErrorCodes.SIGNAL_GETTER_NOT_CALLED]:
     'Signal/memo getter passed without calling it. Use getter() to read the value.',
+
+  [ErrorCodes.CLASS_ATTRIBUTE]:
+    'Use `className` instead of `class` in JSX attributes. `class` is a reserved keyword in JavaScript.',
 }
 
 // =============================================================================
