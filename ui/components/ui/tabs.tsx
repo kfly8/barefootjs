@@ -139,15 +139,7 @@ interface TabsTriggerProps extends ButtonHTMLAttributes {
  * @param props.disabled - Whether disabled
  * @param props.onClick - Click handler
  */
-function TabsTrigger({
-  className = '',
-  value,
-  selected = false,
-  disabled = false,
-  onClick,
-  children,
-  ...props
-}: TabsTriggerProps) {
+function TabsTrigger(props: TabsTriggerProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = e.currentTarget as HTMLElement
     const tabList = target.closest('[role="tablist"]')
@@ -184,23 +176,24 @@ function TabsTrigger({
     }
   }
 
-  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${tabsTriggerStateClasses} ${className}`
+  const selected = props.selected ?? false
+  const classes = `${tabsTriggerBaseClasses} ${tabsTriggerFocusClasses} ${tabsTriggerStateClasses} ${props.className ?? ''}`
 
   return (
     <button
       data-slot="tabs-trigger"
       role="tab"
       aria-selected={selected}
-      disabled={disabled}
+      disabled={props.disabled ?? false}
       data-state={selected ? 'active' : 'inactive'}
-      data-value={value}
+      data-value={props.value}
       tabindex={selected ? 0 : -1}
+      id={props.id}
       className={classes}
-      onClick={onClick}
+      onClick={props.onClick}
       onKeyDown={handleKeyDown}
-      {...props}
     >
-      {children}
+      {props.children}
     </button>
   )
 }
@@ -223,15 +216,10 @@ interface TabsContentProps extends HTMLBaseAttributes {
  * @param props.value - Tab identifier
  * @param props.selected - Whether visible
  */
-function TabsContent({
-  className = '',
-  value,
-  selected = false,
-  children,
-  ...props
-}: TabsContentProps) {
+function TabsContent(props: TabsContentProps) {
+  const selected = props.selected ?? false
   const visibilityClass = selected ? '' : 'hidden'
-  const classes = `${tabsContentClasses} ${visibilityClass} ${className}`
+  const classes = `${tabsContentClasses} ${visibilityClass} ${props.className ?? ''}`
 
   return (
     <div
@@ -239,11 +227,11 @@ function TabsContent({
       role="tabpanel"
       tabindex={0}
       data-state={selected ? 'active' : 'inactive'}
-      data-value={value}
+      data-value={props.value}
+      id={props.id}
       className={classes}
-      {...props}
     >
-      {children}
+      {props.children}
     </div>
   )
 }
