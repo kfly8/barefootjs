@@ -56,12 +56,6 @@
       "type": "(value: number) => void",
       "required": false,
       "description": "Callback when the value changes."
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes for the root element."
     }
   ],
   "examples": [

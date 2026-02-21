@@ -29,12 +29,6 @@
       "type": "Child",
       "required": false,
       "description": "PopoverTrigger and PopoverContent"
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
@@ -59,12 +53,6 @@
           "type": "Child",
           "required": false,
           "description": "Trigger content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -89,12 +77,6 @@
           "type": "'top' | 'bottom'",
           "required": false,
           "description": "Side relative to trigger"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -107,12 +89,6 @@
           "type": "Child",
           "required": false,
           "description": "Button content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     }

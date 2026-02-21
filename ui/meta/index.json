@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-02-20T14:08:08.529Z",
+  "generatedAt": "2026-02-21T02:50:46.721Z",
   "components": [
     {
       "name": "accordion",
@@ -134,6 +134,58 @@
       ]
     },
     {
+      "name": "command",
+      "title": "Command",
+      "category": "display",
+      "description": "Command Components A command menu with search and keyboard navigation. Inspired by shadcn/ui Command (cmdk-based) with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Command root manages search/selected state, children consume via context. Features: - Search filtering (case-insensitive substring by default) - Arrow key navigation - Enter to select - Auto-selection of first visible item on search change - CommandDialog wraps Command in Dialog for Cmd+K style usage - Accessibility (role=\"listbox\", role=\"option\")",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "CommandInput",
+        "CommandList",
+        "CommandEmpty",
+        "CommandGroup",
+        "CommandItem",
+        "CommandSeparator",
+        "CommandShortcut",
+        "CommandDialog"
+      ]
+    },
+    {
+      "name": "context-menu",
+      "title": "Context Menu",
+      "category": "display",
+      "description": "ContextMenu Components A menu triggered by right-click (contextmenu event), positioned at mouse coordinates. Inspired by shadcn/ui ContextMenu. Shares sub-component patterns with DropdownMenu. State management uses createContext/useContext for parent-child communication. Root ContextMenu manages open state and mouse position, children consume via context. Features: - Right-click to open at cursor position - ESC key to close - Arrow key navigation - Accessibility (role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select - Destructive variant for dangerous actions",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "ContextMenuTrigger",
+        "ContextMenuContent",
+        "ContextMenuItem",
+        "ContextMenuCheckboxItem",
+        "ContextMenuRadioGroup",
+        "ContextMenuRadioItem",
+        "ContextMenuSub",
+        "ContextMenuSubTrigger",
+        "ContextMenuSubContent",
+        "ContextMenuLabel",
+        "ContextMenuSeparator",
+        "ContextMenuShortcut",
+        "ContextMenuGroup"
+      ]
+    },
+    {
       "name": "dialog",
       "title": "Dialog",
       "category": "overlay",
@@ -256,6 +308,36 @@
       "description": "Label Component A text label associated with a form control. Supports disabled state via parent group data attributes and peer-based styling for disabled siblings.",
       "tags": [],
       "stateful": false
+    },
+    {
+      "name": "menubar",
+      "title": "Menubar",
+      "category": "display",
+      "description": "Menubar Components A visually persistent horizontal menu bar common in desktop applications (File, Edit, View pattern). When one menu is open, hovering another trigger opens that menu instead (roving behavior). Inspired by shadcn/ui Menubar with CSS variable theming support. Built on the same patterns as DropdownMenu with bar-level coordination. Architecture: Bar-level coordination uses MenubarContext (activeMenu signal). MenubarMenu is a pure DOM wrapper with data-value attribute. MenubarTrigger and MenubarContent derive their menu value from the DOM via closest('[data-slot=\"menubar-menu\"]') and access context only in ref handlers. Features: - Roving hover: hovering a trigger opens it if any menu is already open - ArrowLeft/Right navigates between menubar triggers - ESC key to close - Arrow key navigation within menus - Accessibility (role=\"menubar\", role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "MenubarMenu",
+        "MenubarTrigger",
+        "MenubarContent",
+        "MenubarItem",
+        "MenubarCheckboxItem",
+        "MenubarRadioGroup",
+        "MenubarRadioItem",
+        "MenubarSub",
+        "MenubarSubTrigger",
+        "MenubarSubContent",
+        "MenubarLabel",
+        "MenubarSeparator",
+        "MenubarShortcut",
+        "MenubarGroup"
+      ]
     },
     {
       "name": "pagination",
@@ -381,6 +463,16 @@
         "aria"
       ],
       "stateful": false
+    },
+    {
+      "name": "settings-form",
+      "title": "Settings Form",
+      "category": "display",
+      "description": "",
+      "tags": [
+        "stateful"
+      ],
+      "stateful": true
     },
     {
       "name": "sheet",

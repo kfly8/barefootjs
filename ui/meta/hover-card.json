@@ -31,12 +31,6 @@
       "description": "HoverCardTrigger and HoverCardContent"
     },
     {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
-    },
-    {
       "name": "openDelay",
       "type": "number",
       "required": false,
@@ -67,12 +61,6 @@
           "type": "Child",
           "required": false,
           "description": "Trigger content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -97,12 +85,6 @@
           "type": "'top' | 'bottom'",
           "required": false,
           "description": "Side relative to trigger"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     }

@@ -13,12 +13,6 @@
       "type": "Child",
       "required": false,
       "description": "Card content (typically CardHeader, CardContent, CardFooter)"
-    },
-    {
-      "name": "className",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
@@ -31,12 +25,6 @@
           "type": "Child",
           "required": false,
           "description": "Header content (typically CardTitle and CardDescription)"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -49,12 +37,6 @@
           "type": "Child",
           "required": false,
           "description": "Title text"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -67,12 +49,6 @@
           "type": "Child",
           "required": false,
           "description": "Description text"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -85,12 +61,6 @@
           "type": "Child",
           "required": false,
           "description": "Main content"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -109,24 +79,6 @@
           "type": "string",
           "required": true,
           "description": "Alternative text for the image"
-        },
-        {
-          "name": "width",
-          "type": "number",
-          "required": false,
-          "description": "Image width"
-        },
-        {
-          "name": "height",
-          "type": "number",
-          "required": false,
-          "description": "Image height"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -139,12 +91,6 @@
           "type": "Child",
           "required": false,
           "description": "Action content (typically buttons)"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -157,12 +103,6 @@
           "type": "Child",
           "required": false,
           "description": "Footer content (typically action buttons)"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     }

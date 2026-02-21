@@ -23,13 +23,6 @@
       "description": "Controlled pressed state. When provided, component is in controlled mode."
     },
     {
-      "name": "disabled",
-      "type": "boolean",
-      "required": false,
-      "default": "false",
-      "description": "Whether the toggle is disabled."
-    },
-    {
       "name": "variant",
       "type": "ToggleVariant",
       "required": false,
@@ -48,12 +41,6 @@
       "type": "(pressed: boolean) => void",
       "required": false,
       "description": "Callback when the pressed state changes."
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes."
     },
     {
       "name": "children",

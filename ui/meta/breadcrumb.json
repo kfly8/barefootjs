@@ -14,30 +14,18 @@
       "type": "Child",
       "required": false,
       "description": "Breadcrumb content (typically BreadcrumbList)"
-    },
-    {
-      "name": "className",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
     {
       "name": "BreadcrumbList",
-      "description": "Breadcrumb navigation wrapper. / function Breadcrumb({ children, className = '' }: BreadcrumbProps) { return ( <nav data-slot=\"breadcrumb\" aria-label=\"breadcrumb\" className={className || undefined}> {children} </nav> ) } /** Props for BreadcrumbList component.",
+      "description": "Props for BreadcrumbList component.",
       "props": [
         {
           "name": "children",
           "type": "Child",
           "required": false,
           "description": "List items"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -50,25 +38,13 @@
           "type": "Child",
           "required": false,
           "description": "Item content"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "BreadcrumbLink",
-      "description": "Individual breadcrumb item. / function BreadcrumbItem({ children, className = '' }: BreadcrumbItemProps) { return ( <li data-slot=\"breadcrumb-item\" className={`${breadcrumbItemClasses} ${className}`}> {children} </li> ) } /** Props for BreadcrumbLink component.",
+      "description": "Props for BreadcrumbLink component.",
       "props": [
-        {
-          "name": "href",
-          "type": "string",
-          "required": false,
-          "description": "Link URL"
-        },
         {
           "name": "asChild",
           "type": "boolean",
@@ -80,12 +56,6 @@
           "type": "Child",
           "required": false,
           "description": "Link content"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -98,12 +68,6 @@
           "type": "Child",
           "required": false,
           "description": "Page title"
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -116,26 +80,13 @@
           "type": "Child",
           "required": false,
           "description": "Custom separator content. Defaults to ChevronRightIcon."
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "BreadcrumbEllipsis",
       "description": "Props for BreadcrumbEllipsis component.",
-      "props": [
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
-        }
-      ]
+      "props": []
     }
   ],
   "examples": [

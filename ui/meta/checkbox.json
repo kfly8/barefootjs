@@ -24,13 +24,6 @@
       "description": "Controlled checked state. When provided, component is in controlled mode."
     },
     {
-      "name": "disabled",
-      "type": "boolean",
-      "required": false,
-      "default": "false",
-      "description": "Whether the checkbox is disabled."
-    },
-    {
       "name": "error",
       "type": "boolean",
       "required": false,
@@ -42,12 +35,6 @@
       "type": "(checked: boolean) => void",
       "required": false,
       "description": "Callback when the checked state changes."
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes."
     }
   ],
   "examples": [

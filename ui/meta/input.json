@@ -15,7 +15,7 @@
     },
     {
       "title": "With value binding",
-      "code": "<Input value={name} onInput={(e) => setName(e.target.value)} />"
+      "code": "<Input value={name()} onInput={(e) => setName(e.target.value)} />"
     }
   ],
   "accessibility": {

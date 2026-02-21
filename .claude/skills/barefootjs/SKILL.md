@@ -25,3 +25,4 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 - Stateful components must use `props.xxx` (not destructuring) to maintain reactivity.
 - Use `createSignal`, `createMemo`, `createEffect` from `@barefootjs/dom` (SolidJS-style, not React hooks).
 - Use `for` attribute on `<Label>` (not `htmlFor`).
+- Event handlers have typed `e.target` — write `onInput={e => setValue(e.target.value)}` directly. Do not cast with `as HTMLInputElement`.

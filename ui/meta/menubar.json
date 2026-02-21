@@ -1,8 +1,8 @@
 {
-  "name": "dropdown-menu",
-  "title": "Dropdown Menu",
-  "category": "overlay",
-  "description": "DropdownMenu Components An action menu triggered by a button, avatar, or any element. Inspired by shadcn/ui DropdownMenu with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root DropdownMenu manages open state, children consume via context. Features: - ESC key to close - Arrow key navigation - Accessibility (role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select - Destructive variant for dangerous actions",
+  "name": "menubar",
+  "title": "Menubar",
+  "category": "display",
+  "description": "Menubar Components A visually persistent horizontal menu bar common in desktop applications (File, Edit, View pattern). When one menu is open, hovering another trigger opens that menu instead (roving behavior). Inspired by shadcn/ui Menubar with CSS variable theming support. Built on the same patterns as DropdownMenu with bar-level coordination. Architecture: Bar-level coordination uses MenubarContext (activeMenu signal). MenubarMenu is a pure DOM wrapper with data-value attribute. MenubarTrigger and MenubarContent derive their menu value from the DOM via closest('[data-slot=\"menubar-menu\"]') and access context only in ref handlers. Features: - Roving hover: hovering a trigger opens it if any menu is already open - ArrowLeft/Right navigates between menubar triggers - ESC key to close - Arrow key navigation within menus - Accessibility (role=\"menubar\", role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select",
   "tags": [
     "stateful",
     "multi-component",
@@ -13,58 +13,52 @@
   "stateful": true,
   "props": [
     {
-      "name": "open",
-      "type": "boolean",
-      "required": false,
-      "description": "Whether the dropdown menu is open"
-    },
-    {
-      "name": "onOpenChange",
-      "type": "(open: boolean) => void",
-      "required": false,
-      "description": "Callback when open state should change"
-    },
-    {
       "name": "children",
       "type": "Child",
       "required": false,
-      "description": "DropdownMenuTrigger and DropdownMenuContent"
+      "description": "MenubarMenu children"
     }
   ],
   "subComponents": [
     {
-      "name": "DropdownMenuTrigger",
-      "description": "Props for DropdownMenuTrigger component.",
+      "name": "MenubarMenu",
+      "description": "",
       "props": [
         {
-          "name": "disabled",
-          "type": "boolean",
+          "name": "value",
+          "type": "string",
           "required": false,
-          "description": "Whether disabled"
-        },
-        {
-          "name": "asChild",
-          "type": "boolean",
-          "required": false,
-          "description": "Render child element as trigger instead of built-in button"
+          "description": "Unique value identifying this menu"
         },
         {
           "name": "children",
           "type": "Child",
           "required": false,
-          "description": "Trigger content (any element: button, avatar, icon, etc.)"
+          "description": "MenubarTrigger and MenubarContent"
         }
       ]
     },
     {
-      "name": "DropdownMenuContent",
-      "description": "Props for DropdownMenuContent component.",
+      "name": "MenubarTrigger",
+      "description": "",
       "props": [
         {
           "name": "children",
           "type": "Child",
           "required": false,
-          "description": "DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator components"
+          "description": "Trigger content (text label)"
+        }
+      ]
+    },
+    {
+      "name": "MenubarContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Menu items"
         },
         {
           "name": "align",
@@ -75,8 +69,8 @@
       ]
     },
     {
-      "name": "DropdownMenuItem",
-      "description": "Props for DropdownMenuItem component.",
+      "name": "MenubarItem",
+      "description": "",
       "props": [
         {
           "name": "disabled",
@@ -100,13 +94,13 @@
           "name": "children",
           "type": "Child",
           "required": false,
-          "description": "Item content (text, icons, shortcuts)"
+          "description": "Item content"
         }
       ]
     },
     {
-      "name": "DropdownMenuCheckboxItem",
-      "description": "Props for DropdownMenuCheckboxItem component.",
+      "name": "MenubarCheckboxItem",
+      "description": "",
       "props": [
         {
           "name": "checked",
@@ -135,8 +129,8 @@
       ]
     },
     {
-      "name": "DropdownMenuRadioGroup",
-      "description": "Props for DropdownMenuRadioGroup component.",
+      "name": "MenubarRadioGroup",
+      "description": "",
       "props": [
         {
           "name": "value",
@@ -159,8 +153,8 @@
       ]
     },
     {
-      "name": "DropdownMenuRadioItem",
-      "description": "Props for DropdownMenuRadioItem component.",
+      "name": "MenubarRadioItem",
+      "description": "",
       "props": [
         {
           "name": "value",
@@ -183,8 +177,8 @@
       ]
     },
     {
-      "name": "DropdownMenuSub",
-      "description": "Props for DropdownMenuSub component.",
+      "name": "MenubarSub",
+      "description": "",
       "props": [
         {
           "name": "children",
@@ -195,8 +189,8 @@
       ]
     },
     {
-      "name": "DropdownMenuSubTrigger",
-      "description": "Props for DropdownMenuSubTrigger component.",
+      "name": "MenubarSubTrigger",
+      "description": "",
       "props": [
         {
           "name": "disabled",
@@ -213,8 +207,8 @@
       ]
     },
     {
-      "name": "DropdownMenuSubContent",
-      "description": "Props for DropdownMenuSubContent component.",
+      "name": "MenubarSubContent",
+      "description": "",
       "props": [
         {
           "name": "children",
@@ -225,8 +219,8 @@
       ]
     },
     {
-      "name": "DropdownMenuLabel",
-      "description": "Props for DropdownMenuLabel component.",
+      "name": "MenubarLabel",
+      "description": "",
       "props": [
         {
           "name": "children",
@@ -237,25 +231,25 @@
       ]
     },
     {
-      "name": "DropdownMenuSeparator",
-      "description": "Props for DropdownMenuSeparator component.",
+      "name": "MenubarSeparator",
+      "description": "",
       "props": []
     },
     {
-      "name": "DropdownMenuShortcut",
-      "description": "Props for DropdownMenuShortcut component.",
+      "name": "MenubarShortcut",
+      "description": "",
       "props": [
         {
           "name": "children",
           "type": "Child",
           "required": false,
-          "description": "Shortcut text (e.g., \"Ctrl+Q\")"
+          "description": "Shortcut text (e.g., \"Ctrl+T\")"
         }
       ]
     },
     {
-      "name": "DropdownMenuGroup",
-      "description": "Props for DropdownMenuGroup component.",
+      "name": "MenubarGroup",
+      "description": "",
       "props": [
         {
           "name": "children",
@@ -268,12 +262,12 @@
   ],
   "examples": [
     {
-      "title": "Basic dropdown menu",
-      "code": "const [open, setOpen] = createSignal(false)\n\n<DropdownMenu open={open()} onOpenChange={setOpen}>\n  <DropdownMenuTrigger>\n    <span>Open Menu</span>\n  </DropdownMenuTrigger>\n  <DropdownMenuContent>\n    <DropdownMenuLabel>My Account</DropdownMenuLabel>\n    <DropdownMenuSeparator />\n    <DropdownMenuItem onSelect={() => {}}>Settings</DropdownMenuItem>\n    <DropdownMenuItem onSelect={() => {}}>Log out</DropdownMenuItem>\n  </DropdownMenuContent>\n</DropdownMenu>"
+      "title": "Basic menubar",
+      "code": "<Menubar>\n  <MenubarMenu value=\"file\">\n    <MenubarTrigger>File</MenubarTrigger>\n    <MenubarContent>\n      <MenubarItem>New Tab</MenubarItem>\n      <MenubarItem>New Window</MenubarItem>\n    </MenubarContent>\n  </MenubarMenu>\n</Menubar>"
     }
   ],
   "accessibility": {
-    "role": "menu, menuitem, menuitemcheckbox, group, menuitemradio, separator",
+    "role": "menubar, menu, menuitem, menuitemcheckbox, group, menuitemradio, separator",
     "ariaAttributes": [
       "aria-expanded",
       "aria-haspopup",
@@ -281,6 +275,7 @@
       "aria-checked"
     ],
     "dataAttributes": [
+      "data-value",
       "data-slot",
       "data-state"
     ]
@@ -291,9 +286,6 @@
       "@barefootjs/dom"
     ]
   },
-  "related": [
-    "popover",
-    "select"
-  ],
-  "source": "ui/components/ui/dropdown-menu.tsx"
+  "related": [],
+  "source": "ui/components/ui/menubar.tsx"
 }

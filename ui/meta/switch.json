@@ -24,23 +24,10 @@
       "description": "Controlled checked state. When provided, component is in controlled mode."
     },
     {
-      "name": "disabled",
-      "type": "boolean",
-      "required": false,
-      "default": "false",
-      "description": "Whether the switch is disabled."
-    },
-    {
       "name": "onCheckedChange",
       "type": "(checked: boolean) => void",
       "required": false,
       "description": "Callback when the switch is toggled."
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes for the switch track."
     }
   ],
   "examples": [

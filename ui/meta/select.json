@@ -47,12 +47,6 @@
       "type": "Child",
       "required": false,
       "description": "SelectTrigger and SelectContent"
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
@@ -60,12 +54,6 @@
       "name": "SelectTrigger",
       "description": "Props for SelectTrigger component.",
       "props": [
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
-        },
         {
           "name": "children",
           "type": "Child",
@@ -101,12 +89,6 @@
           "type": "'start' | 'end'",
           "required": false,
           "description": "Alignment relative to trigger"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -131,12 +113,6 @@
           "type": "Child",
           "required": false,
           "description": "Item content (label text)"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -149,44 +125,25 @@
           "type": "Child",
           "required": false,
           "description": "Grouped items"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "SelectLabel",
-      "description": "Semantic grouping of related select items. / function SelectGroup(props: SelectGroupProps) { return ( <div data-slot=\"select-group\" role=\"group\" className={props.class ?? ''}> {props.children} </div> ) } /** Props for SelectLabel component.",
+      "description": "Props for SelectLabel component.",
       "props": [
         {
           "name": "children",
           "type": "Child",
           "required": false,
           "description": "Label text"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "SelectSeparator",
-      "description": "Section label inside the select dropdown. / function SelectLabel(props: SelectLabelProps) { return ( <div data-slot=\"select-label\" className={`${selectLabelClasses} ${props.class ?? ''}`}> {props.children} </div> ) } /** Props for SelectSeparator component.",
-      "props": [
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
-        }
-      ]
+      "description": "Props for SelectSeparator component.",
+      "props": []
     }
   ],
   "examples": [

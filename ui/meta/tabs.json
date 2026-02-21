@@ -33,12 +33,6 @@
       "type": "Child",
       "required": false,
       "description": "Tab components (TabsList and TabsContent)"
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
@@ -51,12 +45,6 @@
           "type": "Child",
           "required": false,
           "description": "TabsTrigger components"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -93,12 +81,6 @@
           "type": "Child",
           "required": false,
           "description": "Tab label"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -123,12 +105,6 @@
           "type": "Child",
           "required": false,
           "description": "Content to display"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     }

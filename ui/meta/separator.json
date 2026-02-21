@@ -12,21 +12,13 @@
       "name": "orientation",
       "type": "SeparatorOrientation",
       "required": false,
-      "default": "horizontal",
-      "description": "The orientation of the separator."
+      "description": "The separator orientation."
     },
     {
       "name": "decorative",
       "type": "boolean",
       "required": false,
-      "default": "true",
-      "description": "Whether the separator is purely decorative (no semantic meaning). When false, renders with role=\"separator\" and aria-orientation."
-    },
-    {
-      "name": "className",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes."
+      "description": "Whether the separator is purely decorative."
     }
   ],
   "variants": {
@@ -38,19 +30,15 @@
   "examples": [
     {
       "title": "Horizontal separator",
-      "code": "<Separator />"
+      "code": "<Separator className=\"my-4\" />"
     },
     {
       "title": "Vertical separator",
       "code": "<Separator orientation=\"vertical\" />"
-    },
-    {
-      "title": "Semantic separator",
-      "code": "<Separator decorative={false} />"
     }
   ],
   "accessibility": {
-    "role": "separator, decorative",
+    "role": "decorative",
     "ariaAttributes": [
       "aria-orientation"
     ],

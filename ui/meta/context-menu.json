@@ -1,8 +1,8 @@
 {
-  "name": "dropdown-menu",
-  "title": "Dropdown Menu",
-  "category": "overlay",
-  "description": "DropdownMenu Components An action menu triggered by a button, avatar, or any element. Inspired by shadcn/ui DropdownMenu with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root DropdownMenu manages open state, children consume via context. Features: - ESC key to close - Arrow key navigation - Accessibility (role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select - Destructive variant for dangerous actions",
+  "name": "context-menu",
+  "title": "Context Menu",
+  "category": "display",
+  "description": "ContextMenu Components A menu triggered by right-click (contextmenu event), positioned at mouse coordinates. Inspired by shadcn/ui ContextMenu. Shares sub-component patterns with DropdownMenu. State management uses createContext/useContext for parent-child communication. Root ContextMenu manages open state and mouse position, children consume via context. Features: - Right-click to open at cursor position - ESC key to close - Arrow key navigation - Accessibility (role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select - Destructive variant for dangerous actions",
   "tags": [
     "stateful",
     "multi-component",
@@ -16,7 +16,7 @@
       "name": "open",
       "type": "boolean",
       "required": false,
-      "description": "Whether the dropdown menu is open"
+      "description": "Whether the context menu is open"
     },
     {
       "name": "onOpenChange",
@@ -28,55 +28,37 @@
       "name": "children",
       "type": "Child",
       "required": false,
-      "description": "DropdownMenuTrigger and DropdownMenuContent"
+      "description": "ContextMenuTrigger and ContextMenuContent"
     }
   ],
   "subComponents": [
     {
-      "name": "DropdownMenuTrigger",
-      "description": "Props for DropdownMenuTrigger component.",
-      "props": [
-        {
-          "name": "disabled",
-          "type": "boolean",
-          "required": false,
-          "description": "Whether disabled"
-        },
-        {
-          "name": "asChild",
-          "type": "boolean",
-          "required": false,
-          "description": "Render child element as trigger instead of built-in button"
-        },
-        {
-          "name": "children",
-          "type": "Child",
-          "required": false,
-          "description": "Trigger content (any element: button, avatar, icon, etc.)"
-        }
-      ]
-    },
-    {
-      "name": "DropdownMenuContent",
-      "description": "Props for DropdownMenuContent component.",
+      "name": "ContextMenuTrigger",
+      "description": "Props for ContextMenuTrigger component.",
       "props": [
         {
           "name": "children",
           "type": "Child",
           "required": false,
-          "description": "DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator components"
-        },
-        {
-          "name": "align",
-          "type": "'start' | 'end'",
-          "required": false,
-          "description": "Alignment relative to trigger"
+          "description": "Trigger content (the right-clickable area)"
         }
       ]
     },
     {
-      "name": "DropdownMenuItem",
-      "description": "Props for DropdownMenuItem component.",
+      "name": "ContextMenuContent",
+      "description": "Props for ContextMenuContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "ContextMenuItem, ContextMenuLabel, ContextMenuSeparator components"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuItem",
+      "description": "Props for ContextMenuItem component.",
       "props": [
         {
           "name": "disabled",
@@ -105,8 +87,8 @@
       ]
     },
     {
-      "name": "DropdownMenuCheckboxItem",
-      "description": "Props for DropdownMenuCheckboxItem component.",
+      "name": "ContextMenuCheckboxItem",
+      "description": "Props for ContextMenuCheckboxItem component.",
       "props": [
         {
           "name": "checked",
@@ -135,8 +117,8 @@
       ]
     },
     {
-      "name": "DropdownMenuRadioGroup",
-      "description": "Props for DropdownMenuRadioGroup component.",
+      "name": "ContextMenuRadioGroup",
+      "description": "Props for ContextMenuRadioGroup component.",
       "props": [
         {
           "name": "value",
@@ -159,8 +141,8 @@
       ]
     },
     {
-      "name": "DropdownMenuRadioItem",
-      "description": "Props for DropdownMenuRadioItem component.",
+      "name": "ContextMenuRadioItem",
+      "description": "Props for ContextMenuRadioItem component.",
       "props": [
         {
           "name": "value",
@@ -183,8 +165,8 @@
       ]
     },
     {
-      "name": "DropdownMenuSub",
-      "description": "Props for DropdownMenuSub component.",
+      "name": "ContextMenuSub",
+      "description": "Props for ContextMenuSub component.",
       "props": [
         {
           "name": "children",
@@ -195,8 +177,8 @@
       ]
     },
     {
-      "name": "DropdownMenuSubTrigger",
-      "description": "Props for DropdownMenuSubTrigger component.",
+      "name": "ContextMenuSubTrigger",
+      "description": "Props for ContextMenuSubTrigger component.",
       "props": [
         {
           "name": "disabled",
@@ -213,8 +195,8 @@
       ]
     },
     {
-      "name": "DropdownMenuSubContent",
-      "description": "Props for DropdownMenuSubContent component.",
+      "name": "ContextMenuSubContent",
+      "description": "Props for ContextMenuSubContent component.",
       "props": [
         {
           "name": "children",
@@ -225,8 +207,8 @@
       ]
     },
     {
-      "name": "DropdownMenuLabel",
-      "description": "Props for DropdownMenuLabel component.",
+      "name": "ContextMenuLabel",
+      "description": "Props for ContextMenuLabel component.",
       "props": [
         {
           "name": "children",
@@ -237,13 +219,13 @@
       ]
     },
     {
-      "name": "DropdownMenuSeparator",
-      "description": "Props for DropdownMenuSeparator component.",
+      "name": "ContextMenuSeparator",
+      "description": "Props for ContextMenuSeparator component.",
       "props": []
     },
     {
-      "name": "DropdownMenuShortcut",
-      "description": "Props for DropdownMenuShortcut component.",
+      "name": "ContextMenuShortcut",
+      "description": "Props for ContextMenuShortcut component.",
       "props": [
         {
           "name": "children",
@@ -254,8 +236,8 @@
       ]
     },
     {
-      "name": "DropdownMenuGroup",
-      "description": "Props for DropdownMenuGroup component.",
+      "name": "ContextMenuGroup",
+      "description": "Props for ContextMenuGroup component.",
       "props": [
         {
           "name": "children",
@@ -268,17 +250,17 @@
   ],
   "examples": [
     {
-      "title": "Basic dropdown menu",
-      "code": "const [open, setOpen] = createSignal(false)\n\n<DropdownMenu open={open()} onOpenChange={setOpen}>\n  <DropdownMenuTrigger>\n    <span>Open Menu</span>\n  </DropdownMenuTrigger>\n  <DropdownMenuContent>\n    <DropdownMenuLabel>My Account</DropdownMenuLabel>\n    <DropdownMenuSeparator />\n    <DropdownMenuItem onSelect={() => {}}>Settings</DropdownMenuItem>\n    <DropdownMenuItem onSelect={() => {}}>Log out</DropdownMenuItem>\n  </DropdownMenuContent>\n</DropdownMenu>"
+      "title": "Basic context menu",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<ContextMenu open={open()} onOpenChange={setOpen}>\n  <ContextMenuTrigger>\n    <div>Right-click here</div>\n  </ContextMenuTrigger>\n  <ContextMenuContent>\n    <ContextMenuItem onSelect={() => {}}>Back</ContextMenuItem>\n    <ContextMenuItem onSelect={() => {}}>Forward</ContextMenuItem>\n  </ContextMenuContent>\n</ContextMenu>"
     }
   ],
   "accessibility": {
     "role": "menu, menuitem, menuitemcheckbox, group, menuitemradio, separator",
     "ariaAttributes": [
-      "aria-expanded",
-      "aria-haspopup",
       "aria-disabled",
-      "aria-checked"
+      "aria-checked",
+      "aria-expanded",
+      "aria-haspopup"
     ],
     "dataAttributes": [
       "data-slot",
@@ -291,9 +273,6 @@
       "@barefootjs/dom"
     ]
   },
-  "related": [
-    "popover",
-    "select"
-  ],
-  "source": "ui/components/ui/dropdown-menu.tsx"
+  "related": [],
+  "source": "ui/components/ui/context-menu.tsx"
 }

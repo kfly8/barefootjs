@@ -24,12 +24,6 @@
       "type": "Child",
       "required": false,
       "description": "Toast components"
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
@@ -69,12 +63,6 @@
           "type": "Child",
           "required": false,
           "description": "Toast content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -87,44 +75,25 @@
           "type": "Child",
           "required": false,
           "description": "Title text"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "ToastDescription",
-      "description": "Title text for the toast. / function ToastTitle({ class: className = '', children }: ToastTitleProps) { return ( <div data-slot=\"toast-title\" className={`${toastTitleClasses} ${className}`}> {children} </div> ) } /** Props for ToastDescription component.",
+      "description": "Props for ToastDescription component.",
       "props": [
         {
           "name": "children",
           "type": "Child",
           "required": false,
           "description": "Description text"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "ToastClose",
       "description": "Props for ToastClose component.",
-      "props": [
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
-        }
-      ]
+      "props": []
     },
     {
       "name": "ToastAction",
@@ -147,12 +116,6 @@
           "type": "Child",
           "required": false,
           "description": "Button content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     }

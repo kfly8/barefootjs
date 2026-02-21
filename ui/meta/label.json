@@ -10,13 +10,13 @@
       "name": "className",
       "type": "string",
       "required": false,
-      "description": ""
+      "description": "Additional CSS class names."
     },
     {
       "name": "children",
       "type": "Child",
       "required": false,
-      "description": ""
+      "description": "Content displayed inside the label."
     }
   ],
   "examples": [

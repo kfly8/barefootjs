@@ -22,12 +22,6 @@
       "description": "Panel children."
     },
     {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes."
-    },
-    {
       "name": "onLayout",
       "type": "(sizes: number[]) => void",
       "required": false,
@@ -62,12 +56,6 @@
           "type": "any",
           "required": false,
           "description": "Panel content."
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes."
         }
       ]
     },
@@ -86,12 +74,6 @@
           "type": "boolean",
           "required": false,
           "description": "Disable drag interaction."
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes."
         }
       ]
     }

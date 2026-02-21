@@ -37,12 +37,6 @@
       "description": "Whether the entire group is disabled."
     },
     {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes."
-    },
-    {
       "name": "children",
       "type": "Child",
       "required": false,
@@ -65,12 +59,6 @@
           "type": "boolean",
           "required": false,
           "description": "Whether this item is disabled."
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes."
         }
       ]
     }

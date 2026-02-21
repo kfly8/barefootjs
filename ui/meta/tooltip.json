@@ -41,12 +41,6 @@
       "required": false,
       "default": "0",
       "description": "Delay in ms before hiding tooltip after mouse leave."
-    },
-    {
-      "name": "id",
-      "type": "string",
-      "required": false,
-      "description": "ID for accessibility (aria-describedby)"
     }
   ],
   "examples": [

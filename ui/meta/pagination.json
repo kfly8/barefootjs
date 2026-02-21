@@ -10,12 +10,6 @@
   "stateful": false,
   "props": [
     {
-      "name": "className",
-      "type": "string",
-      "required": false,
-      "description": ""
-    },
-    {
       "name": "children",
       "type": "Child",
       "required": false,
@@ -28,12 +22,6 @@
       "description": "",
       "props": [
         {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
-        {
           "name": "children",
           "type": "Child",
           "required": false,
@@ -45,12 +33,6 @@
       "name": "PaginationItem",
       "description": "",
       "props": [
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
         {
           "name": "children",
           "type": "Child",
@@ -76,26 +58,8 @@
           "description": ""
         },
         {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "href",
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
-        {
           "name": "children",
           "type": "Child",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "onClick",
-          "type": "(e: Event) => void",
           "required": false,
           "description": ""
         }
@@ -104,14 +68,7 @@
     {
       "name": "PaginationEllipsis",
       "description": "",
-      "props": [
-        {
-          "name": "className",
-          "type": "string",
-          "required": false,
-          "description": ""
-        }
-      ]
+      "props": []
     }
   ],
   "examples": [],

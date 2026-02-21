@@ -59,26 +59,13 @@
           "type": "Child",
           "required": false,
           "description": "Button content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
     {
       "name": "AlertDialogOverlay",
       "description": "Props for AlertDialogOverlay component.",
-      "props": [
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
-        }
-      ]
+      "props": []
     },
     {
       "name": "AlertDialogContent",
@@ -101,12 +88,6 @@
           "type": "string",
           "required": false,
           "description": "ID of the description element for aria-describedby"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -119,12 +100,6 @@
           "type": "Child",
           "required": false,
           "description": "Header content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -133,22 +108,10 @@
       "description": "Props for AlertDialogTitle component.",
       "props": [
         {
-          "name": "id",
-          "type": "string",
-          "required": false,
-          "description": "ID for aria-labelledby reference"
-        },
-        {
           "name": "children",
           "type": "Child",
           "required": false,
           "description": "Title text"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -157,22 +120,10 @@
       "description": "Props for AlertDialogDescription component.",
       "props": [
         {
-          "name": "id",
-          "type": "string",
-          "required": false,
-          "description": "ID for aria-describedby reference"
-        },
-        {
           "name": "children",
           "type": "Child",
           "required": false,
           "description": "Description text"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -185,12 +136,6 @@
           "type": "Child",
           "required": false,
           "description": "Footer content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -203,12 +148,6 @@
           "type": "Child",
           "required": false,
           "description": "Button content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -221,12 +160,6 @@
           "type": "Child",
           "required": false,
           "description": "Button content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         },
         {
           "name": "onClick",

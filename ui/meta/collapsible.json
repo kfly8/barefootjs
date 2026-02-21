@@ -41,12 +41,6 @@
       "type": "Child",
       "required": false,
       "description": "Child components"
-    },
-    {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": "Additional CSS classes"
     }
   ],
   "subComponents": [
@@ -65,12 +59,6 @@
           "type": "Child",
           "required": false,
           "description": "Trigger content"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     },
@@ -83,12 +71,6 @@
           "type": "Child",
           "required": false,
           "description": "Content to display"
-        },
-        {
-          "name": "class",
-          "type": "string",
-          "required": false,
-          "description": "Additional CSS classes"
         }
       ]
     }
