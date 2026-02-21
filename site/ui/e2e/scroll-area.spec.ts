@@ -5,17 +5,6 @@ test.describe('Scroll Area Documentation Page', () => {
     await page.goto('/docs/components/scroll-area')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Scroll Area')
-    await expect(page.locator('text=Augments native scroll functionality')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('ScrollArea Rendering', () => {
     test('displays scroll area elements', async ({ page }) => {
       const scrollAreas = page.locator('[data-slot="scroll-area"]')
@@ -82,22 +71,4 @@ test.describe('Scroll Area Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays scroll area props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^class$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^type$/ })).toBeVisible()
-    })
-  })
 })

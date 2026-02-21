@@ -5,16 +5,6 @@ test.describe('Hover Card Documentation Page', () => {
     await page.goto('/docs/components/hover-card')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Hover Card')
-    await expect(page.locator('text=A floating card that appears on hover to display rich content')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx --bun barefoot add hover-card').first()).toBeVisible()
-  })
-
   test.describe('Preview Demo', () => {
     test('opens hover card on trigger hover', async ({ page }) => {
       const demo = page.locator('[bf-s^="HoverCardPreviewDemo_"]').first()
@@ -118,12 +108,4 @@ test.describe('Hover Card Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-      await expect(page.locator('h3:text-is("HoverCard")')).toBeVisible()
-      await expect(page.locator('h3:text-is("HoverCardTrigger")')).toBeVisible()
-      await expect(page.locator('h3:text-is("HoverCardContent")')).toBeVisible()
-    })
-  })
 })

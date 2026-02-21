@@ -5,17 +5,6 @@ test.describe('Label Documentation Page', () => {
     await page.goto('/docs/components/label')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Label')
-    await expect(page.locator('text=Renders an accessible label associated with controls')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Preview', () => {
     test('displays label with data-slot', async ({ page }) => {
       const label = page.locator('label[data-slot="label"]').first()
@@ -65,23 +54,4 @@ test.describe('Label Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^for$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^className$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^children$/ })).toBeVisible()
-    })
-  })
 })

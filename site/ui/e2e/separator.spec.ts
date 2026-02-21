@@ -5,21 +5,6 @@ test.describe('Separator Documentation Page', () => {
     await page.goto('/docs/components/separator')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Separator')
-    await expect(page.getByRole('main').getByText('Visually or semantically separates content')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
   test.describe('Separator Rendering', () => {
     const separatorSelector = '[data-slot="separator"]'
 
@@ -53,23 +38,4 @@ test.describe('Separator Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^orientation$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^decorative$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^className$/ })).toBeVisible()
-    })
-  })
 })

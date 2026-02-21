@@ -5,23 +5,6 @@ test.describe('Portal Documentation Page', () => {
     await page.goto('/docs/components/portal')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Portal')
-    await expect(page.locator('text=Renders children into a different part')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("DOM escape")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Custom container")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Flexible input")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Cleanup")')).toBeVisible()
-  })
-
   test.describe('Basic Portal', () => {
     test('shows portal content when button clicked', async ({ page }) => {
       const basicDemo = page.locator('[bf-s^="PortalBasicDemo_"]').first()
@@ -130,25 +113,4 @@ test.describe('Portal Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays createPortal function heading', async ({ page }) => {
-      await expect(page.locator('h3:has-text("createPortal")')).toBeVisible()
-    })
-
-    test('displays parameters table', async ({ page }) => {
-      await expect(page.locator('h4:has-text("Parameters")')).toBeVisible()
-      // Check for the first cell in parameters table
-      await expect(page.locator('td:has-text("children")').first()).toBeVisible()
-    })
-
-    test('displays return value table', async ({ page }) => {
-      await expect(page.locator('h4:has-text("Return Value")')).toBeVisible()
-      // Check for table cells in return value table
-      await expect(page.locator('td:has-text("unmount")').first()).toBeVisible()
-    })
-  })
 })

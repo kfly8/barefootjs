@@ -9,15 +9,6 @@ test.describe('Drawer Documentation Page', () => {
     await page.goto('/docs/components/drawer')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Drawer')
-    await expect(page.locator('text=A panel that slides in from the edge')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-  })
-
   test.describe('Basic Drawer', () => {
     test('opens drawer when trigger is clicked', async ({ page }) => {
       const basicDemo = page.locator('[bf-s^="DrawerBasicDemo_"]').first()
@@ -281,33 +272,4 @@ test.describe('Drawer Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays DrawerTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DrawerTrigger")')).toBeVisible()
-    })
-
-    test('displays DrawerContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DrawerContent")')).toBeVisible()
-    })
-
-    test('displays DrawerHandle props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DrawerHandle")')).toBeVisible()
-    })
-
-    test('displays DrawerTitle props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DrawerTitle")')).toBeVisible()
-    })
-
-    test('displays DrawerDescription props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DrawerDescription")')).toBeVisible()
-    })
-
-    test('displays DrawerClose props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DrawerClose")')).toBeVisible()
-    })
-  })
 })

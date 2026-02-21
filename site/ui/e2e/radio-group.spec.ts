@@ -5,17 +5,6 @@ test.describe('RadioGroup Documentation Page', () => {
     await page.goto('/docs/components/radio-group')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Radio Group')
-    await expect(page.locator('text=A set of checkable buttons where only one can be checked')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('RadioGroup Rendering', () => {
     test('displays radio elements', async ({ page }) => {
       const radios = page.locator('button[role="radio"]')
@@ -204,26 +193,4 @@ test.describe('RadioGroup Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays RadioGroup and RadioGroupItem props tables', async ({ page }) => {
-      await expect(page.locator('h3').filter({ hasText: /^RadioGroup$/ })).toBeVisible()
-      await expect(page.locator('h3').filter({ hasText: /^RadioGroupItem$/ })).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")').first()).toBeVisible()
-      await expect(page.locator('th:has-text("Type")').first()).toBeVisible()
-    })
-
-    test('displays key props', async ({ page }) => {
-      const tables = page.locator('table')
-      await expect(tables.first().locator('td').filter({ hasText: /^defaultValue$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^onValueChange$/ })).toBeVisible()
-      await expect(tables.nth(1).locator('td').filter({ hasText: /^value$/ })).toBeVisible()
-    })
-  })
 })

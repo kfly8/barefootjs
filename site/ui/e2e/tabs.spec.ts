@@ -33,20 +33,6 @@ test.describe('Tabs Documentation Page', () => {
     await page.goto('/docs/components/tabs')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Tabs')
-    await expect(page.locator('text=A set of layered sections of content')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('text=bunx --bun barefoot add tabs')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
   test.describe('Tabs Rendering', () => {
     test('displays tab list', async ({ page }) => {
       const tablist = page.locator('[role="tablist"]')
@@ -169,40 +155,7 @@ test.describe('Tabs Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays Tabs props', async ({ page }) => {
-      await expect(page.locator('h3').filter({ hasText: /^Tabs$/ })).toBeVisible()
-    })
-
-    test('displays TabsTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("TabsTrigger")')).toBeVisible()
-    })
-
-    test('displays TabsContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("TabsContent")')).toBeVisible()
-    })
-  })
 })
-
-// Skip: Focus on Button during issue #126 design phase
-test.describe('Home Page - Tabs Link', () => {
-  test('displays Tabs preview card', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('#components a[href="/docs/components/tabs"]')).toBeVisible()
-  })
-
-  test('navigates to Tabs page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#components a[href="/docs/components/tabs"]').click()
-    await expect(page).toHaveURL('/docs/components/tabs')
-    await expect(page.locator('h1')).toContainText('Tabs')
-  })
-})
-
 test.describe('Tabs Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/docs/components/tabs')

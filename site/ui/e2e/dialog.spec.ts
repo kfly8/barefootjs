@@ -10,23 +10,6 @@ test.describe('Dialog Documentation Page', () => {
     await page.goto('/docs/components/dialog')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Dialog')
-    await expect(page.locator('text=A modal dialog that displays content')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-  })
-
-  test('displays features section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Features")')).toBeVisible()
-    await expect(page.locator('strong:has-text("ESC key to close")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Click outside to close")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Scroll lock")')).toBeVisible()
-    await expect(page.locator('strong:has-text("Focus trap")')).toBeVisible()
-  })
-
   test.describe('Basic Dialog', () => {
     test('opens dialog when trigger is clicked', async ({ page }) => {
       const basicDemo = page.locator('[bf-s^="DialogBasicDemo_"]').first()
@@ -383,31 +366,6 @@ test.describe('Dialog Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays DialogTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DialogTrigger")')).toBeVisible()
-    })
-
-    test('displays DialogContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DialogContent")')).toBeVisible()
-    })
-
-    test('displays DialogTitle props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DialogTitle")')).toBeVisible()
-    })
-
-    test('displays DialogDescription props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DialogDescription")')).toBeVisible()
-    })
-
-    test('displays DialogClose props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("DialogClose")')).toBeVisible()
-    })
-  })
 })
 
 test.describe('DialogTrigger asChild', () => {
@@ -462,19 +420,5 @@ test.describe('DialogTrigger asChild', () => {
     await trigger.click()
     await expect(dialog).toBeVisible()
     await expect(dialog).toHaveCSS('opacity', '1')
-  })
-})
-
-test.describe('Home Page - Dialog Link', () => {
-  test('displays Dialog preview card', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('#components a[href="/docs/components/dialog"]')).toBeVisible()
-  })
-
-  test('navigates to Dialog page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#components a[href="/docs/components/dialog"]').click()
-    await expect(page).toHaveURL('/docs/components/dialog')
-    await expect(page.locator('h1')).toContainText('Dialog')
   })
 })

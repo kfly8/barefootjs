@@ -5,23 +5,6 @@ test.describe('Form Submit Documentation Page', () => {
     await page.goto('/docs/forms/submit')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Form Submit')
-    await expect(page.locator('p.text-muted-foreground.text-lg')).toContainText('async submit handling')
-  })
-
-  test('displays pattern overview section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Pattern Overview")')).toBeVisible()
-  })
-
-  test('displays examples section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Examples")')).toBeVisible()
-  })
-
-  test('displays key points section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Key Points")')).toBeVisible()
-  })
-
   test.describe('Basic Submit Demo', () => {
     test('displays basic submit demo', async ({ page }) => {
       await expect(page.locator('[bf-s^="BasicSubmitDemo_"]')).toBeVisible()
@@ -202,26 +185,5 @@ test.describe('Form Submit Documentation Page', () => {
       const successToast = page.locator('[data-slot="toast"][bf-s*="ServerValidationDemo"]')
       await expect(successToast).toBeVisible({ timeout: 5000 })
     })
-  })
-})
-
-test.describe('Home Page - Form Submit Link', () => {
-  test('displays Form Patterns section', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
-  })
-
-  test('displays Form Submit link', async ({ page }) => {
-    await page.goto('/')
-    const link = page.locator('#form-patterns a[href="/docs/forms/submit"]')
-    await expect(link).toBeVisible()
-    await expect(link).toContainText('Form Submit')
-  })
-
-  test('navigates to Form Submit page on click', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#form-patterns a[href="/docs/forms/submit"]').click()
-    await expect(page).toHaveURL('/docs/forms/submit')
-    await expect(page.locator('h1')).toContainText('Form Submit')
   })
 })

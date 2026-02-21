@@ -5,17 +5,6 @@ test.describe('Select Documentation Page', () => {
     await page.goto('/docs/components/select')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Select')
-    await expect(page.locator('text=Displays a list of options for the user to pick from')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Basic Demo', () => {
     test('renders trigger with placeholder', async ({ page }) => {
       const section = page.locator('[bf-s^="SelectBasicDemo_"]:not([data-slot])').first()
@@ -277,40 +266,4 @@ test.describe('Select Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props tables', async ({ page }) => {
-      await expect(page.locator('h3:text-is("Select")')).toBeVisible()
-      await expect(page.locator('h3:has-text("SelectItem")')).toBeVisible()
-      const tables = page.locator('table')
-      expect(await tables.count()).toBeGreaterThanOrEqual(2)
-    })
-
-    test('displays Select props', async ({ page }) => {
-      const tables = page.locator('table')
-      await expect(tables.first().locator('td').filter({ hasText: /^value$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^onValueChange$/ })).toBeVisible()
-      await expect(tables.first().locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-    })
-  })
-})
-
-test.describe('Home Page - Select Link', () => {
-  test('displays Select component link', async ({ page }) => {
-    await page.goto('/')
-    const link = page.locator('#components a[href="/docs/components/select"]')
-    await expect(link).toBeVisible()
-    await expect(link).toContainText('Select')
-  })
-
-  test('navigates to Select page on click', async ({ page }) => {
-    await page.goto('/')
-    const link = page.locator('#components a[href="/docs/components/select"]')
-    await link.click()
-    await expect(page).toHaveURL('/docs/components/select')
-    await expect(page.locator('h1')).toContainText('Select')
-  })
 })

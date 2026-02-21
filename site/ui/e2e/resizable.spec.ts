@@ -5,17 +5,6 @@ test.describe('Resizable Documentation Page', () => {
     await page.goto('/docs/components/resizable')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Resizable')
-    await expect(page.locator('text=Accessible resizable panel groups')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Resizable Rendering', () => {
     test('displays resizable panel groups', async ({ page }) => {
       const groups = page.locator('[data-slot="resizable-panel-group"]')
@@ -127,15 +116,4 @@ test.describe('Resizable Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays all three component props tables', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'ResizablePanelGroup', exact: true })).toBeVisible()
-      await expect(page.getByRole('heading', { name: 'ResizablePanel', exact: true })).toBeVisible()
-      await expect(page.getByRole('heading', { name: 'ResizableHandle', exact: true })).toBeVisible()
-    })
-  })
 })

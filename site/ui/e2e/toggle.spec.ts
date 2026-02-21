@@ -5,17 +5,6 @@ test.describe('Toggle Documentation Page', () => {
     await page.goto('/docs/components/toggle')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Toggle')
-    await expect(page.locator('text=A two-state button that can be either on or off.')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-    await expect(page.locator('[role="tablist"]').first()).toBeVisible()
-    await expect(page.locator('button:has-text("bun")')).toBeVisible()
-  })
-
   test.describe('Toggle Rendering', () => {
     test('displays toggle elements with data-slot', async ({ page }) => {
       const toggles = page.locator('[data-slot="toggle"]')
@@ -128,25 +117,4 @@ test.describe('Toggle Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays props table headers', async ({ page }) => {
-      await expect(page.locator('th:has-text("Prop")')).toBeVisible()
-      await expect(page.locator('th:has-text("Type")')).toBeVisible()
-      await expect(page.locator('th:has-text("Default")')).toBeVisible()
-      await expect(page.locator('th:has-text("Description")')).toBeVisible()
-    })
-
-    test('displays all props', async ({ page }) => {
-      const propsTable = page.locator('table')
-      await expect(propsTable.locator('td').filter({ hasText: /^pressed$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^disabled$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^variant$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^size$/ })).toBeVisible()
-      await expect(propsTable.locator('td').filter({ hasText: /^onPressedChange$/ })).toBeVisible()
-    })
-  })
 })

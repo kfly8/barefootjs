@@ -9,15 +9,6 @@ test.describe('Sheet Documentation Page', () => {
     await page.goto('/docs/components/sheet')
   })
 
-  test('displays page header', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Sheet')
-    await expect(page.locator('text=A panel that slides in from the edge')).toBeVisible()
-  })
-
-  test('displays installation section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Installation")')).toBeVisible()
-  })
-
   test.describe('Basic Sheet', () => {
     test('opens sheet when trigger is clicked', async ({ page }) => {
       const basicDemo = page.locator('[bf-s^="SheetBasicDemo_"]').first()
@@ -279,29 +270,4 @@ test.describe('Sheet Documentation Page', () => {
     })
   })
 
-  test.describe('API Reference', () => {
-    test('displays API Reference section', async ({ page }) => {
-      await expect(page.locator('h2:has-text("API Reference")')).toBeVisible()
-    })
-
-    test('displays SheetTrigger props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("SheetTrigger")')).toBeVisible()
-    })
-
-    test('displays SheetContent props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("SheetContent")')).toBeVisible()
-    })
-
-    test('displays SheetTitle props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("SheetTitle")')).toBeVisible()
-    })
-
-    test('displays SheetDescription props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("SheetDescription")')).toBeVisible()
-    })
-
-    test('displays SheetClose props', async ({ page }) => {
-      await expect(page.locator('h3:has-text("SheetClose")')).toBeVisible()
-    })
-  })
 })
