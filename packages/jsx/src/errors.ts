@@ -39,6 +39,7 @@ export const ErrorCodes = {
   CIRCULAR_DEPENDENCY: 'BF041',
   INVALID_COMPONENT_NAME: 'BF042',
   PROPS_DESTRUCTURING: 'BF043',
+  SIGNAL_GETTER_NOT_CALLED: 'BF044',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
@@ -75,6 +76,8 @@ const errorMessages: Record<ErrorCode, string> = {
     'Component name must start with uppercase letter',
   [ErrorCodes.PROPS_DESTRUCTURING]:
     'Props destructuring in function parameters breaks reactivity. Use props object directly.',
+  [ErrorCodes.SIGNAL_GETTER_NOT_CALLED]:
+    'Signal/memo getter passed without calling it. Use getter() to read the value.',
 }
 
 // =============================================================================
