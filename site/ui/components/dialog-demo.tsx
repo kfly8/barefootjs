@@ -205,9 +205,9 @@ export function DialogLongContentDemo() {
         <DialogContent
           ariaLabelledby="long-dialog-title"
           ariaDescribedby="long-dialog-description"
-          class="max-h-[66vh]"
+          className="max-h-[66vh]"
         >
-          <DialogHeader class="flex-shrink-0">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle id="long-dialog-title">Terms of Service</DialogTitle>
             <DialogDescription id="long-dialog-description">
               Please read the following terms carefully.
@@ -239,7 +239,7 @@ export function DialogLongContentDemo() {
               At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
             </p>
           </div>
-          <DialogFooter class="flex-shrink-0">
+          <DialogFooter className="flex-shrink-0">
             <DialogClose>Decline</DialogClose>
             <DialogClose>Accept</DialogClose>
           </DialogFooter>

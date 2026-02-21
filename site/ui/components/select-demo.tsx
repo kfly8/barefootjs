@@ -28,7 +28,7 @@ export function SelectBasicDemo() {
   return (
     <div className="space-y-3">
       <Select value={value()} onValueChange={setValue}>
-        <SelectTrigger class="w-[280px]">
+        <SelectTrigger className="w-[280px]">
           <SelectValue placeholder="Select a fruit..." />
         </SelectTrigger>
         <SelectContent>
@@ -127,7 +127,7 @@ export function SelectGroupedDemo() {
   return (
     <div className="space-y-3">
       <Select value={timezone()} onValueChange={setTimezone}>
-        <SelectTrigger class="w-[280px]">
+        <SelectTrigger className="w-[280px]">
           <SelectValue placeholder="Select timezone..." />
         </SelectTrigger>
         <SelectContent>

@@ -22,14 +22,14 @@ import { ChevronDownIcon } from '@ui/components/ui/icon'
 export function CollapsibleBasicDemo() {
   return (
     <div className="w-full max-w-sm">
-      <Collapsible defaultOpen class="space-y-2">
+      <Collapsible defaultOpen className="space-y-2">
         <div className="flex items-center justify-between space-x-4">
           <h4 className="text-sm font-semibold">
             @barefootjs/dom has 3 repositories
           </h4>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-9 p-0">
-              <ChevronDownIcon size="sm" class="transition-transform duration-normal" />
+              <ChevronDownIcon size="sm" className="transition-transform duration-normal" />
               <span className="sr-only">Toggle</span>
             </Button>
           </CollapsibleTrigger>
@@ -37,7 +37,7 @@ export function CollapsibleBasicDemo() {
         <div className="rounded-md border border-border px-4 py-2 font-mono text-sm shadow-xs">
           @barefootjs/dom
         </div>
-        <CollapsibleContent class="space-y-2">
+        <CollapsibleContent className="space-y-2">
           <div className="rounded-md border border-border px-4 py-2 font-mono text-sm shadow-xs">
             @barefootjs/jsx
           </div>
@@ -59,14 +59,14 @@ export function CollapsibleControlledDemo() {
 
   return (
     <div className="w-full max-w-sm space-y-4">
-      <Collapsible open={open()} onOpenChange={setOpen} class="space-y-2">
+      <Collapsible open={open()} onOpenChange={setOpen} className="space-y-2">
         <div className="flex items-center justify-between space-x-4">
           <h4 className="text-sm font-semibold">
             Starred Repositories
           </h4>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-9 p-0">
-              <ChevronDownIcon size="sm" class="transition-transform duration-normal" />
+              <ChevronDownIcon size="sm" className="transition-transform duration-normal" />
               <span className="sr-only">Toggle</span>
             </Button>
           </CollapsibleTrigger>
@@ -74,7 +74,7 @@ export function CollapsibleControlledDemo() {
         <div className="rounded-md border border-border px-4 py-2 font-mono text-sm shadow-xs">
           solidjs/solid
         </div>
-        <CollapsibleContent class="space-y-2">
+        <CollapsibleContent className="space-y-2">
           <div className="rounded-md border border-border px-4 py-2 font-mono text-sm shadow-xs">
             honojs/hono
           </div>
@@ -96,14 +96,14 @@ export function CollapsibleControlledDemo() {
 export function CollapsibleDisabledDemo() {
   return (
     <div className="w-full max-w-sm">
-      <Collapsible disabled class="space-y-2">
+      <Collapsible disabled className="space-y-2">
         <div className="flex items-center justify-between space-x-4">
           <h4 className="text-sm font-semibold text-muted-foreground">
             Archived Repositories (disabled)
           </h4>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-9 p-0" disabled>
-              <ChevronDownIcon size="sm" class="transition-transform duration-normal" />
+              <ChevronDownIcon size="sm" className="transition-transform duration-normal" />
               <span className="sr-only">Toggle</span>
             </Button>
           </CollapsibleTrigger>
@@ -111,7 +111,7 @@ export function CollapsibleDisabledDemo() {
         <div className="rounded-md border border-border px-4 py-2 font-mono text-sm shadow-xs opacity-50">
           @barefootjs/legacy
         </div>
-        <CollapsibleContent class="space-y-2">
+        <CollapsibleContent className="space-y-2">
           <div className="rounded-md border border-border px-4 py-2 font-mono text-sm shadow-xs">
             @barefootjs/old-adapter
           </div>

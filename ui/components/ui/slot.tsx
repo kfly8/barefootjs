@@ -48,7 +48,7 @@ interface SlotProps {
   /** Child element to merge props with */
   children?: Child
   /** CSS class to merge with child's class */
-  class?: string
+  className?: string
   /** Additional props to merge with child element */
   [key: string]: unknown
 }
@@ -65,13 +65,13 @@ function isValidElement(element: unknown): element is { tag: unknown; props: Rec
  * Slot component that renders its child with merged props.
  *
  * @param props.children - Child element to merge props with
- * @param props.class - CSS class to merge with child's class
+ * @param props.className - CSS class to merge with child's class
  */
-function Slot({ children, class: className, ...props }: SlotProps) {
+function Slot({ children, className, ...props }: SlotProps) {
   if (children && isValidElement(children)) {
     const Tag = children.tag as any
     const childProps = children.props || {}
-    const childClass = (childProps.class as string) || ''
+    const childClass = (childProps.className as string) || ''
     const childChildren = childProps.children
 
     // Use JSX syntax - compiler will call jsx() from jsxImportSource

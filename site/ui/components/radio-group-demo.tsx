@@ -103,7 +103,7 @@ export function RadioGroupCardDemo() {
 
   return (
     <div className="space-y-4">
-      <RadioGroup defaultValue="startup" onValueChange={setPlan} class="grid-cols-1 sm:grid-cols-3">
+      <RadioGroup defaultValue="startup" onValueChange={setPlan} className="grid-cols-1 sm:grid-cols-3">
         <div className="relative">
           <label className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 cursor-pointer">
             <RadioGroupItem value="startup" />

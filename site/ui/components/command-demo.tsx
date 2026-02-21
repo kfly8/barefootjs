@@ -24,7 +24,7 @@ import {
  */
 export function CommandPreviewDemo() {
   return (
-    <Command class="rounded-lg border shadow-md md:min-w-[450px]">
+    <Command className="rounded-lg border shadow-md md:min-w-[450px]">
       <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
@@ -153,7 +153,7 @@ export function CommandFilterDemo() {
   }
 
   return (
-    <Command filter={prefixFilter} class="rounded-lg border shadow-md md:min-w-[450px]">
+    <Command filter={prefixFilter} className="rounded-lg border shadow-md md:min-w-[450px]">
       <CommandInput placeholder="Try prefix matching..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>

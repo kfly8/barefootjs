@@ -202,7 +202,7 @@ export function DrawerFormDemo() {
             </div>
           </div>
           <DrawerFooter>
-            <DrawerClose class="bg-primary text-primary-foreground hover:bg-primary/90 border-0 w-full">Submit</DrawerClose>
+            <DrawerClose className="bg-primary text-primary-foreground hover:bg-primary/90 border-0 w-full">Submit</DrawerClose>
             <DrawerClose>Cancel</DrawerClose>
           </DrawerFooter>
         </DrawerContent>

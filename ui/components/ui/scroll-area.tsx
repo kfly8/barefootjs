@@ -11,7 +11,7 @@ import { createSignal, onCleanup } from '@barefootjs/dom'
  *
  * @example
  * ```tsx
- * <ScrollArea class="h-72 w-48 rounded-md border">
+ * <ScrollArea className="h-72 w-48 rounded-md border">
  *   <div className="p-4">{content}</div>
  * </ScrollArea>
  * ```

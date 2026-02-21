@@ -243,7 +243,7 @@ function AccordionTrigger(props: AccordionTriggerProps) {
         ref={handleMount}
       >
         {props.children}
-        <ChevronDownIcon size="sm" class={iconClasses} />
+        <ChevronDownIcon size="sm" className={iconClasses} />
       </button>
     </h3>
   )

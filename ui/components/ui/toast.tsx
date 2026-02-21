@@ -374,7 +374,7 @@ function ToastClose(props: ToastCloseProps) {
       className={`${toastCloseClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
-      <XIcon size="sm" class="pointer-events-none" />
+      <XIcon size="sm" className="pointer-events-none" />
     </button>
   )
 }
