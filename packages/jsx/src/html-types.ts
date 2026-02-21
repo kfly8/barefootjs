@@ -80,7 +80,6 @@ export interface HTMLBaseAttributes extends BaseEventAttributes {
   // Core attributes
   id?: string
   className?: string | Promise<string>
-  /** @deprecated Use `className` instead. `class` is a reserved keyword in JavaScript/JSX. */
   class?: never
   style?: string | Record<string, string | number>
   title?: string
