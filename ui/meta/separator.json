@@ -1,0 +1,58 @@
+{
+  "name": "separator",
+  "title": "Separator",
+  "category": "layout",
+  "description": "Separator Component A visual divider that separates content horizontally or vertically. Can be decorative (no semantic meaning) or act as a true separator with appropriate ARIA role and orientation.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "orientation",
+      "type": "SeparatorOrientation",
+      "required": false,
+      "description": "The separator orientation."
+    },
+    {
+      "name": "decorative",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the separator is purely decorative."
+    }
+  ],
+  "variants": {
+    "SeparatorOrientation": [
+      "horizontal",
+      "vertical"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Horizontal separator",
+      "code": "<Separator className=\"my-4\" />"
+    },
+    {
+      "title": "Vertical separator",
+      "code": "<Separator orientation=\"vertical\" />"
+    }
+  ],
+  "accessibility": {
+    "role": "decorative",
+    "ariaAttributes": [
+      "aria-orientation"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-orientation"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "card"
+  ],
+  "source": "ui/components/ui/separator.tsx"
+}

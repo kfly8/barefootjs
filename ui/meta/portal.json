@@ -1,0 +1,55 @@
+{
+  "name": "portal",
+  "title": "Portal",
+  "category": "display",
+  "description": "Portal Component A component that renders its children into a different part of the DOM tree. Useful for modals, tooltips, and dropdowns that need to render outside their parent container to avoid overflow or z-index issues. Uses @barefootjs/dom's createPortal utility for client-side portal mounting.",
+  "tags": [
+    "portal"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Content to render in the portal"
+    },
+    {
+      "name": "container",
+      "type": "HTMLElement | null",
+      "required": false,
+      "description": "Target container element (defaults to document.body)"
+    },
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes"
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage with createPortal",
+      "code": "import { createPortal } from '@barefootjs/dom'\n\nfunction Modal() {\n  const portal = createPortal(\n    '<div class=\"modal\">Modal content</div>',\n    document.body\n  )\n\n  // Later: cleanup\n  portal.unmount()\n}"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "dialog",
+    "drawer",
+    "sheet",
+    "popover"
+  ],
+  "source": "ui/components/ui/portal.tsx"
+}

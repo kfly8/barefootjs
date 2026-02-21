@@ -13,7 +13,7 @@
  *
  * @example With value binding
  * ```tsx
- * <Textarea value={message} onInput={(e) => setMessage(e.target.value)} />
+ * <Textarea value={message()} onInput={(e) => setMessage(e.target.value)} />
  * ```
  *
  * @example With error state

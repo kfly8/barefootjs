@@ -1,0 +1,48 @@
+{
+  "name": "label",
+  "title": "Label",
+  "category": "input",
+  "description": "Label Component A text label associated with a form control. Supports disabled state via parent group data attributes and peer-based styling for disabled siblings.",
+  "tags": [],
+  "stateful": false,
+  "props": [
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS class names."
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Content displayed inside the label."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Label>Email</Label>"
+    },
+    {
+      "title": "With form control",
+      "code": "<Label for=\"email\">Email address</Label>\n<Input id=\"email\" type=\"email\" />"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "input",
+    "checkbox",
+    "switch"
+  ],
+  "source": "ui/components/ui/label.tsx"
+}
