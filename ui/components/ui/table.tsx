@@ -70,10 +70,10 @@ const tableFooterClasses = 'bg-muted/50 border-t font-medium [&>tr]:last:border-
 const tableRowClasses = 'hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors'
 
 // TableHead classes
-const tableHeadClasses = 'text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]'
+const tableHeadClasses = 'text-foreground h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]'
 
 // TableCell classes
-const tableCellClasses = 'p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]'
+const tableCellClasses = 'p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]'
 
 // TableCaption classes
 const tableCaptionClasses = 'text-muted-foreground mt-4 text-sm'
