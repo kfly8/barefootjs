@@ -140,6 +140,12 @@
       "type": "registry:ui",
       "title": "Table",
       "description": "A responsive table component for displaying structured data"
+    },
+    {
+      "name": "spinner",
+      "type": "registry:ui",
+      "title": "Spinner",
+      "description": "An animated loading indicator for async operations"
     }
   ]
 }

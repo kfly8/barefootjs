@@ -47,6 +47,7 @@ import { SheetPage } from './pages/sheet'
 import { HoverCardPage } from './pages/hover-card'
 import { MenubarPage } from './pages/menubar'
 import { TablePage } from './pages/table'
+import { SpinnerPage } from './pages/spinner'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -199,6 +200,10 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Slider</h3>
               <p className="text-xs text-muted-foreground">Range value selector</p>
             </a>
+            <a href="/docs/components/spinner" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Spinner</h3>
+              <p className="text-xs text-muted-foreground">Animated loading indicator</p>
+            </a>
             <a href="/docs/components/switch" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Switch</h3>
               <p className="text-xs text-muted-foreground">On/off toggle control</p>
@@ -342,6 +347,11 @@ export function createApp() {
   // Slider documentation
   app.get('/docs/components/slider', (c) => {
     return c.render(<SliderPage />)
+  })
+
+  // Spinner documentation
+  app.get('/docs/components/spinner', (c) => {
+    return c.render(<SpinnerPage />)
   })
 
   // Switch documentation
