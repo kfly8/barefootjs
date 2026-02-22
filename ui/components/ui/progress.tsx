@@ -60,10 +60,12 @@ function Progress(props: ProgressProps) {
   // Determine current value (controlled or default to 0)
   const currentValue = createMemo(() => controlledValue() ?? 0)
 
-  // Compute percentage clamped to [0, 100]
-  const percentage = createMemo(() => {
-    if (max <= 0) return 0
-    return Math.max(0, Math.min(100, (currentValue() / max) * 100))
+  // Compute offset for translateX: -(100 - percentage)
+  // Pre-computed in memo to avoid arithmetic in template literal (compiler limitation)
+  const indicatorOffset = createMemo(() => {
+    if (max <= 0) return -100
+    const pct = Math.max(0, Math.min(100, (currentValue() / max) * 100))
+    return pct - 100
   })
 
   // Compute data-state: "complete" when value >= max, otherwise "loading"
@@ -87,7 +89,7 @@ function Progress(props: ProgressProps) {
         data-slot="progress-indicator"
         data-state={dataState()}
         className={indicatorClasses}
-        style={`transform: translateX(-${100 - percentage()}%)`}
+        style={`transform: translateX(${indicatorOffset()}%)`}
       />
     </div>
   )

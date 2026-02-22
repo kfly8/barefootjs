@@ -29,9 +29,9 @@ describe('Progress', () => {
     expect(result.signals).toContain('controlledValue')
   })
 
-  test('currentValue, percentage and dataState are memos, not in signals', () => {
+  test('currentValue, indicatorOffset and dataState are memos, not in signals', () => {
     expect(result.signals).not.toContain('currentValue')
-    expect(result.signals).not.toContain('percentage')
+    expect(result.signals).not.toContain('indicatorOffset')
     expect(result.signals).not.toContain('dataState')
   })
 
