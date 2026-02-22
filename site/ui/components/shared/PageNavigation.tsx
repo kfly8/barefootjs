@@ -37,6 +37,7 @@ export const componentOrder = [
   { slug: 'sheet', title: 'Sheet' },
   { slug: 'slider', title: 'Slider' },
   { slug: 'switch', title: 'Switch' },
+  { slug: 'table', title: 'Table' },
   { slug: 'tabs', title: 'Tabs' },
   { slug: 'textarea', title: 'Textarea' },
   { slug: 'toast', title: 'Toast' },

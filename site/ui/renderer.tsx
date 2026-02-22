@@ -101,6 +101,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Sheet', href: '/docs/components/sheet' },
       { title: 'Slider', href: '/docs/components/slider' },
       { title: 'Switch', href: '/docs/components/switch' },
+      { title: 'Table', href: '/docs/components/table' },
       { title: 'Tabs', href: '/docs/components/tabs' },
       { title: 'Textarea', href: '/docs/components/textarea' },
       { title: 'Toast', href: '/docs/components/toast' },

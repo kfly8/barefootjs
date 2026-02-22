@@ -45,6 +45,7 @@ import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
 import { HoverCardPage } from './pages/hover-card'
 import { MenubarPage } from './pages/menubar'
+import { TablePage } from './pages/table'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -196,6 +197,10 @@ export function createApp() {
             <a href="/docs/components/switch" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Switch</h3>
               <p className="text-xs text-muted-foreground">On/off toggle control</p>
+            </a>
+            <a href="/docs/components/table" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Table</h3>
+              <p className="text-xs text-muted-foreground">Responsive data table</p>
             </a>
             <a href="/docs/components/tabs" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Tabs</h3>
@@ -447,6 +452,11 @@ export function createApp() {
   // Sheet documentation
   app.get('/docs/components/sheet', (c) => {
     return c.render(<SheetPage />)
+  })
+
+  // Table documentation
+  app.get('/docs/components/table', (c) => {
+    return c.render(<TablePage />)
   })
 
   // Controlled Input pattern documentation
