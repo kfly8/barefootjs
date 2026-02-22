@@ -102,7 +102,7 @@ export function emitSignalsAndMemos(
 ): void {
   for (const signal of ctx.signals) {
     let initialValue: string
-    if (signal.initialValue.startsWith('props.')) {
+    if (signal.initialValue.startsWith('props.') && !signal.initialValue.includes('??')) {
       initialValue = `${signal.initialValue} ?? ${inferDefaultValue(signal.type)}`
     } else {
       const controlled = controlledSignals.find(c => c.signal === signal)
