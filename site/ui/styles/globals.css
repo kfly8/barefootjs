@@ -106,6 +106,12 @@ html.theme-transition *::after {
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Reset heading/block element browser margins (Tailwind preflight equivalent) */
+  h1, h2, h3, h4, h5, h6,
+  blockquote, dl, dd, figure, p, pre, hr {
+    margin: 0;
+  }
+
   /* Reset anchor browser defaults */
   a {
     color: inherit;
