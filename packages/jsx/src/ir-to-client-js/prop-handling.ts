@@ -75,13 +75,17 @@ export function valueReferencesReactiveData(
  */
 export function getControlledPropName(
   signal: SignalInfo,
-  propsParams: ParamInfo[]
+  propsParams: ParamInfo[],
+  propsObjectName: string | null = null
 ): string | null {
   const initialValue = signal.initialValue.trim()
   const isDefaultProp = (propName: string) => propName.startsWith('default')
+  const propsName = propsObjectName ?? 'props'
 
-  // Direct props.X reference (e.g., props.checked)
-  const propsMatch = initialValue.match(/^props\.(\w+)$/)
+  // Direct <propsName>.X reference, optionally with ?? or || fallback
+  // e.g., props.checked, p.value ?? 0, props.initial || ''
+  const propsPattern = new RegExp(`^${propsName}\\.(\\w+)(?:\\s*(?:\\?\\?|\\|\\|)\\s*.+)?$`)
+  const propsMatch = initialValue.match(propsPattern)
   if (propsMatch) {
     const propName = propsMatch[1]
     if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
@@ -96,10 +100,12 @@ export function getControlledPropName(
     }
   }
 
-  // Prop with nullish coalescing (e.g., checked ?? false)
-  const nullishMatch = initialValue.match(/^(\w+)\s*\?\?\s*.+$/)
-  if (nullishMatch) {
-    const propName = nullishMatch[1]
+  // Prop with nullish coalescing or logical OR fallback
+  // e.g., checked ?? false, props.checked ?? false, p.value || ''
+  const fallbackPattern = new RegExp(`^(?:${propsName}\\.)?(\\w+)\\s*(?:\\?\\?|\\|\\|)\\s*.+$`)
+  const fallbackMatch = initialValue.match(fallbackPattern)
+  if (fallbackMatch) {
+    const propName = fallbackMatch[1]
     if (propsParams.some((p) => p.name === propName) && !isDefaultProp(propName)) {
       return propName
     }
