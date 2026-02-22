@@ -234,7 +234,7 @@ export function Example({
         {/* Preview section */}
         <div className="flex flex-wrap items-center justify-center gap-4 px-8 py-32 bg-card relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle,hsl(var(--muted)/0.5)_1px,transparent_1px)] bg-[length:16px_16px] pointer-events-none" />
-          <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="relative z-10 w-full flex flex-wrap items-center justify-center gap-4">
             {children}
           </div>
         </div>
