@@ -44,15 +44,19 @@ test.describe('Spinner Documentation Page', () => {
     test('shows spinner on button click', async ({ page }) => {
       const button = page.locator('[data-testid="spinner-button"]')
       await expect(button).toBeVisible()
-      await expect(button).toContainText('Submit')
+
+      // Initially shows "Submit" and spinner is hidden
+      const label = page.locator('[data-testid="spinner-button-label"]')
+      await expect(label).toContainText('Submit')
+      const spinnerInButton = button.locator('[data-slot="spinner"]')
+      await expect(spinnerInButton).toHaveClass(/hidden/)
 
       // Click the button to trigger loading state
       await button.click()
 
-      // Spinner should appear inside the button
-      const spinnerInButton = button.locator('[data-slot="spinner"]')
-      await expect(spinnerInButton).toBeVisible()
-      await expect(button).toContainText('Processing...')
+      // Spinner becomes visible and text changes
+      await expect(spinnerInButton).not.toHaveClass(/hidden/)
+      await expect(label).toContainText('Processing...')
     })
   })
 })

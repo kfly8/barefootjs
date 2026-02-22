@@ -35,7 +35,8 @@ export function SpinnerSizesDemo() {
 
 /**
  * Button with loading state.
- * Demonstrates realistic async operation with spinner feedback.
+ * Uses visibility toggling (not conditional rendering) so the Spinner SVG
+ * is always in the DOM and the client JS only toggles classes.
  */
 export function SpinnerButtonDemo() {
   const [loading, setLoading] = createSignal(false)
@@ -53,14 +54,10 @@ export function SpinnerButtonDemo() {
       disabled={loading()}
       onClick={handleClick}
     >
-      {loading() ? (
-        <span className="inline-flex items-center gap-2">
-          <Spinner className="size-4" />
-          Processing...
-        </span>
-      ) : (
-        'Submit'
-      )}
+      <Spinner className={`size-4 ${loading() ? '' : 'hidden'}`} />
+      <span data-testid="spinner-button-label">
+        {loading() ? 'Processing...' : 'Submit'}
+      </span>
     </Button>
   )
 }

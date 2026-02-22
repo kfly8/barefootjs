@@ -2,7 +2,7 @@
  * Spinner Documentation Page
  */
 
-import { Spinner } from '@ui/components/ui/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import { SpinnerSizesDemo, SpinnerButtonDemo } from '@/components/spinner-demo'
 import {
   DocPage,
@@ -64,14 +64,8 @@ function SpinnerButton() {
 
   return (
     <Button disabled={loading()} onClick={handleClick}>
-      {loading() ? (
-        <span className="inline-flex items-center gap-2">
-          <Spinner className="size-4" />
-          Processing...
-        </span>
-      ) : (
-        'Submit'
-      )}
+      <Spinner className={\`size-4 \${loading() ? '' : 'hidden'}\`} />
+      <span>{loading() ? 'Processing...' : 'Submit'}</span>
     </Button>
   )
 }`
