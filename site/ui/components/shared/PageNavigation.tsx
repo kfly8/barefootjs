@@ -8,6 +8,7 @@
 // Component order for navigation (alphabetical)
 export const componentOrder = [
   { slug: 'accordion', title: 'Accordion' },
+  { slug: 'alert', title: 'Alert' },
   { slug: 'alert-dialog', title: 'Alert Dialog' },
   { slug: 'badge', title: 'Badge' },
   { slug: 'breadcrumb', title: 'Breadcrumb' },
