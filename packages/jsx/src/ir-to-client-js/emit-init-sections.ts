@@ -100,16 +100,24 @@ export function emitSignalsAndMemos(
   controlledSignals: Array<{ signal: SignalInfo; propName: string }>,
   lateConstants: ConstantInfo[]
 ): void {
+  const propsName = ctx.propsObjectName ?? 'props'
+  const propsPrefix = `${propsName}.`
+
   for (const signal of ctx.signals) {
     let initialValue: string
-    if (signal.initialValue.startsWith('props.') && !signal.initialValue.includes('??')) {
-      initialValue = `${signal.initialValue} ?? ${inferDefaultValue(signal.type)}`
+    if (signal.initialValue.startsWith(propsPrefix) && !signal.initialValue.includes('??')) {
+      // Replace original prefix with 'props.' for generated code
+      const propRef = 'props.' + signal.initialValue.slice(propsPrefix.length)
+      initialValue = `${propRef} ?? ${inferDefaultValue(signal.type)}`
     } else {
       const controlled = controlledSignals.find(c => c.signal === signal)
       if (controlled) {
         const prop = ctx.propsParams.find(p => p.name === controlled.propName)
         const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
         initialValue = `props.${controlled.propName} ?? ${defaultVal}`
+      } else if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
+        // Replace custom props name with 'props.' even when ?? is present
+        initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
       } else {
         initialValue = signal.initialValue
       }

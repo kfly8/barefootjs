@@ -76,4 +76,26 @@ describe('getControlledPropName', () => {
   test('unknown prop name returns null', () => {
     expect(getControlledPropName(makeSignal('props.unknown'), propsParams)).toBeNull()
   })
+
+  describe('custom props parameter name', () => {
+    test('p.checked with propsObjectName="p"', () => {
+      expect(getControlledPropName(makeSignal('p.checked'), propsParams, 'p')).toBe('checked')
+    })
+
+    test('p.initial ?? 0 with propsObjectName="p"', () => {
+      expect(getControlledPropName(makeSignal('p.initial ?? 0'), propsParams, 'p')).toBe('initial')
+    })
+
+    test('p.defaultChecked ?? false is excluded', () => {
+      expect(getControlledPropName(makeSignal('p.defaultChecked ?? false'), propsParams, 'p')).toBeNull()
+    })
+
+    test('prop.value || "" with propsObjectName="prop"', () => {
+      expect(getControlledPropName(makeSignal("prop.value || ''"), propsParams, 'prop')).toBe('value')
+    })
+
+    test('props.checked is not matched when propsObjectName="p"', () => {
+      expect(getControlledPropName(makeSignal('props.checked'), propsParams, 'p')).toBeNull()
+    })
+  })
 })
