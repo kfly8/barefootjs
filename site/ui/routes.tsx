@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
+import { AlertPage } from './pages/alert'
 import { AlertDialogPage } from './pages/alert-dialog'
 import { BadgePage } from './pages/badge'
 import { BreadcrumbPage } from './pages/breadcrumb'
@@ -82,6 +83,10 @@ export function createApp() {
             <a href="/docs/components/accordion" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Accordion</h3>
               <p className="text-xs text-muted-foreground">Vertically collapsing content sections</p>
+            </a>
+            <a href="/docs/components/alert" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert</h3>
+              <p className="text-xs text-muted-foreground">Callout for important content</p>
             </a>
             <a href="/docs/components/alert-dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
@@ -254,6 +259,11 @@ export function createApp() {
         </div>
       </div>
     )
+  })
+
+  // Alert documentation
+  app.get('/docs/components/alert', (c) => {
+    return c.render(<AlertPage />)
   })
 
   // Alert Dialog documentation
