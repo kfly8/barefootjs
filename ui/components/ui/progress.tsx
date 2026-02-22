@@ -52,8 +52,13 @@ interface ProgressProps extends HTMLBaseAttributes {
 function Progress(props: ProgressProps) {
   const max = props.max ?? 100
 
-  // Track the value reactively
-  const [currentValue, setCurrentValue] = createSignal(props.value ?? 0)
+  // Controlled value - synced from parent via DOM attribute
+  // When parent passes value={signal()}, the compiler generates a sync effect
+  // that updates this signal when the parent's value changes
+  const [controlledValue, setControlledValue] = createSignal<number | undefined>(props.value)
+
+  // Determine current value (controlled or default to 0)
+  const currentValue = createMemo(() => controlledValue() ?? 0)
 
   // Compute percentage clamped to [0, 100]
   const percentage = createMemo(() => {

@@ -25,11 +25,12 @@ describe('Progress', () => {
     expect(result.componentName).toBe('Progress')
   })
 
-  test('has signal: currentValue (createSignal)', () => {
-    expect(result.signals).toContain('currentValue')
+  test('has signal: controlledValue (createSignal)', () => {
+    expect(result.signals).toContain('controlledValue')
   })
 
-  test('percentage and dataState are memos, not in signals', () => {
+  test('currentValue, percentage and dataState are memos, not in signals', () => {
+    expect(result.signals).not.toContain('currentValue')
     expect(result.signals).not.toContain('percentage')
     expect(result.signals).not.toContain('dataState')
   })
