@@ -55,7 +55,7 @@ import type { Child } from '../../types'
 const tableContainerClasses = 'relative w-full overflow-x-auto'
 
 // Table classes
-const tableClasses = 'w-full caption-bottom text-sm'
+const tableClasses = 'w-full caption-bottom border-collapse text-sm'
 
 // TableHeader classes
 const tableHeaderClasses = '[&_tr]:border-b'
