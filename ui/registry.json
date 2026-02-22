@@ -70,6 +70,12 @@
       "description": "A visual divider that separates content horizontally or vertically"
     },
     {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "A placeholder loading indicator with pulse animation"
+    },
+    {
       "name": "drawer",
       "type": "registry:ui",
       "title": "Drawer",

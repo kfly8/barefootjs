@@ -32,6 +32,7 @@ export const componentOrder = [
   { slug: 'scroll-area', title: 'Scroll Area' },
   { slug: 'select', title: 'Select' },
   { slug: 'separator', title: 'Separator' },
+  { slug: 'skeleton', title: 'Skeleton' },
   { slug: 'sheet', title: 'Sheet' },
   { slug: 'slider', title: 'Slider' },
   { slug: 'switch', title: 'Switch' },
