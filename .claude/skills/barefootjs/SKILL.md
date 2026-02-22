@@ -15,6 +15,44 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 5. `bun test <path>` — Verify compilation
 6. `bun run barefoot test:template <name>` — Regenerate richer IR test
 7. `bun test <path>` — Final verification
+8. Create previews and run `bun run barefoot preview <name>` — Visual preview in browser
+9. Ask the user to check `http://localhost:3003` in the browser for visual/interaction verification
+
+## Previews
+
+Previews provide visual preview with full hydration support.
+
+### File location
+
+`ui/components/ui/__previews__/<name>.previews.tsx`
+
+### Format
+
+Each `export function` becomes a separate preview. PascalCase names are auto-converted to display titles (e.g., `WithLabel` → "With Label").
+
+```tsx
+"use client"
+
+import { ComponentName } from '../component-name'
+
+/** Default usage */
+export function Default() {
+  return <ComponentName />
+}
+
+/** Show a specific variant or state */
+export function WithProps() {
+  return <ComponentName variant="outline" disabled />
+}
+```
+
+### Guidelines
+
+- Always include a `Default` preview showing basic usage.
+- Add previews for key variants, states, and compositions (e.g., `WithLabel`, `Disabled`, `PreFilled`).
+- Previews that use signals need `"use client"` at the top.
+- Import components via relative path from `../` (e.g., `import { Button } from '../button'`).
+- After creating previews, run `bun run barefoot preview <name>` and ask the user to verify in the browser.
 
 ## Rules
 

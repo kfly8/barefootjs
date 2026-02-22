@@ -47,3 +47,6 @@ CLAUDE.local.md
 # Playwright
 playwright-report/
 test-results/
+
+# Preview dev server output
+.preview-dist/

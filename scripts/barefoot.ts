@@ -280,6 +280,7 @@ Commands:
   scaffold <name> <comp...>   Generate component skeleton + IR test
   test [component]            Find and show test commands
   test:template <name>        Generate IR test from existing source
+  preview <component>          Start preview dev server for visual check
 
 Options:
   --json                      Output in JSON format
@@ -290,7 +291,8 @@ Workflow:
   3. barefoot scaffold <name> <comp...>    — Generate skeleton + test
   4. Implement the component
   5. bun test <path>                       — Verify
-  6. barefoot test:template <name>         — Regenerate richer test`)
+  6. barefoot test:template <name>         — Regenerate richer test
+  7. barefoot preview <component>          — Visual preview in browser`)
 }
 
 switch (command) {
@@ -323,6 +325,18 @@ switch (command) {
     }
     printTestTemplate(query)
     break
+
+  case 'preview': {
+    if (!query) {
+      console.error('Usage: barefoot preview <component>')
+      console.error('Example: barefoot preview checkbox')
+      process.exit(1)
+    }
+    // Delegate to packages/preview (long-running server)
+    const { runPreview } = await import('../packages/preview/src/index')
+    await runPreview(query)
+    break
+  }
 
   case 'scaffold': {
     const scaffoldArgs = filteredArgs.slice(1)
