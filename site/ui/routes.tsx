@@ -38,6 +38,7 @@ import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
 import { PopoverPage } from './pages/popover'
+import { ProgressPage } from './pages/progress'
 import { RadioGroupPage } from './pages/radio-group'
 import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
@@ -154,6 +155,10 @@ export function createApp() {
             <a href="/docs/components/popover" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Popover</h3>
               <p className="text-xs text-muted-foreground">Floating content anchored to a trigger</p>
+            </a>
+            <a href="/docs/components/progress" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Progress</h3>
+              <p className="text-xs text-muted-foreground">Task completion indicator bar</p>
             </a>
             <a href="/docs/components/radio-group" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Radio Group</h3>
@@ -397,6 +402,11 @@ export function createApp() {
   // Popover documentation
   app.get('/docs/components/popover', (c) => {
     return c.render(<PopoverPage />)
+  })
+
+  // Progress documentation
+  app.get('/docs/components/progress', (c) => {
+    return c.render(<ProgressPage />)
   })
 
   // Radio Group documentation
