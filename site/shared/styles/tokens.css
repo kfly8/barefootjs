@@ -19,6 +19,7 @@
   --tracking-wider: 0.05em;
 
   /* ── Spacing scale ───────────────────────────────────── */
+  --spacing: 0.25rem;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
