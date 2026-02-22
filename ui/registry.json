@@ -4,10 +4,22 @@
   "homepage": "https://ui.barefootjs.dev",
   "items": [
     {
+      "name": "alert",
+      "type": "registry:ui",
+      "title": "Alert",
+      "description": "Displays a callout for important content"
+    },
+    {
       "name": "alert-dialog",
       "type": "registry:ui",
       "title": "Alert Dialog",
       "description": "A modal dialog that interrupts the user with important content and expects a response"
+    },
+    {
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "An image element with a fallback for representing the user"
     },
     {
       "name": "slot",
@@ -70,6 +82,12 @@
       "description": "A visual divider that separates content horizontally or vertically"
     },
     {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "A placeholder loading indicator with pulse animation"
+    },
+    {
       "name": "drawer",
       "type": "registry:ui",
       "title": "Drawer",
@@ -122,6 +140,18 @@
       "type": "registry:ui",
       "title": "Scroll Area",
       "description": "Augments native scroll functionality for custom, cross-browser styling"
+    },
+    {
+      "name": "table",
+      "type": "registry:ui",
+      "title": "Table",
+      "description": "A responsive table component for displaying structured data"
+    },
+    {
+      "name": "spinner",
+      "type": "registry:ui",
+      "title": "Spinner",
+      "description": "An animated loading indicator for async operations"
     }
   ]
 }

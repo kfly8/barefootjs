@@ -1,0 +1,291 @@
+{
+  "name": "menubar",
+  "title": "Menubar",
+  "category": "display",
+  "description": "Menubar Components A visually persistent horizontal menu bar common in desktop applications (File, Edit, View pattern). When one menu is open, hovering another trigger opens that menu instead (roving behavior). Inspired by shadcn/ui Menubar with CSS variable theming support. Built on the same patterns as DropdownMenu with bar-level coordination. Architecture: Bar-level coordination uses MenubarContext (activeMenu signal). MenubarMenu is a pure DOM wrapper with data-value attribute. MenubarTrigger and MenubarContent derive their menu value from the DOM via closest('[data-slot=\"menubar-menu\"]') and access context only in ref handlers. Features: - Roving hover: hovering a trigger opens it if any menu is already open - ArrowLeft/Right navigates between menubar triggers - ESC key to close - Arrow key navigation within menus - Accessibility (role=\"menubar\", role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "MenubarMenu children"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "MenubarMenu",
+      "description": "",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "description": "Unique value identifying this menu"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "MenubarTrigger and MenubarContent"
+        }
+      ]
+    },
+    {
+      "name": "MenubarTrigger",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content (text label)"
+        }
+      ]
+    },
+    {
+      "name": "MenubarContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Menu items"
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'end'",
+          "required": false,
+          "description": "Alignment relative to trigger"
+        }
+      ]
+    },
+    {
+      "name": "MenubarItem",
+      "description": "",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "onSelect",
+          "type": "() => void",
+          "required": false,
+          "description": "Callback when item is selected (menu auto-closes)"
+        },
+        {
+          "name": "variant",
+          "type": "'default' | 'destructive'",
+          "required": false,
+          "description": "Visual variant"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content"
+        }
+      ]
+    },
+    {
+      "name": "MenubarCheckboxItem",
+      "description": "",
+      "props": [
+        {
+          "name": "checked",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether the checkbox is checked"
+        },
+        {
+          "name": "onCheckedChange",
+          "type": "(checked: boolean) => void",
+          "required": false,
+          "description": "Callback when checked state changes"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content"
+        }
+      ]
+    },
+    {
+      "name": "MenubarRadioGroup",
+      "description": "",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "description": "Currently selected value"
+        },
+        {
+          "name": "onValueChange",
+          "type": "(value: string) => void",
+          "required": false,
+          "description": "Callback when value changes"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "RadioItem children"
+        }
+      ]
+    },
+    {
+      "name": "MenubarRadioItem",
+      "description": "",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Value for this radio item"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content"
+        }
+      ]
+    },
+    {
+      "name": "MenubarSub",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "SubTrigger and SubContent"
+        }
+      ]
+    },
+    {
+      "name": "MenubarSubTrigger",
+      "description": "",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content"
+        }
+      ]
+    },
+    {
+      "name": "MenubarSubContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "SubContent items"
+        }
+      ]
+    },
+    {
+      "name": "MenubarLabel",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Label text"
+        }
+      ]
+    },
+    {
+      "name": "MenubarSeparator",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "MenubarShortcut",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Shortcut text (e.g., \"Ctrl+T\")"
+        }
+      ]
+    },
+    {
+      "name": "MenubarGroup",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Grouped menu items"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic menubar",
+      "code": "<Menubar>\n  <MenubarMenu value=\"file\">\n    <MenubarTrigger>File</MenubarTrigger>\n    <MenubarContent>\n      <MenubarItem>New Tab</MenubarItem>\n      <MenubarItem>New Window</MenubarItem>\n    </MenubarContent>\n  </MenubarMenu>\n</Menubar>"
+    }
+  ],
+  "accessibility": {
+    "role": "menubar, menu, menuitem, menuitemcheckbox, group, menuitemradio, separator",
+    "ariaAttributes": [
+      "aria-expanded",
+      "aria-haspopup",
+      "aria-disabled",
+      "aria-checked"
+    ],
+    "dataAttributes": [
+      "data-value",
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/menubar.tsx"
+}

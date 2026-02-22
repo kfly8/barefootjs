@@ -1,0 +1,198 @@
+{
+  "name": "dialog",
+  "title": "Dialog",
+  "category": "overlay",
+  "description": "Dialog Components A modal dialog that displays content in a layer above the page. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Dialog root manages open state, children consume via context. Features: - ESC key to close - Click outside (overlay) to close - Focus trap (Tab/Shift+Tab cycles within modal) - Accessibility (role=\"dialog\", aria-modal=\"true\")",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the dialog is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "scopeId",
+      "type": "string",
+      "required": false,
+      "description": "Scope ID for SSR portal support (explicit)"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Dialog content"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "DialogTrigger",
+      "description": "Props for DialogTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        }
+      ]
+    },
+    {
+      "name": "DialogOverlay",
+      "description": "Props for DialogOverlay component.",
+      "props": []
+    },
+    {
+      "name": "DialogContent",
+      "description": "Props for DialogContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Dialog content"
+        },
+        {
+          "name": "ariaLabelledby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the title element for aria-labelledby"
+        },
+        {
+          "name": "ariaDescribedby",
+          "type": "string",
+          "required": false,
+          "description": "ID of the description element for aria-describedby"
+        }
+      ]
+    },
+    {
+      "name": "DialogHeader",
+      "description": "Props for DialogHeader component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header content (typically DialogTitle and DialogDescription)"
+        }
+      ]
+    },
+    {
+      "name": "DialogTitle",
+      "description": "Props for DialogTitle component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-labelledby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Title text"
+        }
+      ]
+    },
+    {
+      "name": "DialogDescription",
+      "description": "Props for DialogDescription component.",
+      "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "ID for aria-describedby reference"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Description text"
+        }
+      ]
+    },
+    {
+      "name": "DialogFooter",
+      "description": "Props for DialogFooter component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Footer content (typically action buttons)"
+        }
+      ]
+    },
+    {
+      "name": "DialogClose",
+      "description": "Props for DialogClose component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic dialog",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<Dialog open={open()} onOpenChange={setOpen}>\n  <DialogTrigger>Open Dialog</DialogTrigger>\n  <DialogOverlay />\n  <DialogContent ariaLabelledby=\"dialog-title\">\n    <DialogHeader>\n      <DialogTitle id=\"dialog-title\">Dialog Title</DialogTitle>\n      <DialogDescription>Dialog description here.</DialogDescription>\n    </DialogHeader>\n    <DialogFooter>\n      <DialogClose>Cancel</DialogClose>\n      <Button onClick={handleAction}>Confirm</Button>\n    </DialogFooter>\n  </DialogContent>\n</Dialog>"
+    }
+  ],
+  "accessibility": {
+    "role": "dialog",
+    "ariaAttributes": [
+      "aria-modal",
+      "aria-invalid",
+      "aria-labelledby",
+      "aria-describedby"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "alert-dialog",
+    "drawer",
+    "sheet"
+  ],
+  "source": "ui/components/ui/dialog.tsx"
+}

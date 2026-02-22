@@ -1,0 +1,39 @@
+{
+  "name": "input",
+  "title": "Input",
+  "category": "input",
+  "description": "Input Component A styled text input component following shadcn/ui design. Accepts all native input attributes via ...props spread.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Input placeholder=\"Enter your name\" />"
+    },
+    {
+      "title": "With value binding",
+      "code": "<Input value={name()} onInput={(e) => setName(e.target.value)} />"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-invalid"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [
+    "textarea",
+    "label",
+    "select"
+  ],
+  "source": "ui/components/ui/input.tsx"
+}

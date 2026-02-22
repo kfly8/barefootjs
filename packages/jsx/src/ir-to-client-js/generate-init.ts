@@ -175,7 +175,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
 
   const controlledSignals: Array<{ signal: typeof ctx.signals[0]; propName: string }> = []
   for (const signal of ctx.signals) {
-    const controlledPropName = getControlledPropName(signal, ctx.propsParams)
+    const controlledPropName = getControlledPropName(signal, ctx.propsParams, ctx.propsObjectName)
     if (controlledPropName) {
       controlledSignals.push({ signal, propName: controlledPropName })
     }

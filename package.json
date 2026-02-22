@@ -17,7 +17,9 @@
     "build": "bun run --filter '@barefootjs/dom' build && bun run --filter '@barefootjs/jsx' build && bun run --filter '@barefootjs/hono' --filter '@barefootjs/go-template' build && bun run --filter '*' build",
     "test": "bun test --cwd . packages/",
     "test:e2e": "bun run --filter '*' test:e2e",
-    "clean": "bun run --filter '*' clean"
+    "clean": "bun run --filter '*' clean",
+    "meta:extract": "bun run scripts/extract-meta.ts",
+    "barefoot": "bun run scripts/barefoot.ts"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",

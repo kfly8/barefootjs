@@ -9,7 +9,9 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
+import { AlertPage } from './pages/alert'
 import { AlertDialogPage } from './pages/alert-dialog'
+import { AvatarPage } from './pages/avatar'
 import { BadgePage } from './pages/badge'
 import { BreadcrumbPage } from './pages/breadcrumb'
 import { ButtonPage } from './pages/button'
@@ -34,6 +36,7 @@ import { SelectPage } from './pages/select'
 import { ResizablePage } from './pages/resizable'
 import { ScrollAreaPage } from './pages/scroll-area'
 import { SeparatorPage } from './pages/separator'
+import { SkeletonPage } from './pages/skeleton'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
@@ -44,6 +47,8 @@ import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
 import { HoverCardPage } from './pages/hover-card'
 import { MenubarPage } from './pages/menubar'
+import { TablePage } from './pages/table'
+import { SpinnerPage } from './pages/spinner'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -84,9 +89,17 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Accordion</h3>
               <p className="text-xs text-muted-foreground">Vertically collapsing content sections</p>
             </a>
+            <a href="/docs/components/alert" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert</h3>
+              <p className="text-xs text-muted-foreground">Callout for important content</p>
+            </a>
             <a href="/docs/components/alert-dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
               <p className="text-xs text-muted-foreground">Modal dialog for important confirmations</p>
+            </a>
+            <a href="/docs/components/avatar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Avatar</h3>
+              <p className="text-xs text-muted-foreground">User profile image with fallback</p>
             </a>
             <a href="/docs/components/badge" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Badge</h3>
@@ -180,6 +193,10 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Separator</h3>
               <p className="text-xs text-muted-foreground">Visual divider between content</p>
             </a>
+            <a href="/docs/components/skeleton" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Skeleton</h3>
+              <p className="text-xs text-muted-foreground">Placeholder loading indicator</p>
+            </a>
             <a href="/docs/components/sheet" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Sheet</h3>
               <p className="text-xs text-muted-foreground">Side panel overlay</p>
@@ -188,9 +205,17 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Slider</h3>
               <p className="text-xs text-muted-foreground">Range value selector</p>
             </a>
+            <a href="/docs/components/spinner" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Spinner</h3>
+              <p className="text-xs text-muted-foreground">Animated loading indicator</p>
+            </a>
             <a href="/docs/components/switch" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Switch</h3>
               <p className="text-xs text-muted-foreground">On/off toggle control</p>
+            </a>
+            <a href="/docs/components/table" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Table</h3>
+              <p className="text-xs text-muted-foreground">Responsive data table</p>
             </a>
             <a href="/docs/components/tabs" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Tabs</h3>
@@ -261,9 +286,19 @@ export function createApp() {
     )
   })
 
+  // Alert documentation
+  app.get('/docs/components/alert', (c) => {
+    return c.render(<AlertPage />)
+  })
+
   // Alert Dialog documentation
   app.get('/docs/components/alert-dialog', (c) => {
     return c.render(<AlertDialogPage />)
+  })
+
+  // Avatar documentation
+  app.get('/docs/components/avatar', (c) => {
+    return c.render(<AvatarPage />)
   })
 
   // Badge documentation
@@ -317,6 +352,11 @@ export function createApp() {
   // Slider documentation
   app.get('/docs/components/slider', (c) => {
     return c.render(<SliderPage />)
+  })
+
+  // Spinner documentation
+  app.get('/docs/components/spinner', (c) => {
+    return c.render(<SpinnerPage />)
   })
 
   // Switch documentation
@@ -379,6 +419,11 @@ export function createApp() {
     return c.render(<SeparatorPage />)
   })
 
+  // Skeleton documentation
+  app.get('/docs/components/skeleton', (c) => {
+    return c.render(<SkeletonPage />)
+  })
+
   // Textarea documentation
   app.get('/docs/components/textarea', (c) => {
     return c.render(<TextareaPage />)
@@ -437,6 +482,11 @@ export function createApp() {
   // Sheet documentation
   app.get('/docs/components/sheet', (c) => {
     return c.render(<SheetPage />)
+  })
+
+  // Table documentation
+  app.get('/docs/components/table', (c) => {
+    return c.render(<TablePage />)
   })
 
   // Controlled Input pattern documentation

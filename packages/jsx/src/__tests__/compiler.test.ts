@@ -1185,8 +1185,8 @@ describe('Compiler', () => {
           const [active, setActive] = createSignal(0)
           return (
             <Ctx.Provider value={{ active, setActive }}>
-              <div class="tabs-header">Header</div>
-              <div class="tabs-body">{children}</div>
+              <div className="tabs-header">Header</div>
+              <div className="tabs-body">{children}</div>
             </Ctx.Provider>
           )
         }
@@ -1200,8 +1200,8 @@ describe('Compiler', () => {
         contextName: 'Ctx',
         valueProp: { name: 'value', value: '{ active, setActive }' },
         children: [
-          { type: 'element', tag: 'div', attrs: [{ name: 'class', value: 'tabs-header' }] },
-          { type: 'element', tag: 'div', attrs: [{ name: 'class', value: 'tabs-body' }] },
+          { type: 'element', tag: 'div', attrs: [{ name: 'className', value: 'tabs-header' }] },
+          { type: 'element', tag: 'div', attrs: [{ name: 'className', value: 'tabs-body' }] },
         ],
       })
     })
@@ -2625,6 +2625,107 @@ describe('Compiler', () => {
       // Self-closing component's slotId should NOT have ^ prefix
       expect(selfClosing.slotId).toMatch(/^s\d+$/)
       expect(selfClosing.slotId).not.toContain('^')
+    })
+  })
+
+  describe('controlled prop detection (#434)', () => {
+    test('props.xxx ?? default generates sync effect', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface SliderProps {
+          initial?: number
+        }
+
+        export function Slider(props: SliderProps) {
+          const [value, setValue] = createSignal(props.initial ?? 0)
+          return <input type="range" value={value()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Slider.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain("AUTO-GENERATED: Sync controlled prop 'initial'")
+    })
+
+    test('props.defaultXxx ?? default does NOT generate sync effect', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface CheckboxProps {
+          defaultChecked?: boolean
+        }
+
+        export function Checkbox(props: CheckboxProps) {
+          const [checked, setChecked] = createSignal(props.defaultChecked ?? false)
+          return <input type="checkbox" checked={checked()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Checkbox.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).not.toContain('AUTO-GENERATED: Sync controlled prop')
+    })
+
+    test('no redundant double-?? in output', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface SliderProps {
+          initial?: number
+        }
+
+        export function Slider(props: SliderProps) {
+          const [value, setValue] = createSignal(props.initial ?? 0)
+          return <input type="range" value={value()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Slider.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Should not contain double ?? like "props.initial ?? 0 ?? 0"
+      expect(clientJs?.content).not.toMatch(/\?\?.*\?\?/)
+    })
+
+    test('custom props parameter name (e.g., p) generates sync effect', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface SliderProps {
+          initial?: number
+        }
+
+        export function Slider(p: SliderProps) {
+          const [value, setValue] = createSignal(p.initial ?? 0)
+          return <input type="range" value={value()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Slider.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Sync effect should be generated
+      expect(clientJs?.content).toContain("AUTO-GENERATED: Sync controlled prop 'initial'")
+      // Output should use 'props.initial' (not 'p.initial')
+      expect(clientJs?.content).toContain('props.initial')
+      expect(clientJs?.content).not.toContain('p.initial')
+      // No double ??
+      expect(clientJs?.content).not.toMatch(/\?\?.*\?\?/)
     })
   })
 })

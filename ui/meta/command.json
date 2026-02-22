@@ -1,0 +1,205 @@
+{
+  "name": "command",
+  "title": "Command",
+  "category": "display",
+  "description": "Command Components A command menu with search and keyboard navigation. Inspired by shadcn/ui Command (cmdk-based) with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Command root manages search/selected state, children consume via context. Features: - Search filtering (case-insensitive substring by default) - Arrow key navigation - Enter to select - Auto-selection of first visible item on search change - CommandDialog wraps Command in Dialog for Cmd+K style usage - Accessibility (role=\"listbox\", role=\"option\")",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "filter",
+      "type": "(value: string, search: string, keywords?: string[]) => boolean",
+      "required": false,
+      "description": "Custom filter function"
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when an item is selected"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Children"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "CommandInput",
+      "description": "",
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Placeholder text"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        }
+      ]
+    },
+    {
+      "name": "CommandList",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "CommandEmpty",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "CommandGroup",
+      "description": "",
+      "props": [
+        {
+          "name": "heading",
+          "type": "string",
+          "required": false,
+          "description": "Group heading text"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "CommandItem",
+      "description": "",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "description": "Value for filtering and selection (defaults to textContent)"
+        },
+        {
+          "name": "keywords",
+          "type": "string[]",
+          "required": false,
+          "description": "Keywords for search matching"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "onSelect",
+          "type": "(value: string) => void",
+          "required": false,
+          "description": "Callback when selected"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "CommandSeparator",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "CommandShortcut",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "CommandDialog",
+      "description": "",
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether the dialog is open"
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "required": false,
+          "description": "Callback when open state changes"
+        },
+        {
+          "name": "filter",
+          "type": "(value: string, search: string, keywords?: string[]) => boolean",
+          "required": false,
+          "description": "Command filter function"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Command>\n  <CommandInput placeholder=\"Type a command...\" />\n  <CommandList>\n    <CommandEmpty>No results found.</CommandEmpty>\n    <CommandGroup heading=\"Suggestions\">\n      <CommandItem>Calendar</CommandItem>\n      <CommandItem>Search</CommandItem>\n    </CommandGroup>\n  </CommandList>\n</Command>"
+    }
+  ],
+  "accessibility": {
+    "role": "listbox, option, group, separator",
+    "ariaAttributes": [
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-value",
+      "data-disabled"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "dialog"
+    ],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/command.tsx"
+}
