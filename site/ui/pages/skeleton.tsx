@@ -105,7 +105,7 @@ export function SkeletonPage() {
         <Section id="examples" title="Examples">
           <div className="space-y-8">
             <Example title="Basic" code={basicCode}>
-              <div className="space-y-2">
+              <div className="w-full max-w-sm space-y-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-4/5" />
                 <Skeleton className="h-4 w-3/5" />
