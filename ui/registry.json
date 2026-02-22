@@ -4,6 +4,12 @@
   "homepage": "https://ui.barefootjs.dev",
   "items": [
     {
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "An image element with a fallback for representing the user"
+    },
+    {
       "name": "alert-dialog",
       "type": "registry:ui",
       "title": "Alert Dialog",
