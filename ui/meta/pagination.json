@@ -1,0 +1,96 @@
+{
+  "name": "pagination",
+  "title": "Pagination",
+  "category": "navigation",
+  "description": "Pagination Component Navigation component for paginated content. Built with accessible nav, list, and link elements.",
+  "tags": [
+    "multi-component",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "PaginationContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "PaginationItem",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "PaginationLink",
+      "description": "",
+      "props": [
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "'default' | 'icon'",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "PaginationEllipsis",
+      "description": "",
+      "props": []
+    }
+  ],
+  "examples": [],
+  "accessibility": {
+    "role": "navigation",
+    "ariaAttributes": [
+      "aria-label",
+      "aria-current",
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "icon"
+    ],
+    "external": []
+  },
+  "related": [
+    "breadcrumb"
+  ],
+  "source": "ui/components/ui/pagination.tsx"
+}

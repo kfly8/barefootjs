@@ -1,0 +1,105 @@
+{
+  "name": "collapsible",
+  "title": "Collapsible",
+  "category": "navigation",
+  "description": "Collapsible Components An interactive component which expands/collapses a panel. Simpler than Accordion — single panel, no multi-item management. State management uses createContext/useContext for parent-child communication.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Controlled open state"
+    },
+    {
+      "name": "defaultOpen",
+      "type": "boolean",
+      "required": false,
+      "description": "Default open state for uncontrolled mode"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state changes"
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the collapsible is disabled"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Child components"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "CollapsibleTrigger",
+      "description": "Props for CollapsibleTrigger component.",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": "Render child element as trigger instead of built-in button"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content"
+        }
+      ]
+    },
+    {
+      "name": "CollapsibleContent",
+      "description": "Props for CollapsibleContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Content to display"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic collapsible",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<Collapsible open={open()} onOpenChange={setOpen}>\n  <CollapsibleTrigger>Toggle</CollapsibleTrigger>\n  <CollapsibleContent>Hidden content here</CollapsibleContent>\n</Collapsible>"
+    }
+  ],
+  "accessibility": {
+    "role": "region",
+    "ariaAttributes": [
+      "aria-expanded"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state",
+      "data-disabled"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "accordion"
+  ],
+  "source": "ui/components/ui/collapsible.tsx"
+}

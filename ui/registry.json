@@ -4,16 +4,22 @@
   "homepage": "https://ui.barefootjs.dev",
   "items": [
     {
-      "name": "avatar",
+      "name": "alert",
       "type": "registry:ui",
-      "title": "Avatar",
-      "description": "An image element with a fallback for representing the user"
+      "title": "Alert",
+      "description": "Displays a callout for important content"
     },
     {
       "name": "alert-dialog",
       "type": "registry:ui",
       "title": "Alert Dialog",
       "description": "A modal dialog that interrupts the user with important content and expects a response"
+    },
+    {
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "An image element with a fallback for representing the user"
     },
     {
       "name": "slot",
@@ -74,6 +80,12 @@
       "type": "registry:ui",
       "title": "Separator",
       "description": "A visual divider that separates content horizontally or vertically"
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "A placeholder loading indicator with pulse animation"
     },
     {
       "name": "drawer",

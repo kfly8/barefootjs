@@ -1,0 +1,50 @@
+{
+  "name": "settings-form",
+  "title": "Settings Form",
+  "category": "display",
+  "description": "",
+  "tags": [
+    "stateful"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultName",
+      "type": "string",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "defaultNotifications",
+      "type": "boolean",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "onSave",
+      "type": "(data: { name: string; notifications: boolean }) => void",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "examples": [],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "input",
+      "switch",
+      "button",
+      "label"
+    ],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/settings-form.tsx"
+}

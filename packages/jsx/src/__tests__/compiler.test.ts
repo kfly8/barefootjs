@@ -1185,8 +1185,8 @@ describe('Compiler', () => {
           const [active, setActive] = createSignal(0)
           return (
             <Ctx.Provider value={{ active, setActive }}>
-              <div class="tabs-header">Header</div>
-              <div class="tabs-body">{children}</div>
+              <div className="tabs-header">Header</div>
+              <div className="tabs-body">{children}</div>
             </Ctx.Provider>
           )
         }
@@ -1200,8 +1200,8 @@ describe('Compiler', () => {
         contextName: 'Ctx',
         valueProp: { name: 'value', value: '{ active, setActive }' },
         children: [
-          { type: 'element', tag: 'div', attrs: [{ name: 'class', value: 'tabs-header' }] },
-          { type: 'element', tag: 'div', attrs: [{ name: 'class', value: 'tabs-body' }] },
+          { type: 'element', tag: 'div', attrs: [{ name: 'className', value: 'tabs-header' }] },
+          { type: 'element', tag: 'div', attrs: [{ name: 'className', value: 'tabs-body' }] },
         ],
       })
     })

@@ -1,0 +1,278 @@
+{
+  "name": "context-menu",
+  "title": "Context Menu",
+  "category": "display",
+  "description": "ContextMenu Components A menu triggered by right-click (contextmenu event), positioned at mouse coordinates. Inspired by shadcn/ui ContextMenu. Shares sub-component patterns with DropdownMenu. State management uses createContext/useContext for parent-child communication. Root ContextMenu manages open state and mouse position, children consume via context. Features: - Right-click to open at cursor position - ESC key to close - Arrow key navigation - Accessibility (role=\"menu\", role=\"menuitem\") - Submenu support with hover/keyboard navigation - CheckboxItem for multi-select - RadioGroup/RadioItem for single-select - Destructive variant for dangerous actions",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the context menu is open"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state should change"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "ContextMenuTrigger and ContextMenuContent"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "ContextMenuTrigger",
+      "description": "Props for ContextMenuTrigger component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content (the right-clickable area)"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuContent",
+      "description": "Props for ContextMenuContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "ContextMenuItem, ContextMenuLabel, ContextMenuSeparator components"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuItem",
+      "description": "Props for ContextMenuItem component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "onSelect",
+          "type": "() => void",
+          "required": false,
+          "description": "Callback when item is selected (menu auto-closes)"
+        },
+        {
+          "name": "variant",
+          "type": "'default' | 'destructive'",
+          "required": false,
+          "description": "Visual variant"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content (text, icons, shortcuts)"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuCheckboxItem",
+      "description": "Props for ContextMenuCheckboxItem component.",
+      "props": [
+        {
+          "name": "checked",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether the checkbox is checked"
+        },
+        {
+          "name": "onCheckedChange",
+          "type": "(checked: boolean) => void",
+          "required": false,
+          "description": "Callback when checked state changes"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuRadioGroup",
+      "description": "Props for ContextMenuRadioGroup component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "description": "Currently selected value"
+        },
+        {
+          "name": "onValueChange",
+          "type": "(value: string) => void",
+          "required": false,
+          "description": "Callback when value changes"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "RadioItem children"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuRadioItem",
+      "description": "Props for ContextMenuRadioItem component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Value for this radio item"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuSub",
+      "description": "Props for ContextMenuSub component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "SubTrigger and SubContent"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuSubTrigger",
+      "description": "Props for ContextMenuSubTrigger component.",
+      "props": [
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuSubContent",
+      "description": "Props for ContextMenuSubContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "SubContent items"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuLabel",
+      "description": "Props for ContextMenuLabel component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Label text"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuSeparator",
+      "description": "Props for ContextMenuSeparator component.",
+      "props": []
+    },
+    {
+      "name": "ContextMenuShortcut",
+      "description": "Props for ContextMenuShortcut component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Shortcut text (e.g., \"Ctrl+Q\")"
+        }
+      ]
+    },
+    {
+      "name": "ContextMenuGroup",
+      "description": "Props for ContextMenuGroup component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Grouped menu items"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic context menu",
+      "code": "const [open, setOpen] = createSignal(false)\n\n<ContextMenu open={open()} onOpenChange={setOpen}>\n  <ContextMenuTrigger>\n    <div>Right-click here</div>\n  </ContextMenuTrigger>\n  <ContextMenuContent>\n    <ContextMenuItem onSelect={() => {}}>Back</ContextMenuItem>\n    <ContextMenuItem onSelect={() => {}}>Forward</ContextMenuItem>\n  </ContextMenuContent>\n</ContextMenu>"
+    }
+  ],
+  "accessibility": {
+    "role": "menu, menuitem, menuitemcheckbox, group, menuitemradio, separator",
+    "ariaAttributes": [
+      "aria-disabled",
+      "aria-checked",
+      "aria-expanded",
+      "aria-haspopup"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/context-menu.tsx"
+}

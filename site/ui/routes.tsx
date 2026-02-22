@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
+import { AlertPage } from './pages/alert'
 import { AlertDialogPage } from './pages/alert-dialog'
 import { AvatarPage } from './pages/avatar'
 import { BadgePage } from './pages/badge'
@@ -35,6 +36,7 @@ import { SelectPage } from './pages/select'
 import { ResizablePage } from './pages/resizable'
 import { ScrollAreaPage } from './pages/scroll-area'
 import { SeparatorPage } from './pages/separator'
+import { SkeletonPage } from './pages/skeleton'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
@@ -83,6 +85,10 @@ export function createApp() {
             <a href="/docs/components/accordion" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Accordion</h3>
               <p className="text-xs text-muted-foreground">Vertically collapsing content sections</p>
+            </a>
+            <a href="/docs/components/alert" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert</h3>
+              <p className="text-xs text-muted-foreground">Callout for important content</p>
             </a>
             <a href="/docs/components/alert-dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
@@ -180,6 +186,10 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Separator</h3>
               <p className="text-xs text-muted-foreground">Visual divider between content</p>
             </a>
+            <a href="/docs/components/skeleton" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Skeleton</h3>
+              <p className="text-xs text-muted-foreground">Placeholder loading indicator</p>
+            </a>
             <a href="/docs/components/sheet" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Sheet</h3>
               <p className="text-xs text-muted-foreground">Side panel overlay</p>
@@ -259,6 +269,11 @@ export function createApp() {
         </div>
       </div>
     )
+  })
+
+  // Alert documentation
+  app.get('/docs/components/alert', (c) => {
+    return c.render(<AlertPage />)
   })
 
   // Alert Dialog documentation
@@ -382,6 +397,11 @@ export function createApp() {
   // Separator documentation
   app.get('/docs/components/separator', (c) => {
     return c.render(<SeparatorPage />)
+  })
+
+  // Skeleton documentation
+  app.get('/docs/components/skeleton', (c) => {
+    return c.render(<SkeletonPage />)
   })
 
   // Textarea documentation

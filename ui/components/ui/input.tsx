@@ -13,7 +13,7 @@
  *
  * @example With value binding
  * ```tsx
- * <Input value={name} onInput={(e) => setName(e.target.value)} />
+ * <Input value={name()} onInput={(e) => setName(e.target.value)} />
  * ```
  */
 

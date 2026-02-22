@@ -73,6 +73,7 @@ const menuEntries: SidebarEntry[] = [
     title: 'Components',
     links: [
       { title: 'Accordion', href: '/docs/components/accordion' },
+      { title: 'Alert', href: '/docs/components/alert' },
       { title: 'Alert Dialog', href: '/docs/components/alert-dialog' },
       { title: 'Avatar', href: '/docs/components/avatar' },
       { title: 'Badge', href: '/docs/components/badge' },
@@ -97,6 +98,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Scroll Area', href: '/docs/components/scroll-area' },
       { title: 'Select', href: '/docs/components/select' },
       { title: 'Separator', href: '/docs/components/separator' },
+      { title: 'Skeleton', href: '/docs/components/skeleton' },
       { title: 'Sheet', href: '/docs/components/sheet' },
       { title: 'Slider', href: '/docs/components/slider' },
       { title: 'Switch', href: '/docs/components/switch' },

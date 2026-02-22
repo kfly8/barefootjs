@@ -1,0 +1,182 @@
+{
+  "name": "select",
+  "title": "Select",
+  "category": "input",
+  "description": "Select Components A custom select dropdown with multiple sub-components. Inspired by shadcn/ui Select with CSS variable theming support. State management uses createContext/useContext for parent-child communication. Root Select manages open/value state, children consume via context. Features: - ESC key to close - Arrow key navigation - Type-ahead search - Accessibility (role=\"combobox\", role=\"listbox\", role=\"option\") - Controlled/uncontrolled value - Portal for Content (escape overflow clipping) - data-state attribute-driven styling",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "value",
+      "type": "string",
+      "required": false,
+      "description": "Controlled value"
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when value changes"
+    },
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the select is open (controlled)"
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": "Callback when open state changes"
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the entire select is disabled"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "SelectTrigger and SelectContent"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "SelectTrigger",
+      "description": "Props for SelectTrigger component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content (typically SelectValue)"
+        }
+      ]
+    },
+    {
+      "name": "SelectValue",
+      "description": "Props for SelectValue component.",
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Placeholder text when no value is selected"
+        }
+      ]
+    },
+    {
+      "name": "SelectContent",
+      "description": "Props for SelectContent component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "SelectItem, SelectGroup, SelectLabel, SelectSeparator components"
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'end'",
+          "required": false,
+          "description": "Alignment relative to trigger"
+        }
+      ]
+    },
+    {
+      "name": "SelectItem",
+      "description": "Props for SelectItem component.",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "The value for this item"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this item is disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content (label text)"
+        }
+      ]
+    },
+    {
+      "name": "SelectGroup",
+      "description": "Props for SelectGroup component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Grouped items"
+        }
+      ]
+    },
+    {
+      "name": "SelectLabel",
+      "description": "Props for SelectLabel component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Label text"
+        }
+      ]
+    },
+    {
+      "name": "SelectSeparator",
+      "description": "Props for SelectSeparator component.",
+      "props": []
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "const [value, setValue] = createSignal('')\n\n<Select value={value()} onValueChange={setValue}>\n  <SelectTrigger>\n    <SelectValue placeholder=\"Select a fruit...\" />\n  </SelectTrigger>\n  <SelectContent>\n    <SelectItem value=\"apple\">Apple</SelectItem>\n    <SelectItem value=\"banana\">Banana</SelectItem>\n  </SelectContent>\n</Select>"
+    }
+  ],
+  "accessibility": {
+    "role": "combobox, listbox, option, group, separator",
+    "ariaAttributes": [
+      "aria-expanded",
+      "aria-haspopup",
+      "aria-autocomplete",
+      "aria-disabled",
+      "aria-selected"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot",
+      "data-value"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "dropdown-menu",
+    "radio-group",
+    "input"
+  ],
+  "source": "ui/components/ui/select.tsx"
+}
