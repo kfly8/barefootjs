@@ -1,0 +1,16 @@
+{
+  "name": "@barefootjs/story",
+  "version": "0.0.1",
+  "description": "Lightweight story dev server for BarefootJS components",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@barefootjs/hono": "workspace:*",
+    "@barefootjs/jsx": "workspace:*",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@unocss/cli": "^66.0.0",
+    "unocss": "^66.0.0"
+  }
+}

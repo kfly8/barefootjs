@@ -10,7 +10,7 @@ import { resolve } from 'node:path'
 import { compile } from './compile'
 import { createStoryApp, startServer, pascalToTitle, type StoryEntry } from './server'
 
-const ROOT_DIR = resolve(import.meta.dir, '../..')
+const ROOT_DIR = resolve(import.meta.dir, '../../..')
 const STORIES_DIR = resolve(ROOT_DIR, 'ui/components/ui/__stories__')
 const DEFAULT_PORT = 3003
 
@@ -68,7 +68,7 @@ if (import.meta.main) {
   if (componentArg) {
     runStory(componentArg)
   } else {
-    console.error('Usage: bun run scripts/story/index.tsx <component>')
+    console.error('Usage: bun run packages/story/src/index.tsx <component>')
     process.exit(1)
   }
 }

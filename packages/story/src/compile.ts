@@ -5,12 +5,12 @@
  * Follows site/ui/build.ts patterns but minimal — only what stories need.
  */
 
-import { compileJSX, combineParentChildClientJs } from '../../packages/jsx/src/index'
-import { HonoAdapter } from '../../packages/hono/src/adapter/hono-adapter'
-import { mkdir, readdir } from 'node:fs/promises'
+import { compileJSX, combineParentChildClientJs } from '@barefootjs/jsx'
+import { HonoAdapter } from '@barefootjs/hono/adapter'
+import { mkdir, readdir, symlink, lstat } from 'node:fs/promises'
 import { dirname, resolve, join, relative, basename } from 'node:path'
 
-const ROOT_DIR = resolve(import.meta.dir, '../..')
+const ROOT_DIR = resolve(import.meta.dir, '../../..')
 const UI_COMPONENTS_DIR = resolve(ROOT_DIR, 'ui/components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, 'packages/dom')
 const DIST_DIR = resolve(ROOT_DIR, '.story-dist')
@@ -111,6 +111,14 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
   const { storiesPath } = options
 
   await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
+
+  // 0. Symlink node_modules so compiled files resolve hono from the same instance as server
+  const distNodeModules = resolve(DIST_DIR, 'node_modules')
+  const storyNodeModules = resolve(ROOT_DIR, 'packages/story/node_modules')
+  const symlinkExists = await lstat(distNodeModules).then(s => s.isSymbolicLink(), () => false)
+  if (!symlinkExists) {
+    await symlink(storyNodeModules, distNodeModules, 'dir')
+  }
 
   // 1. Copy barefoot.js runtime
   const domDistFile = resolve(DOM_PKG_DIR, 'dist/index.js')
@@ -255,7 +263,7 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
           changed = true
         }
 
-        // Rewrite @barefootjs/hono/utils → relative path
+        // Rewrite @barefootjs/hono/utils → relative path to source
         if (content.includes("@barefootjs/hono/utils")) {
           const relPath = relative(dirname(fullPath), HONO_UTILS_PATH).replace(/\\/g, '/')
           content = content.replace(/@barefootjs\/hono\/utils/g, relPath)

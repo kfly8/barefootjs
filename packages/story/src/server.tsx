@@ -2,8 +2,9 @@
  * Story development server
  *
  * Lightweight Hono server that renders stories with full hydration support.
- * Uses inline script/portal collection instead of @barefootjs/hono to avoid
- * hono version mismatch between root and packages/hono/node_modules.
+ * Uses BfScripts/BfPortals from @barefootjs/hono.
+ * Compiled components' hono imports are rewritten to the same hono instance
+ * in compile.ts to ensure consistent request context sharing.
  */
 
 /** @jsxImportSource hono/jsx */
@@ -11,7 +12,8 @@
 import { Hono } from 'hono'
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { serveStatic } from 'hono/bun'
-import { Fragment } from 'hono/jsx'
+import { BfScripts } from '@barefootjs/hono/scripts'
+import { BfPortals } from '@barefootjs/hono/portals'
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -35,54 +37,6 @@ function WithPredictableIds({ children }: { children: any }) {
   const c = useRequestContext()
   c.set('bfInstanceIdGenerator', createPredictableIdGenerator())
   return <>{children}</>
-}
-
-/**
- * Inline BfScripts — renders collected script tags.
- * Replaces import from packages/hono/src/scripts to avoid hono version mismatch.
- */
-function BfScripts() {
-  try {
-    const c = useRequestContext()
-    c.set('bfScriptsRendered', true)
-    const scripts: { src: string }[] = c.get('bfCollectedScripts') || []
-
-    const barefootScript = scripts.find(s => s.src.includes('barefoot.js'))
-    const componentScripts = scripts.filter(s => !s.src.includes('barefoot.js'))
-    const orderedScripts = barefootScript
-      ? [barefootScript, ...componentScripts.reverse()]
-      : componentScripts.reverse()
-
-    return (
-      <Fragment>
-        {orderedScripts.map(({ src }) => (
-          <script type="module" src={src} />
-        ))}
-      </Fragment>
-    )
-  } catch {
-    return null
-  }
-}
-
-/**
- * Inline BfPortals — renders collected portal content.
- */
-function BfPortals() {
-  try {
-    const c = useRequestContext()
-    c.set('bfPortalsRendered', true)
-    const portals: { id: string; scopeId: string; content: any }[] = c.get('bfCollectedPortals') || []
-    return (
-      <Fragment>
-        {portals.map(({ id, scopeId, content }) => (
-          <div key={id} bf-pi={id} bf-po={scopeId}>{content}</div>
-        ))}
-      </Fragment>
-    )
-  } catch {
-    return null
-  }
 }
 
 // Import map for resolving @barefootjs/dom in client JS

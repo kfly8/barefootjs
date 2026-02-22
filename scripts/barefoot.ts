@@ -332,8 +332,8 @@ switch (command) {
       console.error('Example: barefoot story checkbox')
       process.exit(1)
     }
-    // Delegate to scripts/story/index.tsx (long-running server)
-    const { runStory } = await import('./story/index')
+    // Delegate to packages/story (long-running server)
+    const { runStory } = await import('../packages/story/src/index')
     await runStory(query)
     break
   }
