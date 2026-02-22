@@ -37,6 +37,7 @@ export const componentOrder = [
   { slug: 'skeleton', title: 'Skeleton' },
   { slug: 'sheet', title: 'Sheet' },
   { slug: 'slider', title: 'Slider' },
+  { slug: 'spinner', title: 'Spinner' },
   { slug: 'switch', title: 'Switch' },
   { slug: 'table', title: 'Table' },
   { slug: 'tabs', title: 'Tabs' },
