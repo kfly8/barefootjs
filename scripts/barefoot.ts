@@ -280,7 +280,7 @@ Commands:
   scaffold <name> <comp...>   Generate component skeleton + IR test
   test [component]            Find and show test commands
   test:template <name>        Generate IR test from existing source
-  story <component>           Start story dev server for visual preview
+  preview <component>          Start preview dev server for visual check
 
 Options:
   --json                      Output in JSON format
@@ -292,7 +292,7 @@ Workflow:
   4. Implement the component
   5. bun test <path>                       — Verify
   6. barefoot test:template <name>         — Regenerate richer test
-  7. barefoot story <component>            — Visual preview in browser`)
+  7. barefoot preview <component>          — Visual preview in browser`)
 }
 
 switch (command) {
@@ -326,15 +326,15 @@ switch (command) {
     printTestTemplate(query)
     break
 
-  case 'story': {
+  case 'preview': {
     if (!query) {
-      console.error('Usage: barefoot story <component>')
-      console.error('Example: barefoot story checkbox')
+      console.error('Usage: barefoot preview <component>')
+      console.error('Example: barefoot preview checkbox')
       process.exit(1)
     }
-    // Delegate to packages/story (long-running server)
-    const { runStory } = await import('../packages/story/src/index')
-    await runStory(query)
+    // Delegate to packages/preview (long-running server)
+    const { runPreview } = await import('../packages/preview/src/index')
+    await runPreview(query)
     break
   }
 

@@ -15,20 +15,20 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 5. `bun test <path>` — Verify compilation
 6. `bun run barefoot test:template <name>` — Regenerate richer IR test
 7. `bun test <path>` — Final verification
-8. Create stories and run `bun run barefoot story <name>` — Visual preview in browser
+8. Create previews and run `bun run barefoot preview <name>` — Visual preview in browser
 9. Ask the user to check `http://localhost:3003` in the browser for visual/interaction verification
 
-## Stories
+## Previews
 
-Stories provide visual preview with full hydration support.
+Previews provide visual preview with full hydration support.
 
 ### File location
 
-`ui/components/ui/__stories__/<name>.stories.tsx`
+`ui/components/ui/__previews__/<name>.previews.tsx`
 
 ### Format
 
-Each `export function` becomes a separate story. PascalCase names are auto-converted to display titles (e.g., `WithLabel` → "With Label").
+Each `export function` becomes a separate preview. PascalCase names are auto-converted to display titles (e.g., `WithLabel` → "With Label").
 
 ```tsx
 "use client"
@@ -48,11 +48,11 @@ export function WithProps() {
 
 ### Guidelines
 
-- Always include a `Default` story showing basic usage.
-- Add stories for key variants, states, and compositions (e.g., `WithLabel`, `Disabled`, `PreFilled`).
-- Stories that use signals need `"use client"` at the top.
+- Always include a `Default` preview showing basic usage.
+- Add previews for key variants, states, and compositions (e.g., `WithLabel`, `Disabled`, `PreFilled`).
+- Previews that use signals need `"use client"` at the top.
 - Import components via relative path from `../` (e.g., `import { Button } from '../button'`).
-- After creating stories, run `bun run barefoot story <name>` and ask the user to verify in the browser.
+- After creating previews, run `bun run barefoot preview <name>` and ask the user to verify in the browser.
 
 ## Rules
 

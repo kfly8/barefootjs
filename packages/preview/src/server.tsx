@@ -1,7 +1,7 @@
 /**
- * Story development server
+ * Preview development server
  *
- * Lightweight Hono server that renders stories with full hydration support.
+ * Lightweight Hono server that renders previews with full hydration support.
  * Uses BfScripts/BfPortals from @barefootjs/hono.
  * Compiled components' hono imports are rewritten to the same hono instance
  * in compile.ts to ensure consistent request context sharing.
@@ -46,18 +46,18 @@ const importMapScript = JSON.stringify({
   },
 })
 
-export interface StoryEntry {
+export interface PreviewEntry {
   name: string
   displayName: string
 }
 
 export interface ServerOptions {
-  /** Story entries to render */
-  stories: StoryEntry[]
+  /** Preview entries to render */
+  previews: PreviewEntry[]
   /** Component name (for page title) */
   componentName: string
-  /** Render function: given story name, returns JSX */
-  renderStory: (name: string) => any
+  /** Render function: given preview name, returns JSX */
+  renderPreview: (name: string) => any
   /** Port number */
   port?: number
 }
@@ -69,8 +69,8 @@ export function pascalToTitle(name: string): string {
   return name.replace(/([a-z])([A-Z])/g, '$1 $2')
 }
 
-export function createStoryApp(options: ServerOptions) {
-  const { stories, componentName, renderStory } = options
+export function createPreviewApp(options: ServerOptions) {
+  const { previews, componentName, renderPreview } = options
 
   const app = new Hono()
 
@@ -86,7 +86,7 @@ export function createStoryApp(options: ServerOptions) {
                 <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
                 <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>{componentName} — Stories</title>
+                <title>{componentName} — Preview</title>
                 <link rel="stylesheet" href="/static/globals.css" />
                 <link rel="stylesheet" href="/static/uno.css" />
                 <style>{`
@@ -94,13 +94,13 @@ export function createStoryApp(options: ServerOptions) {
                     padding: 2rem;
                     font-family: system-ui, -apple-system, sans-serif;
                   }
-                  .story-section {
+                  .preview-section {
                     margin-bottom: 2rem;
                     padding: 1.5rem;
                     border: 1px solid var(--border);
                     border-radius: var(--radius);
                   }
-                  .story-title {
+                  .preview-title {
                     font-size: 0.875rem;
                     font-weight: 500;
                     color: var(--muted-foreground);
@@ -128,21 +128,21 @@ export function createStoryApp(options: ServerOptions) {
     )
   )
 
-  // Static files from .story-dist/
+  // Static files from .preview-dist/
   app.use('/static/*', serveStatic({
-    root: '.story-dist',
+    root: '.preview-dist',
     rewriteRequestPath: (path) => path.replace('/static', ''),
   }))
 
-  // Main route: render all stories
+  // Main route: render all previews
   app.get('/', (c) => {
     return c.render(
       <div>
         <h1>{componentName}</h1>
-        {stories.map((story) => (
-          <div className="story-section" data-story={story.name}>
-            <div className="story-title">{story.displayName}</div>
-            {renderStory(story.name)}
+        {previews.map((preview) => (
+          <div className="preview-section" data-preview={preview.name}>
+            <div className="preview-title">{preview.displayName}</div>
+            {renderPreview(preview.name)}
           </div>
         ))}
       </div>
@@ -152,7 +152,7 @@ export function createStoryApp(options: ServerOptions) {
   return app
 }
 
-export function startServer(app: ReturnType<typeof createStoryApp>, port: number) {
-  console.log(`\nStory server running at http://localhost:${port}`)
+export function startServer(app: ReturnType<typeof createPreviewApp>, port: number) {
+  console.log(`\nPreview server running at http://localhost:${port}`)
   return Bun.serve({ port, fetch: app.fetch })
 }

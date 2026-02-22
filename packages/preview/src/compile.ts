@@ -1,8 +1,8 @@
 /**
- * Story compiler pipeline
+ * Preview compiler pipeline
  *
- * Compiles .stories.tsx and their dependencies into .story-dist/.
- * Follows site/ui/build.ts patterns but minimal — only what stories need.
+ * Compiles .previews.tsx and their dependencies into .preview-dist/.
+ * Follows site/ui/build.ts patterns but minimal — only what previews need.
  */
 
 import { compileJSX, combineParentChildClientJs } from '@barefootjs/jsx'
@@ -13,7 +13,7 @@ import { dirname, resolve, join, relative, basename } from 'node:path'
 const ROOT_DIR = resolve(import.meta.dir, '../../..')
 const UI_COMPONENTS_DIR = resolve(ROOT_DIR, 'ui/components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, 'packages/dom')
-const DIST_DIR = resolve(ROOT_DIR, '.story-dist')
+const DIST_DIR = resolve(ROOT_DIR, '.preview-dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 
 function hasUseClientDirective(content: string): boolean {
@@ -76,7 +76,7 @@ function addScriptCollection(content: string, componentId: string, clientJsPath:
 }
 
 /**
- * Discover all .tsx component files under ui/components/ (recursive, skip __stories__ and __tests__)
+ * Discover all .tsx component files under ui/components/ (recursive, skip __previews__ and __tests__)
  */
 async function discoverComponentFiles(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true })
@@ -84,7 +84,7 @@ async function discoverComponentFiles(dir: string): Promise<string[]> {
   for (const entry of entries) {
     const fullPath = join(dir, entry.name)
     if (entry.isDirectory()) {
-      if (entry.name === '__stories__' || entry.name === '__tests__' || entry.name === 'shared') continue
+      if (entry.name === '__previews__' || entry.name === '__tests__' || entry.name === 'shared') continue
       files.push(...await discoverComponentFiles(fullPath))
     } else if (entry.name.endsWith('.tsx')) {
       files.push(fullPath)
@@ -94,30 +94,30 @@ async function discoverComponentFiles(dir: string): Promise<string[]> {
 }
 
 export interface CompileOptions {
-  /** Absolute path to the .stories.tsx file */
-  storiesPath: string
-  /** Story export function names */
-  storyNames: string[]
+  /** Absolute path to the .previews.tsx file */
+  previewsPath: string
+  /** Preview export function names */
+  previewNames: string[]
 }
 
 export interface CompileResult {
-  /** Compiled story component path (for import in server) */
-  storiesCompiledPath: string
+  /** Compiled preview component path (for import in server) */
+  previewsCompiledPath: string
   /** Map: componentName → { markedTemplate, clientJs? } */
   manifest: Record<string, { markedTemplate: string; clientJs?: string }>
 }
 
 export async function compile(options: CompileOptions): Promise<CompileResult> {
-  const { storiesPath } = options
+  const { previewsPath } = options
 
   await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
   // 0. Symlink node_modules so compiled files resolve hono from the same instance as server
   const distNodeModules = resolve(DIST_DIR, 'node_modules')
-  const storyNodeModules = resolve(ROOT_DIR, 'packages/story/node_modules')
+  const previewNodeModules = resolve(ROOT_DIR, 'packages/preview/node_modules')
   const symlinkExists = await lstat(distNodeModules).then(s => s.isSymbolicLink(), () => false)
   if (!symlinkExists) {
-    await symlink(storyNodeModules, distNodeModules, 'dir')
+    await symlink(previewNodeModules, distNodeModules, 'dir')
   }
 
   // 1. Copy barefoot.js runtime
@@ -128,18 +128,18 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     await proc.exited
   }
   await Bun.write(resolve(DIST_DIR, 'barefoot.js'), Bun.file(domDistFile))
-  console.log('Generated: .story-dist/barefoot.js')
+  console.log('Generated: .preview-dist/barefoot.js')
 
   // 2. Copy CSS
   const tokensCSS = await Bun.file(resolve(ROOT_DIR, 'site/shared/styles/tokens.css')).text()
   const globalsCSS = await Bun.file(resolve(ROOT_DIR, 'site/ui/styles/globals.css')).text()
   await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + globalsCSS)
-  console.log('Generated: .story-dist/globals.css')
+  console.log('Generated: .preview-dist/globals.css')
 
   // 3. Discover all component files (dependency compilation)
   const componentFiles = await discoverComponentFiles(UI_COMPONENTS_DIR)
-  // Add the stories file itself
-  const allFiles = [...componentFiles, storiesPath]
+  // Add the previews file itself
+  const allFiles = [...componentFiles, previewsPath]
 
   const manifest: Record<string, { markedTemplate: string; clientJs?: string }> = {
     '__barefoot__': { markedTemplate: '', clientJs: 'barefoot.js' }
@@ -207,7 +207,7 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     if (clientJsContent) {
       await Bun.write(resolve(outputDir, clientJsFilename), clientJsContent)
       const clientJsRelativePath = dirPath === '.' ? clientJsFilename : `${dirPath}/${clientJsFilename}`
-      console.log(`Generated: .story-dist/components/${clientJsRelativePath}`)
+      console.log(`Generated: .preview-dist/components/${clientJsRelativePath}`)
     }
 
     // Add script collection wrapper
@@ -219,7 +219,7 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
       await Bun.write(resolve(outputDir, baseFileName), markedJsxContent)
     }
 
-    console.log(`Generated: .story-dist/components/${relativePath}`)
+    console.log(`Generated: .preview-dist/components/${relativePath}`)
 
     const clientJsPath = clientJsContent
       ? `components/${dirPath === '.' ? clientJsFilename : `${dirPath}/${clientJsFilename}`}`
@@ -311,7 +311,7 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     await Bun.write(destPath, rewritten)
   }
 
-  // 7b. Copy ui/types/ to .story-dist/types/ (for ../../types imports)
+  // 7b. Copy ui/types/ to .preview-dist/types/ (for ../../types imports)
   const uiTypesDir = resolve(ROOT_DIR, 'ui/types')
   const distTypesDir = resolve(DIST_DIR, 'types')
   await mkdir(distTypesDir, { recursive: true })
@@ -338,15 +338,15 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     }
   )
   await unoProc.exited
-  console.log('Generated: .story-dist/uno.css')
+  console.log('Generated: .preview-dist/uno.css')
 
   // 9. Write manifest
   await Bun.write(resolve(DIST_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2))
-  console.log('Generated: .story-dist/manifest.json')
+  console.log('Generated: .preview-dist/manifest.json')
 
-  // Determine compiled stories path relative to DIST
-  const storiesRelative = relative(UI_COMPONENTS_DIR, storiesPath)
-  const storiesCompiledPath = resolve(DIST_COMPONENTS_DIR, storiesRelative)
+  // Determine compiled previews path relative to DIST
+  const previewsRelative = relative(UI_COMPONENTS_DIR, previewsPath)
+  const previewsCompiledPath = resolve(DIST_COMPONENTS_DIR, previewsRelative)
 
-  return { storiesCompiledPath, manifest }
+  return { previewsCompiledPath, manifest }
 }

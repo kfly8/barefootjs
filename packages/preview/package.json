@@ -1,7 +1,7 @@
 {
-  "name": "@barefootjs/story",
+  "name": "@barefootjs/preview",
   "version": "0.0.1",
-  "description": "Lightweight story dev server for BarefootJS components",
+  "description": "Lightweight preview dev server for BarefootJS components",
   "type": "module",
   "private": true,
   "dependencies": {
