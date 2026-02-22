@@ -1,0 +1,82 @@
+{
+  "name": "tooltip",
+  "title": "Tooltip",
+  "category": "overlay",
+  "description": "Tooltip Component A popup that displays contextual information on hover or focus. Adapted from shadcn/ui v4 with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "content",
+      "type": "string",
+      "required": true,
+      "description": "Tooltip content text"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Trigger element"
+    },
+    {
+      "name": "placement",
+      "type": "TooltipPlacement",
+      "required": false,
+      "default": "top",
+      "description": "Placement of tooltip relative to trigger."
+    },
+    {
+      "name": "delayDuration",
+      "type": "number",
+      "required": false,
+      "default": "0",
+      "description": "Delay in ms before showing tooltip on hover."
+    },
+    {
+      "name": "closeDelay",
+      "type": "number",
+      "required": false,
+      "default": "0",
+      "description": "Delay in ms before hiding tooltip after mouse leave."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic tooltip",
+      "code": "<Tooltip content=\"This is helpful information\">\n  <Button>Hover me</Button>\n</Tooltip>"
+    },
+    {
+      "title": "With placement",
+      "code": "<Tooltip content=\"Tooltip on the right\" placement=\"right\">\n  <span>Hover me</span>\n</Tooltip>"
+    },
+    {
+      "title": "With delay",
+      "code": "<Tooltip content=\"Delayed tooltip\" delayDuration={500} closeDelay={200}>\n  <Button>Hover me</Button>\n</Tooltip>"
+    }
+  ],
+  "accessibility": {
+    "role": "tooltip",
+    "ariaAttributes": [
+      "aria-describedby",
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "hover-card",
+    "popover"
+  ],
+  "source": "ui/components/ui/tooltip.tsx"
+}

@@ -1,0 +1,60 @@
+{
+  "name": "scroll-area",
+  "title": "Scroll Area",
+  "category": "layout",
+  "description": "ScrollArea Component Augments native scroll with custom, cross-browser styled scrollbars. Hides native scrollbars and renders overlay thumb indicators.",
+  "tags": [
+    "stateful",
+    "multi-component"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "children",
+      "type": "any",
+      "required": false,
+      "description": "Content to display inside the scrollable area."
+    },
+    {
+      "name": "type",
+      "type": "ScrollAreaType",
+      "required": false,
+      "default": "hover",
+      "description": "When to show scrollbars. @default 'hover'"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "ScrollBar",
+      "description": "",
+      "props": [
+        {
+          "name": "orientation",
+          "type": "'vertical' | 'horizontal'",
+          "required": false,
+          "default": "vertical",
+          "description": "Scroll direction. @default 'vertical'"
+        }
+      ]
+    }
+  ],
+  "examples": [],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot",
+      "data-orientation",
+      "data-state"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [
+    "resizable"
+  ],
+  "source": "ui/components/ui/scroll-area.tsx"
+}

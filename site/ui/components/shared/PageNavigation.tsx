@@ -8,6 +8,7 @@
 // Component order for navigation (alphabetical)
 export const componentOrder = [
   { slug: 'accordion', title: 'Accordion' },
+  { slug: 'alert', title: 'Alert' },
   { slug: 'alert-dialog', title: 'Alert Dialog' },
   { slug: 'badge', title: 'Badge' },
   { slug: 'breadcrumb', title: 'Breadcrumb' },
@@ -32,6 +33,7 @@ export const componentOrder = [
   { slug: 'scroll-area', title: 'Scroll Area' },
   { slug: 'select', title: 'Select' },
   { slug: 'separator', title: 'Separator' },
+  { slug: 'skeleton', title: 'Skeleton' },
   { slug: 'sheet', title: 'Sheet' },
   { slug: 'slider', title: 'Slider' },
   { slug: 'switch', title: 'Switch' },

@@ -16,6 +16,7 @@
  * <Input id="email" type="email" />
  * ```
  */
+
 import type { LabelHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../types'
 

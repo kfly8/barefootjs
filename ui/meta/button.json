@@ -1,0 +1,88 @@
+{
+  "name": "button",
+  "title": "Button",
+  "category": "input",
+  "description": "Button Component A versatile button component with multiple visual variants and sizes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "variant",
+      "type": "ButtonVariant",
+      "required": false,
+      "default": "default",
+      "description": "Visual style of the button."
+    },
+    {
+      "name": "size",
+      "type": "ButtonSize",
+      "required": false,
+      "default": "default",
+      "description": "Size of the button."
+    },
+    {
+      "name": "asChild",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "When true, renders child element with button styling instead of `<button>`. Useful for creating button-styled links or custom elements."
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Children to render inside the button."
+    }
+  ],
+  "variants": {
+    "ButtonVariant": [
+      "default",
+      "destructive",
+      "outline",
+      "secondary",
+      "ghost",
+      "link"
+    ],
+    "ButtonSize": [
+      "default",
+      "sm",
+      "lg",
+      "icon",
+      "icon-sm",
+      "icon-lg"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Button>Click me</Button>"
+    },
+    {
+      "title": "With variant and size",
+      "code": "<Button variant=\"destructive\" size=\"lg\">Delete</Button>"
+    },
+    {
+      "title": "As a link (polymorphic rendering)",
+      "code": "<Button asChild>\n  <a href=\"/home\">Go Home</a>\n</Button>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-invalid"
+    ],
+    "dataAttributes": []
+  },
+  "dependencies": {
+    "internal": [
+      "slot"
+    ],
+    "external": []
+  },
+  "related": [
+    "toggle",
+    "slot"
+  ],
+  "source": "ui/components/ui/button.tsx"
+}

@@ -399,6 +399,22 @@ error[BF044]: Signal getter 'count' passed without calling it
 | `value={props.checked}` | No | Property access, not bare identifier |
 | `value={count() + 1}` | No | Expression, not bare identifier |
 
+### class= vs className= in JSX
+
+JSX requires `className` for CSS class attributes. `class` is a reserved keyword in JavaScript and cannot be used as a JSX attribute name.
+
+BarefootJS enforces this at the **type level** via `class?: never` in `HTMLBaseAttributes`. This means TypeScript reports a type error immediately in the editor — no separate compiler error code is needed.
+
+```tsx
+// ✅ Correct
+<div className="container" />
+
+// ❌ Type error: Type 'string' is not assignable to type 'never'
+<div class="container" />
+```
+
+Note: Hono's JSX uses `class=` (HTML-style), but BarefootJS JSX uses React-style `className=`. This difference is intentional and caught at compile time.
+
 ---
 
 ## Compiler Internals

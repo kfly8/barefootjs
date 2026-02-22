@@ -4,6 +4,12 @@
   "homepage": "https://ui.barefootjs.dev",
   "items": [
     {
+      "name": "alert",
+      "type": "registry:ui",
+      "title": "Alert",
+      "description": "Displays a callout for important content"
+    },
+    {
       "name": "alert-dialog",
       "type": "registry:ui",
       "title": "Alert Dialog",
@@ -68,6 +74,12 @@
       "type": "registry:ui",
       "title": "Separator",
       "description": "A visual divider that separates content horizontally or vertically"
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "A placeholder loading indicator with pulse animation"
     },
     {
       "name": "drawer",
