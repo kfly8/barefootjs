@@ -15,6 +15,27 @@ import {
 } from '../components/shared/docs'
 import { getNavLinks } from '../components/shared/PageNavigation'
 
+// Lucide Terminal icon (inline SVG)
+function TerminalIcon() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4 17 6-6-6-6" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19h8" />
+    </svg>
+  )
+}
+
+// Lucide CircleAlert icon (inline SVG)
+function CircleAlertIcon() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16h.01" />
+    </svg>
+  )
+}
+
 const tocItems: TocItem[] = [
   { id: 'installation', title: 'Installation' },
   { id: 'examples', title: 'Examples' },
@@ -28,6 +49,7 @@ const previewCode = `import { Alert, AlertTitle, AlertDescription } from '@/comp
 function AlertDemo() {
   return (
     <Alert>
+      <TerminalIcon />
       <AlertTitle>Heads up!</AlertTitle>
       <AlertDescription>
         You can add components to your app using the CLI.
@@ -41,6 +63,7 @@ const defaultCode = `import { Alert, AlertTitle, AlertDescription } from '@/comp
 function AlertDefault() {
   return (
     <Alert>
+      <TerminalIcon />
       <AlertTitle>Heads up!</AlertTitle>
       <AlertDescription>
         You can add components to your app using the CLI.
@@ -54,6 +77,7 @@ const destructiveCode = `import { Alert, AlertTitle, AlertDescription } from '@/
 function AlertDestructive() {
   return (
     <Alert variant="destructive">
+      <CircleAlertIcon />
       <AlertTitle>Error</AlertTitle>
       <AlertDescription>
         Your session has expired. Please log in again.
@@ -72,7 +96,7 @@ const alertProps: PropDefinition[] = [
   {
     name: 'children',
     type: 'ReactNode',
-    description: 'The content of the alert (typically AlertTitle and AlertDescription).',
+    description: 'The content of the alert (typically an SVG icon, AlertTitle, and AlertDescription).',
   },
 ]
 
@@ -104,12 +128,15 @@ export function AlertPage() {
 
         {/* Preview */}
         <Example title="" code={previewCode}>
-          <Alert>
-            <AlertTitle>Heads up!</AlertTitle>
-            <AlertDescription>
-              You can add components to your app using the CLI.
-            </AlertDescription>
-          </Alert>
+          <div className="w-full">
+            <Alert>
+              <TerminalIcon />
+              <AlertTitle>Heads up!</AlertTitle>
+              <AlertDescription>
+                You can add components to your app using the CLI.
+              </AlertDescription>
+            </Alert>
+          </div>
         </Example>
 
         {/* Installation */}
@@ -121,21 +148,27 @@ export function AlertPage() {
         <Section id="examples" title="Examples">
           <div className="space-y-8">
             <Example title="Default" code={defaultCode}>
-              <Alert>
-                <AlertTitle>Heads up!</AlertTitle>
-                <AlertDescription>
-                  You can add components to your app using the CLI.
-                </AlertDescription>
-              </Alert>
+              <div className="w-full">
+                <Alert>
+                  <TerminalIcon />
+                  <AlertTitle>Heads up!</AlertTitle>
+                  <AlertDescription>
+                    You can add components to your app using the CLI.
+                  </AlertDescription>
+                </Alert>
+              </div>
             </Example>
 
             <Example title="Destructive" code={destructiveCode}>
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  Your session has expired. Please log in again.
-                </AlertDescription>
-              </Alert>
+              <div className="w-full">
+                <Alert variant="destructive">
+                  <CircleAlertIcon />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>
+                    Your session has expired. Please log in again.
+                  </AlertDescription>
+                </Alert>
+              </div>
             </Example>
           </div>
         </Section>
