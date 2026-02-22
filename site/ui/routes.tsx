@@ -34,6 +34,7 @@ import { SelectPage } from './pages/select'
 import { ResizablePage } from './pages/resizable'
 import { ScrollAreaPage } from './pages/scroll-area'
 import { SeparatorPage } from './pages/separator'
+import { SkeletonPage } from './pages/skeleton'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
@@ -174,6 +175,10 @@ export function createApp() {
             <a href="/docs/components/separator" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Separator</h3>
               <p className="text-xs text-muted-foreground">Visual divider between content</p>
+            </a>
+            <a href="/docs/components/skeleton" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Skeleton</h3>
+              <p className="text-xs text-muted-foreground">Placeholder loading indicator</p>
             </a>
             <a href="/docs/components/sheet" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Sheet</h3>
@@ -372,6 +377,11 @@ export function createApp() {
   // Separator documentation
   app.get('/docs/components/separator', (c) => {
     return c.render(<SeparatorPage />)
+  })
+
+  // Skeleton documentation
+  app.get('/docs/components/skeleton', (c) => {
+    return c.render(<SkeletonPage />)
   })
 
   // Textarea documentation
