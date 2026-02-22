@@ -16,6 +16,12 @@
       "description": "A modal dialog that interrupts the user with important content and expects a response"
     },
     {
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "An image element with a fallback for representing the user"
+    },
+    {
       "name": "slot",
       "type": "registry:ui",
       "title": "Slot",

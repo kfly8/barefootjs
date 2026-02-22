@@ -75,6 +75,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Accordion', href: '/docs/components/accordion' },
       { title: 'Alert', href: '/docs/components/alert' },
       { title: 'Alert Dialog', href: '/docs/components/alert-dialog' },
+      { title: 'Avatar', href: '/docs/components/avatar' },
       { title: 'Badge', href: '/docs/components/badge' },
       { title: 'Breadcrumb', href: '/docs/components/breadcrumb' },
       { title: 'Button', href: '/docs/components/button' },

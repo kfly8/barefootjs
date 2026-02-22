@@ -11,6 +11,7 @@ import { renderer } from './renderer'
 // Component pages
 import { AlertPage } from './pages/alert'
 import { AlertDialogPage } from './pages/alert-dialog'
+import { AvatarPage } from './pages/avatar'
 import { BadgePage } from './pages/badge'
 import { BreadcrumbPage } from './pages/breadcrumb'
 import { ButtonPage } from './pages/button'
@@ -93,6 +94,10 @@ export function createApp() {
             <a href="/docs/components/alert-dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
               <p className="text-xs text-muted-foreground">Modal dialog for important confirmations</p>
+            </a>
+            <a href="/docs/components/avatar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Avatar</h3>
+              <p className="text-xs text-muted-foreground">User profile image with fallback</p>
             </a>
             <a href="/docs/components/badge" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Badge</h3>
@@ -279,6 +284,11 @@ export function createApp() {
   // Alert Dialog documentation
   app.get('/docs/components/alert-dialog', (c) => {
     return c.render(<AlertDialogPage />)
+  })
+
+  // Avatar documentation
+  app.get('/docs/components/avatar', (c) => {
+    return c.render(<AvatarPage />)
   })
 
   // Badge documentation
