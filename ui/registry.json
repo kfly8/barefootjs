@@ -130,6 +130,12 @@
       "description": "A visually persistent menu common in desktop applications"
     },
     {
+      "name": "progress",
+      "type": "registry:ui",
+      "title": "Progress",
+      "description": "Displays an indicator showing the completion progress of a task"
+    },
+    {
       "name": "scroll-area",
       "type": "registry:ui",
       "title": "Scroll Area",
