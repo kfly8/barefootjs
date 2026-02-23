@@ -5,7 +5,7 @@
  */
 
 import { HonoAdapter } from '../src/adapter'
-import { runConformanceTests } from '@barefootjs/adapter-tests'
+import { runConformanceTests, runJSXConformanceTests } from '@barefootjs/adapter-tests'
 
 // =============================================================================
 // Shared Conformance Tests
@@ -13,4 +13,13 @@ import { runConformanceTests } from '@barefootjs/adapter-tests'
 
 runConformanceTests({
   createAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
+})
+
+// =============================================================================
+// JSX-Based Conformance Tests
+// =============================================================================
+
+runJSXConformanceTests({
+  createAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
+  // No referenceAdapter: compile + render success only
 })

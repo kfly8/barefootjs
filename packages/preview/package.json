@@ -4,6 +4,10 @@
   "description": "Lightweight preview dev server for BarefootJS components",
   "type": "module",
   "private": true,
+  "exports": {
+    ".": { "bun": "./src/index.tsx" },
+    "./render": { "bun": "./src/render.ts" }
+  },
   "dependencies": {
     "@barefootjs/hono": "workspace:*",
     "@barefootjs/jsx": "workspace:*",

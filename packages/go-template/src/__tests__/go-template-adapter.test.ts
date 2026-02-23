@@ -8,9 +8,11 @@ import { describe, test, expect } from 'bun:test'
 import { GoTemplateAdapter } from '../adapter/go-template-adapter'
 import {
   runConformanceTests,
+  runJSXConformanceTests,
   textNode, expression, element, conditional, loop, component,
   attr, prop, signal, memo, param, componentIR,
 } from '@barefootjs/adapter-tests'
+import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { parseBlockBody } from '@barefootjs/jsx'
 import ts from 'typescript'
 
@@ -26,6 +28,15 @@ runConformanceTests({
     // TODO: Local helper functions need server-side handling
     'generate/local-functions',
   ],
+})
+
+// =============================================================================
+// JSX-Based Conformance Tests
+// =============================================================================
+
+runJSXConformanceTests({
+  createAdapter: () => new GoTemplateAdapter(),
+  referenceAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
 })
 
 // =============================================================================

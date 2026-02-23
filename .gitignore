@@ -50,3 +50,6 @@ test-results/
 
 # Preview dev server output
 .preview-dist/
+
+# Render temp files (adapter-tests)
+.render-temp/

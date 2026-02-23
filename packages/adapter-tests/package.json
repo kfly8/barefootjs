@@ -6,7 +6,8 @@
     ".": { "bun": "./src/index.ts" }
   },
   "dependencies": {
-    "@barefootjs/jsx": "workspace:*"
+    "@barefootjs/jsx": "workspace:*",
+    "@barefootjs/preview": "workspace:*"
   },
   "devDependencies": {
     "@barefootjs/go-template": "workspace:*",
