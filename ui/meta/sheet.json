@@ -202,5 +202,5 @@
     "drawer",
     "alert-dialog"
   ],
-  "source": "ui/components/ui/sheet.tsx"
+  "source": "ui/components/ui/sheet/index.tsx"
 }

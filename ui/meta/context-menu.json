@@ -274,5 +274,5 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/context-menu.tsx"
+  "source": "ui/components/ui/context-menu/index.tsx"
 }

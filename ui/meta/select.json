@@ -178,5 +178,5 @@
     "radio-group",
     "input"
   ],
-  "source": "ui/components/ui/select.tsx"
+  "source": "ui/components/ui/select/index.tsx"
 }

@@ -295,5 +295,5 @@
     "popover",
     "select"
   ],
-  "source": "ui/components/ui/dropdown-menu.tsx"
+  "source": "ui/components/ui/dropdown-menu/index.tsx"
 }

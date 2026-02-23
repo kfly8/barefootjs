@@ -130,5 +130,5 @@
     "radio-group",
     "tabs"
   ],
-  "source": "ui/components/ui/toggle-group.tsx"
+  "source": "ui/components/ui/toggle-group/index.tsx"
 }

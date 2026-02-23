@@ -9,7 +9,7 @@ export function run(args: string[], ctx: CliContext): void {
 
   if (!componentName) {
     // Run all IR tests
-    const cmd = `bun test ui/components/ui/__tests__/`
+    const cmd = `bun test ui/components/ui/`
     if (ctx.jsonFlag) {
       console.log(JSON.stringify({ command: cmd }))
     } else {
@@ -19,7 +19,7 @@ export function run(args: string[], ctx: CliContext): void {
     return
   }
 
-  const irTestPath = `ui/components/ui/__tests__/${componentName}.test.ts`
+  const irTestPath = `ui/components/ui/${componentName}/index.test.tsx`
   const altIrTestPath = `packages/test/__tests__/${componentName}.test.ts`
   const e2eTestPath = `site/ui/e2e/${componentName}.spec.ts`
 

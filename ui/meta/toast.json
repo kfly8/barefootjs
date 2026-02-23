@@ -171,5 +171,5 @@
     "alert-dialog",
     "dialog"
   ],
-  "source": "ui/components/ui/toast.tsx"
+  "source": "ui/components/ui/toast/index.tsx"
 }

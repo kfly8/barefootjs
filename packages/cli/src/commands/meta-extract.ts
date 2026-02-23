@@ -1,4 +1,4 @@
-// barefoot meta:extract — extract component metadata from ui/components/ui/*.tsx.
+// barefoot meta:extract — extract component metadata from ui/components/ui/*/index.tsx.
 
 import { Glob } from 'bun'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
@@ -23,9 +23,9 @@ function loadRegistry(root: string): Record<string, { title: string; description
   return registry
 }
 
-// Convert file name to component name (e.g., "radio-group.tsx" → "radio-group")
+// Convert directory path to component name (e.g., ".../radio-group/index.tsx" → "radio-group")
 function fileToName(filePath: string): string {
-  return path.basename(filePath, '.tsx')
+  return path.basename(path.dirname(filePath))
 }
 
 // Convert kebab-case to Title Case
@@ -43,8 +43,8 @@ export async function run(_args: string[], ctx: CliContext): Promise<void> {
 
   const registry = loadRegistry(ctx.root)
 
-  // Glob all component TSX files (exclude __tests__/)
-  const glob = new Glob('*.tsx')
+  // Glob all component index.tsx files (colocated structure)
+  const glob = new Glob('*/index.tsx')
   const files: string[] = []
   for await (const file of glob.scan({ cwd: componentsDir })) {
     files.push(path.join(componentsDir, file))
@@ -81,7 +81,7 @@ export async function run(_args: string[], ctx: CliContext): Promise<void> {
       accessibility: parsed.accessibility,
       dependencies: parsed.dependencies,
       related,
-      source: `ui/components/ui/${name}.tsx`,
+      source: `ui/components/ui/${name}/index.tsx`,
     }
 
     // Write per-component JSON
