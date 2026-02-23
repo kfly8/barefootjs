@@ -92,18 +92,18 @@ function PropsStyleChild(props: PropsStyleChildProps) {
 }
 
 /**
- * Destructured style: function Component({ value, label }: Props)
- * Destructured props lose reactivity - value is captured at initial render
+ * Previously destructured style, now converted to props object pattern
+ * to maintain reactivity and avoid BF043 warnings
  */
-function DestructuredStyleChild({ value, label }: PropsStyleChildProps) {
-  // This createMemo captures the initial value of 'value'
-  // and will NOT react to changes from the parent
-  const displayValue = createMemo(() => value * 10)
+function DestructuredStyleChild(props: PropsStyleChildProps) {
+  // This createMemo now properly reacts to props.value changes
+  // using the props object pattern to maintain reactivity
+  const displayValue = createMemo(() => props.value * 10)
 
   return (
     <div className="destructured-style-child">
-      <span className="child-label">{label}</span>
-      <span className="child-raw-value">{value}</span>
+      <span className="child-label">{props.label}</span>
+      <span className="child-raw-value">{props.value}</span>
       <span className="child-computed-value">{displayValue()}</span>
     </div>
   )

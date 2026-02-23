@@ -23,9 +23,9 @@ type Props = {
   initialTodos?: Array<{ id: number; text: string; done: boolean }>
 }
 
-function TodoApp({ initialTodos = [] }: Props) {
+function TodoApp(props: Props) {
   const [todos, setTodos] = createSignal<Todo[]>(
-    initialTodos.map(t => ({ ...t, editing: false }))
+    (props.initialTodos ?? []).map(t => ({ ...t, editing: false }))
   )
   const [newText, setNewText] = createSignal('')
   const [filter, setFilter] = createSignal<Filter>('all')

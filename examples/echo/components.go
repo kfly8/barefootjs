@@ -42,8 +42,8 @@ type CounterProps struct {
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
 	Initial int `json:"initial"`
-	Count int `json:"count"`
-	Doubled int `json:"doubled"`
+	Count interface{} `json:"count"`
+	Doubled interface{} `json:"doubled"`
 }
 
 // NewCounterProps creates CounterProps from CounterInput.
@@ -56,15 +56,15 @@ func NewCounterProps(in CounterInput) CounterProps {
 	return CounterProps{
 		ScopeID: scopeID,
 		Initial: in.Initial,
-		Count: in.Initial,
-		Doubled: in.Initial * 2,
+		Count: nil,
+		Doubled: 0 * 2,
 	}
 }
 
 // ToggleItemInput is the user-facing input type.
 type ToggleItemInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	Label interface{}
+	Label string
 	DefaultOn bool
 }
 
@@ -74,9 +74,9 @@ type ToggleItemProps struct {
 	BfIsRoot bool `json:"-"`
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	Label interface{} `json:"label"`
+	Label string `json:"label"`
 	DefaultOn bool `json:"defaultOn"`
-	On bool `json:"on"`
+	On interface{} `json:"on"`
 }
 
 // NewToggleItemProps creates ToggleItemProps from ToggleItemInput.
@@ -90,7 +90,7 @@ func NewToggleItemProps(in ToggleItemInput) ToggleItemProps {
 		ScopeID: scopeID,
 		Label: in.Label,
 		DefaultOn: in.DefaultOn,
-		On: in.DefaultOn,
+		On: nil,
 	}
 }
 
@@ -170,7 +170,7 @@ func NewTodoItemProps(in TodoItemInput) TodoItemProps {
 // TodoAppInput is the user-facing input type.
 type TodoAppInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	InitialTodos []Todo
+	InitialTodos interface{}
 }
 
 // TodoAppProps is the props type for the TodoApp component.
@@ -179,7 +179,7 @@ type TodoAppProps struct {
 	BfIsRoot bool `json:"-"`
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	InitialTodos []Todo `json:"initialTodos"`
+	InitialTodos interface{} `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
 	Filter string `json:"filter"`
@@ -206,7 +206,7 @@ func NewTodoAppProps(in TodoAppInput) TodoAppProps {
 // TodoAppSSRInput is the user-facing input type.
 type TodoAppSSRInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	InitialTodos []Todo
+	InitialTodos interface{}
 }
 
 // TodoAppSSRProps is the props type for the TodoAppSSR component.
@@ -215,7 +215,7 @@ type TodoAppSSRProps struct {
 	BfIsRoot bool `json:"-"`
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	InitialTodos []Todo `json:"initialTodos"`
+	InitialTodos interface{} `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
 	Filter string `json:"filter"`
@@ -476,7 +476,7 @@ func NewPortalExampleProps(in PortalExampleInput) PortalExampleProps {
 // ConditionalReturnInput is the user-facing input type.
 type ConditionalReturnInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	Variant interface{}
+	Variant string
 }
 
 // ConditionalReturnProps is the props type for the ConditionalReturn component.
@@ -485,7 +485,7 @@ type ConditionalReturnProps struct {
 	BfIsRoot bool `json:"-"`
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	Variant interface{} `json:"variant"`
+	Variant string `json:"variant"`
 	Count int `json:"count"`
 }
 

@@ -34,7 +34,7 @@ function MoonIcon() {
   )
 }
 
-export function ThemeSwitcher({ defaultTheme = 'system', className }: ThemeSwitcherProps) {
+export function ThemeSwitcher(props: ThemeSwitcherProps) {
   const [theme, setTheme] = createSignal<Theme>('light')
   const [initialized, setInitialized] = createSignal(false)
 
@@ -77,7 +77,7 @@ export function ThemeSwitcher({ defaultTheme = 'system', className }: ThemeSwitc
     <button
       type="button"
       onClick={toggleTheme}
-      className={className || "inline-flex items-center justify-center w-9 h-9 rounded-md text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"}
+      className={props.className || "inline-flex items-center justify-center w-9 h-9 rounded-md text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"}
       aria-label={isDark() ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {isDark() ? <SunIcon /> : <MoonIcon />}
