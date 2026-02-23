@@ -1,0 +1,54 @@
+{
+  "description": "generates template for component with object literal signal initializer",
+  "level": "generate",
+  "input": {
+    "version": "0.1",
+    "metadata": {
+      "componentName": "Example",
+      "hasDefaultExport": false,
+      "isClientComponent": true,
+      "typeDefinitions": [],
+      "propsType": null,
+      "propsParams": [],
+      "signals": [
+        {
+          "getter": "position",
+          "setter": "setPosition",
+          "initialValue": "{ x: 0, y: 0 }",
+          "type": {
+            "kind": "object",
+            "raw": "{ x: number; y: number }"
+          }
+        }
+      ],
+      "memos": [],
+      "effects": [],
+      "imports": [],
+      "localFunctions": [],
+      "localConstants": []
+    },
+    "root": {
+      "type": "element",
+      "tag": "div",
+      "attrs": [],
+      "events": [],
+      "ref": null,
+      "children": [
+        {
+          "type": "expression",
+          "expr": "position().x",
+          "typeInfo": null,
+          "reactive": true,
+          "slotId": "s0"
+        }
+      ],
+      "slotId": null,
+      "needsScope": true
+    },
+    "errors": []
+  },
+  "assertions": [
+    { "type": "has-scope-marker" },
+    { "type": "output-not-empty" }
+  ]
+}
