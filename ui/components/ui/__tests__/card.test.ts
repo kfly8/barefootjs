@@ -9,8 +9,7 @@ describe('Card', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'Card')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Card', () => {
@@ -37,8 +36,7 @@ describe('CardHeader', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardHeader')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=card-header', () => {
@@ -51,8 +49,7 @@ describe('CardTitle', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardTitle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as h3 with data-slot=card-title', () => {
@@ -65,8 +62,7 @@ describe('CardDescription', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardDescription')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as p with data-slot=card-description', () => {
@@ -79,8 +75,7 @@ describe('CardContent', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=card-content', () => {
@@ -93,8 +88,7 @@ describe('CardImage', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardImage')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as img with data-slot=card-image', () => {
@@ -107,8 +101,7 @@ describe('CardAction', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardAction')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=card-action', () => {
@@ -121,8 +114,7 @@ describe('CardFooter', () => {
   const result = renderToTest(cardSource, 'card.tsx', 'CardFooter')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=card-footer', () => {

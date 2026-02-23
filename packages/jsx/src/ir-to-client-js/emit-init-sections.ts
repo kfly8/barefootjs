@@ -529,6 +529,18 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   }
 }
 
+/** Emit applyRestAttrs() calls for HTML elements with unresolved spread attrs. */
+export function emitRestAttrApplications(lines: string[], ctx: ClientJsContext): void {
+  for (const elem of ctx.restAttrElements) {
+    const v = varSlotId(elem.slotId)
+    const excludeKeys = JSON.stringify(elem.excludeKeys)
+    lines.push(`  if (_${v}) applyRestAttrs(_${v}, ${elem.source}, ${excludeKeys})`)
+  }
+  if (ctx.restAttrElements.length > 0) {
+    lines.push('')
+  }
+}
+
 /** Emit DOM event handler assignments, skipping slots inside conditionals. */
 export function emitEventHandlers(
   lines: string[],

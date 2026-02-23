@@ -13,8 +13,7 @@ describe('Drawer', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'Drawer')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Drawer', () => {
@@ -34,8 +33,7 @@ describe('DrawerTrigger', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DrawerTrigger', () => {
@@ -68,8 +66,7 @@ describe('DrawerOverlay', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerOverlay')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DrawerOverlay', () => {
@@ -100,8 +97,7 @@ describe('DrawerContent', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DrawerContent', () => {
@@ -143,8 +139,7 @@ describe('DrawerHandle', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerHandle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DrawerHandle', () => {
@@ -170,8 +165,7 @@ describe('DrawerHeader', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerHeader')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=drawer-header', () => {
@@ -184,8 +178,7 @@ describe('DrawerTitle', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerTitle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as h2 with data-slot=drawer-title', () => {
@@ -198,8 +191,7 @@ describe('DrawerDescription', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerDescription')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as p with data-slot=drawer-description', () => {
@@ -212,8 +204,7 @@ describe('DrawerFooter', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerFooter')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=drawer-footer', () => {
@@ -230,8 +221,7 @@ describe('DrawerClose', () => {
   const result = renderToTest(drawerSource, 'drawer.tsx', 'DrawerClose')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DrawerClose', () => {

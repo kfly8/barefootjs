@@ -13,8 +13,7 @@ describe('AlertDialog', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialog')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialog', () => {
@@ -30,8 +29,7 @@ describe('AlertDialogTrigger', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogTrigger', () => {
@@ -58,8 +56,7 @@ describe('AlertDialogOverlay', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogOverlay')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogOverlay', () => {
@@ -87,8 +84,7 @@ describe('AlertDialogContent', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogContent', () => {
@@ -124,8 +120,7 @@ describe('AlertDialogHeader', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogHeader')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogHeader', () => {
@@ -146,8 +141,7 @@ describe('AlertDialogTitle', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogTitle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogTitle', () => {
@@ -168,8 +162,7 @@ describe('AlertDialogDescription', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogDescription')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogDescription', () => {
@@ -190,8 +183,7 @@ describe('AlertDialogFooter', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogFooter')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogFooter', () => {
@@ -212,8 +204,7 @@ describe('AlertDialogCancel', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogCancel')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogCancel', () => {
@@ -234,8 +225,7 @@ describe('AlertDialogAction', () => {
   const result = renderToTest(source, 'alert-dialog.tsx', 'AlertDialogAction')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AlertDialogAction', () => {

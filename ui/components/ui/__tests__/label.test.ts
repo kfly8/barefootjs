@@ -9,8 +9,7 @@ describe('Label', () => {
   const result = renderToTest(labelSource, 'label.tsx', 'Label')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Label', () => {

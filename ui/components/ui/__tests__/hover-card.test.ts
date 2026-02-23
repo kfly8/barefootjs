@@ -13,8 +13,7 @@ describe('HoverCard', () => {
   const result = renderToTest(source, 'hover-card.tsx', 'HoverCard')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is HoverCard', () => {
@@ -36,8 +35,7 @@ describe('HoverCardTrigger', () => {
   const result = renderToTest(source, 'hover-card.tsx', 'HoverCardTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is HoverCardTrigger', () => {
@@ -68,8 +66,7 @@ describe('HoverCardContent', () => {
   const result = renderToTest(source, 'hover-card.tsx', 'HoverCardContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is HoverCardContent', () => {

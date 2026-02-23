@@ -13,8 +13,7 @@ describe('Command', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'Command')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Command', () => {
@@ -44,8 +43,7 @@ describe('CommandInput', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandInput')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandInput', () => {
@@ -82,8 +80,7 @@ describe('CommandList', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandList')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandList', () => {
@@ -112,8 +109,7 @@ describe('CommandEmpty', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandEmpty')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandEmpty', () => {
@@ -139,8 +135,7 @@ describe('CommandGroup', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandGroup', () => {
@@ -170,8 +165,7 @@ describe('CommandItem', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandItem', () => {
@@ -207,8 +201,7 @@ describe('CommandSeparator', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandSeparator')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandSeparator', () => {
@@ -237,8 +230,7 @@ describe('CommandShortcut', () => {
   const result = renderToTest(commandSource, 'command.tsx', 'CommandShortcut')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CommandShortcut', () => {

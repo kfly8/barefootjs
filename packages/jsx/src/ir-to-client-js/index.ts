@@ -94,6 +94,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     clientOnlyElements: [],
     clientOnlyConditionals: [],
     providerSetups: [],
+    restAttrElements: [],
   }
 }
 

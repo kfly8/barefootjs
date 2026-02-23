@@ -9,8 +9,7 @@ describe('Collapsible', () => {
   const result = renderToTest(collapsibleSource, 'collapsible.tsx', 'Collapsible')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -41,8 +40,7 @@ describe('CollapsibleTrigger', () => {
   const result = renderToTest(collapsibleSource, 'collapsible.tsx', 'CollapsibleTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CollapsibleTrigger', () => {
@@ -66,8 +64,7 @@ describe('CollapsibleContent', () => {
   const result = renderToTest(collapsibleSource, 'collapsible.tsx', 'CollapsibleContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is CollapsibleContent', () => {

@@ -9,8 +9,7 @@ describe('Avatar', () => {
   const result = renderToTest(avatarSource, 'avatar.tsx', 'Avatar')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Avatar', () => {
@@ -40,8 +39,7 @@ describe('AvatarImage', () => {
   const result = renderToTest(avatarSource, 'avatar.tsx', 'AvatarImage')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AvatarImage', () => {
@@ -69,8 +67,7 @@ describe('AvatarFallback', () => {
   const result = renderToTest(avatarSource, 'avatar.tsx', 'AvatarFallback')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AvatarFallback', () => {

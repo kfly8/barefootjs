@@ -77,8 +77,7 @@ function generateDescribeBlock(
 
   // Always: no compiler errors
   lines.push(`  test('has no compiler errors', () => {`)
-  lines.push(`    const realErrors = result.errors.filter(e => e.code !== 'BF043')`)
-  lines.push(`    expect(realErrors).toEqual([])`)
+  lines.push(`    expect(result.errors).toEqual([])`)
   lines.push(`  })`)
   lines.push(``)
 

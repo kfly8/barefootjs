@@ -9,8 +9,7 @@ describe('ToastProvider', () => {
   const result = renderToTest(toastSource, 'toast.tsx', 'ToastProvider')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ToastProvider', () => {
@@ -32,8 +31,7 @@ describe('Toast', () => {
   const result = renderToTest(toastSource, 'toast.tsx', 'Toast')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -70,8 +68,7 @@ describe('ToastClose', () => {
   const result = renderToTest(toastSource, 'toast.tsx', 'ToastClose')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ToastClose', () => {
@@ -94,8 +91,7 @@ describe('ToastAction', () => {
   const result = renderToTest(toastSource, 'toast.tsx', 'ToastAction')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ToastAction', () => {

@@ -13,8 +13,7 @@ describe('Accordion', () => {
   const result = renderToTest(accordionSource, 'accordion.tsx', 'Accordion')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Accordion', () => {
@@ -43,8 +42,7 @@ describe('AccordionItem', () => {
   const result = renderToTest(accordionSource, 'accordion.tsx', 'AccordionItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AccordionItem', () => {
@@ -78,8 +76,7 @@ describe('AccordionTrigger', () => {
   const result = renderToTest(accordionSource, 'accordion.tsx', 'AccordionTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AccordionTrigger', () => {
@@ -139,8 +136,7 @@ describe('AccordionContent', () => {
   const result = renderToTest(accordionSource, 'accordion.tsx', 'AccordionContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is AccordionContent', () => {

@@ -21,6 +21,15 @@ import type {
 } from './types'
 
 /**
+ * Deferred info for BF043 (props destructuring warning).
+ * Recorded during extractProps(), emitted only for stateful components in validateContext().
+ */
+export interface PropsDestructuringInfo {
+  loc: SourceLocation
+  hasIgnoreDirective: boolean
+}
+
+/**
  * Represents an if statement with a JSX return in a component function.
  */
 export interface ConditionalReturn {
@@ -58,6 +67,10 @@ export interface AnalyzerContext {
   propsParams: ParamInfo[]
   propsObjectName: string | null
   restPropsName: string | null
+  /** Keys that can be statically expanded from rest props (closed type) */
+  restPropsExpandedKeys: string[]
+  /** Deferred BF043 info; emitted only for stateful components in validateContext() */
+  propsDestructuring: PropsDestructuringInfo | null
 
   // JSX return
   jsxReturn: ts.JsxElement | ts.JsxFragment | ts.JsxSelfClosingElement | null
@@ -97,6 +110,8 @@ export function createAnalyzerContext(
     propsParams: [],
     propsObjectName: null,
     restPropsName: null,
+    restPropsExpandedKeys: [],
+    propsDestructuring: null,
 
     jsxReturn: null,
     conditionalReturns: [],

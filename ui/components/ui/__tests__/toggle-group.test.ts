@@ -9,8 +9,7 @@ describe('ToggleGroup', () => {
   const result = renderToTest(toggleGroupSource, 'toggle-group.tsx', 'ToggleGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -46,8 +45,7 @@ describe('ToggleGroupItem', () => {
   const result = renderToTest(toggleGroupSource, 'toggle-group.tsx', 'ToggleGroupItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ToggleGroupItem', () => {

@@ -13,8 +13,7 @@ describe('ResizablePanelGroup', () => {
   const result = renderToTest(resizableSource, 'resizable.tsx', 'ResizablePanelGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ResizablePanelGroup', () => {
@@ -44,8 +43,7 @@ describe('ResizablePanel', () => {
   const result = renderToTest(resizableSource, 'resizable.tsx', 'ResizablePanel')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ResizablePanel', () => {
@@ -73,8 +71,7 @@ describe('ResizableHandle', () => {
   const result = renderToTest(resizableSource, 'resizable.tsx', 'ResizableHandle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ResizableHandle', () => {

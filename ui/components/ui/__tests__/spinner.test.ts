@@ -9,8 +9,7 @@ describe('Spinner', () => {
   const result = renderToTest(spinnerSource, 'spinner.tsx', 'Spinner')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Spinner', () => {

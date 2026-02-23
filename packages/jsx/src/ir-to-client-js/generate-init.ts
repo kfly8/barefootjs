@@ -21,6 +21,7 @@ import {
   emitClientOnlyConditionals,
   emitLoopUpdates,
   emitEventHandlers,
+  emitRestAttrApplications,
   emitReactivePropBindings,
   emitReactiveChildProps,
   emitRefCallbacks,
@@ -197,6 +198,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
 
   const conditionalSlotIds = collectConditionalSlotIds(ctx)
 
+  emitRestAttrApplications(lines, ctx)
   emitEventHandlers(lines, ctx, conditionalSlotIds)
   emitReactivePropBindings(lines, ctx)
   emitReactiveChildProps(lines, ctx)
@@ -276,6 +278,9 @@ export function generateElementRefs(ctx: ClientJsContext): string {
     if (child.slotId) {
       componentSlots.add(child.slotId)
     }
+  }
+  for (const rest of ctx.restAttrElements) {
+    regularSlots.add(rest.slotId)
   }
 
   // Component slots take precedence over regular slots (#360).

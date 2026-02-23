@@ -9,8 +9,7 @@ describe('Breadcrumb', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'Breadcrumb')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Breadcrumb', () => {
@@ -35,8 +34,7 @@ describe('BreadcrumbList', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'BreadcrumbList')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is BreadcrumbList', () => {
@@ -58,8 +56,7 @@ describe('BreadcrumbItem', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'BreadcrumbItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is BreadcrumbItem', () => {
@@ -76,8 +73,7 @@ describe('BreadcrumbLink', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'BreadcrumbLink')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is BreadcrumbLink', () => {
@@ -99,8 +95,7 @@ describe('BreadcrumbPage', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'BreadcrumbPage')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is BreadcrumbPage', () => {
@@ -121,8 +116,7 @@ describe('BreadcrumbSeparator', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'BreadcrumbSeparator')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is BreadcrumbSeparator', () => {
@@ -143,8 +137,7 @@ describe('BreadcrumbEllipsis', () => {
   const result = renderToTest(breadcrumbSource, 'breadcrumb.tsx', 'BreadcrumbEllipsis')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is BreadcrumbEllipsis', () => {

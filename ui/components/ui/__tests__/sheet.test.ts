@@ -13,8 +13,7 @@ describe('Sheet', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'Sheet')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Sheet', () => {
@@ -34,8 +33,7 @@ describe('SheetTrigger', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SheetTrigger', () => {
@@ -68,8 +66,7 @@ describe('SheetOverlay', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetOverlay')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SheetOverlay', () => {
@@ -100,8 +97,7 @@ describe('SheetContent', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SheetContent', () => {
@@ -149,8 +145,7 @@ describe('SheetHeader', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetHeader')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=sheet-header', () => {
@@ -163,8 +158,7 @@ describe('SheetTitle', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetTitle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as h2 with data-slot=sheet-title', () => {
@@ -177,8 +171,7 @@ describe('SheetDescription', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetDescription')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as p with data-slot=sheet-description', () => {
@@ -191,8 +184,7 @@ describe('SheetFooter', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetFooter')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=sheet-footer', () => {
@@ -209,8 +201,7 @@ describe('SheetClose', () => {
   const result = renderToTest(sheetSource, 'sheet.tsx', 'SheetClose')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SheetClose', () => {

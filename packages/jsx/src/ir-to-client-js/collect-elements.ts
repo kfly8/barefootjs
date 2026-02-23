@@ -163,9 +163,15 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
         }
       }
 
+      // Detect unexpanded spread props (open type — Phase 1 couldn't resolve keys)
+      const spreadProp = node.props.find(p => p.name === '...' || p.name.startsWith('...'))
+      const spreadSource = spreadProp ? spreadProp.value : null
+
       const propsForInit: string[] = []
+      const explicitPropNames: string[] = []
       for (const prop of node.props) {
         if (prop.name === '...' || prop.name.startsWith('...')) continue
+        explicitPropNames.push(prop.name)
         const isEventHandler =
           prop.name.startsWith('on') &&
           prop.name.length > 2 &&
@@ -194,8 +200,16 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           propsForInit.push(`${quotePropName(prop.name)}: ${prop.value}`)
         }
       }
-      const propsExpr =
-        propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+
+      let propsExpr: string
+      if (spreadSource) {
+        // Use forwardProps() to merge spread source with explicit overrides
+        const overrides = propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+        const excludeKeys = JSON.stringify(explicitPropNames)
+        propsExpr = `forwardProps(${spreadSource}, ${overrides}, ${excludeKeys})`
+      } else {
+        propsExpr = propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+      }
 
       ctx.childInits.push({
         name: node.name,
@@ -250,6 +264,22 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
 
   if (element.slotId) {
     for (const attr of element.attrs) {
+      // Track unresolved spread attrs for runtime application
+      if (attr.name === '...' && attr.value) {
+        const spreadSource = attrValueToString(attr.value) ?? ''
+        if (spreadSource) {
+          const excludeKeys = element.attrs
+            .filter(a => a.name !== '...')
+            .map(a => a.name)
+          ctx.restAttrElements.push({
+            slotId: element.slotId,
+            source: spreadSource,
+            excludeKeys,
+          })
+        }
+        continue
+      }
+
       if (attr.dynamic && attr.value) {
         const valueStr = attrValueToString(attr.value)
         if (!valueStr) continue
