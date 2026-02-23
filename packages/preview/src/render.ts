@@ -95,6 +95,8 @@ async function renderHono(
   const code = `/** @jsxImportSource hono/jsx */\n${template}`
 
   await mkdir(RENDER_TEMP_DIR, { recursive: true })
+  // Unique filename per render to avoid Bun's process-level module cache
+  // (bun#12371: re-importing the same path returns stale module)
   const tempFile = resolve(
     RENDER_TEMP_DIR,
     `render-${Date.now()}-${Math.random().toString(36).slice(2)}.tsx`,
@@ -277,23 +279,9 @@ function buildGoPropsInit(
 
 /**
  * Normalize rendered HTML for cross-adapter comparison.
- * Removes adapter-specific attributes and normalizes whitespace.
+ * Collapses whitespace differences caused by Go Template block directives
+ * ({{define}}, {{if}}, etc.) that insert newlines absent in Hono JSX output.
  */
 export function normalizeHTML(html: string): string {
-  let result = html
-
-  // Remove bf-p attribute (Go template serializes props; Hono doesn't)
-  result = result.replace(/\s*bf-p="[^"]*"/g, '')
-  result = result.replace(/\s*bf-p='[^']*'/g, '')
-
-  // Remove Script registration blocks (Go template {{if .Scripts}}...{{end}})
-  // These are already absent in rendered output when Scripts is nil
-
-  // Normalize whitespace: collapse multiple spaces/newlines
-  result = result.replace(/\s+/g, ' ')
-
-  // Trim
-  result = result.trim()
-
-  return result
+  return html.replace(/\s+/g, ' ').trim()
 }
