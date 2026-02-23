@@ -7,9 +7,8 @@
 
 import { describe, test, expect } from 'bun:test'
 import type { TemplateAdapter } from '@barefootjs/jsx'
-import { renderComponent, normalizeHTML } from '@barefootjs/preview/render'
+import { renderComponent, normalizeHTML, GoNotAvailableError } from '@barefootjs/preview/render'
 import { jsxFixtures } from '../fixtures'
-import type { JSXFixture } from './types'
 
 export interface RunJSXConformanceOptions {
   /** Factory to create the adapter under test */
@@ -32,11 +31,21 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
         const adapter = createAdapter()
 
         // 1. Render with the adapter under test
-        const html = await renderComponent({
-          source: fixture.source,
-          adapter,
-          props: fixture.props,
-        })
+        let html: string
+        try {
+          html = await renderComponent({
+            source: fixture.source,
+            adapter,
+            props: fixture.props,
+          })
+        } catch (err) {
+          // Skip if Go is not available (CI without Go)
+          if (err instanceof GoNotAvailableError) {
+            console.log(`Skipping [${fixture.id}]: ${err.message}`)
+            return
+          }
+          throw err
+        }
         expect(html).toBeTruthy()
 
         // 2. If reference adapter provided, compare HTML output

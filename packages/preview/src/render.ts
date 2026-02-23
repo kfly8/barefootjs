@@ -11,8 +11,29 @@ import { Hono } from 'hono'
 import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-const RENDER_TEMP_DIR = resolve(import.meta.dir, '../../.render-temp')
+// Place temp files inside the preview package so hono/jsx resolves correctly
+const RENDER_TEMP_DIR = resolve(import.meta.dir, '../.render-temp')
 const GO_RUNTIME_DIR = resolve(import.meta.dir, '../../go-template/runtime')
+
+export class GoNotAvailableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'GoNotAvailableError'
+  }
+}
+
+let _goAvailable: boolean | null = null
+async function isGoAvailable(): Promise<boolean> {
+  if (_goAvailable !== null) return _goAvailable
+  try {
+    const proc = Bun.spawn(['go', 'version'], { stdout: 'pipe', stderr: 'pipe' })
+    await proc.exited
+    _goAvailable = proc.exitCode === 0
+  } catch {
+    _goAvailable = false
+  }
+  return _goAvailable
+}
 
 export interface RenderOptions {
   /** JSX source code */
@@ -185,6 +206,11 @@ ${propsInit}
 }
 `
     await Bun.write(resolve(tempDir, 'main.go'), mainGo)
+
+    // Check if Go is available
+    if (!await isGoAvailable()) {
+      throw new GoNotAvailableError('go command not found — skipping Go Template rendering')
+    }
 
     // Run `go run .`
     const proc = Bun.spawn(['go', 'run', '.'], {
