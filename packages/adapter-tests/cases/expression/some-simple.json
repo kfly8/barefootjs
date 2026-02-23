@@ -1,0 +1,25 @@
+{
+  "description": "renders some() with simple boolean predicate",
+  "level": "method",
+  "method": "renderExpression",
+  "input": {
+    "type": "expression",
+    "expr": "todos().some(t => t.important)",
+    "typeInfo": null,
+    "reactive": false,
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{bf_some .Todos \"Important\"}}"
+    },
+    "hono": {
+      "template": "{todos().some(t => t.important)}"
+    }
+  }
+}

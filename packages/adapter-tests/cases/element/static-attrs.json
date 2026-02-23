@@ -1,0 +1,46 @@
+{
+  "description": "renders element with static attributes",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "div",
+    "attrs": [
+      {
+        "name": "class",
+        "value": "container",
+        "dynamic": false,
+        "isLiteral": true
+      },
+      {
+        "name": "id",
+        "value": "main",
+        "dynamic": false,
+        "isLiteral": true
+      }
+    ],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "container"
+    },
+    {
+      "type": "contains-text",
+      "text": "main"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<div class=\"container\" id=\"main\"></div>"
+    },
+    "hono": {
+      "template": "<div class=\"container\" id=\"main\" />"
+    }
+  }
+}

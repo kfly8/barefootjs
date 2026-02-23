@@ -1,0 +1,37 @@
+{
+  "description": "converts numeric comparison in condition",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "count() > 0",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "text",
+      "value": "Has items"
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "Has items"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{if gt .Count 0}}Has items{{end}}"
+    },
+    "hono": {
+      "template": "{count() > 0 ? Has items : null}"
+    }
+  }
+}

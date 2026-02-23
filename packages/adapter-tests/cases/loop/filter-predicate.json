@@ -1,0 +1,45 @@
+{
+  "description": "renders loop with filter predicate as range+if",
+  "level": "method",
+  "method": "renderLoop",
+  "input": {
+    "type": "loop",
+    "array": "todos",
+    "arrayType": null,
+    "itemType": null,
+    "param": "todo",
+    "index": null,
+    "key": null,
+    "children": [
+      {
+        "type": "text",
+        "value": "Item"
+      }
+    ],
+    "slotId": null,
+    "isStaticArray": true,
+    "filterPredicate": {
+      "param": "t",
+      "raw": "!t.done"
+    }
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "Item"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "contains": [
+        "{{range",
+        "{{if not .Done}}",
+        "Item",
+        "{{end}}{{end}}"
+      ]
+    },
+    "hono": {
+      "template": "{todos.map((todo) => Item)}"
+    }
+  }
+}

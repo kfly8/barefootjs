@@ -1,0 +1,37 @@
+{
+  "description": "every() with complex predicate in condition uses preamble",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "items().every(t => t.price > 100)",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "text",
+      "value": "All expensive"
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "All expensive"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{$bf_result := true}}{{range .Items}}{{if not (gt .Price 100)}}{{$bf_result = false}}{{break}}{{end}}{{end}}{{if $bf_result}}All expensive{{end}}"
+    },
+    "hono": {
+      "template": "{items().every(t => t.price > 100) ? All expensive : null}"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "description": "renders different components with different slotIds",
+  "tags": [
+    "multi-instance"
+  ],
+  "level": "method",
+  "method": "renderComponent",
+  "input": {
+    "type": "component",
+    "name": "ReactiveChild",
+    "props": [],
+    "propsType": null,
+    "children": [],
+    "template": "",
+    "slotId": "slot_7"
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{template \"ReactiveChild\" .ReactiveChildSlot7}}"
+    },
+    "hono": {
+      "template": "<ReactiveChild __instanceId={`${__scopeId}_slot_7`} />"
+    }
+  }
+}

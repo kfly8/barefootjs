@@ -1,0 +1,25 @@
+{
+  "description": "renders find() with boolean predicate as bf_find",
+  "level": "method",
+  "method": "renderExpression",
+  "input": {
+    "type": "expression",
+    "expr": "items().find(t => t.done)",
+    "typeInfo": null,
+    "reactive": false,
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{bf_find .Items \"Done\" true}}"
+    },
+    "hono": {
+      "template": "{items().find(t => t.done)}"
+    }
+  }
+}

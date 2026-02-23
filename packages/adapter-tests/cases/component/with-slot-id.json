@@ -1,0 +1,40 @@
+{
+  "description": "renders component with slotId using unique field name",
+  "level": "method",
+  "method": "renderComponent",
+  "input": {
+    "type": "component",
+    "name": "ReactiveChild",
+    "props": [
+      {
+        "name": "value",
+        "value": "count()",
+        "dynamic": true,
+        "isLiteral": false
+      },
+      {
+        "name": "label",
+        "value": "Child A",
+        "dynamic": false,
+        "isLiteral": true
+      }
+    ],
+    "propsType": null,
+    "children": [],
+    "template": "",
+    "slotId": "slot_6"
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{template \"ReactiveChild\" .ReactiveChildSlot6}}"
+    },
+    "hono": {
+      "template": "<ReactiveChild value={count()} label=\"Child A\" __instanceId={`${__scopeId}_slot_6`} />"
+    }
+  }
+}

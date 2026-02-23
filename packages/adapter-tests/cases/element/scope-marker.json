@@ -1,0 +1,28 @@
+{
+  "description": "renders element with scope marker",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "div",
+    "attrs": [],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": true
+  },
+  "assertions": [
+    {
+      "type": "has-scope-marker"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<div bf-s=\"{{bfScopeAttr .}}\" {{bfPropsAttr .}}></div>"
+    },
+    "hono": {
+      "template": "<div bf-s={__bfChild ? `~${__scopeId}` : __scopeId} {...(__dataKey !== undefined ? { \"data-key\": __dataKey } : {})} />"
+    }
+  }
+}

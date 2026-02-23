@@ -1,0 +1,51 @@
+{
+  "description": "renders client-only conditional with slotId as comment markers",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "todos().every(t => t.done)",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "element",
+      "tag": "span",
+      "attrs": [],
+      "events": [],
+      "ref": null,
+      "children": [
+        {
+          "type": "text",
+          "value": "All done!"
+        }
+      ],
+      "slotId": null,
+      "needsScope": false
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": "slot_3",
+    "clientOnly": true
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "contains": [
+        "{{bfComment \"cond-start:slot_3\"}}",
+        "{{bfComment \"cond-end:slot_3\"}}"
+      ]
+    },
+    "hono": {
+      "template": "{bfComment(\"cond-start:slot_3\")}{bfComment(\"cond-end:slot_3\")}"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "description": "renders client-only expression with slotId as comment marker",
+  "level": "method",
+  "method": "renderExpression",
+  "input": {
+    "type": "expression",
+    "expr": "todos().every(t => t.done)",
+    "typeInfo": null,
+    "reactive": false,
+    "slotId": "slot_5",
+    "clientOnly": true
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{bfComment \"client:slot_5\"}}"
+    },
+    "hono": {
+      "template": "{bfComment(\"client:slot_5\")}"
+    }
+  }
+}

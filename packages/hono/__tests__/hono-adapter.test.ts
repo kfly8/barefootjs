@@ -1,17 +1,29 @@
 /**
  * Hono Adapter Tests
  *
- * Tests for the HonoAdapter's template generation,
- * focusing on correct handling of component metadata.
+ * Conformance tests (shared across adapters) + Hono-specific tests.
  */
 
 import { describe, test, expect } from 'bun:test'
 import { compileJSXSync } from '@barefootjs/jsx'
 import { HonoAdapter } from '../src/adapter'
+import { runConformanceTests } from '@barefootjs/adapter-tests'
+
+// =============================================================================
+// Shared Conformance Tests (~50 cases)
+// =============================================================================
+
+runConformanceTests({
+  createAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
+})
+
+// =============================================================================
+// Hono-Specific Tests
+// =============================================================================
 
 const adapter = new HonoAdapter({ injectScriptCollection: false })
 
-describe('HonoAdapter', () => {
+describe('HonoAdapter - Adapter Specific', () => {
   test('parenthesizes object literal signal initializers in generated getters', () => {
     const source = `
       'use client'
@@ -54,7 +66,6 @@ describe('HonoAdapter', () => {
 
       const markedTemplate = result.files.find(f => f.type === 'markedTemplate')
       expect(markedTemplate).toBeDefined()
-      // The helper function should be included in the output
       expect(markedTemplate?.content).toContain('function isValidElement(element)')
     })
 

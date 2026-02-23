@@ -1,0 +1,26 @@
+{
+  "description": "renders reactive expression with slot marker",
+  "level": "method",
+  "method": "renderExpression",
+  "input": {
+    "type": "expression",
+    "expr": "count()",
+    "typeInfo": null,
+    "reactive": true,
+    "slotId": "s0"
+  },
+  "assertions": [
+    {
+      "type": "has-slot-marker",
+      "slotId": "s0"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<span bf=\"s0\">{{.Count}}</span>"
+    },
+    "hono": {
+      "template": "<span bf=\"s0\">{count()}</span>"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "description": "renders nested ternary in class attribute",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "li",
+    "attrs": [
+      {
+        "name": "class",
+        "value": "todo.done ? (todo.editing ? 'completed editing' : 'completed') : (todo.editing ? 'editing' : '')",
+        "dynamic": true,
+        "isLiteral": false
+      }
+    ],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "completed"
+    },
+    {
+      "type": "contains-text",
+      "text": "editing"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<li class=\"{{if .Todo.Done}}{{if .Todo.Editing}}completed editing{{else}}completed{{end}}{{else}}{{if .Todo.Editing}}editing{{else}}{{end}}{{end}}\"></li>"
+    },
+    "hono": {
+      "template": "<li class={todo.done ? (todo.editing ? 'completed editing' : 'completed') : (todo.editing ? 'editing' : '')} />"
+    }
+  }
+}

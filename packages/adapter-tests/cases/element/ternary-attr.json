@@ -1,0 +1,36 @@
+{
+  "description": "renders simple ternary in attribute",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "div",
+    "attrs": [
+      {
+        "name": "class",
+        "value": "isActive ? 'active' : ''",
+        "dynamic": true,
+        "isLiteral": false
+      }
+    ],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "active"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<div class=\"{{if .IsActive}}active{{else}}{{end}}\"></div>"
+    },
+    "hono": {
+      "template": "<div class={isActive ? 'active' : ''} />"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "description": "renders element with dynamic attribute",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "div",
+    "attrs": [
+      {
+        "name": "class",
+        "value": "className",
+        "dynamic": true,
+        "isLiteral": false
+      }
+    ],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<div class=\"{{.ClassName}}\"></div>"
+    },
+    "hono": {
+      "template": "<div class={className} />"
+    }
+  }
+}

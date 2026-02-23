@@ -1,0 +1,38 @@
+{
+  "description": "renders simple element with text child",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "div",
+    "attrs": [],
+    "events": [],
+    "ref": null,
+    "children": [
+      {
+        "type": "text",
+        "value": "Hello"
+      }
+    ],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "contains-tag",
+      "tag": "div"
+    },
+    {
+      "type": "contains-text",
+      "text": "Hello"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<div>Hello</div>"
+    },
+    "hono": {
+      "template": "<div>Hello</div>"
+    }
+  }
+}

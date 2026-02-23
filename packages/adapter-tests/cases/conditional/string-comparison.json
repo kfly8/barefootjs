@@ -1,0 +1,37 @@
+{
+  "description": "converts string literal comparison in condition",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "filter() === 'all'",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "text",
+      "value": "All"
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "All"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{if eq .Filter \"all\"}}All{{end}}"
+    },
+    "hono": {
+      "template": "{filter() === 'all' ? All : null}"
+    }
+  }
+}

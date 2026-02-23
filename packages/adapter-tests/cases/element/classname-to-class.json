@@ -1,0 +1,40 @@
+{
+  "description": "converts className to class attribute",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "div",
+    "attrs": [
+      {
+        "name": "className",
+        "value": "container",
+        "dynamic": false,
+        "isLiteral": true
+      }
+    ],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "class"
+    },
+    {
+      "type": "not-contains-text",
+      "text": "className"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<div class=\"container\"></div>"
+    },
+    "hono": {
+      "template": "<div class=\"container\" />"
+    }
+  }
+}

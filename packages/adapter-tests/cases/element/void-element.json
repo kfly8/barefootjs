@@ -1,0 +1,40 @@
+{
+  "description": "renders void element without closing tag",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "input",
+    "attrs": [
+      {
+        "name": "type",
+        "value": "text",
+        "dynamic": false,
+        "isLiteral": true
+      }
+    ],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": null,
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "contains-tag",
+      "tag": "input"
+    },
+    {
+      "type": "not-contains-text",
+      "text": "</input>"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<input type=\"text\">"
+    },
+    "hono": {
+      "template": "<input type=\"text\" />"
+    }
+  }
+}

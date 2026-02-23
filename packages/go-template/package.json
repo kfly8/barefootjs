@@ -39,6 +39,7 @@
     "@barefootjs/jsx": "workspace:*"
   },
   "devDependencies": {
+    "@barefootjs/adapter-tests": "workspace:*",
     "@barefootjs/jsx": "workspace:*",
     "typescript": "^5.0.0"
   }

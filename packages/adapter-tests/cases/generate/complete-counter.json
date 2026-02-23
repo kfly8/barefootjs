@@ -1,0 +1,104 @@
+{
+  "description": "generates complete template for a counter component",
+  "level": "generate",
+  "input": {
+    "version": "0.1",
+    "metadata": {
+      "componentName": "Counter",
+      "hasDefaultExport": false,
+      "isClientComponent": true,
+      "typeDefinitions": [],
+      "propsType": null,
+      "propsParams": [],
+      "signals": [
+        {
+          "getter": "count",
+          "setter": "setCount",
+          "initialValue": "0",
+          "type": {
+            "kind": "primitive",
+            "raw": "number",
+            "primitive": "number"
+          }
+        }
+      ],
+      "memos": [],
+      "effects": [],
+      "imports": [],
+      "localFunctions": [],
+      "localConstants": []
+    },
+    "root": {
+      "type": "element",
+      "tag": "div",
+      "attrs": [],
+      "events": [],
+      "ref": null,
+      "children": [
+        {
+          "type": "element",
+          "tag": "p",
+          "attrs": [],
+          "events": [],
+          "ref": null,
+          "children": [
+            {
+              "type": "expression",
+              "expr": "count()",
+              "typeInfo": null,
+              "reactive": true,
+              "slotId": "s0"
+            }
+          ],
+          "slotId": "s0",
+          "needsScope": false
+        },
+        {
+          "type": "element",
+          "tag": "button",
+          "attrs": [],
+          "events": [
+            {
+              "name": "click",
+              "handler": "() => setCount(n => n + 1)"
+            }
+          ],
+          "ref": null,
+          "children": [
+            {
+              "type": "text",
+              "value": "+1"
+            }
+          ],
+          "slotId": "s1",
+          "needsScope": false
+        }
+      ],
+      "slotId": null,
+      "needsScope": true
+    },
+    "errors": []
+  },
+  "assertions": [
+    {
+      "type": "has-scope-marker"
+    },
+    {
+      "type": "contains-text",
+      "text": "+1"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "contains": [
+        "{{define \"Counter\"}}",
+        "{{end}}",
+        "bf-s=\"{{bfScopeAttr .}}\"",
+        "{{.Count}}"
+      ]
+    },
+    "hono": {
+      "template": "import { bfComment } from '@barefootjs/hono/utils'\n\nexport function Counter({ __instanceId, __bfScope, __bfChild, __bfParentProps, \"data-key\": __dataKey }: { __instanceId?: string; __bfScope?: string; __bfChild?: boolean }) {\n  const __scopeId = __instanceId || `Counter_${Math.random().toString(36).slice(2, 8)}`\n  const count = () => 0\n  const setCount = () => {}\n\n  return (\n    <div bf-s={__bfChild ? `~${__scopeId}` : __scopeId} {...(__dataKey !== undefined ? { \"data-key\": __dataKey } : {})}><p bf=\"s0\"><span bf=\"s0\">{count()}</span></p><button onClick={() => {}} bf=\"s1\">+1</button></div>\n  )\n}"
+    }
+  }
+}

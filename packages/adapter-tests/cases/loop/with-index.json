@@ -1,0 +1,36 @@
+{
+  "description": "renders loop with index variable",
+  "level": "method",
+  "method": "renderLoop",
+  "input": {
+    "type": "loop",
+    "array": "items",
+    "arrayType": null,
+    "itemType": null,
+    "param": "item",
+    "index": "i",
+    "key": null,
+    "children": [
+      {
+        "type": "text",
+        "value": "Item"
+      }
+    ],
+    "slotId": null,
+    "isStaticArray": true
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "Item"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{range $i, $item := .Items}}Item{{end}}"
+    },
+    "hono": {
+      "template": "{items.map((item, i) => Item)}"
+    }
+  }
+}

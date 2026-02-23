@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://barefootjs.dev/schema/component-ir.json",
+  "title": "BarefootJS Component IR",
+  "description": "JSON Schema for the BarefootJS Intermediate Representation. Used to validate conformance test case inputs and document the IR format for adapter authors.",
+  "type": "object",
+  "required": ["version", "metadata", "root", "errors"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.1"
+    },
+    "metadata": { "$ref": "#/$defs/IRMetadata" },
+    "root": { "$ref": "#/$defs/IRNode" },
+    "errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/CompilerError" }
+    }
+  },
+  "$defs": {
+    "SourceLocation": {
+      "type": "object",
+      "properties": {
+        "file": { "type": "string" },
+        "start": { "$ref": "#/$defs/Position" },
+        "end": { "$ref": "#/$defs/Position" }
+      },
+      "required": ["file", "start", "end"]
+    },
+    "Position": {
+      "type": "object",
+      "properties": {
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["line", "column"]
+    },
+    "TypeInfo": {
+      "type": "object",
+      "required": ["kind", "raw"],
+      "properties": {
+        "kind": { "enum": ["primitive", "object", "array", "union", "function", "interface", "unknown"] },
+        "raw": { "type": "string" },
+        "primitive": { "enum": ["string", "number", "boolean", "null", "undefined"] },
+        "properties": { "type": "array", "items": { "$ref": "#/$defs/PropertyInfo" } },
+        "elementType": { "$ref": "#/$defs/TypeInfo" },
+        "unionTypes": { "type": "array", "items": { "$ref": "#/$defs/TypeInfo" } },
+        "params": { "type": "array", "items": { "$ref": "#/$defs/ParamInfo" } },
+        "returnType": { "$ref": "#/$defs/TypeInfo" }
+      }
+    },
+    "PropertyInfo": {
+      "type": "object",
+      "required": ["name", "type", "optional", "readonly"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "$ref": "#/$defs/TypeInfo" },
+        "optional": { "type": "boolean" },
+        "readonly": { "type": "boolean" }
+      }
+    },
+    "ParamInfo": {
+      "type": "object",
+      "required": ["name", "type", "optional"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "$ref": "#/$defs/TypeInfo" },
+        "optional": { "type": "boolean" },
+        "defaultValue": { "type": "string" }
+      }
+    },
+    "IRNode": {
+      "oneOf": [
+        { "$ref": "#/$defs/IRElement" },
+        { "$ref": "#/$defs/IRText" },
+        { "$ref": "#/$defs/IRExpression" },
+        { "$ref": "#/$defs/IRConditional" },
+        { "$ref": "#/$defs/IRLoop" },
+        { "$ref": "#/$defs/IRComponent" },
+        { "$ref": "#/$defs/IRSlot" },
+        { "$ref": "#/$defs/IRFragment" },
+        { "$ref": "#/$defs/IRIfStatement" },
+        { "$ref": "#/$defs/IRProvider" }
+      ]
+    },
+    "IRElement": {
+      "type": "object",
+      "required": ["type", "tag", "attrs", "events", "ref", "children", "slotId", "needsScope"],
+      "properties": {
+        "type": { "const": "element" },
+        "tag": { "type": "string" },
+        "attrs": { "type": "array", "items": { "$ref": "#/$defs/IRAttribute" } },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/IREvent" } },
+        "ref": { "type": ["string", "null"] },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/IRNode" } },
+        "slotId": { "type": ["string", "null"] },
+        "needsScope": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRText": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "text" },
+        "value": { "type": "string" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRExpression": {
+      "type": "object",
+      "required": ["type", "expr", "typeInfo", "reactive", "slotId"],
+      "properties": {
+        "type": { "const": "expression" },
+        "expr": { "type": "string" },
+        "typeInfo": { "oneOf": [{ "$ref": "#/$defs/TypeInfo" }, { "type": "null" }] },
+        "reactive": { "type": "boolean" },
+        "slotId": { "type": ["string", "null"] },
+        "clientOnly": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRConditional": {
+      "type": "object",
+      "required": ["type", "condition", "conditionType", "reactive", "whenTrue", "whenFalse", "slotId"],
+      "properties": {
+        "type": { "const": "conditional" },
+        "condition": { "type": "string" },
+        "conditionType": { "oneOf": [{ "$ref": "#/$defs/TypeInfo" }, { "type": "null" }] },
+        "reactive": { "type": "boolean" },
+        "whenTrue": { "$ref": "#/$defs/IRNode" },
+        "whenFalse": { "$ref": "#/$defs/IRNode" },
+        "slotId": { "type": ["string", "null"] },
+        "clientOnly": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRLoop": {
+      "type": "object",
+      "required": ["type", "array", "param", "children", "isStaticArray"],
+      "properties": {
+        "type": { "const": "loop" },
+        "array": { "type": "string" },
+        "arrayType": { "oneOf": [{ "$ref": "#/$defs/TypeInfo" }, { "type": "null" }] },
+        "itemType": { "oneOf": [{ "$ref": "#/$defs/TypeInfo" }, { "type": "null" }] },
+        "param": { "type": "string" },
+        "index": { "type": ["string", "null"] },
+        "key": { "type": ["string", "null"] },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/IRNode" } },
+        "slotId": { "type": ["string", "null"] },
+        "isStaticArray": { "type": "boolean" },
+        "filterPredicate": {
+          "type": "object",
+          "required": ["param", "raw"],
+          "properties": {
+            "param": { "type": "string" },
+            "raw": { "type": "string" }
+          }
+        },
+        "sortComparator": {
+          "type": "object",
+          "required": ["paramA", "paramB", "field", "direction", "raw", "method"],
+          "properties": {
+            "paramA": { "type": "string" },
+            "paramB": { "type": "string" },
+            "field": { "type": "string" },
+            "direction": { "enum": ["asc", "desc"] },
+            "raw": { "type": "string" },
+            "method": { "enum": ["sort", "toSorted"] }
+          }
+        },
+        "chainOrder": { "enum": ["filter-sort", "sort-filter"] },
+        "clientOnly": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRComponent": {
+      "type": "object",
+      "required": ["type", "name", "props", "children", "template", "slotId"],
+      "properties": {
+        "type": { "const": "component" },
+        "name": { "type": "string" },
+        "props": { "type": "array", "items": { "$ref": "#/$defs/IRProp" } },
+        "propsType": { "oneOf": [{ "$ref": "#/$defs/TypeInfo" }, { "type": "null" }] },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/IRNode" } },
+        "template": { "type": "string" },
+        "slotId": { "type": ["string", "null"] },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRSlot": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "slot" },
+        "name": { "type": "string" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRFragment": {
+      "type": "object",
+      "required": ["type", "children"],
+      "properties": {
+        "type": { "const": "fragment" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/IRNode" } },
+        "transparent": { "type": "boolean" },
+        "needsScopeComment": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRIfStatement": {
+      "type": "object",
+      "required": ["type", "condition", "consequent"],
+      "properties": {
+        "type": { "const": "if-statement" },
+        "condition": { "type": "string" },
+        "consequent": { "$ref": "#/$defs/IRNode" },
+        "alternate": { "oneOf": [{ "$ref": "#/$defs/IRNode" }, { "type": "null" }] },
+        "scopeVariables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "initializer"],
+            "properties": {
+              "name": { "type": "string" },
+              "initializer": { "type": "string" }
+            }
+          }
+        },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRProvider": {
+      "type": "object",
+      "required": ["type", "contextName", "valueProp", "children"],
+      "properties": {
+        "type": { "const": "provider" },
+        "contextName": { "type": "string" },
+        "valueProp": { "$ref": "#/$defs/IRProp" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/IRNode" } },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRAttribute": {
+      "type": "object",
+      "required": ["name", "value", "dynamic", "isLiteral"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": ["string", "null"] },
+        "dynamic": { "type": "boolean" },
+        "isLiteral": { "type": "boolean" },
+        "presenceOrUndefined": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IREvent": {
+      "type": "object",
+      "required": ["name", "handler"],
+      "properties": {
+        "name": { "type": "string" },
+        "handler": { "type": "string" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRProp": {
+      "type": "object",
+      "required": ["name", "value", "dynamic", "isLiteral"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "dynamic": { "type": "boolean" },
+        "isLiteral": { "type": "boolean" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "IRMetadata": {
+      "type": "object",
+      "required": ["componentName", "hasDefaultExport", "typeDefinitions", "propsType", "propsParams", "signals", "memos", "effects", "imports", "localFunctions", "localConstants"],
+      "properties": {
+        "componentName": { "type": "string" },
+        "hasDefaultExport": { "type": "boolean" },
+        "isClientComponent": { "type": "boolean" },
+        "typeDefinitions": { "type": "array" },
+        "propsType": { "oneOf": [{ "$ref": "#/$defs/TypeInfo" }, { "type": "null" }] },
+        "propsParams": { "type": "array", "items": { "$ref": "#/$defs/ParamInfo" } },
+        "propsObjectName": { "type": ["string", "null"] },
+        "restPropsName": { "type": ["string", "null"] },
+        "signals": { "type": "array", "items": { "$ref": "#/$defs/SignalInfo" } },
+        "memos": { "type": "array", "items": { "$ref": "#/$defs/MemoInfo" } },
+        "effects": { "type": "array", "items": { "$ref": "#/$defs/EffectInfo" } },
+        "onMounts": { "type": "array" },
+        "imports": { "type": "array" },
+        "localFunctions": { "type": "array" },
+        "localConstants": { "type": "array" },
+        "clientAnalysis": {
+          "type": "object",
+          "properties": {
+            "needsInit": { "type": "boolean" },
+            "usedProps": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "SignalInfo": {
+      "type": "object",
+      "required": ["getter", "setter", "initialValue", "type"],
+      "properties": {
+        "getter": { "type": "string" },
+        "setter": { "type": "string" },
+        "initialValue": { "type": "string" },
+        "type": { "$ref": "#/$defs/TypeInfo" },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "MemoInfo": {
+      "type": "object",
+      "required": ["name", "computation", "type", "deps"],
+      "properties": {
+        "name": { "type": "string" },
+        "computation": { "type": "string" },
+        "type": { "$ref": "#/$defs/TypeInfo" },
+        "deps": { "type": "array", "items": { "type": "string" } },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "EffectInfo": {
+      "type": "object",
+      "required": ["body", "deps"],
+      "properties": {
+        "body": { "type": "string" },
+        "deps": { "type": "array", "items": { "type": "string" } },
+        "loc": { "$ref": "#/$defs/SourceLocation" }
+      }
+    },
+    "CompilerError": {
+      "type": "object",
+      "required": ["code", "severity", "message", "loc"],
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["error", "warning", "info"] },
+        "message": { "type": "string" },
+        "loc": { "$ref": "#/$defs/SourceLocation" },
+        "suggestion": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "string" },
+            "replacement": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

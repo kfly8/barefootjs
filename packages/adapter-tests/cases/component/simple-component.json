@@ -1,0 +1,27 @@
+{
+  "description": "renders component as template call",
+  "level": "method",
+  "method": "renderComponent",
+  "input": {
+    "type": "component",
+    "name": "Button",
+    "props": [],
+    "propsType": null,
+    "children": [],
+    "template": "",
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "output-not-empty"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{template \"Button\" .Button}}"
+    },
+    "hono": {
+      "template": "<Button __instanceId={__scopeId} />"
+    }
+  }
+}

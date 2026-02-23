@@ -1,0 +1,40 @@
+{
+  "description": "renders filter().length in condition",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "todos().filter(t => !t.done).length > 0",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "text",
+      "value": "Has incomplete"
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "Has incomplete"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "contains": [
+        "{{if gt",
+        "Has incomplete"
+      ]
+    },
+    "hono": {
+      "template": "{todos().filter(t => !t.done).length > 0 ? Has incomplete : null}"
+    }
+  }
+}

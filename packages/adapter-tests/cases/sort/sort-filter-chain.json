@@ -1,0 +1,53 @@
+{
+  "description": "renders sort+filter chain with bf_sort and if condition",
+  "level": "method",
+  "method": "renderLoop",
+  "input": {
+    "type": "loop",
+    "array": "todos",
+    "arrayType": null,
+    "itemType": null,
+    "param": "todo",
+    "index": null,
+    "key": null,
+    "children": [
+      {
+        "type": "text",
+        "value": "TodoItem"
+      }
+    ],
+    "slotId": null,
+    "isStaticArray": true,
+    "sortComparator": {
+      "paramA": "a",
+      "paramB": "b",
+      "field": "priority",
+      "direction": "asc",
+      "raw": "a.priority - b.priority",
+      "method": "sort"
+    },
+    "filterPredicate": {
+      "param": "t",
+      "raw": "!t.done"
+    },
+    "chainOrder": "sort-filter"
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "TodoItem"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "contains": [
+        "bf_sort",
+        "{{if",
+        "{{end}}{{end}}"
+      ]
+    },
+    "hono": {
+      "template": "{todos.map((todo) => TodoItem)}"
+    }
+  }
+}

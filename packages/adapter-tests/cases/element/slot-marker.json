@@ -1,0 +1,29 @@
+{
+  "description": "renders element with slot marker",
+  "level": "method",
+  "method": "renderElement",
+  "input": {
+    "type": "element",
+    "tag": "span",
+    "attrs": [],
+    "events": [],
+    "ref": null,
+    "children": [],
+    "slotId": "s0",
+    "needsScope": false
+  },
+  "assertions": [
+    {
+      "type": "has-slot-marker",
+      "slotId": "s0"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "<span bf=\"s0\"></span>"
+    },
+    "hono": {
+      "template": "<span bf=\"s0\" />"
+    }
+  }
+}

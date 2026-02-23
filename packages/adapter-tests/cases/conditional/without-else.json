@@ -1,0 +1,37 @@
+{
+  "description": "renders conditional without else branch (null whenFalse)",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "isVisible",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "text",
+      "value": "Visible"
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "Visible"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{if .IsVisible}}Visible{{end}}"
+    },
+    "hono": {
+      "template": "{isVisible ? Visible : null}"
+    }
+  }
+}

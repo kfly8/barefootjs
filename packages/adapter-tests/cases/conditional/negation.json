@@ -1,0 +1,37 @@
+{
+  "description": "converts negation in condition",
+  "level": "method",
+  "method": "renderConditional",
+  "input": {
+    "type": "conditional",
+    "condition": "!isLoading()",
+    "conditionType": null,
+    "reactive": false,
+    "whenTrue": {
+      "type": "text",
+      "value": "Loaded"
+    },
+    "whenFalse": {
+      "type": "expression",
+      "expr": "null",
+      "typeInfo": null,
+      "reactive": false,
+      "slotId": null
+    },
+    "slotId": null
+  },
+  "assertions": [
+    {
+      "type": "contains-text",
+      "text": "Loaded"
+    }
+  ],
+  "expected": {
+    "go-template": {
+      "template": "{{if not .IsLoading}}Loaded{{end}}"
+    },
+    "hono": {
+      "template": "{!isLoading() ? Loaded : null}"
+    }
+  }
+}
