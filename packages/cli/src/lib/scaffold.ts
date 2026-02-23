@@ -4,11 +4,8 @@ import { readFileSync, existsSync } from 'fs'
 import path from 'path'
 import type { ComponentMeta } from './types'
 
-const ROOT = path.resolve(import.meta.dir, '../..')
-const META_DIR = path.join(ROOT, 'ui/meta')
-
-function loadMeta(name: string): ComponentMeta | null {
-  const filePath = path.join(META_DIR, `${name}.json`)
+function loadMeta(metaDir: string, name: string): ComponentMeta | null {
+  const filePath = path.join(metaDir, `${name}.json`)
   if (!existsSync(filePath)) return null
   return JSON.parse(readFileSync(filePath, 'utf-8'))
 }
@@ -34,8 +31,8 @@ export interface ScaffoldResult {
  * @param componentName - Name for the new component (kebab-case, e.g. "settings-form")
  * @param useComponents - Names of existing components to compose (e.g. ["input", "switch", "button"])
  */
-export function scaffold(componentName: string, useComponents: string[]): ScaffoldResult {
-  const metas = useComponents.map(name => ({ name, meta: loadMeta(name) }))
+export function scaffold(componentName: string, useComponents: string[], metaDir: string): ScaffoldResult {
+  const metas = useComponents.map(name => ({ name, meta: loadMeta(metaDir, name) }))
   const found = metas.filter(m => m.meta !== null) as { name: string; meta: ComponentMeta }[]
   const notFound = metas.filter(m => m.meta === null).map(m => m.name)
 

@@ -339,10 +339,13 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// Concatenate tokens.css + globals.css to dist
+// Generate tokens CSS from JSON and concatenate with globals.css
+const { loadTokens, mergeTokenSets, generateCSS } = await import('../shared/tokens/index')
 const STYLES_DIR = resolve(ROOT_DIR, 'styles')
-const SHARED_STYLES_DIR = resolve(ROOT_DIR, '../shared/styles')
-const tokensCSS = await Bun.file(resolve(SHARED_STYLES_DIR, 'tokens.css')).text()
+const baseTokens = await loadTokens(resolve(ROOT_DIR, '../shared/tokens/tokens.json'))
+const uiTokens = await loadTokens(resolve(ROOT_DIR, 'tokens.json'))
+const mergedTokens = mergeTokenSets(baseTokens, uiTokens)
+const tokensCSS = generateCSS(mergedTokens)
 const siteGlobalsCSS = await Bun.file(resolve(STYLES_DIR, 'globals.css')).text()
 await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + siteGlobalsCSS)
 console.log('Generated: dist/globals.css (tokens + globals)')

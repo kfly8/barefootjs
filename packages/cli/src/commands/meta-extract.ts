@@ -1,23 +1,19 @@
-#!/usr/bin/env bun
-// Extract component metadata from ui/components/ui/*.tsx and write to ui/meta/
+// barefoot meta:extract — extract component metadata from ui/components/ui/*.tsx.
 
 import { Glob } from 'bun'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import path from 'path'
-import { parseComponent } from './lib/parse-component'
-import { categoryMap, relatedMap, detectTags } from './lib/categories'
-import type { ComponentMeta, MetaIndex, MetaIndexEntry } from './lib/types'
-
-const ROOT = path.resolve(import.meta.dir, '..')
-const COMPONENTS_DIR = path.join(ROOT, 'ui/components/ui')
-const META_DIR = path.join(ROOT, 'ui/meta')
-const REGISTRY_PATH = path.join(ROOT, 'ui/registry.json')
+import type { CliContext } from '../context'
+import { parseComponent } from '../lib/parse-component'
+import { categoryMap, relatedMap, detectTags } from '../lib/categories'
+import type { ComponentMeta, MetaIndex, MetaIndexEntry } from '../lib/types'
 
 // Read registry.json for fallback descriptions
-function loadRegistry(): Record<string, { title: string; description: string }> {
+function loadRegistry(root: string): Record<string, { title: string; description: string }> {
+  const registryPath = path.join(root, 'ui/registry.json')
   const registry: Record<string, { title: string; description: string }> = {}
   try {
-    const data = JSON.parse(readFileSync(REGISTRY_PATH, 'utf-8'))
+    const data = JSON.parse(readFileSync(registryPath, 'utf-8'))
     for (const item of data.items || []) {
       registry[item.name] = { title: item.title, description: item.description }
     }
@@ -37,19 +33,21 @@ function toTitle(name: string): string {
   return name.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
 }
 
-async function main() {
+export async function run(_args: string[], ctx: CliContext): Promise<void> {
+  const componentsDir = path.join(ctx.root, 'ui/components/ui')
+
   // Ensure output directory exists
-  if (!existsSync(META_DIR)) {
-    mkdirSync(META_DIR, { recursive: true })
+  if (!existsSync(ctx.metaDir)) {
+    mkdirSync(ctx.metaDir, { recursive: true })
   }
 
-  const registry = loadRegistry()
+  const registry = loadRegistry(ctx.root)
 
   // Glob all component TSX files (exclude __tests__/)
   const glob = new Glob('*.tsx')
   const files: string[] = []
-  for await (const file of glob.scan({ cwd: COMPONENTS_DIR })) {
-    files.push(path.join(COMPONENTS_DIR, file))
+  for await (const file of glob.scan({ cwd: componentsDir })) {
+    files.push(path.join(componentsDir, file))
   }
   files.sort()
 
@@ -88,7 +86,7 @@ async function main() {
 
     // Write per-component JSON
     writeFileSync(
-      path.join(META_DIR, `${name}.json`),
+      path.join(ctx.metaDir, `${name}.json`),
       JSON.stringify(meta, null, 2) + '\n',
     )
 
@@ -115,14 +113,9 @@ async function main() {
     components: indexEntries,
   }
   writeFileSync(
-    path.join(META_DIR, 'index.json'),
+    path.join(ctx.metaDir, 'index.json'),
     JSON.stringify(index, null, 2) + '\n',
   )
 
   console.log(`Extracted metadata for ${count} components → ui/meta/`)
 }
-
-main().catch(e => {
-  console.error(e)
-  process.exit(1)
-})

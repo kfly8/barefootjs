@@ -18,8 +18,8 @@
     "test": "bun test --cwd . packages/",
     "test:e2e": "bun run --filter '*' test:e2e",
     "clean": "bun run --filter '*' clean",
-    "meta:extract": "bun run scripts/extract-meta.ts",
-    "barefoot": "bun run scripts/barefoot.ts"
+    "meta:extract": "bun run packages/cli/src/index.ts meta:extract",
+    "barefoot": "bun run packages/cli/src/index.ts"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",
