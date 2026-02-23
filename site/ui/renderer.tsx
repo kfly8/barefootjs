@@ -30,9 +30,7 @@ import { SearchButton } from '@/components/search-button'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 import { CommandPalette } from '@/components/command-palette'
 
-// Import manifest for dependency-aware preloading
-// This enables BfPreload to automatically preload the full dependency chain
-// Example: If Button depends on Slot, preloading Button will also preload Slot
+// Import manifest for modulepreload of all client JS entries
 import manifest from './dist/components/manifest.json'
 
 /**
@@ -156,10 +154,7 @@ export const renderer = jsxRenderer(
         <html lang="en">
           <head>
             <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
-            <BfPreload
-              manifest={manifest as Manifest}
-              components={['Button', 'CopyButton', 'Toggle', 'ThemeToggle']}
-            />
+            <BfPreload manifest={manifest as Manifest} />
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <link rel="icon" type="image/png" sizes="32x32" href="/static/icon-32.png" />

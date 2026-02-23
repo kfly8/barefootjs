@@ -10,6 +10,7 @@ import { Header } from '../../shared/components/header'
 import { SearchPlaceholder } from '../../shared/components/search-placeholder'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 import { BfScripts } from '../../../packages/hono/src/scripts'
+import { BfPreload, type Manifest } from '../../../packages/hono/src/preload'
 import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
 
 /**
@@ -29,6 +30,9 @@ function WithPredictableIds({ children }: { children: any }) {
   c.set('bfInstanceIdGenerator', createPredictableIdGenerator())
   return <>{children}</>
 }
+
+// Import manifest for modulepreload of all client JS entries
+import manifest from '../dist/components/manifest.json'
 
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
@@ -50,6 +54,7 @@ export const landingRenderer = jsxRenderer(
         <html lang="en">
           <head>
             <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
+            <BfPreload manifest={manifest as Manifest} />
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <link rel="icon" type="image/png" sizes="32x32" href="/static/icon-32.png" />

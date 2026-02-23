@@ -52,7 +52,8 @@ func FuncMap() template.FuncMap {
 		"bfComment": Comment,
 
 		// Script collection
-		"bfScripts": BfScripts,
+		"bfScripts":       BfScripts,
+		"bfPreloadLinks":  BfPreloadLinks,
 
 		// Scope attribute value (prepends ~ for child components)
 		"bfScopeAttr": ScopeAttr,
@@ -672,6 +673,24 @@ func BfScripts(collector *ScriptCollector) template.HTML {
 	return template.HTML(result.String())
 }
 
+// BfPreloadLinks generates modulepreload link tags for all registered scripts.
+// Place these in <head> for early browser discovery.
+// Modulepreload only fetches and parses — it doesn't execute —
+// so unused preloads have minimal cost.
+func BfPreloadLinks(collector *ScriptCollector) template.HTML {
+	if collector == nil {
+		return ""
+	}
+	var result strings.Builder
+	for _, src := range collector.Scripts() {
+		result.WriteString(`<link rel="modulepreload" href="`)
+		result.WriteString(src)
+		result.WriteString(`">`)
+		result.WriteString("\n")
+	}
+	return template.HTML(result.String())
+}
+
 // =============================================================================
 // Component Renderer
 // =============================================================================
@@ -691,7 +710,10 @@ type RenderContext struct {
 	// Portals contains collected portal content to render at body end
 	Portals template.HTML
 
-	// Scripts contains the collected JS script tags
+	// Preloads contains modulepreload link tags for <head>
+	Preloads template.HTML
+
+	// Scripts contains the collected JS script tags for </body>
 	Scripts template.HTML
 
 	// Title is the page title (defaults to "{ComponentName} - BarefootJS")
@@ -720,9 +742,9 @@ type Renderer struct {
 //	renderer := bf.NewRenderer(templates, func(ctx *bf.RenderContext) string {
 //	    return fmt.Sprintf(`<!DOCTYPE html>
 //	<html>
-//	<head><title>%s</title></head>
+//	<head><title>%s</title>%s</head>
 //	<body>%s%s</body>
-//	</html>`, ctx.Title, ctx.ComponentHTML, ctx.Scripts)
+//	</html>`, ctx.Title, ctx.Preloads, ctx.ComponentHTML, ctx.Scripts)
 //	})
 func NewRenderer(tmpl *template.Template, layout LayoutFunc) *Renderer {
 	return &Renderer{
@@ -798,6 +820,7 @@ func (r *Renderer) Render(opts RenderOptions) string {
 		Props:         opts.Props,
 		ComponentHTML: template.HTML(componentBuf.String()),
 		Portals:       portalCollector.Render(),
+		Preloads:      BfPreloadLinks(scriptCollector),
 		Scripts:       BfScripts(scriptCollector),
 		Title:         title,
 		Heading:       heading,

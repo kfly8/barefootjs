@@ -14,6 +14,7 @@ import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { serveStatic } from 'hono/bun'
 import { BfScripts } from '@barefootjs/hono/scripts'
 import { BfPortals } from '@barefootjs/hono/portals'
+import { BfPreload, type Manifest } from '@barefootjs/hono/preload'
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -58,6 +59,8 @@ export interface ServerOptions {
   componentName: string
   /** Render function: given preview name, returns JSX */
   renderPreview: (name: string) => any
+  /** Component manifest for modulepreload */
+  manifest?: Manifest
   /** Port number */
   port?: number
 }
@@ -70,7 +73,7 @@ export function pascalToTitle(name: string): string {
 }
 
 export function createPreviewApp(options: ServerOptions) {
-  const { previews, componentName, renderPreview } = options
+  const { previews, componentName, renderPreview, manifest } = options
 
   const app = new Hono()
 
@@ -84,6 +87,7 @@ export function createPreviewApp(options: ServerOptions) {
             <html lang="en">
               <head>
                 <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
+                {manifest && <BfPreload manifest={manifest as Manifest} />}
                 <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <title>{componentName} — Preview</title>

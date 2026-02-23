@@ -56,6 +56,7 @@ export async function runPreview(componentName: string) {
       if (!Preview) return <div>Preview "{name}" not found</div>
       return <Preview />
     },
+    manifest: result.manifest,
     port: DEFAULT_PORT,
   })
 

@@ -12,6 +12,7 @@ import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } fr
 import { PageNav, type PageNavLink } from '../shared/components/page-nav'
 import { PageNavigation } from '../shared/components/page-navigation'
 import { BfScripts } from '../../packages/hono/src/scripts'
+import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
 import { TableOfContents } from '@/components/table-of-contents'
 import type { TocItem } from '../shared/components/table-of-contents'
 
@@ -51,6 +52,9 @@ function WithPredictableIds({ children }: { children: any }) {
 }
 
 import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
+
+// Import manifest for modulepreload of all client JS entries
+import manifest from './dist/components/manifest.json'
 
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
@@ -126,6 +130,7 @@ export const renderer = jsxRenderer(
         <html lang="en">
           <head>
             <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
+            <BfPreload manifest={manifest as Manifest} />
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <link rel="icon" type="image/png" sizes="32x32" href="/static/icon-32.png" />

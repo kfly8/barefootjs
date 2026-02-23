@@ -7,6 +7,10 @@
 
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { BfScripts } from '../../packages/hono/src/scripts'
+import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
+
+// Import manifest for modulepreload of all client JS entries
+import manifest from './dist/components/manifest.json'
 
 // Import map for resolving @barefootjs/dom in client JS
 const importMapScript = JSON.stringify({
@@ -24,6 +28,7 @@ export const renderer = jsxRenderer(
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <title>BarefootJS + Hono/JSX</title>
           <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
+          <BfPreload manifest={manifest as Manifest} />
           <link rel="stylesheet" href="/shared/styles/components.css" />
           <link rel="stylesheet" href="/shared/styles/todo-app.css" />
           <style>{`
