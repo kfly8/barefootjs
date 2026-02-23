@@ -56,5 +56,5 @@
   "related": [
     "resizable"
   ],
-  "source": "ui/components/ui/scroll-area.tsx"
+  "source": "ui/components/ui/scroll-area/index.tsx"
 }

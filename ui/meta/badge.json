@@ -68,5 +68,5 @@
   "related": [
     "button"
   ],
-  "source": "ui/components/ui/badge.tsx"
+  "source": "ui/components/ui/badge/index.tsx"
 }

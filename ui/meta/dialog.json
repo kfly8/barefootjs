@@ -194,5 +194,5 @@
     "drawer",
     "sheet"
   ],
-  "source": "ui/components/ui/dialog.tsx"
+  "source": "ui/components/ui/dialog/index.tsx"
 }

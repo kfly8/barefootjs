@@ -6,7 +6,7 @@ import { parseComponent } from '../src/lib/parse-component'
 const COMPONENTS_DIR = path.resolve(import.meta.dir, '../../../ui/components/ui')
 
 function readComponent(name: string): string {
-  return readFileSync(path.join(COMPONENTS_DIR, `${name}.tsx`), 'utf-8')
+  return readFileSync(path.join(COMPONENTS_DIR, name, 'index.tsx'), 'utf-8')
 }
 
 describe('parseComponent', () => {

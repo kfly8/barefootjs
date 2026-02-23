@@ -64,5 +64,5 @@
     "checkbox",
     "toggle"
   ],
-  "source": "ui/components/ui/switch.tsx"
+  "source": "ui/components/ui/switch/index.tsx"
 }

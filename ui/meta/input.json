@@ -35,5 +35,5 @@
     "label",
     "select"
   ],
-  "source": "ui/components/ui/input.tsx"
+  "source": "ui/components/ui/input/index.tsx"
 }

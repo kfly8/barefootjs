@@ -122,5 +122,5 @@
     "pagination",
     "tabs"
   ],
-  "source": "ui/components/ui/breadcrumb.tsx"
+  "source": "ui/components/ui/breadcrumb/index.tsx"
 }

@@ -50,5 +50,5 @@
   "related": [
     "button"
   ],
-  "source": "ui/components/ui/slot.tsx"
+  "source": "ui/components/ui/slot/index.tsx"
 }

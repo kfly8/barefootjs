@@ -201,5 +201,5 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/command.tsx"
+  "source": "ui/components/ui/command/index.tsx"
 }
