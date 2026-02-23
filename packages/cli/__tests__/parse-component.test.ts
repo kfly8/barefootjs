@@ -1,9 +1,9 @@
 import { describe, test, expect } from 'bun:test'
 import { readFileSync } from 'fs'
 import path from 'path'
-import { parseComponent } from '../lib/parse-component'
+import { parseComponent } from '../src/lib/parse-component'
 
-const COMPONENTS_DIR = path.resolve(import.meta.dir, '../../ui/components/ui')
+const COMPONENTS_DIR = path.resolve(import.meta.dir, '../../../ui/components/ui')
 
 function readComponent(name: string): string {
   return readFileSync(path.join(COMPONENTS_DIR, `${name}.tsx`), 'utf-8')

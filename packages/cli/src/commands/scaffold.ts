@@ -1,0 +1,43 @@
+// barefoot scaffold — generate component skeleton + IR test.
+
+import { writeFileSync, mkdirSync, existsSync } from 'fs'
+import path from 'path'
+import type { CliContext } from '../context'
+import { scaffold } from '../lib/scaffold'
+
+export function run(args: string[], ctx: CliContext): void {
+  if (args.length < 2) {
+    console.error('Usage: barefoot scaffold <component-name> <use-component1> [use-component2] ...')
+    console.error('Example: barefoot scaffold settings-form input switch button')
+    process.exit(1)
+  }
+
+  const [componentName, ...useComponents] = args
+  const result = scaffold(componentName, useComponents, ctx.metaDir)
+
+  // Write component file
+  const componentAbsPath = path.join(ctx.root, result.componentPath)
+  if (existsSync(componentAbsPath)) {
+    console.error(`Error: ${result.componentPath} already exists. Delete it first or choose a different name.`)
+    process.exit(1)
+  }
+
+  // Write test file
+  const testAbsPath = path.join(ctx.root, result.testPath)
+  const testDir = path.dirname(testAbsPath)
+  if (!existsSync(testDir)) {
+    mkdirSync(testDir, { recursive: true })
+  }
+
+  writeFileSync(componentAbsPath, result.componentCode)
+  writeFileSync(testAbsPath, result.testCode)
+
+  console.log(`Created:`)
+  console.log(`  ${result.componentPath}`)
+  console.log(`  ${result.testPath}`)
+  console.log(``)
+  console.log(`Next steps:`)
+  console.log(`  1. Implement the component in ${result.componentPath}`)
+  console.log(`  2. bun test ${result.testPath}`)
+  console.log(`  3. bun run barefoot test:template ${componentName}  (regenerate richer test)`)
+}
