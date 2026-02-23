@@ -14,11 +14,10 @@ interface ConditionalReturnProps {
   variant?: string
 }
 
-// @bf-ignore props-destructuring
-function ConditionalReturn({ variant }: ConditionalReturnProps) {
+function ConditionalReturn(props: ConditionalReturnProps) {
   const [count, setCount] = createSignal(0)
 
-  if (variant === 'link') {
+  if (props.variant === 'link') {
     return (
       <a
         href="#"
