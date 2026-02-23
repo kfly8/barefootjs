@@ -6,26 +6,16 @@
 
 import { describe, test, expect } from 'bun:test'
 import { GoTemplateAdapter } from '../adapter/go-template-adapter'
-import { runConformanceTests } from '@barefootjs/adapter-tests'
-import type {
-  ComponentIR,
-  IRLoop,
-  IRComponent,
-  IRExpression,
-  IRConditional,
-} from '@barefootjs/jsx'
+import {
+  runConformanceTests,
+  textNode, expression, element, conditional, loop, component,
+  attr, prop, signal, memo, param, componentIR,
+} from '@barefootjs/adapter-tests'
 import { parseBlockBody } from '@barefootjs/jsx'
 import ts from 'typescript'
 
-// Helper to create minimal source location
-const loc = {
-  file: 'test.tsx',
-  start: { line: 1, column: 0 },
-  end: { line: 1, column: 0 },
-}
-
 // =============================================================================
-// Shared Conformance Tests (~50 cases)
+// Shared Conformance Tests
 // =============================================================================
 
 runConformanceTests({
@@ -47,50 +37,12 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
 
   describe('generate - Go struct types', () => {
     test('generates Go struct types', () => {
-      const ir: ComponentIR = {
-        version: '0.1',
-        metadata: {
-          componentName: 'Counter',
-          hasDefaultExport: false,
-          typeDefinitions: [],
-          propsType: null,
-          propsParams: [
-            {
-              name: 'initial',
-              type: { kind: 'primitive', raw: 'number', primitive: 'number' },
-              optional: true,
-              defaultValue: '0',
-            },
-          ],
-          restPropsName: null,
-          signals: [
-            {
-              getter: 'count',
-              setter: 'setCount',
-              initialValue: '0',
-              type: { kind: 'primitive', raw: 'number', primitive: 'number' },
-              loc,
-            },
-          ],
-          memos: [],
-          effects: [],
-          imports: [],
-          localFunctions: [],
-          localConstants: [],
-        },
-        root: {
-          type: 'element',
-          tag: 'div',
-          attrs: [],
-          events: [],
-          ref: null,
-          children: [],
-          slotId: null,
-          needsScope: false,
-          loc,
-        },
-        errors: [],
-      }
+      const ir = componentIR('Counter', element('div'), {
+        propsParams: [
+          param('initial', { kind: 'primitive', raw: 'number', primitive: 'number' }, { optional: true, defaultValue: '0' }),
+        ],
+        signals: [signal('count', 'setCount', '0')],
+      })
 
       const result = adapter.generate(ir)
 
@@ -107,41 +59,11 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
     test('generates types with custom package name', () => {
       const customAdapter = new GoTemplateAdapter({ packageName: 'views' })
 
-      const ir: ComponentIR = {
-        version: '0.1',
-        metadata: {
-          componentName: 'Button',
-          hasDefaultExport: false,
-          typeDefinitions: [],
-          propsType: null,
-          propsParams: [
-            {
-              name: 'label',
-              type: { kind: 'primitive', raw: 'string', primitive: 'string' },
-              optional: false,
-            },
-          ],
-          restPropsName: null,
-          signals: [],
-          memos: [],
-          effects: [],
-          imports: [],
-          localFunctions: [],
-          localConstants: [],
-        },
-        root: {
-          type: 'element',
-          tag: 'button',
-          attrs: [],
-          events: [],
-          ref: null,
-          children: [],
-          slotId: null,
-          needsScope: false,
-          loc,
-        },
-        errors: [],
-      }
+      const ir = componentIR('Button', element('button'), {
+        propsParams: [
+          param('label', { kind: 'primitive', raw: 'string', primitive: 'string' }),
+        ],
+      })
 
       const types = customAdapter.generateTypes(ir)
 
@@ -151,79 +73,34 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
     })
 
     test('generates fields for multiple static child components with slotId', () => {
-      const ir: ComponentIR = {
-        version: '0.1',
-        metadata: {
-          componentName: 'ReactiveProps',
+      const ir = componentIR(
+        'ReactiveProps',
+        element('div', {
+          needsScope: true,
+          children: [
+            component('ReactiveChild', {
+              props: [
+                prop('value', 'count()', { dynamic: true, isLiteral: false }),
+                prop('label', 'Child A'),
+              ],
+              slotId: 'slot_6',
+            }),
+            component('ReactiveChild', {
+              props: [
+                prop('value', 'doubled()', { dynamic: true, isLiteral: false }),
+                prop('label', 'Child B (doubled)'),
+              ],
+              slotId: 'slot_7',
+            }),
+          ],
+        }),
+        {
           hasDefaultExport: true,
           isClientComponent: true,
-          typeDefinitions: [],
-          propsType: null,
-          propsParams: [],
-          restPropsName: null,
-          signals: [
-            {
-              getter: 'count',
-              setter: 'setCount',
-              initialValue: '0',
-              type: { kind: 'primitive', raw: 'number', primitive: 'number' },
-              loc,
-            },
-          ],
-          memos: [
-            {
-              name: 'doubled',
-              computation: '() => count() * 2',
-              deps: ['count'],
-              type: { kind: 'primitive', raw: 'number', primitive: 'number' },
-            },
-          ],
-          effects: [],
-          onMounts: [],
-          imports: [],
-          localFunctions: [],
-          localConstants: [],
+          signals: [signal('count', 'setCount', '0')],
+          memos: [memo('doubled', '() => count() * 2', ['count'])],
         },
-        root: {
-          type: 'element',
-          tag: 'div',
-          attrs: [],
-          events: [],
-          ref: null,
-          needsScope: true,
-          slotId: null,
-          loc,
-          children: [
-            {
-              type: 'component',
-              name: 'ReactiveChild',
-              props: [
-                { name: 'value', value: 'count()', dynamic: true, isLiteral: false, loc },
-                { name: 'label', value: 'Child A', dynamic: false, isLiteral: true, loc },
-              ],
-              propsType: null,
-              children: [],
-              template: '',
-              slotId: 'slot_6',
-              loc,
-            },
-            {
-              type: 'component',
-              name: 'ReactiveChild',
-              props: [
-                { name: 'value', value: 'doubled()', dynamic: true, isLiteral: false, loc },
-                { name: 'label', value: 'Child B (doubled)', dynamic: false, isLiteral: true, loc },
-              ],
-              propsType: null,
-              children: [],
-              template: '',
-              slotId: 'slot_7',
-              loc,
-            },
-          ],
-        },
-        errors: [],
-      }
+      )
 
       const types = adapter.generateTypes(ir)
 
@@ -240,28 +117,10 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
 
   describe('Portal component handling', () => {
     test('renders Portal component with children as portal collection', () => {
-      const portalComp: IRComponent = {
-        type: 'component',
-        name: 'Portal',
-        props: [],
-        propsType: null,
-        children: [
-          {
-            type: 'element',
-            tag: 'div',
-            attrs: [{ name: 'data-slot', value: 'dialog-overlay', dynamic: false, isLiteral: true, loc }],
-            events: [],
-            ref: null,
-            children: [],
-            slotId: null,
-            needsScope: false,
-            loc,
-          },
-        ],
-        template: '',
+      const portalComp = component('Portal', {
+        children: [element('div', { attrs: [attr('data-slot', 'dialog-overlay')] })],
         slotId: 'slot_portal_1',
-        loc,
-      }
+      })
 
       const result = adapter.renderComponent(portalComp)
       expect(result).toContain('.Portals.Add')
@@ -269,31 +128,17 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
     })
 
     test('renders Portal with dynamic attribute in children', () => {
-      const portalComp: IRComponent = {
-        type: 'component',
-        name: 'Portal',
-        props: [],
-        propsType: null,
+      const portalComp = component('Portal', {
         children: [
-          {
-            type: 'element',
-            tag: 'div',
+          element('div', {
             attrs: [
-              { name: 'data-slot', value: 'dialog-overlay', dynamic: false, isLiteral: true, loc },
-              { name: 'data-state', value: "open ? 'open' : 'closed'", dynamic: true, isLiteral: false, loc },
+              attr('data-slot', 'dialog-overlay'),
+              attr('data-state', "open ? 'open' : 'closed'", { dynamic: true, isLiteral: false }),
             ],
-            events: [],
-            ref: null,
-            children: [],
-            slotId: null,
-            needsScope: false,
-            loc,
-          },
+          }),
         ],
-        template: '',
         slotId: 'slot_portal_2',
-        loc,
-      }
+      })
 
       const result = adapter.renderComponent(portalComp)
       expect(result).toContain('.Portals.Add')
@@ -302,34 +147,12 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
     })
 
     test('Portal without children renders empty portal add', () => {
-      const portalComp: IRComponent = {
-        type: 'component',
-        name: 'Portal',
-        props: [],
-        propsType: null,
-        children: [],
-        template: '',
-        slotId: 'slot_portal_empty',
-        loc,
-      }
-
-      const result = adapter.renderComponent(portalComp)
+      const result = adapter.renderComponent(component('Portal', { slotId: 'slot_portal_empty' }))
       expect(result).toContain('.Portals.Add')
     })
 
     test('non-Portal component renders normally', () => {
-      const comp: IRComponent = {
-        type: 'component',
-        name: 'DialogTrigger',
-        props: [],
-        propsType: null,
-        children: [],
-        template: '',
-        slotId: 'slot_1',
-        loc,
-      }
-
-      const result = adapter.renderComponent(comp)
+      const result = adapter.renderComponent(component('DialogTrigger', { slotId: 'slot_1' }))
       expect(result).toBe('{{template "DialogTrigger" .DialogTriggerSlot1}}')
       expect(result).not.toContain('.Portals.Add')
     })
@@ -355,26 +178,11 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
       const blockBody = parseBlock('{ return !t.done }')
       expect(blockBody).not.toBeNull()
 
-      const loop: IRLoop = {
-        type: 'loop',
-        array: 'todos',
-        arrayType: null,
-        itemType: null,
-        param: 'todo',
-        index: null,
-        key: null,
-        children: [{ type: 'text', value: 'Item', loc }],
-        slotId: null,
-        isStaticArray: true,
-        filterPredicate: {
-          param: 't',
-          blockBody: blockBody!,
-          raw: '{ return !t.done }',
-        },
-        loc,
-      }
+      const l = loop('todos', 'todo', [textNode('Item')], {
+        filterPredicate: { param: 't', blockBody: blockBody!, raw: '{ return !t.done }' },
+      })
 
-      const result = adapter.renderLoop(loop)
+      const result = adapter.renderLoop(l)
       expect(result).toContain('{{range')
       expect(result).toContain('not .Done')
       expect(result).toContain('Item')
@@ -388,26 +196,11 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
       }`)
       expect(blockBody).not.toBeNull()
 
-      const loop: IRLoop = {
-        type: 'loop',
-        array: 'todos',
-        arrayType: null,
-        itemType: null,
-        param: 'todo',
-        index: null,
-        key: null,
-        children: [{ type: 'text', value: 'TodoItem', loc }],
-        slotId: null,
-        isStaticArray: true,
-        filterPredicate: {
-          param: 't',
-          blockBody: blockBody!,
-          raw: 'block body',
-        },
-        loc,
-      }
+      const l = loop('todos', 'todo', [textNode('TodoItem')], {
+        filterPredicate: { param: 't', blockBody: blockBody!, raw: 'block body' },
+      })
 
-      const result = adapter.renderLoop(loop)
+      const result = adapter.renderLoop(l)
       expect(result).toContain('{{range')
       expect(result).toContain('{{if')
       expect(result).toContain('$.Filter')
@@ -423,26 +216,11 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
       }`)
       expect(blockBody).not.toBeNull()
 
-      const loop: IRLoop = {
-        type: 'loop',
-        array: 'todos',
-        arrayType: null,
-        itemType: null,
-        param: 'todo',
-        index: null,
-        key: null,
-        children: [{ type: 'text', value: 'TodoItem', loc }],
-        slotId: null,
-        isStaticArray: true,
-        filterPredicate: {
-          param: 't',
-          blockBody: blockBody!,
-          raw: 'block body',
-        },
-        loc,
-      }
+      const l = loop('todos', 'todo', [textNode('TodoItem')], {
+        filterPredicate: { param: 't', blockBody: blockBody!, raw: 'block body' },
+      })
 
-      const result = adapter.renderLoop(loop)
+      const result = adapter.renderLoop(l)
       expect(result).toContain('{{range')
       expect(result).toContain('{{if')
       expect(result).toContain('$.Filter')
@@ -454,48 +232,23 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
 
   describe('higher-order methods - regression', () => {
     test('simple every(t => t.done) still uses bf_every', () => {
-      const expr: IRExpression = {
-        type: 'expression',
-        expr: 'todos().every(t => t.done)',
-        typeInfo: null,
-        reactive: false,
-        slotId: null,
-        loc,
-      }
-
-      const result = adapter.renderExpression(expr)
+      const result = adapter.renderExpression(expression('todos().every(t => t.done)'))
       expect(result).toBe('{{bf_every .Todos "Done"}}')
     })
   })
 
   describe('find/findIndex - adapter specific', () => {
     test('renders find() with equality + comparison mixed predicate', () => {
-      const expr: IRExpression = {
-        type: 'expression',
-        expr: "items().find(t => t.price > 100 && t.category === type())",
-        typeInfo: null,
-        reactive: false,
-        slotId: null,
-        loc,
-      }
-
-      const result = adapter.renderExpression(expr)
+      const result = adapter.renderExpression(
+        expression("items().find(t => t.price > 100 && t.category === type())"),
+      )
       expect(result).toBe('{{range .Items}}{{if and (gt .Price 100) (eq .Category $.Type)}}{{.}}{{break}}{{end}}{{end}}')
     })
 
     test('renders find() in condition without {{with}}', () => {
-      const cond: IRConditional = {
-        type: 'conditional',
-        condition: 'items().find(t => t.done)',
-        conditionType: null,
-        reactive: false,
-        whenTrue: { type: 'text', value: 'Found', loc },
-        whenFalse: { type: 'expression', expr: 'null', typeInfo: null, reactive: false, slotId: null, loc },
-        slotId: null,
-        loc,
-      }
-
-      const result = adapter.renderConditional(cond)
+      const result = adapter.renderConditional(
+        conditional('items().find(t => t.done)', textNode('Found')),
+      )
       expect(result).toContain('bf_find .Items "Done" true')
       expect(result).toContain('Found')
     })
