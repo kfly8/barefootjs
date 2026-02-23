@@ -27,8 +27,19 @@ async function isGoAvailable(): Promise<boolean> {
   if (_goAvailable !== null) return _goAvailable
   try {
     const proc = Bun.spawn(['go', 'version'], { stdout: 'pipe', stderr: 'pipe' })
+    const stdout = await new Response(proc.stdout).text()
     await proc.exited
-    _goAvailable = proc.exitCode === 0
+    if (proc.exitCode !== 0) { _goAvailable = false; return false }
+
+    // Check Go version is sufficient (go.mod requires 1.25+)
+    const match = stdout.match(/go(\d+)\.(\d+)/)
+    if (match) {
+      const major = parseInt(match[1], 10)
+      const minor = parseInt(match[2], 10)
+      _goAvailable = major > 1 || (major === 1 && minor >= 25)
+    } else {
+      _goAvailable = false
+    }
   } catch {
     _goAvailable = false
   }
