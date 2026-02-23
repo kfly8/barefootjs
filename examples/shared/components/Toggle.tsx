@@ -8,11 +8,12 @@ type ToggleItemProps = {
 }
 
 // Reusable toggle component with label
-function ToggleItem(props: ToggleItemProps) {
-  const [on, setOn] = createSignal(props.defaultOn ?? false)
+// @bf-ignore props-destructuring
+function ToggleItem({ label, defaultOn = false }: ToggleItemProps) {
+  const [on, setOn] = createSignal(defaultOn)
   return (
     <div className="toggle-item" style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
-      <span style="min-width: 120px;">{props.label}</span>
+      <span style="min-width: 120px;">{label}</span>
       <button
         onClick={() => setOn(!on())}
         style={`padding: 4px 12px; min-width: 60px; background: ${on() ? '#4caf50' : '#ccc'}; color: ${on() ? 'white' : 'black'}; border: none; border-radius: 4px; cursor: pointer;`}

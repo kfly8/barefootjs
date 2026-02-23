@@ -164,8 +164,14 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       }
 
       // Detect unexpanded spread props (open type — Phase 1 couldn't resolve keys)
+      // Only handle spreads whose source matches the component's rest/props parameter name.
+      // Other identifiers (e.g., local variables) may not exist in the compiled init scope.
+      // Always use 'props' as the actual source since the init function parameter is always 'props'.
       const spreadProp = node.props.find(p => p.name === '...' || p.name.startsWith('...'))
-      const spreadSource = spreadProp ? spreadProp.value : null
+      const restName = ctx.restPropsName
+      const propsObjName = ctx.propsObjectName
+      const isKnownSource = spreadProp && (spreadProp.value === restName || spreadProp.value === propsObjName)
+      const spreadSource = isKnownSource ? 'props' : null
 
       const propsForInit: string[] = []
       const explicitPropNames: string[] = []
@@ -264,16 +270,21 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
 
   if (element.slotId) {
     for (const attr of element.attrs) {
-      // Track unresolved spread attrs for runtime application
+      // Track unresolved spread attrs for runtime application.
+      // Only handle spreads whose source matches the component's rest/props parameter name.
+      // Other identifiers or complex expressions may not exist in the compiled init scope.
+      // Always use 'props' as the source since the init function parameter is always 'props'.
       if (attr.name === '...' && attr.value) {
-        const spreadSource = attrValueToString(attr.value) ?? ''
-        if (spreadSource) {
+        const spreadVal = attrValueToString(attr.value) ?? ''
+        const elemRestName = ctx.restPropsName
+        const elemPropsObjName = ctx.propsObjectName
+        if (spreadVal && (spreadVal === elemRestName || spreadVal === elemPropsObjName)) {
           const excludeKeys = element.attrs
             .filter(a => a.name !== '...')
             .map(a => a.name)
           ctx.restAttrElements.push({
             slotId: element.slotId,
-            source: spreadSource,
+            source: 'props',
             excludeKeys,
           })
         }

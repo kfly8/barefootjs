@@ -23,9 +23,10 @@ type Props = {
   initialTodos?: Array<{ id: number; text: string; done: boolean }>
 }
 
-function TodoApp(props: Props) {
+// @bf-ignore props-destructuring
+function TodoApp({ initialTodos = [] }: Props) {
   const [todos, setTodos] = createSignal<Todo[]>(
-    (props.initialTodos ?? []).map(t => ({ ...t, editing: false }))
+    initialTodos.map(t => ({ ...t, editing: false }))
   )
   const [newText, setNewText] = createSignal('')
   const [filter, setFilter] = createSignal<Filter>('all')

@@ -13,8 +13,9 @@ interface CounterProps {
   initial?: number
 }
 
-export function Counter(props: CounterProps) {
-  const [count, setCount] = createSignal(props.initial ?? 0)
+// @bf-ignore props-destructuring
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = createSignal(initial)
   const doubled = createMemo(() => count() * 2)
 
   return (

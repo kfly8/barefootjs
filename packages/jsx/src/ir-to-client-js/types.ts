@@ -24,6 +24,7 @@ export interface ClientJsContext {
   localConstants: ConstantInfo[]
   propsParams: ParamInfo[]
   propsObjectName: string | null
+  restPropsName: string | null
 
   // Collected elements
   interactiveElements: InteractiveElement[]
