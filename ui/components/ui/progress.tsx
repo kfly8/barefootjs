@@ -20,8 +20,9 @@ import { createSignal, createMemo } from '@barefootjs/dom'
  * ```
  */
 
-// Root classes (matching shadcn/ui)
-const rootBaseClasses = 'bg-primary/20 relative h-2 w-full overflow-hidden rounded-full'
+// Root classes — uses bg-muted instead of bg-primary/20 because
+// UnoCSS alpha modifiers do not work with CSS variables
+const rootBaseClasses = 'bg-muted relative h-2 w-full overflow-hidden rounded-full'
 
 // Indicator classes
 const indicatorBaseClasses = 'bg-primary h-full w-full flex-1 transition-all'
