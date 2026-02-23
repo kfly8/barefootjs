@@ -14,16 +14,12 @@
   },
   "assertions": [
     {
+      "type": "contains-tag",
+      "tag": "span"
+    },
+    {
       "type": "has-slot-marker",
       "slotId": "s0"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<span bf=\"s0\"></span>"
-    },
-    "hono": {
-      "template": "<span bf=\"s0\" />"
-    }
-  }
+  ]
 }

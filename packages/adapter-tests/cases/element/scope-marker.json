@@ -14,15 +14,11 @@
   },
   "assertions": [
     {
+      "type": "contains-tag",
+      "tag": "div"
+    },
+    {
       "type": "has-scope-marker"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<div bf-s=\"{{bfScopeAttr .}}\" {{bfPropsAttr .}}></div>"
-    },
-    "hono": {
-      "template": "<div bf-s={__bfChild ? `~${__scopeId}` : __scopeId} {...(__dataKey !== undefined ? { \"data-key\": __dataKey } : {})} />"
-    }
-  }
+  ]
 }

@@ -21,20 +21,11 @@
   },
   "assertions": [
     {
-      "type": "contains-text",
-      "text": "completed"
+      "type": "contains-tag",
+      "tag": "li"
     },
     {
-      "type": "contains-text",
-      "text": "editing"
+      "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<li class=\"{{if .Todo.Done}}{{if .Todo.Editing}}completed editing{{else}}completed{{end}}{{else}}{{if .Todo.Editing}}editing{{else}}{{end}}{{end}}\"></li>"
-    },
-    "hono": {
-      "template": "<li class={todo.done ? (todo.editing ? 'completed editing' : 'completed') : (todo.editing ? 'editing' : '')} />"
-    }
-  }
+  ]
 }

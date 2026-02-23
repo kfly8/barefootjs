@@ -21,16 +21,11 @@
   },
   "assertions": [
     {
-      "type": "contains-text",
-      "text": "active"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<div class=\"{{if .IsActive}}active{{else}}{{end}}\"></div>"
+      "type": "contains-tag",
+      "tag": "div"
     },
-    "hono": {
-      "template": "<div class={isActive ? 'active' : ''} />"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

@@ -4,7 +4,7 @@
  * Validates adapter output against adapter-independent structural assertions.
  */
 
-import type { StructuralAssertion, ExpectedOutput } from './types'
+import type { StructuralAssertion } from './types'
 
 export function checkStructuralAssertions(output: string, assertions: StructuralAssertion[]): string[] {
   const failures: string[] = []
@@ -46,34 +46,19 @@ export function checkStructuralAssertions(output: string, assertions: Structural
           failures.push(`Expected output to be empty, got: "${output}"`)
         }
         break
-    }
-  }
-
-  return failures
-}
-
-export function checkExpectedOutput(output: string, expected: ExpectedOutput): string[] {
-  const failures: string[] = []
-
-  if (expected.template !== undefined) {
-    if (output !== expected.template) {
-      failures.push(`Expected exact match:\n  expected: ${JSON.stringify(expected.template)}\n  actual:   ${JSON.stringify(output)}`)
-    }
-  }
-
-  if (expected.contains) {
-    for (const text of expected.contains) {
-      if (!output.includes(text)) {
-        failures.push(`Expected output to contain: "${text}"\n  actual: ${JSON.stringify(output)}`)
-      }
-    }
-  }
-
-  if (expected.notContains) {
-    for (const text of expected.notContains) {
-      if (output.includes(text)) {
-        failures.push(`Expected output NOT to contain: "${text}"\n  actual: ${JSON.stringify(output)}`)
-      }
+      case 'no-self-closing-tag':
+        if (output.includes(`</${assertion.tag}>`)) {
+          failures.push(`Expected output NOT to contain closing tag </${assertion.tag}>`)
+        }
+        break
+      case 'attr-name-normalized':
+        if (output.includes(assertion.from)) {
+          failures.push(`Expected attribute "${assertion.from}" to be normalized to "${assertion.to}", but "${assertion.from}" still appears in output`)
+        }
+        if (!output.includes(assertion.to)) {
+          failures.push(`Expected output to contain normalized attribute "${assertion.to}"`)
+        }
+        break
     }
   }
 

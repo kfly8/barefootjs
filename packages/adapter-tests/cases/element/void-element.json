@@ -25,16 +25,8 @@
       "tag": "input"
     },
     {
-      "type": "not-contains-text",
-      "text": "</input>"
+      "type": "no-self-closing-tag",
+      "tag": "input"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<input type=\"text\">"
-    },
-    "hono": {
-      "template": "<input type=\"text\" />"
-    }
-  }
+  ]
 }

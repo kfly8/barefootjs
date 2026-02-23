@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{bf_find .Items \"Done\" true}}"
-    },
-    "hono": {
-      "template": "{items().find(t => t.done)}"
-    }
-  }
+  ]
 }

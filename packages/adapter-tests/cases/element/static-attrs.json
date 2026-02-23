@@ -27,6 +27,10 @@
   },
   "assertions": [
     {
+      "type": "contains-tag",
+      "tag": "div"
+    },
+    {
       "type": "contains-text",
       "text": "container"
     },
@@ -34,13 +38,5 @@
       "type": "contains-text",
       "text": "main"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<div class=\"container\" id=\"main\"></div>"
-    },
-    "hono": {
-      "template": "<div class=\"container\" id=\"main\" />"
-    }
-  }
+  ]
 }

@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{.User.Name}}"
-    },
-    "hono": {
-      "template": "{user.name}"
-    }
-  }
+  ]
 }

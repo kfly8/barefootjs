@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "Visible"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if .IsVisible}}Visible{{end}}"
     },
-    "hono": {
-      "template": "{isVisible ? Visible : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

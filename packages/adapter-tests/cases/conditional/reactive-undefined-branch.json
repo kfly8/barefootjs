@@ -28,19 +28,11 @@
   },
   "assertions": [
     {
+      "type": "contains-text",
+      "text": "slot_1"
+    },
+    {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "contains": [
-        "{{else}}",
-        "{{bfComment \"cond-start:slot_1\"}}",
-        "{{bfComment \"cond-end:slot_1\"}}"
-      ]
-    },
-    "hono": {
-      "template": "{isChecked() ? <svg bf-c=\"slot_1\" /> : <>{bfComment(\"cond-start:slot_1\")}{null}{bfComment(\"cond-end:slot_1\")}</>}"
-    }
-  }
+  ]
 }

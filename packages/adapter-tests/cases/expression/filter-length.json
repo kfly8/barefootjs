@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{len (bf_filter .Todos \"Done\" false)}}"
-    },
-    "hono": {
-      "template": "{todos().filter(t => !t.done).length}"
-    }
-  }
+  ]
 }

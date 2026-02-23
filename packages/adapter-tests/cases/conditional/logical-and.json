@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "Admin"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if and .IsLoggedIn .IsAdmin}}Admin{{end}}"
     },
-    "hono": {
-      "template": "{isLoggedIn() && isAdmin() ? Admin : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

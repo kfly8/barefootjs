@@ -26,13 +26,5 @@
       "type": "contains-text",
       "text": "Hello"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<div>Hello</div>"
-    },
-    "hono": {
-      "template": "<div>Hello</div>"
-    }
-  }
+  ]
 }

@@ -6,5 +6,5 @@
 
 export { runConformanceTests } from './runner'
 export { loadTestCases } from './loader'
-export type { ConformanceTestCase, StructuralAssertion, ExpectedOutput } from './types'
+export type { ConformanceTestCase, StructuralAssertion } from './types'
 export type { RunConformanceOptions } from './runner'

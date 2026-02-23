@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{$bf_result := false}}{{range .Items}}{{if gt .Price 100}}{{$bf_result = true}}{{break}}{{end}}{{end}}{{$bf_result}}"
-    },
-    "hono": {
-      "template": "{items().some(t => t.price > 100)}"
-    }
-  }
+  ]
 }

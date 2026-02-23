@@ -21,15 +21,11 @@
   },
   "assertions": [
     {
+      "type": "contains-tag",
+      "tag": "div"
+    },
+    {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<div class=\"{{.ClassName}}\"></div>"
-    },
-    "hono": {
-      "template": "<div class={className} />"
-    }
-  }
+  ]
 }

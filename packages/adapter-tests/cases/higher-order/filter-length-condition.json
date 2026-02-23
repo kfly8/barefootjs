@@ -24,17 +24,9 @@
     {
       "type": "contains-text",
       "text": "Has incomplete"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "contains": [
-        "{{if gt",
-        "Has incomplete"
-      ]
     },
-    "hono": {
-      "template": "{todos().filter(t => !t.done).length > 0 ? Has incomplete : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

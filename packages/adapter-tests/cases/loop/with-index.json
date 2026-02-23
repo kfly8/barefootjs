@@ -23,14 +23,9 @@
     {
       "type": "contains-text",
       "text": "Item"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{range $i, $item := .Items}}Item{{end}}"
     },
-    "hono": {
-      "template": "{items.map((item, i) => Item)}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

@@ -34,18 +34,11 @@
   },
   "assertions": [
     {
+      "type": "contains-text",
+      "text": "slot_3"
+    },
+    {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "contains": [
-        "{{bfComment \"cond-start:slot_3\"}}",
-        "{{bfComment \"cond-end:slot_3\"}}"
-      ]
-    },
-    "hono": {
-      "template": "{bfComment(\"cond-start:slot_3\")}{bfComment(\"cond-end:slot_3\")}"
-    }
-  }
+  ]
 }

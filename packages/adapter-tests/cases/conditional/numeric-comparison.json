@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "Has items"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if gt .Count 0}}Has items{{end}}"
     },
-    "hono": {
-      "template": "{count() > 0 ? Has items : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

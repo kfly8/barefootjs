@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "Loaded"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if not .IsLoading}}Loaded{{end}}"
     },
-    "hono": {
-      "template": "{!isLoading() ? Loaded : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

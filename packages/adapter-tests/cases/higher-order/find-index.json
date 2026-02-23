@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{bf_find_index .Items \"Done\" true}}"
-    },
-    "hono": {
-      "template": "{items().findIndex(t => t.done)}"
-    }
-  }
+  ]
 }

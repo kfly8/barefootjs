@@ -26,13 +26,5 @@
       "type": "contains-text",
       "text": "Please login"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if .IsLoggedIn}}Welcome{{else}}Please login{{end}}"
-    },
-    "hono": {
-      "template": "{isLoggedIn ? Welcome : Please login}"
-    }
-  }
+  ]
 }

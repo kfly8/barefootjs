@@ -11,16 +11,11 @@
   },
   "assertions": [
     {
+      "type": "output-not-empty"
+    },
+    {
       "type": "has-slot-marker",
       "slotId": "s0"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<span bf=\"s0\">{{.Count}}</span>"
-    },
-    "hono": {
-      "template": "<span bf=\"s0\">{count()}</span>"
-    }
-  }
+  ]
 }

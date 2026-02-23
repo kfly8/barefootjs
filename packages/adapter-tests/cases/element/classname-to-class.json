@@ -21,20 +21,13 @@
   },
   "assertions": [
     {
-      "type": "contains-text",
-      "text": "class"
+      "type": "contains-tag",
+      "tag": "div"
     },
     {
-      "type": "not-contains-text",
-      "text": "className"
+      "type": "attr-name-normalized",
+      "from": "className",
+      "to": "class"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "<div class=\"container\"></div>"
-    },
-    "hono": {
-      "template": "<div class=\"container\" />"
-    }
-  }
+  ]
 }

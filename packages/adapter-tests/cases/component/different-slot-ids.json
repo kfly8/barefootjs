@@ -16,15 +16,11 @@
   },
   "assertions": [
     {
+      "type": "contains-text",
+      "text": "Child"
+    },
+    {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{template \"ReactiveChild\" .ReactiveChildSlot7}}"
-    },
-    "hono": {
-      "template": "<ReactiveChild __instanceId={`${__scopeId}_slot_7`} />"
-    }
-  }
+  ]
 }

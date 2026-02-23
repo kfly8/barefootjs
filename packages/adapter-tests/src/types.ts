@@ -23,8 +23,6 @@ export interface ConformanceTestCase {
   input: Record<string, unknown>
   /** Adapter-independent structural assertions */
   assertions?: StructuralAssertion[]
-  /** Per-adapter expected outputs, keyed by adapter name */
-  expected?: Record<string, ExpectedOutput>
 }
 
 export type StructuralAssertion =
@@ -35,12 +33,5 @@ export type StructuralAssertion =
   | { type: 'output-not-empty' }
   | { type: 'output-empty' }
   | { type: 'not-contains-text'; text: string }
-
-export interface ExpectedOutput {
-  /** Exact match */
-  template?: string
-  /** Must contain all of these substrings */
-  contains?: string[]
-  /** Must not contain any of these substrings */
-  notContains?: string[]
-}
+  | { type: 'no-self-closing-tag'; tag: string }
+  | { type: 'attr-name-normalized'; from: string; to: string }

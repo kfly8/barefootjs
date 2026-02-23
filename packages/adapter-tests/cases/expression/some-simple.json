@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{bf_some .Todos \"Important\"}}"
-    },
-    "hono": {
-      "template": "{todos().some(t => t.important)}"
-    }
-  }
+  ]
 }

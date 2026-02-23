@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{bf_every .Todos \"Done\"}}"
-    },
-    "hono": {
-      "template": "{todos().every(t => t.done)}"
-    }
-  }
+  ]
 }

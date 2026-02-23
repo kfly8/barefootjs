@@ -13,13 +13,5 @@
     {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{range .Items}}{{if and (gt .Price 100) (.Active)}}{{.Name}}{{break}}{{end}}{{end}}"
-    },
-    "hono": {
-      "template": "{items().find(t => t.price > 100 && t.active).name}"
-    }
-  }
+  ]
 }

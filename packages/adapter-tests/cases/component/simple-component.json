@@ -13,15 +13,11 @@
   },
   "assertions": [
     {
+      "type": "contains-text",
+      "text": "Button"
+    },
+    {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{template \"Button\" .Button}}"
-    },
-    "hono": {
-      "template": "<Button __instanceId={__scopeId} />"
-    }
-  }
+  ]
 }

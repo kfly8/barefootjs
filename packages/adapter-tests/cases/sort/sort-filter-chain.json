@@ -36,18 +36,9 @@
     {
       "type": "contains-text",
       "text": "TodoItem"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "contains": [
-        "bf_sort",
-        "{{if",
-        "{{end}}{{end}}"
-      ]
     },
-    "hono": {
-      "template": "{todos.map((todo) => TodoItem)}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

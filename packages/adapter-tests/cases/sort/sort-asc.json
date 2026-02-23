@@ -31,14 +31,9 @@
     {
       "type": "contains-text",
       "text": "Item"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{range $_, $item := (bf_sort .Items \"price\" \"asc\")}}Item{{end}}"
     },
-    "hono": {
-      "template": "{items.map((item) => Item)}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

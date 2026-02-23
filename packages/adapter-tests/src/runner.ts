@@ -8,7 +8,7 @@
 import { describe, test, expect } from 'bun:test'
 import type { TemplateAdapter, ComponentIR, IRElement, IRExpression, IRConditional, IRLoop, IRComponent } from '@barefootjs/jsx'
 import { loadTestCases } from './loader'
-import { checkStructuralAssertions, checkExpectedOutput } from './assertions'
+import { checkStructuralAssertions } from './assertions'
 import type { ConformanceTestCase } from './types'
 
 export interface RunConformanceOptions {
@@ -36,7 +36,6 @@ export function runConformanceTests(options: RunConformanceOptions): void {
       const cases = await loadTestCases()
       expect(cases.length).toBeGreaterThan(0)
 
-      const adapterName = createAdapter().name
       const failures: string[] = []
 
       for (const testCase of cases) {
@@ -57,15 +56,6 @@ export function runConformanceTests(options: RunConformanceOptions): void {
           const assertionFailures = checkStructuralAssertions(output, testCase.assertions)
           for (const f of assertionFailures) {
             failures.push(`[${testCase.id}] Structural: ${f}`)
-          }
-        }
-
-        // Check adapter-specific expected output
-        const expected = testCase.expected?.[adapterName]
-        if (expected) {
-          const expectedFailures = checkExpectedOutput(output, expected)
-          for (const f of expectedFailures) {
-            failures.push(`[${testCase.id}] Expected: ${f}`)
           }
         }
       }

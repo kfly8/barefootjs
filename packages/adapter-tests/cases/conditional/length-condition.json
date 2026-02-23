@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "Has todos"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if gt (len .Todos) 0}}Has todos{{end}}"
     },
-    "hono": {
-      "template": "{todos().length > 0 ? Has todos : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

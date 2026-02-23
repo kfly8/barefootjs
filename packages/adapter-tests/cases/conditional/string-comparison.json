@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "All"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{if eq .Filter \"all\"}}All{{end}}"
     },
-    "hono": {
-      "template": "{filter() === 'all' ? All : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

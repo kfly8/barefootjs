@@ -27,19 +27,9 @@
     {
       "type": "contains-text",
       "text": "Item"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "contains": [
-        "{{range",
-        "{{if not .Done}}",
-        "Item",
-        "{{end}}{{end}}"
-      ]
     },
-    "hono": {
-      "template": "{todos.map((todo) => Item)}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

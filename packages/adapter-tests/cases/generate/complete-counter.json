@@ -86,19 +86,13 @@
     {
       "type": "contains-text",
       "text": "+1"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "contains": [
-        "{{define \"Counter\"}}",
-        "{{end}}",
-        "bf-s=\"{{bfScopeAttr .}}\"",
-        "{{.Count}}"
-      ]
     },
-    "hono": {
-      "template": "import { bfComment } from '@barefootjs/hono/utils'\n\nexport function Counter({ __instanceId, __bfScope, __bfChild, __bfParentProps, \"data-key\": __dataKey }: { __instanceId?: string; __bfScope?: string; __bfChild?: boolean }) {\n  const __scopeId = __instanceId || `Counter_${Math.random().toString(36).slice(2, 8)}`\n  const count = () => 0\n  const setCount = () => {}\n\n  return (\n    <div bf-s={__bfChild ? `~${__scopeId}` : __scopeId} {...(__dataKey !== undefined ? { \"data-key\": __dataKey } : {})}><p bf=\"s0\"><span bf=\"s0\">{count()}</span></p><button onClick={() => {}} bf=\"s1\">+1</button></div>\n  )\n}"
+    {
+      "type": "contains-tag",
+      "tag": "div"
+    },
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

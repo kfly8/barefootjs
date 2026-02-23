@@ -24,14 +24,9 @@
     {
       "type": "contains-text",
       "text": "All expensive"
-    }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{$bf_result := true}}{{range .Items}}{{if not (gt .Price 100)}}{{$bf_result = false}}{{break}}{{end}}{{end}}{{if $bf_result}}All expensive{{end}}"
     },
-    "hono": {
-      "template": "{items().every(t => t.price > 100) ? All expensive : null}"
+    {
+      "type": "output-not-empty"
     }
-  }
+  ]
 }

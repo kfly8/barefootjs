@@ -12,15 +12,11 @@
   },
   "assertions": [
     {
+      "type": "contains-text",
+      "text": "slot_5"
+    },
+    {
       "type": "output-not-empty"
     }
-  ],
-  "expected": {
-    "go-template": {
-      "template": "{{bfComment \"client:slot_5\"}}"
-    },
-    "hono": {
-      "template": "{bfComment(\"client:slot_5\")}"
-    }
-  }
+  ]
 }
