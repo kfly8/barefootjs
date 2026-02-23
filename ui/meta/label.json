@@ -44,5 +44,5 @@
     "checkbox",
     "switch"
   ],
-  "source": "ui/components/ui/label.tsx"
+  "source": "ui/components/ui/label/index.tsx"
 }

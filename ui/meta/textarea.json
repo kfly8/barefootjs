@@ -53,5 +53,5 @@
     "input",
     "label"
   ],
-  "source": "ui/components/ui/textarea.tsx"
+  "source": "ui/components/ui/textarea/index.tsx"
 }

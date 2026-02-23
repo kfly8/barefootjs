@@ -54,5 +54,5 @@
   "related": [
     "card"
   ],
-  "source": "ui/components/ui/separator.tsx"
+  "source": "ui/components/ui/separator/index.tsx"
 }

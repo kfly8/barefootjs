@@ -92,5 +92,5 @@
   "related": [
     "breadcrumb"
   ],
-  "source": "ui/components/ui/pagination.tsx"
+  "source": "ui/components/ui/pagination/index.tsx"
 }

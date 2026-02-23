@@ -53,8 +53,8 @@ export function scaffold(componentName: string, useComponents: string[], metaDir
   return {
     componentCode,
     testCode,
-    componentPath: `${basePath}.tsx`,
-    testPath: `ui/components/ui/__tests__/${componentName}.test.ts`,
+    componentPath: `${basePath}/index.tsx`,
+    testPath: `${basePath}/index.test.tsx`,
   }
 }
 
@@ -77,7 +77,7 @@ function buildImports(components: { name: string; meta: ComponentMeta }[]): Impo
       }
     }
 
-    imports.push({ from: `./${name}`, names })
+    imports.push({ from: `../${name}`, names })
   }
 
   return imports
@@ -98,7 +98,7 @@ function generateComponentCode(
     lines.push(`import { createSignal } from '@barefootjs/dom'`)
   }
 
-  lines.push(`import type { Child } from '../../types'`)
+  lines.push(`import type { Child } from '../../../types'`)
 
   for (const imp of imports) {
     lines.push(`import { ${imp.names.join(', ')} } from '${imp.from}'`)
@@ -165,7 +165,7 @@ function generateTestCode(componentName: string, needsClient: boolean): string {
   lines.push(`import { resolve } from 'path'`)
   lines.push(`import { renderToTest } from '@barefootjs/test'`)
   lines.push(``)
-  lines.push(`const ${varName} = readFileSync(resolve(__dirname, '../${componentName}.tsx'), 'utf-8')`)
+  lines.push(`const ${varName} = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')`)
   lines.push(``)
   lines.push(`describe('${pascalName}', () => {`)
   lines.push(`  const result = renderToTest(${varName}, '${componentName}.tsx')`)

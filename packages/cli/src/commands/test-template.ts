@@ -12,9 +12,9 @@ export function run(args: string[], ctx: CliContext): void {
     process.exit(1)
   }
 
-  const standardPath = path.join(ctx.root, 'ui/components/ui', `${componentName}.tsx`)
+  const standardPath = path.join(ctx.root, 'ui/components/ui', componentName, 'index.tsx')
   if (!existsSync(standardPath)) {
-    console.error(`Error: Source file not found: ui/components/ui/${componentName}.tsx`)
+    console.error(`Error: Source file not found: ui/components/ui/${componentName}/index.tsx`)
     process.exit(1)
   }
   console.log(generateTestTemplate(standardPath))

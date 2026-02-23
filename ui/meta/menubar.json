@@ -287,5 +287,5 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/menubar.tsx"
+  "source": "ui/components/ui/menubar/index.tsx"
 }

@@ -15,6 +15,8 @@ function printUsage() {
   console.log(`Usage: barefoot <command> [options]
 
 Commands:
+  init [--name <name>]        Initialize a new BarefootJS project
+  add <component...> [--force] Add components to your project
   search <query>              Search components by name/category/tags
   docs <component>            Show component documentation (props, examples, a11y)
   scaffold <name> <comp...>   Generate component skeleton + IR test
@@ -28,16 +30,27 @@ Options:
   --json                      Output in JSON format
 
 Workflow:
-  1. barefoot search <query>               — Find components
-  2. barefoot docs <component>             — Learn props and usage
-  3. barefoot scaffold <name> <comp...>    — Generate skeleton + test
-  4. Implement the component
+  1. barefoot init                         — Initialize project
+  2. barefoot search <query>               — Find components
+  3. barefoot add <component...>           — Add to your project
+  4. barefoot docs <component>             — Learn props and usage
   5. bun test <path>                       — Verify
-  6. barefoot test:template <name>         — Regenerate richer test
-  7. barefoot preview <component>          — Visual preview in browser`)
+  6. barefoot preview <component>          — Visual preview in browser`)
 }
 
 switch (command) {
+  case 'init': {
+    const { run } = await import('./commands/init')
+    run(commandArgs, ctx)
+    break
+  }
+
+  case 'add': {
+    const { run } = await import('./commands/add')
+    run(commandArgs, ctx)
+    break
+  }
+
   case 'search': {
     const { run } = await import('./commands/search')
     run(commandArgs, ctx)

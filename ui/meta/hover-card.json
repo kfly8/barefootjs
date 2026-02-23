@@ -114,5 +114,5 @@
     "tooltip",
     "popover"
   ],
-  "source": "ui/components/ui/hover-card.tsx"
+  "source": "ui/components/ui/hover-card/index.tsx"
 }

@@ -94,5 +94,5 @@
   "related": [
     "scroll-area"
   ],
-  "source": "ui/components/ui/resizable.tsx"
+  "source": "ui/components/ui/resizable/index.tsx"
 }

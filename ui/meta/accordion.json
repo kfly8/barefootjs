@@ -122,5 +122,5 @@
     "collapsible",
     "tabs"
   ],
-  "source": "ui/components/ui/accordion.tsx"
+  "source": "ui/components/ui/accordion/index.tsx"
 }
