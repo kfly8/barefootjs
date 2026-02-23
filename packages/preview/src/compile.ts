@@ -130,8 +130,14 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
   await Bun.write(resolve(DIST_DIR, 'barefoot.js'), Bun.file(domDistFile))
   console.log('Generated: .preview-dist/barefoot.js')
 
-  // 2. Copy CSS
-  const tokensCSS = await Bun.file(resolve(ROOT_DIR, 'site/shared/styles/tokens.css')).text()
+  // 2. Generate CSS from token JSON
+  const { loadTokens, mergeTokenSets, generateCSS } = await import(
+    resolve(ROOT_DIR, 'site/shared/tokens/index')
+  )
+  const baseTokens = await loadTokens(resolve(ROOT_DIR, 'site/shared/tokens/tokens.json'))
+  const uiTokens = await loadTokens(resolve(ROOT_DIR, 'site/ui/tokens.json'))
+  const mergedTokens = mergeTokenSets(baseTokens, uiTokens)
+  const tokensCSS = generateCSS(mergedTokens)
   const globalsCSS = await Bun.file(resolve(ROOT_DIR, 'site/ui/styles/globals.css')).text()
   await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + globalsCSS)
   console.log('Generated: .preview-dist/globals.css')

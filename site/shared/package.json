@@ -2,11 +2,15 @@
   "name": "@barefootjs/site-shared",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "generate:tokens": "bun run tokens/generate-tokens.ts"
+  },
   "exports": {
     "./styles/*": "./styles/*",
     "./components/*": "./components/*",
     "./lib/*": "./lib/*",
-    "./lib/theme-init": "./lib/theme-init.ts"
+    "./lib/theme-init": "./lib/theme-init.ts",
+    "./tokens": "./tokens/index.ts"
   },
   "dependencies": {
     "@barefootjs/hono": "workspace:*",

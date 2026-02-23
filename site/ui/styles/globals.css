@@ -5,62 +5,6 @@
  * User override classes stay in @layer default, so they always win. */
 @layer preflights, base, shortcuts, components, default;
 
-/**
- * BarefootJS Design System - CSS Variables
- *
- * Based on shadcn/ui v4 color system (neutral theme).
- * Uses OKLCH values for CSS custom properties.
- */
-
-:root {
-  /* UI-specific tokens (not in shared tokens.css) */
-
-  /* Popover */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-
-  /* Success */
-  --success: oklch(0.527 0.154 150.069);
-  --success-foreground: oklch(0.985 0 0);
-
-  /* Warning */
-  --warning: oklch(0.769 0.188 70.08);
-  --warning-foreground: oklch(0.145 0 0);
-
-  /* Info */
-  --info: oklch(0.623 0.214 259.815);
-  --info-foreground: oklch(0.985 0 0);
-
-  /* Animation Durations */
-  --duration-slow: 300ms;
-
-  /* Animation Easings */
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark {
-  /* UI-specific dark overrides (not in shared tokens.css) */
-
-  /* Popover */
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-
-  /* Success */
-  --success: oklch(0.696 0.17 162.48);
-  --success-foreground: oklch(0.145 0 0);
-
-  /* Warning */
-  --warning: oklch(0.769 0.188 70.08);
-  --warning-foreground: oklch(0.145 0 0);
-
-  /* Info */
-  --info: oklch(0.623 0.214 259.815);
-  --info-foreground: oklch(0.985 0 0);
-}
-
 /* Theme transition - applied temporarily during theme switch */
 html.theme-transition,
 html.theme-transition *,

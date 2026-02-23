@@ -21,6 +21,7 @@ Commands:
   test [component]            Find and show test commands
   test:template <name>        Generate IR test from existing source
   preview <component>         Start preview dev server for visual check
+  tokens [--category <cat>]   List design tokens (categories: typography, spacing, etc.)
   meta:extract                Extract metadata from ui/components/ui/*.tsx
 
 Options:
@@ -69,6 +70,12 @@ switch (command) {
 
   case 'preview': {
     const { run } = await import('./commands/preview')
+    await run(commandArgs, ctx)
+    break
+  }
+
+  case 'tokens': {
+    const { run } = await import('./commands/tokens')
     await run(commandArgs, ctx)
     break
   }
