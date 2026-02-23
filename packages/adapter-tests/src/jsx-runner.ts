@@ -27,6 +27,7 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
     for (const fixture of jsxFixtures) {
       if (skipSet.has(fixture.id)) continue
 
+      // go run compiles Go on first invocation — allow extra time in CI
       test(`[${fixture.id}] ${fixture.description}`, async () => {
         const adapter = createAdapter()
 
@@ -62,7 +63,7 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
 
           expect(normalizedHtml).toBe(normalizedRefHtml)
         }
-      })
+      }, { timeout: 30_000 })
     }
   })
 }

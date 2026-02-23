@@ -1,19 +1,11 @@
 /**
  * Hono Adapter Tests
  *
- * Conformance tests (shared across adapters).
+ * JSX conformance tests (shared across adapters).
  */
 
 import { HonoAdapter } from '../src/adapter'
-import { runConformanceTests, runJSXConformanceTests } from '@barefootjs/adapter-tests'
-
-// =============================================================================
-// Shared Conformance Tests
-// =============================================================================
-
-runConformanceTests({
-  createAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
-})
+import { runJSXConformanceTests } from '@barefootjs/adapter-tests'
 
 // =============================================================================
 // JSX-Based Conformance Tests

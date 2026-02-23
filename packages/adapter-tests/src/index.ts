@@ -4,11 +4,8 @@
  * Provides a conformance test suite for TemplateAdapter implementations.
  */
 
-export { runConformanceTests } from './runner'
 export { runJSXConformanceTests } from './jsx-runner'
-export { loadTestCases } from './loader'
-export type { ConformanceTestCase, StructuralAssertion, JSXFixture } from './types'
-export type { RunConformanceOptions } from './runner'
+export type { JSXFixture } from './types'
 export type { RunJSXConformanceOptions } from './jsx-runner'
 export {
   testLoc,

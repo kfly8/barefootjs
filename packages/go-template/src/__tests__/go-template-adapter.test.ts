@@ -7,7 +7,6 @@
 import { describe, test, expect } from 'bun:test'
 import { GoTemplateAdapter } from '../adapter/go-template-adapter'
 import {
-  runConformanceTests,
   runJSXConformanceTests,
   textNode, expression, element, conditional, loop, component,
   attr, prop, signal, memo, param, componentIR,
@@ -15,20 +14,6 @@ import {
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { parseBlockBody } from '@barefootjs/jsx'
 import ts from 'typescript'
-
-// =============================================================================
-// Shared Conformance Tests
-// =============================================================================
-
-runConformanceTests({
-  createAdapter: () => new GoTemplateAdapter(),
-  skip: [
-    // TODO: Object literal signal initializers need Go struct type generation
-    'generate/object-literal-signal',
-    // TODO: Local helper functions need server-side handling
-    'generate/local-functions',
-  ],
-})
 
 // =============================================================================
 // JSX-Based Conformance Tests
