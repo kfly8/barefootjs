@@ -74,9 +74,55 @@ export function run(args: string[], ctx: CliContext): void {
   const componentsDir = path.resolve(projectDir, config.paths.components)
   mkdirSync(componentsDir, { recursive: true })
 
+  // 6. Generate package.json if it doesn't exist
+  const pkgJsonPath = path.join(projectDir, 'package.json')
+  if (!existsSync(pkgJsonPath)) {
+    const pkgJson = {
+      name: name || 'my-design-system',
+      private: true,
+      type: 'module',
+      scripts: {
+        test: 'bun test',
+      },
+      dependencies: {
+        '@barefootjs/dom': 'workspace:*',
+        '@barefootjs/jsx': 'workspace:*',
+      },
+      devDependencies: {
+        '@barefootjs/test': 'workspace:*',
+      },
+    }
+    writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n')
+    console.log('  Created package.json')
+  }
+
+  // 7. Generate tsconfig.json if it doesn't exist
+  const tsconfigPath = path.join(projectDir, 'tsconfig.json')
+  if (!existsSync(tsconfigPath)) {
+    const tsconfig = {
+      compilerOptions: {
+        target: 'ESNext',
+        module: 'ESNext',
+        moduleResolution: 'bundler',
+        jsx: 'react-jsx',
+        jsxImportSource: '@barefootjs/jsx',
+        strict: true,
+        skipLibCheck: true,
+        noEmit: true,
+        types: ['bun-types'],
+      },
+      include: ['**/*.ts', '**/*.tsx'],
+      exclude: ['node_modules', 'dist'],
+    }
+    writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\n')
+    console.log('  Created tsconfig.json')
+  }
+
   console.log(`\nProject initialized successfully!`)
   console.log(`\nNext steps:`)
+  console.log(`  bun install                    # Install dependencies`)
   console.log(`  barefoot add button checkbox   # Add components`)
+  console.log(`  bun test                       # Run component tests`)
   console.log(`  barefoot search <query>        # Search available components`)
 }
 
