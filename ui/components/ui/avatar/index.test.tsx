@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const avatarSource = readFileSync(resolve(__dirname, '../avatar.tsx'), 'utf-8')
+const avatarSource = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 describe('Avatar', () => {
   const result = renderToTest(avatarSource, 'avatar.tsx', 'Avatar')

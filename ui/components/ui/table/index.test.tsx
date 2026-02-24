@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const tableSource = readFileSync(resolve(__dirname, '../table.tsx'), 'utf-8')
+const tableSource = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 describe('Table', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'Table')

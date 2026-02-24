@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const spinnerSource = readFileSync(resolve(__dirname, '../spinner.tsx'), 'utf-8')
+const spinnerSource = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 describe('Spinner', () => {
   const result = renderToTest(spinnerSource, 'spinner.tsx', 'Spinner')
