@@ -65,9 +65,6 @@ jobs:
           cd ../jsx && bun run build
 
       - name: Run UI component IR tests
-<<<<<<< adapter-tests
-        run: bun test ui/components/ui/__tests__/
-=======
         run: bun test ui/components/
 
   e2e-hono:
@@ -191,4 +188,3 @@ jobs:
           name: playwright-report-examples-echo
           path: examples/echo/playwright-report/
           retention-days: 30
->>>>>>> main
