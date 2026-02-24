@@ -2050,6 +2050,11 @@ export class GoTemplateAdapter extends BaseAdapter {
           }
         }
 
+        // Handle SolidJS-style props pattern: props.xxx -> .Xxx
+        if (expr.object.kind === 'identifier' && this.propsObjectName && expr.object.name === this.propsObjectName) {
+          return `.${this.capitalizeFieldName(expr.property)}`
+        }
+
         const obj = this.renderConditionExpr(expr.object)
         if (expr.property === 'length') {
           return `len ${obj}`
