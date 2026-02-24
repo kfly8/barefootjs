@@ -51,12 +51,47 @@ export interface RenderOptions {
   adapter: TemplateAdapter
   /** Props to inject (optional) */
   props?: Record<string, unknown>
+  /** Additional component files (filename → source) */
+  components?: Record<string, string>
 }
 
 export async function renderGoTemplateComponent(options: RenderOptions): Promise<string> {
-  const { source, adapter, props } = options
+  const { source, adapter, props, components } = options
 
-  // Compile JSX → marked template + IR
+  if (!adapter.generateTypes) {
+    throw new Error('Go Template adapter must implement generateTypes()')
+  }
+
+  // Compile child components first
+  const childTemplates: string[] = []
+  const childTypeBlocks: string[] = []
+  if (components) {
+    for (const [filename, childSource] of Object.entries(components)) {
+      const childResult = compileJSXSync(childSource, filename, { adapter, outputIR: true })
+      const childErrors = childResult.errors.filter(e => e.severity === 'error')
+      if (childErrors.length > 0) {
+        throw new Error(`Compilation errors in ${filename}:\n${childErrors.map(e => e.message).join('\n')}`)
+      }
+      const childTemplate = childResult.files.find(f => f.type === 'markedTemplate')
+      if (!childTemplate) throw new Error(`No marked template for ${filename}`)
+      childTemplates.push(childTemplate.content)
+
+      const childIrFile = childResult.files.find(f => f.type === 'ir')
+      if (childIrFile) {
+        const childIR = JSON.parse(childIrFile.content) as ComponentIR
+        let childTypes = adapter.generateTypes!(childIR)
+        if (childTypes) {
+          // Strip package declaration and imports — will be merged into main types
+          childTypes = childTypes.replace(/^package \w+\n*/, '')
+          childTypes = childTypes.replace(/import\s*\([^)]*\)\n*/g, '')
+          childTypes = childTypes.replace(/\t"math\/rand"\n/g, '')
+          childTypeBlocks.push(childTypes.trim())
+        }
+      }
+    }
+  }
+
+  // Compile parent source
   const result = compileJSXSync(source, 'component.tsx', { adapter, outputIR: true })
 
   const errors = result.errors.filter(e => e.severity === 'error')
@@ -71,10 +106,6 @@ export async function renderGoTemplateComponent(options: RenderOptions): Promise
   if (!irFile) throw new Error('No IR output (set outputIR: true)')
   const ir = JSON.parse(irFile.content) as ComponentIR
 
-  if (!adapter.generateTypes) {
-    throw new Error('Go Template adapter must implement generateTypes()')
-  }
-
   let goTypes = adapter.generateTypes(ir)
   if (!goTypes) throw new Error('generateTypes() returned null')
 
@@ -84,8 +115,14 @@ export async function renderGoTemplateComponent(options: RenderOptions): Promise
   // Remove "math/rand" import from types (randomID is defined in main.go)
   goTypes = goTypes.replace(/\t"math\/rand"\n/, '')
 
+  // Append child type definitions
+  if (childTypeBlocks.length > 0) {
+    goTypes += '\n\n' + childTypeBlocks.join('\n\n')
+  }
+
   const componentName = ir.metadata.componentName
-  const template = templateFile.content
+  // Concatenate all templates (child define blocks + parent)
+  const template = [...childTemplates, templateFile.content].join('\n')
 
   // Build temp directory with Go files
   const tempDir = resolve(

@@ -13,6 +13,8 @@ export interface JSXFixture {
   description: string
   /** JSX source code (complete component file) */
   source: string
+  /** Additional component files available for import (filename → source) */
+  components?: Record<string, string>
   /** Props to pass when rendering (optional) */
   props?: Record<string, unknown>
 }
@@ -26,7 +28,13 @@ export function createFixture(input: {
   id: string
   description: string
   source: string
+  components?: Record<string, string>
   props?: Record<string, unknown>
 }): JSXFixture {
-  return { ...input, source: input.source.trimStart() }
+  const trimmedComponents = input.components
+    ? Object.fromEntries(
+        Object.entries(input.components).map(([k, v]) => [k, v.trimStart()]),
+      )
+    : undefined
+  return { ...input, source: input.source.trimStart(), components: trimmedComponents }
 }

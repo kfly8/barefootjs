@@ -29,6 +29,9 @@ import { fixture as fragment } from './fragment'
 import { fixture as clientOnly } from './client-only'
 import { fixture as eventHandlers } from './event-handlers'
 import { fixture as defaultProps } from './default-props'
+// Priority 7: Multi-file composition
+import { fixture as childComponent } from './child-component'
+import { fixture as multipleInstances } from './multiple-instances'
 
 import type { JSXFixture } from '../src/types'
 
@@ -64,4 +67,7 @@ export const jsxFixtures: JSXFixture[] = [
   clientOnly,
   eventHandlers,
   defaultProps,
+  // Priority 7: Multi-file composition
+  childComponent,
+  multipleInstances,
 ]
