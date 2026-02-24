@@ -396,14 +396,26 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.loopElements) {
     if (elem.isStaticArray) {
       if (elem.childComponent) {
-        const { name } = elem.childComponent
+        const { name, props } = elem.childComponent
         const v = varSlotId(elem.slotId)
+
+        const propsEntries = props.map((p) => {
+          if (p.isEventHandler) {
+            return `${quotePropName(p.name)}: ${p.value}`
+          } else if (p.isLiteral) {
+            return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
+          } else {
+            return `get ${quotePropName(p.name)}() { return ${p.value} }`
+          }
+        })
+        const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
+
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${v}) {`)
         lines.push(`    const __childScopes = _${v}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
         lines.push(`    __childScopes.forEach((childScope, __idx) => {`)
-        lines.push(`      const __childProps = ${elem.array}[__idx] || {}`)
-        lines.push(`      initChild('${name}', childScope, __childProps)`)
+        lines.push(`      const ${elem.param} = ${elem.array}[__idx]`)
+        lines.push(`      initChild('${name}', childScope, ${propsExpr})`)
         lines.push(`    })`)
         lines.push(`  }`)
         lines.push('')
