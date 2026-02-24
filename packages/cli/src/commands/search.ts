@@ -1,5 +1,6 @@
 // barefoot search — find components by name, category, or tags.
 
+import path from 'path'
 import type { CliContext } from '../context'
 import type { MetaIndexEntry } from '../lib/types'
 import { loadIndex } from '../lib/meta-loader'
@@ -12,8 +13,8 @@ const categoryAliases: Record<string, string[]> = {
   'menu': ['navigation', 'overlay'],
 }
 
-function search(query: string, ctx: CliContext): MetaIndexEntry[] {
-  const index = loadIndex(ctx.metaDir)
+export function search(query: string, metaDir: string): MetaIndexEntry[] {
+  const index = loadIndex(metaDir)
   const q = query.toLowerCase()
 
   // Expand query to include category aliases
@@ -53,12 +54,25 @@ function printSearchResults(results: MetaIndexEntry[], jsonFlag: boolean) {
 }
 
 export function run(args: string[], ctx: CliContext): void {
+  // Parse --dir flag
+  let metaDir = ctx.metaDir
+  const dirIdx = args.indexOf('--dir')
+  if (dirIdx !== -1) {
+    const dirValue = args[dirIdx + 1]
+    if (!dirValue || dirValue.startsWith('-')) {
+      console.error('Error: --dir requires a path argument.')
+      process.exit(1)
+    }
+    metaDir = path.resolve(dirValue)
+    args = [...args.slice(0, dirIdx), ...args.slice(dirIdx + 2)]
+  }
+
   const query = args.join(' ')
   if (!query) {
     // List all components
-    const index = loadIndex(ctx.metaDir)
+    const index = loadIndex(metaDir)
     printSearchResults(index.components, ctx.jsonFlag)
   } else {
-    printSearchResults(search(query, ctx), ctx.jsonFlag)
+    printSearchResults(search(query, metaDir), ctx.jsonFlag)
   }
 }
