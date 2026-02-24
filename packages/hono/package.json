@@ -45,6 +45,9 @@
     "./utils": {
       "types": "./src/utils.ts",
       "import": "./src/utils.ts"
+    },
+    "./test-render": {
+      "bun": "./src/test-render.ts"
     }
   },
   "files": [

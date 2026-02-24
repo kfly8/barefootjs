@@ -39,6 +39,52 @@ function hasUseClientDirective(content: string): boolean {
   return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
 }
 
+// Add script collection wrapper to SSR component
+function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
+  // Add import for useRequestContext
+  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\n"
+
+  // Find the last import statement and add our import after it
+  const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
+  if (!importMatch) {
+    return content
+  }
+
+  const beforeImports = importMatch[1]
+  const existingImports = importMatch[2]
+  const restOfFile = content.slice(importMatch[0].length)
+
+  // Script collection code to insert at the start of each component function
+  const scriptCollector = `
+  // Script collection for client JS hydration
+  try {
+    const __c = useRequestContext()
+    const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
+    const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
+    if (!__outputScripts.has('__barefoot__')) {
+      __outputScripts.add('__barefoot__')
+      __scripts.push({ src: '/static/components/barefoot.js' })
+    }
+    if (!__outputScripts.has('${componentId}')) {
+      __outputScripts.add('${componentId}')
+      __scripts.push({ src: '/static/components/${clientJsPath}' })
+    }
+    __c.set('bfCollectedScripts', __scripts)
+    __c.set('bfOutputScripts', __outputScripts)
+  } catch {}
+`
+
+  // Insert script collector at the start of each export function
+  const modifiedRest = restOfFile.replace(
+    /export function (\w+)\(([^)]*)\)([^{]*)\{/g,
+    (match, name, params, rest) => {
+      return `export function ${name}(${params})${rest}{${scriptCollector}`
+    }
+  )
+
+  return beforeImports + existingImports + importStatement + modifiedRest
+}
+
 // Discover all component files from both local and shared directories
 const localComponents = (await readdir(COMPONENTS_DIR))
   .filter(f => f.endsWith('.tsx'))
@@ -81,13 +127,8 @@ for (const entryPath of componentFiles) {
   const baseNameNoExt = baseFileName.replace('.tsx', '')
   const clientJsFilename = `${baseNameNoExt}.client.js`
 
-  // Create HonoAdapter with script collection enabled (per-file for correct clientJsFilename)
-  const adapter = new HonoAdapter({
-    injectScriptCollection: true,
-    clientJsBasePath: '/static/components/',
-    barefootJsPath: '/static/components/barefoot.js',
-    clientJsFilename,
-  })
+  // Create HonoAdapter (script collection is handled via addScriptCollection post-processing)
+  const adapter = new HonoAdapter()
 
   const result = await compileJSX(entryPath, async (path) => {
     return await Bun.file(path).text()
@@ -139,8 +180,12 @@ for (const entryPath of componentFiles) {
     console.log(`Generated: dist/components/${clientJsFilename}`)
   }
 
-  // Write Marked Template
-  if (markedJsxContent) {
+  // Write Marked Template (with script collection wrapper if client JS exists)
+  if (markedJsxContent && hasClientJs) {
+    const wrappedContent = addScriptCollection(markedJsxContent, baseNameNoExt, clientJsFilename)
+    await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), wrappedContent)
+    console.log(`Generated: dist/components/${baseFileName}`)
+  } else if (markedJsxContent) {
     await Bun.write(resolve(DIST_COMPONENTS_DIR, baseFileName), markedJsxContent)
     console.log(`Generated: dist/components/${baseFileName}`)
   }

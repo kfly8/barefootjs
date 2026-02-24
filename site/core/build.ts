@@ -136,7 +136,7 @@ const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = 
   '__barefoot__': { markedTemplate: '', clientJs: `components/${barefootFileName}` }
 }
 
-const adapter = new HonoAdapter({ injectScriptCollection: false })
+const adapter = new HonoAdapter()
 
 // Discover components from local, shared, and landing dirs
 const localComponentFiles = await discoverComponentFiles(COMPONENTS_DIR)

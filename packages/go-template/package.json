@@ -9,6 +9,9 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./test-render": {
+      "bun": "./src/test-render.ts"
     }
   },
   "files": [

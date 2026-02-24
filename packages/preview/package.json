@@ -5,8 +5,7 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": { "bun": "./src/index.tsx" },
-    "./render": { "bun": "./src/render.ts" }
+    ".": { "bun": "./src/index.tsx" }
   },
   "dependencies": {
     "@barefootjs/hono": "workspace:*",

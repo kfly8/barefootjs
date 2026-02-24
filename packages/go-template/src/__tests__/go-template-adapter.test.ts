@@ -8,6 +8,8 @@ import { describe, test, expect } from 'bun:test'
 import { GoTemplateAdapter } from '../adapter/go-template-adapter'
 import { runJSXConformanceTests } from '@barefootjs/adapter-tests'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
+import { renderHonoComponent } from '@barefootjs/hono/test-render'
+import { renderGoTemplateComponent, GoNotAvailableError } from '@barefootjs/go-template/test-render'
 import { compileJSXSync, type ComponentIR } from '@barefootjs/jsx'
 
 // =============================================================================
@@ -16,9 +18,11 @@ import { compileJSXSync, type ComponentIR } from '@barefootjs/jsx'
 
 runJSXConformanceTests({
   createAdapter: () => new GoTemplateAdapter(),
-  referenceAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
+  render: renderGoTemplateComponent,
+  referenceAdapter: () => new HonoAdapter(),
+  referenceRender: renderHonoComponent,
   onRenderError: (err, id) => {
-    if (err.name === 'GoNotAvailableError') {
+    if (err instanceof GoNotAvailableError) {
       console.log(`Skipping [${id}]: ${err.message}`)
       return true
     }
