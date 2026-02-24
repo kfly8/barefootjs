@@ -1,0 +1,15 @@
+import { createFixture } from '../src/types'
+
+export const fixture = createFixture({
+  id: 'map-with-index',
+  description: 'Array map with index parameter',
+  source: `
+'use client'
+import { createSignal } from '@barefootjs/dom'
+type Entry = { label: string }
+export function MapWithIndex() {
+  const [entries, setEntries] = createSignal<Entry[]>([])
+  return <ul>{entries().map((entry, i) => <li>{i}: {entry.label}</li>)}</ul>
+}
+`,
+})

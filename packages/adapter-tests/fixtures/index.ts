@@ -1,6 +1,67 @@
 import { fixture as counter } from './counter'
+// Priority 1: Core reactivity
+import { fixture as signalWithFallback } from './signal-with-fallback'
+import { fixture as controlledSignal } from './controlled-signal'
+import { fixture as memo } from './memo'
+import { fixture as effect } from './effect'
+import { fixture as multipleSignals } from './multiple-signals'
+// Priority 2: Props and composition
+import { fixture as propsStatic } from './props-static'
+import { fixture as propsReactive } from './props-reactive'
+import { fixture as nestedElements } from './nested-elements'
+// Priority 3: Conditionals
+import { fixture as ternary } from './ternary'
+import { fixture as logicalAnd } from './logical-and'
+import { fixture as conditionalClass } from './conditional-class'
+// Priority 4: Loops
+import { fixture as mapBasic } from './map-basic'
+import { fixture as mapWithIndex } from './map-with-index'
+import { fixture as filterSimple } from './filter-simple'
+import { fixture as sortSimple } from './sort-simple'
+import { fixture as filterSortChain } from './filter-sort-chain'
+// Priority 5: Elements and attributes
+import { fixture as voidElements } from './void-elements'
+import { fixture as dynamicAttributes } from './dynamic-attributes'
+import { fixture as classVsClassname } from './class-vs-classname'
+import { fixture as styleAttribute } from './style-attribute'
+// Priority 6: Advanced patterns
+import { fixture as fragment } from './fragment'
+import { fixture as clientOnly } from './client-only'
+import { fixture as eventHandlers } from './event-handlers'
+import { fixture as defaultProps } from './default-props'
+
 import type { JSXFixture } from '../src/types'
 
 export const jsxFixtures: JSXFixture[] = [
   counter,
+  // Priority 1: Core reactivity
+  signalWithFallback,
+  controlledSignal,
+  memo,
+  effect,
+  multipleSignals,
+  // Priority 2: Props and composition
+  propsStatic,
+  propsReactive,
+  nestedElements,
+  // Priority 3: Conditionals
+  ternary,
+  logicalAnd,
+  conditionalClass,
+  // Priority 4: Loops
+  mapBasic,
+  mapWithIndex,
+  filterSimple,
+  sortSimple,
+  filterSortChain,
+  // Priority 5: Elements and attributes
+  voidElements,
+  dynamicAttributes,
+  classVsClassname,
+  styleAttribute,
+  // Priority 6: Advanced patterns
+  fragment,
+  clientOnly,
+  eventHandlers,
+  defaultProps,
 ]
