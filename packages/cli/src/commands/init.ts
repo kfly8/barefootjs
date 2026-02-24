@@ -1,6 +1,6 @@
 // `barefoot init` — Initialize a new BarefootJS project.
 
-import { existsSync, mkdirSync, writeFileSync, copyFileSync, symlinkSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync, copyFileSync } from 'fs'
 import path from 'path'
 import type { CliContext } from '../context'
 import type { BarefootConfig } from '../context'
@@ -74,10 +74,7 @@ export function run(args: string[], ctx: CliContext): void {
   const componentsDir = path.resolve(projectDir, config.paths.components)
   mkdirSync(componentsDir, { recursive: true })
 
-  // 6. Create symlinks for @barefootjs/* packages
-  linkBarefootPackages(projectDir, ctx.root)
-
-  // 7. Generate package.json if it doesn't exist
+  // 6. Generate package.json if it doesn't exist
   const pkgJsonPath = path.join(projectDir, 'package.json')
   if (!existsSync(pkgJsonPath)) {
     const pkgJson = {
@@ -87,12 +84,19 @@ export function run(args: string[], ctx: CliContext): void {
       scripts: {
         test: 'bun test',
       },
+      dependencies: {
+        '@barefootjs/dom': 'workspace:*',
+        '@barefootjs/jsx': 'workspace:*',
+      },
+      devDependencies: {
+        '@barefootjs/test': 'workspace:*',
+      },
     }
     writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n')
     console.log('  Created package.json')
   }
 
-  // 8. Generate tsconfig.json if it doesn't exist
+  // 7. Generate tsconfig.json if it doesn't exist
   const tsconfigPath = path.join(projectDir, 'tsconfig.json')
   if (!existsSync(tsconfigPath)) {
     const tsconfig = {
@@ -116,25 +120,10 @@ export function run(args: string[], ctx: CliContext): void {
 
   console.log(`\nProject initialized successfully!`)
   console.log(`\nNext steps:`)
+  console.log(`  bun install                    # Install dependencies`)
   console.log(`  barefoot add button checkbox   # Add components`)
   console.log(`  bun test                       # Run component tests`)
   console.log(`  barefoot search <query>        # Search available components`)
-}
-
-const BAREFOOT_PACKAGES = ['dom', 'jsx', 'test'] as const
-
-function linkBarefootPackages(projectDir: string, root: string): void {
-  const scopeDir = path.join(projectDir, 'node_modules', '@barefootjs')
-  mkdirSync(scopeDir, { recursive: true })
-
-  for (const pkg of BAREFOOT_PACKAGES) {
-    const linkPath = path.join(scopeDir, pkg)
-    if (existsSync(linkPath)) continue
-
-    const target = path.relative(scopeDir, path.join(root, 'packages', pkg))
-    symlinkSync(target, linkPath)
-    console.log(`  Linked @barefootjs/${pkg}`)
-  }
 }
 
 async function generateTokensCSS(
