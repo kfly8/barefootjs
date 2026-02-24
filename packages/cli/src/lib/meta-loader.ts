@@ -7,7 +7,7 @@ import type { MetaIndex, ComponentMeta } from './types'
 export function loadIndex(metaDir: string): MetaIndex {
   const indexPath = path.join(metaDir, 'index.json')
   if (!existsSync(indexPath)) {
-    console.error('Error: ui/meta/index.json not found. Run `bun run meta:extract` first.')
+    console.error(`Error: ${indexPath} not found.`)
     process.exit(1)
   }
   return JSON.parse(readFileSync(indexPath, 'utf-8'))

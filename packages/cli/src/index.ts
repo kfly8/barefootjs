@@ -17,7 +17,7 @@ function printUsage() {
 Commands:
   init [--name <name>]        Initialize a new BarefootJS project
   add <component...> [--force] Add components to your project
-  search <query>              Search components by name/category/tags
+  search <query> [--dir <path>] Search components by name/category/tags
   docs <component>            Show component documentation (props, examples, a11y)
   scaffold <name> <comp...>   Generate component skeleton + IR test
   test [component]            Find and show test commands
