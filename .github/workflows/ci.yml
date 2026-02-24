@@ -63,7 +63,7 @@ jobs:
           cd ../jsx && bun run build
 
       - name: Run UI component IR tests
-        run: bun test ui/components/ui/__tests__/
+        run: bun test ui/components/
 
   e2e-hono:
     runs-on: ubuntu-latest
