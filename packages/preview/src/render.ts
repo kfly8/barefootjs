@@ -226,10 +226,13 @@ ${propsInit}
     }
 
     // Run `go run .`
+    // GOTOOLCHAIN=local prevents Go from downloading a newer toolchain
+    // when go.mod specifies a patch version newer than the installed one.
     const proc = Bun.spawn(['go', 'run', '.'], {
       cwd: tempDir,
       stdout: 'pipe',
       stderr: 'pipe',
+      env: { ...process.env, GOTOOLCHAIN: 'local' },
     })
 
     const [stdout, stderr] = await Promise.all([
