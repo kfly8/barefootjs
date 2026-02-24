@@ -13,6 +13,27 @@ export function loadIndex(metaDir: string): MetaIndex {
   return JSON.parse(readFileSync(indexPath, 'utf-8'))
 }
 
+export async function fetchIndex(registryUrl: string): Promise<MetaIndex> {
+  const url = registryUrl.endsWith('/')
+    ? `${registryUrl}index.json`
+    : `${registryUrl}/index.json`
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) }).catch((err: Error) => {
+    console.error(`Error: Failed to fetch registry at ${url}: ${err.message}`)
+    process.exit(1)
+  }) as Response
+  if (!res.ok) {
+    console.error(`Error: Registry returned HTTP ${res.status} for ${url}`)
+    process.exit(1)
+  }
+  try {
+    return await res.json()
+  } catch {
+    console.error(`Error: Invalid JSON from registry at ${url}`)
+    process.exit(1)
+  }
+  throw new Error('unreachable')
+}
+
 export function loadComponent(metaDir: string, name: string): ComponentMeta {
   const filePath = path.join(metaDir, `${name}.json`)
   if (!existsSync(filePath)) {

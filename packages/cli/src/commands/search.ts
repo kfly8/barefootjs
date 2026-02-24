@@ -2,8 +2,8 @@
 
 import path from 'path'
 import type { CliContext } from '../context'
-import type { MetaIndexEntry } from '../lib/types'
-import { loadIndex } from '../lib/meta-loader'
+import type { MetaIndex, MetaIndexEntry } from '../lib/types'
+import { loadIndex, fetchIndex } from '../lib/meta-loader'
 
 // Category aliases for better search (e.g., "form" → "input" components)
 const categoryAliases: Record<string, string[]> = {
@@ -13,8 +13,7 @@ const categoryAliases: Record<string, string[]> = {
   'menu': ['navigation', 'overlay'],
 }
 
-export function search(query: string, metaDir: string): MetaIndexEntry[] {
-  const index = loadIndex(metaDir)
+export function search(query: string, index: MetaIndex): MetaIndexEntry[] {
   const q = query.toLowerCase()
 
   // Expand query to include category aliases
@@ -53,7 +52,7 @@ function printSearchResults(results: MetaIndexEntry[], jsonFlag: boolean) {
   console.log(`\n${results.length} component(s) found. (* = stateful)`)
 }
 
-export function run(args: string[], ctx: CliContext): void {
+export async function run(args: string[], ctx: CliContext): Promise<void> {
   // Parse --dir flag
   let metaDir = ctx.metaDir
   const dirIdx = args.indexOf('--dir')
@@ -67,12 +66,34 @@ export function run(args: string[], ctx: CliContext): void {
     args = [...args.slice(0, dirIdx), ...args.slice(dirIdx + 2)]
   }
 
+  // Parse --registry flag
+  let registryUrl: string | undefined
+  const regIdx = args.indexOf('--registry')
+  if (regIdx !== -1) {
+    const regValue = args[regIdx + 1]
+    if (!regValue || regValue.startsWith('-')) {
+      console.error('Error: --registry requires a URL argument.')
+      process.exit(1)
+    }
+    registryUrl = regValue
+    args = [...args.slice(0, regIdx), ...args.slice(regIdx + 2)]
+  }
+
+  // Mutual exclusion
+  if (dirIdx !== -1 && registryUrl) {
+    console.error('Error: --dir and --registry cannot be used together.')
+    process.exit(1)
+  }
+
+  // Load index from local or remote source
+  const index = registryUrl
+    ? await fetchIndex(registryUrl)
+    : loadIndex(metaDir)
+
   const query = args.join(' ')
   if (!query) {
-    // List all components
-    const index = loadIndex(metaDir)
     printSearchResults(index.components, ctx.jsonFlag)
   } else {
-    printSearchResults(search(query, metaDir), ctx.jsonFlag)
+    printSearchResults(search(query, index), ctx.jsonFlag)
   }
 }
