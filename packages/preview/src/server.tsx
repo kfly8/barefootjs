@@ -14,7 +14,6 @@ import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { serveStatic } from 'hono/bun'
 import { BfScripts } from '@barefootjs/hono/scripts'
 import { BfPortals } from '@barefootjs/hono/portals'
-import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -87,7 +86,6 @@ export function createPreviewApp(options: ServerOptions) {
                 <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
                 <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
                 <title>{componentName} — Preview</title>
                 <link rel="stylesheet" href="/static/globals.css" />
                 <link rel="stylesheet" href="/static/uno.css" />
@@ -135,6 +133,10 @@ export function createPreviewApp(options: ServerOptions) {
                   #bf-theme-toggle:hover {
                     background: var(--accent);
                   }
+                  #bf-theme-toggle .sun { display: none }
+                  #bf-theme-toggle .moon { display: block }
+                  .dark #bf-theme-toggle .sun { display: block }
+                  .dark #bf-theme-toggle .moon { display: none }
                 `}</style>
               </head>
               <body>
@@ -142,40 +144,17 @@ export function createPreviewApp(options: ServerOptions) {
                 <button
                   id="bf-theme-toggle"
                   type="button"
-                  aria-label="Switch to dark mode"
+                  aria-label="Toggle dark mode"
+                  onclick="var r=document.documentElement;r.classList.add('theme-transition');r.classList.toggle('dark');setTimeout(function(){r.classList.remove('theme-transition')},300)"
                 >
-                  {/* Sun icon (shown in dark mode) */}
-                  <svg id="bf-sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                  <svg class="sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="4" />
                     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
                   </svg>
-                  {/* Moon icon (shown in light mode) */}
-                  <svg id="bf-moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                   </svg>
                 </button>
-                <script dangerouslySetInnerHTML={{ __html: `
-(function() {
-  var btn = document.getElementById('bf-theme-toggle');
-  var sun = document.getElementById('bf-sun-icon');
-  var moon = document.getElementById('bf-moon-icon');
-  function update() {
-    var isDark = document.documentElement.classList.contains('dark');
-    sun.style.display = isDark ? 'block' : 'none';
-    moon.style.display = isDark ? 'none' : 'block';
-    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-  }
-  update();
-  btn.addEventListener('click', function() {
-    var root = document.documentElement;
-    root.classList.add('theme-transition');
-    root.classList.toggle('dark');
-    localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
-    update();
-    setTimeout(function() { root.classList.remove('theme-transition'); }, 300);
-  });
-})();
-` }} />
                 <BfPortals />
                 <BfScripts />
               </body>

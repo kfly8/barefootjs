@@ -10,7 +10,6 @@
   "dependencies": {
     "@barefootjs/hono": "workspace:*",
     "@barefootjs/jsx": "workspace:*",
-    "@barefootjs/site-shared": "workspace:*",
     "hono": "^4.6.0"
   },
   "devDependencies": {
