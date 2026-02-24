@@ -21,6 +21,14 @@ app.use('/static/*', serveStatic({
   rewriteRequestPath: (path) => path.replace('/static', ''),
 }))
 
+// CORS + cache headers for registry (matches _headers for production)
+app.use('/r/*', async (c, next) => {
+  await next()
+  c.header('Access-Control-Allow-Origin', '*')
+  c.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  c.header('Cache-Control', 'public, max-age=300')
+})
+
 // Registry routes - serve static JSON files
 app.use('/r/*', serveStatic({
   root: './dist',

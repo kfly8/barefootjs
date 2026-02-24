@@ -482,4 +482,13 @@ async function copyDir(src: string, dest: string) {
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
 
+// Generate _headers for Cloudflare Workers static assets (CORS + cache for registry)
+const headersContent = `/r/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: public, max-age=300
+`
+await Bun.write(resolve(DIST_DIR, '_headers'), headersContent)
+console.log('Generated: dist/_headers')
+
 console.log('\nBuild complete!')
