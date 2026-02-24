@@ -66,6 +66,16 @@
       ]
     },
     {
+      "name": "PaginationPrevious",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "PaginationNext",
+      "description": "",
+      "props": []
+    },
+    {
       "name": "PaginationEllipsis",
       "description": "",
       "props": []

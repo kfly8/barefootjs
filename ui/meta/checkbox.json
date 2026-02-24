@@ -77,5 +77,31 @@
     "radio-group",
     "toggle"
   ],
-  "source": "ui/components/ui/checkbox/index.tsx"
+  "source": "ui/components/ui/checkbox/index.tsx",
+  "signals": [
+    {
+      "getter": "internalChecked",
+      "setter": "setInternalChecked",
+      "initialValue": "props.defaultChecked ?? false"
+    },
+    {
+      "getter": "controlledChecked",
+      "setter": "setControlledChecked",
+      "initialValue": "props.checked"
+    }
+  ],
+  "memos": [
+    {
+      "name": "isControlled",
+      "deps": []
+    },
+    {
+      "name": "isChecked",
+      "deps": [
+        "internalChecked",
+        "controlledChecked",
+        "isControlled"
+      ]
+    }
+  ]
 }

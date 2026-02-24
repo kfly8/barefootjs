@@ -78,5 +78,12 @@
     "hover-card",
     "popover"
   ],
-  "source": "ui/components/ui/tooltip/index.tsx"
+  "source": "ui/components/ui/tooltip/index.tsx",
+  "signals": [
+    {
+      "getter": "open",
+      "setter": "setOpen",
+      "initialValue": "false"
+    }
+  ]
 }

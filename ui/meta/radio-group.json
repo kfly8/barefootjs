@@ -95,5 +95,31 @@
     "toggle-group",
     "select"
   ],
-  "source": "ui/components/ui/radio-group/index.tsx"
+  "source": "ui/components/ui/radio-group/index.tsx",
+  "signals": [
+    {
+      "getter": "internalValue",
+      "setter": "setInternalValue",
+      "initialValue": "props.defaultValue ?? ''"
+    },
+    {
+      "getter": "controlledValue",
+      "setter": "setControlledValue",
+      "initialValue": "props.value"
+    }
+  ],
+  "memos": [
+    {
+      "name": "isControlled",
+      "deps": []
+    },
+    {
+      "name": "currentValue",
+      "deps": [
+        "internalValue",
+        "controlledValue",
+        "isControlled"
+      ]
+    }
+  ]
 }

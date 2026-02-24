@@ -178,5 +178,12 @@
     "radio-group",
     "input"
   ],
-  "source": "ui/components/ui/select/index.tsx"
+  "source": "ui/components/ui/select/index.tsx",
+  "signals": [
+    {
+      "getter": "open",
+      "setter": "setOpen",
+      "initialValue": "false"
+    }
+  ]
 }

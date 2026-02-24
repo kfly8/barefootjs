@@ -201,5 +201,17 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/command/index.tsx"
+  "source": "ui/components/ui/command/index.tsx",
+  "signals": [
+    {
+      "getter": "search",
+      "setter": "setSearch",
+      "initialValue": "''"
+    },
+    {
+      "getter": "selectedValue",
+      "setter": "setSelectedValue",
+      "initialValue": "''"
+    }
+  ]
 }

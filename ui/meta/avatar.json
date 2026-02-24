@@ -1,0 +1,55 @@
+{
+  "name": "avatar",
+  "title": "Avatar",
+  "category": "display",
+  "description": "Avatar Component Displays a user profile image with a fallback for when the image is unavailable. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "multi-component"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Children to render (typically AvatarImage and AvatarFallback)."
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "AvatarImage",
+      "description": "Props for the AvatarImage component.",
+      "props": []
+    },
+    {
+      "name": "AvatarFallback",
+      "description": "Props for the AvatarFallback component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Fallback content (typically user initials)."
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Avatar>\n  <AvatarImage src=\"/avatar.png\" alt=\"User\" />\n  <AvatarFallback>CN</AvatarFallback>\n</Avatar>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [],
+  "source": "ui/components/ui/avatar/index.tsx"
+}

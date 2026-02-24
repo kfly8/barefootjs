@@ -94,5 +94,37 @@
     "input",
     "switch"
   ],
-  "source": "ui/components/ui/slider/index.tsx"
+  "source": "ui/components/ui/slider/index.tsx",
+  "signals": [
+    {
+      "getter": "internalValue",
+      "setter": "setInternalValue",
+      "initialValue": "props.defaultValue ?? min"
+    },
+    {
+      "getter": "controlledValue",
+      "setter": "setControlledValue",
+      "initialValue": "props.value"
+    }
+  ],
+  "memos": [
+    {
+      "name": "isControlled",
+      "deps": []
+    },
+    {
+      "name": "currentValue",
+      "deps": [
+        "internalValue",
+        "controlledValue",
+        "isControlled"
+      ]
+    },
+    {
+      "name": "percentage",
+      "deps": [
+        "currentValue"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,43 @@
+{
+  "name": "spinner",
+  "title": "Spinner",
+  "category": "display",
+  "description": "Spinner Component An animated loading indicator using the LoaderCircle SVG icon. Provides visual feedback during async operations with proper ARIA accessibility attributes.",
+  "tags": [
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": "Additional CSS classes to apply."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Spinner />"
+    },
+    {
+      "title": "Custom size",
+      "code": "<Spinner className=\"size-6\" />"
+    }
+  ],
+  "accessibility": {
+    "role": "status",
+    "ariaAttributes": [
+      "aria-label"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [],
+  "source": "ui/components/ui/spinner/index.tsx"
+}

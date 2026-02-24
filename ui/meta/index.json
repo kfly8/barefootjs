@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-02-21T02:50:46.721Z",
+  "generatedAt": "2026-02-24T13:13:36.535Z",
   "components": [
     {
       "name": "accordion",
@@ -43,6 +43,35 @@
         "AlertDialogFooter",
         "AlertDialogCancel",
         "AlertDialogAction"
+      ]
+    },
+    {
+      "name": "alert",
+      "title": "Alert",
+      "category": "display",
+      "description": "Alert Components Displays a callout for important content with variant support. Sub-components: Alert, AlertTitle, AlertDescription",
+      "tags": [
+        "multi-component",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "AlertTitle",
+        "AlertDescription"
+      ]
+    },
+    {
+      "name": "avatar",
+      "title": "Avatar",
+      "category": "display",
+      "description": "Avatar Component Displays a user profile image with a fallback for when the image is unavailable. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "multi-component"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "AvatarImage",
+        "AvatarFallback"
       ]
     },
     {
@@ -246,7 +275,7 @@
         "context",
         "aria"
       ],
-      "stateful": true,
+      "stateful": false,
       "subComponents": [
         "DropdownMenuTrigger",
         "DropdownMenuContent",
@@ -289,7 +318,36 @@
       "tags": [
         "aria"
       ],
-      "stateful": false
+      "stateful": false,
+      "subComponents": [
+        "ChevronDownIcon",
+        "ChevronUpIcon",
+        "ChevronLeftIcon",
+        "ChevronRightIcon",
+        "XIcon",
+        "PlusIcon",
+        "MinusIcon",
+        "SunIcon",
+        "MoonIcon",
+        "MonitorIcon",
+        "CopyIcon",
+        "ClipboardIcon",
+        "ClipboardCheckIcon",
+        "MenuIcon",
+        "ArrowLeftIcon",
+        "ArrowRightIcon",
+        "EllipsisIcon",
+        "GitHubIcon",
+        "SettingsIcon",
+        "GlobeIcon",
+        "LogOutIcon",
+        "CircleHelpIcon",
+        "SearchIcon",
+        "CircleCheckIcon",
+        "CircleXIcon",
+        "TriangleAlertIcon",
+        "InfoIcon"
+      ]
     },
     {
       "name": "input",
@@ -353,6 +411,8 @@
         "PaginationContent",
         "PaginationItem",
         "PaginationLink",
+        "PaginationPrevious",
+        "PaginationNext",
         "PaginationEllipsis"
       ]
     },
@@ -384,6 +444,17 @@
         "portal"
       ],
       "stateful": false
+    },
+    {
+      "name": "progress",
+      "title": "Progress",
+      "category": "display",
+      "description": "Progress Component Displays an indicator showing the completion progress of a task. Supports controlled mode where the parent updates the value reactively.",
+      "tags": [
+        "stateful",
+        "aria"
+      ],
+      "stateful": true
     },
     {
       "name": "radio-group",
@@ -465,16 +536,6 @@
       "stateful": false
     },
     {
-      "name": "settings-form",
-      "title": "Settings Form",
-      "category": "display",
-      "description": "",
-      "tags": [
-        "stateful"
-      ],
-      "stateful": true
-    },
-    {
       "name": "sheet",
       "title": "Sheet",
       "category": "overlay",
@@ -499,6 +560,14 @@
       ]
     },
     {
+      "name": "skeleton",
+      "title": "Skeleton",
+      "category": "display",
+      "description": "Skeleton Component A placeholder loading indicator that mimics the shape of content with a pulsing animation.",
+      "tags": [],
+      "stateful": false
+    },
+    {
       "name": "slider",
       "title": "Slider",
       "category": "input",
@@ -519,6 +588,16 @@
       "stateful": false
     },
     {
+      "name": "spinner",
+      "title": "Spinner",
+      "category": "display",
+      "description": "Spinner Component An animated loading indicator using the LoaderCircle SVG icon. Provides visual feedback during async operations with proper ARIA accessibility attributes.",
+      "tags": [
+        "aria"
+      ],
+      "stateful": false
+    },
+    {
       "name": "switch",
       "title": "Switch",
       "category": "input",
@@ -529,6 +608,26 @@
         "aria"
       ],
       "stateful": true
+    },
+    {
+      "name": "table",
+      "title": "Table",
+      "category": "display",
+      "description": "Table Components A composable set of table sub-components for displaying structured data. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "multi-component",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "TableHeader",
+        "TableBody",
+        "TableFooter",
+        "TableRow",
+        "TableHead",
+        "TableCell",
+        "TableCaption"
+      ]
     },
     {
       "name": "tabs",

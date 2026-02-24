@@ -10,7 +10,7 @@
     "context",
     "aria"
   ],
-  "stateful": true,
+  "stateful": false,
   "props": [
     {
       "name": "open",

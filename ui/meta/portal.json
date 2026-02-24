@@ -41,9 +41,7 @@
   },
   "dependencies": {
     "internal": [],
-    "external": [
-      "@barefootjs/dom"
-    ]
+    "external": []
   },
   "related": [
     "dialog",

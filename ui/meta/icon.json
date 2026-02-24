@@ -13,12 +13,143 @@
       "type": "IconSize",
       "required": false,
       "description": ""
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "ChevronDownIcon",
+      "description": "",
+      "props": []
     },
     {
-      "name": "class",
-      "type": "string",
-      "required": false,
-      "description": ""
+      "name": "ChevronUpIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "ChevronLeftIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "ChevronRightIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "XIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "PlusIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "MinusIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "SunIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "MoonIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "MonitorIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "CopyIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "ClipboardIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "ClipboardCheckIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "MenuIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "ArrowLeftIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "ArrowRightIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "EllipsisIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "GitHubIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "SettingsIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "GlobeIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "LogOutIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "CircleHelpIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "SearchIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "CircleCheckIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "CircleXIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "TriangleAlertIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "InfoIcon",
+      "description": "",
+      "props": []
     }
   ],
   "variants": {

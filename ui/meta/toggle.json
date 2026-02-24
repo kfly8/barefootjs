@@ -95,5 +95,31 @@
     "switch",
     "toggle-group"
   ],
-  "source": "ui/components/ui/toggle/index.tsx"
+  "source": "ui/components/ui/toggle/index.tsx",
+  "signals": [
+    {
+      "getter": "internalPressed",
+      "setter": "setInternalPressed",
+      "initialValue": "props.defaultPressed ?? false"
+    },
+    {
+      "getter": "controlledPressed",
+      "setter": "setControlledPressed",
+      "initialValue": "props.pressed"
+    }
+  ],
+  "memos": [
+    {
+      "name": "isControlled",
+      "deps": []
+    },
+    {
+      "name": "isPressed",
+      "deps": [
+        "internalPressed",
+        "controlledPressed",
+        "isControlled"
+      ]
+    }
+  ]
 }

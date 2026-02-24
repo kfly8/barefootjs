@@ -1,0 +1,71 @@
+{
+  "name": "alert",
+  "title": "Alert",
+  "category": "display",
+  "description": "Alert Components Displays a callout for important content with variant support. Sub-components: Alert, AlertTitle, AlertDescription",
+  "tags": [
+    "multi-component",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "variant",
+      "type": "AlertVariant",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "AlertTitle",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "AlertDescription",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "variants": {
+    "AlertVariant": [
+      "default",
+      "destructive"
+    ]
+  },
+  "examples": [],
+  "accessibility": {
+    "role": "alert",
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [],
+  "source": "ui/components/ui/alert/index.tsx"
+}
