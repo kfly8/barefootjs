@@ -45,6 +45,9 @@ jobs:
           cd ../hono && bun run build
           cd ../go-template && bun run build
 
+      - name: Pre-warm Go build cache
+        run: cd packages/go-template/runtime && GOTOOLCHAIN=local go build ./...
+
       - name: Run unit tests
         run: bun test packages/
 
