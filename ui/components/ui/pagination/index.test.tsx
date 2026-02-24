@@ -13,8 +13,7 @@ describe('Pagination', () => {
   const result = renderToTest(source, 'pagination.tsx', 'Pagination')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Pagination', () => {
@@ -50,8 +49,7 @@ describe('PaginationContent', () => {
   const result = renderToTest(source, 'pagination.tsx', 'PaginationContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PaginationContent', () => {
@@ -83,8 +81,7 @@ describe('PaginationItem', () => {
   const result = renderToTest(source, 'pagination.tsx', 'PaginationItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PaginationItem', () => {
@@ -112,8 +109,7 @@ describe('PaginationLink', () => {
   const result = renderToTest(source, 'pagination.tsx', 'PaginationLink')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PaginationLink', () => {
@@ -139,8 +135,7 @@ describe('PaginationPrevious', () => {
   const result = renderToTest(source, 'pagination.tsx', 'PaginationPrevious')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PaginationPrevious', () => {
@@ -168,8 +163,7 @@ describe('PaginationNext', () => {
   const result = renderToTest(source, 'pagination.tsx', 'PaginationNext')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PaginationNext', () => {
@@ -197,8 +191,7 @@ describe('PaginationEllipsis', () => {
   const result = renderToTest(source, 'pagination.tsx', 'PaginationEllipsis')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PaginationEllipsis', () => {

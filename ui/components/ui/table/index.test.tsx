@@ -3,14 +3,13 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const tableSource = readFileSync(resolve(__dirname, '../table.tsx'), 'utf-8')
+const tableSource = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 describe('Table', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'Table')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Table', () => {
@@ -41,8 +40,7 @@ describe('TableHeader', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableHeader')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as thead with data-slot=table-header', () => {
@@ -55,8 +53,7 @@ describe('TableBody', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableBody')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as tbody with data-slot=table-body', () => {
@@ -69,8 +66,7 @@ describe('TableFooter', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableFooter')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as tfoot with data-slot=table-footer', () => {
@@ -88,8 +84,7 @@ describe('TableRow', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableRow')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as tr with data-slot=table-row', () => {
@@ -107,8 +102,7 @@ describe('TableHead', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableHead')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as th with data-slot=table-head', () => {
@@ -126,8 +120,7 @@ describe('TableCell', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableCell')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as td with data-slot=table-cell', () => {
@@ -145,8 +138,7 @@ describe('TableCaption', () => {
   const result = renderToTest(tableSource, 'table.tsx', 'TableCaption')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as caption with data-slot=table-caption', () => {

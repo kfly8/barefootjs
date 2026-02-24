@@ -9,8 +9,7 @@ describe('RadioGroup', () => {
   const result = renderToTest(radioGroupSource, 'radio-group.tsx', 'RadioGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -46,8 +45,7 @@ describe('RadioGroupItem', () => {
   const result = renderToTest(radioGroupSource, 'radio-group.tsx', 'RadioGroupItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is RadioGroupItem', () => {

@@ -9,8 +9,7 @@ describe('Select', () => {
   const result = renderToTest(selectSource, 'select.tsx', 'Select')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -36,8 +35,7 @@ describe('SelectTrigger', () => {
   const result = renderToTest(selectSource, 'select.tsx', 'SelectTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SelectTrigger', () => {
@@ -67,8 +65,7 @@ describe('SelectContent', () => {
   const result = renderToTest(selectSource, 'select.tsx', 'SelectContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SelectContent', () => {
@@ -91,8 +88,7 @@ describe('SelectItem', () => {
   const result = renderToTest(selectSource, 'select.tsx', 'SelectItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is SelectItem', () => {

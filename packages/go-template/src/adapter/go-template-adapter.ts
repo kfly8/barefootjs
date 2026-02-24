@@ -243,16 +243,47 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Find nested components (loops with childComponent)
     const nestedComponents = this.findNestedComponents(ir.root)
 
+    // Build prop type overrides from signal types
+    const propTypeOverrides = this.buildPropTypeOverrides(ir)
+
     // Generate Input struct for main component
-    this.generateInputStruct(lines, ir, componentName, nestedComponents)
+    this.generateInputStruct(lines, ir, componentName, nestedComponents, propTypeOverrides)
 
     // Generate Props struct for main component
-    this.generatePropsStruct(lines, ir, componentName, nestedComponents)
+    this.generatePropsStruct(lines, ir, componentName, nestedComponents, propTypeOverrides)
 
     // Generate NewXxxProps function
     this.generateNewPropsFunction(lines, ir, componentName, nestedComponents)
 
     return lines.join('\n')
+  }
+
+  /**
+   * Build a map from prop name to a better Go type inferred from signals.
+   * When a signal is initialized from a prop (e.g., createSignal(props.initial ?? 0)),
+   * the signal's type annotation may be more specific than the prop's TypeInfo.
+   */
+  private buildPropTypeOverrides(ir: ComponentIR): Map<string, string> {
+    const overrides = new Map<string, string>()
+    for (const signal of ir.metadata.signals) {
+      // Check simple identifier reference
+      const propNames = [signal.initialValue]
+      const extracted = this.extractPropNameFromInitialValue(signal.initialValue)
+      if (extracted) propNames.push(extracted)
+
+      for (const propName of propNames) {
+        const param = ir.metadata.propsParams.find(p => p.name === propName)
+        if (!param) continue
+        const propGoType = this.typeInfoToGo(param.type, param.defaultValue)
+        if (propGoType === 'interface{}') {
+          const signalGoType = this.typeInfoToGo(signal.type, signal.initialValue)
+          if (signalGoType !== 'interface{}') {
+            overrides.set(propName, signalGoType)
+          }
+        }
+      }
+    }
+    return overrides
   }
 
   /**
@@ -262,7 +293,8 @@ export class GoTemplateAdapter extends BaseAdapter {
     lines: string[],
     ir: ComponentIR,
     componentName: string,
-    nestedComponents: IRLoopChildComponent[]
+    nestedComponents: IRLoopChildComponent[],
+    propTypeOverrides: Map<string, string>
   ): void {
     const inputTypeName = `${componentName}Input`
     lines.push(`// ${inputTypeName} is the user-facing input type.`)
@@ -276,7 +308,7 @@ export class GoTemplateAdapter extends BaseAdapter {
     for (const param of ir.metadata.propsParams) {
       const fieldName = this.capitalizeFieldName(param.name)
       if (nestedArrayFields.has(fieldName)) continue
-      const goType = this.typeInfoToGo(param.type, param.defaultValue)
+      const goType = propTypeOverrides.get(param.name) ?? this.typeInfoToGo(param.type, param.defaultValue)
       lines.push(`\t${fieldName} ${goType}`)
     }
 
@@ -296,7 +328,8 @@ export class GoTemplateAdapter extends BaseAdapter {
     lines: string[],
     ir: ComponentIR,
     componentName: string,
-    nestedComponents: IRLoopChildComponent[]
+    nestedComponents: IRLoopChildComponent[],
+    propTypeOverrides: Map<string, string>
   ): void {
     const propsTypeName = `${componentName}Props`
     lines.push(`// ${propsTypeName} is the props type for the ${componentName} component.`)
@@ -315,7 +348,7 @@ export class GoTemplateAdapter extends BaseAdapter {
       const fieldName = this.capitalizeFieldName(param.name)
       // Skip if this field will be replaced by a typed array for nested components
       if (nestedArrayFields.has(fieldName)) continue
-      const goType = this.typeInfoToGo(param.type, param.defaultValue)
+      const goType = propTypeOverrides.get(param.name) ?? this.typeInfoToGo(param.type, param.defaultValue)
       const jsonTag = this.toJsonTag(param.name)
       lines.push(`\t${fieldName} ${goType} \`json:"${jsonTag}"\``)
     }
@@ -328,9 +361,19 @@ export class GoTemplateAdapter extends BaseAdapter {
       const jsonTag = this.toJsonTag(signal.getter)
       // Infer type from initial value or referenced prop's type
       let goType: string
-      const referencedProp = propsParamMap.get(signal.initialValue)
+      let referencedProp = propsParamMap.get(signal.initialValue)
+      if (!referencedProp) {
+        const propName = this.extractPropNameFromInitialValue(signal.initialValue)
+        if (propName) referencedProp = propsParamMap.get(propName)
+      }
       if (referencedProp) {
-        goType = this.typeInfoToGo(referencedProp.type, referencedProp.defaultValue)
+        const propGoType = this.typeInfoToGo(referencedProp.type, referencedProp.defaultValue)
+        // Prefer signal's own type when prop type is too generic
+        if (propGoType === 'interface{}') {
+          goType = this.typeInfoToGo(signal.type, signal.initialValue)
+        } else {
+          goType = propGoType
+        }
       } else {
         goType = this.typeInfoToGo(signal.type, signal.initialValue)
       }
@@ -591,6 +634,12 @@ export class GoTemplateAdapter extends BaseAdapter {
       }
     }
 
+    // Check for props.xxx pattern (e.g., "props.initial ?? 0")
+    const propName = this.extractPropNameFromInitialValue(value)
+    if (propName && propsParams?.some(p => p.name === propName)) {
+      return `in.${this.capitalizeFieldName(propName)}`
+    }
+
     if (typeInfo.kind === 'primitive') {
       if (typeInfo.primitive === 'boolean') {
         return value === 'true' ? 'true' : 'false'
@@ -670,6 +719,12 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Check if it's a props param reference
     if (propsParams.some(p => p.name === initialValue)) {
       return `in.${this.capitalizeFieldName(initialValue)}`
+    }
+
+    // Check for props.xxx pattern (e.g., "props.initial ?? 0")
+    const propName = this.extractPropNameFromInitialValue(initialValue)
+    if (propName && propsParams.some(p => p.name === propName)) {
+      return `in.${this.capitalizeFieldName(propName)}`
     }
 
     // Check if it's a literal value
@@ -820,7 +875,11 @@ export class GoTemplateAdapter extends BaseAdapter {
       for (const dep of memo.deps) {
         const signal = signals.find(s => s.getter === dep)
         if (signal) {
-          const referencedProp = propsParamMap.get(signal.initialValue)
+          let referencedProp = propsParamMap.get(signal.initialValue)
+          if (!referencedProp) {
+            const propName = this.extractPropNameFromInitialValue(signal.initialValue)
+            if (propName) referencedProp = propsParamMap.get(propName)
+          }
           if (referencedProp) {
             const propType = this.typeInfoToGo(referencedProp.type, referencedProp.defaultValue)
             if (propType === 'int' || propType === 'float64') {
@@ -861,6 +920,28 @@ export class GoTemplateAdapter extends BaseAdapter {
     if (value.startsWith('[')) return '[]interface{}'
     // Default
     return 'interface{}'
+  }
+
+  /**
+   * Extract prop name from a signal's initialValue that uses props.xxx pattern.
+   * e.g., "props.initial ?? 0" → "initial", "props.checked" → "checked"
+   */
+  private extractPropNameFromInitialValue(initialValue: string): string | null {
+    if (!this.propsObjectName) return null
+    const trimmed = initialValue.trim()
+    const name = this.propsObjectName
+
+    // "props.initial ?? 0", "props.checked", "p.value || ''"
+    const direct = new RegExp(`^${name}\\.(\\w+)(?:\\s*(?:\\?\\?|\\|\\|)\\s*.+)?$`)
+    const m1 = trimmed.match(direct)
+    if (m1) return m1[1]
+
+    // "(props.initialTodos ?? []).map(...)"
+    const wrapped = new RegExp(`^\\(${name}\\.(\\w+)\\s*(?:\\?\\?|\\|\\|)\\s*[^)]+\\)`)
+    const m2 = trimmed.match(wrapped)
+    if (m2) return m2[1]
+
+    return null
   }
 
   private capitalizeFieldName(name: string): string {
@@ -1967,6 +2048,11 @@ export class GoTemplateAdapter extends BaseAdapter {
           if (result) {
             return result
           }
+        }
+
+        // Handle SolidJS-style props pattern: props.xxx -> .Xxx
+        if (expr.object.kind === 'identifier' && this.propsObjectName && expr.object.name === this.propsObjectName) {
+          return `.${this.capitalizeFieldName(expr.property)}`
         }
 
         const obj = this.renderConditionExpr(expr.object)

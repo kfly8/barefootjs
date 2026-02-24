@@ -13,8 +13,7 @@ describe('ContextMenu', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenu')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenu', () => {
@@ -40,8 +39,7 @@ describe('ContextMenuTrigger', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuTrigger', () => {
@@ -68,8 +66,7 @@ describe('ContextMenuContent', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuContent', () => {
@@ -104,8 +101,7 @@ describe('ContextMenuItem', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuItem', () => {
@@ -136,8 +132,7 @@ describe('ContextMenuCheckboxItem', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuCheckboxItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuCheckboxItem', () => {
@@ -167,8 +162,7 @@ describe('ContextMenuRadioGroup', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuRadioGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuRadioGroup', () => {
@@ -195,8 +189,7 @@ describe('ContextMenuRadioItem', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuRadioItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuRadioItem', () => {
@@ -221,8 +214,7 @@ describe('ContextMenuSub', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuSub')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuSub', () => {
@@ -248,8 +240,7 @@ describe('ContextMenuSubTrigger', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuSubTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuSubTrigger', () => {
@@ -287,8 +278,7 @@ describe('ContextMenuSubContent', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuSubContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuSubContent', () => {
@@ -317,8 +307,7 @@ describe('ContextMenuLabel', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuLabel')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuLabel', () => {
@@ -343,8 +332,7 @@ describe('ContextMenuSeparator', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuSeparator')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuSeparator', () => {
@@ -369,8 +357,7 @@ describe('ContextMenuShortcut', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuShortcut')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuShortcut', () => {
@@ -396,8 +383,7 @@ describe('ContextMenuGroup', () => {
   const result = renderToTest(contextMenuSource, 'context-menu.tsx', 'ContextMenuGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ContextMenuGroup', () => {

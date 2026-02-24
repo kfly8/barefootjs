@@ -13,8 +13,7 @@ describe('Dialog', () => {
   const result = renderToTest(source, 'dialog.tsx', 'Dialog')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Dialog', () => {
@@ -30,8 +29,7 @@ describe('DialogTrigger', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogTrigger', () => {
@@ -58,8 +56,7 @@ describe('DialogOverlay', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogOverlay')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogOverlay', () => {
@@ -87,8 +84,7 @@ describe('DialogContent', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogContent', () => {
@@ -124,8 +120,7 @@ describe('DialogHeader', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogHeader')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogHeader', () => {
@@ -146,8 +141,7 @@ describe('DialogTitle', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogTitle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogTitle', () => {
@@ -168,8 +162,7 @@ describe('DialogDescription', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogDescription')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogDescription', () => {
@@ -190,8 +183,7 @@ describe('DialogFooter', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogFooter')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogFooter', () => {
@@ -212,8 +204,7 @@ describe('DialogClose', () => {
   const result = renderToTest(source, 'dialog.tsx', 'DialogClose')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DialogClose', () => {

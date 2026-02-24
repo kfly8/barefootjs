@@ -391,6 +391,8 @@ export interface IRMetadata {
   /** Name of the props object parameter (e.g., 'props' in `function Component(props: Props)`) */
   propsObjectName: string | null
   restPropsName: string | null
+  /** Keys statically expanded from rest props via type analysis (closed type only) */
+  restPropsExpandedKeys: string[]
   signals: SignalInfo[]
   memos: MemoInfo[]
   effects: EffectInfo[]

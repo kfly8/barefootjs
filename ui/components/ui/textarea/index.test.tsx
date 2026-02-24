@@ -9,8 +9,7 @@ describe('Textarea', () => {
   const result = renderToTest(textareaSource, 'textarea.tsx', 'Textarea')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Textarea', () => {

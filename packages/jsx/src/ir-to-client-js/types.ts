@@ -24,6 +24,7 @@ export interface ClientJsContext {
   localConstants: ConstantInfo[]
   propsParams: ParamInfo[]
   propsObjectName: string | null
+  restPropsName: string | null
 
   // Collected elements
   interactiveElements: InteractiveElement[]
@@ -38,6 +39,8 @@ export interface ClientJsContext {
   clientOnlyElements: ClientOnlyElement[]
   clientOnlyConditionals: ClientOnlyConditional[]
   providerSetups: Array<{ contextName: string; valueExpr: string }>
+  /** HTML elements with unresolved spread attrs (open types, need applyRestAttrs at runtime) */
+  restAttrElements: RestAttrElement[]
 }
 
 export interface InteractiveElement {
@@ -156,4 +159,12 @@ export interface ClientOnlyConditional {
   whenFalseEvents: ConditionalBranchEvent[]
   whenTrueRefs: ConditionalBranchRef[]
   whenFalseRefs: ConditionalBranchRef[]
+}
+
+export interface RestAttrElement {
+  slotId: string
+  /** The spread source expression (e.g., 'rest', 'props') */
+  source: string
+  /** Attribute names already statically set on the element (exclude from applyRestAttrs) */
+  excludeKeys: string[]
 }

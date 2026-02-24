@@ -3,14 +3,13 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const spinnerSource = readFileSync(resolve(__dirname, '../spinner.tsx'), 'utf-8')
+const spinnerSource = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 describe('Spinner', () => {
   const result = renderToTest(spinnerSource, 'spinner.tsx', 'Spinner')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Spinner', () => {

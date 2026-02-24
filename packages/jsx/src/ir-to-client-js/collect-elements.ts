@@ -163,9 +163,21 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
         }
       }
 
+      // Detect unexpanded spread props (open type — Phase 1 couldn't resolve keys)
+      // Only handle spreads whose source matches the component's rest/props parameter name.
+      // Other identifiers (e.g., local variables) may not exist in the compiled init scope.
+      // Always use 'props' as the actual source since the init function parameter is always 'props'.
+      const spreadProp = node.props.find(p => p.name === '...' || p.name.startsWith('...'))
+      const restName = ctx.restPropsName
+      const propsObjName = ctx.propsObjectName
+      const isKnownSource = spreadProp && (spreadProp.value === restName || spreadProp.value === propsObjName)
+      const spreadSource = isKnownSource ? 'props' : null
+
       const propsForInit: string[] = []
+      const explicitPropNames: string[] = []
       for (const prop of node.props) {
         if (prop.name === '...' || prop.name.startsWith('...')) continue
+        explicitPropNames.push(prop.name)
         const isEventHandler =
           prop.name.startsWith('on') &&
           prop.name.length > 2 &&
@@ -194,8 +206,16 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           propsForInit.push(`${quotePropName(prop.name)}: ${prop.value}`)
         }
       }
-      const propsExpr =
-        propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+
+      let propsExpr: string
+      if (spreadSource) {
+        // Use forwardProps() to merge spread source with explicit overrides
+        const overrides = propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+        const excludeKeys = JSON.stringify(explicitPropNames)
+        propsExpr = `forwardProps(${spreadSource}, ${overrides}, ${excludeKeys})`
+      } else {
+        propsExpr = propsForInit.length > 0 ? `{ ${propsForInit.join(', ')} }` : '{}'
+      }
 
       ctx.childInits.push({
         name: node.name,
@@ -250,6 +270,27 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
 
   if (element.slotId) {
     for (const attr of element.attrs) {
+      // Track unresolved spread attrs for runtime application.
+      // Only handle spreads whose source matches the component's rest/props parameter name.
+      // Other identifiers or complex expressions may not exist in the compiled init scope.
+      // Always use 'props' as the source since the init function parameter is always 'props'.
+      if (attr.name === '...' && attr.value) {
+        const spreadVal = attrValueToString(attr.value) ?? ''
+        const elemRestName = ctx.restPropsName
+        const elemPropsObjName = ctx.propsObjectName
+        if (spreadVal && (spreadVal === elemRestName || spreadVal === elemPropsObjName)) {
+          const excludeKeys = element.attrs
+            .filter(a => a.name !== '...')
+            .map(a => a.name)
+          ctx.restAttrElements.push({
+            slotId: element.slotId,
+            source: 'props',
+            excludeKeys,
+          })
+        }
+        continue
+      }
+
       if (attr.dynamic && attr.value) {
         const valueStr = attrValueToString(attr.value)
         if (!valueStr) continue

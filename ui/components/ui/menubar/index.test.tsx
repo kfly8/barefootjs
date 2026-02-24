@@ -13,8 +13,7 @@ describe('Menubar', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'Menubar')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -62,8 +61,7 @@ describe('MenubarMenu', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarMenu')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarMenu', () => {
@@ -92,8 +90,7 @@ describe('MenubarTrigger', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarTrigger', () => {
@@ -154,8 +151,7 @@ describe('MenubarContent', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarContent', () => {
@@ -200,8 +196,7 @@ describe('MenubarItem', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarItem', () => {
@@ -241,8 +236,7 @@ describe('MenubarCheckboxItem', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarCheckboxItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarCheckboxItem', () => {
@@ -292,8 +286,7 @@ describe('MenubarRadioGroup', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarRadioGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarRadioGroup', () => {
@@ -324,8 +317,7 @@ describe('MenubarRadioItem', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarRadioItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarRadioItem', () => {
@@ -369,8 +361,7 @@ describe('MenubarSub', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarSub')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarSub', () => {
@@ -401,8 +392,7 @@ describe('MenubarSubTrigger', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarSubTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarSubTrigger', () => {
@@ -450,8 +440,7 @@ describe('MenubarSubContent', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarSubContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarSubContent', () => {
@@ -496,8 +485,7 @@ describe('MenubarLabel', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarLabel')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarLabel', () => {
@@ -527,8 +515,7 @@ describe('MenubarSeparator', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarSeparator')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarSeparator', () => {
@@ -561,8 +548,7 @@ describe('MenubarShortcut', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarShortcut')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarShortcut', () => {
@@ -593,8 +579,7 @@ describe('MenubarGroup', () => {
   const result = renderToTest(menubarSource, 'menubar.tsx', 'MenubarGroup')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is MenubarGroup', () => {

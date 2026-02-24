@@ -9,8 +9,7 @@ describe('DropdownMenu', () => {
   const result = renderToTest(dropdownMenuSource, 'dropdown-menu.tsx', 'DropdownMenu')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -36,8 +35,7 @@ describe('DropdownMenuTrigger', () => {
   const result = renderToTest(dropdownMenuSource, 'dropdown-menu.tsx', 'DropdownMenuTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DropdownMenuTrigger', () => {
@@ -60,8 +58,7 @@ describe('DropdownMenuContent', () => {
   const result = renderToTest(dropdownMenuSource, 'dropdown-menu.tsx', 'DropdownMenuContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DropdownMenuContent', () => {
@@ -84,8 +81,7 @@ describe('DropdownMenuItem', () => {
   const result = renderToTest(dropdownMenuSource, 'dropdown-menu.tsx', 'DropdownMenuItem')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DropdownMenuItem', () => {
@@ -104,8 +100,7 @@ describe('DropdownMenuSub', () => {
   const result = renderToTest(dropdownMenuSource, 'dropdown-menu.tsx', 'DropdownMenuSub')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is DropdownMenuSub', () => {

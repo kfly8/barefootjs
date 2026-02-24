@@ -9,8 +9,7 @@ describe('Toggle', () => {
   const result = renderToTest(toggleSource, 'toggle.tsx', 'Toggle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {

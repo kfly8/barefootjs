@@ -45,6 +45,13 @@ export { registerTemplate, getTemplate, hasTemplate, type TemplateFn } from './t
 // Component creation for dynamic rendering
 export { createComponent, getPropsUpdateFn, getComponentProps } from './component'
 
+// Props utilities
+export { splitProps } from './split-props'
+
+// Spread props helpers (internal, for compiler-generated code)
+export { forwardProps } from './forward-props'
+export { applyRestAttrs } from './apply-rest-attrs'
+
 // Runtime helpers (internal, for compiler-generated code)
 export {
   findScope,

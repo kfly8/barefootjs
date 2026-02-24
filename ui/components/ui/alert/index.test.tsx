@@ -3,14 +3,13 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const alertSource = readFileSync(resolve(__dirname, '../alert.tsx'), 'utf-8')
+const alertSource = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 describe('Alert', () => {
   const result = renderToTest(alertSource, 'alert.tsx', 'Alert')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is Alert', () => {
@@ -37,8 +36,7 @@ describe('AlertTitle', () => {
   const result = renderToTest(alertSource, 'alert.tsx', 'AlertTitle')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as h5 with data-slot=alert-title', () => {
@@ -56,8 +54,7 @@ describe('AlertDescription', () => {
   const result = renderToTest(alertSource, 'alert.tsx', 'AlertDescription')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('renders as div with data-slot=alert-description', () => {

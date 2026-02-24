@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { renderToTest } from '@barefootjs/test'
 
-const source = readFileSync(resolve(__dirname, '../progress.tsx'), 'utf-8')
+const source = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
 
 // ---------------------------------------------------------------------------
 // Progress (stateful — currentValue signal, percentage/dataState memos)
@@ -13,8 +13,7 @@ describe('Progress', () => {
   const result = renderToTest(source, 'progress.tsx', 'Progress')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {

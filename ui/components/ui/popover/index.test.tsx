@@ -9,8 +9,7 @@ describe('Popover', () => {
   const result = renderToTest(popoverSource, 'popover.tsx', 'Popover')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -36,8 +35,7 @@ describe('PopoverTrigger', () => {
   const result = renderToTest(popoverSource, 'popover.tsx', 'PopoverTrigger')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PopoverTrigger', () => {
@@ -60,8 +58,7 @@ describe('PopoverContent', () => {
   const result = renderToTest(popoverSource, 'popover.tsx', 'PopoverContent')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PopoverContent', () => {
@@ -83,8 +80,7 @@ describe('PopoverClose', () => {
   const result = renderToTest(popoverSource, 'popover.tsx', 'PopoverClose')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is PopoverClose', () => {

@@ -13,8 +13,7 @@ describe('ScrollArea', () => {
   const result = renderToTest(scrollAreaSource, 'scroll-area.tsx', 'ScrollArea')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('isClient is true', () => {
@@ -76,8 +75,7 @@ describe('ScrollBar', () => {
   const result = renderToTest(scrollAreaSource, 'scroll-area.tsx', 'ScrollBar')
 
   test('has no compiler errors', () => {
-    const realErrors = result.errors.filter(e => e.code !== 'BF043')
-    expect(realErrors).toEqual([])
+    expect(result.errors).toEqual([])
   })
 
   test('componentName is ScrollBar', () => {
