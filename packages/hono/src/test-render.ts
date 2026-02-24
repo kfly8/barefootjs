@@ -21,12 +21,33 @@ export interface RenderOptions {
   adapter: TemplateAdapter
   /** Props to inject (optional) */
   props?: Record<string, unknown>
+  /** Additional component files (filename → source) */
+  components?: Record<string, string>
 }
 
 export async function renderHonoComponent(options: RenderOptions): Promise<string> {
-  const { source, adapter, props } = options
+  const { source, adapter, props, components } = options
 
-  // Compile JSX → marked template
+  // Compile child components first
+  const childCodes: string[] = []
+  const componentKeys = new Set<string>()
+  if (components) {
+    for (const [filename, childSource] of Object.entries(components)) {
+      componentKeys.add(filename)
+      const childResult = compileJSXSync(childSource, filename, { adapter })
+      const childErrors = childResult.errors.filter(e => e.severity === 'error')
+      if (childErrors.length > 0) {
+        throw new Error(`Compilation errors in ${filename}:\n${childErrors.map(e => e.message).join('\n')}`)
+      }
+      const childTemplate = childResult.files.find(f => f.type === 'markedTemplate')
+      if (!childTemplate) throw new Error(`No marked template for ${filename}`)
+      // Strip export keywords so only the parent component is exported
+      const localCode = childTemplate.content.replace(/\bexport\s+(default\s+)?/g, '')
+      childCodes.push(localCode)
+    }
+  }
+
+  // Compile parent source
   const result = compileJSXSync(source, 'component.tsx', { adapter })
 
   const errors = result.errors.filter(e => e.severity === 'error')
@@ -37,8 +58,32 @@ export async function renderHonoComponent(options: RenderOptions): Promise<strin
   const templateFile = result.files.find(f => f.type === 'markedTemplate')
   if (!templateFile) throw new Error('No marked template in compile output')
 
-  // Add JSX pragma for Bun to use Hono's JSX runtime
-  const code = `/** @jsxImportSource hono/jsx */\n${templateFile.content}`
+  let parentCode = templateFile.content
+  // Strip import lines that reference component files
+  if (componentKeys.size > 0) {
+    parentCode = parentCode
+      .split('\n')
+      .filter(line => {
+        const importMatch = line.match(/^\s*import\s+.*from\s+['"](.+?)['"]/)
+        if (!importMatch) return true
+        const importPath = importMatch[1]
+        // Match against component keys: './badge' matches './badge.tsx'
+        for (const key of componentKeys) {
+          const keyWithoutExt = key.replace(/\.tsx?$/, '')
+          if (importPath === keyWithoutExt || importPath === key) return false
+        }
+        return true
+      })
+      .join('\n')
+  }
+
+  // Combine: JSX pragma + child compiled functions + parent compiled code
+  const codeParts = ['/** @jsxImportSource hono/jsx */']
+  for (const childCode of childCodes) {
+    codeParts.push(childCode)
+  }
+  codeParts.push(parentCode)
+  const code = codeParts.join('\n')
 
   await mkdir(RENDER_TEMP_DIR, { recursive: true })
   // Unique filename per render to avoid Bun's process-level module cache
