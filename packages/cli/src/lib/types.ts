@@ -100,3 +100,25 @@ export interface MetaIndex {
   generatedAt: string
   components: MetaIndexEntry[]
 }
+
+/**
+ * A single file entry in a RegistryItem (shadcn/ui registry format).
+ */
+export interface RegistryItemFile {
+  path: string    // e.g. "components/ui/button/index.tsx"
+  type: string    // e.g. "registry:ui"
+  content: string // full file content
+}
+
+/**
+ * Remote registry item (matches build-registry.ts output).
+ */
+export interface RegistryItem {
+  $schema: string
+  name: string
+  type: string
+  title: string
+  description: string
+  dependencies: string[]
+  files: RegistryItemFile[]
+}
