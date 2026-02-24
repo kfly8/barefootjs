@@ -1,0 +1,22 @@
+import { createFixture } from '../src/types'
+
+export const fixture = createFixture({
+  id: 'event-handlers',
+  description: 'Multiple event handler types (onClick, onInput)',
+  source: `
+'use client'
+import { createSignal } from '@barefootjs/dom'
+export function EventHandlers() {
+  const [text, setText] = createSignal('')
+  const [count, setCount] = createSignal(0)
+  return (
+    <div>
+      <input type="text" onInput={(e) => setText(e.currentTarget.value)} />
+      <button onClick={() => setCount(n => n + 1)}>Click</button>
+      <span>{text()}</span>
+      <span>{count()}</span>
+    </div>
+  )
+}
+`,
+})
