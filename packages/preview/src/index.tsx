@@ -11,15 +11,15 @@ import { compile } from './compile'
 import { createPreviewApp, startServer, pascalToTitle, type PreviewEntry } from './server'
 
 const ROOT_DIR = resolve(import.meta.dir, '../../..')
-const PREVIEWS_DIR = resolve(ROOT_DIR, 'ui/components/ui/__previews__')
+const UI_DIR = resolve(ROOT_DIR, 'ui/components/ui')
 const DEFAULT_PORT = 3003
 
 export async function runPreview(componentName: string) {
-  const previewsPath = resolve(PREVIEWS_DIR, `${componentName}.previews.tsx`)
+  const previewsPath = resolve(UI_DIR, componentName, 'index.preview.tsx')
 
   // 1. Check previews file exists
   if (!await Bun.file(previewsPath).exists()) {
-    console.error(`Error: Preview file not found: ui/components/ui/__previews__/${componentName}.previews.tsx`)
+    console.error(`Error: Preview file not found: ui/components/ui/${componentName}/index.preview.tsx`)
     process.exit(1)
   }
 
