@@ -2,7 +2,7 @@
 
 import { readFileSync, existsSync } from 'fs'
 import path from 'path'
-import type { MetaIndex, ComponentMeta } from './types'
+import type { MetaIndex, ComponentMeta, RegistryItem } from './types'
 
 export function loadIndex(metaDir: string): MetaIndex {
   const indexPath = path.join(metaDir, 'index.json')
@@ -19,6 +19,26 @@ export async function fetchIndex(registryUrl: string): Promise<MetaIndex> {
     : `${registryUrl}/index.json`
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) }).catch((err: Error) => {
     console.error(`Error: Failed to fetch registry at ${url}: ${err.message}`)
+    process.exit(1)
+  }) as Response
+  if (!res.ok) {
+    console.error(`Error: Registry returned HTTP ${res.status} for ${url}`)
+    process.exit(1)
+  }
+  try {
+    return await res.json()
+  } catch {
+    console.error(`Error: Invalid JSON from registry at ${url}`)
+    process.exit(1)
+  }
+  throw new Error('unreachable')
+}
+
+export async function fetchRegistryItem(registryUrl: string, name: string): Promise<RegistryItem> {
+  const base = registryUrl.endsWith('/') ? registryUrl : `${registryUrl}/`
+  const url = `${base}${name}.json`
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) }).catch((err: Error) => {
+    console.error(`Error: Failed to fetch component "${name}" from ${url}: ${err.message}`)
     process.exit(1)
   }) as Response
   if (!res.ok) {

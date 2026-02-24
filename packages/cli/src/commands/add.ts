@@ -3,16 +3,31 @@
 import { existsSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, readdirSync } from 'fs'
 import path from 'path'
 import type { CliContext } from '../context'
-import { findBarefootJson, loadBarefootConfig } from '../context'
+import { findBarefootJson, loadBarefootConfig, type BarefootConfig } from '../context'
 import { resolveDependencies } from '../lib/dependency-resolver'
+import { fetchRegistryItem } from '../lib/meta-loader'
 import type { MetaIndex, MetaIndexEntry, ComponentMeta } from '../lib/types'
 
-export function run(args: string[], ctx: CliContext): void {
+export async function run(args: string[], ctx: CliContext): Promise<void> {
   const force = args.includes('--force')
+
+  // Parse --registry flag
+  let registryUrl: string | undefined
+  const regIdx = args.indexOf('--registry')
+  if (regIdx !== -1) {
+    const regValue = args[regIdx + 1]
+    if (!regValue || regValue.startsWith('-')) {
+      console.error('Error: --registry requires a URL argument.')
+      process.exit(1)
+    }
+    registryUrl = regValue
+    args = [...args.slice(0, regIdx), ...args.slice(regIdx + 2)]
+  }
+
   const componentNames = args.filter(a => !a.startsWith('--'))
 
   if (componentNames.length === 0) {
-    console.error('Usage: barefoot add <component...> [--force]')
+    console.error('Usage: barefoot add <component...> [--force] [--registry <url>]')
     process.exit(1)
   }
 
@@ -26,6 +41,96 @@ export function run(args: string[], ctx: CliContext): void {
   const projectDir = path.dirname(configPath)
   const config = loadBarefootConfig(configPath)
 
+  if (registryUrl) {
+    await addFromRegistry(componentNames, registryUrl, projectDir, config, force)
+  } else {
+    addFromLocal(componentNames, ctx, projectDir, config, force)
+  }
+}
+
+/**
+ * Add components from a remote registry.
+ * Phase 1: Fetch all registry items (all-or-nothing).
+ * Phase 2: Write files only if all fetches succeeded.
+ */
+export async function addFromRegistry(
+  componentNames: string[],
+  registryUrl: string,
+  projectDir: string,
+  config: BarefootConfig,
+  force: boolean,
+): Promise<void> {
+  // Phase 1: Fetch all registry items
+  const items = await Promise.all(
+    componentNames.map(name => fetchRegistryItem(registryUrl, name))
+  )
+
+  // Merge all files into a deduplication map (path → content)
+  const fileMap = new Map<string, string>()
+  for (const item of items) {
+    for (const file of item.files) {
+      fileMap.set(file.path, file.content)
+    }
+  }
+
+  // Phase 2: Write files
+  const destComponentsDir = path.resolve(projectDir, config.paths.components)
+  const destMetaDir = path.resolve(projectDir, config.paths.meta)
+  mkdirSync(destComponentsDir, { recursive: true })
+  mkdirSync(destMetaDir, { recursive: true })
+
+  const added: string[] = []
+  const skipped: string[] = []
+
+  for (const [filePath, content] of fileMap) {
+    // Map path: "components/ui/xxx/..." → config.paths.components/xxx/...
+    // Everything else → project root relative
+    let destPath: string
+    if (filePath.startsWith('components/ui/')) {
+      const relPath = filePath.slice('components/ui/'.length)
+      destPath = path.resolve(destComponentsDir, relPath)
+    } else {
+      destPath = path.resolve(projectDir, filePath)
+    }
+
+    if (existsSync(destPath) && !force) {
+      skipped.push(filePath)
+      continue
+    }
+
+    mkdirSync(path.dirname(destPath), { recursive: true })
+    writeFileSync(destPath, content)
+    added.push(filePath)
+  }
+
+  // Rebuild meta/index.json if meta dir exists
+  if (existsSync(destMetaDir)) {
+    rebuildMetaIndex(destMetaDir)
+  }
+
+  // Summary
+  if (added.length > 0) {
+    console.log(`\n  Added: ${added.join(', ')}`)
+  }
+  if (skipped.length > 0) {
+    console.log(`  Skipped (already exists): ${skipped.join(', ')}`)
+    console.log(`  Use --force to overwrite existing components.`)
+  }
+  if (added.length > 0) {
+    console.log(`\n  Run tests: bun test ${config.paths.components}/`)
+  }
+}
+
+/**
+ * Add components from local monorepo source (original behavior).
+ */
+function addFromLocal(
+  componentNames: string[],
+  ctx: CliContext,
+  projectDir: string,
+  config: BarefootConfig,
+  force: boolean,
+): void {
   // Source directories (monorepo)
   const srcComponentsDir = path.resolve(ctx.root, 'ui/components/ui')
   const srcMetaDir = path.resolve(ctx.root, 'ui/meta')
