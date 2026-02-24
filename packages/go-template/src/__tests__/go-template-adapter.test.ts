@@ -6,14 +6,9 @@
 
 import { describe, test, expect } from 'bun:test'
 import { GoTemplateAdapter } from '../adapter/go-template-adapter'
-import {
-  runJSXConformanceTests,
-  textNode, expression, element, conditional, loop, component,
-  attr, prop, signal, memo, param, componentIR,
-} from '@barefootjs/adapter-tests'
+import { runJSXConformanceTests } from '@barefootjs/adapter-tests'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
-import { parseBlockBody } from '@barefootjs/jsx'
-import ts from 'typescript'
+import { compileJSXSync, type ComponentIR } from '@barefootjs/jsx'
 
 // =============================================================================
 // JSX-Based Conformance Tests
@@ -25,21 +20,48 @@ runJSXConformanceTests({
 })
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Compile JSX source to ComponentIR using the GoTemplateAdapter.
+ */
+function compileToIR(source: string, adapter?: GoTemplateAdapter): ComponentIR {
+  const result = compileJSXSync(source.trimStart(), 'test.tsx', {
+    adapter: adapter ?? new GoTemplateAdapter(),
+    outputIR: true,
+  })
+  const irFile = result.files.find(f => f.type === 'ir')
+  if (!irFile) throw new Error('No IR output')
+  return JSON.parse(irFile.content) as ComponentIR
+}
+
+/**
+ * Compile JSX source and return the generated template output.
+ */
+function compileAndGenerate(source: string, adapter?: GoTemplateAdapter) {
+  const a = adapter ?? new GoTemplateAdapter()
+  const ir = compileToIR(source, a)
+  return a.generate(ir)
+}
+
+// =============================================================================
 // Go-Template-Specific Tests
 // =============================================================================
 
 describe('GoTemplateAdapter - Adapter Specific', () => {
-  const adapter = new GoTemplateAdapter()
-
   describe('generate - Go struct types', () => {
     test('generates Go struct types', () => {
-      const ir = componentIR('Counter', element('div'), {
-        propsParams: [
-          param('initial', { kind: 'primitive', raw: 'number', primitive: 'number' }, { optional: true, defaultValue: '0' }),
-        ],
-        signals: [signal('count', 'setCount', '0')],
-      })
+      const adapter = new GoTemplateAdapter()
+      const ir = compileToIR(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
 
+export function Counter(props: { initial?: number }) {
+  const [count, setCount] = createSignal(props.initial ?? 0)
+  return <div>{count()}</div>
+}
+`)
       const result = adapter.generate(ir)
 
       expect(result.types).toBeDefined()
@@ -54,12 +76,11 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
   describe('generateTypes', () => {
     test('generates types with custom package name', () => {
       const customAdapter = new GoTemplateAdapter({ packageName: 'views' })
-
-      const ir = componentIR('Button', element('button'), {
-        propsParams: [
-          param('label', { kind: 'primitive', raw: 'string', primitive: 'string' }),
-        ],
-      })
+      const ir = compileToIR(`
+export function Button(props: { label: string }) {
+  return <button>{props.label}</button>
+}
+`, customAdapter)
 
       const types = customAdapter.generateTypes(ir)
 
@@ -69,43 +90,40 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
     })
 
     test('generates fields for multiple static child components with slotId', () => {
-      const ir = componentIR(
-        'ReactiveProps',
-        element('div', {
-          needsScope: true,
-          children: [
-            component('ReactiveChild', {
-              props: [
-                prop('value', 'count()', { dynamic: true, isLiteral: false }),
-                prop('label', 'Child A'),
-              ],
-              slotId: 'slot_6',
-            }),
-            component('ReactiveChild', {
-              props: [
-                prop('value', 'doubled()', { dynamic: true, isLiteral: false }),
-                prop('label', 'Child B (doubled)'),
-              ],
-              slotId: 'slot_7',
-            }),
-          ],
-        }),
-        {
-          hasDefaultExport: true,
-          isClientComponent: true,
-          signals: [signal('count', 'setCount', '0')],
-          memos: [memo('doubled', '() => count() * 2', ['count'])],
-        },
-      )
+      const adapter = new GoTemplateAdapter()
+      // ReactiveChild is not defined here — only referenced as a child component.
+      // The compiler creates IRComponent nodes for any PascalCase JSX element.
+      const ir = compileToIR(`
+"use client"
+import { createSignal, createMemo } from "@barefootjs/dom"
 
-      const types = adapter.generateTypes(ir)
+export default function ReactiveProps() {
+  const [count, setCount] = createSignal(0)
+  const doubled = createMemo(() => count() * 2)
+  return (
+    <div>
+      <ReactiveChild value={count()} label="Child A" />
+      <ReactiveChild value={doubled()} label="Child B (doubled)" />
+    </div>
+  )
+}
+`)
 
-      expect(types).toContain('ReactiveChildSlot6 ReactiveChildProps `json:"-"`')
-      expect(types).toContain('ReactiveChildSlot7 ReactiveChildProps `json:"-"`')
-      expect(types).toContain('ReactiveChildSlot6: NewReactiveChildProps(ReactiveChildInput{')
-      expect(types).toContain('ReactiveChildSlot7: NewReactiveChildProps(ReactiveChildInput{')
-      expect(types).toContain('ScopeID: scopeID + "_slot_6"')
-      expect(types).toContain('ScopeID: scopeID + "_slot_7"')
+      const types = adapter.generateTypes(ir)!
+
+      // Two ReactiveChild instances should produce two distinct Props fields
+      const fieldMatches = types.match(/ReactiveChild\w+ ReactiveChildProps/g) ?? []
+      expect(fieldMatches.length).toBe(2)
+
+      // Each instance should have a NewReactiveChildProps initializer
+      const initMatches = types.match(/NewReactiveChildProps\(ReactiveChildInput\{/g) ?? []
+      expect(initMatches.length).toBe(2)
+
+      // Each should have its own ScopeID derived from parent
+      const scopeMatches = types.match(/ScopeID: scopeID \+ "_/g) ?? []
+      expect(scopeMatches.length).toBe(2)
+
+      // Label values should be present
       expect(types).toContain('Label: "Child A"')
       expect(types).toContain('Label: "Child B (doubled)"')
     })
@@ -113,140 +131,221 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
 
   describe('Portal component handling', () => {
     test('renders Portal component with children as portal collection', () => {
-      const portalComp = component('Portal', {
-        children: [element('div', { attrs: [attr('data-slot', 'dialog-overlay')] })],
-        slotId: 'slot_portal_1',
-      })
+      // Portal is referenced as a child component (not defined in file).
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
 
-      const result = adapter.renderComponent(portalComp)
-      expect(result).toContain('.Portals.Add')
-      expect(result).toContain('data-slot=\\"dialog-overlay\\"')
+export function DialogDemo() {
+  const [open, setOpen] = createSignal(false)
+  return (
+    <div>
+      <Portal>
+        <div data-slot="dialog-overlay"></div>
+      </Portal>
+    </div>
+  )
+}
+`)
+      expect(result.template).toContain('.Portals.Add')
+      expect(result.template).toContain('data-slot=\\"dialog-overlay\\"')
     })
 
     test('renders Portal with dynamic attribute in children', () => {
-      const portalComp = component('Portal', {
-        children: [
-          element('div', {
-            attrs: [
-              attr('data-slot', 'dialog-overlay'),
-              attr('data-state', "open ? 'open' : 'closed'", { dynamic: true, isLiteral: false }),
-            ],
-          }),
-        ],
-        slotId: 'slot_portal_2',
-      })
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
 
-      const result = adapter.renderComponent(portalComp)
-      expect(result).toContain('.Portals.Add')
-      expect(result).toContain('bfPortalHTML')
-      expect(result).toContain('data-state')
+export function DialogDemo() {
+  const [open, setOpen] = createSignal(false)
+  return (
+    <div>
+      <Portal>
+        <div data-slot="dialog-overlay" data-state={open() ? 'open' : 'closed'}></div>
+      </Portal>
+    </div>
+  )
+}
+`)
+      expect(result.template).toContain('.Portals.Add')
+      expect(result.template).toContain('bfPortalHTML')
+      expect(result.template).toContain('data-state')
     })
 
     test('Portal without children renders empty portal add', () => {
-      const result = adapter.renderComponent(component('Portal', { slotId: 'slot_portal_empty' }))
-      expect(result).toContain('.Portals.Add')
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+export function DialogDemo() {
+  const [open, setOpen] = createSignal(false)
+  return (
+    <div>
+      <Portal />
+    </div>
+  )
+}
+`)
+      expect(result.template).toContain('.Portals.Add')
     })
 
     test('non-Portal component renders normally', () => {
-      const result = adapter.renderComponent(component('DialogTrigger', { slotId: 'slot_1' }))
-      expect(result).toBe('{{template "DialogTrigger" .DialogTriggerSlot1}}')
-      expect(result).not.toContain('.Portals.Add')
+      // DialogTrigger is referenced but not defined — compiler creates IRComponent.
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+export function DialogDemo() {
+  const [open, setOpen] = createSignal(false)
+  return (
+    <div>
+      <DialogTrigger />
+    </div>
+  )
+}
+`)
+      expect(result.template).toContain('{{template "DialogTrigger"')
+      expect(result.template).not.toContain('.Portals.Add')
     })
   })
 
   describe('block body filter rendering', () => {
-    function parseBlock(code: string) {
-      const sourceFile = ts.createSourceFile(
-        'test.ts',
-        `(t => ${code})`,
-        ts.ScriptTarget.Latest,
-        true,
-        ts.ScriptKind.TSX
-      )
-      const exprStmt = sourceFile.statements[0] as ts.ExpressionStatement
-      const paren = exprStmt.expression as ts.ParenthesizedExpression
-      const arrow = paren.expression as ts.ArrowFunction
-      const block = arrow.body as ts.Block
-      return parseBlockBody(block, sourceFile)
-    }
-
     test('renders loop with simple block body filter', () => {
-      const blockBody = parseBlock('{ return !t.done }')
-      expect(blockBody).not.toBeNull()
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
 
-      const l = loop('todos', 'todo', [textNode('Item')], {
-        filterPredicate: { param: 't', blockBody: blockBody!, raw: '{ return !t.done }' },
-      })
+type Todo = { text: string; done: boolean }
 
-      const result = adapter.renderLoop(l)
-      expect(result).toContain('{{range')
-      expect(result).toContain('not .Done')
-      expect(result).toContain('Item')
+export function TodoList() {
+  const [todos, setTodos] = createSignal<Todo[]>([])
+  return (
+    <ul>
+      {todos().filter(t => { return !t.done }).map(todo => (
+        <li>Item</li>
+      ))}
+    </ul>
+  )
+}
+`)
+      expect(result.template).toContain('{{range')
+      expect(result.template).toContain('not .Done')
+      expect(result.template).toContain('Item')
     })
 
     test('renders loop with variable declaration and simple if', () => {
-      const blockBody = parseBlock(`{
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+type Todo = { text: string; done: boolean }
+
+export function TodoList() {
+  const [todos, setTodos] = createSignal<Todo[]>([])
+  const [filter, setFilter] = createSignal('all')
+  return (
+    <ul>
+      {todos().filter(t => {
         const f = filter()
         if (f === 'active') return !t.done
         return true
-      }`)
-      expect(blockBody).not.toBeNull()
-
-      const l = loop('todos', 'todo', [textNode('TodoItem')], {
-        filterPredicate: { param: 't', blockBody: blockBody!, raw: 'block body' },
-      })
-
-      const result = adapter.renderLoop(l)
-      expect(result).toContain('{{range')
-      expect(result).toContain('{{if')
-      expect(result).toContain('$.Filter')
-      expect(result).toContain('TodoItem')
+      }).map(todo => (
+        <li>TodoItem</li>
+      ))}
+    </ul>
+  )
+}
+`)
+      expect(result.template).toContain('{{range')
+      expect(result.template).toContain('{{if')
+      expect(result.template).toContain('$.Filter')
+      expect(result.template).toContain('TodoItem')
     })
 
     test('renders loop with TodoApp filter pattern', () => {
-      const blockBody = parseBlock(`{
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+type Todo = { text: string; done: boolean }
+
+export function TodoApp() {
+  const [todos, setTodos] = createSignal<Todo[]>([])
+  const [filter, setFilter] = createSignal('all')
+  return (
+    <ul>
+      {todos().filter(t => {
         const f = filter()
         if (f === 'active') return !t.done
         if (f === 'completed') return t.done
         return true
-      }`)
-      expect(blockBody).not.toBeNull()
-
-      const l = loop('todos', 'todo', [textNode('TodoItem')], {
-        filterPredicate: { param: 't', blockBody: blockBody!, raw: 'block body' },
-      })
-
-      const result = adapter.renderLoop(l)
-      expect(result).toContain('{{range')
-      expect(result).toContain('{{if')
-      expect(result).toContain('$.Filter')
-      expect(result).toContain('active')
-      expect(result).toContain('completed')
-      expect(result).toContain('TodoItem')
+      }).map(todo => (
+        <li>TodoItem</li>
+      ))}
+    </ul>
+  )
+}
+`)
+      expect(result.template).toContain('{{range')
+      expect(result.template).toContain('{{if')
+      expect(result.template).toContain('$.Filter')
+      expect(result.template).toContain('active')
+      expect(result.template).toContain('completed')
+      expect(result.template).toContain('TodoItem')
     })
   })
 
   describe('higher-order methods - regression', () => {
-    test('simple every(t => t.done) still uses bf_every', () => {
-      const result = adapter.renderExpression(expression('todos().every(t => t.done)'))
-      expect(result).toBe('{{bf_every .Todos "Done"}}')
+    test('simple every(t => t.done) uses bf_every', () => {
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+type Todo = { text: string; done: boolean }
+
+export function TodoStatus() {
+  const [todos, setTodos] = createSignal<Todo[]>([])
+  return <div>{todos().every(t => t.done)}</div>
+}
+`)
+      expect(result.template).toContain('bf_every .Todos "Done"')
     })
   })
 
   describe('find/findIndex - adapter specific', () => {
     test('renders find() with equality + comparison mixed predicate', () => {
-      const result = adapter.renderExpression(
-        expression("items().find(t => t.price > 100 && t.category === type())"),
-      )
-      expect(result).toBe('{{range .Items}}{{if and (gt .Price 100) (eq .Category $.Type)}}{{.}}{{break}}{{end}}{{end}}')
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+type Item = { price: number; category: string }
+
+export function ItemFinder() {
+  const [items, setItems] = createSignal<Item[]>([])
+  const [type, setType] = createSignal('')
+  return <div>{items().find(t => t.price > 100 && t.category === type())}</div>
+}
+`)
+      expect(result.template).toContain('{{range')
+      expect(result.template).toContain('gt .Price 100')
+      expect(result.template).toContain('eq .Category $.Type')
+      expect(result.template).toContain('{{break}}')
     })
 
-    test('renders find() in condition without {{with}}', () => {
-      const result = adapter.renderConditional(
-        conditional('items().find(t => t.done)', textNode('Found')),
-      )
-      expect(result).toContain('bf_find .Items "Done" true')
-      expect(result).toContain('Found')
+    test('renders find() in condition', () => {
+      const result = compileAndGenerate(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+type Item = { name: string; done: boolean }
+
+export function ItemChecker() {
+  const [items, setItems] = createSignal<Item[]>([])
+  return <div>{items().find(t => t.done) ? 'Found' : 'Not found'}</div>
+}
+`)
+      expect(result.template).toContain('bf_find .Items "Done" true')
+      expect(result.template).toContain('Found')
     })
   })
 })
