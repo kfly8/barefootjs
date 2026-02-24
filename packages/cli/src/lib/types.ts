@@ -32,6 +32,27 @@ export interface DependencyMeta {
   external: string[]
 }
 
+export interface SignalMeta {
+  getter: string
+  setter: string
+  initialValue: string
+}
+
+export interface MemoMeta {
+  name: string
+  deps: string[]
+}
+
+export interface EffectMeta {
+  deps: string[]
+}
+
+export interface CompilerErrorMeta {
+  code: string
+  message: string
+  line: number
+}
+
 /**
  * Detailed per-component metadata (written to ui/meta/<name>.json).
  */
@@ -50,6 +71,12 @@ export interface ComponentMeta {
   dependencies: DependencyMeta
   related: string[]
   source: string
+
+  // Compiler-derived fields (from analyzeComponent)
+  signals?: SignalMeta[]
+  memos?: MemoMeta[]
+  effects?: EffectMeta[]
+  compilerErrors?: CompilerErrorMeta[]
 }
 
 /**

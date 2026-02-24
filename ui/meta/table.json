@@ -1,0 +1,158 @@
+{
+  "name": "table",
+  "title": "Table",
+  "category": "display",
+  "description": "Table Components A composable set of table sub-components for displaying structured data. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "multi-component",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Table content (typically TableHeader, TableBody, TableFooter, TableCaption)"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "TableHeader",
+      "description": "Props for TableHeader component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header rows"
+        }
+      ]
+    },
+    {
+      "name": "TableBody",
+      "description": "Props for TableBody component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Body rows"
+        }
+      ]
+    },
+    {
+      "name": "TableFooter",
+      "description": "Props for TableFooter component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Footer rows"
+        }
+      ]
+    },
+    {
+      "name": "TableRow",
+      "description": "Props for TableRow component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Row cells"
+        }
+      ]
+    },
+    {
+      "name": "TableHead",
+      "description": "Props for TableHead component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Header cell content"
+        },
+        {
+          "name": "colSpan",
+          "type": "number",
+          "required": false,
+          "description": "Number of columns a header cell should span"
+        },
+        {
+          "name": "rowSpan",
+          "type": "number",
+          "required": false,
+          "description": "Number of rows a header cell should span"
+        },
+        {
+          "name": "scope",
+          "type": "'col' | 'colgroup' | 'row' | 'rowgroup'",
+          "required": false,
+          "description": "Specifies a group of columns for alignment"
+        }
+      ]
+    },
+    {
+      "name": "TableCell",
+      "description": "Props for TableCell component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Cell content"
+        },
+        {
+          "name": "colSpan",
+          "type": "number",
+          "required": false,
+          "description": "Number of columns a cell should span"
+        },
+        {
+          "name": "rowSpan",
+          "type": "number",
+          "required": false,
+          "description": "Number of rows a cell should span"
+        }
+      ]
+    },
+    {
+      "name": "TableCaption",
+      "description": "Props for TableCaption component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Caption text"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic table",
+      "code": "<Table>\n  <TableHeader>\n    <TableRow>\n      <TableHead>Name</TableHead>\n      <TableHead>Status</TableHead>\n    </TableRow>\n  </TableHeader>\n  <TableBody>\n    <TableRow>\n      <TableCell>Item 1</TableCell>\n      <TableCell>Active</TableCell>\n    </TableRow>\n  </TableBody>\n</Table>"
+    },
+    {
+      "title": "Table with caption and footer",
+      "code": "<Table>\n  <TableCaption>A list of recent invoices.</TableCaption>\n  <TableHeader>\n    <TableRow>\n      <TableHead>Invoice</TableHead>\n      <TableHead className=\"text-right\">Amount</TableHead>\n    </TableRow>\n  </TableHeader>\n  <TableBody>\n    <TableRow>\n      <TableCell>INV001</TableCell>\n      <TableCell className=\"text-right\">$250.00</TableCell>\n    </TableRow>\n  </TableBody>\n  <TableFooter>\n    <TableRow>\n      <TableCell>Total</TableCell>\n      <TableCell className=\"text-right\">$250.00</TableCell>\n    </TableRow>\n  </TableFooter>\n</Table>"
+    }
+  ],
+  "accessibility": {
+    "role": "checkbox])]:pr-0, checkbox]]:translate-y-[2px]'",
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [],
+  "source": "ui/components/ui/table/index.tsx"
+}

@@ -13,7 +13,7 @@
       "description": "Child element to merge props with"
     },
     {
-      "name": "class",
+      "name": "className",
       "type": "string",
       "required": false,
       "description": "CSS class to merge with child's class"

@@ -274,5 +274,12 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/context-menu/index.tsx"
+  "source": "ui/components/ui/context-menu/index.tsx",
+  "signals": [
+    {
+      "getter": "position",
+      "setter": "setPosition",
+      "initialValue": "{ x: 0, y: 0 }"
+    }
+  ]
 }

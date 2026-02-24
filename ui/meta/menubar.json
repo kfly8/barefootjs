@@ -287,5 +287,12 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/menubar/index.tsx"
+  "source": "ui/components/ui/menubar/index.tsx",
+  "signals": [
+    {
+      "getter": "activeMenu",
+      "setter": "setActiveMenu",
+      "initialValue": "''"
+    }
+  ]
 }

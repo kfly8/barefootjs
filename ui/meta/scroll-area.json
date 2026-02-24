@@ -56,5 +56,47 @@
   "related": [
     "resizable"
   ],
-  "source": "ui/components/ui/scroll-area/index.tsx"
+  "source": "ui/components/ui/scroll-area/index.tsx",
+  "signals": [
+    {
+      "getter": "hovered",
+      "setter": "setHovered",
+      "initialValue": "false"
+    },
+    {
+      "getter": "scrolling",
+      "setter": "setScrolling",
+      "initialValue": "false"
+    },
+    {
+      "getter": "thumbVSize",
+      "setter": "setThumbVSize",
+      "initialValue": "0"
+    },
+    {
+      "getter": "thumbVPos",
+      "setter": "setThumbVPos",
+      "initialValue": "0"
+    },
+    {
+      "getter": "thumbHSize",
+      "setter": "setThumbHSize",
+      "initialValue": "0"
+    },
+    {
+      "getter": "thumbHPos",
+      "setter": "setThumbHPos",
+      "initialValue": "0"
+    },
+    {
+      "getter": "canScrollV",
+      "setter": "setCanScrollV",
+      "initialValue": "false"
+    },
+    {
+      "getter": "canScrollH",
+      "setter": "setCanScrollH",
+      "initialValue": "false"
+    }
+  ]
 }

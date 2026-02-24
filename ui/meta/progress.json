@@ -1,0 +1,84 @@
+{
+  "name": "progress",
+  "title": "Progress",
+  "category": "display",
+  "description": "Progress Component Displays an indicator showing the completion progress of a task. Supports controlled mode where the parent updates the value reactively.",
+  "tags": [
+    "stateful",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "value",
+      "type": "number",
+      "required": false,
+      "default": "0",
+      "description": "The current progress value."
+    },
+    {
+      "name": "max",
+      "type": "number",
+      "required": false,
+      "default": "100",
+      "description": "The maximum value."
+    },
+    {
+      "name": "indicatorClassName",
+      "type": "string",
+      "required": false,
+      "description": "Additional classes for the indicator element."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<Progress value={50} />"
+    },
+    {
+      "title": "Custom max",
+      "code": "<Progress value={3} max={10} />"
+    }
+  ],
+  "accessibility": {
+    "role": "progressbar",
+    "ariaAttributes": [
+      "aria-valuenow",
+      "aria-valuemin",
+      "aria-valuemax"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/progress/index.tsx",
+  "signals": [
+    {
+      "getter": "currentValue",
+      "setter": "setCurrentValue",
+      "initialValue": "props.value ?? 0"
+    }
+  ],
+  "memos": [
+    {
+      "name": "percentage",
+      "deps": [
+        "currentValue"
+      ]
+    },
+    {
+      "name": "dataState",
+      "deps": [
+        "currentValue"
+      ]
+    }
+  ]
+}

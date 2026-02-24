@@ -130,5 +130,31 @@
     "radio-group",
     "tabs"
   ],
-  "source": "ui/components/ui/toggle-group/index.tsx"
+  "source": "ui/components/ui/toggle-group/index.tsx",
+  "signals": [
+    {
+      "getter": "internalValue",
+      "setter": "setInternalValue",
+      "initialValue": "normalizeToArray(props.defaultValue)"
+    },
+    {
+      "getter": "controlledValue",
+      "setter": "setControlledValue",
+      "initialValue": "props.value !== undefined ? normalizeToArray(props.value) : undefined"
+    }
+  ],
+  "memos": [
+    {
+      "name": "isControlled",
+      "deps": []
+    },
+    {
+      "name": "currentValue",
+      "deps": [
+        "internalValue",
+        "controlledValue",
+        "isControlled"
+      ]
+    }
+  ]
 }

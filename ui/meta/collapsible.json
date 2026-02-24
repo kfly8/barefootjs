@@ -101,5 +101,12 @@
   "related": [
     "accordion"
   ],
-  "source": "ui/components/ui/collapsible/index.tsx"
+  "source": "ui/components/ui/collapsible/index.tsx",
+  "signals": [
+    {
+      "getter": "internalOpen",
+      "setter": "setInternalOpen",
+      "initialValue": "props.defaultOpen ?? false"
+    }
+  ]
 }
