@@ -25,7 +25,6 @@ const result = compile(source, { adapter })
 
 ```typescript
 const adapter = new HonoAdapter({
-  injectScriptCollection: true,
   clientJsBasePath: '/static/components/',
   barefootJsPath: '/static/components/barefoot.js',
   clientJsFilename: 'my-component.client.js',
@@ -34,7 +33,6 @@ const adapter = new HonoAdapter({
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `injectScriptCollection` | `boolean` | `false` | Enable script collection via Hono's `useRequestContext()` |
 | `clientJsBasePath` | `string` | `'/static/components/'` | Base path for client JS files |
 | `barefootJsPath` | `string` | `'/static/components/barefoot.js'` | Path to the BarefootJS runtime |
 | `clientJsFilename` | `string` | `'{componentName}.client.js'` | Override the client JS filename |
@@ -114,17 +112,9 @@ Key aspects of the output:
 
 ## Script Collection
 
-When `injectScriptCollection` is enabled, the adapter uses Hono's `useRequestContext()` to register client scripts during SSR:
+Script collection is handled as a build-time post-processing step. After compiling with HonoAdapter, the build script injects `useRequestContext()` calls into the generated marked templates to register client scripts during SSR.
 
-```tsx
-const adapter = new HonoAdapter({
-  injectScriptCollection: true,
-  clientJsBasePath: '/static/components/',
-  barefootJsPath: '/static/components/barefoot.js',
-})
-```
-
-Each component registers its script path during rendering. At the end of the page, the `BfScripts` component renders the collected `<script>` tags:
+At the end of the page, the `BfScripts` component renders the collected `<script>` tags:
 
 ```tsx
 import { BfScripts } from '@barefootjs/hono'
@@ -141,7 +131,7 @@ export function Layout({ children }) {
 }
 ```
 
-This ensures each component's client JS is loaded exactly once, even if the component appears multiple times on the page.
+This ensures each component's client JS is loaded exactly once, even if the component appears multiple times on the page. See `site/ui/build.ts` for the `addScriptCollection()` implementation pattern.
 
 
 ## Hydration Props

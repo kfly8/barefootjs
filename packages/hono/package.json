@@ -45,6 +45,9 @@
     "./utils": {
       "types": "./src/utils.ts",
       "import": "./src/utils.ts"
+    },
+    "./test-render": {
+      "bun": "./src/test-render.ts"
     }
   },
   "files": [
@@ -76,6 +79,7 @@
     "hono": "^4.0.0"
   },
   "devDependencies": {
+    "@barefootjs/adapter-tests": "workspace:*",
     "@types/jsdom": "^27.0.0",
     "hono": "^4.6.0",
     "jsdom": "^27.3.0",

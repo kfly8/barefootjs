@@ -175,9 +175,7 @@ const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = 
 }
 
 // Create HonoAdapter (script collection is handled manually via addScriptCollection)
-const adapter = new HonoAdapter({
-  injectScriptCollection: false,
-})
+const adapter = new HonoAdapter()
 
 // Compile each component
 for (const entryPath of componentFiles) {

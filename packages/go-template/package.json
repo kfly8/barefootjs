@@ -9,6 +9,9 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./test-render": {
+      "bun": "./src/test-render.ts"
     }
   },
   "files": [
@@ -39,7 +42,10 @@
     "@barefootjs/jsx": "workspace:*"
   },
   "devDependencies": {
+    "@barefootjs/adapter-tests": "workspace:*",
+    "@barefootjs/hono": "workspace:*",
     "@barefootjs/jsx": "workspace:*",
+    "hono": "^4.6.0",
     "typescript": "^5.0.0"
   }
 }

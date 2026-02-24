@@ -1,4 +1,4 @@
-name: CI — Core
+name: CI — Go Template Adapter
 
 on:
   push:
@@ -6,19 +6,21 @@ on:
     paths:
       - 'packages/dom/**'
       - 'packages/jsx/**'
-      - 'packages/test/**'
+      - 'packages/go-template/**'
+      - 'packages/preview/**'
       - 'packages/adapter-tests/**'
-      - 'ui/**'
-      - '.github/workflows/ci.yml'
+      - 'examples/echo/**'
+      - '.github/workflows/ci-go-template.yml'
   pull_request:
     branches: [main]
     paths:
       - 'packages/dom/**'
       - 'packages/jsx/**'
-      - 'packages/test/**'
+      - 'packages/go-template/**'
+      - 'packages/preview/**'
       - 'packages/adapter-tests/**'
-      - 'ui/**'
-      - '.github/workflows/ci.yml'
+      - 'examples/echo/**'
+      - '.github/workflows/ci-go-template.yml'
 
 jobs:
   test:
@@ -27,6 +29,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -39,69 +46,13 @@ jobs:
         run: |
           cd packages/dom && bun run build
           cd ../jsx && bun run build
+          cd ../go-template && bun run build
+
+      - name: Pre-warm Go build cache
+        run: cd packages/go-template/runtime && GOTOOLCHAIN=local go build ./...
 
       - name: Run unit tests
-        run: bun test packages/dom packages/jsx packages/test
-
-  test-ui:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build packages
-        run: |
-          cd packages/dom && bun run build
-          cd ../jsx && bun run build
-
-      - name: Run UI component IR tests
-        run: bun test ui/components/
-
-  e2e-site-ui:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build packages
-        run: |
-          cd packages/dom && bun run build
-          cd ../jsx && bun run build
-          cd ../hono && bun run build
-
-      - name: Build site/ui
-        run: cd site/ui && bun run build
-
-      - name: Install Playwright browsers
-        run: bunx playwright install --with-deps chromium
-
-      - name: Run site/ui E2E tests
-        run: cd site/ui && bun run test:e2e
-
-      - name: Upload Playwright report (site/ui)
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-site-ui
-          path: site/ui/playwright-report/
-          retention-days: 30
+        run: bun test packages/go-template
 
   e2e-echo:
     runs-on: ubuntu-latest

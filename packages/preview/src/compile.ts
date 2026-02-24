@@ -151,7 +151,7 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     '__barefoot__': { markedTemplate: '', clientJs: 'barefoot.js' }
   }
 
-  const adapter = new HonoAdapter({ injectScriptCollection: false })
+  const adapter = new HonoAdapter()
 
   // 4. Compile each "use client" component
   for (const entryPath of allFiles) {

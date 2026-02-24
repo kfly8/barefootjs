@@ -1,0 +1,16 @@
+{
+  "name": "@barefootjs/adapter-tests",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": { "bun": "./src/index.ts" }
+  },
+  "dependencies": {
+    "@barefootjs/jsx": "workspace:*"
+  },
+  "devDependencies": {
+    "@barefootjs/go-template": "workspace:*",
+    "@barefootjs/hono": "workspace:*",
+    "typescript": "^5.0.0"
+  }
+}

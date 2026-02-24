@@ -1,7 +1,7 @@
 /**
  * BarefootJS Hono Adapter
  *
- * Generates Hono JSX from Pure IR with integrated script collection logic.
+ * Generates Hono JSX from Pure IR.
  */
 
 import {
@@ -24,13 +24,6 @@ import {
 } from '@barefootjs/jsx'
 
 export interface HonoAdapterOptions {
-  /**
-   * Enable script collection for SSR with Hono's useRequestContext.
-   * When enabled, generated components will include logic to collect
-   * client JS scripts for BfScripts component.
-   */
-  injectScriptCollection?: boolean
-
   /**
    * Base path for client JS files (e.g., '/static/components/')
    * Used to generate script src attributes.
@@ -61,7 +54,6 @@ export class HonoAdapter implements TemplateAdapter {
 
   constructor(options: HonoAdapterOptions = {}) {
     this.options = {
-      injectScriptCollection: options.injectScriptCollection ?? false,
       clientJsBasePath: options.clientJsBasePath ?? '/static/components/',
       barefootJsPath: options.barefootJsPath ?? '/static/components/barefoot.js',
       clientJsFilename: options.clientJsFilename,
@@ -96,11 +88,6 @@ export class HonoAdapter implements TemplateAdapter {
 
   private generateImports(ir: ComponentIR): string {
     const lines: string[] = []
-
-    // Add useRequestContext import if script collection is enabled
-    if (this.options.injectScriptCollection) {
-      lines.push("import { useRequestContext } from 'hono/jsx-renderer'")
-    }
 
     // Add bfComment for conditional reconciliation markers
     lines.push("import { bfComment } from '@barefootjs/hono/utils'")
@@ -299,11 +286,6 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push(`  const __scopeId = __bfScope || __instanceId || \`${name}_\${Math.random().toString(36).slice(2, 8)}\``)
     }
 
-    // Generate script collection code if enabled
-    if (this.options.injectScriptCollection && hasClientInteractivity) {
-      lines.push(this.generateScriptCollectionCode())
-    }
-
     if (signalInits) {
       lines.push(signalInits)
     }
@@ -337,79 +319,12 @@ export class HonoAdapter implements TemplateAdapter {
       return lines.join('\n')
     }
 
-    // Wrap JSX with fragment to include inline scripts if needed
-    const needsInlineScripts = this.options.injectScriptCollection && hasClientInteractivity
-    if (needsInlineScripts) {
-      lines.push(`  return (`)
-      lines.push(`    <>`)
-      lines.push(`      ${jsxBody}`)
-      lines.push(this.generateInlineScriptTags())
-      lines.push(`    </>`)
-      lines.push(`  )`)
-    } else {
-      lines.push(`  return (`)
-      lines.push(`    ${jsxBody}`)
-      lines.push(`  )`)
-    }
+    lines.push(`  return (`)
+    lines.push(`    ${jsxBody}`)
+    lines.push(`  )`)
     lines.push(`}`)
 
     return lines.join('\n')
-  }
-
-  private generateScriptCollectionCode(): string {
-    const barefootSrc = this.options.barefootJsPath
-    const clientJsBasePath = this.options.clientJsBasePath
-    const clientJsFilename = this.options.clientJsFilename || `${this.componentName}.client.js`
-    // Use filename without extension as component ID for deduplication
-    const componentId = clientJsFilename.replace(/\.client\.js$/, '')
-
-    return `
-  // Script collection for client JS hydration (Suspense-aware)
-  let __shouldOutputInline = false
-  let __shouldOutputBarefoot = false
-  let __shouldOutputThis = false
-  const __barefootSrc = '${barefootSrc}'
-  const __thisSrc = '${clientJsBasePath}${clientJsFilename}'
-  try {
-    const __c = useRequestContext()
-    const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
-    const __scriptsRendered = __c.get('bfScriptsRendered') ?? false
-
-    // Check if we need to output each script (not already output)
-    __shouldOutputBarefoot = !__outputScripts.has('__barefoot__')
-    __shouldOutputThis = !__outputScripts.has('${componentId}')
-
-    if (__scriptsRendered) {
-      // BfScripts already rendered (e.g., inside Suspense boundary)
-      // Output scripts inline and mark as output
-      __shouldOutputInline = true
-      if (__shouldOutputBarefoot) __outputScripts.add('__barefoot__')
-      if (__shouldOutputThis) __outputScripts.add('${componentId}')
-    } else {
-      // BfScripts not yet rendered - collect for deferred rendering
-      const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
-      if (__shouldOutputBarefoot) {
-        __outputScripts.add('__barefoot__')
-        __scripts.push({ src: __barefootSrc })
-      }
-      if (__shouldOutputThis) {
-        __outputScripts.add('${componentId}')
-        __scripts.push({ src: __thisSrc })
-      }
-      __c.set('bfCollectedScripts', __scripts)
-    }
-    __c.set('bfOutputScripts', __outputScripts)
-  } catch {
-    // Context unavailable - output inline as fallback
-    __shouldOutputInline = true
-    __shouldOutputBarefoot = true
-    __shouldOutputThis = true
-  }`
-  }
-
-  private generateInlineScriptTags(): string {
-    return `      {__shouldOutputInline && __shouldOutputBarefoot && <script type="module" src={__barefootSrc} />}
-      {__shouldOutputInline && __shouldOutputThis && <script type="module" src={__thisSrc} />}`
   }
 
   private hasEventHandlers(node: IRNode): boolean {
@@ -931,5 +846,5 @@ export class HonoAdapter implements TemplateAdapter {
   }
 }
 
-// Export singleton instance for convenience (without script collection)
+// Export singleton instance for convenience
 export const honoAdapter = new HonoAdapter()
