@@ -879,6 +879,12 @@ function findTypeDeclaration(
 function inferTypeFromValue(value: string): TypeInfo {
   const trimmed = value.trim()
 
+  // Handle ?? fallback: infer type from the right-hand side
+  const nullishMatch = trimmed.match(/^.+\?\?\s*(.+)$/)
+  if (nullishMatch) {
+    return inferTypeFromValue(nullishMatch[1])
+  }
+
   // Number
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
     return { kind: 'primitive', raw: 'number', primitive: 'number' }

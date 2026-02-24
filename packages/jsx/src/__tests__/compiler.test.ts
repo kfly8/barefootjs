@@ -2699,6 +2699,80 @@ describe('Compiler', () => {
       expect(clientJs?.content).not.toMatch(/\?\?.*\?\?/)
     })
 
+    test('preserves original ?? fallback value in output', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface SliderProps {
+          initial?: number
+        }
+
+        export function Slider(props: SliderProps) {
+          const [value, setValue] = createSignal(props.initial ?? 0)
+          return <input type="range" value={value()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Slider.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Must preserve the original fallback value, NOT replace with undefined
+      expect(clientJs?.content).toContain('props.initial ?? 0')
+      expect(clientJs?.content).not.toContain('props.initial ?? undefined')
+    })
+
+    test('preserves boolean fallback value in output', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface CheckboxProps {
+          defaultChecked?: boolean
+        }
+
+        export function Checkbox(props: CheckboxProps) {
+          const [checked, setChecked] = createSignal(props.defaultChecked ?? false)
+          return <input type="checkbox" checked={checked()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Checkbox.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Must preserve false, NOT replace with undefined
+      expect(clientJs?.content).toContain('props.defaultChecked ?? false')
+      expect(clientJs?.content).not.toContain('props.defaultChecked ?? undefined')
+    })
+
+    test('preserves string fallback value in output', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        interface InputProps {
+          defaultValue?: string
+        }
+
+        export function Input(props: InputProps) {
+          const [value, setValue] = createSignal(props.defaultValue ?? '')
+          return <input value={value()} />
+        }
+      `
+
+      const result = compileJSXSync(source, 'Input.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // Must preserve empty string, NOT replace with undefined
+      expect(clientJs?.content).not.toContain("props.defaultValue ?? undefined")
+    })
+
     test('custom props parameter name (e.g., p) generates sync effect', () => {
       const source = `
         'use client'
