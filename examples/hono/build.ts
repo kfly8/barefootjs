@@ -41,8 +41,8 @@ function hasUseClientDirective(content: string): boolean {
 
 // Add script collection wrapper to SSR component
 function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
-  // Add import for useRequestContext
-  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\n"
+  // Add imports for useRequestContext and Fragment (for inline scripts in Suspense)
+  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\nimport { Fragment } from 'hono/jsx'\n"
 
   // Find the last import statement and add our import after it
   const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
@@ -54,20 +54,34 @@ function addScriptCollection(content: string, componentId: string, clientJsPath:
   const existingImports = importMatch[2]
   const restOfFile = content.slice(importMatch[0].length)
 
-  // Script collection code to insert at the start of each component function
+  // Helper function to wrap JSX with inline script tags (for Suspense streaming)
+  const helperFn = `
+function __bfWrap(jsx: any, scripts: string[]) {
+  if (scripts.length === 0) return jsx
+  return <Fragment>{jsx}{scripts.map(s => <script type="module" src={s} />)}</Fragment>
+}
+`
+
+  // Script collection code to insert at the start of each component function.
+  // When BfScripts has already rendered (e.g., inside Suspense boundaries),
+  // scripts are output inline instead of being collected.
   const scriptCollector = `
+  let __bfInlineScripts: string[] = []
   // Script collection for client JS hydration
   try {
     const __c = useRequestContext()
     const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
     const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
+    const __bfRendered = __c.get('bfScriptsRendered')
     if (!__outputScripts.has('__barefoot__')) {
       __outputScripts.add('__barefoot__')
-      __scripts.push({ src: '/static/components/barefoot.js' })
+      if (__bfRendered) __bfInlineScripts.push('/static/components/barefoot.js')
+      else __scripts.push({ src: '/static/components/barefoot.js' })
     }
     if (!__outputScripts.has('${componentId}')) {
       __outputScripts.add('${componentId}')
-      __scripts.push({ src: '/static/components/${clientJsPath}' })
+      if (__bfRendered) __bfInlineScripts.push('/static/components/${clientJsPath}')
+      else __scripts.push({ src: '/static/components/${clientJsPath}' })
     }
     __c.set('bfCollectedScripts', __scripts)
     __c.set('bfOutputScripts', __outputScripts)
@@ -75,14 +89,39 @@ function addScriptCollection(content: string, componentId: string, clientJsPath:
 `
 
   // Insert script collector at the start of each export function
-  const modifiedRest = restOfFile.replace(
+  let modifiedRest = restOfFile.replace(
     /export function (\w+)\(([^)]*)\)([^{]*)\{/g,
     (match, name, params, rest) => {
       return `export function ${name}(${params})${rest}{${scriptCollector}`
     }
   )
 
-  return beforeImports + existingImports + importStatement + modifiedRest
+  // Wrap each return (...) with __bfWrap((...), __bfInlineScripts)
+  // Process from back to front to preserve offsets
+  const returnPattern = /return\s*\(/g
+  const returnMatches: Array<{ index: number; length: number }> = []
+  let m
+  while ((m = returnPattern.exec(modifiedRest)) !== null) {
+    returnMatches.push({ index: m.index, length: m[0].length })
+  }
+  // Process from last to first to keep earlier offsets valid
+  for (let ri = returnMatches.length - 1; ri >= 0; ri--) {
+    const rm = returnMatches[ri]
+    const afterOpen = rm.index + rm.length // position after 'return ('
+    let depth = 1
+    let ci = afterOpen
+    while (ci < modifiedRest.length && depth > 0) {
+      if (modifiedRest[ci] === '(') depth++
+      else if (modifiedRest[ci] === ')') depth--
+      ci++
+    }
+    // ci is right after the matching ')'; insert wrap closing there
+    modifiedRest = modifiedRest.slice(0, ci) + ', __bfInlineScripts)' + modifiedRest.slice(ci)
+    // Replace 'return (' with 'return __bfWrap(('
+    modifiedRest = modifiedRest.slice(0, rm.index) + 'return __bfWrap((' + modifiedRest.slice(rm.index + rm.length)
+  }
+
+  return beforeImports + existingImports + importStatement + helperFn + modifiedRest
 }
 
 // Discover all component files from both local and shared directories
