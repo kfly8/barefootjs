@@ -94,5 +94,5 @@
     "input",
     "switch"
   ],
-  "source": "ui/components/ui/slider.tsx"
+  "source": "ui/components/ui/slider/index.tsx"
 }

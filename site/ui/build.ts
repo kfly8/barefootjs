@@ -118,8 +118,14 @@ const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
 
+// Check if a file is a test or preview (should be excluded from build)
+function isTestOrPreview(filename: string): boolean {
+  return filename.includes('.test.') || filename.includes('.preview.')
+}
+
 // Recursively discover all component files in ui/ and docs/ subdirectories
 // Skip 'shared' directory which contains non-compilable utility modules
+// Skip test and preview files
 async function discoverComponentFiles(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true })
   const files: string[] = []
@@ -129,7 +135,7 @@ async function discoverComponentFiles(dir: string): Promise<string[]> {
       // Skip shared directory - it contains utility modules, not components
       if (entry.name === 'shared') continue
       files.push(...await discoverComponentFiles(fullPath))
-    } else if (entry.name.endsWith('.tsx')) {
+    } else if (entry.name.endsWith('.tsx') && !isTestOrPreview(entry.name)) {
       files.push(fullPath)
     }
   }
@@ -215,7 +221,12 @@ for (const entryPath of componentFiles) {
   const relativePath = relative(rootDir, entryPath)
   const dirPath = dirname(relativePath)
   const baseFileName = relativePath.split('/').pop()!
-  const baseNameNoExt = baseFileName.replace('.tsx', '')
+  let baseNameNoExt = baseFileName.replace('.tsx', '')
+  // For colocated index.tsx files, use parent directory as component name
+  if (baseNameNoExt === 'index') {
+    const parts = relativePath.split('/')
+    baseNameNoExt = parts[parts.length - 2] || baseNameNoExt
+  }
 
   // Create subdirectory if needed
   const outputDir = dirPath === '.' ? DIST_COMPONENTS_DIR : resolve(DIST_COMPONENTS_DIR, dirPath)
@@ -339,10 +350,13 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// Concatenate tokens.css + globals.css to dist
+// Generate tokens CSS from JSON and concatenate with globals.css
+const { loadTokens, mergeTokenSets, generateCSS } = await import('../shared/tokens/index')
 const STYLES_DIR = resolve(ROOT_DIR, 'styles')
-const SHARED_STYLES_DIR = resolve(ROOT_DIR, '../shared/styles')
-const tokensCSS = await Bun.file(resolve(SHARED_STYLES_DIR, 'tokens.css')).text()
+const baseTokens = await loadTokens(resolve(ROOT_DIR, '../shared/tokens/tokens.json'))
+const uiTokens = await loadTokens(resolve(ROOT_DIR, 'tokens.json'))
+const mergedTokens = mergeTokenSets(baseTokens, uiTokens)
+const tokensCSS = generateCSS(mergedTokens)
 const siteGlobalsCSS = await Bun.file(resolve(STYLES_DIR, 'globals.css')).text()
 await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + siteGlobalsCSS)
 console.log('Generated: dist/globals.css (tokens + globals)')
@@ -365,7 +379,7 @@ async function copyServerComponents(srcDir: string, destDir: string, prefix: str
     if (entry.isDirectory()) {
       await mkdir(destPath, { recursive: true })
       await copyServerComponents(srcPath, destPath, `${prefix}${entry.name}/`)
-    } else if (entry.name.endsWith('.tsx')) {
+    } else if (entry.name.endsWith('.tsx') && !isTestOrPreview(entry.name)) {
       const content = await Bun.file(srcPath).text()
       // Skip files that have "use client" directive (already compiled)
       if (!hasUseClientDirective(content)) {

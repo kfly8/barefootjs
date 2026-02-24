@@ -112,9 +112,18 @@ export function emitSignalsAndMemos(
     } else {
       const controlled = controlledSignals.find(c => c.signal === signal)
       if (controlled) {
-        const prop = ctx.propsParams.find(p => p.name === controlled.propName)
-        const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
-        initialValue = `props.${controlled.propName} ?? ${defaultVal}`
+        if (signal.initialValue.includes('??')) {
+          // Preserve developer's original fallback (e.g., props.initial ?? 0)
+          if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
+            initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
+          } else {
+            initialValue = signal.initialValue
+          }
+        } else {
+          const prop = ctx.propsParams.find(p => p.name === controlled.propName)
+          const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
+          initialValue = `props.${controlled.propName} ?? ${defaultVal}`
+        }
       } else if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
         // Replace custom props name with 'props.' even when ?? is present
         initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
@@ -526,6 +535,18 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         lines.push('')
       }
     }
+  }
+}
+
+/** Emit applyRestAttrs() calls for HTML elements with unresolved spread attrs. */
+export function emitRestAttrApplications(lines: string[], ctx: ClientJsContext): void {
+  for (const elem of ctx.restAttrElements) {
+    const v = varSlotId(elem.slotId)
+    const excludeKeys = JSON.stringify(elem.excludeKeys)
+    lines.push(`  if (_${v}) applyRestAttrs(_${v}, ${elem.source}, ${excludeKeys})`)
+  }
+  if (ctx.restAttrElements.length > 0) {
+    lines.push('')
   }
 }
 

@@ -84,5 +84,5 @@
     "toggle",
     "slot"
   ],
-  "source": "ui/components/ui/button.tsx"
+  "source": "ui/components/ui/button/index.tsx"
 }

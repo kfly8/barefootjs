@@ -21,14 +21,14 @@ export interface TableOfContentsProps {
   items: TocItem[]
 }
 
-export function TableOfContents({ items }: TableOfContentsProps) {
-  if (items.length === 0) return null
+export function TableOfContents(props: TableOfContentsProps) {
+  if (props.items.length === 0) return null
 
   // Item height in pixels (py-1 = 8px padding + ~20px line-height)
   const ITEM_HEIGHT = 28
 
   // Use separate variable to avoid operator precedence issues in compiled output
-  const initialActiveId = items[0]?.id ?? ''
+  const initialActiveId = props.items[0]?.id ?? ''
   const [activeId, setActiveId] = createSignal<string>(initialActiveId)
 
   // Update indicator position when activeId changes
@@ -36,9 +36,9 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   createEffect(() => {
     const indicator = document.querySelector('[data-toc-indicator]') as HTMLElement
     if (indicator) {
-      const idx = items.findIndex(item => item.id === activeId())
+      const idx = props.items.findIndex(item => item.id === activeId())
       const activeIdx = idx >= 0 ? idx : 0
-      const activeItem = items[activeIdx]
+      const activeItem = props.items[activeIdx]
       const xOffset = activeItem?.branch ? 8 : 0
       indicator.style.transform = `translate(${xOffset}px, ${activeIdx * ITEM_HEIGHT}px)`
     }
@@ -46,13 +46,13 @@ export function TableOfContents({ items }: TableOfContentsProps) {
 
   // Track visible sections using IntersectionObserver
   createEffect(() => {
-    const sections = items
+    const sections = props.items
       .map(item => document.getElementById(item.id))
       .filter((el): el is HTMLElement => el !== null)
 
     if (sections.length === 0) return
 
-    const lastItemId = items[items.length - 1]?.id
+    const lastItemId = props.items[props.items.length - 1]?.id
 
     // Check if scrolled to bottom of page
     const handleScroll = () => {
@@ -107,7 +107,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
             style={`background-color: var(--gradient-start); height: ${ITEM_HEIGHT}px; left: 0;`}
           />
           <ul className="list-none m-0 p-0 text-sm">
-            {items.map(item => (
+            {props.items.map(item => (
               <li key={item.id} className="list-none m-0 p-0">
                 <a
                   href={`#${item.id}`}

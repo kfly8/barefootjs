@@ -95,5 +95,5 @@
     "toggle-group",
     "select"
   ],
-  "source": "ui/components/ui/radio-group.tsx"
+  "source": "ui/components/ui/radio-group/index.tsx"
 }

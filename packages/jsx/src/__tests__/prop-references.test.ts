@@ -227,9 +227,7 @@ describe('ClientJS generation with semantic prop refs', () => {
 
     const result = compileJSXSync(source, 'Dialog.tsx', { adapter })
 
-    // Filter out props-destructuring warnings (expected for this test)
-    const realErrors = result.errors.filter((e) => e.code !== 'BF043')
-    expect(realErrors).toHaveLength(0)
+    expect(result.errors).toHaveLength(0)
 
     const clientJs = result.files.find((f) => f.type === 'clientJs')
     expect(clientJs).toBeDefined()
@@ -279,9 +277,7 @@ describe('ClientJS generation with semantic prop refs', () => {
 
     const result = compileJSXSync(source, 'Dialog.tsx', { adapter })
 
-    // Filter out props-destructuring warnings (expected for this test)
-    const realErrors = result.errors.filter((e) => e.code !== 'BF043')
-    expect(realErrors).toHaveLength(0)
+    expect(result.errors).toHaveLength(0)
 
     const clientJs = result.files.find((f) => f.type === 'clientJs')
     expect(clientJs).toBeDefined()
@@ -306,9 +302,7 @@ describe('ClientJS generation with semantic prop refs', () => {
 
     const result = compileJSXSync(source, 'Dialog.tsx', { adapter })
 
-    // Filter out props-destructuring warnings (expected for this test)
-    const realErrors = result.errors.filter((e) => e.code !== 'BF043')
-    expect(realErrors).toHaveLength(0)
+    expect(result.errors).toHaveLength(0)
 
     const clientJs = result.files.find((f) => f.type === 'clientJs')
     expect(clientJs).toBeDefined()

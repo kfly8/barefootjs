@@ -95,5 +95,5 @@
     "switch",
     "toggle-group"
   ],
-  "source": "ui/components/ui/toggle.tsx"
+  "source": "ui/components/ui/toggle/index.tsx"
 }

@@ -130,5 +130,5 @@
   "related": [
     "separator"
   ],
-  "source": "ui/components/ui/card.tsx"
+  "source": "ui/components/ui/card/index.tsx"
 }

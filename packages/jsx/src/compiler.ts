@@ -303,6 +303,7 @@ function buildMetadata(
     propsParams: ctx.propsParams,
     propsObjectName: ctx.propsObjectName,
     restPropsName: ctx.restPropsName,
+    restPropsExpandedKeys: ctx.restPropsExpandedKeys,
     signals: ctx.signals,
     memos: ctx.memos,
     effects: ctx.effects,

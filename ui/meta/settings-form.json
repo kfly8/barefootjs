@@ -46,5 +46,5 @@
     ]
   },
   "related": [],
-  "source": "ui/components/ui/settings-form.tsx"
+  "source": "ui/components/ui/settings-form/index.tsx"
 }

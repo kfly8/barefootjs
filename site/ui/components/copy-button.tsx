@@ -13,11 +13,11 @@ export interface CopyButtonProps {
   code: string
 }
 
-export function CopyButton({ code }: CopyButtonProps) {
+export function CopyButton(props: CopyButtonProps) {
   const [copied, setCopied] = createSignal(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code).then(() => {
+    navigator.clipboard.writeText(props.code).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })

@@ -134,5 +134,5 @@
     "accordion",
     "toggle-group"
   ],
-  "source": "ui/components/ui/tabs.tsx"
+  "source": "ui/components/ui/tabs/index.tsx"
 }

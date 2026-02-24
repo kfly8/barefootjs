@@ -56,5 +56,5 @@
   "related": [
     "button"
   ],
-  "source": "ui/components/ui/icon.tsx"
+  "source": "ui/components/ui/icon/index.tsx"
 }

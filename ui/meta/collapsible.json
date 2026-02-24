@@ -101,5 +101,5 @@
   "related": [
     "accordion"
   ],
-  "source": "ui/components/ui/collapsible.tsx"
+  "source": "ui/components/ui/collapsible/index.tsx"
 }

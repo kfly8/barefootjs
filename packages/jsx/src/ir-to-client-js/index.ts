@@ -81,6 +81,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     localConstants: ir.metadata.localConstants,
     propsParams: ir.metadata.propsParams,
     propsObjectName: ir.metadata.propsObjectName,
+    restPropsName: ir.metadata.restPropsName,
 
     interactiveElements: [],
     dynamicElements: [],
@@ -94,6 +95,7 @@ function createContext(ir: ComponentIR): ClientJsContext {
     clientOnlyElements: [],
     clientOnlyConditionals: [],
     providerSetups: [],
+    restAttrElements: [],
   }
 }
 

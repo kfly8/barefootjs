@@ -95,6 +95,7 @@ function PropsStyleChild(props: PropsStyleChildProps) {
  * Destructured style: function Component({ value, label }: Props)
  * Destructured props lose reactivity - value is captured at initial render
  */
+// @bf-ignore props-destructuring
 function DestructuredStyleChild({ value, label }: PropsStyleChildProps) {
   // This createMemo captures the initial value of 'value'
   // and will NOT react to changes from the parent

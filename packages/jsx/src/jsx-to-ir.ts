@@ -1196,13 +1196,31 @@ function processAttributes(
   for (const attr of attributes.properties) {
     // Spread attribute: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      attrs.push({
-        name: '...',
-        value: attr.expression.getText(ctx.sourceFile),
-        dynamic: true,
-        isLiteral: false,
-        loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
-      })
+      const spreadExpr = attr.expression.getText(ctx.sourceFile)
+      const expandedKeys = ctx.analyzer.restPropsExpandedKeys
+      const restName = ctx.analyzer.restPropsName
+
+      // Expand spread if keys are statically known (closed type)
+      if (expandedKeys.length > 0 && restName && spreadExpr === restName) {
+        const loc = getSourceLocation(attr, ctx.sourceFile, ctx.filePath)
+        for (const key of expandedKeys) {
+          attrs.push({
+            name: key,
+            value: `${restName}.${key}`,
+            dynamic: true,
+            isLiteral: false,
+            loc,
+          })
+        }
+      } else {
+        attrs.push({
+          name: '...',
+          value: spreadExpr,
+          dynamic: true,
+          isLiteral: false,
+          loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
+        })
+      }
       continue
     }
 
@@ -1399,13 +1417,31 @@ function processComponentProps(
   for (const attr of attributes.properties) {
     // Spread props: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      props.push({
-        name: '...',
-        value: attr.expression.getText(ctx.sourceFile),
-        dynamic: true,
-        isLiteral: false,
-        loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
-      })
+      const spreadExpr = attr.expression.getText(ctx.sourceFile)
+      const expandedKeys = ctx.analyzer.restPropsExpandedKeys
+      const restName = ctx.analyzer.restPropsName
+
+      // Expand spread if keys are statically known (closed type)
+      if (expandedKeys.length > 0 && restName && spreadExpr === restName) {
+        const loc = getSourceLocation(attr, ctx.sourceFile, ctx.filePath)
+        for (const key of expandedKeys) {
+          props.push({
+            name: key,
+            value: `${restName}.${key}`,
+            dynamic: true,
+            isLiteral: false,
+            loc,
+          })
+        }
+      } else {
+        props.push({
+          name: '...',
+          value: spreadExpr,
+          dynamic: true,
+          isLiteral: false,
+          loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
+        })
+      }
       continue
     }
 

@@ -28,7 +28,7 @@ const componentMeta: Record<
     description: 'A polymorphic component that merges props with child element',
     dependencies: ['@barefootjs/jsx'],
     files: [
-      { sourcePath: 'components/ui/slot.tsx', targetPath: 'components/ui/slot.tsx' },
+      { sourcePath: 'components/ui/slot/index.tsx', targetPath: 'components/ui/slot/index.tsx' },
       { sourcePath: 'types/index.tsx', targetPath: 'types/index.tsx' },
     ],
   },
@@ -38,8 +38,8 @@ const componentMeta: Record<
     dependencies: ['@barefootjs/jsx'],
     // Include slot files directly (button depends on slot)
     files: [
-      { sourcePath: 'components/ui/button.tsx', targetPath: 'components/ui/button.tsx' },
-      { sourcePath: 'components/ui/slot.tsx', targetPath: 'components/ui/slot.tsx' },
+      { sourcePath: 'components/ui/button/index.tsx', targetPath: 'components/ui/button/index.tsx' },
+      { sourcePath: 'components/ui/slot/index.tsx', targetPath: 'components/ui/slot/index.tsx' },
       { sourcePath: 'types/index.tsx', targetPath: 'types/index.tsx' },
     ],
   },

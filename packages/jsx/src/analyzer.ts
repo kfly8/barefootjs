@@ -692,16 +692,12 @@ function hasIgnoreDirective(
 function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): void {
   // Pattern 1: Destructured props - { prop1, prop2 }
   if (ts.isObjectBindingPattern(param.name)) {
-    // Warn about props destructuring (breaks reactivity)
+    // Record destructuring info for deferred BF043 emission (stateful components only)
     const componentNode = ctx.componentNode
-    if (componentNode && !hasIgnoreDirective(componentNode, ctx.sourceFile, 'props-destructuring')) {
-      ctx.errors.push(
-        createWarning(ErrorCodes.PROPS_DESTRUCTURING, getSourceLocation(param, ctx.sourceFile, ctx.filePath), {
-          suggestion: {
-            message: 'Use props object directly: function Component(props: Props) { ... props.checked ... }',
-          },
-        })
-      )
+    const ignored = !!(componentNode && hasIgnoreDirective(componentNode, ctx.sourceFile, 'props-destructuring'))
+    ctx.propsDestructuring = {
+      loc: getSourceLocation(param, ctx.sourceFile, ctx.filePath),
+      hasIgnoreDirective: ignored,
     }
 
     for (const element of param.name.elements) {
@@ -723,6 +719,15 @@ function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): voi
         })
       }
     }
+
+    // Compute restPropsExpandedKeys when rest props exist with a type annotation
+    if (ctx.restPropsName && param.type) {
+      const allKeys = collectTypeKeys(param.type, ctx)
+      if (allKeys) {
+        const destructuredKeys = new Set(ctx.propsParams.map(p => p.name))
+        ctx.restPropsExpandedKeys = allKeys.filter(k => !destructuredKeys.has(k))
+      }
+    }
   }
 
   // Pattern 2: Props object - props: Type (SolidJS-style)
@@ -739,6 +744,55 @@ function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): voi
   if (param.type) {
     ctx.propsType = typeNodeToTypeInfo(param.type, ctx.sourceFile)
   }
+}
+
+/**
+ * Collect all property key names from a type node.
+ * Returns null for open types (extends HTMLAttributes, index signatures, etc.)
+ * where static key enumeration is not possible.
+ */
+function collectTypeKeys(typeNode: ts.TypeNode, ctx: AnalyzerContext): string[] | null {
+  if (ts.isTypeLiteralNode(typeNode)) {
+    return collectKeysFromMembers(typeNode.members, ctx)
+  }
+
+  if (ts.isTypeReferenceNode(typeNode)) {
+    const typeName = typeNode.typeName.getText(ctx.sourceFile)
+    const typeDecl = findTypeDeclaration(typeName, ctx.sourceFile)
+    if (!typeDecl) return null // External type — open
+
+    if (ts.isInterfaceDeclaration(typeDecl)) {
+      // Interface with extends clause is considered open
+      if (typeDecl.heritageClauses && typeDecl.heritageClauses.length > 0) return null
+      return collectKeysFromMembers(typeDecl.members, ctx)
+    }
+    if (ts.isTypeAliasDeclaration(typeDecl)) {
+      if (ts.isTypeLiteralNode(typeDecl.type)) {
+        return collectKeysFromMembers(typeDecl.type.members, ctx)
+      }
+      if (ts.isIntersectionTypeNode(typeDecl.type)) {
+        // Intersection types are considered open
+        return null
+      }
+    }
+  }
+
+  return null
+}
+
+function collectKeysFromMembers(
+  members: ts.NodeArray<ts.TypeElement>,
+  ctx: AnalyzerContext
+): string[] | null {
+  const keys: string[] = []
+  for (const member of members) {
+    // Index signatures make the type open
+    if (ts.isIndexSignatureDeclaration(member)) return null
+    if (ts.isPropertySignature(member) && member.name) {
+      keys.push(member.name.getText(ctx.sourceFile))
+    }
+  }
+  return keys
 }
 
 /**
@@ -892,6 +946,20 @@ function extractDependencies(code: string, ctx: AnalyzerContext): string[] {
 // =============================================================================
 
 function validateContext(ctx: AnalyzerContext): void {
+  // BF043: Emit props destructuring warning only for stateful components.
+  // Stateless components can safely destructure props since values are static.
+  const isStateful = ctx.signals.length > 0 || ctx.memos.length > 0 ||
+    ctx.effects.length > 0 || ctx.onMounts.length > 0
+  if (ctx.propsDestructuring && isStateful && !ctx.propsDestructuring.hasIgnoreDirective) {
+    ctx.errors.push(
+      createWarning(ErrorCodes.PROPS_DESTRUCTURING, ctx.propsDestructuring.loc, {
+        suggestion: {
+          message: 'Use props object directly: function Component(props: Props) { ... props.checked ... }',
+        },
+      })
+    )
+  }
+
   // Check for 'use client' directive if signals/events exist
   if (ctx.signals.length > 0 && !ctx.hasUseClientDirective) {
     ctx.errors.push(

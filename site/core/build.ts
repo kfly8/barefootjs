@@ -268,8 +268,10 @@ if (componentExports.length > 0) {
   console.log('Generated: dist/components/index.ts')
 }
 
-// ── 4. CSS: Concatenate tokens.css + globals.css + landing.css ─
-const tokensCSS = await Bun.file(resolve(SHARED_DIR, 'styles/tokens.css')).text()
+// ── 4. CSS: Generate tokens from JSON + globals.css + landing.css ─
+const { loadTokens, generateCSS } = await import('../shared/tokens/index')
+const baseTokens = await loadTokens(resolve(SHARED_DIR, 'tokens/tokens.json'))
+const tokensCSS = generateCSS(baseTokens)
 const globalsCSS = await Bun.file(resolve(ROOT_DIR, 'styles/globals.css')).text()
 const landingCSS = await Bun.file(resolve(ROOT_DIR, 'styles/landing.css')).text()
 const combinedCSS = tokensCSS + '\n' + globalsCSS + '\n' + landingCSS
