@@ -17,6 +17,13 @@ import { compileJSXSync, type ComponentIR } from '@barefootjs/jsx'
 runJSXConformanceTests({
   createAdapter: () => new GoTemplateAdapter(),
   referenceAdapter: () => new HonoAdapter({ injectScriptCollection: false }),
+  onRenderError: (err, id) => {
+    if (err.name === 'GoNotAvailableError') {
+      console.log(`Skipping [${id}]: ${err.message}`)
+      return true
+    }
+    return false
+  },
 })
 
 // =============================================================================

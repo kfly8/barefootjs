@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from 'bun:test'
 import type { TemplateAdapter } from '@barefootjs/jsx'
-import { renderComponent, normalizeHTML, GoNotAvailableError } from '@barefootjs/preview/render'
+import { renderComponent, normalizeHTML } from '@barefootjs/preview/render'
 import { jsxFixtures } from '../fixtures'
 
 export interface RunJSXConformanceOptions {
@@ -17,6 +17,8 @@ export interface RunJSXConformanceOptions {
   referenceAdapter?: () => TemplateAdapter
   /** Fixture IDs to skip */
   skip?: string[]
+  /** Optional error handler for render failures. Return true to skip the test. */
+  onRenderError?: (err: Error, fixtureId: string) => boolean
 }
 
 export function runJSXConformanceTests(options: RunJSXConformanceOptions): void {
@@ -39,11 +41,7 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
             props: fixture.props,
           })
         } catch (err) {
-          // Skip if Go is not available (CI without Go)
-          if (err instanceof GoNotAvailableError) {
-            console.log(`Skipping [${fixture.id}]: ${err.message}`)
-            return
-          }
+          if (options.onRenderError?.(err as Error, fixture.id)) return
           throw err
         }
         expect(html).toBeTruthy()
