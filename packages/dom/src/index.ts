@@ -68,5 +68,6 @@ export {
   $ as $,
   $c,
   type ComponentInitFn,
+  type MountOptions,
   type BranchConfig,
 } from './runtime'

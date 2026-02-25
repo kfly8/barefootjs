@@ -3013,4 +3013,64 @@ describe('Compiler', () => {
       }).toThrow(/reactive primitives/)
     })
   })
+
+  describe('comment scope flag for fragment roots (#381)', () => {
+    test('fragment-root component generates mount with comment: true', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function FragComp() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <>
+              <div>{count()}</div>
+              <button onClick={() => setCount(c => c + 1)}>+</button>
+            </>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'FragComp.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // mount() should include comment: true for fragment roots
+      expect(content).toMatch(/mount\('FragComp', initFragComp, \{[^}]*comment: true/)
+
+      // findScope should include comment flag
+      expect(content).toContain("findScope('FragComp', __instanceIndex, __parentScope, true)")
+    })
+
+    test('single-root component generates mount without comment flag', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function SingleRoot() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <span>{count()}</span>
+              <button onClick={() => setCount(c => c + 1)}>+</button>
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'SingleRoot.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // mount() should NOT include comment flag for single-root components
+      expect(content).not.toContain('comment:')
+      expect(content).not.toContain('comment: true')
+
+      // findScope should not include comment flag
+      expect(content).toContain("findScope('SingleRoot', __instanceIndex, __parentScope)")
+      expect(content).not.toContain("findScope('SingleRoot', __instanceIndex, __parentScope, true)")
+    })
+  })
 })
