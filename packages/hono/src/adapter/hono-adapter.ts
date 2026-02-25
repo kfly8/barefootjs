@@ -50,6 +50,7 @@ export class HonoAdapter implements TemplateAdapter {
   private componentName: string = ''
   private options: HonoAdapterOptions
   private isClientComponent: boolean = false
+  private hasClientInteractivity: boolean = false
   private currentComponentHasProps: boolean = false
 
   constructor(options: HonoAdapterOptions = {}) {
@@ -193,6 +194,7 @@ export class HonoAdapter implements TemplateAdapter {
     // that need client JS wiring (detected by analyzeClientNeeds)
     const needsClientInit = ir.metadata.clientAnalysis?.needsInit ?? false
     const hasClientInteractivity = ir.metadata.isClientComponent || needsClientInit
+    this.hasClientInteractivity = hasClientInteractivity
 
     // Check if component uses props object pattern (SolidJS-style)
     const propsObjectName = ir.metadata.propsObjectName
@@ -637,8 +639,8 @@ export class HonoAdapter implements TemplateAdapter {
     // Determine how to pass scope to child component
     let scopeAttr: string
     // Mark child components with slotId for parent-first hydration
-    // Only add __bfChild when parent is a client component (will call initChild)
-    const bfChildAttr = (comp.slotId && this.isClientComponent) ? ' __bfChild={true}' : ''
+    // Add __bfChild when parent has client interactivity (will call initChild)
+    const bfChildAttr = (comp.slotId && this.hasClientInteractivity) ? ' __bfChild={true}' : ''
     if (ctx?.isRootOfClientComponent) {
       // Root component: if it has a slotId, include it so client JS can find it
       // with [bf-s$="_sX"] selector. Otherwise pass parent's scope directly.

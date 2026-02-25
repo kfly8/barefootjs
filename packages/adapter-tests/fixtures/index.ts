@@ -34,6 +34,7 @@ import { fixture as nullishCoalescingText } from './nullish-coalescing-text'
 // Priority 7: Multi-file composition
 import { fixture as childComponent } from './child-component'
 import { fixture as multipleInstances } from './multiple-instances'
+import { fixture as staticArrayChildren } from './static-array-children'
 
 import type { JSXFixture } from '../src/types'
 
@@ -74,4 +75,5 @@ export const jsxFixtures: JSXFixture[] = [
   // Priority 7: Multi-file composition
   childComponent,
   multipleInstances,
+  staticArrayChildren,
 ]
