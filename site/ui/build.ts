@@ -47,12 +47,6 @@ function hasUseClientDirective(content: string): boolean {
   return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
 }
 
-// Detect if source may contain event handler attributes (e.g., onClick={...})
-// Used as a lightweight pre-filter to avoid compiling purely static server components
-function mayHaveEventHandlers(content: string): boolean {
-  return /\bon[A-Z]\w*\s*[=({]/.test(content)
-}
-
 // Generate short hash from content
 function generateHash(content: string): string {
   const hash = Bun.hash(content)
@@ -184,16 +178,11 @@ const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = 
 const adapter = new HonoAdapter()
 
 // Compile each component
-// Components with "use client" are always compiled. Components without the directive
-// are also compiled if they contain event handler patterns (stateless event callbacks).
+// All components are compiled. The compiler determines whether client JS is needed
+// based on event handlers and reactive primitives, not just "use client" directive.
 for (const entryPath of componentFiles) {
   const sourceContent = await Bun.file(entryPath).text()
   const hasDirective = hasUseClientDirective(sourceContent)
-
-  // Skip components that have neither "use client" nor event handler patterns
-  if (!hasDirective && !mayHaveEventHandlers(sourceContent)) {
-    continue
-  }
 
   // Determine rootDir based on whether the file is from UI, docs, or shared components
   const isUiComponent = entryPath.startsWith(UI_COMPONENTS_DIR)
