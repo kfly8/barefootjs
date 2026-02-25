@@ -2206,6 +2206,52 @@ describe('Compiler', () => {
       expect(clientJs!.content).not.toContain(`(item, __idx)`)
     })
 
+    test('static array: nested component with index in callback and signal access (#480)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+
+        export function SelectionDemo() {
+          const [selected, setSelected] = createSignal(items.map(() => false))
+
+          const toggleRow = (index) => {
+            setSelected(prev => prev.map((v, i) => i === index ? !v : v))
+          }
+
+          return (
+            <table>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr>
+                    <td>
+                      <Checkbox
+                        checked={selected()[index]}
+                        onCheckedChange={() => toggleRow(index)}
+                        aria-label={\`Select \${item.id}\`}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'SelectionDemo.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // The forEach callback should use the user-defined 'index' parameter
+      expect(clientJs!.content).toContain('(item, index)')
+      expect(clientJs!.content).not.toContain('__idx')
+      // Props should reference 'index' correctly in callback and signal access
+      expect(clientJs!.content).toContain('selected()[index]')
+      expect(clientJs!.content).toContain('toggleRow(index)')
+    })
+
     test('dynamic signal array: component generates reconcileList with createComponent', () => {
       const source = `
         'use client'
