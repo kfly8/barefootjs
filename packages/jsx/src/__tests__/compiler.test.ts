@@ -2080,7 +2080,7 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain("initChild('RadioGroupItem'")
     })
 
-    test('static array: direct component generates initChild', () => {
+    test('static array: direct component generates initChild with JSX props', () => {
       const source = `
         'use client'
 
@@ -2101,6 +2101,57 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
       expect(clientJs!.content).toContain("initChild('RadioGroupItem'")
+      // Props should reference item.value, not pass raw array item
+      expect(clientJs!.content).toContain('item.value')
+      expect(clientJs!.content).not.toContain('__childProps')
+    })
+
+    test('static array: literal JSX props preserved on direct child component', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ name: 'a' }, { name: 'b' }]
+          return (
+            <div>
+              {items.map(item => (
+                <ListItem label={item.name} className="pl-2 basis-1/3" />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('className: "pl-2 basis-1/3"')
+      expect(clientJs!.content).toContain('item.name')
+    })
+
+    test('static array: event handler props preserved on direct child component', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ id: '1' }, { id: '2' }]
+          const handleClick = (id: string) => console.log(id)
+          return (
+            <div>
+              {items.map(item => (
+                <ListItem onClick={() => handleClick(item.id)} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('onClick:')
     })
 
     test('dynamic signal array: component generates reconcileList with createComponent', () => {
