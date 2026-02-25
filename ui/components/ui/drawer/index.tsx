@@ -81,12 +81,13 @@ const directionOpenClasses: Record<DrawerDirection, string> = {
   left: 'translate-x-0',
 }
 
-// Direction-specific closed state classes (slide off-screen)
+// Direction-specific closed state classes (slide off-screen + pointer-events-none to prevent
+// closed portaled panels from other demos intercepting clicks)
 const directionClosedClasses: Record<DrawerDirection, string> = {
-  top: '-translate-y-full',
-  right: 'translate-x-full',
-  bottom: 'translate-y-full',
-  left: '-translate-x-full',
+  top: '-translate-y-full pointer-events-none',
+  right: 'translate-x-full pointer-events-none',
+  bottom: 'translate-y-full pointer-events-none',
+  left: '-translate-x-full pointer-events-none',
 }
 
 // DrawerHeader classes — centered text for vertical drawers
