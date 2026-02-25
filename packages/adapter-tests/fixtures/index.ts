@@ -30,6 +30,7 @@ import { fixture as fragment } from './fragment'
 import { fixture as clientOnly } from './client-only'
 import { fixture as eventHandlers } from './event-handlers'
 import { fixture as defaultProps } from './default-props'
+import { fixture as nullishCoalescingText } from './nullish-coalescing-text'
 // Priority 7: Multi-file composition
 import { fixture as childComponent } from './child-component'
 import { fixture as multipleInstances } from './multiple-instances'
@@ -69,6 +70,7 @@ export const jsxFixtures: JSXFixture[] = [
   clientOnly,
   eventHandlers,
   defaultProps,
+  nullishCoalescingText,
   // Priority 7: Multi-file composition
   childComponent,
   multipleInstances,

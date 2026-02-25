@@ -134,6 +134,26 @@ describe('expression-parser', () => {
       }
     })
 
+    test('parses nullish coalescing operator', () => {
+      const result = parseExpression('a ?? b')
+      expect(result.kind).toBe('logical')
+      if (result.kind === 'logical') {
+        expect(result.op).toBe('??')
+        expect(result.left.kind).toBe('identifier')
+        expect(result.right.kind).toBe('identifier')
+      }
+    })
+
+    test('parses nullish coalescing with member access and literal', () => {
+      const result = parseExpression("props.label ?? 'Default'")
+      expect(result.kind).toBe('logical')
+      if (result.kind === 'logical') {
+        expect(result.op).toBe('??')
+        expect(result.left.kind).toBe('member')
+        expect(result.right.kind).toBe('literal')
+      }
+    })
+
     test('parses unary negation', () => {
       const result = parseExpression('!isLoading')
       expect(result.kind).toBe('unary')
@@ -284,6 +304,13 @@ describe('expression-parser', () => {
       expect(result.level).toBe('L4')
     })
 
+    test('L4: nullish coalescing is supported', () => {
+      const expr = parseExpression("props.label ?? 'Default'")
+      const result = isSupported(expr)
+      expect(result.supported).toBe(true)
+      expect(result.level).toBe('L4')
+    })
+
     test('L4: negation is supported', () => {
       const expr = parseExpression('!isLoading()')
       const result = isSupported(expr)
@@ -393,6 +420,11 @@ describe('expression-parser', () => {
     test('converts member access to string', () => {
       const expr = parseExpression('user.name')
       expect(exprToString(expr)).toBe('user.name')
+    })
+
+    test('converts nullish coalescing to string', () => {
+      const expr = parseExpression("a ?? 'fallback'")
+      expect(exprToString(expr)).toBe('a ?? "fallback"')
     })
 
     test('converts arrow function to string', () => {
