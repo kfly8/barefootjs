@@ -413,8 +413,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${v}) {`)
         lines.push(`    const __childScopes = _${v}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
-        lines.push(`    __childScopes.forEach((childScope, __idx) => {`)
-        lines.push(`      const ${elem.param} = ${elem.array}[__idx]`)
+        const indexParam = elem.index || '__idx'
+        lines.push(`    __childScopes.forEach((childScope, ${indexParam}) => {`)
+        lines.push(`      const ${elem.param} = ${elem.array}[${indexParam}]`)
         lines.push(`      initChild('${name}', childScope, ${propsExpr})`)
         lines.push(`    })`)
         lines.push(`  }`)
@@ -441,8 +442,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
 
           lines.push(`  // Initialize nested ${comp.name} in static array`)
           lines.push(`  if (_${v}) {`)
-          lines.push(`    ${elem.array}.forEach((${elem.param}, __idx) => {`)
-          lines.push(`      const __iterEl = _${v}.children[__idx]`)
+          const indexParam = elem.index || '__idx'
+          lines.push(`    ${elem.array}.forEach((${elem.param}, ${indexParam}) => {`)
+          lines.push(`      const __iterEl = _${v}.children[${indexParam}]`)
           lines.push(`      if (__iterEl) {`)
           lines.push(`        const __compEl = __iterEl.querySelector('${selector}')`)
           lines.push(`        if (__compEl) initChild('${comp.name}', __compEl, ${propsExpr})`)
