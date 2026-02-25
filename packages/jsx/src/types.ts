@@ -140,6 +140,7 @@ export interface IRLoopChildComponent {
     isLiteral: boolean // true if value came from a string literal attribute
     isEventHandler: boolean
   }>
+  children: IRNode[] // Child nodes for nested component rendering
 }
 
 export interface IRLoop {
