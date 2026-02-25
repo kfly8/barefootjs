@@ -6,7 +6,9 @@ import { describe, test, expect } from 'bun:test'
 import { compileJSXSync, compileJSX } from '../compiler'
 import { analyzeComponent } from '../analyzer'
 import { jsxToIR } from '../jsx-to-ir'
+import { analyzeClientNeeds } from '../ir-to-client-js'
 import { TestAdapter } from '../adapters/test-adapter'
+import { HonoAdapter } from '../../../../packages/hono/src/adapter/hono-adapter'
 import { resolve, dirname } from 'node:path'
 import { isBooleanAttr, BOOLEAN_ATTRS } from '../html-constants'
 
@@ -2080,7 +2082,7 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain("initChild('RadioGroupItem'")
     })
 
-    test('static array: direct component generates initChild', () => {
+    test('static array: direct component generates initChild with JSX props', () => {
       const source = `
         'use client'
 
@@ -2101,6 +2103,57 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
       expect(clientJs!.content).toContain("initChild('RadioGroupItem'")
+      // Props should reference item.value, not pass raw array item
+      expect(clientJs!.content).toContain('item.value')
+      expect(clientJs!.content).not.toContain('__childProps')
+    })
+
+    test('static array: literal JSX props preserved on direct child component', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ name: 'a' }, { name: 'b' }]
+          return (
+            <div>
+              {items.map(item => (
+                <ListItem label={item.name} className="pl-2 basis-1/3" />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('className: "pl-2 basis-1/3"')
+      expect(clientJs!.content).toContain('item.name')
+    })
+
+    test('static array: event handler props preserved on direct child component', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ id: '1' }, { id: '2' }]
+          const handleClick = (id: string) => console.log(id)
+          return (
+            <div>
+              {items.map(item => (
+                <ListItem onClick={() => handleClick(item.id)} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('onClick:')
     })
 
     test('dynamic signal array: component generates reconcileList with createComponent', () => {
@@ -2800,6 +2853,164 @@ describe('Compiler', () => {
       expect(clientJs?.content).not.toContain('p.initial')
       // No double ??
       expect(clientJs?.content).not.toMatch(/\?\?.*\?\?/)
+    })
+  })
+
+  describe('event callbacks on stateless components', () => {
+    test('stateless component with event-forwarding prop generates client JS', () => {
+      const source = `
+        interface SortHeaderProps {
+          label: string
+          onSort: () => void
+        }
+
+        export function SortHeader({ label, onSort }: SortHeaderProps) {
+          return <th onClick={onSort}>{label}</th>
+        }
+      `
+
+      const result = compileJSXSync(source, 'SortHeader.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain('click')
+    })
+
+    test('stateless component with local event handler generates client JS', () => {
+      const source = `
+        export function LogButton() {
+          return <button onClick={() => console.log('clicked')}>Log</button>
+        }
+      `
+
+      const result = compileJSXSync(source, 'LogButton.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs?.content).toContain('click')
+    })
+
+    test('analyzeClientNeeds returns needsInit: true for event-wiring components', () => {
+      const source = `
+        interface ClickableProps {
+          onClick: () => void
+        }
+
+        export function Clickable({ onClick }: ClickableProps) {
+          return <div onClick={onClick}>Click me</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Clickable.tsx')
+      const ir = jsxToIR(ctx)
+      expect(ir).not.toBeNull()
+
+      const componentIR = {
+        version: '0.1' as const,
+        metadata: {
+          componentName: ctx.componentName || 'Clickable',
+          hasDefaultExport: ctx.hasDefaultExport,
+          isClientComponent: ctx.hasUseClientDirective,
+          typeDefinitions: ctx.typeDefinitions,
+          propsType: ctx.propsType,
+          propsParams: ctx.propsParams,
+          propsObjectName: ctx.propsObjectName,
+          restPropsName: ctx.restPropsName,
+          restPropsExpandedKeys: ctx.restPropsExpandedKeys,
+          signals: ctx.signals,
+          memos: ctx.memos,
+          effects: ctx.effects,
+          onMounts: ctx.onMounts,
+          imports: ctx.imports,
+          localFunctions: ctx.localFunctions,
+          localConstants: ctx.localConstants,
+        },
+        root: ir!,
+        errors: [],
+      }
+
+      const analysis = analyzeClientNeeds(componentIR)
+      expect(analysis.needsInit).toBe(true)
+    })
+
+    test('purely static component does not generate client JS', () => {
+      const source = `
+        export function StaticLabel() {
+          return <span>Hello World</span>
+        }
+      `
+
+      const result = compileJSXSync(source, 'StaticLabel.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeUndefined()
+    })
+
+    test('components with reactive primitives still require "use client"', () => {
+      const source = `
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+        }
+      `
+
+      // This should produce errors because signals require "use client"
+      // The compiler itself doesn't throw, but the adapter will
+      expect(() => {
+        compileJSXSync(source, 'Counter.tsx', { adapter })
+      }).not.toThrow()
+
+      // Verify the analyzer detects the issue
+      const ctx = analyzeComponent(source, 'Counter.tsx')
+      expect(ctx.signals.length).toBeGreaterThan(0)
+      expect(ctx.hasUseClientDirective).toBe(false)
+    })
+
+    test('HonoAdapter does not throw for stateless event-wiring components', () => {
+      const source = `
+        interface SortHeaderProps {
+          label: string
+          onSort: () => void
+        }
+
+        export function SortHeader({ label, onSort }: SortHeaderProps) {
+          return <th onClick={onSort}>{label}</th>
+        }
+      `
+
+      const honoAdapter = new HonoAdapter()
+      const result = compileJSXSync(source, 'SortHeader.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      // Should produce client JS
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+
+      // Should produce marked template with scope attributes
+      const template = result.files.find(f => f.type === 'markedTemplate')
+      expect(template).toBeDefined()
+      expect(template?.content).toContain('bf-s=')
+    })
+
+    test('HonoAdapter throws for signals without "use client"', () => {
+      const source = `
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+        }
+      `
+
+      const honoAdapter = new HonoAdapter()
+      expect(() => {
+        compileJSXSync(source, 'Counter.tsx', { adapter: honoAdapter })
+      }).toThrow(/reactive primitives/)
     })
   })
 })

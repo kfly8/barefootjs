@@ -16,6 +16,8 @@ export interface RenderOptions {
   adapter: TemplateAdapter
   /** Props to inject (optional) */
   props?: Record<string, unknown>
+  /** Additional component files (filename → source) */
+  components?: Record<string, string>
 }
 
 export interface RunJSXConformanceOptions {
@@ -33,12 +35,32 @@ export interface RunJSXConformanceOptions {
   onRenderError?: (err: Error, fixtureId: string) => boolean
 }
 
+/** HTML void elements that must not have a closing tag */
+const VOID_ELEMENTS = 'area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr'
+
 /**
  * Normalize rendered HTML for cross-adapter comparison.
- * Collapses whitespace differences caused by template engine formatting.
+ * Handles known formatting differences between adapters:
+ * - Whitespace collapsing (template engine formatting)
+ * - bf-p attribute removal (adapter-specific props serialization strategy)
+ * - Void element self-closing normalization (<br/> vs <br>)
+ * - Trailing whitespace before closing > in tags
  */
 function normalizeHTML(html: string): string {
-  return html.replace(/\s+/g, ' ').trim()
+  return html
+    // Remove bf-p attribute (Hono uses JSON serialization, Go uses struct fields)
+    .replace(/\s*bf-p="[^"]*"/g, '')
+    // Normalize child scope ID prefix: bf-s="~parentId_sN" → bf-s="parentId_sN"
+    .replace(/bf-s="~([^"]*)"/g, 'bf-s="$1"')
+    // Normalize void element self-closing: <br/> or <br /> → <br>
+    .replace(new RegExp(`<(${VOID_ELEMENTS})(\\s[^>]*?)?\\s*/>`, 'g'), '<$1$2>')
+    // Remove trailing whitespace before >
+    .replace(/\s+>/g, '>')
+    // Collapse inter-tag whitespace (Go Template adds newlines between blocks)
+    .replace(/>\s+</g, '><')
+    // Collapse whitespace
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export function runJSXConformanceTests(options: RunJSXConformanceOptions): void {
@@ -59,6 +81,7 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
             source: fixture.source,
             adapter,
             props: fixture.props,
+            components: fixture.components,
           })
         } catch (err) {
           if (options.onRenderError?.(err as Error, fixture.id)) return
@@ -73,6 +96,7 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
             source: fixture.source,
             adapter: refAdapter,
             props: fixture.props,
+            components: fixture.components,
           })
 
           const normalizedHtml = normalizeHTML(html)

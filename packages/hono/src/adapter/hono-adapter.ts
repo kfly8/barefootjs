@@ -175,22 +175,24 @@ export class HonoAdapter implements TemplateAdapter {
     const name = ir.metadata.componentName
     const propsTypeName = this.getPropsTypeName(ir)
 
-    // Check if component has client-side features (signals, memos, event handlers)
-    const hasClientFeatures =
+    // Validate: only reactive primitives (signals, memos, effects, onMounts) require "use client"
+    const hasReactivePrimitives =
       ir.metadata.signals.length > 0 ||
       ir.metadata.memos.length > 0 ||
-      this.hasEventHandlers(ir.root)
+      ir.metadata.effects.length > 0 ||
+      ir.metadata.onMounts.length > 0
 
-    // Validate: components with client features must have "use client" directive
-    if (hasClientFeatures && !ir.metadata.isClientComponent) {
+    if (hasReactivePrimitives && !ir.metadata.isClientComponent) {
       throw new Error(
-        `Component "${name}" has client-side features (signals, memos, or event handlers) ` +
+        `Component "${name}" has reactive primitives (signals, memos, effects, or onMounts) ` +
         `but is not marked as a client component. Add "use client" directive at the top of the file.`
       )
     }
 
-    // A component is a client component only if it has "use client" directive
-    const hasClientInteractivity = ir.metadata.isClientComponent
+    // A component needs client interactivity if it has "use client" OR if it has event handlers
+    // that need client JS wiring (detected by analyzeClientNeeds)
+    const needsClientInit = ir.metadata.clientAnalysis?.needsInit ?? false
+    const hasClientInteractivity = ir.metadata.isClientComponent || needsClientInit
 
     // Check if component uses props object pattern (SolidJS-style)
     const propsObjectName = ir.metadata.propsObjectName
@@ -325,35 +327,6 @@ export class HonoAdapter implements TemplateAdapter {
     lines.push(`}`)
 
     return lines.join('\n')
-  }
-
-  private hasEventHandlers(node: IRNode): boolean {
-    if (node.type === 'element') {
-      if (node.events.length > 0) return true
-      for (const child of node.children) {
-        if (this.hasEventHandlers(child)) return true
-      }
-    } else if (node.type === 'component') {
-      // Check if any props look like event handlers
-      for (const prop of node.props) {
-        if (prop.name.startsWith('on') && prop.name.length > 2) return true
-      }
-      for (const child of node.children) {
-        if (this.hasEventHandlers(child)) return true
-      }
-    } else if (node.type === 'fragment') {
-      for (const child of node.children) {
-        if (this.hasEventHandlers(child)) return true
-      }
-    } else if (node.type === 'conditional') {
-      if (this.hasEventHandlers(node.whenTrue)) return true
-      if (this.hasEventHandlers(node.whenFalse)) return true
-    } else if (node.type === 'loop') {
-      for (const child of node.children) {
-        if (this.hasEventHandlers(child)) return true
-      }
-    }
-    return false
   }
 
   private generateSignalInitializers(ir: ComponentIR): string {

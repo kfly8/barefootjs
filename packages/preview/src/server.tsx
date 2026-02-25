@@ -113,10 +113,48 @@ export function createPreviewApp(options: ServerOptions) {
                     font-weight: 600;
                     margin-bottom: 1.5rem;
                   }
+                  #bf-theme-toggle {
+                    position: fixed;
+                    bottom: 1rem;
+                    right: 1rem;
+                    z-index: 9999;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: var(--radius);
+                    border: 1px solid var(--border);
+                    background: var(--card);
+                    color: var(--foreground);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+                  }
+                  #bf-theme-toggle:hover {
+                    background: var(--accent);
+                  }
+                  #bf-theme-toggle .sun { display: none }
+                  #bf-theme-toggle .moon { display: block }
+                  .dark #bf-theme-toggle .sun { display: block }
+                  .dark #bf-theme-toggle .moon { display: none }
                 `}</style>
               </head>
               <body>
                 {children}
+                <button
+                  id="bf-theme-toggle"
+                  type="button"
+                  aria-label="Toggle dark mode"
+                  onclick="var r=document.documentElement;r.classList.add('theme-transition');r.classList.toggle('dark');setTimeout(function(){r.classList.remove('theme-transition')},300)"
+                >
+                  <svg class="sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </svg>
+                  <svg class="moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                </button>
                 <BfPortals />
                 <BfScripts />
               </body>

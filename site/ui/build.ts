@@ -178,12 +178,11 @@ const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = 
 const adapter = new HonoAdapter()
 
 // Compile each component
+// All components are compiled. The compiler determines whether client JS is needed
+// based on event handlers and reactive primitives, not just "use client" directive.
 for (const entryPath of componentFiles) {
-  // Check if file has "use client" directive
   const sourceContent = await Bun.file(entryPath).text()
-  if (!hasUseClientDirective(sourceContent)) {
-    continue // Skip server-only components
-  }
+  const hasDirective = hasUseClientDirective(sourceContent)
 
   // Determine rootDir based on whether the file is from UI, docs, or shared components
   const isUiComponent = entryPath.startsWith(UI_COMPONENTS_DIR)
@@ -212,6 +211,13 @@ for (const entryPath of componentFiles) {
     for (const error of errors) {
       console.error(`  ${error.message}`)
     }
+    continue
+  }
+
+  // Skip non-"use client" components that didn't produce client JS
+  // These are pure server components — copyServerComponents() handles them
+  const hasClientJsFile = result.files.some(f => f.type === 'clientJs')
+  if (!hasDirective && !hasClientJsFile) {
     continue
   }
 
@@ -481,5 +487,14 @@ async function copyDir(src: string, dest: string) {
 }
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
+
+// Generate _headers for Cloudflare Workers static assets (CORS + cache for registry)
+const headersContent = `/r/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: public, max-age=300
+`
+await Bun.write(resolve(DIST_DIR, '_headers'), headersContent)
+console.log('Generated: dist/_headers')
 
 console.log('\nBuild complete!')

@@ -20,7 +20,7 @@ export type ParsedExpr =
   | { kind: 'binary'; op: string; left: ParsedExpr; right: ParsedExpr }
   | { kind: 'unary'; op: string; argument: ParsedExpr }
   | { kind: 'conditional'; test: ParsedExpr; consequent: ParsedExpr; alternate: ParsedExpr }
-  | { kind: 'logical'; op: '&&' | '||'; left: ParsedExpr; right: ParsedExpr }
+  | { kind: 'logical'; op: '&&' | '||' | '??'; left: ParsedExpr; right: ParsedExpr }
   | { kind: 'template-literal'; parts: TemplatePart[] }
   | { kind: 'arrow-fn'; param: string; body: ParsedExpr }
   | { kind: 'higher-order'; method: 'filter' | 'every' | 'some' | 'find' | 'findIndex'; object: ParsedExpr; param: string; predicate: ParsedExpr }
@@ -193,6 +193,9 @@ function convertNode(node: ts.Node, raw: string): ParsedExpr {
     }
     if (opToken.kind === ts.SyntaxKind.BarBarToken) {
       return { kind: 'logical', op: '||', left, right }
+    }
+    if (opToken.kind === ts.SyntaxKind.QuestionQuestionToken) {
+      return { kind: 'logical', op: '??', left, right }
     }
 
     // Convert operator token to string

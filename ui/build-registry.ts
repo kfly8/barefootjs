@@ -11,38 +11,64 @@ import { dirname, resolve } from 'node:path'
 const ROOT_DIR = dirname(import.meta.path)
 const DIST_DIR = resolve(ROOT_DIR, 'dist/r')
 
-// Component metadata (title, description, dependencies)
-// Note: For custom registries, we include all dependency files directly
-// instead of using registryDependencies (which resolves to shadcn's registry)
-const componentMeta: Record<
-  string,
-  {
-    title: string
-    description: string
-    dependencies: string[]
-    files: Array<{ sourcePath: string; targetPath: string }>
+/**
+ * Scan a component's source file and collect internal UI dependencies.
+ * Detects `from '../{dep}'` patterns and recurses one level for transitive deps.
+ * Also detects `from '../../../types'` to include types/index.tsx.
+ */
+async function resolveFiles(name: string): Promise<string[]> {
+  const paths: string[] = []
+  const seen = new Set<string>()
+
+  async function collect(componentName: string) {
+    if (seen.has(componentName)) return
+    seen.add(componentName)
+
+    const filePath = `components/ui/${componentName}/index.tsx`
+    paths.push(filePath)
+
+    const absPath = resolve(ROOT_DIR, filePath)
+    const content = await Bun.file(absPath).text()
+
+    // Detect internal UI deps: from '../{dep}'
+    const depPattern = /from\s+['"]\.\.\/([a-z][\w-]*)['"/]/g
+    let match: RegExpExecArray | null
+    while ((match = depPattern.exec(content)) !== null) {
+      await collect(match[1])
+    }
+
+    // Detect types import: from '../../../types'
+    if (/from\s+['"]\.\.\/\.\.\/\.\.\/types['"]/.test(content)) {
+      if (!seen.has('__types__')) {
+        seen.add('__types__')
+        paths.push('types/index.tsx')
+      }
+    }
   }
-> = {
-  slot: {
-    title: 'Slot',
-    description: 'A polymorphic component that merges props with child element',
-    dependencies: ['@barefootjs/jsx'],
-    files: [
-      { sourcePath: 'components/ui/slot/index.tsx', targetPath: 'components/ui/slot/index.tsx' },
-      { sourcePath: 'types/index.tsx', targetPath: 'types/index.tsx' },
-    ],
-  },
-  button: {
-    title: 'Button',
-    description: 'A button component with variants and sizes',
-    dependencies: ['@barefootjs/jsx'],
-    // Include slot files directly (button depends on slot)
-    files: [
-      { sourcePath: 'components/ui/button/index.tsx', targetPath: 'components/ui/button/index.tsx' },
-      { sourcePath: 'components/ui/slot/index.tsx', targetPath: 'components/ui/slot/index.tsx' },
-      { sourcePath: 'types/index.tsx', targetPath: 'types/index.tsx' },
-    ],
-  },
+
+  await collect(name)
+  return paths
+}
+
+/**
+ * Resolve npm dependencies for a component.
+ * Always includes @barefootjs/jsx. Adds @barefootjs/dom if imported by the
+ * component or any of its transitive internal deps.
+ */
+async function resolveDependencies(files: string[]): Promise<string[]> {
+  const deps = ['@barefootjs/jsx']
+
+  for (const file of files) {
+    if (file === 'types/index.tsx') continue
+    const absPath = resolve(ROOT_DIR, file)
+    const content = await Bun.file(absPath).text()
+    if (content.includes('@barefootjs/dom')) {
+      deps.push('@barefootjs/dom')
+      break
+    }
+  }
+
+  return deps
 }
 
 interface RegistryItem {
@@ -71,18 +97,21 @@ interface RegistryIndex {
   }>
 }
 
-async function buildRegistryItem(name: string): Promise<RegistryItem> {
-  const meta = componentMeta[name]
-  if (!meta) throw new Error(`Unknown component: ${name}`)
+async function buildRegistryItem(
+  name: string,
+  registryMeta: { title: string; description: string },
+): Promise<RegistryItem> {
+  const filePaths = await resolveFiles(name)
+  const dependencies = await resolveDependencies(filePaths)
 
   const files: RegistryItem['files'] = []
 
-  for (const fileInfo of meta.files) {
-    const filePath = resolve(ROOT_DIR, fileInfo.sourcePath)
-    const content = await Bun.file(filePath).text()
+  for (const fp of filePaths) {
+    const absPath = resolve(ROOT_DIR, fp)
+    const content = await Bun.file(absPath).text()
 
     files.push({
-      path: fileInfo.targetPath,
+      path: fp,
       type: 'registry:ui',
       content,
     })
@@ -92,9 +121,9 @@ async function buildRegistryItem(name: string): Promise<RegistryItem> {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
     name,
     type: 'registry:ui',
-    title: meta.title,
-    description: meta.description,
-    dependencies: meta.dependencies,
+    title: registryMeta.title,
+    description: registryMeta.description,
+    dependencies,
     files,
   }
 }
@@ -111,7 +140,10 @@ async function main() {
   // Build individual component files
   for (const item of registry.items) {
     try {
-      const registryItem = await buildRegistryItem(item.name)
+      const registryItem = await buildRegistryItem(item.name, {
+        title: item.title,
+        description: item.description,
+      })
       await Bun.write(resolve(DIST_DIR, `${item.name}.json`), JSON.stringify(registryItem, null, 2))
       console.log(`Generated: dist/r/${item.name}.json`)
     } catch (error) {
