@@ -347,6 +347,11 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Include local constants
     for (const constant of ir.metadata.localConstants) {
+      const keyword = constant.declarationKind ?? 'const'
+      if (!constant.value) {
+        lines.push(`  ${keyword} ${constant.name}`)
+        continue
+      }
       const value = constant.value.trim()
       // Skip client-only constructs in SSR:
       // - createContext() — only used client-side via provideContext/useContext
@@ -365,10 +370,10 @@ export class HonoAdapter implements TemplateAdapter {
         // Generate a stub function for SSR (these may be referenced as props)
         // Extract parameters if possible
         const params = this.extractFunctionParams(value)
-        lines.push(`  const ${constant.name} = (${params}) => {}`)
+        lines.push(`  ${keyword} ${constant.name} = (${params}) => {}`)
       } else {
         // Output non-function constants directly
-        lines.push(`  const ${constant.name} = ${constant.value}`)
+        lines.push(`  ${keyword} ${constant.name} = ${constant.value}`)
       }
     }
 

@@ -1600,7 +1600,7 @@ function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
     const constPattern = new RegExp(`\\b${constant.name}\\b`)
     if (constPattern.test(expr)) {
       // Check if the constant's value contains reactive references
-      if (isReactiveValue(constant.value, ctx)) {
+      if (constant.value && isReactiveValue(constant.value, ctx)) {
         return true
       }
     }

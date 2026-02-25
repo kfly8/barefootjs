@@ -122,7 +122,7 @@ export function applyCssLayerPrefix(ir: ComponentIR, layerName: string): void {
     changed = false
     for (const constName of [...referencedConstants]) {
       const constant = ir.metadata.localConstants.find(c => c.name === constName)
-      if (!constant) continue
+      if (!constant || !constant.value) continue
       for (const id of extractIdentifiers(constant.value)) {
         if (constantNames.has(id) && !referencedConstants.has(id)) {
           referencedConstants.add(id)
@@ -134,7 +134,7 @@ export function applyCssLayerPrefix(ir: ComponentIR, layerName: string): void {
 
   // Apply prefixing to referenced constants
   for (const constant of ir.metadata.localConstants) {
-    if (referencedConstants.has(constant.name)) {
+    if (referencedConstants.has(constant.name) && constant.value) {
       constant.value = prefixConstantValue(constant.value, layerName)
     }
   }

@@ -85,8 +85,13 @@ export function emitPropsExtraction(
 /** Emit constants that have no signal/memo dependencies (before signal declarations). */
 export function emitEarlyConstants(lines: string[], earlyConstants: ConstantInfo[]): void {
   for (const constant of earlyConstants) {
-    const jsValue = stripTypeScriptSyntax(constant.value)
-    lines.push(`  const ${constant.name} = ${jsValue}`)
+    const keyword = constant.declarationKind ?? 'const'
+    if (constant.value !== undefined) {
+      const jsValue = stripTypeScriptSyntax(constant.value)
+      lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
+    } else {
+      lines.push(`  ${keyword} ${constant.name}`)
+    }
   }
   if (earlyConstants.length > 0) {
     lines.push('')
@@ -153,8 +158,13 @@ export function emitSignalsAndMemos(
   }
 
   for (const constant of lateConstants) {
-    const jsValue = stripTypeScriptSyntax(constant.value)
-    lines.push(`  const ${constant.name} = ${jsValue}`)
+    const keyword = constant.declarationKind ?? 'const'
+    if (constant.value !== undefined) {
+      const jsValue = stripTypeScriptSyntax(constant.value)
+      lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
+    } else {
+      lines.push(`  ${keyword} ${constant.name}`)
+    }
   }
 
   if (ctx.signals.length > 0 || ctx.memos.length > 0 || lateConstants.length > 0) {
@@ -182,11 +192,13 @@ export function emitFunctionsAndHandlers(
 
   for (const constant of ctx.localConstants) {
     if (outputConstants.has(constant.name)) continue
+    if (!constant.value) continue
     if (usedIdentifiers.has(constant.name)) {
       const value = constant.value.trim()
       if (value.includes('=>')) {
+        const keyword = constant.declarationKind ?? 'const'
         const jsValue = stripTypeScriptSyntax(value)
-        lines.push(`  const ${constant.name} = ${jsValue}`)
+        lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
         lines.push('')
       }
     }
@@ -836,6 +848,11 @@ export function emitRegistrationAndHydration(
   }
 
   for (const constant of ctx.localConstants) {
+    if (!constant.value) {
+      // `let x` with no initializer — not safe for template inlining
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
     const trimmedValue = constant.value.trim()
 
     // Arrow functions cannot be inlined into templates

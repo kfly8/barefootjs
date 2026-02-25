@@ -140,7 +140,7 @@ function visit(
         decl.initializer &&
         !isArrowComponentFunction(decl)
       ) {
-        collectConstant(decl, ctx, true)
+        collectConstant(decl, ctx, true, 'const')
       }
     }
   }
@@ -202,8 +202,9 @@ function visitComponentBody(node: ts.Node, ctx: AnalyzerContext): void {
         collectSignal(decl, ctx)
       } else if (isMemoDeclaration(decl)) {
         collectMemo(decl, ctx)
-      } else if (ts.isIdentifier(decl.name) && decl.initializer) {
-        collectConstant(decl, ctx, false)
+      } else if (ts.isIdentifier(decl.name)) {
+        const isLet = (node.declarationList.flags & ts.NodeFlags.Let) !== 0
+        collectConstant(decl, ctx, false, isLet ? 'let' : 'const')
       }
     }
   }
@@ -608,27 +609,31 @@ function collectFunction(
 function collectConstant(
   node: ts.VariableDeclaration,
   ctx: AnalyzerContext,
-  _isModule: boolean
+  _isModule: boolean,
+  declarationKind: 'const' | 'let' = 'const'
 ): void {
-  if (!ts.isIdentifier(node.name) || !node.initializer) return
+  if (!ts.isIdentifier(node.name)) return
 
   // Skip if it's a signal or memo
   if (isSignalDeclaration(node) || isMemoDeclaration(node)) return
 
   const name = node.name.text
-  const value = node.initializer.getText(ctx.sourceFile)
+  const value = node.initializer
+    ? node.initializer.getText(ctx.sourceFile)
+    : undefined
 
   // Get type from annotation or infer
   let type: TypeInfo | null = null
   if (node.type) {
     type = typeNodeToTypeInfo(node.type, ctx.sourceFile)
-  } else {
+  } else if (value) {
     type = inferTypeFromValue(value)
   }
 
   ctx.localConstants.push({
     name,
     value,
+    declarationKind,
     type,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   })

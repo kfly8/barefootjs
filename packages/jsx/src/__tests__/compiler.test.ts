@@ -3123,4 +3123,122 @@ describe('Compiler', () => {
       expect(content).not.toContain("findScope('SingleRoot', __instanceIndex, __parentScope, true)")
     })
   })
+
+  describe('let variable declarations (#482)', () => {
+    test('let without initializer is captured by analyzer', () => {
+      const source = `
+        'use client'
+        import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+
+        type ApiType = { scrollPrev: () => void }
+
+        export function Carousel() {
+          let emblaApi: ApiType | undefined
+          const [canScrollPrev, setCanScrollPrev] = createSignal(false)
+
+          createEffect(() => {
+            if (emblaApi) {
+              setCanScrollPrev(true)
+            }
+          })
+
+          return <div>{canScrollPrev() ? 'yes' : 'no'}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Carousel.tsx')
+      const letConstant = ctx.localConstants.find(c => c.name === 'emblaApi')
+      expect(letConstant).toBeDefined()
+      expect(letConstant!.declarationKind).toBe('let')
+      expect(letConstant!.value).toBeUndefined()
+    })
+
+    test('let without initializer is emitted in client JS', () => {
+      const source = `
+        'use client'
+        import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+
+        type ApiType = { scrollPrev: () => void }
+
+        export function Carousel() {
+          let emblaApi: ApiType | undefined
+          const [canScrollPrev, setCanScrollPrev] = createSignal(false)
+
+          const scrollPrev = () => {
+            if (emblaApi) emblaApi.scrollPrev()
+          }
+
+          createEffect(() => {
+            if (emblaApi) {
+              setCanScrollPrev(true)
+            }
+          })
+
+          return <div onClick={scrollPrev}>{canScrollPrev() ? 'yes' : 'no'}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Carousel.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('let emblaApi')
+      // Must not contain type annotation in output
+      expect(clientJs!.content).not.toContain('ApiType')
+    })
+
+    test('let with initializer is emitted as let, not const', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          let count = 0
+          const [value, setValue] = createSignal(count)
+          return <div>{value()}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Counter.tsx')
+      const letConstant = ctx.localConstants.find(c => c.name === 'count')
+      expect(letConstant).toBeDefined()
+      expect(letConstant!.declarationKind).toBe('let')
+      expect(letConstant!.value).toBe('0')
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('let count = 0')
+      expect(clientJs!.content).not.toContain('const count')
+    })
+
+    test('const declarations still emitted as const (regression)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          const prefix = 'count'
+          const [value, setValue] = createSignal(0)
+          return <div>{value() + prefix}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Counter.tsx')
+      const constConstant = ctx.localConstants.find(c => c.name === 'prefix')
+      expect(constConstant).toBeDefined()
+      expect(constConstant!.declarationKind).toBe('const')
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("const prefix = 'count'")
+      expect(clientJs!.content).not.toContain('let prefix')
+    })
+  })
 })

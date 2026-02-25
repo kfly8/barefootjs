@@ -152,7 +152,7 @@ export function collectUsedIdentifiers(ctx: ClientJsContext): Set<string> {
   }
 
   for (const constant of ctx.localConstants) {
-    extractIdentifiers(constant.value, used)
+    if (constant.value) extractIdentifiers(constant.value, used)
   }
 
   for (const child of ctx.childInits) {

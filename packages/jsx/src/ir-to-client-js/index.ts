@@ -48,6 +48,7 @@ export function analyzeClientNeeds(ir: ComponentIR): { needsInit: boolean; usedP
   // Transitive props via constants
   for (const constant of ctx.localConstants) {
     if (usedIdentifiers.has(constant.name)) {
+      if (!constant.value) continue
       const trimmedValue = constant.value.trim()
       if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) continue
       if (!trimmedValue.includes('=>') && constant.name !== 'props') {
