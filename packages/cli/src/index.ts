@@ -23,6 +23,7 @@ Commands:
   test [component]            Find and show test commands
   test:template <name>        Generate IR test from existing source
   preview <component>         Start preview dev server for visual check
+  preview:generate <comp> [--force]  Generate preview file from component metadata
   tokens [--category <cat>]   List design tokens (categories: typography, spacing, etc.)
   meta:extract                Extract metadata from ui/components/ui/*.tsx
 
@@ -83,6 +84,12 @@ switch (command) {
 
   case 'preview': {
     const { run } = await import('./commands/preview')
+    await run(commandArgs, ctx)
+    break
+  }
+
+  case 'preview:generate': {
+    const { run } = await import('./commands/preview-generate')
     await run(commandArgs, ctx)
     break
   }
