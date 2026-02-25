@@ -344,6 +344,9 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Collect nested component array field names to skip from propsParams
     const nestedArrayFields = new Set(nestedComponents.map(n => `${n.name}s`))
 
+    // Track emitted prop field names to avoid duplicate fields when signal name matches prop name
+    const propFieldNames = new Set<string>()
+
     for (const param of ir.metadata.propsParams) {
       const fieldName = this.capitalizeFieldName(param.name)
       // Skip if this field will be replaced by a typed array for nested components
@@ -351,6 +354,7 @@ export class GoTemplateAdapter extends BaseAdapter {
       const goType = propTypeOverrides.get(param.name) ?? this.typeInfoToGo(param.type, param.defaultValue)
       const jsonTag = this.toJsonTag(param.name)
       lines.push(`\t${fieldName} ${goType} \`json:"${jsonTag}"\``)
+      propFieldNames.add(fieldName)
     }
 
     // Find signal types by looking at their initial values
@@ -358,6 +362,8 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     for (const signal of ir.metadata.signals) {
       const fieldName = this.capitalizeFieldName(signal.getter)
+      // Skip if a prop field with the same name was already emitted
+      if (propFieldNames.has(fieldName)) continue
       const jsonTag = this.toJsonTag(signal.getter)
       // Infer type from initial value or referenced prop's type
       let goType: string
@@ -443,16 +449,19 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Collect nested component array field names
     const nestedArrayFields = new Set(nestedComponents.map(n => `${n.name}s`))
 
-    // Add props params
+    // Add props params, tracking field names to skip duplicate signal assignments
+    const propFieldNames = new Set<string>()
     for (const param of ir.metadata.propsParams) {
       const fieldName = this.capitalizeFieldName(param.name)
       if (nestedArrayFields.has(fieldName)) continue
       lines.push(`\t\t${fieldName}: in.${fieldName},`)
+      propFieldNames.add(fieldName)
     }
 
-    // Add signal initial values
+    // Add signal initial values (skip if prop field with same name already emitted)
     for (const signal of ir.metadata.signals) {
       const fieldName = this.capitalizeFieldName(signal.getter)
+      if (propFieldNames.has(fieldName)) continue
       const initialValue = this.convertInitialValue(signal.initialValue, signal.type, ir.metadata.propsParams)
       lines.push(`\t\t${fieldName}: ${initialValue},`)
     }
