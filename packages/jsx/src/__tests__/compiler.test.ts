@@ -2935,7 +2935,7 @@ describe('Compiler', () => {
       expect(analysis.needsInit).toBe(true)
     })
 
-    test('purely static component does not generate client JS', () => {
+    test('purely static component generates template-only mount (#435)', () => {
       const source = `
         export function StaticLabel() {
           return <span>Hello World</span>
@@ -2946,7 +2946,10 @@ describe('Compiler', () => {
       expect(result.errors).toHaveLength(0)
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
-      expect(clientJs).toBeUndefined()
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("mount('StaticLabel'")
+      expect(clientJs!.content).toContain('function initStaticLabel() {}')
+      expect(clientJs!.content).toContain('<span>Hello World</span>')
     })
 
     test('components with reactive primitives still require "use client"', () => {

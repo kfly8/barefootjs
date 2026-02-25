@@ -131,6 +131,38 @@ export function getPropsUpdateFn(element: HTMLElement): ((props: Record<string, 
 
 
 /**
+ * Render a child component's template to an HTML string.
+ * Used by compiler-generated template functions when a stateless component
+ * appears inside a conditional branch or loop template.
+ *
+ * If the component has a registered template, it renders the HTML and injects
+ * a bf-s scope attribute. Otherwise, falls back to an empty placeholder.
+ *
+ * @param name - Component name (e.g., 'Spinner')
+ * @param props - Props to pass to the template
+ * @param key - Optional key for list reconciliation
+ * @returns HTML string with scope marker
+ */
+export function renderChild(
+  name: string,
+  props: Record<string, unknown>,
+  key?: string | number
+): string {
+  const templateFn = getTemplate(name)
+  const id = Math.random().toString(36).slice(2, 8)
+  const keyAttr = key !== undefined ? ` data-key="${key}"` : ''
+
+  if (!templateFn) {
+    // Fallback: empty placeholder (for components without registered templates)
+    return `<div bf-s="${name}_${id}"${keyAttr}></div>`
+  }
+
+  const html = templateFn(props).trim()
+  // Inject bf-s scope attribute into the root element
+  return html.replace(/^(<\w+)/, `$1 bf-s="${name}_${id}"${keyAttr}`)
+}
+
+/**
  * Generate a random ID for scope identification
  */
 function generateId(): string {

@@ -4,7 +4,7 @@
 
 import type { IRNode } from '../types'
 import { isBooleanAttr } from '../html-constants'
-import { toHtmlAttrName, attrValueToString } from './utils'
+import { toHtmlAttrName, attrValueToString, quotePropName } from './utils'
 
 const VOID_ELEMENTS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
@@ -69,15 +69,20 @@ export function irToHtmlTemplate(node: IRNode): string {
         return node.children.map(irToHtmlTemplate).join('')
       }
 
-      // Component children in loops require special handling.
-      // We generate a placeholder with scope marker that can be hydrated.
-      // Note: Full component rendering on client is a known limitation.
-      // For dynamic lists, consider using plain elements instead of components.
-      const keyProp = node.props.find((p) => p.name === 'key')
-      const keyAttr = keyProp ? ` data-key="\${${keyProp.value}}"` : ''
-      const scopeAttr = ` bf-s="${node.name}_\${Math.random().toString(36).slice(2, 8)}"`
-      // Generate minimal placeholder - content will be rendered by component
-      return `<div${keyAttr}${scopeAttr}></div>`
+      // Use renderChild() to render child component's registered template at runtime.
+      // This allows stateless components in conditional branches to render their content
+      // instead of emitting empty placeholders (#435).
+      const propsEntries = node.props
+        .filter(p => p.name !== '...' && !p.name.startsWith('...') && p.name !== 'key')
+        .filter(p => !(p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()))
+        .map(p => {
+          if (p.isLiteral) return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
+          return `${quotePropName(p.name)}: ${p.value}`
+        })
+      const propsExpr = propsEntries.length > 0 ? `{${propsEntries.join(', ')}}` : '{}'
+      const keyProp = node.props.find(p => p.name === 'key')
+      const keyArg = keyProp ? `, ${keyProp.value}` : ''
+      return `\${renderChild('${node.name}', ${propsExpr}${keyArg})}`
     }
 
     case 'loop': {
@@ -141,9 +146,10 @@ export function irToComponentTemplate(
 
     // Then: prefix prop names with 'props.'
     for (const propName of propNames) {
-      // Match propName as identifier followed by property/index/call access,
-      // but not already prefixed with 'props.' or inside string literals
-      const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?=[.\\[()])`, 'g')
+      // Match propName as standalone identifier or followed by property/index/call access,
+      // but not already prefixed with 'props.' or inside string literals.
+      // Uses negative lookahead for identifier chars to avoid partial matches.
+      const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?![a-zA-Z0-9_$])`, 'g')
       result = result.replace(pattern, `props.${propName}`)
     }
     return result
@@ -209,9 +215,19 @@ export function irToComponentTemplate(
         return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
       }
 
-      const keyProp = node.props.find((p) => p.name === 'key')
-      const keyAttr = keyProp ? ` data-key="\${${transformExpr(keyProp.value)}}"` : ''
-      return `<div${keyAttr} bf-s="${node.name}_\${Math.random().toString(36).slice(2, 8)}"></div>`
+      // Use renderChild() to render child component's template at runtime (#435)
+      const propsEntries = node.props
+        .filter(p => p.name !== '...' && !p.name.startsWith('...') && p.name !== 'key')
+        .filter(p => !(p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()))
+        .map(p => {
+          if (p.isLiteral) return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
+          const valueStr = attrValueToString(p.value)
+          return `${quotePropName(p.name)}: ${valueStr ? transformExpr(valueStr) : JSON.stringify(p.value)}`
+        })
+      const propsExpr = propsEntries.length > 0 ? `{${propsEntries.join(', ')}}` : '{}'
+      const keyProp = node.props.find(p => p.name === 'key')
+      const keyArg = keyProp ? `, ${transformExpr(keyProp.value)}` : ''
+      return `\${renderChild('${node.name}', ${propsExpr}${keyArg})}`
     }
 
     case 'loop':

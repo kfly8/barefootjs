@@ -787,31 +787,14 @@ function valueOnlyUsesKnownNames(value: string, knownNames: Set<string>): boolea
   return true
 }
 
-/** Emit mount() call that registers component, template, and hydrates. */
-export function emitRegistrationAndHydration(
-  lines: string[],
-  ctx: ClientJsContext,
-  _ir: ComponentIR
-): void {
-  const name = ctx.componentName
-
-  lines.push(`}`)
-  lines.push('')
-
-  const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
-
-  // Build inlinable constants map and unsafe local names set (#343)
-  // Local constants computed inside the component function are not available
-  // at module scope where the mount() template callback executes.
-  // We classify each constant as inlinable (can be substituted with its value)
-  // or unsafe (cannot be used in templates).
-  //
-  // A constant is only inlinable if its value exclusively references:
-  // - Props (via props.xxx or destructured prop names)
-  // - Other component-local names (constants, signals, memos, functions)
-  // - JavaScript built-in globals
-  // File-scope variables (e.g., variant lookup Records) are NOT available in
-  // the generated client JS module scope, so constants referencing them are unsafe.
+/**
+ * Build the inlinable constants map and unsafe local names set from a context.
+ * Extracted for reuse by both emitRegistrationAndHydration and generateTemplateOnlyMount (#435).
+ */
+export function buildInlinableConstants(ctx: ClientJsContext): {
+  inlinableConstants: Map<string, string>
+  unsafeLocalNames: Set<string>
+} {
   const inlinableConstants = new Map<string, string>()
   const unsafeLocalNames = new Set<string>()
 
@@ -819,7 +802,6 @@ export function emitRegistrationAndHydration(
   const signalSetters = new Set(ctx.signals.map(s => s.setter))
   const memoNames = new Set(ctx.memos.map(m => m.name))
 
-  // All identifiers known within the component function scope
   const componentScopeNames = new Set<string>()
   for (const c of ctx.localConstants) componentScopeNames.add(c.name)
   for (const s of ctx.signals) { componentScopeNames.add(s.getter); componentScopeNames.add(s.setter) }
@@ -828,7 +810,6 @@ export function emitRegistrationAndHydration(
   for (const p of ctx.propsParams) componentScopeNames.add(p.name)
   if (ctx.propsObjectName) componentScopeNames.add(ctx.propsObjectName)
 
-  // Local functions are not available at module scope
   for (const fn of ctx.localFunctions) {
     unsafeLocalNames.add(fn.name)
   }
@@ -836,39 +817,27 @@ export function emitRegistrationAndHydration(
   for (const constant of ctx.localConstants) {
     const trimmedValue = constant.value.trim()
 
-    // Arrow functions cannot be inlined into templates
     if (trimmedValue.includes('=>')) {
       unsafeLocalNames.add(constant.name)
       continue
     }
 
-    // Module-level constants (createContext, new WeakMap) are already at module scope
     if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
       continue
     }
 
-    // Check if value references signals, setters, or memos (reactive data)
     let dependsOnReactive = false
     for (const sigName of signalGetters) {
-      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) {
-        dependsOnReactive = true
-        break
-      }
+      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
     }
     if (!dependsOnReactive) {
       for (const setterName of signalSetters) {
-        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) {
-          dependsOnReactive = true
-          break
-        }
+        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
       }
     }
     if (!dependsOnReactive) {
       for (const mName of memoNames) {
-        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) {
-          dependsOnReactive = true
-          break
-        }
+        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
       }
     }
 
@@ -877,9 +846,6 @@ export function emitRegistrationAndHydration(
       continue
     }
 
-    // Check that the value only references known component-scope identifiers.
-    // File-scope variables (Records, helper objects) are not available in the
-    // client JS module scope where the template callback executes.
     if (!valueOnlyUsesKnownNames(trimmedValue, componentScopeNames)) {
       unsafeLocalNames.add(constant.name)
       continue
@@ -888,7 +854,7 @@ export function emitRegistrationAndHydration(
     inlinableConstants.set(constant.name, stripTypeScriptSyntax(trimmedValue))
   }
 
-  // Resolve chained references: replace constant names within values with resolved values
+  // Resolve chained references
   let changed = true
   const maxIterations = inlinableConstants.size + 1
   let iteration = 0
@@ -911,7 +877,7 @@ export function emitRegistrationAndHydration(
     }
   }
 
-  // After resolution, demote any constant whose value still references an unsafe name
+  // Demote constants whose value still references an unsafe name
   const toRemove: string[] = []
   for (const [constName, constValue] of inlinableConstants) {
     for (const unsafeName of unsafeLocalNames) {
@@ -925,6 +891,23 @@ export function emitRegistrationAndHydration(
     inlinableConstants.delete(removeName)
     unsafeLocalNames.add(removeName)
   }
+
+  return { inlinableConstants, unsafeLocalNames }
+}
+
+/** Emit mount() call that registers component, template, and hydrates. */
+export function emitRegistrationAndHydration(
+  lines: string[],
+  ctx: ClientJsContext,
+  _ir: ComponentIR
+): void {
+  const name = ctx.componentName
+
+  lines.push(`}`)
+  lines.push('')
+
+  const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+  const { inlinableConstants, unsafeLocalNames } = buildInlinableConstants(ctx)
 
   const isCommentScope = _ir.root.type === 'fragment'
     && (_ir.root as IRFragment).needsScopeComment

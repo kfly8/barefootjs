@@ -8,7 +8,7 @@ import type { ComponentIR } from '../types'
 export const DOM_IMPORT_CANDIDATES = [
   'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
   'findScope', 'hydrate', 'cond', 'insert', 'reconcileList',
-  'createComponent', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
+  'createComponent', 'renderChild', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
   'mount',
   'createPortal',
   'provideContext', 'createContext', 'useContext',
