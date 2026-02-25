@@ -43,7 +43,7 @@ export { createContext, useContext, provideContext, type Context } from './conte
 export { registerTemplate, getTemplate, hasTemplate, type TemplateFn } from './template'
 
 // Component creation for dynamic rendering
-export { createComponent, getPropsUpdateFn, getComponentProps } from './component'
+export { createComponent, renderChild, getPropsUpdateFn, getComponentProps } from './component'
 
 // Props utilities
 export { splitProps } from './split-props'
