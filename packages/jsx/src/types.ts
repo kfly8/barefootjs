@@ -368,7 +368,8 @@ export interface FunctionInfo {
 
 export interface ConstantInfo {
   name: string
-  value: string
+  value?: string
+  declarationKind: 'const' | 'let'
   type: TypeInfo | null
   loc: SourceLocation
 }

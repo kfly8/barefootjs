@@ -176,6 +176,11 @@ export class TestAdapter extends BaseAdapter {
     }
 
     for (const constant of ir.metadata.localConstants) {
+      const keyword = constant.declarationKind ?? 'const'
+      if (!constant.value) {
+        lines.push(`  ${keyword} ${constant.name}`)
+        continue
+      }
       const value = constant.value.trim()
       const isArrowFunc =
         value.startsWith('async (') ||
@@ -184,9 +189,9 @@ export class TestAdapter extends BaseAdapter {
         /^\([^)]*\)\s*=>/.test(value)
 
       if (isArrowFunc) {
-        lines.push(`  const ${constant.name} = () => {}`)
+        lines.push(`  ${keyword} ${constant.name} = () => {}`)
       } else {
-        lines.push(`  const ${constant.name} = ${constant.value}`)
+        lines.push(`  ${keyword} ${constant.name} = ${constant.value}`)
       }
     }
 

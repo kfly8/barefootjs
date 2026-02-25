@@ -11,10 +11,11 @@
  * Only resolves string literals, template literals, and array.join() patterns.
  * Record lookups, function expressions, and other complex values are skipped.
  */
-export function resolveConstants(constants: Array<{ name: string; value: string }>): Map<string, string> {
+export function resolveConstants(constants: Array<{ name: string; value?: string }>): Map<string, string> {
   const resolved = new Map<string, string>()
 
   for (const c of constants) {
+    if (!c.value) continue
     const value = tryResolve(c.value, resolved)
     if (value !== null) {
       resolved.set(c.name, value)
