@@ -12,4 +12,5 @@ export function SortSimple() {
   return <ul>{products().sort((a, b) => a.price - b.price).map(p => <li>{p.name}</li>)}</ul>
 }
 `,
+  expectedHtml: `<ul bf-s="test" bf="s0"></ul>`,
 })
