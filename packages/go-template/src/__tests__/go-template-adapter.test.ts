@@ -62,6 +62,29 @@ function compileAndGenerate(source: string, adapter?: GoTemplateAdapter) {
 
 describe('GoTemplateAdapter - Adapter Specific', () => {
   describe('generate - Go struct types', () => {
+    test('deduplicates struct field when signal name matches prop name (#461)', () => {
+      const adapter = new GoTemplateAdapter()
+      const ir = compileToIR(`
+"use client"
+import { createSignal } from "@barefootjs/dom"
+
+export function Example(props: { label?: string }) {
+  const [label, setLabel] = createSignal(props.label ?? 'Default')
+  return <div>{label()}</div>
+}
+`)
+      const result = adapter.generate(ir)
+
+      expect(result.types).toBeDefined()
+      // Should have exactly one Label field, not two
+      const labelFields = result.types!.match(/\bLabel\b.*`json:"label"`/g) ?? []
+      expect(labelFields.length).toBe(1)
+
+      // NewExampleProps should have exactly one Label assignment
+      const labelAssignments = result.types!.match(/Label:/g) ?? []
+      expect(labelAssignments.length).toBe(1)
+    })
+
     test('generates Go struct types', () => {
       const adapter = new GoTemplateAdapter()
       const ir = compileToIR(`
