@@ -99,7 +99,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           param: node.param,
           index: node.index,
           key: node.key,
-          template: node.childComponent ? '' : irToHtmlTemplate(node.children[0]),
+          template: node.childComponent ? '' : (node.children[0] ? irToHtmlTemplate(node.children[0]) : ''),
           childEventHandlers: childHandlers,
           childEvents,
           childComponent: node.childComponent,
