@@ -7,7 +7,7 @@ import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
-import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate } from './html-template'
+import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, irChildrenToJsExpr } from './html-template'
 
 /**
  * Collect slot IDs that are inside conditionals (handled by insert()).
@@ -475,7 +475,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
     const vLoop = varSlotId(elem.slotId)
 
     if (elem.childComponent) {
-      const { name, props } = elem.childComponent
+      const { name, props, children } = elem.childComponent
       const propsEntries = props.map((p) => {
         if (p.isEventHandler) {
           return `${quotePropName(p.name)}: ${p.value}`
@@ -485,6 +485,12 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           return `get ${quotePropName(p.name)}() { return ${p.value} }`
         }
       })
+
+      if (children && children.length > 0) {
+        const childrenExpr = irChildrenToJsExpr(children)
+        propsEntries.push(`get children() { return ${childrenExpr} }`)
+      }
+
       const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
       const keyExpr = elem.key || '__idx'
       const indexParam = elem.index || '__idx'

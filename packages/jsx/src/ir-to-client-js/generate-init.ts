@@ -2,7 +2,7 @@
  * generateInitFunction orchestrator + generateElementRefs.
  */
 
-import type { ComponentIR, ConstantInfo, IRFragment } from '../types'
+import type { ComponentIR, ConstantInfo, IRFragment, IRNode } from '../types'
 import type { ClientJsContext } from './types'
 import { stripTypeScriptSyntax, varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
@@ -46,6 +46,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   for (const loop of ctx.loopElements) {
     if (loop.childComponent) {
       childComponentNames.add(loop.childComponent.name)
+      collectComponentNamesFromIR(loop.childComponent.children, childComponentNames)
     }
   }
   for (const child of ctx.childInits) {
@@ -322,4 +323,22 @@ export function generateElementRefs(ctx: ClientJsContext): string {
   }
 
   return refLines.join('\n')
+}
+
+/**
+ * Recursively collect component names from IR children.
+ * Used to ensure all nested components are imported.
+ */
+function collectComponentNamesFromIR(nodes: IRNode[], names: Set<string>): void {
+  for (const node of nodes) {
+    if (node.type === 'component') {
+      names.add(node.name)
+      collectComponentNamesFromIR(node.children, names)
+    } else if (node.type === 'element' || node.type === 'fragment' || node.type === 'provider') {
+      collectComponentNamesFromIR(node.children, names)
+    } else if (node.type === 'conditional') {
+      collectComponentNamesFromIR([node.whenTrue], names)
+      collectComponentNamesFromIR([node.whenFalse], names)
+    }
+  }
 }

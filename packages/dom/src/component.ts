@@ -51,12 +51,22 @@ export function createComponent(
     return createPlaceholder(name, key)
   }
 
-  // 2. Generate HTML from props
-  // Unwrap getter props to get current values for template rendering
+  // 2. Evaluate children from props getter
+  const childrenDescriptor = Object.getOwnPropertyDescriptor(props, 'children')
+  const children = childrenDescriptor && typeof childrenDescriptor.get === 'function'
+    ? childrenDescriptor.get()
+    : props.children
+
+  // 3. Generate HTML from props
+  // When children contain DOM elements, pass empty children for shell HTML
   const unwrappedProps = unwrapPropsForTemplate(props)
+  const hasDomChildren = children != null && hasDomElements(children)
+  if (hasDomChildren) {
+    unwrappedProps.children = ''
+  }
   const html = templateFn(unwrappedProps)
 
-  // 3. Create DOM element
+  // 4. Create DOM element
   const template = document.createElement('template')
   template.innerHTML = html.trim()
   const element = template.content.firstChild as HTMLElement
@@ -66,14 +76,19 @@ export function createComponent(
     return createPlaceholder(name, key)
   }
 
-  // 4. Set scope ID and key attributes
+  // 5. Insert DOM children into the shell element
+  if (hasDomChildren) {
+    insertDomChildren(element, children)
+  }
+
+  // 6. Set scope ID and key attributes
   const scopeId = `${name}_${generateId()}`
   element.setAttribute(BF_SCOPE, scopeId)
   if (key !== undefined) {
     element.setAttribute('data-key', String(key))
   }
 
-  // 5. Initialize the component synchronously
+  // 7. Initialize the component synchronously
   // Event handlers need to be bound immediately so user interactions work right away.
   // Nested effects are now supported in createEffect, so we don't need queueMicrotask.
   const initFn = getComponentInit(name)
@@ -82,10 +97,10 @@ export function createComponent(
     initFn(0, element, props)
   }
 
-  // 6. Mark element as initialized
+  // 8. Mark element as initialized
   element.setAttribute(BF_HYDRATED, 'true')
 
-  // 7. Store props and register update function for element reuse in reconcileList
+  // 9. Store props and register update function for element reuse in reconcileList
   propsMap.set(element, props)
   registerPropsUpdate(element, name, props)
 
@@ -206,4 +221,31 @@ function unwrapPropsForTemplate(props: Record<string, unknown>): Record<string, 
   }
 
   return result
+}
+
+/**
+ * Check if a value contains DOM elements (HTMLElement instances).
+ */
+function hasDomElements(value: unknown): boolean {
+  if (value instanceof HTMLElement) return true
+  if (Array.isArray(value)) return value.some(hasDomElements)
+  return false
+}
+
+/**
+ * Insert DOM children into a shell element.
+ * - HTMLElement → appendChild directly
+ * - Array → iterate, appendChild each element, create text nodes for strings
+ * - string/number → create text node
+ */
+function insertDomChildren(element: HTMLElement, children: unknown): void {
+  if (children instanceof HTMLElement) {
+    element.appendChild(children)
+  } else if (Array.isArray(children)) {
+    for (const child of children) {
+      insertDomChildren(element, child)
+    }
+  } else if (typeof children === 'string' || typeof children === 'number') {
+    element.appendChild(document.createTextNode(String(children)))
+  }
 }

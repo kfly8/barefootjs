@@ -104,6 +104,72 @@ export function irToHtmlTemplate(node: IRNode): string {
 }
 
 /**
+ * Convert IR children into a JavaScript expression string for createComponent.
+ * Produces expressions suitable for use in `get children() { return <expr> }`.
+ *
+ * - IRComponent → createComponent('Name', { get prop() {...}, get children() {...} })
+ * - IRExpression → the expression directly
+ * - IRText → JSON string literal
+ * - IRElement → template literal via irToHtmlTemplate()
+ * - IRFragment → recurse into children
+ * - IRConditional → ternary expression
+ * - Single child → single expression; multiple → array literal
+ */
+export function irChildrenToJsExpr(children: IRNode[]): string {
+  // Flatten fragments and filter empty text nodes
+  const exprs = children.flatMap(c => irNodeToJsExprs(c)).filter(Boolean)
+  if (exprs.length === 0) return "''"
+  if (exprs.length === 1) return exprs[0]
+  return `[${exprs.join(', ')}]`
+}
+
+function irNodeToJsExprs(node: IRNode): string[] {
+  switch (node.type) {
+    case 'component': {
+      const propsEntries: string[] = node.props
+        .filter(p => p.name !== 'key' && p.name !== '...' && !p.name.startsWith('...'))
+        .map(p => {
+          if (p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()) {
+            return `${quotePropName(p.name)}: ${p.value}`
+          }
+          if (p.isLiteral) {
+            return `get ${quotePropName(p.name)}() { return ${JSON.stringify(p.value)} }`
+          }
+          return `get ${quotePropName(p.name)}() { return ${p.value} }`
+        })
+
+      if (node.children.length > 0) {
+        const childrenExpr = irChildrenToJsExpr(node.children)
+        propsEntries.push(`get children() { return ${childrenExpr} }`)
+      }
+
+      const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
+      return [`createComponent('${node.name}', ${propsExpr})`]
+    }
+
+    case 'expression':
+      if (node.expr === 'null' || node.expr === 'undefined') return []
+      return [node.expr]
+
+    case 'text':
+      if (!node.value.trim()) return []
+      return [JSON.stringify(node.value)]
+
+    case 'element':
+      return [`\`${irToHtmlTemplate(node)}\``]
+
+    case 'fragment':
+      return node.children.flatMap(c => irNodeToJsExprs(c))
+
+    case 'conditional':
+      return [`${node.condition} ? ${irChildrenToJsExpr([node.whenTrue])} : ${irChildrenToJsExpr([node.whenFalse])}`]
+
+    default:
+      return []
+  }
+}
+
+/**
  * Add bf-c attribute to the first element in an HTML template string.
  * This ensures cond() can find the element for subsequent swaps.
  */

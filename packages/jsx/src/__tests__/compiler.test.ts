@@ -2307,6 +2307,144 @@ describe('Compiler', () => {
       expect(content).toContain('$c(__scope')
       expect(content).toContain('reconcileList')
     })
+
+    test('dynamic signal array: component with component children emits nested createComponent (#481)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function DataTable() {
+          const [payments, setPayments] = createSignal([
+            { id: 'PAY-001', amount: 100 },
+            { id: 'PAY-002', amount: 200 },
+          ])
+          return (
+            <div>
+              {payments().map(payment => (
+                <TableRow>
+                  <TableCell>{payment.id}</TableCell>
+                  <TableCell>{payment.amount}</TableCell>
+                </TableRow>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'DataTable.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Should use reconcileList with createComponent
+      expect(content).toContain('reconcileList')
+      expect(content).toContain("createComponent('TableRow'")
+
+      // Children should be emitted as nested createComponent calls
+      expect(content).toContain("createComponent('TableCell'")
+      expect(content).toContain('get children()')
+      expect(content).toContain('payment.id')
+      expect(content).toContain('payment.amount')
+    })
+
+    test('dynamic signal array: component with mixed children (text + components)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function List() {
+          const [items, setItems] = createSignal([{ name: 'a' }, { name: 'b' }])
+          return (
+            <div>
+              {items().map(item => (
+                <Card>
+                  <CardHeader>{item.name}</CardHeader>
+                </Card>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      expect(content).toContain("createComponent('Card'")
+      expect(content).toContain("createComponent('CardHeader'")
+      expect(content).toContain('get children()')
+      expect(content).toContain('item.name')
+    })
+
+    test('dynamic signal array: component without children does not emit children getter', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function RadioGroup() {
+          const [items, setItems] = createSignal([{ value: 'a' }, { value: 'b' }])
+          return (
+            <div>
+              {items().map(item => (
+                <RadioGroupItem value={item.value} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'RadioGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      expect(content).toContain("createComponent('RadioGroupItem'")
+      // No children getter should be emitted for childless component
+      expect(content).not.toContain('get children()')
+    })
+
+    test('dynamic signal array: deeply nested components (A > B > C)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function DataTable() {
+          const [rows, setRows] = createSignal([{ id: '1', value: 'test' }])
+          return (
+            <div>
+              {rows().map(row => (
+                <TableRow>
+                  <TableCell>
+                    <Badge>{row.value}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'DataTable.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // All three nested components should appear
+      expect(content).toContain("createComponent('TableRow'")
+      expect(content).toContain("createComponent('TableCell'")
+      expect(content).toContain("createComponent('Badge'")
+      expect(content).toContain('row.value')
+
+      // All nested component names should be imported
+      expect(content).toContain('@bf-child:TableRow')
+      expect(content).toContain('@bf-child:TableCell')
+      expect(content).toContain('@bf-child:Badge')
+    })
   })
 
   describe('TypeScript syntax guard (#349)', () => {
