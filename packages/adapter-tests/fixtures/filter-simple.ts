@@ -12,4 +12,5 @@ export function FilterSimple() {
   return <ul>{todos().filter(t => t.done).map(t => <li>{t.text}</li>)}</ul>
 }
 `,
+  expectedHtml: `<ul bf-s="test" bf="s0"></ul>`,
 })

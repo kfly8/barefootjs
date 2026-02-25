@@ -12,4 +12,5 @@ export function SignalPropSameName(props: { label?: string }) {
 }
 `,
   props: { label: 'Hello' },
+  expectedHtml: `<span bf-s="test" bf="s1"><span bf="s0">Hello</span></span>`,
 })

@@ -11,4 +11,5 @@ export function LogicalAndDemo() {
   return <div>{show() && <span>Shown</span>}</div>
 }
 `,
+  expectedHtml: `<div bf-s="test" bf="s1"><!--bf-cond-start:s0--><!--bf-cond-end:s0--></div>`,
 })

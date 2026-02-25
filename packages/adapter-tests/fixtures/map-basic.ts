@@ -12,4 +12,5 @@ export function MapBasic() {
   return <ul>{items().map(item => <li>{item.name}</li>)}</ul>
 }
 `,
+  expectedHtml: `<ul bf-s="test" bf="s0"></ul>`,
 })

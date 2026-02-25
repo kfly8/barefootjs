@@ -12,4 +12,5 @@ export function FilterSortChain() {
   return <ul>{products().filter(p => p.active).sort((a, b) => a.price - b.price).map(p => <li>{p.name}</li>)}</ul>
 }
 `,
+  expectedHtml: `<ul bf-s="test" bf="s0"></ul>`,
 })

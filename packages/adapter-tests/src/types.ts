@@ -17,6 +17,8 @@ export interface JSXFixture {
   components?: Record<string, string>
   /** Props to pass when rendering (optional) */
   props?: Record<string, unknown>
+  /** Expected normalized HTML output (generated from reference Hono adapter) */
+  expectedHtml?: string
 }
 
 /**
@@ -30,6 +32,7 @@ export function createFixture(input: {
   source: string
   components?: Record<string, string>
   props?: Record<string, unknown>
+  expectedHtml?: string
 }): JSXFixture {
   const trimmedComponents = input.components
     ? Object.fromEntries(
