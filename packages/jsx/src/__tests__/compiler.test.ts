@@ -2277,6 +2277,61 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain("createComponent('RadioGroupItem'")
     })
 
+    test('static array: SSR template includes __bfChild for "use client" parent (#483)', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+
+        export function CardList() {
+          const items = [{ title: 'a' }, { title: 'b' }]
+          return (
+            <div>
+              {items.map(item => (
+                <Card title={item.title} className="p-4" />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'CardList.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')
+      expect(template).toBeDefined()
+      expect(template!.content).toContain('__bfChild={true}')
+    })
+
+    test('static array: SSR template includes __bfChild for stateless parent with client interactivity (#483)', () => {
+      // Parent has no "use client" but has static array with child components,
+      // which triggers needsClientInit (client JS with initChild calls).
+      // Without __bfChild, child components hydrate with empty props before
+      // the parent's initChild can pass correct props (including className).
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        export function StaticList() {
+          const items = [{ label: 'x' }, { label: 'y' }]
+          return (
+            <ul>
+              {items.map(item => (
+                <ListItem label={item.label} className="text-sm" />
+              ))}
+            </ul>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'StaticList.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')
+      expect(template).toBeDefined()
+      expect(template!.content).toContain('__bfChild={true}')
+
+      // Should also generate client JS with initChild
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("initChild('ListItem'")
+    })
+
     test('no duplicate variable declaration when .map() slot ID matches component slot ID (#360)', () => {
       const source = `
         'use client'
