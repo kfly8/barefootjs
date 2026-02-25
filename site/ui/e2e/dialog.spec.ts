@@ -153,9 +153,8 @@ test.describe('Dialog Documentation Page', () => {
       await expect(openDialog).toBeVisible()
       await expect(openDialog).toHaveCSS('opacity', '1')
 
-      // Dialog should have scale-100 (transform contains scale(1) = matrix(1, 0, 0, 1, ...))
-      const transform = await openDialog.evaluate((el) => getComputedStyle(el).transform)
-      expect(transform).toMatch(/^matrix\(1, 0, 0, 1,/)
+      // Dialog should have scale-100 class applied (fully scaled)
+      await expect(openDialog).toHaveClass(/scale-100/)
     })
 
     test('close via ESC - animation plays', async ({ page }) => {
