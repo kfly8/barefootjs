@@ -71,6 +71,28 @@ describe('findScope', () => {
     const scope = findScope('Counter', 0, parent)
     expect(scope?.getAttribute('bf-s')).toBe('Counter_inside')
   })
+
+  test('without comment flag returns null when no attribute scope exists', () => {
+    document.body.innerHTML = `
+      <!--bf-scope:FragComp_abc-->
+      <div>child 1</div>
+      <div>child 2</div>
+    `
+    // Without comment flag, should NOT fall back to comment-based search
+    const scope = findScope('FragComp', 0, null)
+    expect(scope).toBeNull()
+  })
+
+  test('with comment=true finds comment-based scope', () => {
+    document.body.innerHTML = `
+      <!--bf-scope:FragComp_abc-->
+      <div>child 1</div>
+      <div>child 2</div>
+    `
+    // With comment flag, should find via comment scope marker
+    const scope = findScope('FragComp', 0, null, true)
+    expect(scope).not.toBeNull()
+  })
 })
 
 describe('find', () => {
@@ -421,6 +443,36 @@ describe('hydrate', () => {
 
     expect(initialized.length).toBe(1)
     expect(initialized[0].props).toEqual({})
+  })
+
+  test('without comment flag does not hydrate comment-based scopes', () => {
+    const initialized: Element[] = []
+
+    document.body.innerHTML = `
+      <!--bf-scope:FragComp_abc|{"FragComp":{}}-->
+      <div>child 1</div>
+    `
+
+    hydrate('FragComp', (_, __, scope) => initialized.push(scope))
+
+    // Without comment flag, comment-based scopes should be skipped
+    expect(initialized.length).toBe(0)
+  })
+
+  test('with comment=true hydrates comment-based scopes', () => {
+    const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
+
+    document.body.innerHTML = `
+      <!--bf-scope:FragComp_abc|{"FragComp":{"title":"hello"}}-->
+      <div>child 1</div>
+    `
+
+    hydrate('FragComp', (props, _, scope) => {
+      initialized.push({ props, scope })
+    }, true)
+
+    expect(initialized.length).toBe(1)
+    expect(initialized[0].props).toEqual({ title: 'hello' })
   })
 })
 

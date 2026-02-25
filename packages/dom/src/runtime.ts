@@ -70,12 +70,14 @@ function getCommentScopeBoundary(commentNode: Comment): Node | null {
  * @param name - Component name prefix to search for
  * @param idx - Instance index (for multiple instances)
  * @param parent - Parent element or scope element to search within
+ * @param comment - When true, fall back to comment-based scope search (fragment roots only)
  * @returns The scope element or null if not found
  */
 export function findScope(
   name: string,
   idx: number,
-  parent: Element | Document | null
+  parent: Element | Document | null,
+  comment?: boolean
 ): Element | null {
   const parentEl = parent as HTMLElement
 
@@ -130,8 +132,11 @@ export function findScope(
     return scope
   }
 
-  // Fallback: search for comment-based scope markers (<!--bf-scope:Name_xxx-->)
-  return findScopeByComment(name, idx, searchRoot)
+  // Only fall back to comment-based search when explicitly flagged (fragment roots)
+  if (comment) {
+    return findScopeByComment(name, idx, searchRoot)
+  }
+  return null
 }
 
 /**
@@ -432,9 +437,16 @@ function findInPortals(scopeId: string, selector: string): Element | null {
  */
 export function hydrate(
   name: string,
-  init: (props: Record<string, unknown>, idx: number, scope: Element) => void
+  init: (props: Record<string, unknown>, idx: number, scope: Element) => void,
+  comment?: boolean
 ): void {
   const doHydrate = () => {
+    if (comment) {
+      // Comment-scope-only: skip attribute-based search
+      hydrateCommentScopes(name, init, new Set())
+      return
+    }
+
     // Only select uninitialized elements (skip already hydrated ones)
     const scopeEls = document.querySelectorAll(
       `[${BF_SCOPE}^="${name}_"]:not([${BF_HYDRATED}])`
@@ -482,9 +494,6 @@ export function hydrate(
 
       init(props, 0, scopeEl)
     }
-
-    // Also hydrate comment-based scope markers (<!--bf-scope:Name_xxx-->)
-    hydrateCommentScopes(name, init, initializedScopes)
   }
 
   // Immediately hydrate elements already in DOM
@@ -1054,23 +1063,38 @@ export function initChild(
 // --- mount ---
 
 /**
+ * Options for mount().
+ * @param template - Optional template function for client-side creation
+ * @param comment - When true, use comment-based scope hydration (fragment roots)
+ */
+export interface MountOptions {
+  template?: (props: Record<string, unknown>) => string
+  comment?: boolean
+}
+
+/**
  * Combined component registration + template registration + hydration.
  * Replaces the three separate calls: registerComponent() + registerTemplate() + hydrate().
  *
  * @param name - Component name
  * @param init - Init function that takes (idx, scope, props)
- * @param templateFn - Optional template function for client-side creation
+ * @param options - Mount options or legacy template function (backward compat)
  */
 export function mount(
   name: string,
   init: ComponentInitFn,
-  templateFn?: (props: Record<string, unknown>) => string
+  options?: MountOptions | ((props: Record<string, unknown>) => string)
 ): void {
+  // Backward compat: positional templateFn
+  const resolved: MountOptions = typeof options === 'function'
+    ? { template: options }
+    : options ?? {}
+
   registerComponent(name, init)
-  if (templateFn) {
-    registerTemplate(name, templateFn)
+  if (resolved.template) {
+    registerTemplate(name, resolved.template)
   }
-  hydrate(name, (props, idx, scope) => init(idx, scope, props))
+  hydrate(name, (props, idx, scope) => init(idx, scope, props), resolved.comment)
 }
 
 // --- shorthand finders ---

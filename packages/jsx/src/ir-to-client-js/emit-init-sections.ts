@@ -3,7 +3,7 @@
  * Each function appends to a lines[] array.
  */
 
-import type { ComponentIR, ConstantInfo, SignalInfo } from '../types'
+import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
@@ -926,13 +926,24 @@ export function emitRegistrationAndHydration(
     unsafeLocalNames.add(removeName)
   }
 
-  let templateArg = ''
+  const isCommentScope = _ir.root.type === 'fragment'
+    && (_ir.root as IRFragment).needsScopeComment
+
+  // Build options object for mount()
+  const optionParts: string[] = []
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
     if (templateHtml) {
-      templateArg = `, (props) => \`${templateHtml}\``
+      optionParts.push(`template: (props) => \`${templateHtml}\``)
     }
   }
+  if (isCommentScope) {
+    optionParts.push('comment: true')
+  }
 
-  lines.push(`mount('${name}', init${name}${templateArg})`)
+  if (optionParts.length > 0) {
+    lines.push(`mount('${name}', init${name}, { ${optionParts.join(', ')} })`)
+  } else {
+    lines.push(`mount('${name}', init${name})`)
+  }
 }

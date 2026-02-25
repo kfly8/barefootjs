@@ -2,7 +2,7 @@
  * generateInitFunction orchestrator + generateElementRefs.
  */
 
-import type { ComponentIR, ConstantInfo } from '../types'
+import type { ComponentIR, ConstantInfo, IRFragment } from '../types'
 import type { ClientJsContext } from './types'
 import { stripTypeScriptSyntax, varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
@@ -60,8 +60,11 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   lines.push('')
   lines.push(MODULE_CONSTANTS_PLACEHOLDER)
 
+  const isCommentScope = _ir.root.type === 'fragment'
+    && (_ir.root as IRFragment).needsScopeComment
+
   lines.push(`export function init${name}(__instanceIndex, __parentScope, props = {}) {`)
-  lines.push(`  const __scope = findScope('${name}', __instanceIndex, __parentScope)`)
+  lines.push(`  const __scope = findScope('${name}', __instanceIndex, __parentScope${isCommentScope ? ', true' : ''})`)
   lines.push(`  if (!__scope) return`)
   lines.push('')
 
