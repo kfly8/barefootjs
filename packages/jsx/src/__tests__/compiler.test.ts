@@ -2156,6 +2156,56 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain('onClick:')
     })
 
+    test('static array: index parameter renamed in direct child component props (#479)', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ id: '1' }, { id: '2' }]
+          return (
+            <div>
+              {items.map((item, index) => (
+                <ListItem index={index} value={item.id} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // The forEach callback should use the user-defined index parameter name
+      expect(clientJs!.content).toContain('(childScope, index)')
+      expect(clientJs!.content).not.toContain('(childScope, __idx)')
+    })
+
+    test('static array: index parameter renamed in nested component props (#479)', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ id: '1' }, { id: '2' }]
+          return (
+            <div>
+              {items.map((item, idx) => (
+                <div><Nested position={idx} value={item.id} /></div>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // The forEach callback should use the user-defined index parameter name
+      expect(clientJs!.content).toContain(`(item, idx)`)
+      expect(clientJs!.content).not.toContain(`(item, __idx)`)
+    })
+
     test('dynamic signal array: component generates reconcileList with createComponent', () => {
       const source = `
         'use client'
