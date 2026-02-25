@@ -2,7 +2,7 @@
  * generateInitFunction orchestrator + generateElementRefs.
  */
 
-import type { ComponentIR, ConstantInfo } from '../types'
+import type { ComponentIR, ConstantInfo, IRFragment, IRNode } from '../types'
 import type { ClientJsContext } from './types'
 import { stripTypeScriptSyntax, varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
@@ -46,6 +46,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   for (const loop of ctx.loopElements) {
     if (loop.childComponent) {
       childComponentNames.add(loop.childComponent.name)
+      collectComponentNamesFromIR(loop.childComponent.children, childComponentNames)
     }
   }
   for (const child of ctx.childInits) {
@@ -60,8 +61,11 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   lines.push('')
   lines.push(MODULE_CONSTANTS_PLACEHOLDER)
 
+  const isCommentScope = _ir.root.type === 'fragment'
+    && (_ir.root as IRFragment).needsScopeComment
+
   lines.push(`export function init${name}(__instanceIndex, __parentScope, props = {}) {`)
-  lines.push(`  const __scope = findScope('${name}', __instanceIndex, __parentScope)`)
+  lines.push(`  const __scope = findScope('${name}', __instanceIndex, __parentScope${isCommentScope ? ', true' : ''})`)
   lines.push(`  if (!__scope) return`)
   lines.push('')
 
@@ -81,6 +85,13 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
 
   for (const constant of ctx.localConstants) {
     if (usedIdentifiers.has(constant.name)) {
+      if (!constant.value) {
+        // `let x` with no initializer — always needed, no module-level hoist
+        neededConstants.push(constant)
+        outputConstants.add(constant.name)
+        continue
+      }
+
       const trimmedValue = constant.value.trim()
 
       // createContext() and new WeakMap() must be at module level to enable
@@ -108,7 +119,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   for (const provider of ctx.providerSetups) {
     if (!moduleLevelConstantNames.has(provider.contextName)) {
       const contextConstant = ctx.localConstants.find(
-        (c) => c.name === provider.contextName && /^createContext\b/.test(c.value.trim())
+        (c) => c.name === provider.contextName && c.value && /^createContext\b/.test(c.value.trim())
       )
       if (contextConstant) {
         moduleLevelConstants.push(contextConstant)
@@ -144,6 +155,11 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   const earlyConstants: ConstantInfo[] = []
   const lateConstants: ConstantInfo[] = []
   for (const constant of neededConstants) {
+    if (!constant.value) {
+      // No initializer (e.g. `let x`) — classify as early (no reactive deps)
+      earlyConstants.push(constant)
+      continue
+    }
     const value = constant.value
     let dependsOnReactive = false
     for (const sigName of signalNames) {
@@ -223,6 +239,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   if (moduleLevelConstants.length > 0) {
     const moduleConstantLines: string[] = []
     for (const constant of moduleLevelConstants) {
+      if (!constant.value) continue
       const jsValue = stripTypeScriptSyntax(constant.value)
       moduleConstantLines.push(`var ${constant.name} = ${constant.name} ?? ${jsValue}`)
     }
@@ -306,4 +323,22 @@ export function generateElementRefs(ctx: ClientJsContext): string {
   }
 
   return refLines.join('\n')
+}
+
+/**
+ * Recursively collect component names from IR children.
+ * Used to ensure all nested components are imported.
+ */
+function collectComponentNamesFromIR(nodes: IRNode[], names: Set<string>): void {
+  for (const node of nodes) {
+    if (node.type === 'component') {
+      names.add(node.name)
+      collectComponentNamesFromIR(node.children, names)
+    } else if (node.type === 'element' || node.type === 'fragment' || node.type === 'provider') {
+      collectComponentNamesFromIR(node.children, names)
+    } else if (node.type === 'conditional') {
+      collectComponentNamesFromIR([node.whenTrue], names)
+      collectComponentNamesFromIR([node.whenFalse], names)
+    }
+  }
 }

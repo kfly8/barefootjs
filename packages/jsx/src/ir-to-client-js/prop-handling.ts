@@ -16,7 +16,7 @@ export function expandDynamicPropValue(value: string, ctx: ClientJsContext): str
   const trimmedValue = value.trim()
 
   const constant = ctx.localConstants.find((c) => c.name === trimmedValue)
-  if (constant) {
+  if (constant && constant.value) {
     return constant.value
   }
 
@@ -135,7 +135,7 @@ export function detectPropsWithPropertyAccess(
     sources.push(elem.expression)
   }
   for (const constant of neededConstants) {
-    sources.push(constant.value)
+    if (constant.value) sources.push(constant.value)
   }
 
   for (const prop of ctx.propsParams) {

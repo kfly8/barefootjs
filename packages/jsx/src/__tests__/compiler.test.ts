@@ -2156,6 +2156,102 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain('onClick:')
     })
 
+    test('static array: index parameter renamed in direct child component props (#479)', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ id: '1' }, { id: '2' }]
+          return (
+            <div>
+              {items.map((item, index) => (
+                <ListItem index={index} value={item.id} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // The forEach callback should use the user-defined index parameter name
+      expect(clientJs!.content).toContain('(childScope, index)')
+      expect(clientJs!.content).not.toContain('(childScope, __idx)')
+    })
+
+    test('static array: index parameter renamed in nested component props (#479)', () => {
+      const source = `
+        'use client'
+
+        export function List() {
+          const items = [{ id: '1' }, { id: '2' }]
+          return (
+            <div>
+              {items.map((item, idx) => (
+                <div><Nested position={idx} value={item.id} /></div>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // The forEach callback should use the user-defined index parameter name
+      expect(clientJs!.content).toContain(`(item, idx)`)
+      expect(clientJs!.content).not.toContain(`(item, __idx)`)
+    })
+
+    test('static array: nested component with index in callback and signal access (#480)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+
+        export function SelectionDemo() {
+          const [selected, setSelected] = createSignal(items.map(() => false))
+
+          const toggleRow = (index) => {
+            setSelected(prev => prev.map((v, i) => i === index ? !v : v))
+          }
+
+          return (
+            <table>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr>
+                    <td>
+                      <Checkbox
+                        checked={selected()[index]}
+                        onCheckedChange={() => toggleRow(index)}
+                        aria-label={\`Select \${item.id}\`}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'SelectionDemo.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // The forEach callback should use the user-defined 'index' parameter
+      expect(clientJs!.content).toContain('(item, index)')
+      expect(clientJs!.content).not.toContain('__idx')
+      // Props should reference 'index' correctly in callback and signal access
+      expect(clientJs!.content).toContain('selected()[index]')
+      expect(clientJs!.content).toContain('toggleRow(index)')
+    })
+
     test('dynamic signal array: component generates reconcileList with createComponent', () => {
       const source = `
         'use client'
@@ -2179,6 +2275,61 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       expect(clientJs!.content).toContain('reconcileList')
       expect(clientJs!.content).toContain("createComponent('RadioGroupItem'")
+    })
+
+    test('static array: SSR template includes __bfChild for "use client" parent (#483)', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+
+        export function CardList() {
+          const items = [{ title: 'a' }, { title: 'b' }]
+          return (
+            <div>
+              {items.map(item => (
+                <Card title={item.title} className="p-4" />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'CardList.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')
+      expect(template).toBeDefined()
+      expect(template!.content).toContain('__bfChild={true}')
+    })
+
+    test('static array: SSR template includes __bfChild for stateless parent with client interactivity (#483)', () => {
+      // Parent has no "use client" but has static array with child components,
+      // which triggers needsClientInit (client JS with initChild calls).
+      // Without __bfChild, child components hydrate with empty props before
+      // the parent's initChild can pass correct props (including className).
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        export function StaticList() {
+          const items = [{ label: 'x' }, { label: 'y' }]
+          return (
+            <ul>
+              {items.map(item => (
+                <ListItem label={item.label} className="text-sm" />
+              ))}
+            </ul>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'StaticList.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')
+      expect(template).toBeDefined()
+      expect(template!.content).toContain('__bfChild={true}')
+
+      // Should also generate client JS with initChild
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("initChild('ListItem'")
     })
 
     test('no duplicate variable declaration when .map() slot ID matches component slot ID (#360)', () => {
@@ -2210,6 +2361,144 @@ describe('Compiler', () => {
       // Component slot ref ($c) and reconcileList should both be present
       expect(content).toContain('$c(__scope')
       expect(content).toContain('reconcileList')
+    })
+
+    test('dynamic signal array: component with component children emits nested createComponent (#481)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function DataTable() {
+          const [payments, setPayments] = createSignal([
+            { id: 'PAY-001', amount: 100 },
+            { id: 'PAY-002', amount: 200 },
+          ])
+          return (
+            <div>
+              {payments().map(payment => (
+                <TableRow>
+                  <TableCell>{payment.id}</TableCell>
+                  <TableCell>{payment.amount}</TableCell>
+                </TableRow>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'DataTable.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Should use reconcileList with createComponent
+      expect(content).toContain('reconcileList')
+      expect(content).toContain("createComponent('TableRow'")
+
+      // Children should be emitted as nested createComponent calls
+      expect(content).toContain("createComponent('TableCell'")
+      expect(content).toContain('get children()')
+      expect(content).toContain('payment.id')
+      expect(content).toContain('payment.amount')
+    })
+
+    test('dynamic signal array: component with mixed children (text + components)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function List() {
+          const [items, setItems] = createSignal([{ name: 'a' }, { name: 'b' }])
+          return (
+            <div>
+              {items().map(item => (
+                <Card>
+                  <CardHeader>{item.name}</CardHeader>
+                </Card>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'List.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      expect(content).toContain("createComponent('Card'")
+      expect(content).toContain("createComponent('CardHeader'")
+      expect(content).toContain('get children()')
+      expect(content).toContain('item.name')
+    })
+
+    test('dynamic signal array: component without children does not emit children getter', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function RadioGroup() {
+          const [items, setItems] = createSignal([{ value: 'a' }, { value: 'b' }])
+          return (
+            <div>
+              {items().map(item => (
+                <RadioGroupItem value={item.value} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'RadioGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      expect(content).toContain("createComponent('RadioGroupItem'")
+      // No children getter should be emitted for childless component
+      expect(content).not.toContain('get children()')
+    })
+
+    test('dynamic signal array: deeply nested components (A > B > C)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function DataTable() {
+          const [rows, setRows] = createSignal([{ id: '1', value: 'test' }])
+          return (
+            <div>
+              {rows().map(row => (
+                <TableRow>
+                  <TableCell>
+                    <Badge>{row.value}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'DataTable.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // All three nested components should appear
+      expect(content).toContain("createComponent('TableRow'")
+      expect(content).toContain("createComponent('TableCell'")
+      expect(content).toContain("createComponent('Badge'")
+      expect(content).toContain('row.value')
+
+      // All nested component names should be imported
+      expect(content).toContain('@bf-child:TableRow')
+      expect(content).toContain('@bf-child:TableCell')
+      expect(content).toContain('@bf-child:Badge')
     })
   })
 
@@ -2935,7 +3224,7 @@ describe('Compiler', () => {
       expect(analysis.needsInit).toBe(true)
     })
 
-    test('purely static component does not generate client JS', () => {
+    test('purely static component generates template-only mount (#435)', () => {
       const source = `
         export function StaticLabel() {
           return <span>Hello World</span>
@@ -2946,7 +3235,10 @@ describe('Compiler', () => {
       expect(result.errors).toHaveLength(0)
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
-      expect(clientJs).toBeUndefined()
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("mount('StaticLabel'")
+      expect(clientJs!.content).toContain('function initStaticLabel() {}')
+      expect(clientJs!.content).toContain('<span>Hello World</span>')
     })
 
     test('components with reactive primitives still require "use client"', () => {
@@ -3011,6 +3303,184 @@ describe('Compiler', () => {
       expect(() => {
         compileJSXSync(source, 'Counter.tsx', { adapter: honoAdapter })
       }).toThrow(/reactive primitives/)
+    })
+  })
+
+  describe('comment scope flag for fragment roots (#381)', () => {
+    test('fragment-root component generates mount with comment: true', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function FragComp() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <>
+              <div>{count()}</div>
+              <button onClick={() => setCount(c => c + 1)}>+</button>
+            </>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'FragComp.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // mount() should include comment: true for fragment roots
+      expect(content).toMatch(/mount\('FragComp', initFragComp, \{[^}]*comment: true/)
+
+      // findScope should include comment flag
+      expect(content).toContain("findScope('FragComp', __instanceIndex, __parentScope, true)")
+    })
+
+    test('single-root component generates mount without comment flag', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function SingleRoot() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <span>{count()}</span>
+              <button onClick={() => setCount(c => c + 1)}>+</button>
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'SingleRoot.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // mount() should NOT include comment flag for single-root components
+      expect(content).not.toContain('comment:')
+      expect(content).not.toContain('comment: true')
+
+      // findScope should not include comment flag
+      expect(content).toContain("findScope('SingleRoot', __instanceIndex, __parentScope)")
+      expect(content).not.toContain("findScope('SingleRoot', __instanceIndex, __parentScope, true)")
+    })
+  })
+
+  describe('let variable declarations (#482)', () => {
+    test('let without initializer is captured by analyzer', () => {
+      const source = `
+        'use client'
+        import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+
+        type ApiType = { scrollPrev: () => void }
+
+        export function Carousel() {
+          let emblaApi: ApiType | undefined
+          const [canScrollPrev, setCanScrollPrev] = createSignal(false)
+
+          createEffect(() => {
+            if (emblaApi) {
+              setCanScrollPrev(true)
+            }
+          })
+
+          return <div>{canScrollPrev() ? 'yes' : 'no'}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Carousel.tsx')
+      const letConstant = ctx.localConstants.find(c => c.name === 'emblaApi')
+      expect(letConstant).toBeDefined()
+      expect(letConstant!.declarationKind).toBe('let')
+      expect(letConstant!.value).toBeUndefined()
+    })
+
+    test('let without initializer is emitted in client JS', () => {
+      const source = `
+        'use client'
+        import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+
+        type ApiType = { scrollPrev: () => void }
+
+        export function Carousel() {
+          let emblaApi: ApiType | undefined
+          const [canScrollPrev, setCanScrollPrev] = createSignal(false)
+
+          const scrollPrev = () => {
+            if (emblaApi) emblaApi.scrollPrev()
+          }
+
+          createEffect(() => {
+            if (emblaApi) {
+              setCanScrollPrev(true)
+            }
+          })
+
+          return <div onClick={scrollPrev}>{canScrollPrev() ? 'yes' : 'no'}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Carousel.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('let emblaApi')
+      // Must not contain type annotation in output
+      expect(clientJs!.content).not.toContain('ApiType')
+    })
+
+    test('let with initializer is emitted as let, not const', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          let count = 0
+          const [value, setValue] = createSignal(count)
+          return <div>{value()}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Counter.tsx')
+      const letConstant = ctx.localConstants.find(c => c.name === 'count')
+      expect(letConstant).toBeDefined()
+      expect(letConstant!.declarationKind).toBe('let')
+      expect(letConstant!.value).toBe('0')
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain('let count = 0')
+      expect(clientJs!.content).not.toContain('const count')
+    })
+
+    test('const declarations still emitted as const (regression)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Counter() {
+          const prefix = 'count'
+          const [value, setValue] = createSignal(0)
+          return <div>{value() + prefix}</div>
+        }
+      `
+
+      const ctx = analyzeComponent(source, 'Counter.tsx')
+      const constConstant = ctx.localConstants.find(c => c.name === 'prefix')
+      expect(constConstant).toBeDefined()
+      expect(constConstant!.declarationKind).toBe('const')
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).toContain("const prefix = 'count'")
+      expect(clientJs!.content).not.toContain('let prefix')
     })
   })
 })

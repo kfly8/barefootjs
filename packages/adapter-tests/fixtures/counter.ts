@@ -11,4 +11,5 @@ export function Counter() {
   return <button onClick={() => setCount(n => n + 1)}>Count: {count()}</button>
 }
 `,
+  expectedHtml: `<button bf-s="test" bf="s1">Count: <span bf="s0">0</span></button>`,
 })

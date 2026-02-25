@@ -46,12 +46,15 @@ const VOID_ELEMENTS = 'area|base|br|col|embed|hr|img|input|link|meta|param|sourc
  * - Void element self-closing normalization (<br/> vs <br>)
  * - Trailing whitespace before closing > in tags
  */
-function normalizeHTML(html: string): string {
+export function normalizeHTML(html: string): string {
   return html
     // Remove bf-p attribute (Hono uses JSON serialization, Go uses struct fields)
     .replace(/\s*bf-p="[^"]*"/g, '')
     // Normalize child scope ID prefix: bf-s="~parentId_sN" → bf-s="parentId_sN"
     .replace(/bf-s="~([^"]*)"/g, 'bf-s="$1"')
+    // Normalize non-deterministic child scope IDs (hash derived from file path):
+    // bf-s="ComponentName_abc123" → bf-s="ComponentName_*"
+    .replace(/bf-s="([A-Z][a-zA-Z]*)_[a-z0-9]+"/g, 'bf-s="$1_*"')
     // Normalize void element self-closing: <br/> or <br /> → <br>
     .replace(new RegExp(`<(${VOID_ELEMENTS})(\\s[^>]*?)?\\s*/>`, 'g'), '<$1$2>')
     // Remove trailing whitespace before >
@@ -89,8 +92,9 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
         }
         expect(html).toBeTruthy()
 
-        // 2. If reference adapter provided, compare HTML output
+        // 2. Compare HTML output against reference
         if (referenceAdapter && referenceRender) {
+          // Live reference: render with reference adapter and compare
           const refAdapter = referenceAdapter()
           const refHtml = await referenceRender({
             source: fixture.source,
@@ -103,6 +107,10 @@ export function runJSXConformanceTests(options: RunJSXConformanceOptions): void 
           const normalizedRefHtml = normalizeHTML(refHtml)
 
           expect(normalizedHtml).toBe(normalizedRefHtml)
+        } else if (fixture.expectedHtml) {
+          // Pre-generated reference: compare against fixture's expectedHtml
+          const normalizedHtml = normalizeHTML(html)
+          expect(normalizedHtml).toBe(fixture.expectedHtml)
         }
       })
     }

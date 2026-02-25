@@ -1103,6 +1103,7 @@ function transformMapCall(
           isLiteral: p.isLiteral,
           isEventHandler: p.name.startsWith('on') && p.name.length > 2,
         })),
+      children: comp.children,
     }
   }
 
@@ -1161,6 +1162,7 @@ function collectNestedComponents(nodes: IRNode[]): IRLoopChildComponent[] {
             isLiteral: p.isLiteral,
             isEventHandler: p.name.startsWith('on') && p.name.length > 2,
           })),
+        children: node.children,
       })
     }
     if (node.type === 'element' && node.children) {
@@ -1600,7 +1602,7 @@ function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
     const constPattern = new RegExp(`\\b${constant.name}\\b`)
     if (constPattern.test(expr)) {
       // Check if the constant's value contains reactive references
-      if (isReactiveValue(constant.value, ctx)) {
+      if (constant.value && isReactiveValue(constant.value, ctx)) {
         return true
       }
     }

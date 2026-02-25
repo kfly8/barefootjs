@@ -10,6 +10,9 @@ import { collectElements } from './collect-elements'
 import { generateInitFunction } from './generate-init'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
 import { valueReferencesReactiveData } from './prop-handling'
+import { canGenerateStaticTemplate, irToComponentTemplate } from './html-template'
+import { buildInlinableConstants } from './emit-init-sections'
+import { IMPORT_PLACEHOLDER, detectUsedImports } from './imports'
 
 /** Public entry point: IR → client JS string. Returns '' if no client JS is needed. */
 export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
@@ -17,7 +20,8 @@ export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]):
   collectElements(ir.root, ctx)
 
   if (!needsClientJs(ctx)) {
-    return ''
+    // Stateless components still need template registration so renderChild() can find them (#435)
+    return generateTemplateOnlyMount(ir, ctx)
   }
 
   return generateInitFunction(ir, ctx, siblingComponents)
@@ -48,6 +52,7 @@ export function analyzeClientNeeds(ir: ComponentIR): { needsInit: boolean; usedP
   // Transitive props via constants
   for (const constant of ctx.localConstants) {
     if (usedIdentifiers.has(constant.name)) {
+      if (!constant.value) continue
       const trimmedValue = constant.value.trim()
       if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) continue
       if (!trimmedValue.includes('=>') && constant.name !== 'props') {
@@ -117,4 +122,41 @@ function needsClientJs(ctx: ClientJsContext): boolean {
     ctx.clientOnlyConditionals.length > 0 ||
     ctx.providerSetups.length > 0
   )
+}
+
+/**
+ * Generate minimal client JS for stateless components that only need
+ * template registration. This allows renderChild() to find and render
+ * the component's template when it appears in conditional branches (#435).
+ *
+ * Returns '' if a static template cannot be generated.
+ */
+function generateTemplateOnlyMount(ir: ComponentIR, ctx: ClientJsContext): string {
+  const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+  const { inlinableConstants, unsafeLocalNames } = buildInlinableConstants(ctx)
+
+  if (!canGenerateStaticTemplate(ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
+    return ''
+  }
+
+  const templateHtml = irToComponentTemplate(ir.root, propNamesForTemplate, inlinableConstants)
+  if (!templateHtml) {
+    return ''
+  }
+
+  const name = ctx.componentName
+  const lines: string[] = []
+
+  lines.push(IMPORT_PLACEHOLDER)
+  lines.push('')
+  lines.push(`function init${name}() {}`)
+  lines.push('')
+  lines.push(`mount('${name}', init${name}, { template: (props) => \`${templateHtml}\` })`)
+
+  const generatedCode = lines.join('\n')
+  const usedImports = detectUsedImports(generatedCode)
+  const sortedImports = [...usedImports].sort()
+  const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/dom'`
+
+  return generatedCode.replace(IMPORT_PLACEHOLDER, importLine)
 }

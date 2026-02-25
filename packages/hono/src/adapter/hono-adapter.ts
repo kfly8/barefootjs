@@ -50,6 +50,7 @@ export class HonoAdapter implements TemplateAdapter {
   private componentName: string = ''
   private options: HonoAdapterOptions
   private isClientComponent: boolean = false
+  private hasClientInteractivity: boolean = false
   private currentComponentHasProps: boolean = false
 
   constructor(options: HonoAdapterOptions = {}) {
@@ -193,6 +194,7 @@ export class HonoAdapter implements TemplateAdapter {
     // that need client JS wiring (detected by analyzeClientNeeds)
     const needsClientInit = ir.metadata.clientAnalysis?.needsInit ?? false
     const hasClientInteractivity = ir.metadata.isClientComponent || needsClientInit
+    this.hasClientInteractivity = hasClientInteractivity
 
     // Check if component uses props object pattern (SolidJS-style)
     const propsObjectName = ir.metadata.propsObjectName
@@ -347,6 +349,11 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Include local constants
     for (const constant of ir.metadata.localConstants) {
+      const keyword = constant.declarationKind ?? 'const'
+      if (!constant.value) {
+        lines.push(`  ${keyword} ${constant.name}`)
+        continue
+      }
       const value = constant.value.trim()
       // Skip client-only constructs in SSR:
       // - createContext() — only used client-side via provideContext/useContext
@@ -365,10 +372,10 @@ export class HonoAdapter implements TemplateAdapter {
         // Generate a stub function for SSR (these may be referenced as props)
         // Extract parameters if possible
         const params = this.extractFunctionParams(value)
-        lines.push(`  const ${constant.name} = (${params}) => {}`)
+        lines.push(`  ${keyword} ${constant.name} = (${params}) => {}`)
       } else {
         // Output non-function constants directly
-        lines.push(`  const ${constant.name} = ${constant.value}`)
+        lines.push(`  ${keyword} ${constant.name} = ${constant.value}`)
       }
     }
 
@@ -632,8 +639,8 @@ export class HonoAdapter implements TemplateAdapter {
     // Determine how to pass scope to child component
     let scopeAttr: string
     // Mark child components with slotId for parent-first hydration
-    // Only add __bfChild when parent is a client component (will call initChild)
-    const bfChildAttr = (comp.slotId && this.isClientComponent) ? ' __bfChild={true}' : ''
+    // Add __bfChild when parent has client interactivity (will call initChild)
+    const bfChildAttr = (comp.slotId && this.hasClientInteractivity) ? ' __bfChild={true}' : ''
     if (ctx?.isRootOfClientComponent) {
       // Root component: if it has a slotId, include it so client JS can find it
       // with [bf-s$="_sX"] selector. Otherwise pass parent's scope directly.

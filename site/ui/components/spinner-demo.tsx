@@ -35,8 +35,6 @@ export function SpinnerSizesDemo() {
 
 /**
  * Button with loading state.
- * Uses visibility toggling (not conditional rendering) so the Spinner SVG
- * is always in the DOM and the client JS only toggles classes.
  */
 export function SpinnerButtonDemo() {
   const [loading, setLoading] = createSignal(false)
@@ -54,7 +52,7 @@ export function SpinnerButtonDemo() {
       disabled={loading()}
       onClick={handleClick}
     >
-      <Spinner className={`size-4 ${loading() ? '' : 'hidden'}`} />
+      {loading() ? <Spinner className="size-4" /> : null}
       <span data-testid="spinner-button-label">
         {loading() ? 'Processing...' : 'Submit'}
       </span>

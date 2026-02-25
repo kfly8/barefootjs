@@ -131,9 +131,7 @@ test.describe('Sheet Documentation Page', () => {
 
       // Before opening, sheet should be translated off-screen (translate-x-full)
       const closedSheet = page.locator('[role="dialog"][aria-labelledby="sheet-basic-title"][data-state="closed"]').first()
-      const closedTransform = await closedSheet.evaluate((el) => getComputedStyle(el).transform)
-      // translate-x-full means transform matrix with positive x translation
-      expect(closedTransform).not.toBe('none')
+      await expect(closedSheet).toHaveClass(/translate-x-full/)
 
       await trigger.click()
 

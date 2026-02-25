@@ -3,11 +3,11 @@
  * Each function appends to a lines[] array.
  */
 
-import type { ComponentIR, ConstantInfo, SignalInfo } from '../types'
+import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
-import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate } from './html-template'
+import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, irChildrenToJsExpr } from './html-template'
 
 /**
  * Collect slot IDs that are inside conditionals (handled by insert()).
@@ -85,8 +85,13 @@ export function emitPropsExtraction(
 /** Emit constants that have no signal/memo dependencies (before signal declarations). */
 export function emitEarlyConstants(lines: string[], earlyConstants: ConstantInfo[]): void {
   for (const constant of earlyConstants) {
-    const jsValue = stripTypeScriptSyntax(constant.value)
-    lines.push(`  const ${constant.name} = ${jsValue}`)
+    const keyword = constant.declarationKind ?? 'const'
+    if (constant.value !== undefined) {
+      const jsValue = stripTypeScriptSyntax(constant.value)
+      lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
+    } else {
+      lines.push(`  ${keyword} ${constant.name}`)
+    }
   }
   if (earlyConstants.length > 0) {
     lines.push('')
@@ -153,8 +158,13 @@ export function emitSignalsAndMemos(
   }
 
   for (const constant of lateConstants) {
-    const jsValue = stripTypeScriptSyntax(constant.value)
-    lines.push(`  const ${constant.name} = ${jsValue}`)
+    const keyword = constant.declarationKind ?? 'const'
+    if (constant.value !== undefined) {
+      const jsValue = stripTypeScriptSyntax(constant.value)
+      lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
+    } else {
+      lines.push(`  ${keyword} ${constant.name}`)
+    }
   }
 
   if (ctx.signals.length > 0 || ctx.memos.length > 0 || lateConstants.length > 0) {
@@ -182,11 +192,13 @@ export function emitFunctionsAndHandlers(
 
   for (const constant of ctx.localConstants) {
     if (outputConstants.has(constant.name)) continue
+    if (!constant.value) continue
     if (usedIdentifiers.has(constant.name)) {
       const value = constant.value.trim()
       if (value.includes('=>')) {
+        const keyword = constant.declarationKind ?? 'const'
         const jsValue = stripTypeScriptSyntax(value)
-        lines.push(`  const ${constant.name} = ${jsValue}`)
+        lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
         lines.push('')
       }
     }
@@ -413,8 +425,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${v}) {`)
         lines.push(`    const __childScopes = _${v}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
-        lines.push(`    __childScopes.forEach((childScope, __idx) => {`)
-        lines.push(`      const ${elem.param} = ${elem.array}[__idx]`)
+        const indexParam = elem.index || '__idx'
+        lines.push(`    __childScopes.forEach((childScope, ${indexParam}) => {`)
+        lines.push(`      const ${elem.param} = ${elem.array}[${indexParam}]`)
         lines.push(`      initChild('${name}', childScope, ${propsExpr})`)
         lines.push(`    })`)
         lines.push(`  }`)
@@ -441,8 +454,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
 
           lines.push(`  // Initialize nested ${comp.name} in static array`)
           lines.push(`  if (_${v}) {`)
-          lines.push(`    ${elem.array}.forEach((${elem.param}, __idx) => {`)
-          lines.push(`      const __iterEl = _${v}.children[__idx]`)
+          const indexParam = elem.index || '__idx'
+          lines.push(`    ${elem.array}.forEach((${elem.param}, ${indexParam}) => {`)
+          lines.push(`      const __iterEl = _${v}.children[${indexParam}]`)
           lines.push(`      if (__iterEl) {`)
           lines.push(`        const __compEl = __iterEl.querySelector('${selector}')`)
           lines.push(`        if (__compEl) initChild('${comp.name}', __compEl, ${propsExpr})`)
@@ -461,7 +475,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
     const vLoop = varSlotId(elem.slotId)
 
     if (elem.childComponent) {
-      const { name, props } = elem.childComponent
+      const { name, props, children } = elem.childComponent
       const propsEntries = props.map((p) => {
         if (p.isEventHandler) {
           return `${quotePropName(p.name)}: ${p.value}`
@@ -471,6 +485,12 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           return `get ${quotePropName(p.name)}() { return ${p.value} }`
         }
       })
+
+      if (children && children.length > 0) {
+        const childrenExpr = irChildrenToJsExpr(children)
+        propsEntries.push(`get children() { return ${childrenExpr} }`)
+      }
+
       const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
       const keyExpr = elem.key || '__idx'
       const indexParam = elem.index || '__idx'
@@ -787,31 +807,14 @@ function valueOnlyUsesKnownNames(value: string, knownNames: Set<string>): boolea
   return true
 }
 
-/** Emit mount() call that registers component, template, and hydrates. */
-export function emitRegistrationAndHydration(
-  lines: string[],
-  ctx: ClientJsContext,
-  _ir: ComponentIR
-): void {
-  const name = ctx.componentName
-
-  lines.push(`}`)
-  lines.push('')
-
-  const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
-
-  // Build inlinable constants map and unsafe local names set (#343)
-  // Local constants computed inside the component function are not available
-  // at module scope where the mount() template callback executes.
-  // We classify each constant as inlinable (can be substituted with its value)
-  // or unsafe (cannot be used in templates).
-  //
-  // A constant is only inlinable if its value exclusively references:
-  // - Props (via props.xxx or destructured prop names)
-  // - Other component-local names (constants, signals, memos, functions)
-  // - JavaScript built-in globals
-  // File-scope variables (e.g., variant lookup Records) are NOT available in
-  // the generated client JS module scope, so constants referencing them are unsafe.
+/**
+ * Build the inlinable constants map and unsafe local names set from a context.
+ * Extracted for reuse by both emitRegistrationAndHydration and generateTemplateOnlyMount (#435).
+ */
+export function buildInlinableConstants(ctx: ClientJsContext): {
+  inlinableConstants: Map<string, string>
+  unsafeLocalNames: Set<string>
+} {
   const inlinableConstants = new Map<string, string>()
   const unsafeLocalNames = new Set<string>()
 
@@ -819,7 +822,6 @@ export function emitRegistrationAndHydration(
   const signalSetters = new Set(ctx.signals.map(s => s.setter))
   const memoNames = new Set(ctx.memos.map(m => m.name))
 
-  // All identifiers known within the component function scope
   const componentScopeNames = new Set<string>()
   for (const c of ctx.localConstants) componentScopeNames.add(c.name)
   for (const s of ctx.signals) { componentScopeNames.add(s.getter); componentScopeNames.add(s.setter) }
@@ -828,47 +830,39 @@ export function emitRegistrationAndHydration(
   for (const p of ctx.propsParams) componentScopeNames.add(p.name)
   if (ctx.propsObjectName) componentScopeNames.add(ctx.propsObjectName)
 
-  // Local functions are not available at module scope
   for (const fn of ctx.localFunctions) {
     unsafeLocalNames.add(fn.name)
   }
 
   for (const constant of ctx.localConstants) {
+    if (!constant.value) {
+      // `let x` with no initializer — not safe for template inlining
+      unsafeLocalNames.add(constant.name)
+      continue
+    }
     const trimmedValue = constant.value.trim()
 
-    // Arrow functions cannot be inlined into templates
     if (trimmedValue.includes('=>')) {
       unsafeLocalNames.add(constant.name)
       continue
     }
 
-    // Module-level constants (createContext, new WeakMap) are already at module scope
     if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
       continue
     }
 
-    // Check if value references signals, setters, or memos (reactive data)
     let dependsOnReactive = false
     for (const sigName of signalGetters) {
-      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) {
-        dependsOnReactive = true
-        break
-      }
+      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
     }
     if (!dependsOnReactive) {
       for (const setterName of signalSetters) {
-        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) {
-          dependsOnReactive = true
-          break
-        }
+        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
       }
     }
     if (!dependsOnReactive) {
       for (const mName of memoNames) {
-        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) {
-          dependsOnReactive = true
-          break
-        }
+        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
       }
     }
 
@@ -877,9 +871,6 @@ export function emitRegistrationAndHydration(
       continue
     }
 
-    // Check that the value only references known component-scope identifiers.
-    // File-scope variables (Records, helper objects) are not available in the
-    // client JS module scope where the template callback executes.
     if (!valueOnlyUsesKnownNames(trimmedValue, componentScopeNames)) {
       unsafeLocalNames.add(constant.name)
       continue
@@ -888,7 +879,7 @@ export function emitRegistrationAndHydration(
     inlinableConstants.set(constant.name, stripTypeScriptSyntax(trimmedValue))
   }
 
-  // Resolve chained references: replace constant names within values with resolved values
+  // Resolve chained references
   let changed = true
   const maxIterations = inlinableConstants.size + 1
   let iteration = 0
@@ -911,7 +902,7 @@ export function emitRegistrationAndHydration(
     }
   }
 
-  // After resolution, demote any constant whose value still references an unsafe name
+  // Demote constants whose value still references an unsafe name
   const toRemove: string[] = []
   for (const [constName, constValue] of inlinableConstants) {
     for (const unsafeName of unsafeLocalNames) {
@@ -926,13 +917,41 @@ export function emitRegistrationAndHydration(
     unsafeLocalNames.add(removeName)
   }
 
-  let templateArg = ''
+  return { inlinableConstants, unsafeLocalNames }
+}
+
+/** Emit mount() call that registers component, template, and hydrates. */
+export function emitRegistrationAndHydration(
+  lines: string[],
+  ctx: ClientJsContext,
+  _ir: ComponentIR
+): void {
+  const name = ctx.componentName
+
+  lines.push(`}`)
+  lines.push('')
+
+  const propNamesForTemplate = new Set(ctx.propsParams.map((p) => p.name))
+  const { inlinableConstants, unsafeLocalNames } = buildInlinableConstants(ctx)
+
+  const isCommentScope = _ir.root.type === 'fragment'
+    && (_ir.root as IRFragment).needsScopeComment
+
+  // Build options object for mount()
+  const optionParts: string[] = []
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
     if (templateHtml) {
-      templateArg = `, (props) => \`${templateHtml}\``
+      optionParts.push(`template: (props) => \`${templateHtml}\``)
     }
   }
+  if (isCommentScope) {
+    optionParts.push('comment: true')
+  }
 
-  lines.push(`mount('${name}', init${name}${templateArg})`)
+  if (optionParts.length > 0) {
+    lines.push(`mount('${name}', init${name}, { ${optionParts.join(', ')} })`)
+  } else {
+    lines.push(`mount('${name}', init${name})`)
+  }
 }
