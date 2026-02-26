@@ -12,5 +12,7 @@ export function EffectDemo() {
   return <div>{count()}</div>
 }
 `,
-  expectedHtml: `<div bf-s="test" bf="s1"><span bf="s0">0</span></div>`,
+  expectedHtml: `
+    <div bf-s="test" bf="s1"><span bf="s0">0</span></div>
+  `,
 })

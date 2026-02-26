@@ -19,5 +19,12 @@ export function EventHandlers() {
   )
 }
 `,
-  expectedHtml: `<div bf-s="test"><input type="text" bf="s0"><button bf="s1">Click</button><span bf="s3"><span bf="s2"></span></span><span bf="s5"><span bf="s4">0</span></span></div>`,
+  expectedHtml: `
+    <div bf-s="test">
+      <input type="text" bf="s0">
+      <button bf="s1">Click</button>
+      <span bf="s3"><span bf="s2"></span></span>
+      <span bf="s5"><span bf="s4">0</span></span>
+    </div>
+  `,
 })

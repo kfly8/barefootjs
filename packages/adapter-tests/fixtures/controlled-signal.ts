@@ -12,5 +12,7 @@ export function ControlledSignal(props: { value: number }) {
 }
 `,
   props: { value: 42 },
-  expectedHtml: `<span bf-s="test" bf="s1"><span bf="s0">42</span></span>`,
+  expectedHtml: `
+    <span bf-s="test" bf="s1"><span bf="s0">42</span></span>
+  `,
 })

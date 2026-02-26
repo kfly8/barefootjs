@@ -12,5 +12,10 @@ export function MemoDemo() {
   return <div><span>{count()}</span><span>{doubled()}</span></div>
 }
 `,
-  expectedHtml: `<div bf-s="test"><span bf="s1"><span bf="s0">0</span></span><span bf="s3"><span bf="s2">0</span></span></div>`,
+  expectedHtml: `
+    <div bf-s="test">
+      <span bf="s1"><span bf="s0">0</span></span>
+      <span bf="s3"><span bf="s2">0</span></span>
+    </div>
+  `,
 })

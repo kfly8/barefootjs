@@ -12,5 +12,7 @@ export function MapWithIndex() {
   return <ul>{entries().map((entry, i) => <li>{i}: {entry.label}</li>)}</ul>
 }
 `,
-  expectedHtml: `<ul bf-s="test" bf="s0"></ul>`,
+  expectedHtml: `
+    <ul bf-s="test" bf="s0"></ul>
+  `,
 })

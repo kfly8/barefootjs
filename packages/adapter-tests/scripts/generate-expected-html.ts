@@ -4,12 +4,13 @@
  * Usage: bun run packages/adapter-tests/scripts/generate-expected-html.ts
  *
  * This compiles each fixture with HonoAdapter, renders to HTML, normalizes it,
- * and writes the expectedHtml back into the fixture files.
+ * formats with indentation, and writes the expectedHtml back into the fixture files.
  */
 
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { renderHonoComponent } from '@barefootjs/hono/test-render'
 import { normalizeHTML } from '../src/jsx-runner'
+import { indentHTML } from '../src/indent-html'
 import { jsxFixtures } from '../fixtures'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -30,24 +31,25 @@ async function main() {
         components: fixture.components,
       })
 
-      const expectedHtml = normalizeHTML(html)
-      const expectedHtmlLine = `  expectedHtml: \`${expectedHtml}\`,`
+      const normalizedHtml = normalizeHTML(html)
+      const indentedHtml = indentHTML(normalizedHtml)
+      const expectedHtmlBlock = `  expectedHtml: \`${indentedHtml}\`,`
 
       // Read the fixture file and update it
       const filePath = resolve(FIXTURES_DIR, `${fixture.id}.ts`)
       let content = readFileSync(filePath, 'utf-8')
 
       if (content.includes('expectedHtml:')) {
-        // Replace existing expectedHtml line
+        // Replace existing expectedHtml (single-line or multi-line)
         content = content.replace(
-          /^  expectedHtml:.*$/m,
-          expectedHtmlLine,
+          /  expectedHtml: `[^`]*`,/s,
+          expectedHtmlBlock,
         )
       } else {
         // Insert expectedHtml before the closing `})`
         content = content.replace(
           /\}\)\s*$/,
-          `${expectedHtmlLine}\n})\n`,
+          `${expectedHtmlBlock}\n})\n`,
         )
       }
 

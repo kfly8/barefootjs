@@ -12,5 +12,7 @@ export function DynamicAttributes() {
   return <div data-state={state()} data-count={count()}>Content</div>
 }
 `,
-  expectedHtml: `<div data-state="closed" data-count="0" bf-s="test" bf="s0">Content</div>`,
+  expectedHtml: `
+    <div data-state="closed" data-count="0" bf-s="test" bf="s0">Content</div>
+  `,
 })
