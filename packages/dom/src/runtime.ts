@@ -1190,6 +1190,46 @@ export function $c(scope: Element | null, id: string): Element | null {
   return find(scope, `[${BF_SCOPE}^="${BF_CHILD_PREFIX}${cleanId}_"], [${BF_SCOPE}^="${cleanId}_"]`)
 }
 
+// --- $t: text node finder via comment markers ---
+
+/**
+ * Find the Text node for a reactive text expression marked by comment nodes.
+ * Expects marker format: <!--bf:sX-->text<!--/bf:sX-->
+ *
+ * Used by compiler-generated code for reactive text expressions (e.g., {count()}).
+ * Returns the Text node between the start and end comment markers so that
+ * createEffect can update it via .nodeValue without needing a wrapper <span>.
+ *
+ * @param scope - The component scope element to search within
+ * @param id - The slot ID (e.g., 's0' or '^s3')
+ * @returns The Text node or null
+ */
+export function $t(scope: Element | null, id: string): Text | null {
+  if (!scope) return null
+  // Strip parent-owned prefix for matching
+  const cleanId = id.startsWith(BF_PARENT_OWNED_PREFIX) ? id.slice(1) : id
+  const marker = `bf:${cleanId}`
+
+  // Determine search root
+  const commentInfo = commentScopeRegistry.get(scope)
+  const searchRoot: Node = commentInfo ? (commentInfo.commentNode.parentNode ?? scope) : scope
+
+  const walker = document.createTreeWalker(searchRoot, NodeFilter.SHOW_COMMENT)
+  while (walker.nextNode()) {
+    if (walker.currentNode.nodeValue === marker) {
+      const next = walker.currentNode.nextSibling
+      if (next?.nodeType === Node.TEXT_NODE) {
+        return next as Text
+      }
+      // No text node exists (empty initial value) — create one
+      const textNode = document.createTextNode('')
+      walker.currentNode.parentNode?.insertBefore(textNode, walker.currentNode.nextSibling)
+      return textNode
+    }
+  }
+  return null
+}
+
 // --- updateClientMarker ---
 
 /**

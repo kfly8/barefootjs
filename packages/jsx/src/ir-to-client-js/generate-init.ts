@@ -257,6 +257,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
  */
 export function generateElementRefs(ctx: ClientJsContext): string {
   const regularSlots = new Set<string>()
+  const textSlots = new Set<string>()
   const componentSlots = new Set<string>()
   const conditionalSlotIds = collectConditionalSlotIds(ctx)
 
@@ -269,9 +270,10 @@ export function generateElementRefs(ctx: ClientJsContext): string {
       }
     }
   }
+  // Dynamic text expressions use comment markers found via $t()
   for (const elem of ctx.dynamicElements) {
     if (!elem.insideConditional) {
-      regularSlots.add(elem.slotId)
+      textSlots.add(elem.slotId)
     }
   }
   for (const elem of ctx.conditionalElements) {
@@ -308,13 +310,18 @@ export function generateElementRefs(ctx: ClientJsContext): string {
     regularSlots.delete(slotId)
   }
 
-  if (regularSlots.size === 0 && componentSlots.size === 0) return ''
+  if (regularSlots.size === 0 && textSlots.size === 0 && componentSlots.size === 0) return ''
 
   const refLines: string[] = []
 
   // Regular element slots use $() shorthand for find(scope, '[bf="id"]')
   for (const slotId of regularSlots) {
     refLines.push(`  const _${varSlotId(slotId)} = $(__scope, '${slotId}')`)
+  }
+
+  // Text slots use $t() to find Text nodes via comment markers <!--bf:id-->
+  for (const slotId of textSlots) {
+    refLines.push(`  const _${varSlotId(slotId)} = $t(__scope, '${slotId}')`)
   }
 
   // Component slots use $c() shorthand for find(scope, '[bf-s$="_id"]')

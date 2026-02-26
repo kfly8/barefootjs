@@ -224,7 +224,7 @@ export function emitFunctionsAndHandlers(
   }
 }
 
-/** Emit createEffect blocks that update textContent for reactive expressions. */
+/** Emit createEffect blocks that update text nodes for reactive expressions. */
 export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): void {
   // Group elements by expression to consolidate effects with same dependencies
   const byExpression = new Map<string, typeof ctx.dynamicElements>()
@@ -248,12 +248,12 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         lines.push(`    const __val = ${expr}`)
         for (const elem of normalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    if (_${v}) _${v}.textContent = String(__val)`)
+          lines.push(`    if (_${v}) _${v}.nodeValue = String(__val)`)
         }
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    const __el_${v} = $(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${v}) __el_${v}.textContent = String(__val)`)
+          lines.push(`    const __el_${v} = $t(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${v}) __el_${v}.nodeValue = String(__val)`)
         }
       } else {
         // Only conditional elements — defer expression evaluation until
@@ -261,8 +261,8 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         // parent prop is undefined (e.g. prev?.title when prev is undefined).
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    const __el_${v} = $(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${v}) __el_${v}.textContent = String(${expr})`)
+          lines.push(`    const __el_${v} = $t(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${v}) __el_${v}.nodeValue = String(${expr})`)
         }
       }
       lines.push(`  })`)

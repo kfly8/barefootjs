@@ -7,3 +7,12 @@ import { raw } from 'hono/html'
 export function bfComment(key: string) {
   return raw(`<!--bf-${key}-->`)
 }
+
+/**
+ * Output comment markers for reactive text expressions.
+ * Renders <!--bf:slotId--> (start) or <!--/bf:slotId--> (end).
+ */
+export function bfText(slotId: string, end?: boolean) {
+  return raw(end ? `<!--/bf:${slotId}-->` : `<!--bf:${slotId}-->`)
+}
+

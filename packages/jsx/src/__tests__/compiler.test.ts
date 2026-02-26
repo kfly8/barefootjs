@@ -715,9 +715,9 @@ describe('Compiler', () => {
       const content = clientJs!.content
 
       // The expression should be inlined inside the element check, not evaluated before it.
-      // Pattern: if (__el_XX) __el_XX.textContent = String(prev.title)
+      // Pattern: if (__el_XX) __el_XX.nodeValue = String(prev.title)
       // NOT:     const __val = prev.title  (which would throw when prev is undefined)
-      expect(content).toMatch(/if \(__el_\w+\) __el_\w+\.textContent = String\(prev\.title\)/)
+      expect(content).toMatch(/if \(__el_\w+\) __el_\w+\.nodeValue = String\(prev\.title\)/)
       expect(content).not.toMatch(/const __val = prev\.title/)
     })
 

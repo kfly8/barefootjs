@@ -67,6 +67,7 @@ export {
   mount,
   $ as $,
   $c,
+  $t,
   type ComponentInitFn,
   type MountOptions,
   type BranchConfig,
