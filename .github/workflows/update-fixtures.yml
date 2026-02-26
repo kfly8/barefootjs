@@ -1,0 +1,64 @@
+name: Update Fixtures
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/jsx/**'
+      - 'packages/hono/**'
+      - 'packages/dom/**'
+      - 'packages/adapter-tests/src/**'
+      - 'packages/adapter-tests/scripts/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-fixtures-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  update-expected-html:
+    runs-on: ubuntu-latest
+    # Skip fork PRs (no write permission)
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          cd packages/dom && bun run build
+          cd ../jsx && bun run build
+          cd ../hono && bun run build
+
+      - name: Generate expectedHtml
+        run: bun run packages/adapter-tests/scripts/generate-expected-html.ts
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet packages/adapter-tests/fixtures/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/adapter-tests/fixtures/
+          git commit -m "Update fixture expectedHtml (auto-generated)"
+          git push

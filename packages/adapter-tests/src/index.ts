@@ -5,6 +5,7 @@
  */
 
 export { runJSXConformanceTests, normalizeHTML } from './jsx-runner'
-export { createFixture } from './types'
+export { createFixture, normalizeExpectedHtml } from './types'
 export type { JSXFixture } from './types'
+export { indentHTML } from './indent-html'
 export type { RunJSXConformanceOptions, RenderOptions } from './jsx-runner'

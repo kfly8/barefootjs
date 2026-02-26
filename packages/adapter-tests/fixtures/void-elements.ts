@@ -15,5 +15,12 @@ export function VoidElements() {
   )
 }
 `,
-  expectedHtml: `<div bf-s="test"><br><hr><img src="test.png" alt="test"><input type="text"></div>`,
+  expectedHtml: `
+    <div bf-s="test">
+      <br>
+      <hr>
+      <img src="test.png" alt="test">
+      <input type="text">
+    </div>
+  `,
 })

@@ -12,5 +12,7 @@ export function SignalWithFallback(props: { initial?: number }) {
 }
 `,
   props: { initial: 5 },
-  expectedHtml: `<div bf-s="test" bf="s1"><span bf="s0">5</span></div>`,
+  expectedHtml: `
+    <div bf-s="test" bf="s1"><span bf="s0">5</span></div>
+  `,
 })

@@ -19,5 +19,7 @@ export function NestedElements() {
   )
 }
 `,
-  expectedHtml: `<div bf-s="test"><section><article><p bf="s1"><span bf="s0">hello</span></p></article></section></div>`,
+  expectedHtml: `
+    <div bf-s="test"><section><article><p bf="s1"><span bf="s0">hello</span></p></article></section></div>
+  `,
 })

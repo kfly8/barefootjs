@@ -8,5 +8,7 @@ export function ClassVsClassname() {
   return <div className="container"><span className="label">Text</span></div>
 }
 `,
-  expectedHtml: `<div class="container" bf-s="test"><span class="label">Text</span></div>`,
+  expectedHtml: `
+    <div class="container" bf-s="test"><span class="label">Text</span></div>
+  `,
 })

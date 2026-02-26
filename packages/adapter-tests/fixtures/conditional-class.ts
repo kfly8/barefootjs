@@ -11,5 +11,7 @@ export function ConditionalClass() {
   return <div className={active() ? 'on' : 'off'}>Toggle</div>
 }
 `,
-  expectedHtml: `<div class="off" bf-s="test" bf="s0">Toggle</div>`,
+  expectedHtml: `
+    <div class="off" bf-s="test" bf="s0">Toggle</div>
+  `,
 })
