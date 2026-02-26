@@ -1,0 +1,297 @@
+"use client"
+
+/**
+ * Carousel Components
+ *
+ * A carousel with motion and swipe built using Embla Carousel.
+ * Uses context pattern (like Dialog) for parent-child communication.
+ * Context is ONLY consumed inside ref callbacks (client-side hydration).
+ * Orientation is passed via data-orientation attribute for SSR.
+ *
+ * @example Basic carousel
+ * ```tsx
+ * <Carousel>
+ *   <CarouselContent>
+ *     <CarouselItem>Slide 1</CarouselItem>
+ *     <CarouselItem>Slide 2</CarouselItem>
+ *     <CarouselItem>Slide 3</CarouselItem>
+ *   </CarouselContent>
+ *   <CarouselPrevious />
+ *   <CarouselNext />
+ * </Carousel>
+ * ```
+ */
+
+import { createContext, useContext, createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
+import type { Child } from '../../../types'
+
+// Embla Carousel types (minimal subset)
+type EmblaOptionsType = {
+  axis?: 'x' | 'y'
+  loop?: boolean
+  align?: 'start' | 'center' | 'end'
+  dragFree?: boolean
+  containScroll?: 'trimSnaps' | 'keepSnaps' | false
+  [key: string]: any
+}
+
+type EmblaCarouselType = {
+  scrollPrev: () => void
+  scrollNext: () => void
+  canScrollPrev: () => boolean
+  canScrollNext: () => boolean
+  on: (event: any, callback: () => void) => any
+  destroy: () => void
+}
+
+// Context for Carousel → children state sharing (client-side only)
+interface CarouselContextValue {
+  orientation: 'horizontal' | 'vertical'
+  scrollPrev: () => void
+  scrollNext: () => void
+  canScrollPrev: () => boolean
+  canScrollNext: () => boolean
+  setApi: (api: EmblaCarouselType) => void
+  setCanScrollPrev: (v: boolean) => void
+  setCanScrollNext: (v: boolean) => void
+}
+
+const CarouselContext = createContext<CarouselContextValue>()
+
+// CSS classes
+const carouselClasses = 'relative'
+const carouselContentClasses = 'flex'
+const carouselItemClasses = 'min-w-0 shrink-0 grow-0 basis-full'
+
+const carouselButtonBaseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 absolute h-8 w-8 rounded-full'
+
+interface CarouselProps extends HTMLBaseAttributes {
+  /** Scroll orientation */
+  orientation?: 'horizontal' | 'vertical'
+  /** Embla Carousel options */
+  opts?: EmblaOptionsType
+  /** Carousel content */
+  children?: Child
+}
+
+function Carousel(props: CarouselProps) {
+  const orientation = props.orientation ?? 'horizontal'
+  const [canScrollPrev, setCanScrollPrev] = createSignal(false)
+  const [canScrollNext, setCanScrollNext] = createSignal(false)
+  let emblaApi: EmblaCarouselType | undefined
+
+  const scrollPrev = () => emblaApi?.scrollPrev()
+  const scrollNext = () => emblaApi?.scrollNext()
+
+  const handleMount = (el: HTMLElement) => {
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (orientation === 'horizontal') {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); scrollPrev() }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); scrollNext() }
+      } else {
+        if (e.key === 'ArrowUp') { e.preventDefault(); scrollPrev() }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); scrollNext() }
+      }
+    })
+  }
+
+  return (
+    <CarouselContext.Provider value={{
+      orientation,
+      scrollPrev,
+      scrollNext,
+      canScrollPrev,
+      canScrollNext,
+      setApi: (api: EmblaCarouselType) => { emblaApi = api },
+      setCanScrollPrev,
+      setCanScrollNext,
+    }}>
+      <div
+        data-slot="carousel"
+        role="region"
+        aria-roledescription="carousel"
+        className={`${carouselClasses} ${props.className ?? ''}`}
+        tabindex={0}
+        ref={handleMount}
+        data-orientation={orientation}
+        data-opts={props.opts ? JSON.stringify(props.opts) : undefined}
+      >
+        {props.children}
+      </div>
+    </CarouselContext.Provider>
+  )
+}
+
+interface CarouselContentProps extends HTMLBaseAttributes {
+  /** Carousel items */
+  children?: Child
+  /** Orientation override (read from parent via data attribute during SSR) */
+  orientation?: 'horizontal' | 'vertical'
+}
+
+function CarouselContent(props: CarouselContentProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(CarouselContext)
+    const carouselEl = el.closest('[data-slot="carousel"]') as HTMLElement
+    if (!carouselEl) return
+
+    // Parse options from carousel root
+    const optsStr = carouselEl.dataset.opts
+    const userOpts: EmblaOptionsType = optsStr ? JSON.parse(optsStr) : {}
+    const orientation = ctx.orientation
+
+    // Dynamic import of embla-carousel
+    import('embla-carousel').then((mod) => {
+      const EmblaCarousel = mod.default
+      const viewportEl = el.parentElement as HTMLElement
+
+      const opts: EmblaOptionsType = {
+        axis: orientation === 'vertical' ? 'y' : 'x',
+        ...userOpts,
+      }
+
+      const embla = EmblaCarousel(viewportEl, opts)
+
+      const updateButtons = () => {
+        ctx.setCanScrollPrev(embla.canScrollPrev())
+        ctx.setCanScrollNext(embla.canScrollNext())
+      }
+
+      embla.on('select', updateButtons)
+      embla.on('reInit', updateButtons)
+      updateButtons()
+
+      ctx.setApi(embla)
+
+      onCleanup(() => {
+        embla.destroy()
+      })
+    })
+  }
+
+  // For SSR: default to horizontal layout
+  return (
+    <div data-slot="carousel-viewport" className="overflow-hidden">
+      <div
+        data-slot="carousel-content"
+        className={`${carouselContentClasses} -ml-4 ${props.className ?? ''}`}
+        ref={handleMount}
+      >
+        {props.children}
+      </div>
+    </div>
+  )
+}
+
+interface CarouselItemProps extends HTMLBaseAttributes {
+  /** Slide content */
+  children?: Child
+}
+
+function CarouselItem(props: CarouselItemProps) {
+  // For SSR: default to horizontal padding
+  return (
+    <div
+      data-slot="carousel-item"
+      role="group"
+      aria-roledescription="slide"
+      className={`${carouselItemClasses} pl-4 ${props.className ?? ''}`}
+    >
+      {props.children}
+    </div>
+  )
+}
+
+interface CarouselPreviousProps extends ButtonHTMLAttributes {
+  /** Button content override */
+  children?: Child
+}
+
+function CarouselPrevious(props: CarouselPreviousProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(CarouselContext)
+
+    el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      ctx.scrollPrev()
+    })
+
+    createEffect(() => {
+      const disabled = !ctx.canScrollPrev()
+      ;(el as HTMLButtonElement).disabled = disabled
+    })
+
+    // Update position classes based on orientation
+    const carouselEl = el.closest('[data-slot="carousel"]') as HTMLElement
+    if (carouselEl?.dataset.orientation === 'vertical') {
+      el.classList.add('-top-12', 'left-1/2', '-translate-x-1/2', 'rotate-90')
+      el.classList.remove('-left-12', 'top-1/2', '-translate-y-1/2')
+    }
+  }
+
+  // Default: horizontal position
+  return (
+    <button
+      data-slot="carousel-previous"
+      type="button"
+      className={`${carouselButtonBaseClasses} -left-12 top-1/2 -translate-y-1/2 ${props.className ?? ''}`}
+      disabled
+      aria-label="Previous slide"
+      ref={handleMount}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+      <span className="sr-only">Previous slide</span>
+    </button>
+  )
+}
+
+interface CarouselNextProps extends ButtonHTMLAttributes {
+  /** Button content override */
+  children?: Child
+}
+
+function CarouselNext(props: CarouselNextProps) {
+  const handleMount = (el: HTMLElement) => {
+    const ctx = useContext(CarouselContext)
+
+    el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      ctx.scrollNext()
+    })
+
+    createEffect(() => {
+      const disabled = !ctx.canScrollNext()
+      ;(el as HTMLButtonElement).disabled = disabled
+    })
+
+    // Update position classes based on orientation
+    const carouselEl = el.closest('[data-slot="carousel"]') as HTMLElement
+    if (carouselEl?.dataset.orientation === 'vertical') {
+      el.classList.add('-bottom-12', 'left-1/2', '-translate-x-1/2', 'rotate-90')
+      el.classList.remove('-right-12', 'top-1/2', '-translate-y-1/2')
+    }
+  }
+
+  // Default: horizontal position
+  return (
+    <button
+      data-slot="carousel-next"
+      type="button"
+      className={`${carouselButtonBaseClasses} -right-12 top-1/2 -translate-y-1/2 ${props.className ?? ''}`}
+      disabled
+      aria-label="Next slide"
+      ref={handleMount}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+      <span className="sr-only">Next slide</span>
+    </button>
+  )
+}
+
+export { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext }
+export type { CarouselProps, CarouselContentProps, CarouselItemProps, CarouselPreviousProps, CarouselNextProps }

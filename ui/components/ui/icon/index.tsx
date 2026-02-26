@@ -64,6 +64,7 @@ const strokePaths = {
   'arrow-left': 'm12 19-7-7 7-7M19 12H5',
   'arrow-right': 'M5 12h14m-7-7 7 7-7 7',
   'ellipsis': 'M5 12h.01M12 12h.01M19 12h.01',
+  'arrow-up-down': 'm21 16-4 4-4-4M17 20V4M3 8l4-4 4 4M7 4v16',
 } as const
 
 export type IconName = keyof typeof strokePaths | 'github' | 'search' | 'settings' | 'globe' | 'log-out' | 'circle-help'
@@ -220,6 +221,15 @@ export function ArrowRightIcon({ size, className = '', ...props }: IconProps) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
       <path d={strokePaths['arrow-right']} />
+    </svg>
+  )
+}
+
+export function ArrowUpDownIcon({ size, className = '', ...props }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
+      <path d={strokePaths['arrow-up-down']} />
     </svg>
   )
 }

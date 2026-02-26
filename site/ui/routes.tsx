@@ -9,12 +9,14 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
+import { AspectRatioPage } from './pages/aspect-ratio'
 import { AlertPage } from './pages/alert'
 import { AlertDialogPage } from './pages/alert-dialog'
 import { AvatarPage } from './pages/avatar'
 import { BadgePage } from './pages/badge'
 import { BreadcrumbPage } from './pages/breadcrumb'
 import { ButtonPage } from './pages/button'
+import { CarouselPage } from './pages/carousel'
 import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
 import { InputPage } from './pages/input'
@@ -27,6 +29,7 @@ import { CommandPage } from './pages/command'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { ContextMenuPage } from './pages/context-menu'
+import { DataTablePage } from './pages/data-table'
 import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
 import { TogglePage } from './pages/toggle'
@@ -97,6 +100,10 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
               <p className="text-xs text-muted-foreground">Modal dialog for important confirmations</p>
             </a>
+            <a href="/docs/components/aspect-ratio" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Aspect Ratio</h3>
+              <p className="text-xs text-muted-foreground">Content within a desired ratio</p>
+            </a>
             <a href="/docs/components/avatar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Avatar</h3>
               <p className="text-xs text-muted-foreground">User profile image with fallback</p>
@@ -117,6 +124,10 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Card</h3>
               <p className="text-xs text-muted-foreground">Container for grouped content</p>
             </a>
+            <a href="/docs/components/carousel" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Carousel</h3>
+              <p className="text-xs text-muted-foreground">Motion and swipe content slider</p>
+            </a>
             <a href="/docs/components/checkbox" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Checkbox</h3>
               <p className="text-xs text-muted-foreground">Toggle selection control</p>
@@ -132,6 +143,10 @@ export function createApp() {
             <a href="/docs/components/context-menu" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Context Menu</h3>
               <p className="text-xs text-muted-foreground">Right-click menu at cursor position</p>
+            </a>
+            <a href="/docs/components/data-table" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Data Table</h3>
+              <p className="text-xs text-muted-foreground">Sortable, filterable data table</p>
             </a>
             <a href="/docs/components/dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Dialog</h3>
@@ -286,6 +301,11 @@ export function createApp() {
     )
   })
 
+  // Aspect Ratio documentation
+  app.get('/docs/components/aspect-ratio', (c) => {
+    return c.render(<AspectRatioPage />)
+  })
+
   // Alert documentation
   app.get('/docs/components/alert', (c) => {
     return c.render(<AlertPage />)
@@ -317,6 +337,11 @@ export function createApp() {
       title: 'Button - barefootjs/ui',
       description: 'Displays a button or a component that looks like a button.',
     })
+  })
+
+  // Carousel documentation
+  app.get('/docs/components/carousel', (c) => {
+    return c.render(<CarouselPage />)
   })
 
   // Card documentation
@@ -382,6 +407,11 @@ export function createApp() {
   // Context Menu documentation
   app.get('/docs/components/context-menu', (c) => {
     return c.render(<ContextMenuPage />)
+  })
+
+  // Data Table documentation
+  app.get('/docs/components/data-table', (c) => {
+    return c.render(<DataTablePage />)
   })
 
   // Dropdown Menu documentation

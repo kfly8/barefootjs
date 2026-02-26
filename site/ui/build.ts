@@ -365,6 +365,15 @@ const siteGlobalsCSS = await Bun.file(resolve(STYLES_DIR, 'globals.css')).text()
 await Bun.write(resolve(DIST_DIR, 'globals.css'), tokensCSS + '\n' + siteGlobalsCSS)
 console.log('Generated: dist/globals.css (tokens + globals)')
 
+// Copy third-party ESM modules needed by client JS
+const EMBLA_ESM = resolve(ROOT_DIR, '../../node_modules/embla-carousel/esm/embla-carousel.esm.js')
+if (await Bun.file(EMBLA_ESM).exists()) {
+  const emblaDir = resolve(DIST_DIR, 'lib')
+  await mkdir(emblaDir, { recursive: true })
+  await Bun.write(resolve(emblaDir, 'embla-carousel.esm.js'), Bun.file(EMBLA_ESM))
+  console.log('Copied: dist/lib/embla-carousel.esm.js')
+}
+
 // Copy lib/ directory to dist/
 // These are runtime utilities needed by compiled components
 const LIB_DIR = resolve(ROOT_DIR, 'lib')
@@ -487,6 +496,13 @@ async function copyDir(src: string, dest: string) {
 }
 await copyDir(DIST_COMPONENTS_DIR, resolve(DIST_STATIC_DIR, 'components'))
 console.log('Copied: dist/static/components/')
+
+// Copy lib/ to static/lib/ for client-side third-party modules
+const DIST_LIB_DIR_EXISTS = await Bun.file(resolve(DIST_DIR, 'lib/embla-carousel.esm.js')).exists()
+if (DIST_LIB_DIR_EXISTS) {
+  await copyDir(resolve(DIST_DIR, 'lib'), resolve(DIST_STATIC_DIR, 'lib'))
+  console.log('Copied: dist/static/lib/')
+}
 
 // Generate _headers for Cloudflare Workers static assets (CORS + cache for registry)
 const headersContent = `/r/*

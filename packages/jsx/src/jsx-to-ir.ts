@@ -1112,10 +1112,11 @@ function transformMapCall(
   // Only signal and memo arrays need reconcileList for dynamic DOM updates
   const isStaticArray = !isSignalOrMemoArray(array, ctx)
 
-  // For static arrays without direct childComponent, collect nested components
-  // This enables hydrating components wrapped in elements (e.g., <div><Checkbox /></div>)
-  const nestedComponents = (!childComponent && isStaticArray)
-    ? collectNestedComponents(children)
+  // For static arrays, collect nested components that need hydration.
+  // When childComponent exists (e.g., <TableRow>), also collect components nested
+  // within it (e.g., <Checkbox> inside <TableCell> inside <TableRow>).
+  const nestedComponents = isStaticArray
+    ? collectNestedComponents(children).filter(c => c.name !== childComponent?.name)
     : undefined
 
   return {
@@ -1164,6 +1165,11 @@ function collectNestedComponents(nodes: IRNode[]): IRLoopChildComponent[] {
           })),
         children: node.children,
       })
+      // Also traverse component children to find deeply nested components
+      // (e.g., Checkbox inside TableCell inside TableRow)
+      if (node.children) {
+        node.children.forEach(traverse)
+      }
     }
     if (node.type === 'element' && node.children) {
       node.children.forEach(traverse)

@@ -29,6 +29,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "embla-carousel": "^8.6.0",
     "shiki": "^3.21.0"
   }
 }

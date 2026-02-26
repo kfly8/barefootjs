@@ -424,7 +424,10 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
 
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${v}) {`)
-        lines.push(`    const __childScopes = _${v}.querySelectorAll('[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])')`)
+        const childSelector = elem.childComponent.slotId
+          ? `[bf-s$="_${elem.childComponent.slotId}"]:not([bf-h])`
+          : `[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])`
+        lines.push(`    const __childScopes = _${v}.querySelectorAll('${childSelector}')`)
         const indexParam = elem.index || '__idx'
         lines.push(`    __childScopes.forEach((childScope, ${indexParam}) => {`)
         lines.push(`      const ${elem.param} = ${elem.array}[${indexParam}]`)

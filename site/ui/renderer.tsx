@@ -75,15 +75,18 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Accordion', href: '/docs/components/accordion' },
       { title: 'Alert', href: '/docs/components/alert' },
       { title: 'Alert Dialog', href: '/docs/components/alert-dialog' },
+      { title: 'Aspect Ratio', href: '/docs/components/aspect-ratio' },
       { title: 'Avatar', href: '/docs/components/avatar' },
       { title: 'Badge', href: '/docs/components/badge' },
       { title: 'Breadcrumb', href: '/docs/components/breadcrumb' },
       { title: 'Button', href: '/docs/components/button' },
       { title: 'Card', href: '/docs/components/card' },
+      { title: 'Carousel', href: '/docs/components/carousel' },
       { title: 'Checkbox', href: '/docs/components/checkbox' },
       { title: 'Collapsible', href: '/docs/components/collapsible' },
       { title: 'Command', href: '/docs/components/command' },
       { title: 'Context Menu', href: '/docs/components/context-menu' },
+      { title: 'Data Table', href: '/docs/components/data-table' },
       { title: 'Dialog', href: '/docs/components/dialog' },
       { title: 'Drawer', href: '/docs/components/drawer' },
       { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
@@ -132,10 +135,11 @@ const menuEntries: SidebarEntry[] = [
   },
 ]
 
-// Import map for resolving @barefootjs/dom in client JS
+// Import map for resolving bare module specifiers in client JS
 const importMapScript = JSON.stringify({
   imports: {
     '@barefootjs/dom': '/static/components/barefoot.js',
+    'embla-carousel': '/static/lib/embla-carousel.esm.js',
   },
 })
 
