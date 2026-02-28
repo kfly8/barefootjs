@@ -1,14 +1,14 @@
 import { describe, test, expect } from 'bun:test'
 import ts from 'typescript'
-import { printWithoutTypes } from '../print-without-types'
+import { collectAllTypeRanges, reconstructWithoutTypes } from '../print-without-types'
 
 /**
- * Helper: parse a TypeScript expression and run printWithoutTypes on it.
+ * Helper: parse a TypeScript expression and return it with types stripped.
  */
 function strip(code: string): string {
   const sourceFile = ts.createSourceFile('test.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  // Return the full file printed without types
-  return printWithoutTypes(sourceFile, sourceFile).trim()
+  const ranges = collectAllTypeRanges(sourceFile)
+  return reconstructWithoutTypes(sourceFile, sourceFile, ranges).trim()
 }
 
 /**
@@ -16,17 +16,17 @@ function strip(code: string): string {
  * and print it without types. Useful for testing single expressions.
  */
 function stripExpr(code: string): string {
-  const wrapped = code
-  const sourceFile = ts.createSourceFile('test.ts', wrapped, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const sourceFile = ts.createSourceFile('test.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const ranges = collectAllTypeRanges(sourceFile)
   const stmt = sourceFile.statements[0]
   if (ts.isExpressionStatement(stmt)) {
-    return printWithoutTypes(stmt.expression, sourceFile)
+    return reconstructWithoutTypes(stmt.expression, sourceFile, ranges)
   }
   // For variable declarations
   if (ts.isVariableStatement(stmt)) {
-    return printWithoutTypes(stmt, sourceFile)
+    return reconstructWithoutTypes(stmt, sourceFile, ranges)
   }
-  return printWithoutTypes(stmt, sourceFile)
+  return reconstructWithoutTypes(stmt, sourceFile, ranges)
 }
 
 describe('printWithoutTypes', () => {
@@ -173,9 +173,10 @@ describe('printWithoutTypes', () => {
       // Angle-bracket assertions are only valid in .ts files, not .tsx
       const code = '<HTMLElement>element'
       const sourceFile = ts.createSourceFile('test.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+      const ranges = collectAllTypeRanges(sourceFile)
       const stmt = sourceFile.statements[0]
       if (ts.isExpressionStatement(stmt)) {
-        expect(printWithoutTypes(stmt.expression, sourceFile)).toBe('element')
+        expect(reconstructWithoutTypes(stmt.expression, sourceFile, ranges)).toBe('element')
       }
     })
   })

@@ -4,39 +4,65 @@
  * Uses the TypeScript AST to collect text ranges of type-only syntax,
  * then reconstructs the source text by skipping those ranges.
  * This preserves original formatting exactly.
+ *
+ * Design: collectAllTypeRanges() walks the entire SourceFile once and produces
+ * a sorted, merged ExcludeRange[]. reconstructWithoutTypes() then filters
+ * those ranges to a node's span and rebuilds the text — no extra AST walk.
  */
 
 import ts from 'typescript'
 
-interface ExcludeRange {
+export interface ExcludeRange {
   start: number
   end: number
 }
 
 /**
- * Print a TypeScript AST node as JavaScript by excluding type-only syntax.
- * Replaces getText(sourceFile) for sites that produce client JS.
+ * Walk the entire SourceFile once and return all type-only text ranges,
+ * sorted and merged. Store the result on AnalyzerContext so every
+ * subsequent getJS(node) call is a cheap slice+filter.
  */
-export function printWithoutTypes(node: ts.Node, sourceFile: ts.SourceFile): string {
+export function collectAllTypeRanges(sourceFile: ts.SourceFile): ExcludeRange[] {
+  const ranges: ExcludeRange[] = []
+  collectTypeRanges(sourceFile, sourceFile, sourceFile.text, ranges)
+  ranges.sort((a, b) => a.start - b.start)
+  return mergeRanges(ranges)
+}
+
+/**
+ * Reconstruct a node's text by skipping pre-computed type ranges.
+ * Only ranges overlapping the node's span are considered.
+ */
+export function reconstructWithoutTypes(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  ranges: ExcludeRange[]
+): string {
   const nodeStart = node.getStart(sourceFile)
   const nodeEnd = node.getEnd()
   const fullText = sourceFile.text
 
-  const ranges: ExcludeRange[] = []
-  collectTypeRanges(node, sourceFile, fullText, ranges)
+  // Binary search for the first range that could overlap
+  let lo = 0
+  let hi = ranges.length
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1
+    if (ranges[mid].end <= nodeStart) {
+      lo = mid + 1
+    } else {
+      hi = mid
+    }
+  }
 
-  // Sort by start position and merge overlapping ranges
-  ranges.sort((a, b) => a.start - b.start)
-  const merged = mergeRanges(ranges)
-
-  // Reconstruct text by skipping excluded ranges
   let result = ''
   let pos = nodeStart
-  for (const range of merged) {
+  for (let i = lo; i < ranges.length; i++) {
+    const range = ranges[i]
+    if (range.start >= nodeEnd) break
     if (range.start > pos) {
       result += fullText.slice(pos, range.start)
     }
-    pos = range.end
+    pos = Math.max(pos, range.end)
   }
   if (pos < nodeEnd) {
     result += fullText.slice(pos, nodeEnd)

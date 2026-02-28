@@ -28,7 +28,6 @@ import type {
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
 import { createError, ErrorCodes } from './errors'
-import { printWithoutTypes } from './print-without-types'
 
 // =============================================================================
 // Transform Context
@@ -41,6 +40,8 @@ interface TransformContext {
   slotIdCounter: number
   isRoot: boolean
   insideComponentChildren: boolean
+  /** Shortcut for analyzer.getJS(node) */
+  getJS(node: ts.Node): string
 }
 
 function createTransformContext(analyzer: AnalyzerContext): TransformContext {
@@ -51,6 +52,9 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
     slotIdCounter: 0,
     isRoot: true,
     insideComponentChildren: false,
+    getJS(node: ts.Node): string {
+      return analyzer.getJS(node)
+    },
   }
 }
 
@@ -601,7 +605,7 @@ function transformExpression(
   }
 
   // Regular expression
-  const exprText = printWithoutTypes(expr, ctx.sourceFile)
+  const exprText = ctx.getJS(expr)
   const reactive = isReactiveExpression(exprText, ctx)
   // @client expressions always need slotId and are treated as reactive for client-side evaluation
   const needsSlot = reactive || isClientOnly
@@ -626,7 +630,7 @@ function transformConditional(
   node: ts.ConditionalExpression,
   ctx: TransformContext
 ): IRConditional {
-  const condition = printWithoutTypes(node.condition, ctx.sourceFile)
+  const condition = ctx.getJS(node.condition)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -650,7 +654,7 @@ function transformLogicalAnd(
   node: ts.BinaryExpression,
   ctx: TransformContext
 ): IRConditional {
-  const condition = printWithoutTypes(node.left, ctx.sourceFile)
+  const condition = ctx.getJS(node.left)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -691,7 +695,7 @@ function transformConditionalBranch(
   }
 
   // Regular expression (including null)
-  const exprText = printWithoutTypes(node, ctx.sourceFile)
+  const exprText = ctx.getJS(node)
   return {
     type: 'expression',
     expr: exprText,
@@ -788,7 +792,7 @@ function extractSortComparator(
     return { result: null, unsupportedReason: 'Block body sort comparators are not supported for server-side rendering' }
   }
 
-  const raw = printWithoutTypes(callback.body, ctx.sourceFile)
+  const raw = ctx.getJS(callback.body)
 
   // Must be a subtraction: a.field - b.field or b.field - a.field
   if (!ts.isBinaryExpression(callback.body) || callback.body.operatorToken.kind !== ts.SyntaxKind.MinusToken) {
@@ -803,8 +807,8 @@ function extractSortComparator(
     return { result: null, unsupportedReason: `Sort comparator '${raw}' is not a simple field access pattern` }
   }
 
-  const leftObj = printWithoutTypes(left.expression, ctx.sourceFile)
-  const rightObj = printWithoutTypes(right.expression, ctx.sourceFile)
+  const leftObj = ctx.getJS(left.expression)
+  const rightObj = ctx.getJS(right.expression)
   const leftField = left.name.text
   const rightField = right.name.text
 
@@ -877,8 +881,8 @@ function extractFilterPredicate(
 
   // Block body arrow functions: filter(t => { const f = filter(); ... })
   if (ts.isBlock(callback.body)) {
-    const raw = printWithoutTypes(callback.body, ctx.sourceFile)
-    const statements = parseBlockBody(callback.body, ctx.sourceFile)
+    const raw = ctx.getJS(callback.body)
+    const statements = parseBlockBody(callback.body, ctx.sourceFile, (n) => ctx.getJS(n))
     if (!statements) {
       return { result: null, unsupportedReason: 'Block body filter predicate cannot be parsed for server-side rendering' }
     }
@@ -888,7 +892,7 @@ function extractFilterPredicate(
   }
 
   // Expression body: filter(t => !t.done)
-  const raw = printWithoutTypes(callback.body, ctx.sourceFile)
+  const raw = ctx.getJS(callback.body)
   const predicate = parseExpression(raw)
 
   // Check if predicate is supported for SSR
@@ -943,7 +947,7 @@ function transformMapCall(
         )
       }
       // Keep sort (and filter if present) in array string for client evaluation
-      array = printWithoutTypes(mapSource, ctx.sourceFile)
+      array = ctx.getJS(mapSource)
     } else {
       sortComparator = sortExtraction.result
 
@@ -966,16 +970,16 @@ function transformMapCall(
             )
           }
           // Keep entire chain in array for client evaluation
-          array = printWithoutTypes(mapSource, ctx.sourceFile)
+          array = ctx.getJS(mapSource)
           sortComparator = undefined
           chainOrder = undefined
         } else {
-          array = printWithoutTypes(innerFilter.array, ctx.sourceFile)
+          array = ctx.getJS(innerFilter.array)
           filterPredicate = filterExtraction.result
         }
       } else {
         // Simple sort().map()
-        array = printWithoutTypes(sortInfo.array, ctx.sourceFile)
+        array = ctx.getJS(sortInfo.array)
       }
     }
   } else if (filterInfo) {
@@ -1000,7 +1004,7 @@ function transformMapCall(
         )
       }
       // Keep filter (and sort if present) in array for client evaluation
-      array = printWithoutTypes(mapSource, ctx.sourceFile)
+      array = ctx.getJS(mapSource)
     } else {
       filterPredicate = filterExtraction.result
 
@@ -1023,18 +1027,18 @@ function transformMapCall(
             )
           }
           // Keep sort in array for client evaluation, but keep filter extracted
-          array = printWithoutTypes(filterInfo.array, ctx.sourceFile)
+          array = ctx.getJS(filterInfo.array)
         } else {
           sortComparator = sortExtraction.result
-          array = printWithoutTypes(innerSort.array, ctx.sourceFile)
+          array = ctx.getJS(innerSort.array)
         }
       } else {
         // Simple filter().map()
-        array = printWithoutTypes(filterInfo.array, ctx.sourceFile)
+        array = ctx.getJS(filterInfo.array)
       }
     }
   } else {
-    array = printWithoutTypes(mapSource, ctx.sourceFile)
+    array = ctx.getJS(mapSource)
   }
 
   // Get callback function
@@ -1205,7 +1209,7 @@ function processAttributes(
   for (const attr of attributes.properties) {
     // Spread attribute: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      const spreadExpr = printWithoutTypes(attr.expression, ctx.sourceFile)
+      const spreadExpr = ctx.getJS(attr.expression)
       const expandedKeys = ctx.analyzer.restPropsExpandedKeys
       const restName = ctx.analyzer.restPropsName
 
@@ -1240,7 +1244,7 @@ function processAttributes(
     // Ref attribute
     if (name === 'ref') {
       if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-        ref = printWithoutTypes(attr.initializer.expression, ctx.sourceFile)
+        ref = ctx.getJS(attr.initializer.expression)
       }
       continue
     }
@@ -1251,7 +1255,7 @@ function processAttributes(
         const eventName = name.slice(2).toLowerCase()
         events.push({
           name: eventName,
-          handler: printWithoutTypes(attr.initializer.expression, ctx.sourceFile),
+          handler: ctx.getJS(attr.initializer.expression),
           loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
         })
       }
@@ -1324,12 +1328,12 @@ function getAttributeValue(
     // Detect `expr || undefined` pattern → boolean presence attribute
     if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
       if (ts.isIdentifier(expr.right) && expr.right.text === 'undefined') {
-        const baseExpr = printWithoutTypes(expr.left, ctx.sourceFile)
+        const baseExpr = ctx.getJS(expr.left)
         return { value: baseExpr, dynamic: true, isLiteral: false, presenceOrUndefined: true }
       }
     }
 
-    const exprText = printWithoutTypes(expr, ctx.sourceFile)
+    const exprText = ctx.getJS(expr)
     return { value: exprText, dynamic: true, isLiteral: false }
   }
 
@@ -1359,11 +1363,11 @@ function parseTemplateLiteral(
         parts.push(ternary)
       } else {
         // Fallback: keep as string expression
-        parts.push({ type: 'string', value: `\${${printWithoutTypes(span.expression, ctx.sourceFile)}}` })
+        parts.push({ type: 'string', value: `\${${ctx.getJS(span.expression)}}` })
       }
     } else {
       // Non-ternary expression: keep as ${expr}
-      parts.push({ type: 'string', value: `\${${printWithoutTypes(span.expression, ctx.sourceFile)}}` })
+      parts.push({ type: 'string', value: `\${${ctx.getJS(span.expression)}}` })
     }
 
     // Add the literal part after this span (text after ${} until next ${} or end)
@@ -1390,7 +1394,7 @@ function parseTernary(
   if (whenTrueValue !== null && whenFalseValue !== null) {
     return {
       type: 'ternary',
-      condition: printWithoutTypes(expr.condition, ctx.sourceFile),
+      condition: ctx.getJS(expr.condition),
       whenTrue: whenTrueValue,
       whenFalse: whenFalseValue,
     }
@@ -1426,7 +1430,7 @@ function processComponentProps(
   for (const attr of attributes.properties) {
     // Spread props: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      const spreadExpr = printWithoutTypes(attr.expression, ctx.sourceFile)
+      const spreadExpr = ctx.getJS(attr.expression)
       const expandedKeys = ctx.analyzer.restPropsExpandedKeys
       const restName = ctx.analyzer.restPropsName
 
@@ -1767,7 +1771,7 @@ function buildIfStatementChain(
     const condReturn = conditionalReturns[i]
 
     // Get the condition text
-    const condition = printWithoutTypes(condReturn.condition, analyzer.sourceFile)
+    const condition = ctx.getJS(condReturn.condition)
 
     // Transform the JSX return in the then branch
     // Reset isRoot so each branch gets needsScope=true
@@ -1783,7 +1787,7 @@ function buildIfStatementChain(
       if (ts.isIdentifier(decl.name) && decl.initializer) {
         scopeVariables.push({
           name: decl.name.text,
-          initializer: printWithoutTypes(decl.initializer, analyzer.sourceFile),
+          initializer: ctx.getJS(decl.initializer),
         })
       }
     }
