@@ -110,6 +110,42 @@ describe('hydrate', () => {
     expect(initialized.length).toBe(0)
   })
 
+  test('does not crash on invalid props JSON', () => {
+    const initialized: Array<{ props: Record<string, unknown> }> = []
+
+    document.body.innerHTML = `
+      <div bf-s="Counter_abc" bf-p='{invalid json}'>content</div>
+    `
+
+    hydrate('Counter', {
+      init: (_scope, props) => {
+        initialized.push({ props })
+      }
+    })
+
+    expect(initialized.length).toBe(1)
+    expect(initialized[0].props).toEqual({})
+  })
+
+  test('does not crash on invalid comment props JSON', () => {
+    const initialized: Array<{ props: Record<string, unknown> }> = []
+
+    document.body.innerHTML = `
+      <!--bf-scope:FragComp_abc|{broken-->
+      <div>child</div>
+    `
+
+    hydrate('FragComp', {
+      init: (_scope, props) => {
+        initialized.push({ props })
+      },
+      comment: true
+    })
+
+    expect(initialized.length).toBe(1)
+    expect(initialized[0].props).toEqual({})
+  })
+
   test('with comment=true hydrates comment-based scopes', () => {
     const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
 

@@ -84,7 +84,14 @@ export function hydrate(name: string, def: ComponentDef): void {
 
       // Read props from bf-p attribute (flat format: {"propName": value, ...})
       const propsJson = scopeEl.getAttribute(BF_PROPS)
-      const props = propsJson ? JSON.parse(propsJson) : {}
+      let props: Record<string, unknown> = {}
+      if (propsJson) {
+        try {
+          props = JSON.parse(propsJson)
+        } catch {
+          console.warn(`[BarefootJS] Invalid props JSON on ${instanceId}:`, propsJson)
+        }
+      }
 
       def.init(scopeEl, props)
     }
@@ -161,8 +168,15 @@ function hydrateCommentScopes(
       })
 
       // Parse props from comment
-      const parsed = propsJson ? JSON.parse(propsJson) : {}
-      const props = parsed[name] ?? {}
+      let parsed: Record<string, unknown> = {}
+      if (propsJson) {
+        try {
+          parsed = JSON.parse(propsJson)
+        } catch {
+          console.warn(`[BarefootJS] Invalid props JSON in comment scope ${scopeId}:`, propsJson)
+        }
+      }
+      const props = (parsed[name] ?? {}) as Record<string, unknown>
 
       init(proxyEl, props)
     }
