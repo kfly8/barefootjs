@@ -11,5 +11,7 @@ export function TernaryDemo() {
   return <div>{show() ? <span>Visible</span> : <span>Hidden</span>}</div>
 }
 `,
-  expectedHtml: `<div bf-s="test" bf="s1"><span bf-c="s0">Hidden</span></div>`,
+  expectedHtml: `
+    <div bf-s="test" bf="s1"><span bf-c="s0">Hidden</span></div>
+  `,
 })

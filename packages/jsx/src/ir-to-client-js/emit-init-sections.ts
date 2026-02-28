@@ -6,7 +6,7 @@
 import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
-import { stripTypeScriptSyntax, inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
+import { inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
 import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, irChildrenToJsExpr } from './html-template'
 
 /**
@@ -87,7 +87,7 @@ export function emitEarlyConstants(lines: string[], earlyConstants: ConstantInfo
   for (const constant of earlyConstants) {
     const keyword = constant.declarationKind ?? 'const'
     if (constant.value !== undefined) {
-      const jsValue = stripTypeScriptSyntax(constant.value)
+      const jsValue = constant.value
       lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
     } else {
       lines.push(`  ${keyword} ${constant.name}`)
@@ -153,14 +153,13 @@ export function emitSignalsAndMemos(
   }
 
   for (const memo of ctx.memos) {
-    const jsComputation = stripTypeScriptSyntax(memo.computation)
-    lines.push(`  const ${memo.name} = createMemo(${jsComputation})`)
+    lines.push(`  const ${memo.name} = createMemo(${memo.computation})`)
   }
 
   for (const constant of lateConstants) {
     const keyword = constant.declarationKind ?? 'const'
     if (constant.value !== undefined) {
-      const jsValue = stripTypeScriptSyntax(constant.value)
+      const jsValue = constant.value
       lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
     } else {
       lines.push(`  ${keyword} ${constant.name}`)
@@ -184,8 +183,7 @@ export function emitFunctionsAndHandlers(
   for (const fn of ctx.localFunctions) {
     if (usedIdentifiers.has(fn.name)) {
       const paramStr = fn.params.map((p) => p.name).join(', ')
-      const jsBody = stripTypeScriptSyntax(fn.body)
-      lines.push(`  const ${fn.name} = (${paramStr}) => ${jsBody}`)
+      lines.push(`  const ${fn.name} = (${paramStr}) => ${fn.body}`)
       lines.push('')
     }
   }
@@ -197,8 +195,7 @@ export function emitFunctionsAndHandlers(
       const value = constant.value.trim()
       if (value.includes('=>')) {
         const keyword = constant.declarationKind ?? 'const'
-        const jsValue = stripTypeScriptSyntax(value)
-        lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
+        lines.push(`  ${keyword} ${constant.name} = ${value}`)
         lines.push('')
       }
     }
@@ -224,7 +221,7 @@ export function emitFunctionsAndHandlers(
   }
 }
 
-/** Emit createEffect blocks that update textContent for reactive expressions. */
+/** Emit createEffect blocks that update text nodes for reactive expressions. */
 export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): void {
   // Group elements by expression to consolidate effects with same dependencies
   const byExpression = new Map<string, typeof ctx.dynamicElements>()
@@ -248,12 +245,12 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         lines.push(`    const __val = ${expr}`)
         for (const elem of normalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    if (_${v}) _${v}.textContent = String(__val)`)
+          lines.push(`    if (_${v}) _${v}.nodeValue = String(__val)`)
         }
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    const __el_${v} = $(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${v}) __el_${v}.textContent = String(__val)`)
+          lines.push(`    const __el_${v} = $t(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${v}) __el_${v}.nodeValue = String(__val)`)
         }
       } else {
         // Only conditional elements — defer expression evaluation until
@@ -261,8 +258,8 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         // parent prop is undefined (e.g. prev?.title when prev is undefined).
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    const __el_${v} = $(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${v}) __el_${v}.textContent = String(${expr})`)
+          lines.push(`    const __el_${v} = $t(__scope, '${elem.slotId}')`)
+          lines.push(`    if (__el_${v}) __el_${v}.nodeValue = String(${expr})`)
         }
       }
       lines.push(`  })`)
@@ -355,7 +352,7 @@ function emitBranchBindings(
 
   for (const ref of refs) {
     const v = varSlotId(ref.slotId)
-    lines.push(`      if (_${v}) (${stripTypeScriptSyntax(ref.callback)})(_${v})`)
+    lines.push(`      if (_${v}) (${ref.callback})(_${v})`)
   }
 }
 
@@ -722,20 +719,18 @@ export function emitRefCallbacks(
   for (const elem of ctx.refElements) {
     if (conditionalSlotIds.has(elem.slotId)) continue
     const v = varSlotId(elem.slotId)
-    lines.push(`  if (_${v}) (${stripTypeScriptSyntax(elem.callback)})(_${v})`)
+    lines.push(`  if (_${v}) (${elem.callback})(_${v})`)
   }
 }
 
 /** Emit user-defined createEffect and onMount calls. */
 export function emitEffectsAndOnMounts(lines: string[], ctx: ClientJsContext): void {
   for (const effect of ctx.effects) {
-    const jsBody = stripTypeScriptSyntax(effect.body)
-    lines.push(`  createEffect(${jsBody})`)
+    lines.push(`  createEffect(${effect.body})`)
   }
 
   for (const onMount of ctx.onMounts) {
-    const jsBody = stripTypeScriptSyntax(onMount.body)
-    lines.push(`  onMount(${jsBody})`)
+    lines.push(`  onMount(${onMount.body})`)
   }
 }
 
@@ -745,8 +740,7 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
     lines.push('')
     lines.push('  // Provide context for child components')
     for (const provider of ctx.providerSetups) {
-      const jsValueExpr = stripTypeScriptSyntax(provider.valueExpr)
-      lines.push(`  provideContext(${provider.contextName}, ${jsValueExpr})`)
+      lines.push(`  provideContext(${provider.contextName}, ${provider.valueExpr})`)
     }
   }
 
@@ -755,8 +749,7 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
     lines.push(`  // Initialize child components with props`)
     for (const child of ctx.childInits) {
       const scopeRef = child.slotId ? `_${varSlotId(child.slotId)}` : '__scope'
-      const jsPropsExpr = stripTypeScriptSyntax(child.propsExpr)
-      lines.push(`  initChild('${child.name}', ${scopeRef}, ${jsPropsExpr})`)
+      lines.push(`  initChild('${child.name}', ${scopeRef}, ${child.propsExpr})`)
     }
   }
 }
@@ -883,7 +876,7 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
       continue
     }
 
-    inlinableConstants.set(constant.name, stripTypeScriptSyntax(trimmedValue))
+    inlinableConstants.set(constant.name, trimmedValue)
   }
 
   // Resolve chained references

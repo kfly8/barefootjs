@@ -1190,6 +1190,79 @@ export function $c(scope: Element | null, id: string): Element | null {
   return find(scope, `[${BF_SCOPE}^="${BF_CHILD_PREFIX}${cleanId}_"], [${BF_SCOPE}^="${cleanId}_"]`)
 }
 
+// --- $t: text node finder via comment markers ---
+
+/**
+ * Find the Text node for a reactive text expression marked by comment nodes.
+ * Expects marker format: <!--bf:sX-->text<!--/-->
+ *
+ * Used by compiler-generated code for reactive text expressions (e.g., {count()}).
+ * Returns the Text node after the start comment marker so that
+ * createEffect can update it via .nodeValue without needing a wrapper <span>.
+ *
+ * @param scope - The component scope element to search within
+ * @param id - The slot ID (e.g., 's0' or '^s3')
+ * @returns The Text node or null
+ */
+export function $t(scope: Element | null, id: string): Text | null {
+  if (!scope) return null
+  // Keep the full id (including ^ prefix) for marker matching —
+  // parent-owned slots produce <!--bf:^sN--> in the HTML.
+  const marker = `bf:${id}`
+  const isParentOwned = id.startsWith(BF_PARENT_OWNED_PREFIX)
+
+  // Determine search root
+  const commentInfo = commentScopeRegistry.get(scope)
+  const searchRoot: Node = commentInfo ? (commentInfo.commentNode.parentNode ?? scope) : scope
+
+  const walker = document.createTreeWalker(searchRoot, NodeFilter.SHOW_COMMENT)
+  while (walker.nextNode()) {
+    const comment = walker.currentNode as Comment
+    if (comment.nodeValue === marker) {
+      // For non-parent-owned slots, verify the comment belongs to this scope
+      // (not inside a nested child component scope)
+      if (!isParentOwned && !commentBelongsToScope(comment, scope, commentInfo)) {
+        continue
+      }
+      const next = comment.nextSibling
+      if (next?.nodeType === Node.TEXT_NODE) {
+        return next as Text
+      }
+      // No text node exists (empty initial value) — create one
+      const textNode = document.createTextNode('')
+      comment.parentNode?.insertBefore(textNode, comment.nextSibling)
+      return textNode
+    }
+  }
+  return null
+}
+
+/**
+ * Check if a comment node belongs to the given scope (not inside a nested child scope).
+ */
+function commentBelongsToScope(
+  comment: Comment,
+  scope: Element,
+  commentInfo: { commentNode: Comment; scopeId: string } | undefined
+): boolean {
+  // Walk up from the comment to find the nearest scope element
+  const parent = comment.parentElement
+  if (!parent) return false
+
+  // If the comment's parent element has a bf-s attribute that is NOT our scope,
+  // then the comment is inside a child component's scope
+  const parentScope = parent.closest(`[${BF_SCOPE}]`)
+  if (parentScope === scope) return true
+
+  // For comment-based scopes, the scope element is virtual
+  if (commentInfo) {
+    return isInCommentScopeRange(parent, commentInfo.commentNode)
+  }
+
+  // If the nearest scope is inside our scope, the comment is in a nested scope
+  return false
+}
+
 // --- updateClientMarker ---
 
 /**

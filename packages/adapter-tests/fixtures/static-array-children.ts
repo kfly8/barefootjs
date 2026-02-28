@@ -23,5 +23,10 @@ export function ListItem({ label, className }: { label: string; className?: stri
 }
 `,
   },
-  expectedHtml: `<ul bf-s="test" bf="s1"><li class="text-sm" bf-s="ListItem_*" bf="s1"><span bf="s0">Alpha</span></li><li class="text-sm" bf-s="ListItem_*" bf="s1"><span bf="s0">Beta</span></li></ul>`,
+  expectedHtml: `
+    <ul bf-s="test" bf="s1">
+      <li class="text-sm" bf-s="ListItem_*" bf="s1"><!--bf:s0-->Alpha<!--/--></li>
+      <li class="text-sm" bf-s="ListItem_*" bf="s1"><!--bf:s0-->Beta<!--/--></li>
+    </ul>
+  `,
 })

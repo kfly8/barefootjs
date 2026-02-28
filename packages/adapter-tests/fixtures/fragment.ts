@@ -11,5 +11,9 @@ export function FragmentDemo() {
   return <><span>A</span><span>{count()}</span></>
 }
 `,
-  expectedHtml: `<!--bf-scope:test--><span>A</span><span bf="s1"><span bf="s0">0</span></span>`,
+  expectedHtml: `
+    <!--bf-scope:test-->
+    <span>A</span>
+    <span bf="s1"><!--bf:s0-->0<!--/--></span>
+  `,
 })

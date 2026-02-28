@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'bun:test'
 import ts from 'typescript'
 import { parseExpression, isSupported, exprToString, parseBlockBody } from '../expression-parser'
+import { collectAllTypeRanges, reconstructWithoutTypes } from '../strip-types'
 
 describe('expression-parser', () => {
   describe('parseExpression', () => {
@@ -462,11 +463,13 @@ describe('expression-parser', () => {
         true,
         ts.ScriptKind.TSX
       )
+      const ranges = collectAllTypeRanges(sourceFile)
+      const getJS = (node: ts.Node) => reconstructWithoutTypes(node, sourceFile, ranges)
       const exprStmt = sourceFile.statements[0] as ts.ExpressionStatement
       const paren = exprStmt.expression as ts.ParenthesizedExpression
       const arrow = paren.expression as ts.ArrowFunction
       const block = arrow.body as ts.Block
-      return parseBlockBody(block, sourceFile)
+      return parseBlockBody(block, sourceFile, getJS)
     }
 
     test('parses simple return statement', () => {

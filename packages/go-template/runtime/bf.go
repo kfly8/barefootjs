@@ -49,7 +49,9 @@ func FuncMap() template.FuncMap {
 		"bf_sort":       Sort,
 
 		// Comment marker (for hydration)
-		"bfComment": Comment,
+		"bfComment":    Comment,
+		"bfTextStart":  TextStart,
+		"bfTextEnd":    TextEnd,
 
 		// Script collection
 		"bfScripts": BfScripts,
@@ -524,6 +526,18 @@ func capitalize(s string) string {
 // The "bf-" prefix is automatically added.
 func Comment(content string) template.HTML {
 	return template.HTML("<!--bf-" + content + "-->")
+}
+
+// TextStart returns an HTML comment start marker for reactive text expressions.
+// Format: <!--bf:slotId-->
+func TextStart(slotId string) template.HTML {
+	return template.HTML("<!--bf:" + slotId + "-->")
+}
+
+// TextEnd returns an HTML comment end marker for reactive text expressions.
+// Format: <!--/-->
+func TextEnd() template.HTML {
+	return "<!--/-->"
 }
 
 // ScopeComment outputs a comment-based scope marker for fragment root components.

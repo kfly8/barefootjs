@@ -12,5 +12,10 @@ export function PropsReactive(props: { label: string }) {
 }
 `,
   props: { label: 'Hello' },
-  expectedHtml: `<div bf-s="test"><span bf="s1"><span bf="s0">Hello</span></span><span bf="s3"><span bf="s2">0</span></span></div>`,
+  expectedHtml: `
+    <div bf-s="test">
+      <span bf="s1"><!--bf:s0-->Hello<!--/--></span>
+      <span bf="s3"><!--bf:s2-->0<!--/--></span>
+    </div>
+  `,
 })

@@ -18,5 +18,7 @@ export function ClientOnly() {
   )
 }
 `,
-  expectedHtml: `<ul bf-s="test" bf="s0"></ul>`,
+  expectedHtml: `
+    <ul bf-s="test" bf="s0"></ul>
+  `,
 })

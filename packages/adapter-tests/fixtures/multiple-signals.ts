@@ -12,5 +12,10 @@ export function MultipleSignals() {
   return <div><span>{name()}</span><span>{age()}</span></div>
 }
 `,
-  expectedHtml: `<div bf-s="test"><span bf="s1"><span bf="s0"></span></span><span bf="s3"><span bf="s2">0</span></span></div>`,
+  expectedHtml: `
+    <div bf-s="test">
+      <span bf="s1"><!--bf:s0--><!--/--></span>
+      <span bf="s3"><!--bf:s2-->0<!--/--></span>
+    </div>
+  `,
 })

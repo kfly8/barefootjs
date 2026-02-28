@@ -17,5 +17,10 @@ export function Badge({ label }: { label: string }) {
 `,
   },
   props: { title: 'Hello' },
-  expectedHtml: `<div bf-s="test"><h2 bf="s1"><span bf="s0">Hello</span></h2><span bf-s="test_s2" bf="s1"><span bf="s0">New</span></span></div>`,
+  expectedHtml: `
+    <div bf-s="test">
+      <h2 bf="s1"><!--bf:s0-->Hello<!--/--></h2>
+      <span bf-s="test_s2" bf="s1"><!--bf:s0-->New<!--/--></span>
+    </div>
+  `,
 })

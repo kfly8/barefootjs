@@ -40,6 +40,8 @@ interface TransformContext {
   slotIdCounter: number
   isRoot: boolean
   insideComponentChildren: boolean
+  /** Shortcut for analyzer.getJS(node) */
+  getJS(node: ts.Node): string
 }
 
 function createTransformContext(analyzer: AnalyzerContext): TransformContext {
@@ -50,6 +52,9 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
     slotIdCounter: 0,
     isRoot: true,
     insideComponentChildren: false,
+    getJS(node: ts.Node): string {
+      return analyzer.getJS(node)
+    },
   }
 }
 
@@ -600,7 +605,7 @@ function transformExpression(
   }
 
   // Regular expression
-  const exprText = expr.getText(ctx.sourceFile)
+  const exprText = ctx.getJS(expr)
   const reactive = isReactiveExpression(exprText, ctx)
   // @client expressions always need slotId and are treated as reactive for client-side evaluation
   const needsSlot = reactive || isClientOnly
@@ -625,7 +630,7 @@ function transformConditional(
   node: ts.ConditionalExpression,
   ctx: TransformContext
 ): IRConditional {
-  const condition = node.condition.getText(ctx.sourceFile)
+  const condition = ctx.getJS(node.condition)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -649,7 +654,7 @@ function transformLogicalAnd(
   node: ts.BinaryExpression,
   ctx: TransformContext
 ): IRConditional {
-  const condition = node.left.getText(ctx.sourceFile)
+  const condition = ctx.getJS(node.left)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -689,8 +694,18 @@ function transformConditionalBranch(
     return transformConditionalBranch(node.expression, ctx)
   }
 
+  // Nested ternary: cond1 ? <A/> : cond2 ? <B/> : <C/>
+  if (ts.isConditionalExpression(node)) {
+    return transformConditional(node, ctx)
+  }
+
+  // Logical AND in branch: cond1 ? <A/> : (cond2 && <B/>)
+  if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+    return transformLogicalAnd(node, ctx)
+  }
+
   // Regular expression (including null)
-  const exprText = node.getText(ctx.sourceFile)
+  const exprText = ctx.getJS(node)
   return {
     type: 'expression',
     expr: exprText,
@@ -787,7 +802,7 @@ function extractSortComparator(
     return { result: null, unsupportedReason: 'Block body sort comparators are not supported for server-side rendering' }
   }
 
-  const raw = callback.body.getText(ctx.sourceFile)
+  const raw = ctx.getJS(callback.body)
 
   // Must be a subtraction: a.field - b.field or b.field - a.field
   if (!ts.isBinaryExpression(callback.body) || callback.body.operatorToken.kind !== ts.SyntaxKind.MinusToken) {
@@ -802,8 +817,8 @@ function extractSortComparator(
     return { result: null, unsupportedReason: `Sort comparator '${raw}' is not a simple field access pattern` }
   }
 
-  const leftObj = left.expression.getText(ctx.sourceFile)
-  const rightObj = right.expression.getText(ctx.sourceFile)
+  const leftObj = ctx.getJS(left.expression)
+  const rightObj = ctx.getJS(right.expression)
   const leftField = left.name.text
   const rightField = right.name.text
 
@@ -876,8 +891,8 @@ function extractFilterPredicate(
 
   // Block body arrow functions: filter(t => { const f = filter(); ... })
   if (ts.isBlock(callback.body)) {
-    const raw = callback.body.getText(ctx.sourceFile)
-    const statements = parseBlockBody(callback.body, ctx.sourceFile)
+    const raw = ctx.getJS(callback.body)
+    const statements = parseBlockBody(callback.body, ctx.sourceFile, (n) => ctx.getJS(n))
     if (!statements) {
       return { result: null, unsupportedReason: 'Block body filter predicate cannot be parsed for server-side rendering' }
     }
@@ -887,7 +902,7 @@ function extractFilterPredicate(
   }
 
   // Expression body: filter(t => !t.done)
-  const raw = callback.body.getText(ctx.sourceFile)
+  const raw = ctx.getJS(callback.body)
   const predicate = parseExpression(raw)
 
   // Check if predicate is supported for SSR
@@ -942,7 +957,7 @@ function transformMapCall(
         )
       }
       // Keep sort (and filter if present) in array string for client evaluation
-      array = mapSource.getText(ctx.sourceFile)
+      array = ctx.getJS(mapSource)
     } else {
       sortComparator = sortExtraction.result
 
@@ -965,16 +980,16 @@ function transformMapCall(
             )
           }
           // Keep entire chain in array for client evaluation
-          array = mapSource.getText(ctx.sourceFile)
+          array = ctx.getJS(mapSource)
           sortComparator = undefined
           chainOrder = undefined
         } else {
-          array = innerFilter.array.getText(ctx.sourceFile)
+          array = ctx.getJS(innerFilter.array)
           filterPredicate = filterExtraction.result
         }
       } else {
         // Simple sort().map()
-        array = sortInfo.array.getText(ctx.sourceFile)
+        array = ctx.getJS(sortInfo.array)
       }
     }
   } else if (filterInfo) {
@@ -999,7 +1014,7 @@ function transformMapCall(
         )
       }
       // Keep filter (and sort if present) in array for client evaluation
-      array = mapSource.getText(ctx.sourceFile)
+      array = ctx.getJS(mapSource)
     } else {
       filterPredicate = filterExtraction.result
 
@@ -1022,18 +1037,18 @@ function transformMapCall(
             )
           }
           // Keep sort in array for client evaluation, but keep filter extracted
-          array = filterInfo.array.getText(ctx.sourceFile)
+          array = ctx.getJS(filterInfo.array)
         } else {
           sortComparator = sortExtraction.result
-          array = innerSort.array.getText(ctx.sourceFile)
+          array = ctx.getJS(innerSort.array)
         }
       } else {
         // Simple filter().map()
-        array = filterInfo.array.getText(ctx.sourceFile)
+        array = ctx.getJS(filterInfo.array)
       }
     }
   } else {
-    array = mapSource.getText(ctx.sourceFile)
+    array = ctx.getJS(mapSource)
   }
 
   // Get callback function
@@ -1204,7 +1219,7 @@ function processAttributes(
   for (const attr of attributes.properties) {
     // Spread attribute: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      const spreadExpr = attr.expression.getText(ctx.sourceFile)
+      const spreadExpr = ctx.getJS(attr.expression)
       const expandedKeys = ctx.analyzer.restPropsExpandedKeys
       const restName = ctx.analyzer.restPropsName
 
@@ -1239,7 +1254,7 @@ function processAttributes(
     // Ref attribute
     if (name === 'ref') {
       if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-        ref = attr.initializer.expression.getText(ctx.sourceFile)
+        ref = ctx.getJS(attr.initializer.expression)
       }
       continue
     }
@@ -1250,7 +1265,7 @@ function processAttributes(
         const eventName = name.slice(2).toLowerCase()
         events.push({
           name: eventName,
-          handler: attr.initializer.expression.getText(ctx.sourceFile),
+          handler: ctx.getJS(attr.initializer.expression),
           loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
         })
       }
@@ -1323,12 +1338,12 @@ function getAttributeValue(
     // Detect `expr || undefined` pattern → boolean presence attribute
     if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
       if (ts.isIdentifier(expr.right) && expr.right.text === 'undefined') {
-        const baseExpr = expr.left.getText(ctx.sourceFile)
+        const baseExpr = ctx.getJS(expr.left)
         return { value: baseExpr, dynamic: true, isLiteral: false, presenceOrUndefined: true }
       }
     }
 
-    const exprText = expr.getText(ctx.sourceFile)
+    const exprText = ctx.getJS(expr)
     return { value: exprText, dynamic: true, isLiteral: false }
   }
 
@@ -1358,11 +1373,11 @@ function parseTemplateLiteral(
         parts.push(ternary)
       } else {
         // Fallback: keep as string expression
-        parts.push({ type: 'string', value: `\${${span.expression.getText(ctx.sourceFile)}}` })
+        parts.push({ type: 'string', value: `\${${ctx.getJS(span.expression)}}` })
       }
     } else {
       // Non-ternary expression: keep as ${expr}
-      parts.push({ type: 'string', value: `\${${span.expression.getText(ctx.sourceFile)}}` })
+      parts.push({ type: 'string', value: `\${${ctx.getJS(span.expression)}}` })
     }
 
     // Add the literal part after this span (text after ${} until next ${} or end)
@@ -1389,7 +1404,7 @@ function parseTernary(
   if (whenTrueValue !== null && whenFalseValue !== null) {
     return {
       type: 'ternary',
-      condition: expr.condition.getText(ctx.sourceFile),
+      condition: ctx.getJS(expr.condition),
       whenTrue: whenTrueValue,
       whenFalse: whenFalseValue,
     }
@@ -1425,7 +1440,7 @@ function processComponentProps(
   for (const attr of attributes.properties) {
     // Spread props: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      const spreadExpr = attr.expression.getText(ctx.sourceFile)
+      const spreadExpr = ctx.getJS(attr.expression)
       const expandedKeys = ctx.analyzer.restPropsExpandedKeys
       const restName = ctx.analyzer.restPropsName
 
@@ -1766,7 +1781,7 @@ function buildIfStatementChain(
     const condReturn = conditionalReturns[i]
 
     // Get the condition text
-    const condition = condReturn.condition.getText(analyzer.sourceFile)
+    const condition = ctx.getJS(condReturn.condition)
 
     // Transform the JSX return in the then branch
     // Reset isRoot so each branch gets needsScope=true
@@ -1782,7 +1797,7 @@ function buildIfStatementChain(
       if (ts.isIdentifier(decl.name) && decl.initializer) {
         scopeVariables.push({
           name: decl.name.text,
-          initializer: decl.initializer.getText(analyzer.sourceFile),
+          initializer: ctx.getJS(decl.initializer),
         })
       }
     }

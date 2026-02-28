@@ -22,9 +22,19 @@ export interface JSXFixture {
 }
 
 /**
+ * Normalize expectedHtml by collapsing whitespace for comparison.
+ * Allows expectedHtml to be written with indentation in fixtures
+ * while still matching flat HTML output from adapters.
+ */
+export function normalizeExpectedHtml(html: string): string {
+  return html.replace(/>\s+</g, '><').replace(/\s+/g, ' ').trim()
+}
+
+/**
  * Create a JSXFixture with automatic source trimming.
  * Strips leading newline from template literals so source
  * can be written with a natural indentation style.
+ * Normalizes expectedHtml by collapsing whitespace.
  */
 export function createFixture(input: {
   id: string
@@ -39,5 +49,13 @@ export function createFixture(input: {
         Object.entries(input.components).map(([k, v]) => [k, v.trimStart()]),
       )
     : undefined
-  return { ...input, source: input.source.trimStart(), components: trimmedComponents }
+  const normalizedExpectedHtml = input.expectedHtml
+    ? normalizeExpectedHtml(input.expectedHtml)
+    : undefined
+  return {
+    ...input,
+    source: input.source.trimStart(),
+    components: trimmedComponents,
+    expectedHtml: normalizedExpectedHtml,
+  }
 }

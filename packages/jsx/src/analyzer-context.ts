@@ -19,6 +19,7 @@ import type {
   SourceLocation,
   ParamInfo,
 } from './types'
+import { type ExcludeRange, collectAllTypeRanges, reconstructWithoutTypes } from './strip-types'
 
 /**
  * Deferred info for BF043 (props destructuring warning).
@@ -83,6 +84,12 @@ export interface AnalyzerContext {
 
   // Directive
   hasUseClientDirective: boolean
+
+  // Pre-computed type ranges for type stripping
+  typeExcludeRanges: ExcludeRange[]
+
+  /** Return node text with TypeScript type syntax removed. */
+  getJS(node: ts.Node): string
 }
 
 export function createAnalyzerContext(
@@ -119,6 +126,11 @@ export function createAnalyzerContext(
     errors: [],
 
     hasUseClientDirective: false,
+
+    typeExcludeRanges: collectAllTypeRanges(sourceFile),
+    getJS(node: ts.Node): string {
+      return reconstructWithoutTypes(node, sourceFile, this.typeExcludeRanges)
+    },
   }
 }
 

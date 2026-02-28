@@ -90,8 +90,8 @@ export class HonoAdapter implements TemplateAdapter {
   private generateImports(ir: ComponentIR): string {
     const lines: string[] = []
 
-    // Add bfComment for conditional reconciliation markers
-    lines.push("import { bfComment } from '@barefootjs/hono/utils'")
+    // Add bfComment/bfText for hydration markers
+    lines.push("import { bfComment, bfText, bfTextEnd } from '@barefootjs/hono/utils'")
 
     // Re-export original imports (excluding @barefootjs/dom)
     for (const imp of ir.metadata.imports) {
@@ -491,9 +491,9 @@ export class HonoAdapter implements TemplateAdapter {
     if (expr.clientOnly && expr.slotId) {
       return `{bfComment("client:${expr.slotId}")}`
     }
-    // Wrap reactive expressions in a span with slot marker for client JS to find
+    // Mark reactive expressions with comment nodes for client JS to find
     if (expr.reactive && expr.slotId) {
-      return `<span bf="${expr.slotId}">{${expr.expr}}</span>`
+      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfTextEnd()}`
     }
     return `{${expr.expr}}`
   }

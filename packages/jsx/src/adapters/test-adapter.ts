@@ -246,7 +246,9 @@ export class TestAdapter extends BaseAdapter {
       return 'null'
     }
     if (expr.reactive && expr.slotId) {
-      return `<span bf="${expr.slotId}">{${expr.expr}}</span>`
+      // Use comment markers instead of span to avoid altering DOM structure.
+      // In JSX, this is rendered via bfText() at runtime.
+      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfTextEnd()}`
     }
     return `{${expr.expr}}`
   }
@@ -360,6 +362,7 @@ export class TestAdapter extends BaseAdapter {
   renderCondMarker(condId: string): string {
     return `bf-c="${condId}"`
   }
+
 }
 
 export const testAdapter = new TestAdapter()

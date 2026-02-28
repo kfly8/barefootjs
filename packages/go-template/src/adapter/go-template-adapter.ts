@@ -1047,13 +1047,14 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Use comment markers instead of <span> to avoid changing DOM structure.
     if (goExpr.startsWith('{{')) {
       if (expr.reactive && expr.slotId) {
-        return `{{bfComment "expr-start:${expr.slotId}"}}${goExpr}{{bfComment "expr-end:${expr.slotId}"}}`
+        return `{{bfTextStart "${expr.slotId}"}}${goExpr}{{bfTextEnd}}`
       }
       return goExpr
     }
 
+    // Mark reactive expressions with comment nodes for client JS to find
     if (expr.reactive && expr.slotId) {
-      return `<span ${this.renderSlotMarker(expr.slotId)}>{{${goExpr}}}</span>`
+      return `{{bfTextStart "${expr.slotId}"}}{{${goExpr}}}{{bfTextEnd}}`
     }
 
     return `{{${goExpr}}}`

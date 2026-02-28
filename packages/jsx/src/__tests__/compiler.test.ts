@@ -715,9 +715,9 @@ describe('Compiler', () => {
       const content = clientJs!.content
 
       // The expression should be inlined inside the element check, not evaluated before it.
-      // Pattern: if (__el_XX) __el_XX.textContent = String(prev.title)
+      // Pattern: if (__el_XX) __el_XX.nodeValue = String(prev.title)
       // NOT:     const __val = prev.title  (which would throw when prev is undefined)
-      expect(content).toMatch(/if \(__el_\w+\) __el_\w+\.textContent = String\(prev\.title\)/)
+      expect(content).toMatch(/if \(__el_\w+\) __el_\w+\.nodeValue = String\(prev\.title\)/)
       expect(content).not.toMatch(/const __val = prev\.title/)
     })
 
@@ -2505,8 +2505,8 @@ describe('Compiler', () => {
   describe('TypeScript syntax guard (#349)', () => {
     // Guard test: ensures no TypeScript syntax survives in generated client JS.
     // This catches regressions like #341 where a new emit site forgot to call
-    // stripTypeScriptSyntax(). When tsgo becomes available, this guard remains
-    // valid regardless of the stripping mechanism used.
+    // strip-types. Types are now stripped at the AST level in Phase 1
+    // via collectAllTypeRanges() + reconstructWithoutTypes() instead of regex-based stripping in Phase 2.
 
     test('all TypeScript syntax patterns are stripped from client JS output', () => {
       const source = `
@@ -3481,6 +3481,88 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       expect(clientJs!.content).toContain("const prefix = 'count'")
       expect(clientJs!.content).not.toContain('let prefix')
+    })
+  })
+
+  describe('nested ternary (#495)', () => {
+    test('compiles all branches of nested ternary', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function StatusBadge() {
+          const [status, setStatus] = createSignal('idle')
+          return <div>{status() === 'loading' ? <span>Loading</span> : status() === 'error' ? <span>Error</span> : <span>Idle</span>}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'StatusBadge.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // No raw JSX should remain in the compiled output
+      expect(clientJs!.content).not.toContain('<span>Loading</span>')
+      expect(clientJs!.content).not.toContain('<span>Error</span>')
+      expect(clientJs!.content).not.toContain('<span>Idle</span>')
+    })
+
+    test('compiles deeply nested ternary (3+ levels)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function DeepTernary() {
+          const [v, setV] = createSignal(0)
+          return <div>{v() === 1 ? <span>One</span> : v() === 2 ? <span>Two</span> : v() === 3 ? <span>Three</span> : <span>Other</span>}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'DeepTernary.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).not.toContain('<span>One</span>')
+      expect(clientJs!.content).not.toContain('<span>Two</span>')
+      expect(clientJs!.content).not.toContain('<span>Three</span>')
+      expect(clientJs!.content).not.toContain('<span>Other</span>')
+    })
+
+    test('compiles stateless nested ternary without errors', () => {
+      const source = `
+        export function StaticNested(props: { status: string }) {
+          return <div>{props.status === 'a' ? <span>A</span> : props.status === 'b' ? <span>B</span> : <span>C</span>}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'StaticNested.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      // Stateless components produce JSX templates — verify template is generated
+      const template = result.files.find(f => f.type === 'markedTemplate')
+      expect(template).toBeDefined()
+      // The nested ternary should produce two conditional expressions in the template
+      expect(template!.content).toContain("props.status === 'a'")
+      expect(template!.content).toContain("props.status === 'b'")
+    })
+
+    test('compiles logical AND inside ternary branch', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function AndInBranch() {
+          const [a, setA] = createSignal(false)
+          const [b, setB] = createSignal(false)
+          return <div>{a() ? <span>A</span> : b() && <span>B</span>}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'AndInBranch.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      expect(clientJs!.content).not.toContain('<span>A</span>')
+      expect(clientJs!.content).not.toContain('<span>B</span>')
     })
   })
 })

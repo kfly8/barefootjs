@@ -103,8 +103,7 @@ export function toHtmlAttrName(jsxAttrName: string): string {
  *   Output: (e) => { e.key === 'Enter' && handleAdd() }
  */
 export function wrapHandlerInBlock(handler: string): string {
-  const stripped = stripTypeScriptSyntax(handler)
-  const trimmed = stripped.trim()
+  const trimmed = handler.trim()
 
   if (trimmed.startsWith('(') && trimmed.includes('=>')) {
     const arrowIndex = trimmed.indexOf('=>')
@@ -136,50 +135,3 @@ export function inferDefaultValue(type: { kind: string; primitive?: string }): s
   return 'undefined'
 }
 
-/**
- * Strip TypeScript-specific syntax from a code string.
- * Converts TypeScript to JavaScript by removing:
- * - Type annotations on parameters: (e: KeyboardEvent) => (e)
- * - Type assertions: e.target as HTMLElement => e.target
- * - Variable type annotations: let x: number = 1 => let x = 1
- * - Return type annotations: (x): void => x  =>  (x) => x
- * - Type predicates: (el): el is HTMLElement => ...  =>  (el) => ...
- * - Generic type parameters: new Set<string>()  =>  new Set()
- * - Non-null assertions: x! => x
- */
-export function stripTypeScriptSyntax(code: string): string {
-  // Non-null assertions: x! => x (but not !== or !=)
-  let result = code.replace(/(\w)!(?!=)/g, '$1')
-
-  // Type assertions: "expr as Type" or "expr as Type | Type2 | ..."
-  // Supports identifier types (HTMLElement), string literal types ('horizontal'), and generics (Set<string>)
-  const tsTypeAtom = `(?:[A-Za-z_][A-Za-z0-9_]*(?:<[^>]*>)?(?:\\[\\])?|'[^']*'|"[^"]*")`
-  result = result.replace(new RegExp(`\\s+as\\s+${tsTypeAtom}(?:\\s*\\|\\s*${tsTypeAtom})*`, 'g'), '')
-
-  // Parameter type annotations: (param: Type) or (param: Type | Type2) => (param)
-  // Only match TypeScript types (uppercase initial or type keyword) to avoid matching object properties
-  result = result.replace(
-    /([(,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*((?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?(?:\s*\|\s*(?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?)*)(?=\s*[,)])/g,
-    '$1$2'
-  )
-
-  // Return type annotations and type predicates on arrow functions
-  result = result.replace(/\)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]\s|&]*(?:\s+is\s+[A-Za-z_][A-Za-z0-9_<>\[\]\s|&]*)?\s*=>/g, ') =>')
-
-  // Generic type parameters: new Set<string>(), Map<K, V>()
-  result = result.replace(/<[A-Za-z_][A-Za-z0-9_,\s<>]*>\s*\(/g, '(')
-
-  // Variable type annotations: let/const x: Type = value
-  result = result.replace(/(let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[^\n=]+=(?!=)/g, '$1 $2 =')
-
-  // Variable type annotations without initializer: let x: Type => let x
-  result = result.replace(/(let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:[^\n;=]+/g, '$1 $2')
-
-  // Multi-variable type annotations: let x: number, y: number
-  // Use a function replacer to strip types from all variables in a single declaration
-  result = result.replace(/(let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*,/g, '$1 $2,')
-  // Only strip continuation variables that follow a let/const/var declaration (lookbehind)
-  result = result.replace(/(?<=(?:let|const|var)\s+[a-zA-Z_][a-zA-Z0-9_]*[^;]*),\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*[A-Za-z_][A-Za-z0-9_<>\[\]|&\s]*(?=[,\n;)])/g, ', $1')
-
-  return result
-}
