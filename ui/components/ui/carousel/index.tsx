@@ -61,7 +61,6 @@ const CarouselContext = createContext<CarouselContextValue>()
 
 // CSS classes
 const carouselClasses = 'relative'
-const carouselContentClasses = 'flex'
 const carouselItemClasses = 'min-w-0 shrink-0 grow-0 basis-full'
 
 const carouselButtonBaseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 absolute h-8 w-8 rounded-full'
@@ -131,6 +130,8 @@ interface CarouselContentProps extends HTMLBaseAttributes {
 }
 
 function CarouselContent(props: CarouselContentProps) {
+  const orientation = props.orientation ?? 'horizontal'
+
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(CarouselContext)
     const carouselEl = el.closest('[data-slot="carousel"]') as HTMLElement
@@ -139,7 +140,6 @@ function CarouselContent(props: CarouselContentProps) {
     // Parse options from carousel root
     const optsStr = carouselEl.dataset.opts
     const userOpts: EmblaOptionsType = optsStr ? JSON.parse(optsStr) : {}
-    const orientation = ctx.orientation
 
     // Dynamic import of embla-carousel
     import('embla-carousel').then((mod) => {
@@ -147,7 +147,7 @@ function CarouselContent(props: CarouselContentProps) {
       const viewportEl = el.parentElement as HTMLElement
 
       const opts: EmblaOptionsType = {
-        axis: orientation === 'vertical' ? 'y' : 'x',
+        axis: ctx.orientation === 'vertical' ? 'y' : 'x',
         ...userOpts,
       }
 
@@ -170,12 +170,13 @@ function CarouselContent(props: CarouselContentProps) {
     })
   }
 
-  // For SSR: default to horizontal layout
+  const directionClasses = orientation === 'vertical' ? 'flex-col -mt-4' : 'flex -ml-4'
+
   return (
     <div data-slot="carousel-viewport" className="overflow-hidden">
       <div
         data-slot="carousel-content"
-        className={`${carouselContentClasses} -ml-4 ${props.className ?? ''}`}
+        className={`${directionClasses} ${props.className ?? ''}`}
         ref={handleMount}
       >
         {props.children}
@@ -185,18 +186,21 @@ function CarouselContent(props: CarouselContentProps) {
 }
 
 interface CarouselItemProps extends HTMLBaseAttributes {
+  /** Scroll orientation (must match parent Carousel) */
+  orientation?: 'horizontal' | 'vertical'
   /** Slide content */
   children?: Child
 }
 
 function CarouselItem(props: CarouselItemProps) {
-  // For SSR: default to horizontal padding
+  const paddingClass = (props.orientation ?? 'horizontal') === 'vertical' ? 'pt-4' : 'pl-4'
+
   return (
     <div
       data-slot="carousel-item"
       role="group"
       aria-roledescription="slide"
-      className={`${carouselItemClasses} pl-4 ${props.className ?? ''}`}
+      className={`${carouselItemClasses} ${paddingClass} ${props.className ?? ''}`}
     >
       {props.children}
     </div>

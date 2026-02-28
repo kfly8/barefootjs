@@ -63,5 +63,31 @@ test.describe('Carousel Documentation Page', () => {
 
       await expect(verticalCarousel).toBeVisible()
     })
+
+    test('vertical carousel content uses flex-col', async ({ page }) => {
+      const verticalCarousel = page.locator('[data-slot="carousel"][data-orientation="vertical"]')
+      const content = verticalCarousel.locator('[data-slot="carousel-content"]')
+
+      await expect(content).toHaveClass(/flex-col/)
+    })
+
+    test('clicking next in vertical carousel navigates', async ({ page }) => {
+      const verticalCarousel = page.locator('[data-slot="carousel"][data-orientation="vertical"]')
+      const nextBtn = verticalCarousel.locator('[data-slot="carousel-next"]')
+      const prevBtn = verticalCarousel.locator('[data-slot="carousel-previous"]')
+
+      // Wait for embla to initialize
+      await page.waitForTimeout(500)
+
+      // Previous should be disabled initially
+      await expect(prevBtn).toBeDisabled()
+
+      // Click next
+      await nextBtn.click()
+      await page.waitForTimeout(300)
+
+      // Previous should now be enabled
+      await expect(prevBtn).not.toBeDisabled()
+    })
   })
 })
