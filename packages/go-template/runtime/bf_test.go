@@ -326,11 +326,6 @@ func TestTextMarkers(t *testing.T) {
 		t.Errorf("TextStart(s0) = %v, want %v", gotStart, wantStart)
 	}
 
-	gotEnd := TextEnd("s0")
-	wantEnd := "<!--/bf:s0-->"
-	if string(gotEnd) != wantEnd {
-		t.Errorf("TextEnd(s0) = %v, want %v", gotEnd, wantEnd)
-	}
 }
 
 func TestFuncMap(t *testing.T) {
@@ -342,7 +337,7 @@ func TestFuncMap(t *testing.T) {
 		"bf_lower", "bf_upper", "bf_trim", "bf_contains", "bf_join",
 		"bf_len", "bf_at", "bf_includes", "bf_first", "bf_last",
 		"bf_every", "bf_some", "bf_filter", "bf_find", "bf_find_index", "bf_sort",
-		"bfComment", "bfTextStart", "bfTextEnd", "bfPortalHTML",
+		"bfComment", "bfTextStart", "bfPortalHTML",
 	}
 
 	for _, name := range expectedFuncs {

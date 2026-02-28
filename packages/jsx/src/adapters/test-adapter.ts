@@ -248,7 +248,7 @@ export class TestAdapter extends BaseAdapter {
     if (expr.reactive && expr.slotId) {
       // Use comment markers instead of span to avoid altering DOM structure.
       // In JSX, this is rendered via bfText() at runtime.
-      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfText("${expr.slotId}", true)}`
+      return `{bfText("${expr.slotId}")}{${expr.expr}}`
     }
     return `{${expr.expr}}`
   }

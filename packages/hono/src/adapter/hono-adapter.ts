@@ -493,7 +493,7 @@ export class HonoAdapter implements TemplateAdapter {
     }
     // Mark reactive expressions with comment nodes for client JS to find
     if (expr.reactive && expr.slotId) {
-      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfText("${expr.slotId}", true)}`
+      return `{bfText("${expr.slotId}")}{${expr.expr}}`
     }
     return `{${expr.expr}}`
   }
