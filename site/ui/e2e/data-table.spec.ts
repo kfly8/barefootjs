@@ -14,22 +14,28 @@ test.describe('Data Table Documentation Page', () => {
       expect(count).toBeGreaterThanOrEqual(2)
     })
 
-    test('clicking Amount header sorts data', async ({ page }) => {
+    test('clicking Amount header cycles through 3 sort states', async ({ page }) => {
       // First sort button pair on the page (preview section)
       const amountHeader = page.locator('[data-slot="data-table-column-header"]').filter({ hasText: 'Amount' }).first()
 
-      // Click to sort ascending
-      await amountHeader.click()
-
-      // First data row in the first table should have lowest amount ($242.00)
       const firstTable = page.locator('[data-slot="table"]').first()
       const rows = firstTable.locator('[data-slot="table-body"] [data-slot="table-row"]')
       const firstAmountCell = rows.first().locator('[data-slot="table-cell"]').last()
+
+      // Original unsorted order: first row is PAY001 ($316.00)
+      await expect(firstAmountCell).toHaveText('$316.00')
+
+      // Click 1: sort ascending — lowest amount first
+      await amountHeader.click()
       await expect(firstAmountCell).toHaveText('$242.00')
 
-      // Click again for descending
+      // Click 2: sort descending — highest amount first
       await amountHeader.click()
       await expect(firstAmountCell).toHaveText('$874.00')
+
+      // Click 3: reset to unsorted — back to original order
+      await amountHeader.click()
+      await expect(firstAmountCell).toHaveText('$316.00')
     })
   })
 

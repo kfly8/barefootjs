@@ -424,9 +424,13 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
 
         lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
         lines.push(`  if (_${v}) {`)
+        // Use both suffix match (for inlined stateless components whose bf-s uses
+        // parent scope + slotId, e.g. ~ParentName_hash_s3) and prefix match (for
+        // stateful components whose bf-s uses their own name, e.g. ToggleItem_hash)
+        const namePrefixSelector = `[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])`
         const childSelector = elem.childComponent.slotId
-          ? `[bf-s$="_${elem.childComponent.slotId}"]:not([bf-h])`
-          : `[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])`
+          ? `[bf-s$="_${elem.childComponent.slotId}"]:not([bf-h]), ${namePrefixSelector}`
+          : namePrefixSelector
         lines.push(`    const __childScopes = _${v}.querySelectorAll('${childSelector}')`)
         const indexParam = elem.index || '__idx'
         lines.push(`    __childScopes.forEach((childScope, ${indexParam}) => {`)
