@@ -16,12 +16,14 @@ import { BF_SCOPE, BF_SLOT, BF_COND } from './attrs'
  * @param items - Array of items to render
  * @param getKey - Function to extract a unique key from each item (or null to use index)
  * @param renderItem - Function that returns an HTMLElement for each item
+ * @param firstElement - Pre-created element for first item (avoids duplicate creation when caller already rendered item 0)
  */
 export function reconcileElements<T>(
   container: HTMLElement | null,
   items: T[],
   getKey: ((item: T, index: number) => string) | null,
-  renderItem: (item: T, index: number) => HTMLElement
+  renderItem: (item: T, index: number) => HTMLElement,
+  firstElement?: HTMLElement
 ): void {
   if (!container || !items) return
 
@@ -46,7 +48,7 @@ export function reconcileElements<T>(
     const item = items[i]
     const key = getKey ? getKey(item, i) : String(i)
 
-    const createEl = () => renderItem(item, i)
+    const createEl = () => (i === 0 && firstElement) ? firstElement : renderItem(item, i)
 
     if (existingByKey.has(key)) {
       // An element with this key already exists
@@ -98,7 +100,7 @@ export function reconcileElements<T>(
  * Sync reactive DOM state from a source element to a target element.
  * Copies class names, replaces conditional elements, and syncs text content.
  */
-function syncElementState(target: HTMLElement, source: HTMLElement): void {
+export function syncElementState(target: HTMLElement, source: HTMLElement): void {
   // Sync class list (for reactive classes like 'done' on TodoItem)
   target.className = source.className
 
