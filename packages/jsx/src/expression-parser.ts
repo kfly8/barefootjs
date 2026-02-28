@@ -7,6 +7,7 @@
  */
 
 import ts from 'typescript'
+import { printWithoutTypes } from './print-without-types'
 
 // =============================================================================
 // Parsed Expression Types
@@ -552,7 +553,7 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
       return null
     }
     const name = decl.name.text
-    const initText = decl.initializer.getText(sourceFile)
+    const initText = printWithoutTypes(decl.initializer, sourceFile)
     const init = parseExpression(initText)
     if (init.kind === 'unsupported') {
       return null
@@ -566,7 +567,7 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
       // return; (no value) -> return undefined, treat as return true
       return { kind: 'return', value: { kind: 'literal', value: true, literalType: 'boolean' } }
     }
-    const valueText = stmt.expression.getText(sourceFile)
+    const valueText = printWithoutTypes(stmt.expression, sourceFile)
     const value = parseExpression(valueText)
     if (value.kind === 'unsupported') {
       return null
@@ -576,7 +577,7 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
 
   // If statement: if (f === 'active') return !t.done
   if (ts.isIfStatement(stmt)) {
-    const conditionText = stmt.expression.getText(sourceFile)
+    const conditionText = printWithoutTypes(stmt.expression, sourceFile)
     const condition = parseExpression(conditionText)
     if (condition.kind === 'unsupported') {
       return null
