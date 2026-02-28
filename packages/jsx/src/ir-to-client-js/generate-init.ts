@@ -4,7 +4,7 @@
 
 import type { ComponentIR, ConstantInfo, IRFragment, IRNode } from '../types'
 import type { ClientJsContext } from './types'
-import { stripTypeScriptSyntax, varSlotId } from './utils'
+import { varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
 import { valueReferencesReactiveData, getControlledPropName, detectPropsWithPropertyAccess } from './prop-handling'
 import { IMPORT_PLACEHOLDER, MODULE_CONSTANTS_PLACEHOLDER, detectUsedImports, collectUserDomImports } from './imports'
@@ -240,8 +240,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
     const moduleConstantLines: string[] = []
     for (const constant of moduleLevelConstants) {
       if (!constant.value) continue
-      const jsValue = stripTypeScriptSyntax(constant.value)
-      moduleConstantLines.push(`var ${constant.name} = ${constant.name} ?? ${jsValue}`)
+      moduleConstantLines.push(`var ${constant.name} = ${constant.name} ?? ${constant.value}`)
     }
     moduleConstantsCode = moduleConstantLines.join('\n') + '\n'
   }

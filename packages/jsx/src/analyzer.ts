@@ -7,6 +7,7 @@
 
 import ts from 'typescript'
 import type { ImportSpecifier, TypeInfo, ParamInfo } from './types'
+import { printWithoutTypes } from './print-without-types'
 import {
   type AnalyzerContext,
   type ConditionalReturn,
@@ -383,7 +384,7 @@ function collectSignal(node: ts.VariableDeclaration, ctx: AnalyzerContext): void
 
   const getter = elements[0].name.text
   const setter = elements[1].name.text
-  const initialValue = callExpr.arguments[0]?.getText(ctx.sourceFile) || ''
+  const initialValue = callExpr.arguments[0] ? printWithoutTypes(callExpr.arguments[0], ctx.sourceFile) : ''
 
   // Try to infer type from initial value or type argument
   let type: TypeInfo = { kind: 'unknown', raw: 'unknown' }
@@ -423,7 +424,7 @@ function isMemoDeclaration(node: ts.VariableDeclaration): boolean {
 function collectMemo(node: ts.VariableDeclaration, ctx: AnalyzerContext): void {
   const name = (node.name as ts.Identifier).text
   const callExpr = node.initializer as ts.CallExpression
-  const computation = callExpr.arguments[0]?.getText(ctx.sourceFile) || ''
+  const computation = callExpr.arguments[0] ? printWithoutTypes(callExpr.arguments[0], ctx.sourceFile) : ''
 
   // Extract dependencies from computation
   const deps = extractDependencies(computation, ctx)
@@ -455,7 +456,7 @@ function isEffectCall(node: ts.Expression): boolean {
 }
 
 function collectEffect(node: ts.CallExpression, ctx: AnalyzerContext): void {
-  const body = node.arguments[0]?.getText(ctx.sourceFile) || ''
+  const body = node.arguments[0] ? printWithoutTypes(node.arguments[0], ctx.sourceFile) : ''
   const deps = extractDependencies(body, ctx)
 
   ctx.effects.push({
@@ -477,7 +478,7 @@ function isOnMountCall(node: ts.Expression): boolean {
 }
 
 function collectOnMount(node: ts.CallExpression, ctx: AnalyzerContext): void {
-  const body = node.arguments[0]?.getText(ctx.sourceFile) || ''
+  const body = node.arguments[0] ? printWithoutTypes(node.arguments[0], ctx.sourceFile) : ''
 
   ctx.onMounts.push({
     body,
@@ -584,9 +585,9 @@ function collectFunction(
       raw: 'unknown',
     },
     optional: !!p.questionToken,
-    defaultValue: p.initializer?.getText(ctx.sourceFile),
+    defaultValue: p.initializer ? printWithoutTypes(p.initializer, ctx.sourceFile) : undefined,
   }))
-  const body = node.body?.getText(ctx.sourceFile) || ''
+  const body = node.body ? printWithoutTypes(node.body, ctx.sourceFile) : ''
   const returnType = typeNodeToTypeInfo(node.type, ctx.sourceFile)
 
   // Check if function contains JSX
@@ -619,7 +620,7 @@ function collectConstant(
 
   const name = node.name.text
   const value = node.initializer
-    ? node.initializer.getText(ctx.sourceFile)
+    ? printWithoutTypes(node.initializer, ctx.sourceFile)
     : undefined
 
   // Get type from annotation or infer
@@ -708,7 +709,7 @@ function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): voi
     for (const element of param.name.elements) {
       if (ts.isBindingElement(element) && ts.isIdentifier(element.name)) {
         const localName = element.name.text
-        const defaultValue = element.initializer?.getText(ctx.sourceFile)
+        const defaultValue = element.initializer ? printWithoutTypes(element.initializer, ctx.sourceFile) : undefined
 
         // Handle rest props: { ...props }
         if (element.dotDotDotToken) {

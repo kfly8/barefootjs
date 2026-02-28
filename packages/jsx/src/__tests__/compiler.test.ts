@@ -2505,8 +2505,8 @@ describe('Compiler', () => {
   describe('TypeScript syntax guard (#349)', () => {
     // Guard test: ensures no TypeScript syntax survives in generated client JS.
     // This catches regressions like #341 where a new emit site forgot to call
-    // stripTypeScriptSyntax(). When tsgo becomes available, this guard remains
-    // valid regardless of the stripping mechanism used.
+    // printWithoutTypes(). Types are now stripped at the AST level in Phase 1
+    // via printWithoutTypes() instead of regex-based stripping in Phase 2.
 
     test('all TypeScript syntax patterns are stripped from client JS output', () => {
       const source = `

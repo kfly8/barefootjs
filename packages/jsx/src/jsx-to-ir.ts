@@ -28,6 +28,7 @@ import type {
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
 import { createError, ErrorCodes } from './errors'
+import { printWithoutTypes } from './print-without-types'
 
 // =============================================================================
 // Transform Context
@@ -600,7 +601,7 @@ function transformExpression(
   }
 
   // Regular expression
-  const exprText = expr.getText(ctx.sourceFile)
+  const exprText = printWithoutTypes(expr, ctx.sourceFile)
   const reactive = isReactiveExpression(exprText, ctx)
   // @client expressions always need slotId and are treated as reactive for client-side evaluation
   const needsSlot = reactive || isClientOnly
@@ -625,7 +626,7 @@ function transformConditional(
   node: ts.ConditionalExpression,
   ctx: TransformContext
 ): IRConditional {
-  const condition = node.condition.getText(ctx.sourceFile)
+  const condition = printWithoutTypes(node.condition, ctx.sourceFile)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -649,7 +650,7 @@ function transformLogicalAnd(
   node: ts.BinaryExpression,
   ctx: TransformContext
 ): IRConditional {
-  const condition = node.left.getText(ctx.sourceFile)
+  const condition = printWithoutTypes(node.left, ctx.sourceFile)
   const reactive = isReactiveExpression(condition, ctx)
   const slotId = reactive ? generateSlotId(ctx) : null
 
@@ -690,7 +691,7 @@ function transformConditionalBranch(
   }
 
   // Regular expression (including null)
-  const exprText = node.getText(ctx.sourceFile)
+  const exprText = printWithoutTypes(node, ctx.sourceFile)
   return {
     type: 'expression',
     expr: exprText,
@@ -787,7 +788,7 @@ function extractSortComparator(
     return { result: null, unsupportedReason: 'Block body sort comparators are not supported for server-side rendering' }
   }
 
-  const raw = callback.body.getText(ctx.sourceFile)
+  const raw = printWithoutTypes(callback.body, ctx.sourceFile)
 
   // Must be a subtraction: a.field - b.field or b.field - a.field
   if (!ts.isBinaryExpression(callback.body) || callback.body.operatorToken.kind !== ts.SyntaxKind.MinusToken) {
@@ -802,8 +803,8 @@ function extractSortComparator(
     return { result: null, unsupportedReason: `Sort comparator '${raw}' is not a simple field access pattern` }
   }
 
-  const leftObj = left.expression.getText(ctx.sourceFile)
-  const rightObj = right.expression.getText(ctx.sourceFile)
+  const leftObj = printWithoutTypes(left.expression, ctx.sourceFile)
+  const rightObj = printWithoutTypes(right.expression, ctx.sourceFile)
   const leftField = left.name.text
   const rightField = right.name.text
 
@@ -876,7 +877,7 @@ function extractFilterPredicate(
 
   // Block body arrow functions: filter(t => { const f = filter(); ... })
   if (ts.isBlock(callback.body)) {
-    const raw = callback.body.getText(ctx.sourceFile)
+    const raw = printWithoutTypes(callback.body, ctx.sourceFile)
     const statements = parseBlockBody(callback.body, ctx.sourceFile)
     if (!statements) {
       return { result: null, unsupportedReason: 'Block body filter predicate cannot be parsed for server-side rendering' }
@@ -887,7 +888,7 @@ function extractFilterPredicate(
   }
 
   // Expression body: filter(t => !t.done)
-  const raw = callback.body.getText(ctx.sourceFile)
+  const raw = printWithoutTypes(callback.body, ctx.sourceFile)
   const predicate = parseExpression(raw)
 
   // Check if predicate is supported for SSR
@@ -942,7 +943,7 @@ function transformMapCall(
         )
       }
       // Keep sort (and filter if present) in array string for client evaluation
-      array = mapSource.getText(ctx.sourceFile)
+      array = printWithoutTypes(mapSource, ctx.sourceFile)
     } else {
       sortComparator = sortExtraction.result
 
@@ -965,16 +966,16 @@ function transformMapCall(
             )
           }
           // Keep entire chain in array for client evaluation
-          array = mapSource.getText(ctx.sourceFile)
+          array = printWithoutTypes(mapSource, ctx.sourceFile)
           sortComparator = undefined
           chainOrder = undefined
         } else {
-          array = innerFilter.array.getText(ctx.sourceFile)
+          array = printWithoutTypes(innerFilter.array, ctx.sourceFile)
           filterPredicate = filterExtraction.result
         }
       } else {
         // Simple sort().map()
-        array = sortInfo.array.getText(ctx.sourceFile)
+        array = printWithoutTypes(sortInfo.array, ctx.sourceFile)
       }
     }
   } else if (filterInfo) {
@@ -999,7 +1000,7 @@ function transformMapCall(
         )
       }
       // Keep filter (and sort if present) in array for client evaluation
-      array = mapSource.getText(ctx.sourceFile)
+      array = printWithoutTypes(mapSource, ctx.sourceFile)
     } else {
       filterPredicate = filterExtraction.result
 
@@ -1022,18 +1023,18 @@ function transformMapCall(
             )
           }
           // Keep sort in array for client evaluation, but keep filter extracted
-          array = filterInfo.array.getText(ctx.sourceFile)
+          array = printWithoutTypes(filterInfo.array, ctx.sourceFile)
         } else {
           sortComparator = sortExtraction.result
-          array = innerSort.array.getText(ctx.sourceFile)
+          array = printWithoutTypes(innerSort.array, ctx.sourceFile)
         }
       } else {
         // Simple filter().map()
-        array = filterInfo.array.getText(ctx.sourceFile)
+        array = printWithoutTypes(filterInfo.array, ctx.sourceFile)
       }
     }
   } else {
-    array = mapSource.getText(ctx.sourceFile)
+    array = printWithoutTypes(mapSource, ctx.sourceFile)
   }
 
   // Get callback function
@@ -1204,7 +1205,7 @@ function processAttributes(
   for (const attr of attributes.properties) {
     // Spread attribute: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      const spreadExpr = attr.expression.getText(ctx.sourceFile)
+      const spreadExpr = printWithoutTypes(attr.expression, ctx.sourceFile)
       const expandedKeys = ctx.analyzer.restPropsExpandedKeys
       const restName = ctx.analyzer.restPropsName
 
@@ -1239,7 +1240,7 @@ function processAttributes(
     // Ref attribute
     if (name === 'ref') {
       if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
-        ref = attr.initializer.expression.getText(ctx.sourceFile)
+        ref = printWithoutTypes(attr.initializer.expression, ctx.sourceFile)
       }
       continue
     }
@@ -1250,7 +1251,7 @@ function processAttributes(
         const eventName = name.slice(2).toLowerCase()
         events.push({
           name: eventName,
-          handler: attr.initializer.expression.getText(ctx.sourceFile),
+          handler: printWithoutTypes(attr.initializer.expression, ctx.sourceFile),
           loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
         })
       }
@@ -1323,12 +1324,12 @@ function getAttributeValue(
     // Detect `expr || undefined` pattern → boolean presence attribute
     if (ts.isBinaryExpression(expr) && expr.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
       if (ts.isIdentifier(expr.right) && expr.right.text === 'undefined') {
-        const baseExpr = expr.left.getText(ctx.sourceFile)
+        const baseExpr = printWithoutTypes(expr.left, ctx.sourceFile)
         return { value: baseExpr, dynamic: true, isLiteral: false, presenceOrUndefined: true }
       }
     }
 
-    const exprText = expr.getText(ctx.sourceFile)
+    const exprText = printWithoutTypes(expr, ctx.sourceFile)
     return { value: exprText, dynamic: true, isLiteral: false }
   }
 
@@ -1358,11 +1359,11 @@ function parseTemplateLiteral(
         parts.push(ternary)
       } else {
         // Fallback: keep as string expression
-        parts.push({ type: 'string', value: `\${${span.expression.getText(ctx.sourceFile)}}` })
+        parts.push({ type: 'string', value: `\${${printWithoutTypes(span.expression, ctx.sourceFile)}}` })
       }
     } else {
       // Non-ternary expression: keep as ${expr}
-      parts.push({ type: 'string', value: `\${${span.expression.getText(ctx.sourceFile)}}` })
+      parts.push({ type: 'string', value: `\${${printWithoutTypes(span.expression, ctx.sourceFile)}}` })
     }
 
     // Add the literal part after this span (text after ${} until next ${} or end)
@@ -1389,7 +1390,7 @@ function parseTernary(
   if (whenTrueValue !== null && whenFalseValue !== null) {
     return {
       type: 'ternary',
-      condition: expr.condition.getText(ctx.sourceFile),
+      condition: printWithoutTypes(expr.condition, ctx.sourceFile),
       whenTrue: whenTrueValue,
       whenFalse: whenFalseValue,
     }
@@ -1425,7 +1426,7 @@ function processComponentProps(
   for (const attr of attributes.properties) {
     // Spread props: {...props}
     if (ts.isJsxSpreadAttribute(attr)) {
-      const spreadExpr = attr.expression.getText(ctx.sourceFile)
+      const spreadExpr = printWithoutTypes(attr.expression, ctx.sourceFile)
       const expandedKeys = ctx.analyzer.restPropsExpandedKeys
       const restName = ctx.analyzer.restPropsName
 
@@ -1766,7 +1767,7 @@ function buildIfStatementChain(
     const condReturn = conditionalReturns[i]
 
     // Get the condition text
-    const condition = condReturn.condition.getText(analyzer.sourceFile)
+    const condition = printWithoutTypes(condReturn.condition, analyzer.sourceFile)
 
     // Transform the JSX return in the then branch
     // Reset isRoot so each branch gets needsScope=true
@@ -1782,7 +1783,7 @@ function buildIfStatementChain(
       if (ts.isIdentifier(decl.name) && decl.initializer) {
         scopeVariables.push({
           name: decl.name.text,
-          initializer: decl.initializer.getText(analyzer.sourceFile),
+          initializer: printWithoutTypes(decl.initializer, analyzer.sourceFile),
         })
       }
     }
