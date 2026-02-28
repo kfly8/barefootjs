@@ -776,9 +776,8 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
       // Should import only required functions
-      expect(clientJs?.content).toContain('findScope')
       expect(clientJs?.content).toContain('$(__scope')  // shorthand finder
-      expect(clientJs?.content).toContain('mount')
+      expect(clientJs?.content).toContain('hydrate')
       // Should NOT import unused functions
       expect(clientJs?.content).not.toContain('createSignal')
       expect(clientJs?.content).not.toContain('createMemo')
@@ -1325,7 +1324,7 @@ describe('Compiler', () => {
       })
     })
 
-    test('end-to-end: provider-only component generates findScope + provideContext in client JS (#290)', () => {
+    test('end-to-end: provider-only component generates hydrate + provideContext in client JS (#290)', () => {
       const adapter = new TestAdapter()
       const source = `
         'use client'
@@ -1349,9 +1348,9 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')!
       expect(clientJs).toBeDefined()
 
-      // The generated client JS must contain findScope (for hydration)
+      // The generated client JS must contain hydrate (for registration + hydration)
       // and provideContext (for context setup)
-      expect(clientJs.content).toContain('findScope')
+      expect(clientJs.content).toContain('hydrate')
       expect(clientJs.content).toContain('provideContext(DialogContext')
     })
 
@@ -1775,7 +1774,7 @@ describe('Compiler', () => {
 
   describe('mount template local constant inlining (#343)', () => {
     test('props-derived constant is inlined in mount template', () => {
-      // Local constants computed from props should be inlined in the mount()
+      // Local constants computed from props should be inlined in the hydrate()
       // template callback, which executes at module scope where locals are unavailable
       const source = `
         'use client'
@@ -1841,8 +1840,8 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // mount() should NOT have a template argument (signal-dependent constant)
-      expect(content).toMatch(/mount\('Display', initDisplay\)/)
+      // hydrate() should NOT have a template argument (signal-dependent constant)
+      expect(content).toMatch(/hydrate\('Display', \{ init: initDisplay \}\)/)
       expect(content).not.toContain('(props) => `')
     })
 
@@ -3236,7 +3235,7 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      expect(clientJs!.content).toContain("mount('StaticLabel'")
+      expect(clientJs!.content).toContain("hydrate('StaticLabel'")
       expect(clientJs!.content).toContain('function initStaticLabel() {}')
       expect(clientJs!.content).toContain('<span>Hello World</span>')
     })
@@ -3328,11 +3327,8 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // mount() should include comment: true for fragment roots
-      expect(content).toMatch(/mount\('FragComp', initFragComp, \{[^}]*comment: true/)
-
-      // findScope should include comment flag
-      expect(content).toContain("findScope('FragComp', __instanceIndex, __parentScope, true)")
+      // hydrate() should include comment: true for fragment roots
+      expect(content).toMatch(/hydrate\('FragComp', \{[^}]*comment: true/)
     })
 
     test('single-root component generates mount without comment flag', () => {
@@ -3356,13 +3352,9 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // mount() should NOT include comment flag for single-root components
+      // hydrate() should NOT include comment flag for single-root components
       expect(content).not.toContain('comment:')
       expect(content).not.toContain('comment: true')
-
-      // findScope should not include comment flag
-      expect(content).toContain("findScope('SingleRoot', __instanceIndex, __parentScope)")
-      expect(content).not.toContain("findScope('SingleRoot', __instanceIndex, __parentScope, true)")
     })
   })
 

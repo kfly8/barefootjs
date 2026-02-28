@@ -11,7 +11,8 @@
  */
 
 import { getPropsUpdateFn, getComponentProps } from './component'
-import { BF_SCOPE, BF_SLOT, BF_HYDRATED, BF_COND } from './attrs'
+import { hydratedScopes } from './hydration-state'
+import { BF_SCOPE, BF_SLOT, BF_COND } from './attrs'
 
 
 /**
@@ -129,7 +130,7 @@ function reconcileListElements<T>(
 
       // Check if this is an uninitialized SSR element
       // SSR elements have bf-s but no bf-h
-      if (existingEl.getAttribute(BF_SCOPE) && !existingEl.hasAttribute(BF_HYDRATED)) {
+      if (existingEl.getAttribute(BF_SCOPE) && !hydratedScopes.has(existingEl)) {
         // For SSR elements, create new element with proper initialization
         const newEl = createEl()
         if (!newEl.dataset.key) {

@@ -424,9 +424,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         // Use both suffix match (for inlined stateless components whose bf-s uses
         // parent scope + slotId, e.g. ~ParentName_hash_s3) and prefix match (for
         // stateful components whose bf-s uses their own name, e.g. ToggleItem_hash)
-        const namePrefixSelector = `[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])`
+        const namePrefixSelector = `[bf-s^="~${name}_"], [bf-s^="${name}_"]`
         const childSelector = elem.childComponent.slotId
-          ? `[bf-s$="_${elem.childComponent.slotId}"]:not([bf-h]), ${namePrefixSelector}`
+          ? `[bf-s$="_${elem.childComponent.slotId}"], ${namePrefixSelector}`
           : namePrefixSelector
         lines.push(`    const __childScopes = _${v}.querySelectorAll('${childSelector}')`)
         const indexParam = elem.index || '__idx'
@@ -453,8 +453,8 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
 
           const selector = comp.slotId
-            ? `[bf-s$="_${comp.slotId}"]:not([bf-h])`
-            : `[bf-s^="~${comp.name}_"]:not([bf-h]), [bf-s^="${comp.name}_"]:not([bf-h])`
+            ? `[bf-s$="_${comp.slotId}"]`
+            : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
 
           lines.push(`  // Initialize nested ${comp.name} in static array`)
           lines.push(`  if (_${v}) {`)
@@ -502,7 +502,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const chainedExpr = buildChainedArrayExpr(elem)
 
       lines.push(`  createEffect(() => {`)
-      lines.push(`    reconcileList(_${vLoop}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
+      lines.push(`    reconcileElements(_${vLoop}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
       lines.push(`      createComponent('${name}', ${propsExpr}, ${keyExpr})`)
       lines.push(`    )`)
       lines.push(`  })`)
@@ -512,7 +512,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const indexParamTemplate = elem.index || '__idx'
       lines.push(`  createEffect(() => {`)
       lines.push(`    const __arr = ${chainedExprTemplate}`)
-      lines.push(`    reconcileList(_${vLoop}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
+      lines.push(`    reconcileTemplates(_${vLoop}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
       lines.push(`  })`)
     }
     lines.push('')
@@ -920,7 +920,7 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
   return { inlinableConstants, unsafeLocalNames }
 }
 
-/** Emit mount() call that registers component, template, and hydrates. */
+/** Emit hydrate() call that registers component, template, and hydrates. */
 export function emitRegistrationAndHydration(
   lines: string[],
   ctx: ClientJsContext,
@@ -937,21 +937,17 @@ export function emitRegistrationAndHydration(
   const isCommentScope = _ir.root.type === 'fragment'
     && (_ir.root as IRFragment).needsScopeComment
 
-  // Build options object for mount()
-  const optionParts: string[] = []
+  // Build ComponentDef object for hydrate()
+  const defParts: string[] = [`init: init${name}`]
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
     if (templateHtml) {
-      optionParts.push(`template: (props) => \`${templateHtml}\``)
+      defParts.push(`template: (props) => \`${templateHtml}\``)
     }
   }
   if (isCommentScope) {
-    optionParts.push('comment: true')
+    defParts.push('comment: true')
   }
 
-  if (optionParts.length > 0) {
-    lines.push(`mount('${name}', init${name}, { ${optionParts.join(', ')} })`)
-  } else {
-    lines.push(`mount('${name}', init${name})`)
-  }
+  lines.push(`hydrate('${name}', { ${defParts.join(', ')} })`)
 }

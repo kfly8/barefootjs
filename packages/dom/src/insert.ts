@@ -1,0 +1,231 @@
+/**
+ * BarefootJS - Conditional Insert
+ *
+ * Handle conditional DOM updates using branch configurations.
+ * SolidJS-inspired replacement for legacy cond() that properly
+ * handles event binding for both branches.
+ */
+
+import { createEffect } from './reactive'
+import { find } from './query'
+import { BF_COND } from './attrs'
+
+/**
+ * Branch configuration for conditional rendering.
+ * Contains template and event binding functions for each branch.
+ */
+export interface BranchConfig {
+  /** HTML template function for this branch */
+  template: () => string
+
+  /**
+   * Bind events to elements within the branch.
+   * Called both during hydration (for SSR elements) and after DOM swaps.
+   * @param scope - The scope element to search within for event targets
+   */
+  bindEvents: (scope: Element) => void
+}
+
+
+/**
+ * Handle conditional DOM updates using branch configurations.
+ *
+ * Key behaviors:
+ * - First run (hydration): Reuse SSR element, call branch.bindEvents() for current branch
+ * - Condition change: Create new element from template, call branch.bindEvents()
+ *
+ * @param scope - Component scope element
+ * @param id - Conditional slot ID (e.g., 's0')
+ * @param conditionFn - Function that returns current condition value
+ * @param whenTrue - Branch config for when condition is true
+ * @param whenFalse - Branch config for when condition is false
+ */
+export function insert(
+  scope: Element | null,
+  id: string,
+  conditionFn: () => boolean,
+  whenTrue: BranchConfig,
+  whenFalse: BranchConfig
+): void {
+  if (!scope) return
+
+  // Check if either branch uses fragment conditional (comment markers)
+  // Both branches need to be checked because SSR may render either branch
+  const sampleTrue = whenTrue.template()
+  const sampleFalse = whenFalse.template()
+  const isFragmentCond = sampleTrue.includes(`<!--bf-cond-start:${id}-->`) ||
+                         sampleFalse.includes(`<!--bf-cond-start:${id}-->`)
+
+  let prevCond: boolean | undefined
+
+  createEffect(() => {
+    const currCond = Boolean(conditionFn())
+    const isFirstRun = prevCond === undefined
+    const prevVal = prevCond
+    prevCond = currCond
+
+    // Select the appropriate branch
+    const branch = currCond ? whenTrue : whenFalse
+
+    if (isFirstRun) {
+      // Hydration mode: check if existing DOM matches expected branch
+      // If the existing element doesn't match the expected branch,
+      // we need to swap the DOM first (e.g., SSR rendered whenFalse but now we need whenTrue)
+      const html = branch.template()
+      const existingEl = find(scope, `[${BF_COND}="${id}"]`)
+      if (existingEl) {
+        // Check if the existing element type matches what we expect
+        // For simple cases, compare tag names from templates
+        const expectedTag = getFirstTagFromTemplate(html)
+        const actualTag = existingEl.tagName.toLowerCase()
+
+        if (expectedTag && actualTag !== expectedTag) {
+          // DOM doesn't match expected branch - need to swap
+          if (isFragmentCond) {
+            updateFragmentConditional(scope, id, html)
+          } else {
+            updateElementConditional(scope, id, html)
+          }
+        }
+      } else if (isFragmentCond) {
+        // For @client fragment conditionals, SSR renders only comment markers.
+        // We need to insert the actual content on first run.
+        updateFragmentConditional(scope, id, html)
+      }
+
+      // Bind events to the (possibly updated) SSR element
+      branch.bindEvents(scope)
+
+      // Auto-focus on first run too (for components created via createComponent with editing=true)
+      autoFocusConditionalElement(scope, id)
+      return
+    }
+
+    // Skip if condition hasn't changed.
+    // Reactive updates within a branch are handled by the effect system,
+    // not by DOM replacement. Only replace DOM when the branch switches.
+    if (currCond === prevVal) {
+      return
+    }
+
+    // Branch changed: swap DOM and bind events
+    const html = branch.template()
+    if (isFragmentCond) {
+      updateFragmentConditional(scope, id, html)
+    } else {
+      updateElementConditional(scope, id, html)
+    }
+
+    // Bind events to the newly inserted element
+    branch.bindEvents(scope)
+
+    // Auto-focus elements with autofocus attribute (for dynamically created elements)
+    autoFocusConditionalElement(scope, id)
+  })
+}
+
+/**
+ * Auto-focus elements with autofocus attribute within a conditional slot.
+ * Used by insert() to focus inputs when they become visible.
+ * Uses requestAnimationFrame to ensure element is in DOM before focusing.
+ */
+function autoFocusConditionalElement(scope: Element, id: string): void {
+  // Use requestAnimationFrame to defer focus until after DOM updates.
+  // This is necessary because createComponent() may call insert() before
+  // the element is added to the document by reconcileList().
+  requestAnimationFrame(() => {
+    const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
+    if (condEl) {
+      const autofocusEl = condEl.matches('[autofocus]')
+        ? condEl
+        : condEl.querySelector('[autofocus]')
+      if (autofocusEl && typeof (autofocusEl as HTMLElement).focus === 'function') {
+        ;(autofocusEl as HTMLElement).focus()
+      }
+    }
+  })
+}
+
+/**
+ * Extract the first tag name from an HTML template string.
+ * Returns lowercase tag name or null if not found.
+ */
+function getFirstTagFromTemplate(template: string): string | null {
+  const match = template.match(/^<(\w+)/)
+  return match ? match[1].toLowerCase() : null
+}
+
+/**
+ * Update fragment conditional (content between comment markers)
+ */
+function updateFragmentConditional(scope: Element, id: string, html: string): void {
+  // Find start comment marker
+  const startMarker = `bf-cond-start:${id}`
+  let startComment: Comment | null = null
+  const walker = document.createTreeWalker(scope, NodeFilter.SHOW_COMMENT)
+  while (walker.nextNode()) {
+    if (walker.currentNode.nodeValue === startMarker) {
+      startComment = walker.currentNode as Comment
+      break
+    }
+  }
+
+  const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
+
+  const endMarker = `bf-cond-end:${id}`
+
+  if (startComment) {
+    // Remove nodes between start and end markers
+    const nodesToRemove: Node[] = []
+    let node = startComment.nextSibling
+    while (node && !(node.nodeType === 8 && node.nodeValue === endMarker)) {
+      nodesToRemove.push(node)
+      node = node.nextSibling
+    }
+    const endComment = node
+    nodesToRemove.forEach(n => n.parentNode?.removeChild(n))
+
+    // Insert new content
+    const template = document.createElement('template')
+    template.innerHTML = html
+    const newNodes: Node[] = []
+    let child = template.content.firstChild
+    while (child) {
+      if (!(child.nodeType === 8 && child.nodeValue?.startsWith('bf-cond-'))) {
+        newNodes.push(child.cloneNode(true))
+      }
+      child = child.nextSibling
+    }
+    newNodes.forEach(n => startComment!.parentNode?.insertBefore(n, endComment))
+  } else if (condEl) {
+    // Single element: replace with new content
+    const template = document.createElement('template')
+    template.innerHTML = html
+    const firstChild = template.content.firstChild
+
+    if (firstChild?.nodeType === 8 && firstChild?.nodeValue === `bf-cond-start:${id}`) {
+      // Switching from element to fragment
+      const parent = condEl.parentNode
+      const nodes = Array.from(template.content.childNodes).map(n => n.cloneNode(true))
+      nodes.forEach(n => parent?.insertBefore(n, condEl))
+      condEl.remove()
+    } else if (firstChild) {
+      condEl.replaceWith(firstChild.cloneNode(true))
+    }
+  }
+}
+
+/**
+ * Update element conditional (single element with bf-c)
+ */
+function updateElementConditional(scope: Element, id: string, html: string): void {
+  const condEl = scope.querySelector(`[${BF_COND}="${id}"]`)
+  if (!condEl) return
+
+  const template = document.createElement('template')
+  template.innerHTML = html
+  const newEl = template.content.firstChild
+  if (newEl) {
+    condEl.replaceWith(newEl.cloneNode(true))
+  }
+}

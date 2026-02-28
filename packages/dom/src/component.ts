@@ -6,8 +6,10 @@
  */
 
 import { getTemplate } from './template'
-import { getComponentInit } from './runtime'
-import { BF_SCOPE, BF_HYDRATED } from './attrs'
+import { getComponentInit } from './registry'
+import { hydratedScopes } from './hydration-state'
+import { BF_SCOPE } from './attrs'
+import type { ComponentDef } from './types'
 
 // WeakMap to store props update functions for each component element
 // This allows reconcileList to update props when an element is reused
@@ -39,11 +41,22 @@ const propsMap = new WeakMap<HTMLElement, Record<string, unknown>>()
  *   onDelete: () => handleDelete(1)
  * }, 1)
  */
+/**
+ * Create a component instance from a string name (SSR mode, uses registry)
+ * or from a ComponentDef (CSR mode, no registry needed).
+ */
 export function createComponent(
-  name: string,
+  nameOrDef: string | ComponentDef,
   props: Record<string, unknown>,
   key?: string | number
 ): HTMLElement {
+  // ComponentDef mode: use def directly instead of registry lookup
+  if (typeof nameOrDef !== 'string') {
+    return createComponentFromDef(nameOrDef, props, key)
+  }
+
+  const name = nameOrDef
+
   // 1. Get template function
   const templateFn = getTemplate(name)
   if (!templateFn) {
@@ -94,11 +107,11 @@ export function createComponent(
   const initFn = getComponentInit(name)
   if (initFn) {
     // Pass original props (with getters) for reactivity
-    initFn(0, element, props)
+    initFn(element, props)
   }
 
   // 8. Mark element as initialized
-  element.setAttribute(BF_HYDRATED, 'true')
+  hydratedScopes.add(element)
 
   // 9. Store props and register update function for element reuse in reconcileList
   propsMap.set(element, props)
@@ -131,7 +144,7 @@ function registerPropsUpdate(
     // and set up new effects that reference the new values
     const init = getComponentInit(name)
     if (init) {
-      init(0, element, newProps)
+      init(element, newProps)
     }
   })
 }
@@ -257,4 +270,53 @@ function insertDomChildren(element: HTMLElement, children: unknown): void {
   } else if (typeof children === 'string' || typeof children === 'number') {
     element.appendChild(document.createTextNode(String(children)))
   }
+}
+
+/**
+ * Create a component instance from a ComponentDef (CSR mode).
+ * Does not use the component registry — the def is passed directly.
+ */
+function createComponentFromDef(
+  def: ComponentDef,
+  props: Record<string, unknown>,
+  key?: string | number
+): HTMLElement {
+  if (!def.template) {
+    throw new Error('[BarefootJS] createComponent with ComponentDef requires a template function')
+  }
+
+  // Generate HTML from template
+  const unwrappedProps = unwrapPropsForTemplate(props)
+  const html = def.template(unwrappedProps)
+
+  // Create DOM element
+  const template = document.createElement('template')
+  template.innerHTML = html.trim()
+  const element = template.content.firstChild as HTMLElement
+
+  if (!element) {
+    const el = document.createElement('div')
+    el.textContent = '[ComponentDef]'
+    el.style.cssText = 'color: red; border: 1px dashed red; padding: 4px;'
+    return el
+  }
+
+  // Set scope ID and key
+  const name = def.init.name?.replace(/^init/, '') || 'Component'
+  const scopeId = `${name}_${generateId()}`
+  element.setAttribute(BF_SCOPE, scopeId)
+  if (key !== undefined) {
+    element.setAttribute('data-key', String(key))
+  }
+
+  // Initialize
+  def.init(element, props)
+
+  // Mark as initialized
+  hydratedScopes.add(element)
+
+  // Store props for element reuse
+  propsMap.set(element, props)
+
+  return element
 }
