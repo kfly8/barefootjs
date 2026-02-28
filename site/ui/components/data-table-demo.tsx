@@ -46,7 +46,7 @@ export function DataTablePreviewDemo() {
   const [sortKey, setSortKey] = createSignal<SortKey>(null)
   const [sortDir, setSortDir] = createSignal<SortDir>('asc')
 
-  const handleSort = (key) => {
+  const handleSort = (key: 'amount' | 'status') => {
     if (sortKey() === null) {
       setSortKey(key)
       setSortDir('asc')
