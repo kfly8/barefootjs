@@ -14,6 +14,6 @@ export function FragmentDemo() {
   expectedHtml: `
     <!--bf-scope:test-->
     <span>A</span>
-    <span bf="s1"><!--bf:s0-->0<!--/bf:s0--></span>
+    <span bf="s1"><!--bf:s0-->0</span>
   `,
 })
