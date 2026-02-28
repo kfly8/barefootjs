@@ -19,7 +19,7 @@ import type {
   SourceLocation,
   ParamInfo,
 } from './types'
-import { type ExcludeRange, collectAllTypeRanges, reconstructWithoutTypes } from './print-without-types'
+import { type ExcludeRange, collectAllTypeRanges, reconstructWithoutTypes } from './strip-types'
 
 /**
  * Deferred info for BF043 (props destructuring warning).
