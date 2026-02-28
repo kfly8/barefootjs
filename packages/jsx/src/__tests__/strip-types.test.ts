@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import ts from 'typescript'
-import { collectAllTypeRanges, reconstructWithoutTypes } from '../print-without-types'
+import { collectAllTypeRanges, reconstructWithoutTypes } from '../strip-types'
 
 /**
  * Helper: parse a TypeScript expression and return it with types stripped.
@@ -29,7 +29,7 @@ function stripExpr(code: string): string {
   return reconstructWithoutTypes(stmt, sourceFile, ranges)
 }
 
-describe('printWithoutTypes', () => {
+describe('strip-types', () => {
   describe('parameter type annotations', () => {
     test('strips type from arrow function parameter', () => {
       expect(stripExpr('(newValue: string) => { setVal(newValue) }')).toBe(

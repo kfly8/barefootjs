@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test'
 import ts from 'typescript'
 import { parseExpression, isSupported, exprToString, parseBlockBody } from '../expression-parser'
-import { collectAllTypeRanges, reconstructWithoutTypes } from '../print-without-types'
+import { collectAllTypeRanges, reconstructWithoutTypes } from '../strip-types'
 
 describe('expression-parser', () => {
   describe('parseExpression', () => {
