@@ -220,6 +220,15 @@ function unwrapPropsForTemplate(props: Record<string, unknown>): Record<string, 
     }
   }
 
+  // Template functions expect children as an HTML string, not an array.
+  // Join non-DOM array children to avoid Array.toString() inserting commas.
+  if (Array.isArray(result.children) && !hasDomElements(result.children)) {
+    result.children = (result.children as unknown[])
+      .flat()
+      .map(c => c == null ? '' : String(c))
+      .join('')
+  }
+
   return result
 }
 
