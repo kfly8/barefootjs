@@ -689,6 +689,16 @@ function transformConditionalBranch(
     return transformConditionalBranch(node.expression, ctx)
   }
 
+  // Nested ternary: cond1 ? <A/> : cond2 ? <B/> : <C/>
+  if (ts.isConditionalExpression(node)) {
+    return transformConditional(node, ctx)
+  }
+
+  // Logical AND in branch: cond1 ? <A/> : (cond2 && <B/>)
+  if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+    return transformLogicalAnd(node, ctx)
+  }
+
   // Regular expression (including null)
   const exprText = node.getText(ctx.sourceFile)
   return {
