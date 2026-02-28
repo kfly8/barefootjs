@@ -74,6 +74,24 @@ describe('stripTypeScriptSyntax', () => {
         stripTypeScriptSyntax('(id: number | undefined) => { use(id) }')
       ).toBe('(id) => { use(id) }')
     })
+
+    test('strips string literal union type annotation (#496)', () => {
+      expect(
+        stripTypeScriptSyntax("(key: 'amount' | 'status') => { use(key) }")
+      ).toBe('(key) => { use(key) }')
+    })
+
+    test('strips double-quoted string literal union type annotation (#496)', () => {
+      expect(
+        stripTypeScriptSyntax('(dir: "horizontal" | "vertical") => { use(dir) }')
+      ).toBe('(dir) => { use(dir) }')
+    })
+
+    test('strips mixed keyword and string literal union type annotation (#496)', () => {
+      expect(
+        stripTypeScriptSyntax("(value: string | 'auto') => { use(value) }")
+      ).toBe('(value) => { use(value) }')
+    })
   })
 
   describe('object properties are not stripped', () => {

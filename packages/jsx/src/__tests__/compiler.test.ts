@@ -2551,6 +2551,10 @@ describe('Compiler', () => {
             ))
           }
 
+          const handleSort = (key: 'amount' | 'status') => {
+            setSelected(key)
+          }
+
           onCleanup(() => {
             if (timer) clearTimeout(timer)
           })
@@ -2582,6 +2586,10 @@ describe('Compiler', () => {
       expect(js).not.toContain('item: ItemType')
       expect(js).not.toContain('i: number')
       expect(js).not.toContain('id: string')
+
+      // --- String literal union type annotations (#496) ---
+      expect(js).not.toContain("key: 'amount'")
+      expect(js).not.toContain("'amount' | 'status'")
 
       // --- Type assertions ---
       expect(js).not.toContain('as HTMLElement')

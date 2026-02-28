@@ -157,9 +157,10 @@ export function stripTypeScriptSyntax(code: string): string {
   result = result.replace(new RegExp(`\\s+as\\s+${tsTypeAtom}(?:\\s*\\|\\s*${tsTypeAtom})*`, 'g'), '')
 
   // Parameter type annotations: (param: Type) or (param: Type | Type2) => (param)
-  // Only match TypeScript types (uppercase initial or type keyword) to avoid matching object properties
+  // Only match TypeScript types (uppercase initial, type keyword, or string literals) to avoid matching object properties
+  const paramTypeAtom = `(?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never|'[^']*'|"[^"]*")`
   result = result.replace(
-    /([(,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*((?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?(?:\s*\|\s*(?:[A-Z][A-Za-z0-9_]*|number|string|boolean|void|null|undefined|any|unknown|never)(?:<[^>]*>)?(?:\[\])?)*)(?=\s*[,)])/g,
+    new RegExp(`([(,]\\s*)([a-zA-Z_][a-zA-Z0-9_]*)\\s*:\\s*(${paramTypeAtom}(?:<[^>]*>)?(?:\\[\\])?(?:\\s*\\|\\s*${paramTypeAtom}(?:<[^>]*>)?(?:\\[\\])?)*)(?=\\s*[,)])`, 'g'),
     '$1$2'
   )
 
