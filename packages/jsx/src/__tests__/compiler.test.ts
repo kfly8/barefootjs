@@ -552,7 +552,7 @@ describe('Compiler', () => {
   })
 
   describe('map with index parameter', () => {
-    test('includes index parameter in reconcileList callback', () => {
+    test('includes index parameter in reconcileTemplates callback', () => {
       const source = `
         'use client'
         import { createMemo } from '@barefootjs/dom'
@@ -2251,7 +2251,7 @@ describe('Compiler', () => {
       expect(clientJs!.content).toContain('toggleRow(index)')
     })
 
-    test('dynamic signal array: component generates reconcileList with createComponent', () => {
+    test('dynamic signal array: component generates reconcileElements with createComponent', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -2272,7 +2272,7 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      expect(clientJs!.content).toContain('reconcileList')
+      expect(clientJs!.content).toContain('reconcileElements')
       expect(clientJs!.content).toContain("createComponent('RadioGroupItem'")
     })
 
@@ -2357,9 +2357,9 @@ describe('Compiler', () => {
       const uniqueDeclarations = new Set(slotDeclarations)
       expect(slotDeclarations.length).toBe(uniqueDeclarations.size)
 
-      // Component slot ref ($c) and reconcileList should both be present
+      // Component slot ref ($c) and reconcileTemplates should both be present
       expect(content).toContain('$c(__scope')
-      expect(content).toContain('reconcileList')
+      expect(content).toContain('reconcileTemplates')
     })
 
     test('dynamic signal array: component with component children emits nested createComponent (#481)', () => {
@@ -2391,8 +2391,8 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Should use reconcileList with createComponent
-      expect(content).toContain('reconcileList')
+      // Should use reconcileElements with createComponent
+      expect(content).toContain('reconcileElements')
       expect(content).toContain("createComponent('TableRow'")
 
       // Children should be emitted as nested createComponent calls

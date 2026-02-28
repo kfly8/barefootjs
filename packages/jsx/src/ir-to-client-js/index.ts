@@ -151,7 +151,7 @@ function generateTemplateOnlyMount(ir: ComponentIR, ctx: ClientJsContext): strin
   lines.push('')
   lines.push(`function init${name}() {}`)
   lines.push('')
-  lines.push(`mount('${name}', init${name}, { template: (props) => \`${templateHtml}\` })`)
+  lines.push(`hydrate('${name}', { init: init${name}, template: (props) => \`${templateHtml}\` })`)
 
   const generatedCode = lines.join('\n')
   const usedImports = detectUsedImports(generatedCode)
