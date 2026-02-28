@@ -129,7 +129,7 @@ function reconcileListElements<T>(
       existingByKey.delete(key)
 
       // Check if this is an uninitialized SSR element
-      // SSR elements have bf-s but no bf-h
+      // SSR elements have bf-s but are not yet in hydratedScopes
       if (existingEl.getAttribute(BF_SCOPE) && !hydratedScopes.has(existingEl)) {
         // For SSR elements, create new element with proper initialization
         const newEl = createEl()

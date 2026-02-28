@@ -34,7 +34,7 @@ export function findScope(
   // For fragment root components, the scope is identified by a comment marker,
   // not by the bf-s attribute on the proxy element.
   // This must be checked before the bf-s check to prevent the proxy element
-  // from being incorrectly accepted and marked as hydrated (bf-h),
+  // from being incorrectly accepted and marked as hydrated,
   // which would block child component initialization via initChild.
   if (parentEl) {
     const commentInfo = commentScopeRegistry.get(parentEl)
