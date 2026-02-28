@@ -10,15 +10,6 @@ import { hydratedScopes } from './hydration-state'
 import type { InitFn } from './types'
 
 /**
- * @deprecated Use InitFn instead. Kept for backward compatibility.
- */
-export type ComponentInitFn = (
-  idx: number,
-  scope: Element | null,
-  props: Record<string, unknown>
-) => void
-
-/**
  * Component registry for parent-child communication.
  */
 const componentRegistry = new Map<string, InitFn>()

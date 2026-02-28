@@ -70,6 +70,3 @@ export { render } from './render'
 
 // Core types
 export type { InitFn, ComponentDef } from './types'
-
-// Backward compatibility — ComponentInitFn is deprecated, use InitFn
-export type { ComponentInitFn } from './registry'

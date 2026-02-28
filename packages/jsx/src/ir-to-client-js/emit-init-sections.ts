@@ -400,7 +400,7 @@ export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext
   }
 }
 
-/** Emit reconcileList calls for dynamic loops, and static array child initialization. */
+/** Emit reconcileElements/reconcileTemplates calls for dynamic loops, and static array child initialization. */
 export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.loopElements) {
     if (elem.isStaticArray) {

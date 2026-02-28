@@ -11,7 +11,10 @@ export const BF_SCOPE = 'bf-s'
 /** Slot ID (most common): `bf="s1"` */
 export const BF_SLOT = 'bf'
 
-/** Runtime-only hydration guard: `bf-h` */
+/**
+ * Runtime-only hydration guard: `bf-h`
+ * @deprecated No longer used. Kept for backward compatibility.
+ */
 export const BF_HYDRATED = 'bf-h'
 
 /** Serialized props JSON: `bf-p="..."` */

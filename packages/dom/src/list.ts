@@ -10,7 +10,6 @@
  * 2. Element mode: renderItem returns HTMLElement (for component-based rendering)
  */
 
-import { getPropsUpdateFn, getComponentProps } from './component'
 import { hydratedScopes } from './hydration-state'
 import { BF_SCOPE, BF_SLOT, BF_COND } from './attrs'
 
