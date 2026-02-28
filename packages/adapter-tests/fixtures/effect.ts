@@ -13,6 +13,6 @@ export function EffectDemo() {
 }
 `,
   expectedHtml: `
-    <div bf-s="test" bf="s1"><span bf="s0">0</span></div>
+    <div bf-s="test" bf="s1"><!--bf:s0-->0<!--/bf:s0--></div>
   `,
 })
