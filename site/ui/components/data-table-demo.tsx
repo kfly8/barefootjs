@@ -48,11 +48,7 @@ export function DataTablePreviewDemo() {
 
   const handleSort = (key) => {
     if (sortKey() === key) {
-      if (sortDir() === 'asc') {
-        setSortDir('desc')
-      } else {
-        setSortKey(null)
-      }
+      setSortDir(sortDir() === 'asc' ? 'desc' : 'asc')
     } else {
       setSortKey(key)
       setSortDir('asc')

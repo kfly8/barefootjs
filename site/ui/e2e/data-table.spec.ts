@@ -14,28 +14,46 @@ test.describe('Data Table Documentation Page', () => {
       expect(count).toBeGreaterThanOrEqual(2)
     })
 
-    test('clicking Amount header cycles through 3 sort states', async ({ page }) => {
-      // First sort button pair on the page (preview section)
+    test('clicking Amount header toggles between asc and desc', async ({ page }) => {
       const amountHeader = page.locator('[data-slot="data-table-column-header"]').filter({ hasText: 'Amount' }).first()
 
       const firstTable = page.locator('[data-slot="table"]').first()
       const rows = firstTable.locator('[data-slot="table-body"] [data-slot="table-row"]')
       const firstAmountCell = rows.first().locator('[data-slot="table-cell"]').last()
 
-      // Original unsorted order: first row is PAY001 ($316.00)
+      // Original unsorted order
       await expect(firstAmountCell).toHaveText('$316.00')
 
-      // Click 1: sort ascending — lowest amount first
+      // Click 1: asc
       await amountHeader.click()
       await expect(firstAmountCell).toHaveText('$242.00')
 
-      // Click 2: sort descending — highest amount first
+      // Click 2: desc
       await amountHeader.click()
       await expect(firstAmountCell).toHaveText('$874.00')
 
-      // Click 3: reset to unsorted — back to original order
+      // Click 3: back to asc (not unsorted)
       await amountHeader.click()
-      await expect(firstAmountCell).toHaveText('$316.00')
+      await expect(firstAmountCell).toHaveText('$242.00')
+    })
+
+    test('switching column resets sort to ascending', async ({ page }) => {
+      const amountHeader = page.locator('[data-slot="data-table-column-header"]').filter({ hasText: 'Amount' }).first()
+      const statusHeader = page.locator('[data-slot="data-table-column-header"]').filter({ hasText: 'Status' }).first()
+
+      const firstTable = page.locator('[data-slot="table"]').first()
+      const rows = firstTable.locator('[data-slot="table-body"] [data-slot="table-row"]')
+
+      // Sort Amount descending (2 clicks)
+      await amountHeader.click()
+      await amountHeader.click()
+      const firstAmountCell = rows.first().locator('[data-slot="table-cell"]').last()
+      await expect(firstAmountCell).toHaveText('$874.00')
+
+      // Switch to Status — resets to ascending
+      await statusHeader.click()
+      const firstStatusCell = rows.first().locator('[data-slot="table-cell"]').nth(1)
+      await expect(firstStatusCell).toHaveText('failed')
     })
   })
 
