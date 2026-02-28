@@ -56,8 +56,13 @@ export function irToHtmlTemplate(node: IRNode): string {
       }
       return `\${${node.expr}}`
 
-    case 'conditional':
-      return `\${${node.condition} ? \`${irToHtmlTemplate(node.whenTrue)}\` : \`${irToHtmlTemplate(node.whenFalse)}\`}`
+    case 'conditional': {
+      const trueBranch = irToHtmlTemplate(node.whenTrue)
+      const falseBranch = irToHtmlTemplate(node.whenFalse)
+      const trueHtml = node.slotId ? addCondAttrToTemplate(trueBranch, node.slotId) : trueBranch
+      const falseHtml = node.slotId ? addCondAttrToTemplate(falseBranch, node.slotId) : falseBranch
+      return `\${${node.condition} ? \`${trueHtml}\` : \`${falseHtml}\`}`
+    }
 
     case 'fragment':
       return node.children.map(irToHtmlTemplate).join('')

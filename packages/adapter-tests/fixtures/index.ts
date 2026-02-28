@@ -12,6 +12,7 @@ import { fixture as propsReactive } from './props-reactive'
 import { fixture as nestedElements } from './nested-elements'
 // Priority 3: Conditionals
 import { fixture as ternary } from './ternary'
+import { fixture as nestedTernary } from './nested-ternary'
 import { fixture as logicalAnd } from './logical-and'
 import { fixture as conditionalClass } from './conditional-class'
 // Priority 4: Loops
@@ -53,6 +54,7 @@ export const jsxFixtures: JSXFixture[] = [
   nestedElements,
   // Priority 3: Conditionals
   ternary,
+  nestedTernary,
   logicalAnd,
   conditionalClass,
   // Priority 4: Loops
