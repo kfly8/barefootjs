@@ -23,8 +23,8 @@ export function EventHandlers() {
     <div bf-s="test">
       <input type="text" bf="s0">
       <button bf="s1">Click</button>
-      <span bf="s3"><!--bf:s2--><!--/bf:s2--></span>
-      <span bf="s5"><!--bf:s4-->0<!--/bf:s4--></span>
+      <span bf="s3"><!--bf:s2--><!--/--></span>
+      <span bf="s5"><!--bf:s4-->0<!--/--></span>
     </div>
   `,
 })

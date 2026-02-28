@@ -91,7 +91,7 @@ export class HonoAdapter implements TemplateAdapter {
     const lines: string[] = []
 
     // Add bfComment/bfText for hydration markers
-    lines.push("import { bfComment, bfText } from '@barefootjs/hono/utils'")
+    lines.push("import { bfComment, bfText, bfTextEnd } from '@barefootjs/hono/utils'")
 
     // Re-export original imports (excluding @barefootjs/dom)
     for (const imp of ir.metadata.imports) {
@@ -493,7 +493,7 @@ export class HonoAdapter implements TemplateAdapter {
     }
     // Mark reactive expressions with comment nodes for client JS to find
     if (expr.reactive && expr.slotId) {
-      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfText("${expr.slotId}", true)}`
+      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfTextEnd()}`
     }
     return `{${expr.expr}}`
   }

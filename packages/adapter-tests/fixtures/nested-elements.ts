@@ -20,6 +20,6 @@ export function NestedElements() {
 }
 `,
   expectedHtml: `
-    <div bf-s="test"><section><article><p bf="s1"><!--bf:s0-->hello<!--/bf:s0--></p></article></section></div>
+    <div bf-s="test"><section><article><p bf="s1"><!--bf:s0-->hello<!--/--></p></article></section></div>
   `,
 })

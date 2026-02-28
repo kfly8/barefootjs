@@ -535,9 +535,9 @@ func TextStart(slotId string) template.HTML {
 }
 
 // TextEnd returns an HTML comment end marker for reactive text expressions.
-// Format: <!--/bf:slotId-->
-func TextEnd(slotId string) template.HTML {
-	return template.HTML("<!--/bf:" + slotId + "-->")
+// Format: <!--/-->
+func TextEnd() template.HTML {
+	return "<!--/-->"
 }
 
 // ScopeComment outputs a comment-based scope marker for fragment root components.

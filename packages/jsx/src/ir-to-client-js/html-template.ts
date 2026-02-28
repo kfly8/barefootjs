@@ -52,7 +52,7 @@ export function irToHtmlTemplate(node: IRNode): string {
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
       if (node.slotId) {
-        return `<!--bf:${node.slotId}-->\${${node.expr}}<!--/bf:${node.slotId}-->`
+        return `<!--bf:${node.slotId}-->\${${node.expr}}<!--/-->`
       }
       return `\${${node.expr}}`
 
@@ -261,7 +261,7 @@ export function irToComponentTemplate(
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
       if (node.slotId) {
-        return `<!--bf:${node.slotId}-->\${${transformExpr(node.expr)}}<!--/bf:${node.slotId}-->`
+        return `<!--bf:${node.slotId}-->\${${transformExpr(node.expr)}}<!--/-->`
       }
       return `\${${transformExpr(node.expr)}}`
 
