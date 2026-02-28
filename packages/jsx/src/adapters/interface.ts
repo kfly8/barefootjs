@@ -14,18 +14,6 @@ import type {
   IRComponent,
 } from '../types'
 
-/**
- * Check if a reactive expression at index i in children needs a closing
- * comment marker to prevent the browser from merging the expression's
- * text node with the following static text node.
- */
-export function needsTextEndMarker(children: IRNode[], i: number): boolean {
-  const child = children[i]
-  if (child.type !== 'expression' || !child.slotId) return false
-  const next = children[i + 1]
-  return next?.type === 'text'
-}
-
 export interface AdapterOutput {
   template: string
   types?: string // Generated types (for typed languages)
@@ -78,15 +66,8 @@ export abstract class BaseAdapter implements TemplateAdapter {
   abstract renderScopeMarker(instanceIdExpr: string): string
   abstract renderSlotMarker(slotId: string): string
   abstract renderCondMarker(condId: string): string
-  abstract renderTextEndMarker(slotId: string): string
 
   renderChildren(children: IRNode[]): string {
-    return children.map((child, i) => {
-      const rendered = this.renderNode(child)
-      if (needsTextEndMarker(children, i)) {
-        return rendered + this.renderTextEndMarker((child as IRExpression).slotId!)
-      }
-      return rendered
-    }).join('')
+    return children.map((child) => this.renderNode(child)).join('')
   }
 }

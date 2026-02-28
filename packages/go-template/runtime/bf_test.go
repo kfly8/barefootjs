@@ -326,10 +326,10 @@ func TestTextMarkers(t *testing.T) {
 		t.Errorf("TextStart(s0) = %v, want %v", gotStart, wantStart)
 	}
 
-	gotEnd := TextEnd("s0")
-	wantEnd := "<!--/bf:s0-->"
+	gotEnd := TextEnd()
+	wantEnd := "<!--/-->"
 	if string(gotEnd) != wantEnd {
-		t.Errorf("TextEnd(s0) = %v, want %v", gotEnd, wantEnd)
+		t.Errorf("TextEnd() = %v, want %v", gotEnd, wantEnd)
 	}
 }
 

@@ -1047,14 +1047,14 @@ export class GoTemplateAdapter extends BaseAdapter {
     // Use comment markers instead of <span> to avoid changing DOM structure.
     if (goExpr.startsWith('{{')) {
       if (expr.reactive && expr.slotId) {
-        return `{{bfTextStart "${expr.slotId}"}}${goExpr}`
+        return `{{bfTextStart "${expr.slotId}"}}${goExpr}{{bfTextEnd}}`
       }
       return goExpr
     }
 
     // Mark reactive expressions with comment nodes for client JS to find
     if (expr.reactive && expr.slotId) {
-      return `{{bfTextStart "${expr.slotId}"}}{{${goExpr}}}`
+      return `{{bfTextStart "${expr.slotId}"}}{{${goExpr}}}{{bfTextEnd}}`
     }
 
     return `{{${goExpr}}}`
@@ -2369,10 +2369,6 @@ export class GoTemplateAdapter extends BaseAdapter {
 
   renderCondMarker(condId: string): string {
     return `bf-c="${condId}"`
-  }
-
-  renderTextEndMarker(slotId: string): string {
-    return `{{bfTextEnd "${slotId}"}}`
   }
 
   private wrapWithCondMarker(content: string, condId: string): string {

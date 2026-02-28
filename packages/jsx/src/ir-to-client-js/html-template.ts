@@ -2,25 +2,9 @@
  * IR → HTML template string generation and validation.
  */
 
-import type { IRNode, IRExpression } from '../types'
+import type { IRNode } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import { toHtmlAttrName, attrValueToString, quotePropName } from './utils'
-
-/**
- * Render an array of IR children, inserting closing comment markers
- * when a reactive expression is immediately followed by a text node.
- * Without the marker, the browser merges adjacent text content into
- * a single Text node, breaking $t() updates.
- */
-function renderChildren(children: IRNode[], renderFn: (node: IRNode) => string): string {
-  return children.map((child, i) => {
-    const html = renderFn(child)
-    if (child.type === 'expression' && child.slotId && children[i + 1]?.type === 'text') {
-      return html + `<!--/bf:${(child as IRExpression).slotId}-->`
-    }
-    return html
-  }).join('')
-}
 
 const VOID_ELEMENTS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
@@ -53,7 +37,7 @@ export function irToHtmlTemplate(node: IRNode): string {
       }
 
       const attrs = attrParts.join(' ')
-      const children = renderChildren(node.children, irToHtmlTemplate)
+      const children = node.children.map(irToHtmlTemplate).join('')
 
       // Non-void elements must use open+close tags (HTML parsers ignore self-closing on div, span, etc.)
       if (children || !VOID_ELEMENTS.has(node.tag)) {
@@ -68,7 +52,7 @@ export function irToHtmlTemplate(node: IRNode): string {
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
       if (node.slotId) {
-        return `<!--bf:${node.slotId}-->\${${node.expr}}`
+        return `<!--bf:${node.slotId}-->\${${node.expr}}<!--/-->`
       }
       return `\${${node.expr}}`
 
@@ -76,13 +60,13 @@ export function irToHtmlTemplate(node: IRNode): string {
       return `\${${node.condition} ? \`${irToHtmlTemplate(node.whenTrue)}\` : \`${irToHtmlTemplate(node.whenFalse)}\`}`
 
     case 'fragment':
-      return renderChildren(node.children, irToHtmlTemplate)
+      return node.children.map(irToHtmlTemplate).join('')
 
     case 'component': {
       // Portal is a special pass-through component - render its children directly
       // Portal moves content to document.body, so we need the actual content in templates
       if (node.name === 'Portal') {
-        return renderChildren(node.children, irToHtmlTemplate)
+        return node.children.map(irToHtmlTemplate).join('')
       }
 
       // Use renderChild() to render child component's registered template at runtime.
@@ -103,7 +87,7 @@ export function irToHtmlTemplate(node: IRNode): string {
 
     case 'loop': {
       // Generate inline .map().join('') so loop variables are properly scoped
-      const childTemplate = renderChildren(node.children, irToHtmlTemplate)
+      const childTemplate = node.children.map(irToHtmlTemplate).join('')
       const indexParam = node.index ? `, ${node.index}` : ''
       return `\${${node.array}.map((${node.param}${indexParam}) => \`${childTemplate}\`).join('')}`
     }
@@ -112,7 +96,7 @@ export function irToHtmlTemplate(node: IRNode): string {
       return ''
 
     case 'provider':
-      return renderChildren(node.children, irToHtmlTemplate)
+      return node.children.map(irToHtmlTemplate).join('')
 
     default:
       return ''
@@ -263,8 +247,7 @@ export function irToComponentTemplate(
       }
 
       const attrs = attrParts.join(' ')
-      const renderComp = (c: IRNode) => irToComponentTemplate(c, propNames, inlinableConstants)
-      const children = renderChildren(node.children, renderComp)
+      const children = node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
       if (children || !VOID_ELEMENTS.has(node.tag)) {
         return `<${node.tag}${attrs ? ' ' + attrs : ''}>${children}</${node.tag}>`
@@ -278,7 +261,7 @@ export function irToComponentTemplate(
     case 'expression':
       if (node.expr === 'null' || node.expr === 'undefined') return ''
       if (node.slotId) {
-        return `<!--bf:${node.slotId}-->\${${transformExpr(node.expr)}}`
+        return `<!--bf:${node.slotId}-->\${${transformExpr(node.expr)}}<!--/-->`
       }
       return `\${${transformExpr(node.expr)}}`
 
@@ -290,15 +273,12 @@ export function irToComponentTemplate(
       return `\${${transformExpr(node.condition)} ? \`${trueHtml}\` : \`${falseHtml}\`}`
     }
 
-    case 'fragment': {
-      const renderComp = (c: IRNode) => irToComponentTemplate(c, propNames, inlinableConstants)
-      return renderChildren(node.children, renderComp)
-    }
+    case 'fragment':
+      return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
     case 'component': {
-      const renderComp = (c: IRNode) => irToComponentTemplate(c, propNames, inlinableConstants)
       if (node.name === 'Portal') {
-        return renderChildren(node.children, renderComp)
+        return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
       }
 
       // Use renderChild() to render child component's template at runtime (#435)
@@ -316,18 +296,14 @@ export function irToComponentTemplate(
       return `\${renderChild('${node.name}', ${propsExpr}${keyArg})}`
     }
 
-    case 'loop': {
-      const renderComp = (c: IRNode) => irToComponentTemplate(c, propNames, inlinableConstants)
-      return renderChildren(node.children, renderComp)
-    }
+    case 'loop':
+      return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
     case 'if-statement':
       return ''
 
-    case 'provider': {
-      const renderComp = (c: IRNode) => irToComponentTemplate(c, propNames, inlinableConstants)
-      return renderChildren(node.children, renderComp)
-    }
+    case 'provider':
+      return node.children.map((c) => irToComponentTemplate(c, propNames, inlinableConstants)).join('')
 
     default:
       return ''

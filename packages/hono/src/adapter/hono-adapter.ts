@@ -91,7 +91,7 @@ export class HonoAdapter implements TemplateAdapter {
     const lines: string[] = []
 
     // Add bfComment/bfText for hydration markers
-    lines.push("import { bfComment, bfText } from '@barefootjs/hono/utils'")
+    lines.push("import { bfComment, bfText, bfTextEnd } from '@barefootjs/hono/utils'")
 
     // Re-export original imports (excluding @barefootjs/dom)
     for (const imp of ir.metadata.imports) {
@@ -493,7 +493,7 @@ export class HonoAdapter implements TemplateAdapter {
     }
     // Mark reactive expressions with comment nodes for client JS to find
     if (expr.reactive && expr.slotId) {
-      return `{bfText("${expr.slotId}")}{${expr.expr}}`
+      return `{bfText("${expr.slotId}")}{${expr.expr}}{bfTextEnd()}`
     }
     return `{${expr.expr}}`
   }
@@ -585,13 +585,7 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   private renderChildrenInLoop(children: IRNode[]): string {
-    return children.map((child, i) => {
-      const rendered = this.renderNode(child, { isInsideLoop: true })
-      if (child.type === 'expression' && child.slotId && children[i + 1]?.type === 'text') {
-        return rendered + `{bfText("${child.slotId}", true)}`
-      }
-      return rendered
-    }).join('')
+    return children.map((child) => this.renderNode(child, { isInsideLoop: true })).join('')
   }
 
   /**
@@ -698,15 +692,7 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   renderChildren(children: IRNode[]): string {
-    return children.map((child, i) => {
-      const rendered = this.renderNode(child)
-      // Add closing marker when reactive expression is followed by a text node
-      // to prevent browser from merging them into a single text node
-      if (child.type === 'expression' && child.slotId && children[i + 1]?.type === 'text') {
-        return rendered + `{bfText("${child.slotId}", true)}`
-      }
-      return rendered
-    }).join('')
+    return children.map((child) => this.renderNode(child)).join('')
   }
 
   // ===========================================================================
