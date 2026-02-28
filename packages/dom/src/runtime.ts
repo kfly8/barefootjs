@@ -1194,10 +1194,10 @@ export function $c(scope: Element | null, id: string): Element | null {
 
 /**
  * Find the Text node for a reactive text expression marked by comment nodes.
- * Expects marker format: <!--bf:sX-->text<!--/bf:sX-->
+ * Expects marker format: <!--bf:sX-->text<!--/-->
  *
  * Used by compiler-generated code for reactive text expressions (e.g., {count()}).
- * Returns the Text node between the start and end comment markers so that
+ * Returns the Text node after the start comment marker so that
  * createEffect can update it via .nodeValue without needing a wrapper <span>.
  *
  * @param scope - The component scope element to search within
