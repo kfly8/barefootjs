@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
 import { render } from '../src/render'
 import { createComponent } from '../src/component'
+import { hydratedScopes } from '../src/hydration-state'
 import type { ComponentDef } from '../src/types'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
@@ -86,6 +87,21 @@ describe('render', () => {
 
     expect(receivedProps.length).toBe(1)
     expect(receivedProps[0]).toEqual({ foo: 'bar' })
+  })
+
+  test('marks element in hydratedScopes after init', () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+
+    const def: ComponentDef = {
+      init: () => {},
+      template: () => `<div>content</div>`
+    }
+
+    render(container, def)
+
+    const element = container.firstElementChild!
+    expect(hydratedScopes.has(element)).toBe(true)
   })
 })
 

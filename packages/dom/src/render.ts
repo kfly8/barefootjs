@@ -7,6 +7,7 @@
  */
 
 import { BF_SCOPE } from './attrs'
+import { hydratedScopes } from './hydration-state'
 import type { ComponentDef } from './types'
 
 /**
@@ -62,4 +63,7 @@ export function render(
 
   // Initialize the component
   def.init(element, props)
+
+  // Mark as hydrated so reconcileList doesn't re-initialize
+  hydratedScopes.add(element)
 }
