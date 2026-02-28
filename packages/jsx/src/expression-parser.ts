@@ -526,11 +526,15 @@ function containsHigherOrder(expr: ParsedExpr): boolean {
  * })
  * ```
  */
-export function parseBlockBody(block: ts.Block, sourceFile: ts.SourceFile): ParsedStatement[] | null {
+export function parseBlockBody(
+  block: ts.Block,
+  sourceFile: ts.SourceFile,
+  getJS: (node: ts.Node) => string
+): ParsedStatement[] | null {
   const statements: ParsedStatement[] = []
 
   for (const stmt of block.statements) {
-    const parsed = parseStatement(stmt, sourceFile)
+    const parsed = parseStatement(stmt, sourceFile, getJS)
     if (parsed === null) {
       // Unsupported statement type
       return null
@@ -544,7 +548,11 @@ export function parseBlockBody(block: ts.Block, sourceFile: ts.SourceFile): Pars
 /**
  * Parse a single statement into ParsedStatement.
  */
-function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedStatement | null {
+function parseStatement(
+  stmt: ts.Statement,
+  sourceFile: ts.SourceFile,
+  getJS: (node: ts.Node) => string
+): ParsedStatement | null {
   // Variable declaration: const f = filter()
   if (ts.isVariableStatement(stmt)) {
     const decl = stmt.declarationList.declarations[0]
@@ -552,7 +560,7 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
       return null
     }
     const name = decl.name.text
-    const initText = decl.initializer.getText(sourceFile)
+    const initText = getJS(decl.initializer)
     const init = parseExpression(initText)
     if (init.kind === 'unsupported') {
       return null
@@ -566,7 +574,7 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
       // return; (no value) -> return undefined, treat as return true
       return { kind: 'return', value: { kind: 'literal', value: true, literalType: 'boolean' } }
     }
-    const valueText = stmt.expression.getText(sourceFile)
+    const valueText = getJS(stmt.expression)
     const value = parseExpression(valueText)
     if (value.kind === 'unsupported') {
       return null
@@ -576,14 +584,14 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
 
   // If statement: if (f === 'active') return !t.done
   if (ts.isIfStatement(stmt)) {
-    const conditionText = stmt.expression.getText(sourceFile)
+    const conditionText = getJS(stmt.expression)
     const condition = parseExpression(conditionText)
     if (condition.kind === 'unsupported') {
       return null
     }
 
     // Parse consequent (then branch)
-    const consequent = parseIfBranch(stmt.thenStatement, sourceFile)
+    const consequent = parseIfBranch(stmt.thenStatement, sourceFile, getJS)
     if (consequent === null) {
       return null
     }
@@ -593,14 +601,14 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
     if (stmt.elseStatement) {
       // else if -> recurse as if statement
       if (ts.isIfStatement(stmt.elseStatement)) {
-        const elseIf = parseStatement(stmt.elseStatement, sourceFile)
+        const elseIf = parseStatement(stmt.elseStatement, sourceFile, getJS)
         if (elseIf === null) {
           return null
         }
         alternate = [elseIf]
       } else {
         // else { ... }
-        const elseBranch = parseIfBranch(stmt.elseStatement, sourceFile)
+        const elseBranch = parseIfBranch(stmt.elseStatement, sourceFile, getJS)
         if (elseBranch === null) {
           return null
         }
@@ -618,14 +626,18 @@ function parseStatement(stmt: ts.Statement, sourceFile: ts.SourceFile): ParsedSt
 /**
  * Parse an if branch (then or else) into ParsedStatement array.
  */
-function parseIfBranch(branch: ts.Statement, sourceFile: ts.SourceFile): ParsedStatement[] | null {
+function parseIfBranch(
+  branch: ts.Statement,
+  sourceFile: ts.SourceFile,
+  getJS: (node: ts.Node) => string
+): ParsedStatement[] | null {
   // Block: { ... }
   if (ts.isBlock(branch)) {
-    return parseBlockBody(branch, sourceFile)
+    return parseBlockBody(branch, sourceFile, getJS)
   }
 
   // Single statement (no braces): return !t.done
-  const parsed = parseStatement(branch, sourceFile)
+  const parsed = parseStatement(branch, sourceFile, getJS)
   if (parsed === null) {
     return null
   }
