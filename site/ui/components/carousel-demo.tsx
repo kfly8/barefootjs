@@ -65,8 +65,8 @@ export function CarouselOrientationDemo() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
+        <CarouselPrevious orientation="vertical" />
+        <CarouselNext orientation="vertical" />
       </Carousel>
     </div>
   )

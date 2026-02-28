@@ -204,11 +204,19 @@ function CarouselItem(props: CarouselItemProps) {
 }
 
 interface CarouselPreviousProps extends ButtonHTMLAttributes {
+  /** Scroll orientation (must match parent Carousel) */
+  orientation?: 'horizontal' | 'vertical'
   /** Button content override */
   children?: Child
 }
 
+const prevHorizontalClasses = '-left-12 top-1/2 -translate-y-1/2'
+const prevVerticalClasses = '-top-12 left-1/2 -translate-x-1/2 rotate-90'
+
 function CarouselPrevious(props: CarouselPreviousProps) {
+  const orientation = props.orientation ?? 'horizontal'
+  const positionClasses = orientation === 'vertical' ? prevVerticalClasses : prevHorizontalClasses
+
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(CarouselContext)
 
@@ -221,21 +229,13 @@ function CarouselPrevious(props: CarouselPreviousProps) {
       const disabled = !ctx.canScrollPrev()
       ;(el as HTMLButtonElement).disabled = disabled
     })
-
-    // Update position classes based on orientation
-    const carouselEl = el.closest('[data-slot="carousel"]') as HTMLElement
-    if (carouselEl?.dataset.orientation === 'vertical') {
-      el.classList.add('-top-12', 'left-1/2', '-translate-x-1/2', 'rotate-90')
-      el.classList.remove('-left-12', 'top-1/2', '-translate-y-1/2')
-    }
   }
 
-  // Default: horizontal position
   return (
     <button
       data-slot="carousel-previous"
       type="button"
-      className={`${carouselButtonBaseClasses} -left-12 top-1/2 -translate-y-1/2 ${props.className ?? ''}`}
+      className={`${carouselButtonBaseClasses} ${positionClasses} ${props.className ?? ''}`}
       disabled
       aria-label="Previous slide"
       ref={handleMount}
@@ -249,11 +249,19 @@ function CarouselPrevious(props: CarouselPreviousProps) {
 }
 
 interface CarouselNextProps extends ButtonHTMLAttributes {
+  /** Scroll orientation (must match parent Carousel) */
+  orientation?: 'horizontal' | 'vertical'
   /** Button content override */
   children?: Child
 }
 
+const nextHorizontalClasses = '-right-12 top-1/2 -translate-y-1/2'
+const nextVerticalClasses = '-bottom-12 left-1/2 -translate-x-1/2 rotate-90'
+
 function CarouselNext(props: CarouselNextProps) {
+  const orientation = props.orientation ?? 'horizontal'
+  const positionClasses = orientation === 'vertical' ? nextVerticalClasses : nextHorizontalClasses
+
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(CarouselContext)
 
@@ -266,21 +274,13 @@ function CarouselNext(props: CarouselNextProps) {
       const disabled = !ctx.canScrollNext()
       ;(el as HTMLButtonElement).disabled = disabled
     })
-
-    // Update position classes based on orientation
-    const carouselEl = el.closest('[data-slot="carousel"]') as HTMLElement
-    if (carouselEl?.dataset.orientation === 'vertical') {
-      el.classList.add('-bottom-12', 'left-1/2', '-translate-x-1/2', 'rotate-90')
-      el.classList.remove('-right-12', 'top-1/2', '-translate-y-1/2')
-    }
   }
 
-  // Default: horizontal position
   return (
     <button
       data-slot="carousel-next"
       type="button"
-      className={`${carouselButtonBaseClasses} -right-12 top-1/2 -translate-y-1/2 ${props.className ?? ''}`}
+      className={`${carouselButtonBaseClasses} ${positionClasses} ${props.className ?? ''}`}
       disabled
       aria-label="Next slide"
       ref={handleMount}
