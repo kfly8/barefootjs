@@ -2990,7 +2990,8 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      expect(clientJs?.content).toContain("AUTO-GENERATED: Sync controlled prop 'initial'")
+      // Sync effect for controlled prop should be generated
+      expect(clientJs?.content).toContain('const __val = props.initial')
     })
 
     test('props.defaultXxx ?? default does NOT generate sync effect', () => {
@@ -3013,7 +3014,8 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      expect(clientJs?.content).not.toContain('AUTO-GENERATED: Sync controlled prop')
+      // No sync effect for uncontrolled (defaultXxx) props
+      expect(clientJs?.content).not.toContain('const __val = props.')
     })
 
     test('no redundant double-?? in output', () => {
@@ -3135,7 +3137,7 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
       // Sync effect should be generated
-      expect(clientJs?.content).toContain("AUTO-GENERATED: Sync controlled prop 'initial'")
+      expect(clientJs?.content).toContain('const __val = props.initial')
       // Output should use 'props.initial' (not 'p.initial')
       expect(clientJs?.content).toContain('props.initial')
       expect(clientJs?.content).not.toContain('p.initial')

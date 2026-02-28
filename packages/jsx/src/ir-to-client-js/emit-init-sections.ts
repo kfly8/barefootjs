@@ -145,7 +145,6 @@ export function emitSignalsAndMemos(
     const accessor = prop?.defaultValue
       ? `(props.${propName} ?? ${prop.defaultValue})`
       : `props.${propName}`
-    lines.push(`  // AUTO-GENERATED: Sync controlled prop '${propName}' to internal signal`)
     lines.push(`  createEffect(() => {`)
     lines.push(`    const __val = ${accessor}`)
     lines.push(`    if (__val !== undefined) ${signal.setter}(__val)`)
