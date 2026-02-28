@@ -37,23 +37,21 @@ test.describe('Data Table Documentation Page', () => {
       await expect(firstAmountCell).toHaveText('$242.00')
     })
 
-    test('switching column resets sort to ascending', async ({ page }) => {
+    test('clicking different column resets to unsorted', async ({ page }) => {
       const amountHeader = page.locator('[data-slot="data-table-column-header"]').filter({ hasText: 'Amount' }).first()
       const statusHeader = page.locator('[data-slot="data-table-column-header"]').filter({ hasText: 'Status' }).first()
 
       const firstTable = page.locator('[data-slot="table"]').first()
       const rows = firstTable.locator('[data-slot="table-body"] [data-slot="table-row"]')
-
-      // Sort Amount descending (2 clicks)
-      await amountHeader.click()
-      await amountHeader.click()
       const firstAmountCell = rows.first().locator('[data-slot="table-cell"]').last()
-      await expect(firstAmountCell).toHaveText('$874.00')
 
-      // Switch to Status — resets to ascending
+      // Sort Amount ascending
+      await amountHeader.click()
+      await expect(firstAmountCell).toHaveText('$242.00')
+
+      // Click Status — resets to unsorted (original order)
       await statusHeader.click()
-      const firstStatusCell = rows.first().locator('[data-slot="table-cell"]').nth(1)
-      await expect(firstStatusCell).toHaveText('failed')
+      await expect(firstAmountCell).toHaveText('$316.00')
     })
   })
 
