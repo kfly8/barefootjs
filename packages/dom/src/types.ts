@@ -16,6 +16,8 @@ export type InitFn = (scope: Element, props: Record<string, unknown>) => void
  * Bundles the init function with optional template and scope metadata.
  */
 export interface ComponentDef {
+  /** Component name (e.g., 'Counter'). Used for scope ID generation. */
+  name?: string
   /** Init function that hydrates a scope element */
   init: InitFn
   /** Template function for client-side component creation */

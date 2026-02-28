@@ -53,7 +53,7 @@ export function render(
   // Set scope ID if not present
   if (!element.getAttribute(BF_SCOPE)) {
     const id = Math.random().toString(36).slice(2, 8)
-    const name = def.init.name?.replace(/^init/, '') || 'Component'
+    const name = def.name || def.init.name?.replace(/^init/, '') || 'Component'
     element.setAttribute(BF_SCOPE, `${name}_${id}`)
   }
 

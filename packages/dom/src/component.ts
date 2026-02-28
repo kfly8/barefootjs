@@ -302,7 +302,7 @@ function createComponentFromDef(
   }
 
   // Set scope ID and key
-  const name = def.init.name?.replace(/^init/, '') || 'Component'
+  const name = def.name || def.init.name?.replace(/^init/, '') || 'Component'
   const scopeId = `${name}_${generateId()}`
   element.setAttribute(BF_SCOPE, scopeId)
   if (key !== undefined) {
