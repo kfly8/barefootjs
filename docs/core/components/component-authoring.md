@@ -119,16 +119,21 @@ export function Toggle() {
 **Client JS:**
 
 ```js
-import { createSignal, createEffect, find, bind } from '@barefootjs/dom'
+import { createSignal, createEffect, $, hydrate } from '@barefootjs/dom'
 
-export function init() {
+export function initToggle(__scope, props = {}) {
   const [on, setOn] = createSignal(false)
 
-  const _slot_0 = find('[bf="slot_0"]')
-  createEffect(() => { _slot_0.textContent = on() ? 'ON' : 'OFF' })
+  const _s0 = $(__scope, 's0')
 
-  bind('[bf="slot_0"]', 'click', () => setOn(v => !v))
+  createEffect(() => {
+    if (_s0) _s0.textContent = on() ? 'ON' : 'OFF'
+  })
+
+  if (_s0) _s0.onclick = () => setOn(v => !v)
 }
+
+hydrate('Toggle', { init: initToggle })
 ```
 
 The server renders static HTML. The browser runs the init function to make it interactive. Only the specific text node bound to `on()` updates when the signal changes.

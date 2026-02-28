@@ -131,7 +131,7 @@ Simple patterns (e.g., `t => !t.done`, `(a, b) => a.price - b.price`) can be com
 
 ### Auto Scope Wrapping
 
-If a component's IR root is a Provider (Context.Provider) with no wrapper element, the compiler wraps it in `<div style="display:contents">` to provide a DOM anchor for `findScope()` during hydration.
+If a component's IR root is a Provider (Context.Provider) with no wrapper element, the compiler wraps it in `<div style="display:contents">` to provide a DOM anchor for scope identification during hydration. The scope element is passed directly as the first argument to the init function.
 
 ---
 
@@ -235,7 +235,7 @@ function init(scope, props) {
   insert(_2, () => isOpen() ? panelHtml : null)
 
   // 11. Loop updates
-  reconcileList(_3, items(), getKey, renderItem)
+  reconcileElements(_3, items(), getKey, renderItem)
 
   // 12. Event handlers
   _0.addEventListener('click', handleClick)
@@ -254,7 +254,7 @@ function init(scope, props) {
 The generator scans the output code and includes only the `@barefootjs/dom` imports actually used:
 
 ```javascript
-import { createSignal, createEffect, find, findScope } from '@barefootjs/dom'
+import { createSignal, createEffect, find, hydrate } from '@barefootjs/dom'
 ```
 
 ### 6. Event Delegation in Loops

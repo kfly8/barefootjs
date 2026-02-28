@@ -76,16 +76,22 @@ export function Counter(props) {
 Phase 2b produces client JS:
 
 ```js
-import { createSignal, createEffect, find, bind } from '@barefootjs/dom'
+import { createSignal, createEffect, find, hydrate } from '@barefootjs/dom'
 
-export function init(props) {
+export function initCounter(__scope, props = {}) {
   const [count, setCount] = createSignal(props.initial ?? 0)
 
-  const _slot_0 = find('[bf="slot_0"]')
-  createEffect(() => { _slot_0.textContent = String(count()) })
+  const _slot_0 = find(__scope, '[bf="slot_0"]')
+  const _slot_1 = find(__scope, '[bf="slot_1"]')
 
-  bind('[bf="slot_1"]', 'click', () => setCount(n => n + 1))
+  createEffect(() => {
+    if (_slot_0) _slot_0.textContent = String(count())
+  })
+
+  if (_slot_1) _slot_1.onclick = () => setCount(n => n + 1)
 }
+
+hydrate('Counter', { init: initCounter })
 ```
 
 The server renders the HTML. The browser runs only the client JS to make it interactive.

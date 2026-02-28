@@ -215,7 +215,6 @@ createEffect(() => {
    | `bf-pi` | Portal container ID | `bf-pi="bf-portal-1"` |
    | `bf-pp` | Portal placeholder | `bf-pp="bf-portal-1"` |
    | `bf-i` | List item marker | `bf-i` |
-   | `bf-h` | Hydration guard (runtime-only, not in template output) | `bf-h` |
 
 2. **Client JS**: Minimal JavaScript for reactivity
    - Uses `createEffect` for reactive updates
