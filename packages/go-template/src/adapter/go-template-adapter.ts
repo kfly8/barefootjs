@@ -2371,6 +2371,10 @@ export class GoTemplateAdapter extends BaseAdapter {
     return `bf-c="${condId}"`
   }
 
+  renderTextEndMarker(slotId: string): string {
+    return `{{bfTextEnd "${slotId}"}}`
+  }
+
   private wrapWithCondMarker(content: string, condId: string): string {
     // If content is an HTML element, add bf-c attribute
     if (content.startsWith('<')) {

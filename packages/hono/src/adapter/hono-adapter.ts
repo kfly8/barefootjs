@@ -585,7 +585,13 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   private renderChildrenInLoop(children: IRNode[]): string {
-    return children.map((child) => this.renderNode(child, { isInsideLoop: true })).join('')
+    return children.map((child, i) => {
+      const rendered = this.renderNode(child, { isInsideLoop: true })
+      if (child.type === 'expression' && child.slotId && children[i + 1]?.type === 'text') {
+        return rendered + `{bfText("${child.slotId}", true)}`
+      }
+      return rendered
+    }).join('')
   }
 
   /**
@@ -692,7 +698,15 @@ export class HonoAdapter implements TemplateAdapter {
   }
 
   renderChildren(children: IRNode[]): string {
-    return children.map((child) => this.renderNode(child)).join('')
+    return children.map((child, i) => {
+      const rendered = this.renderNode(child)
+      // Add closing marker when reactive expression is followed by a text node
+      // to prevent browser from merging them into a single text node
+      if (child.type === 'expression' && child.slotId && children[i + 1]?.type === 'text') {
+        return rendered + `{bfText("${child.slotId}", true)}`
+      }
+      return rendered
+    }).join('')
   }
 
   // ===========================================================================

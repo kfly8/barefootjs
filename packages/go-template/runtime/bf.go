@@ -51,6 +51,7 @@ func FuncMap() template.FuncMap {
 		// Comment marker (for hydration)
 		"bfComment":    Comment,
 		"bfTextStart":  TextStart,
+		"bfTextEnd":    TextEnd,
 
 		// Script collection
 		"bfScripts": BfScripts,
@@ -531,6 +532,12 @@ func Comment(content string) template.HTML {
 // Format: <!--bf:slotId-->
 func TextStart(slotId string) template.HTML {
 	return template.HTML("<!--bf:" + slotId + "-->")
+}
+
+// TextEnd returns an HTML comment end marker for reactive text expressions.
+// Format: <!--/bf:slotId-->
+func TextEnd(slotId string) template.HTML {
+	return template.HTML("<!--/bf:" + slotId + "-->")
 }
 
 // ScopeComment outputs a comment-based scope marker for fragment root components.

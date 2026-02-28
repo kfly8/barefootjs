@@ -9,10 +9,10 @@ export function bfComment(key: string) {
 }
 
 /**
- * Output comment marker for reactive text expressions.
- * Renders <!--bf:slotId-->
+ * Output comment markers for reactive text expressions.
+ * Renders <!--bf:slotId--> (start) or <!--/bf:slotId--> (end).
  */
-export function bfText(slotId: string) {
-  return raw(`<!--bf:${slotId}-->`)
+export function bfText(slotId: string, end?: boolean) {
+  return raw(end ? `<!--/bf:${slotId}-->` : `<!--bf:${slotId}-->`)
 }
 

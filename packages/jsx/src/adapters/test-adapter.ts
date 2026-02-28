@@ -362,6 +362,10 @@ export class TestAdapter extends BaseAdapter {
   renderCondMarker(condId: string): string {
     return `bf-c="${condId}"`
   }
+
+  renderTextEndMarker(slotId: string): string {
+    return `{bfText("${slotId}", true)}`
+  }
 }
 
 export const testAdapter = new TestAdapter()
