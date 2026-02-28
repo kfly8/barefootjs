@@ -14,8 +14,8 @@ export function PropsReactive(props: { label: string }) {
   props: { label: 'Hello' },
   expectedHtml: `
     <div bf-s="test">
-      <span bf="s1"><!--bf:s0-->Hello</span>
-      <span bf="s3"><!--bf:s2-->0</span>
+      <span bf="s1"><!--bf:s0-->Hello<!--/--></span>
+      <span bf="s3"><!--bf:s2-->0<!--/--></span>
     </div>
   `,
 })
