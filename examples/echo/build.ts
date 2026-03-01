@@ -5,10 +5,10 @@
  */
 
 import { analyzeComponent, listExportedComponents, jsxToIR, generateClientJs, combineParentChildClientJs, type ComponentIR } from '@barefootjs/jsx'
-import { GoTemplateAdapter } from '@barefootjs/go-template'
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { spawnSync } from 'node:child_process'
+import config from './barefoot.config'
 
 
 const projectRoot = import.meta.dirname
@@ -49,8 +49,8 @@ const barefootDest = resolve(clientDir, 'barefoot.js')
 copyFileSync(domDistFile, barefootDest)
 console.log('  Copied: barefoot.js\n')
 
-// Create adapter (package name 'main' for direct use in main.go)
-const adapter = new GoTemplateAdapter({ packageName: 'main' })
+// Use adapter from barefoot.config.ts
+const adapter = config.adapter
 
 // Collect all types for combined components.go
 const allTypeParts: string[] = []
@@ -279,7 +279,8 @@ for (const componentPath of components) {
       // Generate merged import statement with sorted names
       const sortedImports = [...allImportNames].sort()
       const importStatement = `import { ${sortedImports.join(', ')} } from './barefoot.js'\n\n`
-      writeFileSync(clientPath, importStatement + clientJsParts.join('\n'))
+      const clientJsContent = importStatement + clientJsParts.join('\n')
+      writeFileSync(clientPath, clientJsContent)
       console.log(`  Client:   ${componentName}.client.js`)
     }
   }
@@ -458,5 +459,19 @@ function combineClientJsFiles(): void {
 
 // Combine parent-child client JS
 combineClientJsFiles()
+
+// Minify client JS (after combine so all files are final)
+if (config.minify) {
+  // @ts-expect-error minifySyntax is supported at runtime but missing from older bun-types
+  const transpiler = new Bun.Transpiler({ minifyWhitespace: true, minifySyntax: true })
+  const clientFiles = readdirSync(clientDir).filter(f => f.endsWith('.js'))
+  for (const file of clientFiles) {
+    const filePath = resolve(clientDir, file)
+    const content = readFileSync(filePath, 'utf-8')
+    if (content) {
+      writeFileSync(filePath, transpiler.transformSync(content))
+    }
+  }
+}
 
 console.log('\nDone!')

@@ -17,86 +17,19 @@
 import { compileJSX, combineParentChildClientJs } from '@barefootjs/jsx'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
-import { dirname, resolve, join, relative, basename } from 'node:path'
+import { dirname, resolve, join, relative } from 'node:path'
+import {
+  hasUseClientDirective,
+  discoverComponentFiles as discoverFiles,
+  generateHash,
+} from '../../packages/cli/src/lib/build'
+import { addScriptCollection } from '../../packages/hono/src/build'
 
 const ROOT_DIR = dirname(import.meta.path)
 
 // File type helpers
 function isTsOrTsxFile(filename: string): boolean {
   return filename.endsWith('.tsx') || filename.endsWith('.ts')
-}
-
-function hasUseClientDirective(content: string): boolean {
-  // Remove leading comments (block and line comments)
-  let trimmed = content.trimStart()
-
-  // Skip block comments at the beginning
-  while (trimmed.startsWith('/*')) {
-    const endIndex = trimmed.indexOf('*/')
-    if (endIndex === -1) break
-    trimmed = trimmed.slice(endIndex + 2).trimStart()
-  }
-
-  // Skip line comments at the beginning
-  while (trimmed.startsWith('//')) {
-    const endIndex = trimmed.indexOf('\n')
-    if (endIndex === -1) break
-    trimmed = trimmed.slice(endIndex + 1).trimStart()
-  }
-
-  return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
-}
-
-// Generate short hash from content
-function generateHash(content: string): string {
-  const hash = Bun.hash(content)
-  return hash.toString(16).slice(0, 8)
-}
-
-// Add script collection wrapper to SSR component
-function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
-  // Add import for useRequestContext
-  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\n"
-
-  // Find the last import statement and add our import after it
-  const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
-  if (!importMatch) {
-    return content
-  }
-
-  const beforeImports = importMatch[1]
-  const existingImports = importMatch[2]
-  const restOfFile = content.slice(importMatch[0].length)
-
-  // Script collection code to insert at the start of each component function
-  const scriptCollector = `
-  // Script collection for client JS hydration
-  try {
-    const __c = useRequestContext()
-    const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
-    const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
-    if (!__outputScripts.has('__barefoot__')) {
-      __outputScripts.add('__barefoot__')
-      __scripts.push({ src: '/static/components/barefoot.js' })
-    }
-    if (!__outputScripts.has('${componentId}')) {
-      __outputScripts.add('${componentId}')
-      __scripts.push({ src: '/static/components/${clientJsPath}' })
-    }
-    __c.set('bfCollectedScripts', __scripts)
-    __c.set('bfOutputScripts', __outputScripts)
-  } catch {}
-`
-
-  // Insert script collector at the start of each export function
-  const modifiedRest = restOfFile.replace(
-    /export function (\w+)\(([^)]*)\)([^{]*)\{/g,
-    (match, name, params, rest) => {
-      return `export function ${name}(${params})${rest}{${scriptCollector}`
-    }
-  )
-
-  return beforeImports + existingImports + importStatement + modifiedRest
 }
 
 // Copy all TS/TSX files from a directory (non-recursive)
@@ -146,7 +79,7 @@ async function discoverComponentFiles(dir: string): Promise<string[]> {
 // The compiler handles "use client" filtering
 const uiComponentFiles = await discoverComponentFiles(UI_COMPONENTS_DIR)
 const docsComponentFiles = await discoverComponentFiles(DOCS_COMPONENTS_DIR)
-const sharedComponentFiles = await discoverComponentFiles(SHARED_COMPONENTS_DIR)
+const sharedComponentFiles = await discoverFiles(SHARED_COMPONENTS_DIR)
 const componentFiles = [...uiComponentFiles, ...docsComponentFiles, ...sharedComponentFiles]
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
