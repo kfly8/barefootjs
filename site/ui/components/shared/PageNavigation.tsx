@@ -29,6 +29,7 @@ export const componentOrder = [
   { slug: 'input', title: 'Input' },
   { slug: 'label', title: 'Label' },
   { slug: 'menubar', title: 'Menubar' },
+  { slug: 'navigation-menu', title: 'Navigation Menu' },
   { slug: 'pagination', title: 'Pagination' },
   { slug: 'popover', title: 'Popover' },
   { slug: 'portal', title: 'Portal' },

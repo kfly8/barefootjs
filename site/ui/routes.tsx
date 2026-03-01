@@ -50,6 +50,7 @@ import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
 import { HoverCardPage } from './pages/hover-card'
 import { MenubarPage } from './pages/menubar'
+import { NavigationMenuPage } from './pages/navigation-menu'
 import { TablePage } from './pages/table'
 import { SpinnerPage } from './pages/spinner'
 
@@ -175,6 +176,10 @@ export function createApp() {
             <a href="/docs/components/menubar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Menubar</h3>
               <p className="text-xs text-muted-foreground">Desktop application menu bar</p>
+            </a>
+            <a href="/docs/components/navigation-menu" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Navigation Menu</h3>
+              <p className="text-xs text-muted-foreground">Hover-activated navigation links</p>
             </a>
             <a href="/docs/components/pagination" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Pagination</h3>
@@ -467,6 +472,11 @@ export function createApp() {
   // Menubar documentation
   app.get('/docs/components/menubar', (c) => {
     return c.render(<MenubarPage />)
+  })
+
+  // Navigation Menu documentation
+  app.get('/docs/components/navigation-menu', (c) => {
+    return c.render(<NavigationMenuPage />)
   })
 
   // Pagination documentation
