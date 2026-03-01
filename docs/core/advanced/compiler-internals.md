@@ -119,7 +119,7 @@ Elements receive a `slotId` (making them findable during hydration) when they ha
 
 ### Filter/Sort Chain Parsing
 
-The compiler parses `.filter()` and `.sort()` chains before `.map()` for server-side evaluation:
+The compiler parses `.filter()` and `.sort()` chains before `.map()` for template-level evaluation:
 
 ```tsx
 {todos().filter(t => !t.done).sort((a, b) => a.date - b.date).map(t => (
@@ -127,7 +127,7 @@ The compiler parses `.filter()` and `.sort()` chains before `.map()` for server-
 ))}
 ```
 
-Simple patterns (e.g., `t => !t.done`, `(a, b) => a.price - b.price`) can be compiled for server-side evaluation. Complex patterns trigger **BF021** with a suggestion to use `/* @client */`. See [Error Codes Reference](./error-codes.md#bf021--unsupported-jsx-pattern) for details.
+Simple patterns (e.g., `t => !t.done`, `(a, b) => a.price - b.price`) can be compiled for template-level evaluation. Complex patterns trigger **BF021** with a suggestion to use `/* @client */`. See [Error Codes Reference](./error-codes.md#bf021--unsupported-jsx-pattern) for details.
 
 ### Auto Scope Wrapping
 
@@ -266,8 +266,10 @@ export function initCounter(__scope, props = {}) {
 }
 
 // Registration: hydrate() registers the component and initializes all
-// instances on the page. Template is included only when the component
-// can generate a static template (no signal-dependent expressions).
+// instances on the page. Template inclusion depends on two factors:
+// 1. Static template (no signal deps) → always included
+// 2. CSR fallback template → only when used as a child component
+// Top-level-only components with signals skip template to save bytes.
 hydrate('Counter', { init: initCounter })
 ```
 
@@ -281,7 +283,9 @@ import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from 
 
 ### 6. Template Registration
 
-When `canGenerateStaticTemplate()` returns true (no signal-dependent expressions in the template), a template function is included in the `hydrate()` call:
+The compiler decides whether to include a `template` function in the `hydrate()` call based on two factors:
+
+**Static template** — When `canGenerateStaticTemplate()` returns true (no signal-dependent expressions), a lightweight template is always included:
 
 ```javascript
 hydrate('Button', {
@@ -290,18 +294,32 @@ hydrate('Button', {
 })
 ```
 
-This template is used by `createComponent()` for dynamic component creation in loops. Components with signals that prevent static template generation are hydrated without a template.
+**CSR fallback template** — When a component has signals (can't generate a static template) but is used as a child by another component in the same file, a CSR fallback template is generated. This template replaces signal calls with initial values so `createComponent()` can render the component in loops and conditionals:
+
+```javascript
+// StatusBadge is used by Dashboard in the same file → gets CSR fallback
+hydrate('StatusBadge', {
+  init: initStatusBadge,
+  template: (props) => `<span bf="s0">${props.active ? 'on' : 'off'}</span>`
+})
+
+// Dashboard is top-level only → no template (saves bytes)
+hydrate('Dashboard', { init: initDashboard })
+```
+
+**No template** — Top-level-only components with signals skip template generation entirely. They are hydrated from server-rendered HTML and never need to be created dynamically by `createComponent()`.
 
 ---
 
 ## Multi-Component Files
 
-When a file exports multiple components, the compiler:
+When a file exports multiple components, the compiler uses a **two-pass** approach:
 
-1. Detects all exports via `listExportedComponents()`
-2. Compiles each component independently (separate IR, separate client JS)
-3. Merges templates — deduplicates shared imports and type definitions
-4. Merges client JS — combines imports by source module
+1. **Pass 1** — Detects all exports via `listExportedComponents()`, then runs analysis and JSX → IR for each component
+2. **Between passes** — Scans all IRs with `collectComponentNamesFromIR()` to build a `usedAsChild` set (components referenced by other components in the same file)
+3. **Pass 2** — Runs adapter generation and client JS generation for each component, passing `usedAsChild` so that only child components get CSR fallback templates
+4. Merges templates — deduplicates shared imports and type definitions
+5. Merges client JS — combines imports by source module
 
 ```tsx
 // Both compiled from the same file
