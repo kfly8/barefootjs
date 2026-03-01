@@ -110,9 +110,9 @@ function renderChild(name, props, key, suffix) {
 }
 
 // Noop stubs for init-phase functions (not needed for template evaluation)
-const $ = () => null
-const $t = () => null
-const $c = () => null
+const $ = (...args) => new Array(args.length - 1).fill(null)
+const $t = (...args) => new Array(args.length - 1).fill(null)
+const $c = (...args) => new Array(args.length - 1).fill(null)
 const createSignal = (v) => [() => v, () => {}]
 const createEffect = () => {}
 const createMemo = (fn) => fn

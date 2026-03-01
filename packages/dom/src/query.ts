@@ -377,30 +377,15 @@ function findInPortals(scopeId: string, selector: string): Element | null {
 // --- shorthand finders ---
 
 /**
- * Shorthand for find(scope, '[bf="id"]').
+ * Find elements within a scope by slot IDs.
  * Used by compiler-generated code for regular slot element references.
+ * Always returns an array — callers use destructuring.
  *
  * For parent-owned slots (^-prefixed IDs like '^s3'), searches all descendants
  * ignoring scope boundaries. This handles elements passed as children to child
  * components — they are owned by the parent but rendered inside the child's scope.
- *
- * Supports batch mode: pass multiple IDs to get an array of results.
- * Single ID returns a scalar (backward compatible).
- *
- * @param scope - The scope element to search within
- * @param id - The slot ID (e.g., 's0' or '^s3')
- * @returns The matching element or null (scalar for 1 ID, array for 2+)
  */
-export function $(scope: Element | null, id: string): Element | null
-export function $(scope: Element | null, id1: string, id2: string, ...rest: string[]): (Element | null)[]
-export function $(scope: Element | null, ...ids: string[]): Element | null | (Element | null)[] {
-  if (ids.length === 1) {
-    const id = ids[0]
-    if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
-      return findParentOwned(scope, id)
-    }
-    return find(scope, `[${BF_SLOT}="${id}"]`)
-  }
+export function $(scope: Element | null, ...ids: string[]): (Element | null)[] {
   return ids.map(id => {
     if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
       return findParentOwned(scope, id)
@@ -461,22 +446,12 @@ function findParentOwned(scope: Element | null, id: string): Element | null {
 }
 
 /**
- * Shorthand for finding child component scope elements.
+ * Find child component scope elements by slot ID or component name.
  * - Slot ID (e.g., 's1'): uses suffix match [bf-s$="_s1"]
  * - Component name (e.g., 'Counter'): uses prefix match [bf-s^="Counter_"]
- *
- * Supports batch mode: pass multiple IDs to get an array of results.
- *
- * @param scope - The scope element to search within
- * @param id - Slot ID suffix or component name
- * @returns The matching element or null (scalar for 1 ID, array for 2+)
+ * Always returns an array — callers use destructuring.
  */
-export function $c(scope: Element | null, id: string): Element | null
-export function $c(scope: Element | null, id1: string, id2: string, ...rest: string[]): (Element | null)[]
-export function $c(scope: Element | null, ...ids: string[]): Element | null | (Element | null)[] {
-  if (ids.length === 1) {
-    return $cSingle(scope, ids[0])
-  }
+export function $c(scope: Element | null, ...ids: string[]): (Element | null)[] {
   return ids.map(id => $cSingle(scope, id))
 }
 
@@ -495,60 +470,14 @@ function $cSingle(scope: Element | null, id: string): Element | null {
 // --- $t: text node finder via comment markers ---
 
 /**
- * Find the Text node for a reactive text expression marked by comment nodes.
+ * Find Text nodes for reactive text expressions marked by comment nodes.
  * Expects marker format: <!--bf:sX-->text<!--/-->
+ * Always returns an array — callers use destructuring.
  *
- * Used by compiler-generated code for reactive text expressions (e.g., {count()}).
- * Returns the Text node after the start comment marker so that
- * createEffect can update it via .nodeValue without needing a wrapper <span>.
- *
- * Supports batch mode: pass multiple IDs to find all text nodes in a single
- * TreeWalker pass, with early exit when all markers are found.
- *
- * @param scope - The component scope element to search within
- * @param id - The slot ID (e.g., 's0' or '^s3')
- * @returns The Text node or null (scalar for 1 ID, array for 2+)
+ * Uses a single TreeWalker pass to find all markers at once,
+ * with early exit when all are found.
  */
-export function $t(scope: Element | null, id: string): Text | null
-export function $t(scope: Element | null, id1: string, id2: string, ...rest: string[]): (Text | null)[]
-export function $t(scope: Element | null, ...ids: string[]): Text | null | (Text | null)[] {
-  if (ids.length === 1) {
-    return $tSingle(scope, ids[0])
-  }
-  return $tBatch(scope, ids)
-}
-
-function $tSingle(scope: Element | null, id: string): Text | null {
-  if (!scope) return null
-  // Keep the full id (including ^ prefix) for marker matching —
-  // parent-owned slots produce <!--bf:^sN--> in the HTML.
-  const marker = `bf:${id}`
-  const isParentOwned = id.startsWith(BF_PARENT_OWNED_PREFIX)
-
-  // Determine search root
-  const commentInfo = commentScopeRegistry.get(scope)
-  const searchRoot: Node = commentInfo ? (commentInfo.commentNode.parentNode ?? scope) : scope
-
-  const walker = document.createTreeWalker(searchRoot, NodeFilter.SHOW_COMMENT)
-  while (walker.nextNode()) {
-    const comment = walker.currentNode as Comment
-    if (comment.nodeValue === marker) {
-      // For non-parent-owned slots, verify the comment belongs to this scope
-      // (not inside a nested child component scope)
-      if (!isParentOwned && !commentBelongsToScope(comment, scope, commentInfo)) {
-        continue
-      }
-      return textNodeAfterComment(comment)
-    }
-  }
-  return null
-}
-
-/**
- * Batch mode: single TreeWalker pass to find all text node markers at once.
- * Early-exits when all markers are found.
- */
-function $tBatch(scope: Element | null, ids: string[]): (Text | null)[] {
+export function $t(scope: Element | null, ...ids: string[]): (Text | null)[] {
   const results: (Text | null)[] = new Array(ids.length).fill(null)
   if (!scope) return results
 

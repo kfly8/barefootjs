@@ -912,7 +912,7 @@ describe('Compiler', () => {
       expect(content).toMatch(/\$\(__scope, 's\d+', 's\d+'/)
     })
 
-    test('emits single call for 1 slot', () => {
+    test('emits destructured call for 1 slot', () => {
       const source = `
         'use client'
 
@@ -927,10 +927,8 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Single slot should remain scalar: const _s0 = $(__scope, 's0')
-      expect(content).toMatch(/const _s\d+ = \$\(__scope, 's\d+'\)/)
-      // Should NOT use destructured form
-      expect(content).not.toMatch(/const \[_s\d+\] = \$/)
+      // Single slot also uses destructured form: const [_s0] = $(__scope, 's0')
+      expect(content).toMatch(/const \[_s\d+\] = \$\(__scope, 's\d+'\)/)
     })
   })
 
@@ -2435,16 +2433,11 @@ describe('Compiler', () => {
       const content = clientJs!.content
 
       // Each slot variable should be declared at most once
-      // Match both single (const _sN =) and batch (const [_sN, _sM] =) patterns
-      const singleDecls = content.match(/const _s\d+ =/g) || []
       const batchDecls = content.match(/const \[([^\]]+)\]/g) || []
-      const allVars = [
-        ...singleDecls.map(d => d.replace(' =', '')),
-        ...batchDecls.flatMap(d => {
-          const inner = d.match(/\[([^\]]+)\]/)
-          return inner ? inner[1].split(',').map(v => 'const ' + v.trim()) : []
-        })
-      ]
+      const allVars = batchDecls.flatMap((d: string) => {
+        const inner = d.match(/\[([^\]]+)\]/)
+        return inner ? inner[1].split(',').map((v: string) => v.trim()) : []
+      })
       const uniqueVars = new Set(allVars)
       expect(allVars.length).toBe(uniqueVars.size)
 
@@ -2959,9 +2952,9 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
 
       // Should use $(__scope, '^sN') for the lookup (raw ID with ^)
-      expect(clientJs!.content).toMatch(/\$\(__scope, '\^s\d+'/)
-      // Should use _sN (without ^) for variable name — single or batch form
-      expect(clientJs!.content).toMatch(/(?:const _s\d+ = \$\(__scope, '\^s\d+'\)|const \[.*_s\d+.*\] = \$\(__scope, .*'\^s\d+')/)
+      expect(clientJs!.content).toMatch(/\$\(__scope, .*'\^s\d+'/)
+      // Should use _sN (without ^) for variable name in destructured form
+      expect(clientJs!.content).toMatch(/const \[.*_s\d+.*\] = \$\(__scope, .*'\^s\d+'/)
     })
 
     test('reactive expressions inside component children get ^-prefixed slotId', () => {

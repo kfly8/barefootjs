@@ -319,16 +319,10 @@ export function generateElementRefs(ctx: ClientJsContext): string {
 
 /**
  * Emit element ref declarations for a set of slot IDs using the given finder function.
- * Single slot: `const _sN = fn(__scope, 'sN')`
- * Multiple slots: `const [_sN, _sM] = fn(__scope, 'sN', 'sM')`
+ * Always emits destructured form: `const [_sN, ...] = fn(__scope, 'sN', ...)`
  */
 function emitSlotRefs(lines: string[], slotIds: string[], fn: string): void {
   if (slotIds.length === 0) return
-  if (slotIds.length === 1) {
-    const id = slotIds[0]
-    lines.push(`  const _${varSlotId(id)} = ${fn}(__scope, '${id}')`)
-    return
-  }
   const vars = slotIds.map(id => `_${varSlotId(id)}`).join(', ')
   const args = slotIds.map(id => `'${id}'`).join(', ')
   lines.push(`  const [${vars}] = ${fn}(__scope, ${args})`)
