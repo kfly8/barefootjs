@@ -49,6 +49,20 @@ export { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
 // Client JS Combiner (for build scripts)
 export { combineParentChildClientJs } from './combine-client-js'
 
+// Build options (shared by adapters and CLI)
+export interface BuildOptions {
+  /** Source component directories relative to config file */
+  components?: string[]
+  /** Output directory relative to config file */
+  outDir?: string
+  /** Minify client JS output */
+  minify?: boolean
+  /** Add content hash to client JS filenames */
+  contentHash?: boolean
+  /** Output only client JS, skip marked templates and manifest */
+  clientOnly?: boolean
+}
+
 // CSS Layer Prefixer
 export { applyCssLayerPrefix } from './css-layer-prefixer'
 

@@ -1,19 +1,10 @@
 // Hono build config factory for barefoot.config.ts
 
+import type { BuildOptions } from '@barefootjs/jsx'
 import { HonoAdapter } from './adapter'
 import type { HonoAdapterOptions } from './adapter'
 
-export interface HonoBuildOptions {
-  /** Source component directories relative to config file */
-  components?: string[]
-  /** Output directory relative to config file */
-  outDir?: string
-  /** Minify client JS output */
-  minify?: boolean
-  /** Add content hash to client JS filenames */
-  contentHash?: boolean
-  /** Output only client JS, skip marked templates and manifest */
-  clientOnly?: boolean
+export interface HonoBuildOptions extends BuildOptions {
   /** Inject Hono script collection wrapper (default: true) */
   scriptCollection?: boolean
   /** Adapter-specific options passed to HonoAdapter */
