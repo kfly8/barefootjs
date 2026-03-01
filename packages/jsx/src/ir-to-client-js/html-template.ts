@@ -459,6 +459,19 @@ export function generateCsrTemplate(
       }
     }
 
+    // Re-run signal/memo replacement after constant inlining.
+    // Inlined constant values may contain signal/memo calls that need resolution.
+    if (signalMap && signalMap.size > 0) {
+      for (const [getter, initialValue] of signalMap) {
+        result = result.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initialValue})`)
+      }
+    }
+    if (memoMap && memoMap.size > 0) {
+      for (const [name, computation] of memoMap) {
+        result = result.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
+      }
+    }
+
     // Prefix prop names with 'props.'
     for (const propName of propNames) {
       const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?![a-zA-Z0-9_$])`, 'g')

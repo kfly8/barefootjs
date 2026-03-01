@@ -979,6 +979,30 @@ export function buildSignalAndMemoMaps(ctx: ClientJsContext): {
     memoMap.set(memo.name, expr)
   }
 
+  // Resolve chained memo references: if memo A references memo B(),
+  // replace B() with B's resolved computation expression.
+  let changed = true
+  const maxIter = memoMap.size + 1
+  let iter = 0
+  while (changed && iter < maxIter) {
+    changed = false
+    iter++
+    for (const [memoName, memoExpr] of memoMap) {
+      let newExpr = memoExpr
+      for (const [otherName, otherExpr] of memoMap) {
+        if (otherName === memoName) continue
+        const replaced = newExpr.replace(new RegExp(`\\b${otherName}\\(\\)`, 'g'), `(${otherExpr})`)
+        if (replaced !== newExpr) {
+          newExpr = replaced
+          changed = true
+        }
+      }
+      if (newExpr !== memoExpr) {
+        memoMap.set(memoName, newExpr)
+      }
+    }
+  }
+
   return { signalMap, memoMap }
 }
 
