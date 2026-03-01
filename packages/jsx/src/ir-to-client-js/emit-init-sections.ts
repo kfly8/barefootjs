@@ -3,7 +3,8 @@
  * Each function appends to a lines[] array.
  */
 
-import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types'
+import type { ComponentIR, SignalInfo, IRFragment } from '../types'
+import type { Declaration } from './declaration-sort'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
@@ -82,124 +83,97 @@ export function emitPropsExtraction(
   }
 }
 
-/** Emit constants that have no signal/memo dependencies (before signal declarations). */
-export function emitEarlyConstants(lines: string[], earlyConstants: ConstantInfo[]): void {
-  for (const constant of earlyConstants) {
-    const keyword = constant.declarationKind ?? 'const'
-    if (constant.value !== undefined) {
-      const jsValue = constant.value
-      lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
-    } else {
-      lines.push(`  ${keyword} ${constant.name}`)
-    }
-  }
-  if (earlyConstants.length > 0) {
-    lines.push('')
-  }
-}
-
-/** Emit createSignal/createMemo declarations, controlled-signal sync effects, and late constants. */
-export function emitSignalsAndMemos(
+/**
+ * Emit a single declaration (constant, signal, memo, or function).
+ * Dispatches by declaration kind. Used by the unified topological-sort emitter.
+ */
+export function emitDeclaration(
   lines: string[],
+  decl: Declaration,
   ctx: ClientJsContext,
-  controlledSignals: Array<{ signal: SignalInfo; propName: string }>,
-  lateConstants: ConstantInfo[]
+  controlledSignals: Array<{ signal: SignalInfo; propName: string }>
 ): void {
-  const propsName = ctx.propsObjectName ?? 'props'
-  const propsPrefix = `${propsName}.`
-
-  for (const signal of ctx.signals) {
-    let initialValue: string
-    if (signal.initialValue.startsWith(propsPrefix) && !signal.initialValue.includes('??')) {
-      // Replace original prefix with 'props.' for generated code
-      const propRef = 'props.' + signal.initialValue.slice(propsPrefix.length)
-      initialValue = `${propRef} ?? ${inferDefaultValue(signal.type)}`
-    } else {
-      const controlled = controlledSignals.find(c => c.signal === signal)
-      if (controlled) {
-        if (signal.initialValue.includes('??')) {
-          // Preserve developer's original fallback (e.g., props.initial ?? 0)
-          if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
-            initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
-          } else {
-            initialValue = signal.initialValue
-          }
-        } else {
-          const prop = ctx.propsParams.find(p => p.name === controlled.propName)
-          const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
-          initialValue = `props.${controlled.propName} ?? ${defaultVal}`
-        }
-      } else if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
-        // Replace custom props name with 'props.' even when ?? is present
-        initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
+  switch (decl.kind) {
+    case 'constant': {
+      const constant = decl.info
+      const keyword = constant.declarationKind ?? 'const'
+      if (constant.value !== undefined) {
+        lines.push(`  ${keyword} ${constant.name} = ${constant.value}`)
       } else {
-        initialValue = signal.initialValue
+        lines.push(`  ${keyword} ${constant.name}`)
       }
+      break
     }
+    case 'signal': {
+      const signal = decl.info
+      const propsName = ctx.propsObjectName ?? 'props'
+      const propsPrefix = `${propsName}.`
 
-    lines.push(`  const [${signal.getter}, ${signal.setter}] = createSignal(${initialValue})`)
-  }
+      let initialValue: string
+      if (signal.initialValue.startsWith(propsPrefix) && !signal.initialValue.includes('??')) {
+        const propRef = 'props.' + signal.initialValue.slice(propsPrefix.length)
+        initialValue = `${propRef} ?? ${inferDefaultValue(signal.type)}`
+      } else {
+        const controlled = controlledSignals.find(c => c.signal === signal)
+        if (controlled) {
+          if (signal.initialValue.includes('??')) {
+            if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
+              initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
+            } else {
+              initialValue = signal.initialValue
+            }
+          } else {
+            const prop = ctx.propsParams.find(p => p.name === controlled.propName)
+            const defaultVal = prop?.defaultValue ?? inferDefaultValue(signal.type)
+            initialValue = `props.${controlled.propName} ?? ${defaultVal}`
+          }
+        } else if (ctx.propsObjectName && signal.initialValue.startsWith(propsPrefix)) {
+          initialValue = 'props.' + signal.initialValue.slice(propsPrefix.length)
+        } else {
+          initialValue = signal.initialValue
+        }
+      }
 
-  for (const { signal, propName } of controlledSignals) {
-    const prop = ctx.propsParams.find(p => p.name === propName)
-    const accessor = prop?.defaultValue
-      ? `(props.${propName} ?? ${prop.defaultValue})`
-      : `props.${propName}`
-    lines.push(`  createEffect(() => {`)
-    lines.push(`    const __val = ${accessor}`)
-    lines.push(`    if (__val !== undefined) ${signal.setter}(__val)`)
-    lines.push(`  })`)
-  }
-
-  for (const memo of ctx.memos) {
-    lines.push(`  const ${memo.name} = createMemo(${memo.computation})`)
-  }
-
-  for (const constant of lateConstants) {
-    const keyword = constant.declarationKind ?? 'const'
-    if (constant.value !== undefined) {
-      const jsValue = constant.value
-      lines.push(`  ${keyword} ${constant.name} = ${jsValue}`)
-    } else {
-      lines.push(`  ${keyword} ${constant.name}`)
+      lines.push(`  const [${signal.getter}, ${signal.setter}] = createSignal(${initialValue})`)
+      break
     }
-  }
-
-  if (ctx.signals.length > 0 || ctx.memos.length > 0 || lateConstants.length > 0) {
-    lines.push('')
+    case 'memo': {
+      lines.push(`  const ${decl.info.name} = createMemo(${decl.info.computation})`)
+      break
+    }
+    case 'function': {
+      const fn = decl.info
+      const paramStr = fn.params.map((p) => p.name).join(', ')
+      lines.push(`  const ${fn.name} = (${paramStr}) => ${fn.body}`)
+      break
+    }
   }
 }
 
-/** Emit local function definitions, arrow-function constants, and props-based event handlers. */
-export function emitFunctionsAndHandlers(
+/** Emit createEffect for controlled signal synchronization. */
+export function emitControlledSignalEffect(
+  lines: string[],
+  signal: SignalInfo,
+  propName: string,
+  ctx: ClientJsContext
+): void {
+  const prop = ctx.propsParams.find(p => p.name === propName)
+  const accessor = prop?.defaultValue
+    ? `(props.${propName} ?? ${prop.defaultValue})`
+    : `props.${propName}`
+  lines.push(`  createEffect(() => {`)
+  lines.push(`    const __val = ${accessor}`)
+  lines.push(`    if (__val !== undefined) ${signal.setter}(__val)`)
+  lines.push(`  })`)
+}
+
+/** Emit props-based event handler bindings (handlers that come from props, not local definitions). */
+export function emitPropsEventHandlers(
   lines: string[],
   ctx: ClientJsContext,
-  usedIdentifiers: Set<string>,
-  outputConstants: Set<string>,
   usedFunctions: Set<string>,
   neededProps: Set<string>
 ): void {
-  for (const fn of ctx.localFunctions) {
-    if (usedIdentifiers.has(fn.name)) {
-      const paramStr = fn.params.map((p) => p.name).join(', ')
-      lines.push(`  const ${fn.name} = (${paramStr}) => ${fn.body}`)
-      lines.push('')
-    }
-  }
-
-  for (const constant of ctx.localConstants) {
-    if (outputConstants.has(constant.name)) continue
-    if (!constant.value) continue
-    if (usedIdentifiers.has(constant.name)) {
-      const value = constant.value.trim()
-      if (value.includes('=>')) {
-        const keyword = constant.declarationKind ?? 'const'
-        lines.push(`  ${keyword} ${constant.name} = ${value}`)
-        lines.push('')
-      }
-    }
-  }
-
   const localNames = new Set([
     ...ctx.localFunctions.map((f) => f.name),
     ...ctx.localConstants.map((c) => c.name),

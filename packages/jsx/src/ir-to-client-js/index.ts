@@ -55,7 +55,7 @@ export function analyzeClientNeeds(ir: ComponentIR): { needsInit: boolean; usedP
       if (!constant.value) continue
       const trimmedValue = constant.value.trim()
       if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) continue
-      if (!trimmedValue.includes('=>') && constant.name !== 'props') {
+      if (constant.name !== 'props') {
         const refs = valueReferencesReactiveData(constant.value, ctx)
         for (const propName of refs.usedProps) {
           neededProps.add(propName)

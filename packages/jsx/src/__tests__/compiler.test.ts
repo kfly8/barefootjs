@@ -3856,4 +3856,144 @@ describe('Compiler', () => {
       expect(content).not.toMatch(/'\(props\.size/)
     })
   })
+
+  describe('dependency-based declaration ordering (#508)', () => {
+    test('constant depending on call expression with arrow argument preserves source order', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function MyForm(props) {
+          const form = createForm({ onSubmit: async (values) => { await fetch('/api', { body: JSON.stringify(values) }) } })
+          const emailField = form.field('email')
+          const [submitted, setSubmitted] = createSignal(false)
+          return <div><input value={emailField.value} onInput={(e) => emailField.onChange(e.target.value)} /><button onClick={() => setSubmitted(true)}>Submit</button></div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyForm.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+
+      const content = clientJs.content
+      // form must be defined before emailField
+      const formIndex = content.indexOf('const form =')
+      const emailFieldIndex = content.indexOf('const emailField =')
+      expect(formIndex).toBeGreaterThan(-1)
+      expect(emailFieldIndex).toBeGreaterThan(-1)
+      expect(formIndex).toBeLessThan(emailFieldIndex)
+    })
+
+    test('signal depending on function: function emitted before signal (#365 regression)', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function ToggleGroup(props) {
+          function toArray(value) {
+            return Array.isArray(value) ? value : value ? [value] : []
+          }
+          const [selected, setSelected] = createSignal(toArray(props.defaultValue))
+          return <div data-state={selected().length > 0 ? 'on' : 'off'} onClick={() => setSelected([])}>{props.children}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'ToggleGroup.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+
+      // toArray must be defined before the signal declaration
+      const fnIndex = clientJs.content.indexOf('toArray')
+      const signalIndex = clientJs.content.indexOf('const [selected')
+      expect(signalIndex).toBeGreaterThan(-1)
+      expect(fnIndex).toBeLessThan(signalIndex)
+    })
+
+    test('memo depending on signal: emitted after signal', () => {
+      const source = `
+        'use client'
+        import { createSignal, createMemo } from '@barefootjs/dom'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          const doubled = createMemo(() => count() * 2)
+          return <div onClick={() => setCount(n => n + 1)}>{doubled()}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+
+      const signalIndex = clientJs.content.indexOf('createSignal')
+      const memoIndex = clientJs.content.indexOf('createMemo')
+      expect(signalIndex).toBeGreaterThan(-1)
+      expect(memoIndex).toBeGreaterThan(-1)
+      expect(signalIndex).toBeLessThan(memoIndex)
+    })
+
+    test('independent declarations preserve source order', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function MyComponent() {
+          const label = 'Hello'
+          const prefix = 'prefix'
+          const [count, setCount] = createSignal(0)
+          return <div onClick={() => setCount(n => n + 1)}>{prefix}: {label} {count()}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyComponent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+
+      const content = clientJs.content
+      const labelIndex = content.indexOf("const label =")
+      const prefixIndex = content.indexOf("const prefix =")
+      expect(labelIndex).toBeGreaterThan(-1)
+      expect(prefixIndex).toBeGreaterThan(-1)
+      expect(labelIndex).toBeLessThan(prefixIndex)
+    })
+
+    test('transitive dependencies: constant → constant → signal', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function MyComponent() {
+          const [items, setItems] = createSignal([1, 2, 3])
+          const total = items().reduce((a, b) => a + b, 0)
+          const message = 'Total: ' + total
+          return <div onClick={() => setItems([4, 5, 6])}>{message}</div>
+        }
+      `
+
+      const result = compileJSXSync(source, 'MyComponent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')!
+      expect(clientJs).toBeDefined()
+
+      const content = clientJs.content
+      // signal must come before total, total before message
+      const signalIndex = content.indexOf('createSignal')
+      const totalIndex = content.indexOf('const total =')
+      const messageIndex = content.indexOf("const message =")
+      expect(signalIndex).toBeGreaterThan(-1)
+      expect(totalIndex).toBeGreaterThan(-1)
+      expect(messageIndex).toBeGreaterThan(-1)
+      expect(signalIndex).toBeLessThan(totalIndex)
+      expect(totalIndex).toBeLessThan(messageIndex)
+    })
+  })
 })
