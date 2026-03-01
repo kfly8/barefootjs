@@ -190,11 +190,12 @@ function Switch(props: Props) {
 }
 ```
 
-This generates a sync effect:
+This generates a sync effect immediately after the signal creation:
 
 ```javascript
 createEffect(() => {
-  if (props.checked !== undefined) setChecked(props.checked)
+  const __val = props.checked
+  if (__val !== undefined) setChecked(__val)
 })
 ```
 
@@ -203,50 +204,71 @@ createEffect(() => {
 The generated `init` function follows this structure:
 
 ```javascript
-function init(scope, props) {
-  // 1. Element references
-  const _0 = find(scope, '[bf="0"]')
+import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/dom'
 
-  // 2. Props extraction (with defaults)
-  const { label = 'Click' } = props
+export function initCounter(__scope, props = {}) {
+  if (!__scope) return
 
-  // 3. Early constants (no reactive deps)
-  const baseClass = 'btn'
+  // 1. Props extraction (with defaults)
+  const label = props.label ?? 'Click'
 
-  // 4. Signals and memos
-  const [count, setCount] = createSignal(0)
+  // 2. Early constants (no reactive deps)
+  const baseClass = 'counter'
+
+  // 3. Local functions / handlers (before signals so signal initializers
+  //    can reference them, e.g., createSignal(toArray(props.x)))
+  const handleClick = () => { setCount(n => n + 1) }
+
+  // 4. Signals, memos, controlled signal sync, and late constants
+  const [count, setCount] = createSignal(props.initial ?? 0)
+  createEffect(() => {                          // controlled signal sync
+    const __val = props.initial
+    if (__val !== undefined) setCount(__val)
+  })
   const doubled = createMemo(() => count() * 2)
+  const displayValue = `Count: ${count()}`      // late constant (reactive deps)
 
-  // 5. Controlled signal sync
-  createEffect(() => { ... })
+  // 5. Element references
+  //    $()  — regular elements:  find(scope, '[bf="id"]')
+  //    $t() — text nodes:        find comment marker <!--bf:id-->
+  //    $c() — child components:  find(scope, '[bf-s$="_id"]')
+  const _s3 = $(__scope, 's3')
+  const _s0 = $t(__scope, 's0')
+  const _s2 = $t(__scope, 's2')
 
-  // 6. Local functions / handlers
-  function handleClick() { setCount(n => n + 1) }
+  // 6. Dynamic text updates
+  createEffect(() => {
+    const __val = count()
+    if (_s0) _s0.nodeValue = String(__val)
+  })
 
-  // 7. Late constants (reactive deps)
+  // 7. Reactive attribute updates
+  createEffect(() => {
+    if (_s3) { _s3.disabled = !!(count() > 10) }
+  })
 
-  // 8. Dynamic text updates
-  createEffect(() => { _0.textContent = String(count()) })
+  // 8. Conditional updates
+  // insert(_s4, () => isOpen() ? panelHtml : null)
 
-  // 9. Reactive attribute updates
-  createEffect(() => { _1.className = count() > 0 ? 'active' : '' })
+  // 9. Loop updates
+  // reconcileTemplates(_s5, items(), getKey, renderItem)
 
-  // 10. Conditional updates
-  insert(_2, () => isOpen() ? panelHtml : null)
+  // 10. Event handlers
+  if (_s3) _s3.onclick = handleClick
 
-  // 11. Loop updates
-  reconcileElements(_3, items(), getKey, renderItem)
+  // 11. Reactive prop bindings / child component props
+  // 12. Ref callbacks
+  // 13. User-defined effects and onMounts
+  createEffect(() => { console.log('Count changed:', count()) })
+  onMount(() => { console.log('Mounted') })
 
-  // 12. Event handlers
-  _0.addEventListener('click', handleClick)
-
-  // 13. Ref callbacks
-  inputRef(_4)
-
-  // 14. User-defined effects and onMounts
-  createEffect(() => { ... })
-  onMount(() => { ... })
+  // 14. Provider setup and child component initialization
 }
+
+// Registration: hydrate() registers the component and initializes all
+// instances on the page. Template is included only when the component
+// can generate a static template (no signal-dependent expressions).
+hydrate('Counter', { init: initCounter })
 ```
 
 ### 5. Import Detection
@@ -254,22 +276,21 @@ function init(scope, props) {
 The generator scans the output code and includes only the `@barefootjs/dom` imports actually used:
 
 ```javascript
-import { createSignal, createEffect, find, hydrate } from '@barefootjs/dom'
+import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/dom'
 ```
 
-### 6. Event Delegation in Loops
+### 6. Template Registration
 
-For loops that render elements with events, the compiler uses event delegation:
+When `canGenerateStaticTemplate()` returns true (no signal-dependent expressions in the template), a template function is included in the `hydrate()` call:
 
 ```javascript
-// Parent container handles events
-_loopSlot.addEventListener('click', (e) => {
-  const el = e.target.closest('[bf="childSlot"]')
-  if (!el) return
-  const item = items().find(t => t.id === el.dataset.key)
-  handleItemClick(item)
+hydrate('Button', {
+  init: initButton,
+  template: (props) => `<button class="${props.className ?? ''}" bf="s0">${props.children}</button>`
 })
 ```
+
+This template is used by `createComponent()` for dynamic component creation in loops. Components with signals that prevent static template generation are hydrated without a template.
 
 ---
 
