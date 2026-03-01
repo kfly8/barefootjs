@@ -8,6 +8,7 @@
 
 import {
   analyzeComponent,
+  buildMetadata,
   jsxToIR,
   generateClientJs,
   analyzeClientNeeds,
@@ -52,24 +53,7 @@ function compileToClientJs(source: string, filePath: string): string {
 
   const componentIR: ComponentIR = {
     version: '0.1',
-    metadata: {
-      componentName: ctx.componentName || 'Unknown',
-      hasDefaultExport: ctx.hasDefaultExport,
-      isClientComponent: ctx.hasUseClientDirective,
-      typeDefinitions: ctx.typeDefinitions,
-      propsType: ctx.propsType,
-      propsParams: ctx.propsParams,
-      propsObjectName: ctx.propsObjectName,
-      restPropsName: ctx.restPropsName,
-      restPropsExpandedKeys: ctx.restPropsExpandedKeys,
-      signals: ctx.signals,
-      memos: ctx.memos,
-      effects: ctx.effects,
-      onMounts: ctx.onMounts,
-      imports: ctx.imports,
-      localFunctions: ctx.localFunctions,
-      localConstants: ctx.localConstants,
-    },
+    metadata: buildMetadata(ctx),
     root: ir,
     errors: [],
   }
