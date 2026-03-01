@@ -279,7 +279,13 @@ for (const componentPath of components) {
       // Generate merged import statement with sorted names
       const sortedImports = [...allImportNames].sort()
       const importStatement = `import { ${sortedImports.join(', ')} } from './barefoot.js'\n\n`
-      writeFileSync(clientPath, importStatement + clientJsParts.join('\n'))
+      let clientJsContent = importStatement + clientJsParts.join('\n')
+      if (config.minify) {
+        // @ts-expect-error minifySyntax is supported at runtime but missing from older bun-types
+        const transpiler = new Bun.Transpiler({ minifyWhitespace: true, minifySyntax: true })
+        clientJsContent = transpiler.transformSync(clientJsContent)
+      }
+      writeFileSync(clientPath, clientJsContent)
       console.log(`  Client:   ${componentName}.client.js`)
     }
   }
