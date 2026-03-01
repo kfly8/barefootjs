@@ -5,4 +5,5 @@ export default createConfig({
   outDir: 'dist',
   clientOnly: true,
   scriptCollection: false,
+  minify: true,
 })
