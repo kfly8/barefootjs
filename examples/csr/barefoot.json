@@ -1,8 +1,0 @@
-{
-  "$schema": "https://barefootjs.dev/schema/barefoot.json",
-  "paths": {
-    "components": "components",
-    "tokens": "tokens",
-    "meta": "meta"
-  }
-}

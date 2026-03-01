@@ -8,7 +8,7 @@ import { resolve, basename, relative } from 'node:path'
 // ── Types ────────────────────────────────────────────────────────────────
 
 export interface BuildConfig {
-  /** Absolute path to the project directory (where barefoot.json lives) */
+  /** Absolute path to the project directory (where barefoot.config.ts lives) */
   projectDir: string
   /** Adapter instance */
   adapter: TemplateAdapter
