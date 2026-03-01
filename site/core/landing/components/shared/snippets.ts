@@ -31,12 +31,9 @@ export const ECHO_OUTPUT = `{{/* Go Template */}}
 </button>`
 
 export const CLIENT_CODE = `// Counter.client.js
-import { createSignal, createEffect, findScope, find, hydrate, registerComponent } from '@barefootjs/dom'
+import { createSignal, createEffect, find, hydrate } from '@barefootjs/dom'
 
-export function initCounter(__instanceIndex, __parentScope, props = {}) {
-  const __scope = findScope('Counter', __instanceIndex, __parentScope)
-  if (!__scope) return
-
+export function initCounter(__scope, props = {}) {
   const [count, setCount] = createSignal(props.count ?? 0)
 
   const _slot_0 = find(__scope, '[bf="slot_0"]')
@@ -49,5 +46,4 @@ export function initCounter(__instanceIndex, __parentScope, props = {}) {
   if (_slot_1) _slot_1.onclick = () => setCount(c => c + 1)
 }
 
-registerComponent('Counter', initCounter)
-hydrate('Counter', (props, idx, scope) => initCounter(idx, scope, props))`
+hydrate('Counter', { init: initCounter })`

@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
-import { findScope, find, $, $c, hydrate, bind, cond } from '../src/runtime'
-import { createSignal } from '../src/reactive'
+import { findScope, find, $, $c } from '../src/query'
+import { hydratedScopes } from '../src/hydration-state'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
 beforeAll(() => {
@@ -21,7 +21,7 @@ describe('findScope', () => {
     const scope = findScope('Counter', 0, null)
     expect(scope).not.toBeNull()
     expect(scope?.getAttribute('bf-s')).toBe('Counter_abc123')
-    expect(scope?.hasAttribute('bf-h')).toBe(true)
+    expect(hydratedScopes.has(scope!)).toBe(true)
   })
 
   test('returns parent if it is the scope element', () => {
@@ -35,9 +35,13 @@ describe('findScope', () => {
 
   test('skips already initialized scopes', () => {
     document.body.innerHTML = `
-      <div bf-s="Counter_1" bf-h="true"></div>
+      <div bf-s="Counter_1"></div>
       <div bf-s="Counter_2"></div>
     `
+    // Mark first scope as already hydrated
+    const first = document.querySelector('[bf-s="Counter_1"]')!
+    hydratedScopes.add(first)
+
     const scope = findScope('Counter', 0, null)
     expect(scope?.getAttribute('bf-s')).toBe('Counter_2')
   })
@@ -358,316 +362,6 @@ describe('$c', () => {
     const result = $c(scope, '^Counter')
     expect(result).not.toBeNull()
     expect(result?.getAttribute('bf-s')).toBe('~Counter_abc123')
-  })
-})
-
-describe('hydrate', () => {
-  beforeEach(() => {
-    document.body.innerHTML = ''
-  })
-
-  test('initializes root components with props', () => {
-    const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
-
-    document.body.innerHTML = `
-      <div bf-s="Counter_abc" bf-p='{"count": 5}'>content</div>
-    `
-
-    hydrate('Counter', (props, idx, scope) => {
-      initialized.push({ props, scope })
-    })
-
-    expect(initialized.length).toBe(1)
-    expect(initialized[0].props).toEqual({ count: 5 })
-    expect(initialized[0].scope.getAttribute('bf-s')).toBe('Counter_abc')
-  })
-
-  test('skips nested component scopes with same component type', () => {
-    const initialized: Element[] = []
-
-    // Counter nested inside another Counter should be skipped
-    // (parent component is responsible for initializing its children)
-    document.body.innerHTML = `
-      <div bf-s="Counter_1">
-        <div bf-s="Counter_nested">nested</div>
-      </div>
-    `
-
-    hydrate('Counter', (_, __, scope) => initialized.push(scope))
-
-    // Only the outer Counter_1 should be initialized, not the nested one
-    expect(initialized.length).toBe(1)
-    expect(initialized[0].getAttribute('bf-s')).toBe('Counter_1')
-  })
-
-  test('initializes nested component with different parent type', () => {
-    const initialized: Element[] = []
-
-    // Counter nested inside Parent (different type) should NOT be skipped
-    // This allows e.g. ToggleItem to hydrate inside Toggle
-    document.body.innerHTML = `
-      <div bf-s="Parent_1">
-        <div bf-s="Counter_nested">nested</div>
-      </div>
-    `
-
-    hydrate('Counter', (_, __, scope) => initialized.push(scope))
-
-    expect(initialized.length).toBe(1)
-    expect(initialized[0].getAttribute('bf-s')).toBe('Counter_nested')
-  })
-
-  test('initializes multiple instances', () => {
-    const initialized: Element[] = []
-
-    document.body.innerHTML = `
-      <div bf-s="Counter_1">first</div>
-      <div bf-s="Counter_2">second</div>
-    `
-
-    hydrate('Counter', (_, __, scope) => initialized.push(scope))
-
-    expect(initialized.length).toBe(2)
-  })
-
-  test('handles missing props script', () => {
-    const initialized: Array<{ props: Record<string, unknown> }> = []
-
-    document.body.innerHTML = `
-      <div bf-s="Counter_abc">content</div>
-    `
-
-    hydrate('Counter', (props) => {
-      initialized.push({ props })
-    })
-
-    expect(initialized.length).toBe(1)
-    expect(initialized[0].props).toEqual({})
-  })
-
-  test('without comment flag does not hydrate comment-based scopes', () => {
-    const initialized: Element[] = []
-
-    document.body.innerHTML = `
-      <!--bf-scope:FragComp_abc|{"FragComp":{}}-->
-      <div>child 1</div>
-    `
-
-    hydrate('FragComp', (_, __, scope) => initialized.push(scope))
-
-    // Without comment flag, comment-based scopes should be skipped
-    expect(initialized.length).toBe(0)
-  })
-
-  test('with comment=true hydrates comment-based scopes', () => {
-    const initialized: Array<{ props: Record<string, unknown>; scope: Element }> = []
-
-    document.body.innerHTML = `
-      <!--bf-scope:FragComp_abc|{"FragComp":{"title":"hello"}}-->
-      <div>child 1</div>
-    `
-
-    hydrate('FragComp', (props, _, scope) => {
-      initialized.push({ props, scope })
-    }, true)
-
-    expect(initialized.length).toBe(1)
-    expect(initialized[0].props).toEqual({ title: 'hello' })
-  })
-})
-
-describe('bind', () => {
-  beforeEach(() => {
-    document.body.innerHTML = ''
-  })
-
-  test('attaches event listeners', () => {
-    const clicks: Event[] = []
-    const el = document.createElement('button')
-
-    bind(el, {
-      onClick: (e: Event) => clicks.push(e)
-    })
-
-    el.click()
-    expect(clicks.length).toBe(1)
-  })
-
-  test('attaches multiple event listeners', () => {
-    const events: string[] = []
-    const el = document.createElement('input')
-
-    bind(el, {
-      onFocus: () => events.push('focus'),
-      onBlur: () => events.push('blur')
-    })
-
-    el.dispatchEvent(new Event('focus'))
-    el.dispatchEvent(new Event('blur'))
-    expect(events).toEqual(['focus', 'blur'])
-  })
-
-  test('creates effects for reactive boolean props', () => {
-    const el = document.createElement('input') as HTMLInputElement
-    const [disabled, setDisabled] = createSignal(false)
-
-    bind(el, {
-      disabled: disabled
-    })
-
-    expect(el.disabled).toBe(false)
-    setDisabled(true)
-    expect(el.disabled).toBe(true)
-  })
-
-  test('creates effects for reactive attribute props', () => {
-    const el = document.createElement('div')
-    const [title, setTitle] = createSignal('initial')
-
-    bind(el, {
-      title: title
-    })
-
-    expect(el.getAttribute('title')).toBe('initial')
-    setTitle('updated')
-    expect(el.getAttribute('title')).toBe('updated')
-  })
-
-  test('removes attribute when value is null', () => {
-    const el = document.createElement('div')
-    const [title, setTitle] = createSignal<string | null>('initial')
-
-    bind(el, {
-      title: title
-    })
-
-    expect(el.getAttribute('title')).toBe('initial')
-    setTitle(null)
-    expect(el.hasAttribute('title')).toBe(false)
-  })
-
-  test('handles null element gracefully', () => {
-    // Should not throw
-    bind(null, { onClick: () => {} })
-  })
-
-  test('handles null props gracefully', () => {
-    const el = document.createElement('button')
-    // Should not throw
-    bind(el, null as unknown as Record<string, unknown>)
-  })
-})
-
-describe('cond', () => {
-  beforeEach(() => {
-    document.body.innerHTML = ''
-  })
-
-  test('does not modify DOM on first run when condition is true', () => {
-    document.body.innerHTML = `
-      <div bf-s="Test_1">
-        <span bf-c="c1">Initial</span>
-      </div>
-    `
-    const scope = document.querySelector('[bf-s]')!
-    const [show] = createSignal(true)
-
-    cond(
-      scope,
-      'c1',
-      show,
-      [() => '<span bf-c="c1">Visible</span>', () => '<span bf-c="c1">Hidden</span>']
-    )
-
-    // First run should not change DOM
-    expect(scope.querySelector('[bf-c]')?.textContent).toBe('Initial')
-  })
-
-  test('switches templates when condition changes', () => {
-    document.body.innerHTML = `
-      <div bf-s="Test_1">
-        <span bf-c="c1">Initial</span>
-      </div>
-    `
-    const scope = document.querySelector('[bf-s]')!
-    const [show, setShow] = createSignal(true)
-
-    cond(
-      scope,
-      'c1',
-      show,
-      [() => '<span bf-c="c1">Visible</span>', () => '<span bf-c="c1">Hidden</span>']
-    )
-
-    // Toggle to false
-    setShow(false)
-    expect(scope.querySelector('[bf-c]')?.textContent).toBe('Hidden')
-
-    // Toggle back to true
-    setShow(true)
-    expect(scope.querySelector('[bf-c]')?.textContent).toBe('Visible')
-  })
-
-  test('handles null scope gracefully', () => {
-    const [show] = createSignal(true)
-    // Should not throw
-    cond(null, 'c1', show, [() => '<span>True</span>', () => '<span>False</span>'])
-  })
-
-  test('evaluates template functions on each condition change', () => {
-    document.body.innerHTML = `
-      <div bf-s="Test_1">
-        <span bf-c="c1">0</span>
-      </div>
-    `
-    const scope = document.querySelector('[bf-s]')!
-    const [show, setShow] = createSignal(true)
-    const [count, setCount] = createSignal(0)
-
-    cond(
-      scope,
-      'c1',
-      show,
-      [() => `<span bf-c="c1">Count: ${count()}</span>`, () => '<span bf-c="c1">Hidden</span>']
-    )
-
-    // Increment count
-    setCount(5)
-
-    // Toggle to false and back - should show updated count
-    setShow(false)
-    setShow(true)
-    expect(scope.querySelector('[bf-c]')?.textContent).toBe('Count: 5')
-  })
-
-  test('re-attaches event handlers after DOM update', () => {
-    const clicks: string[] = []
-    document.body.innerHTML = `
-      <div bf-s="Test_1">
-        <button bf-c="c1" bf="btn">Click me</button>
-      </div>
-    `
-    const scope = document.querySelector('[bf-s]')!
-    const [show, setShow] = createSignal(true)
-
-    cond(
-      scope,
-      'c1',
-      show,
-      [() => '<button bf-c="c1" bf="btn">Show</button>', () => '<button bf-c="c1" bf="btn">Hide</button>'],
-      [{ selector: '[bf="btn"]', event: 'click', handler: () => clicks.push('clicked') }]
-    )
-
-    // First run attaches handlers
-    const btn1 = scope.querySelector('[bf="btn"]') as HTMLElement
-    btn1.click()
-    expect(clicks).toEqual(['clicked'])
-
-    // Toggle condition
-    setShow(false)
-    const btn2 = scope.querySelector('[bf="btn"]') as HTMLElement
-    btn2.click()
-    expect(clicks).toEqual(['clicked', 'clicked'])
   })
 })
 

@@ -1,0 +1,18 @@
+{
+  "name": "barefootjs-csr-example",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "bun run build.ts",
+    "dev": "bun run server.ts",
+    "test:e2e": "bunx playwright test",
+    "test:e2e:ui": "bunx playwright test --ui"
+  },
+  "dependencies": {
+    "@barefootjs/dom": "workspace:*"
+  },
+  "devDependencies": {
+    "@barefootjs/hono": "workspace:*",
+    "@barefootjs/jsx": "workspace:*",
+    "bun-types": "^1.1.0"
+  }
+}

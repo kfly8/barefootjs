@@ -15,6 +15,7 @@ import type { TemplateAdapter } from './adapters/interface'
 import { analyzeComponent, listExportedComponents } from './analyzer'
 import { jsxToIR } from './jsx-to-ir'
 import { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
+import { collectComponentNamesFromIR } from './ir-to-client-js/generate-init'
 import { applyCssLayerPrefix } from './css-layer-prefixer'
 
 /**
@@ -121,19 +122,19 @@ function compileMultipleComponentsSync(
   const errors: CompileResult['errors'] = []
   const adapter = options.adapter
 
-  // Compile each component and collect outputs
-  const allOutputs: { imports: string; types: string; component: string; clientJs?: string }[] = []
+  // --- Pass 1: analyze + jsxToIR for ALL components ---
+  const entries: { componentIR: ComponentIR; ctx: ReturnType<typeof analyzeComponent> }[] = []
 
   for (const componentName of componentNames) {
     const ctx = analyzeComponent(source, filePath, componentName)
 
     if (!ctx.jsxReturn) {
-      errors.push(...ctx.errors)  // Only analyzer errors
+      errors.push(...ctx.errors)
       continue
     }
 
     const ir = jsxToIR(ctx)
-    errors.push(...ctx.errors)  // All errors: analyzer + IR phase
+    errors.push(...ctx.errors)
     if (!ir) continue
 
     const componentIR: ComponentIR = {
@@ -143,14 +144,25 @@ function compileMultipleComponentsSync(
       errors: [],
     }
 
-    // Pre-compute client JS analysis for adapter optimization
     componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
 
-    // Apply CSS layer prefix if configured
     if (options.cssLayerPrefix) {
       applyCssLayerPrefix(componentIR, options.cssLayerPrefix)
     }
 
+    entries.push({ componentIR, ctx })
+  }
+
+  // --- Between passes: collect usedAsChild set ---
+  const usedAsChild = new Set<string>()
+  for (const { componentIR } of entries) {
+    collectComponentNamesFromIR([componentIR.root], usedAsChild)
+  }
+
+  // --- Pass 2: adapter.generate + generateClientJs ---
+  const allOutputs: { imports: string; types: string; component: string; clientJs?: string }[] = []
+
+  for (const { componentIR } of entries) {
     const adapterOutput = adapter.generate(componentIR)
     const fullContent = adapterOutput.template
 
@@ -179,7 +191,7 @@ function compileMultipleComponentsSync(
       imports: importLines.join('\n'),
       types: typeLines.join('\n'),
       component: componentLines.join('\n'),
-      clientJs: generateClientJs(componentIR, componentNames) || undefined,
+      clientJs: generateClientJs(componentIR, componentNames, usedAsChild) || undefined,
     })
   }
 

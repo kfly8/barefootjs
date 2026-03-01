@@ -1,6 +1,6 @@
 # Props & Type Safety
 
-Component props in BarefootJS are typed with TypeScript interfaces. The compiler preserves type information through compilation, and the adapter uses it to generate type-safe server templates.
+Component props in BarefootJS are typed with TypeScript interfaces. The compiler preserves type information through compilation, and the adapter uses it to generate type-safe marked templates.
 
 Props in client components are reactive — **how you access them matters**. See [Props Reactivity](../reactivity/props-reactivity.md) for the full explanation. This page focuses on typing patterns.
 

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Form - CSR</title>
+  <script type="importmap">
+    { "imports": { "@barefootjs/dom": "/static/components/barefoot.js" } }
+  </script>
+  <link rel="stylesheet" href="/shared/styles/components.css">
+</head>
+<body>
+  <div>
+    <h1>Form Example</h1>
+    <div id="app"></div>
+    <p><a href="/">← Back</a></p>
+  </div>
+  <script type="module">
+    import { render, getComponentInit, getTemplate } from '@barefootjs/dom'
+    await import('/static/components/Form.client.js')
+    const init = getComponentInit('Form')
+    const template = getTemplate('Form')
+    if (init && template) {
+      render(document.getElementById('app'), { init, template })
+    }
+  </script>
+</body>
+</html>

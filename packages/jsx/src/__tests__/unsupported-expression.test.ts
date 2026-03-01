@@ -2,7 +2,7 @@
  * Unsupported Expression Error Tests
  *
  * Tests for BF021: Emit compile error when a filter predicate cannot be
- * compiled to server template and @client is not present.
+ * compiled to marked template and @client is not present.
  */
 
 import { describe, test, expect } from 'bun:test'
@@ -101,7 +101,7 @@ describe('Unsupported Expression Error (BF021)', () => {
     const bf021 = errors.find(e => e.code === ErrorCodes.UNSUPPORTED_JSX_PATTERN)
 
     expect(bf021).toBeDefined()
-    expect(bf021!.message).toContain('Expression cannot be compiled to server template')
+    expect(bf021!.message).toContain('Expression cannot be compiled to marked template')
   })
 
   test('error includes suggestion to add @client', () => {
@@ -131,7 +131,7 @@ describe('Unsupported Expression Error (BF021)', () => {
 
     expect(bf021).toHaveLength(1)
     expect(bf021[0].severity).toBe('error')
-    expect(bf021[0].message).toContain('Expression cannot be compiled to server template')
+    expect(bf021[0].message).toContain('Expression cannot be compiled to marked template')
   })
 })
 

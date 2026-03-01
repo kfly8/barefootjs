@@ -9,13 +9,12 @@ Hydration is the process of making server-rendered HTML interactive. BarefootJS 
 
 ## Hydration Markers
 
-The compiler inserts `bf-*` attributes into the server template. These tell the client JS where to attach behavior:
+The compiler inserts `bf-*` attributes into the marked template. These tell the client JS where to attach behavior:
 
 | Marker | Purpose | Example |
 |--------|---------|---------|
 | `bf-s` | Component scope boundary (`~` prefix = child) | `<div bf-s="Counter_a1b2">`, `<div bf-s="~Item_c3d4">` |
 | `bf` | Interactive element (slot) | `<p bf="s0">` |
-| `bf-h` | Hydration guard (runtime-only, prevents double hydration) | `<div bf-s="Counter_a1b2" bf-h>` |
 | `bf-p` | Serialized props JSON | `<div bf-p='{"initial":5}'>` |
 | `bf-c` | Conditional block | `<div bf-c="s2">` |
 | `bf-po` | Portal owner scope ID | `<div bf-po="Dialog_a1b2">` |
@@ -27,9 +26,9 @@ The compiler inserts `bf-*` attributes into the server template. These tell the 
 
 1. The server renders HTML with markers and embeds component props in `bf-p` attributes
 2. The browser loads the client JS
-3. `hydrate()` finds all `bf-s` elements without `bf-h` (uninitialized)
+3. `hydrate()` finds all uninitialized `bf-s` elements
 4. For each scope, the init function runs — creating signals, binding effects, attaching event handlers
-5. The runtime sets `bf-h` on the scope element to prevent double initialization
+5. The runtime tracks the scope internally to prevent double initialization
 6. The page is now interactive
 
 ```
@@ -37,15 +36,15 @@ Server HTML (static)
     ↓
 Client JS loads
     ↓
-hydrate("Counter", init)
+hydrate('Counter', { init: initCounter })
     ↓
-Find <div bf-s="Counter_a1b2"> without bf-h
+Find uninitialized <div bf-s="Counter_a1b2">
     ↓
 Read props from bf-p attribute
     ↓
-Run init(): createSignal, createEffect, bind events
+Run init(): createSignal, createEffect, attach event handlers
     ↓
-Set bf-h on scope element (mark as initialized)
+Track scope as initialized (internal hydratedScopes Set)
     ↓
 Page is interactive
 ```

@@ -55,14 +55,14 @@ const doubled = createMemo(() => count() * 2)  // Computed, no extra signal
 
 ### Use Static Arrays When Possible
 
-If a list doesn't change after initial render, the compiler detects it as a **static array** and skips `reconcileList`:
+If a list doesn't change after initial render, the compiler detects it as a **static array** and skips list reconciliation:
 
 ```tsx
-// Static — no reconcileList generated
+// Static — no reconciliation generated
 const tabs = ['Home', 'About', 'Contact']
 {tabs.map(tab => <Tab label={tab} />)}
 
-// Dynamic — reconcileList needed
+// Dynamic — reconcileElements/reconcileTemplates needed
 const [items, setItems] = createSignal([...])
 {items().map(item => <Item key={item.id} data={item} />)}
 ```

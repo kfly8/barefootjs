@@ -20,7 +20,7 @@ export function Counter() {
 This tells the compiler:
 
 - **Generate client JS** for this component
-- **Add hydration markers** to the server template
+- **Add hydration markers** to the marked template
 - **Validate** that reactive APIs are only used in client components
 
 Without the directive, the compiler produces a server-only template with no client JS. A component without `"use client"` that tries to use `createSignal` will get an error:

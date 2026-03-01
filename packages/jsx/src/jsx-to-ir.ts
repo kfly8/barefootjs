@@ -862,7 +862,7 @@ type FilterPredicateResult = {
 
 /**
  * Extraction result that carries an optional unsupported reason.
- * When unsupportedReason is set, the predicate cannot be compiled to server template.
+ * When unsupportedReason is set, the predicate cannot be compiled to marked template.
  */
 type FilterExtractionResult = {
   result: FilterPredicateResult | null
@@ -875,7 +875,7 @@ type FilterExtractionResult = {
  * or ParsedStatement[] (block body).
  *
  * Returns FilterExtractionResult with unsupportedReason when the predicate
- * cannot be compiled to a server template.
+ * cannot be compiled to a marked template.
  */
 function extractFilterPredicate(
   callback: ts.Expression,
@@ -948,7 +948,7 @@ function transformMapCall(
           createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
             getSourceLocation(sortInfo.callback, ctx.sourceFile, ctx.filePath),
             {
-              message: `Expression cannot be compiled to server template: ${sortExtraction.unsupportedReason}`,
+              message: `Expression cannot be compiled to marked template: ${sortExtraction.unsupportedReason}`,
               suggestion: {
                 message: 'Add /* @client */ to evaluate this expression on the client only',
               },
@@ -971,7 +971,7 @@ function transformMapCall(
               createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
                 getSourceLocation(innerFilter.callback, ctx.sourceFile, ctx.filePath),
                 {
-                  message: `Expression cannot be compiled to server template: ${filterExtraction.unsupportedReason}`,
+                  message: `Expression cannot be compiled to marked template: ${filterExtraction.unsupportedReason}`,
                   suggestion: {
                     message: 'Add /* @client */ to evaluate this expression on the client only',
                   },
@@ -1005,7 +1005,7 @@ function transformMapCall(
           createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
             getSourceLocation(filterInfo.callback, ctx.sourceFile, ctx.filePath),
             {
-              message: `Expression cannot be compiled to server template: ${filterExtraction.unsupportedReason}`,
+              message: `Expression cannot be compiled to marked template: ${filterExtraction.unsupportedReason}`,
               suggestion: {
                 message: 'Add /* @client */ to evaluate this expression on the client only',
               },
@@ -1028,7 +1028,7 @@ function transformMapCall(
               createError(ErrorCodes.UNSUPPORTED_JSX_PATTERN,
                 getSourceLocation(innerSort.callback, ctx.sourceFile, ctx.filePath),
                 {
-                  message: `Expression cannot be compiled to server template: ${sortExtraction.unsupportedReason}`,
+                  message: `Expression cannot be compiled to marked template: ${sortExtraction.unsupportedReason}`,
                   suggestion: {
                     message: 'Add /* @client */ to evaluate this expression on the client only',
                   },

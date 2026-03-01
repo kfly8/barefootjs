@@ -15,7 +15,7 @@ import { buildInlinableConstants } from './emit-init-sections'
 import { IMPORT_PLACEHOLDER, detectUsedImports } from './imports'
 
 /** Public entry point: IR → client JS string. Returns '' if no client JS is needed. */
-export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]): string {
+export function generateClientJs(ir: ComponentIR, siblingComponents?: string[], usedAsChild?: Set<string>): string {
   const ctx = createContext(ir)
   collectElements(ir.root, ctx)
 
@@ -24,7 +24,7 @@ export function generateClientJs(ir: ComponentIR, siblingComponents?: string[]):
     return generateTemplateOnlyMount(ir, ctx)
   }
 
-  return generateInitFunction(ir, ctx, siblingComponents)
+  return generateInitFunction(ir, ctx, siblingComponents, usedAsChild)
 }
 
 /**
@@ -151,7 +151,7 @@ function generateTemplateOnlyMount(ir: ComponentIR, ctx: ClientJsContext): strin
   lines.push('')
   lines.push(`function init${name}() {}`)
   lines.push('')
-  lines.push(`mount('${name}', init${name}, { template: (props) => \`${templateHtml}\` })`)
+  lines.push(`hydrate('${name}', { init: init${name}, template: (props) => \`${templateHtml}\` })`)
 
   const generatedCode = lines.join('\n')
   const usedImports = detectUsedImports(generatedCode)

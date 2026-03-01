@@ -30,19 +30,40 @@ test.describe('Carousel Documentation Page', () => {
       await expect(nextBtn).toBeVisible()
     })
 
+    test('embla initializes without errors', async ({ page }) => {
+      const errors: string[] = []
+      page.on('pageerror', (err) => errors.push(err.message))
+      page.on('console', (msg) => {
+        if (msg.type() === 'error') errors.push(msg.text())
+      })
+
+      await page.goto('/docs/components/carousel')
+
+      const carousel = page.locator('[data-slot="carousel"]').first()
+      const prevBtn = carousel.locator('[data-slot="carousel-previous"]')
+
+      // Embla initialization sets button disabled states.
+      // Previous button should become disabled (at first slide) once embla loads.
+      await expect(prevBtn).toBeDisabled({ timeout: 5000 })
+
+      // No fetch errors (e.g. 404 for embla-carousel.esm.js)
+      const emblaErrors = errors.filter(e => /embla|Failed to fetch/i.test(e))
+      expect(emblaErrors).toHaveLength(0)
+    })
+
     test('clicking next navigates to next slide', async ({ page }) => {
       const carousel = page.locator('[data-slot="carousel"]').first()
+      const prevBtn = carousel.locator('[data-slot="carousel-previous"]')
       const nextBtn = carousel.locator('[data-slot="carousel-next"]')
 
-      // Wait for embla to initialize
-      await page.waitForTimeout(500)
+      // Wait for embla to initialize (prev button disabled at first slide)
+      await expect(prevBtn).toBeDisabled({ timeout: 5000 })
 
       // Click next
       await nextBtn.click()
       await page.waitForTimeout(300)
 
       // Previous button should now be enabled
-      const prevBtn = carousel.locator('[data-slot="carousel-previous"]')
       await expect(prevBtn).not.toBeDisabled()
     })
   })
@@ -77,10 +98,7 @@ test.describe('Carousel Documentation Page', () => {
       const prevBtn = verticalCarousel.locator('[data-slot="carousel-previous"]')
 
       // Wait for embla to initialize
-      await page.waitForTimeout(500)
-
-      // Previous should be disabled initially
-      await expect(prevBtn).toBeDisabled()
+      await expect(prevBtn).toBeDisabled({ timeout: 5000 })
 
       // Click next
       await nextBtn.click()

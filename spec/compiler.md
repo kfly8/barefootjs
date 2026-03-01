@@ -144,7 +144,7 @@ The **consumer** (child) determines when evaluation happens, not the **provider*
 | Props access | Getter-based | Getter-based | Direct access |
 | Destructuring props | ⚠️ Careful | ⚠️ Careful | ✅ Safe |
 | Dependency tracking | Automatic | Automatic | Manual arrays |
-| Rendering | Server template + Client hydration | All in JS | All in JS |
+| Rendering | Marked template + Client hydration | All in JS | All in JS |
 
 ### Memos
 
@@ -203,7 +203,7 @@ createEffect(() => {
 
 ### Hydration Markers
 
-1. **Marked Template**: Server-side template with hydration markers
+1. **Marked Template**: Template with hydration markers (used for both SSR and CSR)
 
    | Marker | Purpose | Example |
    |--------|---------|---------|
@@ -215,7 +215,6 @@ createEffect(() => {
    | `bf-pi` | Portal container ID | `bf-pi="bf-portal-1"` |
    | `bf-pp` | Portal placeholder | `bf-pp="bf-portal-1"` |
    | `bf-i` | List item marker | `bf-i` |
-   | `bf-h` | Hydration guard (runtime-only, not in template output) | `bf-h` |
 
 2. **Client JS**: Minimal JavaScript for reactivity
    - Uses `createEffect` for reactive updates
@@ -289,7 +288,7 @@ interface TemplateAdapter {
 | BF010 | Unknown signal reference |
 | BF011 | Signal used outside component |
 | BF020 | Invalid JSX expression |
-| BF021 | Unsupported JSX pattern (e.g., filter predicate or sort comparator too complex for SSR) |
+| BF021 | Unsupported JSX pattern (e.g., filter predicate or sort comparator too complex for template compilation) |
 | BF030 | Type inference failed |
 | BF031 | Props type mismatch |
 | BF043 | Props destructuring breaks reactivity |
@@ -327,12 +326,12 @@ function Component({ checked }: Props) {
 
 ### Unsupported Expressions (BF021)
 
-When a filter predicate or sort comparator cannot be compiled to a server template, the compiler emits a **BF021** error. This replaces the previous silent fallback to client-only evaluation.
+When a filter predicate or sort comparator cannot be compiled to a marked template, the compiler emits a **BF021** error. This replaces the previous silent fallback to client-only evaluation.
 
 **Filter predicates**: Complex predicates (nested higher-order methods, `typeof`, etc.) trigger BF021.
 
 ```
-error[BF021]: Expression cannot be compiled to server template: Higher-order method 'some()' with complex predicate.
+error[BF021]: Expression cannot be compiled to marked template: Higher-order method 'some()' with complex predicate.
 
   --> src/components/TodoList.tsx:9:30
    |
@@ -345,7 +344,7 @@ error[BF021]: Expression cannot be compiled to server template: Higher-order met
 **Sort comparators**: Only simple `(a, b) => a.field - b.field` patterns are supported. Complex comparators (`.localeCompare()`, block body, multi-field) trigger BF021.
 
 ```
-error[BF021]: Expression cannot be compiled to server template: Sort comparator 'a.name.localeCompare(b.name)' is not a simple subtraction pattern (a.field - b.field)
+error[BF021]: Expression cannot be compiled to marked template: Sort comparator 'a.name.localeCompare(b.name)' is not a simple subtraction pattern (a.field - b.field)
 
   --> src/components/List.tsx:9:30
    |
@@ -369,7 +368,7 @@ error[BF021]: Expression cannot be compiled to server template: Sort comparator 
 ))}
 ```
 
-When `@client` is present, the compiler skips SSR for that expression without emitting an error.
+When `@client` is present, the compiler skips template generation for that expression without emitting an error.
 
 ### Signal/Memo Getter Not Called (BF044)
 

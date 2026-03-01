@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Todo App - CSR</title>
+  <script type="importmap">
+    { "imports": { "@barefootjs/dom": "/static/components/barefoot.js" } }
+  </script>
+  <link rel="stylesheet" href="/shared/styles/components.css">
+  <link rel="stylesheet" href="/shared/styles/todo-app.css">
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { render, getComponentInit, getTemplate } from '@barefootjs/dom'
+    await import('/static/components/TodoApp.client.js')
+
+    // Fetch initial todos from API
+    const response = await fetch('/api/todos')
+    const initialTodos = await response.json()
+
+    const init = getComponentInit('TodoApp')
+    const template = getTemplate('TodoApp')
+    if (init && template) {
+      render(document.getElementById('app'), { init, template }, { initialTodos })
+    }
+  </script>
+</body>
+</html>

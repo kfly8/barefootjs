@@ -7,7 +7,7 @@ import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
-import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, irChildrenToJsExpr } from './html-template'
+import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, generateCsrTemplate, irChildrenToJsExpr, createStringProtector } from './html-template'
 
 /**
  * Collect slot IDs that are inside conditionals (handled by insert()).
@@ -145,7 +145,6 @@ export function emitSignalsAndMemos(
     const accessor = prop?.defaultValue
       ? `(props.${propName} ?? ${prop.defaultValue})`
       : `props.${propName}`
-    lines.push(`  // AUTO-GENERATED: Sync controlled prop '${propName}' to internal signal`)
     lines.push(`  createEffect(() => {`)
     lines.push(`    const __val = ${accessor}`)
     lines.push(`    if (__val !== undefined) ${signal.setter}(__val)`)
@@ -400,7 +399,7 @@ export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext
   }
 }
 
-/** Emit reconcileList calls for dynamic loops, and static array child initialization. */
+/** Emit reconcileElements/reconcileTemplates calls for dynamic loops, and static array child initialization. */
 export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.loopElements) {
     if (elem.isStaticArray) {
@@ -424,9 +423,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         // Use both suffix match (for inlined stateless components whose bf-s uses
         // parent scope + slotId, e.g. ~ParentName_hash_s3) and prefix match (for
         // stateful components whose bf-s uses their own name, e.g. ToggleItem_hash)
-        const namePrefixSelector = `[bf-s^="~${name}_"]:not([bf-h]), [bf-s^="${name}_"]:not([bf-h])`
+        const namePrefixSelector = `[bf-s^="~${name}_"], [bf-s^="${name}_"]`
         const childSelector = elem.childComponent.slotId
-          ? `[bf-s$="_${elem.childComponent.slotId}"]:not([bf-h]), ${namePrefixSelector}`
+          ? `[bf-s$="_${elem.childComponent.slotId}"], ${namePrefixSelector}`
           : namePrefixSelector
         lines.push(`    const __childScopes = _${v}.querySelectorAll('${childSelector}')`)
         const indexParam = elem.index || '__idx'
@@ -453,8 +452,8 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
 
           const selector = comp.slotId
-            ? `[bf-s$="_${comp.slotId}"]:not([bf-h])`
-            : `[bf-s^="~${comp.name}_"]:not([bf-h]), [bf-s^="${comp.name}_"]:not([bf-h])`
+            ? `[bf-s$="_${comp.slotId}"]`
+            : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
 
           lines.push(`  // Initialize nested ${comp.name} in static array`)
           lines.push(`  if (_${v}) {`)
@@ -502,7 +501,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const chainedExpr = buildChainedArrayExpr(elem)
 
       lines.push(`  createEffect(() => {`)
-      lines.push(`    reconcileList(_${vLoop}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
+      lines.push(`    reconcileElements(_${vLoop}, ${chainedExpr}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
       lines.push(`      createComponent('${name}', ${propsExpr}, ${keyExpr})`)
       lines.push(`    )`)
       lines.push(`  })`)
@@ -512,7 +511,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
       const indexParamTemplate = elem.index || '__idx'
       lines.push(`  createEffect(() => {`)
       lines.push(`    const __arr = ${chainedExprTemplate}`)
-      lines.push(`    reconcileList(_${vLoop}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
+      lines.push(`    reconcileTemplates(_${vLoop}, __arr, ${keyFn}, (${elem.param}, ${indexParamTemplate}) => \`${elem.template}\`)`)
       lines.push(`  })`)
     }
     lines.push('')
@@ -808,6 +807,47 @@ function valueOnlyUsesKnownNames(value: string, knownNames: Set<string>): boolea
 }
 
 /**
+ * Resolve chained references within a constants map.
+ * If constant A references constant B, replace B's name in A's value with B's resolved value.
+ */
+export function resolveChainedRefs(constants: Map<string, string>): void {
+  let changed = true
+  const maxIterations = constants.size + 1
+  let iteration = 0
+  while (changed && iteration < maxIterations) {
+    changed = false
+    iteration++
+    for (const [constName, constValue] of constants) {
+      // String literal values (single/double quoted) cannot contain variable references.
+      // Skip them to avoid corrupting CSS class names like "size-4" when a constant
+      // named "size" exists (the regex would falsely match "size" in "size-4").
+      const trimmed = constValue.trim()
+      if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+          (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        continue
+      }
+
+      // Protect string literals within compound values (e.g., Record objects
+      // containing 'size-4') from regex-based identifier replacement
+      const { protect, restore } = createStringProtector()
+      let newValue = protect(constValue)
+      for (const [otherName, otherValue] of constants) {
+        if (otherName === constName) continue
+        const replaced = newValue.replace(new RegExp(`(?<!\\.)\\b${otherName}\\b`, 'g'), `(${protect(otherValue)})`)
+        if (replaced !== newValue) {
+          newValue = replaced
+          changed = true
+        }
+      }
+      newValue = restore(newValue)
+      if (newValue !== constValue) {
+        constants.set(constName, newValue)
+      }
+    }
+  }
+}
+
+/**
  * Build the inlinable constants map and unsafe local names set from a context.
  * Extracted for reuse by both emitRegistrationAndHydration and generateTemplateOnlyMount (#435).
  */
@@ -879,28 +919,7 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
     inlinableConstants.set(constant.name, trimmedValue)
   }
 
-  // Resolve chained references
-  let changed = true
-  const maxIterations = inlinableConstants.size + 1
-  let iteration = 0
-  while (changed && iteration < maxIterations) {
-    changed = false
-    iteration++
-    for (const [constName, constValue] of inlinableConstants) {
-      let newValue = constValue
-      for (const [otherName, otherValue] of inlinableConstants) {
-        if (otherName === constName) continue
-        const replaced = newValue.replace(new RegExp(`(?<!\\.)\\b${otherName}\\b`, 'g'), `(${otherValue})`)
-        if (replaced !== newValue) {
-          newValue = replaced
-          changed = true
-        }
-      }
-      if (newValue !== constValue) {
-        inlinableConstants.set(constName, newValue)
-      }
-    }
-  }
+  resolveChainedRefs(inlinableConstants)
 
   // Demote constants whose value still references an unsafe name
   const toRemove: string[] = []
@@ -920,11 +939,92 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
   return { inlinableConstants, unsafeLocalNames }
 }
 
-/** Emit mount() call that registers component, template, and hydrates. */
+/**
+ * Build signal and memo maps for CSR template generation.
+ * Signal map: getter name → initial value expression
+ * Memo map: memo name → computation expression with signal calls replaced by initial values
+ */
+export function buildSignalAndMemoMaps(ctx: ClientJsContext): {
+  signalMap: Map<string, string>
+  memoMap: Map<string, string>
+} {
+  const propsName = ctx.propsObjectName ?? 'props'
+  const propsPrefix = `${propsName}.`
+
+  const signalMap = new Map<string, string>()
+  for (const signal of ctx.signals) {
+    let initialValue = signal.initialValue
+    // Normalize custom props object name to 'props.' and add default fallback
+    // to match emitSignalsAndMemos() behavior (prevents undefined rendering in CSR)
+    if (ctx.propsObjectName && initialValue.startsWith(propsPrefix)) {
+      const propRef = 'props.' + initialValue.slice(propsPrefix.length)
+      if (!initialValue.includes('??')) {
+        initialValue = `${propRef} ?? ${inferDefaultValue(signal.type)}`
+      } else {
+        initialValue = propRef
+      }
+    } else if (initialValue.startsWith('props.') && !initialValue.includes('??')) {
+      initialValue = `${initialValue} ?? ${inferDefaultValue(signal.type)}`
+    }
+    signalMap.set(signal.getter, initialValue)
+  }
+
+  const memoMap = new Map<string, string>()
+  for (const memo of ctx.memos) {
+    let expr = memo.computation
+    // Extract the function body from arrow function: () => count() * 2 → count() * 2
+    // Supports both expression arrows `() => expr` and block arrows `() => { return expr }`
+    const arrowMatch = expr.match(/^\(\)\s*=>\s*(.+)$/s)
+    if (arrowMatch) {
+      const body = arrowMatch[1].trim()
+      if (body.startsWith('{')) {
+        // Block body: extract return expression
+        const returnMatch = body.match(/return\s+(.+?)\s*[;}]?\s*}$/)
+        expr = returnMatch ? returnMatch[1] : expr
+      } else {
+        expr = body
+      }
+    }
+    // Replace signal getter calls with initial values
+    for (const [getter, initial] of signalMap) {
+      expr = expr.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initial})`)
+    }
+    memoMap.set(memo.name, expr)
+  }
+
+  // Resolve chained memo references: if memo A references memo B(),
+  // replace B() with B's resolved computation expression.
+  let changed = true
+  const maxIter = memoMap.size + 1
+  let iter = 0
+  while (changed && iter < maxIter) {
+    changed = false
+    iter++
+    for (const [memoName, memoExpr] of memoMap) {
+      let newExpr = memoExpr
+      for (const [otherName, otherExpr] of memoMap) {
+        if (otherName === memoName) continue
+        const replaced = newExpr.replace(new RegExp(`\\b${otherName}\\(\\)`, 'g'), `(${otherExpr})`)
+        if (replaced !== newExpr) {
+          newExpr = replaced
+          changed = true
+        }
+      }
+      if (newExpr !== memoExpr) {
+        memoMap.set(memoName, newExpr)
+      }
+    }
+  }
+
+  return { signalMap, memoMap }
+}
+
+/** Emit hydrate() call that registers component, template, and hydrates. */
 export function emitRegistrationAndHydration(
   lines: string[],
   ctx: ClientJsContext,
-  _ir: ComponentIR
+  _ir: ComponentIR,
+  usedAsChild?: Set<string>
 ): void {
   const name = ctx.componentName
 
@@ -937,21 +1037,49 @@ export function emitRegistrationAndHydration(
   const isCommentScope = _ir.root.type === 'fragment'
     && (_ir.root as IRFragment).needsScopeComment
 
-  // Build options object for mount()
-  const optionParts: string[] = []
+  // Build ComponentDef object for hydrate()
+  const defParts: string[] = [`init: init${name}`]
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
     if (templateHtml) {
-      optionParts.push(`template: (props) => \`${templateHtml}\``)
+      defParts.push(`template: (props) => \`${templateHtml}\``)
+    }
+  } else if (usedAsChild?.has(name)) {
+    // CSR fallback: only emit when this component is used as a child by another
+    // component in the same file. Top-level-only components skip this to save bytes.
+    // transformExpr() uses string literal protection to prevent regex corruption
+    // of CSS class names (e.g., 'size-4' when constant 'size' exists).
+    const { signalMap, memoMap } = buildSignalAndMemoMaps(ctx)
+
+    // Re-promote demoted constants by resolving signal/memo references
+    const csrInlinableConstants = new Map(inlinableConstants)
+    for (const constant of ctx.localConstants) {
+      if (unsafeLocalNames.has(constant.name) && constant.value && !constant.value.includes('=>')) {
+        let value = constant.value.trim()
+        for (const [getter, initial] of signalMap) {
+          value = value.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initial})`)
+        }
+        for (const [name, computation] of memoMap) {
+          value = value.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
+        }
+        if (!/\b\w+\(\)/.test(value)) {
+          csrInlinableConstants.set(constant.name, value)
+        }
+      }
+    }
+    resolveChainedRefs(csrInlinableConstants)
+
+    const templateHtml = generateCsrTemplate(
+      _ir.root, propNamesForTemplate, csrInlinableConstants, signalMap, memoMap
+    )
+    if (templateHtml) {
+      defParts.push(`template: (props) => \`${templateHtml}\``)
     }
   }
+  // No else: top-level-only components skip template entirely (save bytes)
   if (isCommentScope) {
-    optionParts.push('comment: true')
+    defParts.push('comment: true')
   }
 
-  if (optionParts.length > 0) {
-    lines.push(`mount('${name}', init${name}, { ${optionParts.join(', ')} })`)
-  } else {
-    lines.push(`mount('${name}', init${name})`)
-  }
+  lines.push(`hydrate('${name}', { ${defParts.join(', ')} })`)
 }

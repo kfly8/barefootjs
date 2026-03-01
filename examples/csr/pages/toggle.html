@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Toggle - CSR</title>
+  <script type="importmap">
+    { "imports": { "@barefootjs/dom": "/static/components/barefoot.js" } }
+  </script>
+  <link rel="stylesheet" href="/shared/styles/components.css">
+</head>
+<body>
+  <div>
+    <h1>Toggle Example</h1>
+    <div id="app"></div>
+    <p><a href="/">← Back</a></p>
+  </div>
+  <script type="module">
+    import { render, getComponentInit, getTemplate } from '@barefootjs/dom'
+    await import('/static/components/Toggle.client.js')
+    const init = getComponentInit('Toggle')
+    const template = getTemplate('Toggle')
+    if (init && template) {
+      const toggleItems = [
+        { label: 'Setting 1', defaultOn: true },
+        { label: 'Setting 2', defaultOn: false },
+        { label: 'Setting 3', defaultOn: false },
+      ]
+      render(document.getElementById('app'), { init, template }, { toggleItems })
+    }
+  </script>
+</body>
+</html>
