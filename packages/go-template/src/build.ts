@@ -1,19 +1,10 @@
 // Go template build config factory for barefoot.config.ts
 
+import type { BuildOptions } from '@barefootjs/jsx'
 import { GoTemplateAdapter } from './adapter'
 import type { GoTemplateAdapterOptions } from './adapter'
 
-export interface GoTemplateBuildOptions {
-  /** Source component directories relative to config file */
-  components?: string[]
-  /** Output directory relative to config file */
-  outDir?: string
-  /** Minify client JS output */
-  minify?: boolean
-  /** Add content hash to client JS filenames */
-  contentHash?: boolean
-  /** Output only client JS, skip marked templates and manifest */
-  clientOnly?: boolean
+export interface GoTemplateBuildOptions extends BuildOptions {
   /** Adapter-specific options passed to GoTemplateAdapter */
   adapterOptions?: GoTemplateAdapterOptions
 }
