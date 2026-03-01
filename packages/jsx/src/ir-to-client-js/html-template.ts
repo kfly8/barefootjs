@@ -414,16 +414,183 @@ export function canGenerateStaticTemplate(
 }
 
 /**
+ * Generate HTML template for CSR mode.
+ * Unlike irToComponentTemplate(), this handles stateful components:
+ * - Signal getter calls (e.g., count()) are replaced with initial value expressions
+ * - Memo getter calls (e.g., doubled()) are replaced with their computation expressions
+ * - Loops generate .map().join('') for inline rendering
+ * - Child components use renderChild() for runtime template lookup
+ *
+ * @param node - IR node to render
+ * @param propNames - Set of prop names to prefix with 'props.'
+ * @param inlinableConstants - Map of constant names to their resolved values
+ * @param signalMap - Map of signal getter names to their initial value expressions
+ * @param memoMap - Map of memo names to their computation expressions (with signals already replaced)
+ */
+export function generateCsrTemplate(
+  node: IRNode,
+  propNames: Set<string>,
+  inlinableConstants?: Map<string, string>,
+  signalMap?: Map<string, string>,
+  memoMap?: Map<string, string>,
+  insideLoop?: boolean,
+): string {
+  const transformExpr = (expr: string): string => {
+    let result = expr
+
+    // Replace signal getter calls with initial values: count() → (props.initial ?? 0)
+    if (signalMap && signalMap.size > 0) {
+      for (const [getter, initialValue] of signalMap) {
+        result = result.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initialValue})`)
+      }
+    }
+
+    // Replace memo getter calls with computation expressions: doubled() → ((props.initial ?? 0) * 2)
+    if (memoMap && memoMap.size > 0) {
+      for (const [name, computation] of memoMap) {
+        result = result.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
+      }
+    }
+
+    // Inline constant references with their resolved values
+    if (inlinableConstants && inlinableConstants.size > 0) {
+      for (const [constName, constValue] of inlinableConstants) {
+        result = result.replace(new RegExp(`(?<!\\.)\\b${constName}\\b`, 'g'), `(${constValue})`)
+      }
+    }
+
+    // Prefix prop names with 'props.'
+    for (const propName of propNames) {
+      const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?![a-zA-Z0-9_$])`, 'g')
+      result = result.replace(pattern, `props.${propName}`)
+    }
+    return result
+  }
+
+  const recurse = (n: IRNode): string => generateCsrTemplate(n, propNames, inlinableConstants, signalMap, memoMap, insideLoop)
+  const recurseInLoop = (n: IRNode): string => generateCsrTemplate(n, propNames, inlinableConstants, signalMap, memoMap, true)
+
+  switch (node.type) {
+    case 'element': {
+      const attrParts = node.attrs
+        .map((a) => {
+          if (a.name === '...') return ''
+          const attrName = a.name === 'key' ? 'data-key' : toHtmlAttrName(a.name)
+          if (a.value === null) return attrName
+          const valueStr = attrValueToString(a.value)
+          if (a.dynamic && valueStr && isBooleanAttr(attrName)) {
+            return `\${${transformExpr(valueStr)} ? '${attrName}' : ''}`
+          }
+          if (a.dynamic && valueStr && a.presenceOrUndefined) {
+            return `\${${transformExpr(valueStr)} ? '${attrName}' : ''}`
+          }
+          if (a.dynamic && valueStr) return `\${(${transformExpr(valueStr)}) != null ? '${attrName}="' + (${transformExpr(valueStr)}) + '"' : ''}`
+          if (valueStr) return `${attrName}="${valueStr}"`
+          return attrName
+        })
+        .filter(Boolean)
+
+      if (node.slotId) {
+        attrParts.push(`bf="${node.slotId}"`)
+      }
+
+      const attrs = attrParts.join(' ')
+      const children = node.children.map(recurse).join('')
+
+      if (children || !VOID_ELEMENTS.has(node.tag)) {
+        return `<${node.tag}${attrs ? ' ' + attrs : ''}>${children}</${node.tag}>`
+      }
+      return `<${node.tag}${attrs ? ' ' + attrs : ''} />`
+    }
+
+    case 'text':
+      return node.value
+
+    case 'expression':
+      if (node.expr === 'null' || node.expr === 'undefined') return ''
+      // clientOnly expressions use bf-client: markers (matched by updateClientMarker).
+      // The initial value is injected by the effect, not the template.
+      if (node.clientOnly && node.slotId) {
+        return `<!--bf-client:${node.slotId}--><!--/-->`
+      }
+      if (node.slotId) {
+        return `<!--bf:${node.slotId}-->\${${transformExpr(node.expr)}}<!--/-->`
+      }
+      return `\${${transformExpr(node.expr)}}`
+
+    case 'conditional': {
+      const trueBranch = recurse(node.whenTrue)
+      const falseBranch = recurse(node.whenFalse)
+      const trueHtml = node.slotId ? addCondAttrToTemplate(trueBranch, node.slotId) : trueBranch
+      const falseHtml = node.slotId ? addCondAttrToTemplate(falseBranch, node.slotId) : falseBranch
+      return `\${${transformExpr(node.condition)} ? \`${trueHtml}\` : \`${falseHtml}\`}`
+    }
+
+    case 'fragment':
+      return node.children.map(recurse).join('')
+
+    case 'component': {
+      if (node.name === 'Portal') {
+        return node.children.map(recurse).join('')
+      }
+
+      const propsEntries = node.props
+        .filter(p => p.name !== '...' && !p.name.startsWith('...') && p.name !== 'key')
+        .filter(p => !(p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()))
+        .map(p => {
+          if (p.isLiteral) return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
+          const valueStr = attrValueToString(p.value)
+          return `${quotePropName(p.name)}: ${valueStr ? transformExpr(valueStr) : JSON.stringify(p.value)}`
+        })
+      const propsExpr = propsEntries.length > 0 ? `{${propsEntries.join(', ')}}` : '{}'
+      const keyProp = node.props.find(p => p.name === 'key')
+      const keyArg = keyProp ? `, ${transformExpr(keyProp.value)}` : ''
+      // Pass slotId as suffix so $c() can find the child by slot.
+      // Skip slotSuffix inside loops — loop children are found by name prefix, not slot suffix.
+      const slotArg = (!insideLoop && node.slotId) ? `, '${node.slotId}'` : ''
+      return `\${renderChild('${node.name}', ${propsExpr}${keyArg || (slotArg ? ', undefined' : '')}${slotArg})}`
+    }
+
+    case 'loop': {
+      // Generate inline .map().join('') so loop variables are properly scoped
+      const childTemplate = node.children.map(recurseInLoop).join('')
+      const indexParam = node.index ? `, ${node.index}` : ''
+      return `\${${transformExpr(node.array)}.map((${node.param}${indexParam}) => \`${childTemplate}\`).join('')}`
+    }
+
+    case 'if-statement': {
+      const consequent = recurse(node.consequent)
+      const alternate = node.alternate ? recurse(node.alternate) : ''
+      return `\${${transformExpr(node.condition)} ? \`${consequent}\` : \`${alternate}\`}`
+    }
+
+    case 'provider':
+      return node.children.map(recurse).join('')
+
+    default:
+      return ''
+  }
+}
+
+/**
  * Check if an expression is a simple prop-based expression.
  * Simple prop expressions access props only: todo.done, todo.text, props.name
  * Non-prop expressions call signals: todos(), todos().length, todos().filter(...)
  */
 export function isSimplePropExpression(expr: string, propNames: Set<string>): boolean {
   const match = expr.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)/)
-  if (!match) return true
+  if (!match) {
+    // No identifier at start (e.g., template literal `${...}`) — check for signal calls
+    return !expr.includes('()')
+  }
 
   const rootIdent = match[1]
-  if (propNames.has(rootIdent)) return true
+  if (propNames.has(rootIdent)) {
+    // Even if root is a prop name, calling it as a function means it's a signal getter
+    const rest = expr.slice(rootIdent.length)
+    if (rest.startsWith('(')) return false
+    return true
+  }
   if (expr.includes('()')) return false
 
   return true

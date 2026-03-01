@@ -1821,7 +1821,7 @@ describe('Compiler', () => {
       expect(content).not.toMatch(/\bclasses\b/)
     })
 
-    test('signal-dependent constant prevents template generation', () => {
+    test('signal-dependent constant prevents static template but generates CSR template', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -1840,9 +1840,10 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // hydrate() should NOT have a template argument (signal-dependent constant)
-      expect(content).toMatch(/hydrate\('Display', \{ init: initDisplay \}\)/)
-      expect(content).not.toContain('(props) => `')
+      // Static template is prevented, but CSR fallback template is generated
+      // with signal calls replaced by initial values
+      expect(content).toContain('template: (props) => `')
+      expect(content).toMatch(/hydrate\('Display',/)
     })
 
     test('issue #343 full reproduction: local constant in disabled attribute', () => {
@@ -3038,8 +3039,10 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      // Should not contain double ?? like "props.initial ?? 0 ?? 0"
-      expect(clientJs?.content).not.toMatch(/\?\?.*\?\?/)
+      // Init function should not contain double ?? like "props.initial ?? 0 ?? 0"
+      // (Template function may legitimately contain ?? in signal initial value substitutions)
+      const initFn = clientJs?.content.match(/export function initSlider[\s\S]*?^}/m)?.[0] ?? ''
+      expect(initFn).not.toMatch(/\?\?.*\?\?/)
     })
 
     test('preserves original ?? fallback value in output', () => {
@@ -3141,8 +3144,9 @@ describe('Compiler', () => {
       // Output should use 'props.initial' (not 'p.initial')
       expect(clientJs?.content).toContain('props.initial')
       expect(clientJs?.content).not.toContain('p.initial')
-      // No double ??
-      expect(clientJs?.content).not.toMatch(/\?\?.*\?\?/)
+      // Init function should not contain double ??
+      const initFn = clientJs?.content.match(/export function initSlider[\s\S]*?^}/m)?.[0] ?? ''
+      expect(initFn).not.toMatch(/\?\?.*\?\?/)
     })
   })
 
@@ -3330,7 +3334,8 @@ describe('Compiler', () => {
       const content = clientJs!.content
 
       // hydrate() should include comment: true for fragment roots
-      expect(content).toMatch(/hydrate\('FragComp', \{[^}]*comment: true/)
+      expect(content).toMatch(/hydrate\('FragComp',/)
+      expect(content).toContain('comment: true')
     })
 
     test('single-root component generates mount without comment flag', () => {
@@ -3557,6 +3562,140 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       expect(clientJs!.content).not.toContain('<span>A</span>')
       expect(clientJs!.content).not.toContain('<span>B</span>')
+    })
+  })
+
+  describe('CSR template generation (generateCsrTemplate)', () => {
+    test('Counter: signal calls replaced with initial values in template', () => {
+      const source = `
+        'use client'
+        import { createSignal, createMemo } from '@barefootjs/dom'
+        interface CounterProps { initial?: number }
+        export function Counter(props: CounterProps) {
+          const [count, setCount] = createSignal(props.initial ?? 0)
+          const doubled = createMemo(() => count() * 2)
+          return (
+            <div className="counter-container">
+              <p className="counter-value">{count()}</p>
+              <p className="counter-doubled">doubled: {doubled()}</p>
+              <button className="btn-increment" onClick={() => setCount(n => n + 1)}>+1</button>
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Template should be generated (CSR fallback)
+      expect(content).toContain('template: (props) => `')
+
+      // Signal calls should be replaced with initial values
+      // count() → (props.initial ?? 0)
+      expect(content).toMatch(/template:.*props\.initial \?\? 0/)
+
+      // Memo should be inlined: doubled() → ((props.initial ?? 0) * 2)
+      // The template should contain the expanded memo computation
+      expect(content).toMatch(/template:.*\* 2/)
+
+      // Should NOT contain raw signal/memo getter calls in template
+      const templateMatch = content.match(/template: \(props\) => `([^`]*)`/)
+      if (templateMatch) {
+        const templateBody = templateMatch[1]
+        expect(templateBody).not.toMatch(/\bcount\(\)/)
+        expect(templateBody).not.toMatch(/\bdoubled\(\)/)
+      }
+    })
+
+    test('loop generates .map().join("") in CSR template', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function ItemList(props: { items: string[] }) {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <span>{count()}</span>
+              <ul>
+                {props.items.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'ItemList.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Template should be generated (CSR fallback due to signal)
+      expect(content).toContain('template: (props) => `')
+
+      // Loop should use .map().join('') pattern
+      expect(content).toMatch(/\.map\(/)
+      expect(content).toMatch(/\.join\(''\)/)
+    })
+
+    test('child component uses renderChild() in CSR template', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        function Child(props: { value: number }) {
+          return <span>{props.value}</span>
+        }
+
+        export function Parent() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <Child value={count()} />
+              <button onClick={() => setCount(n => n + 1)}>+</button>
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Parent.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Template should contain renderChild for child component
+      expect(content).toContain('template: (props) => `')
+      expect(content).toContain("renderChild('Child'")
+    })
+
+    test('client-only expression outputs empty placeholder in CSR template', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function Filtered() {
+          const [items, setItems] = createSignal([{id: 1, done: false}])
+          return (
+            <ul>
+              {/* @client */ items().filter(t => !t.done).map(t => (
+                <li>{t.id}</li>
+              ))}
+            </ul>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Filtered.tsx', { adapter })
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+
+      // CSR template should be generated
+      expect(clientJs!.content).toContain('template: (props) => `')
     })
   })
 })

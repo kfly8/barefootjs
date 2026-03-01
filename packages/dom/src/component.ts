@@ -174,20 +174,26 @@ export function getPropsUpdateFn(element: HTMLElement): ((props: Record<string, 
 export function renderChild(
   name: string,
   props: Record<string, unknown>,
-  key?: string | number
+  key?: string | number,
+  slotSuffix?: string
 ): string {
   const templateFn = getTemplate(name)
   const id = Math.random().toString(36).slice(2, 8)
+  const suffix = slotSuffix ? `_${slotSuffix}` : ''
   const keyAttr = key !== undefined ? ` data-key="${key}"` : ''
 
   if (!templateFn) {
     // Fallback: empty placeholder (for components without registered templates)
-    return `<div bf-s="${name}_${id}"${keyAttr}></div>`
+    // Use ~ prefix to mark as child component (prevents hydrate() re-initialization)
+    return `<div bf-s="~${name}_${id}${suffix}"${keyAttr}></div>`
   }
 
   const html = templateFn(props).trim()
-  // Inject bf-s scope attribute into the root element
-  return html.replace(/^(<\w+)/, `$1 bf-s="${name}_${id}"${keyAttr}`)
+  // Inject bf-s scope attribute with ~ child prefix into the root element.
+  // The ~ prefix marks this as a child component so hydrate()'s requestAnimationFrame
+  // re-check skips it (the parent initializes it via initChild instead).
+  // The optional slot suffix (e.g., "_s5") enables $c() slot-based lookup from the parent.
+  return html.replace(/^(<\w+)/, `$1 bf-s="~${name}_${id}${suffix}"${keyAttr}`)
 }
 
 /**

@@ -7,7 +7,7 @@ import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
-import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, irChildrenToJsExpr } from './html-template'
+import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, generateCsrTemplate, irChildrenToJsExpr } from './html-template'
 
 /**
  * Collect slot IDs that are inside conditionals (handled by insert()).
@@ -919,6 +919,46 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
   return { inlinableConstants, unsafeLocalNames }
 }
 
+/**
+ * Build signal and memo maps for CSR template generation.
+ * Signal map: getter name → initial value expression
+ * Memo map: memo name → computation expression with signal calls replaced by initial values
+ */
+export function buildSignalAndMemoMaps(ctx: ClientJsContext): {
+  signalMap: Map<string, string>
+  memoMap: Map<string, string>
+} {
+  const propsName = ctx.propsObjectName ?? 'props'
+  const propsPrefix = `${propsName}.`
+
+  const signalMap = new Map<string, string>()
+  for (const signal of ctx.signals) {
+    let initialValue = signal.initialValue
+    // Normalize custom props object name to 'props.'
+    if (ctx.propsObjectName && initialValue.startsWith(propsPrefix)) {
+      initialValue = 'props.' + initialValue.slice(propsPrefix.length)
+    }
+    signalMap.set(signal.getter, initialValue)
+  }
+
+  const memoMap = new Map<string, string>()
+  for (const memo of ctx.memos) {
+    let expr = memo.computation
+    // Extract the function body from arrow function: () => count() * 2 → count() * 2
+    const arrowMatch = expr.match(/^\(\)\s*=>\s*(.+)$/)
+    if (arrowMatch) {
+      expr = arrowMatch[1]
+    }
+    // Replace signal getter calls with initial values
+    for (const [getter, initial] of signalMap) {
+      expr = expr.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initial})`)
+    }
+    memoMap.set(memo.name, expr)
+  }
+
+  return { signalMap, memoMap }
+}
+
 /** Emit hydrate() call that registers component, template, and hydrates. */
 export function emitRegistrationAndHydration(
   lines: string[],
@@ -940,6 +980,15 @@ export function emitRegistrationAndHydration(
   const defParts: string[] = [`init: init${name}`]
   if (canGenerateStaticTemplate(_ir.root, propNamesForTemplate, inlinableConstants, unsafeLocalNames)) {
     const templateHtml = irToComponentTemplate(_ir.root, propNamesForTemplate, inlinableConstants)
+    if (templateHtml) {
+      defParts.push(`template: (props) => \`${templateHtml}\``)
+    }
+  } else {
+    // CSR fallback: use generateCsrTemplate which handles signals, memos, loops, and child components
+    const { signalMap, memoMap } = buildSignalAndMemoMaps(ctx)
+    const templateHtml = generateCsrTemplate(
+      _ir.root, propNamesForTemplate, inlinableConstants, signalMap, memoMap
+    )
     if (templateHtml) {
       defParts.push(`template: (props) => \`${templateHtml}\``)
     }
