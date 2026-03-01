@@ -1821,7 +1821,7 @@ describe('Compiler', () => {
       expect(content).not.toMatch(/\bclasses\b/)
     })
 
-    test('signal-dependent constant prevents static template but generates CSR template', () => {
+    test('signal-dependent constant prevents template generation', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -1840,10 +1840,9 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Static template is prevented, but CSR fallback template is generated
-      // with signal calls replaced by initial values
-      expect(content).toContain('template: (props) => `')
-      expect(content).toMatch(/hydrate\('Display',/)
+      // Signal-dependent constants prevent static template; no template emitted
+      expect(content).not.toContain('template:')
+      expect(content).toContain("hydrate('Display', { init: initDisplay })")
     })
 
     test('issue #343 full reproduction: local constant in disabled attribute', () => {
@@ -3565,8 +3564,8 @@ describe('Compiler', () => {
     })
   })
 
-  describe('CSR template generation (generateCsrTemplate)', () => {
-    test('Counter: signal calls replaced with initial values in template', () => {
+  describe('hydrate() template generation for signal-bearing components', () => {
+    test('Counter with signals: no template in hydrate (signals prevent static template)', () => {
       const source = `
         'use client'
         import { createSignal, createMemo } from '@barefootjs/dom'
@@ -3590,27 +3589,13 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Template should be generated (CSR fallback)
-      expect(content).toContain('template: (props) => `')
-
-      // Signal calls should be replaced with initial values
-      // count() → (props.initial ?? 0)
-      expect(content).toMatch(/template:.*props\.initial \?\? 0/)
-
-      // Memo should be inlined: doubled() → ((props.initial ?? 0) * 2)
-      // The template should contain the expanded memo computation
-      expect(content).toMatch(/template:.*\* 2/)
-
-      // Should NOT contain raw signal/memo getter calls in template
-      const templateMatch = content.match(/template: \(props\) => `([^`]*)`/)
-      if (templateMatch) {
-        const templateBody = templateMatch[1]
-        expect(templateBody).not.toMatch(/\bcount\(\)/)
-        expect(templateBody).not.toMatch(/\bdoubled\(\)/)
-      }
+      // Components with signals that fail canGenerateStaticTemplate() are hydrated
+      // without a template. The init function handles hydration directly.
+      expect(content).toContain("hydrate('Counter', { init: initCounter })")
+      expect(content).not.toContain('template:')
     })
 
-    test('loop generates .map().join("") in CSR template', () => {
+    test('ItemList with signals and loop: no template in hydrate', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3633,17 +3618,12 @@ describe('Compiler', () => {
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-      const content = clientJs!.content
 
-      // Template should be generated (CSR fallback due to signal)
-      expect(content).toContain('template: (props) => `')
-
-      // Loop should use .map().join('') pattern
-      expect(content).toMatch(/\.map\(/)
-      expect(content).toMatch(/\.join\(''\)/)
+      // No template for components with signals that can't be statically templated
+      expect(clientJs!.content).toContain("hydrate('ItemList', { init: initItemList })")
     })
 
-    test('child component uses renderChild() in CSR template', () => {
+    test('child stateless component gets template, parent with signals does not', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3669,12 +3649,14 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Template should contain renderChild for child component
-      expect(content).toContain('template: (props) => `')
-      expect(content).toContain("renderChild('Child'")
+      // Stateless Child gets a template
+      expect(content).toContain("hydrate('Child', { init: initChild, template:")
+
+      // Parent with signals does not get a template
+      expect(content).toContain("hydrate('Parent', { init: initParent })")
     })
 
-    test('client-only expression outputs empty placeholder in CSR template', () => {
+    test('client-only expression: no template in hydrate', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3694,8 +3676,8 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
 
-      // CSR template should be generated
-      expect(clientJs!.content).toContain('template: (props) => `')
+      // No template for components with signals
+      expect(clientJs!.content).toContain("hydrate('Filtered', { init: initFiltered })")
     })
   })
 })

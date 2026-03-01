@@ -7,7 +7,7 @@ import type { ComponentIR, ConstantInfo, SignalInfo, IRFragment } from '../types
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef } from './types'
 import { inferDefaultValue, toHtmlAttrName, toDomEventProp, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId } from './utils'
-import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, generateCsrTemplate, irChildrenToJsExpr } from './html-template'
+import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, irChildrenToJsExpr } from './html-template'
 
 /**
  * Collect slot IDs that are inside conditionals (handled by insert()).
@@ -818,6 +818,15 @@ export function resolveChainedRefs(constants: Map<string, string>): void {
     changed = false
     iteration++
     for (const [constName, constValue] of constants) {
+      // String literal values (single/double quoted) cannot contain variable references.
+      // Skip them to avoid corrupting CSS class names like "size-4" when a constant
+      // named "size" exists (the regex would falsely match "size" in "size-4").
+      const trimmed = constValue.trim()
+      if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+          (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        continue
+      }
+
       let newValue = constValue
       for (const [otherName, otherValue] of constants) {
         if (otherName === constName) continue
@@ -1030,39 +1039,13 @@ export function emitRegistrationAndHydration(
     if (templateHtml) {
       defParts.push(`template: (props) => \`${templateHtml}\``)
     }
-  } else {
-    // CSR fallback: use generateCsrTemplate which handles signals, memos, loops, and child components
-    const { signalMap, memoMap } = buildSignalAndMemoMaps(ctx)
-
-    // Re-promote demoted constants by resolving their signal/memo references.
-    // buildInlinableConstants() demotes constants that reference signals/memos (e.g.,
-    // `classes = \`base ${checked() ? 'active' : ''}\``), but for CSR templates we can
-    // inline them by substituting signal/memo calls with their initial values.
-    const csrInlinableConstants = new Map(inlinableConstants)
-    for (const constant of ctx.localConstants) {
-      if (unsafeLocalNames.has(constant.name) && constant.value && !constant.value.includes('=>')) {
-        let value = constant.value.trim()
-        for (const [getter, initial] of signalMap) {
-          value = value.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initial})`)
-        }
-        for (const [name, computation] of memoMap) {
-          value = value.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
-        }
-        // Only re-promote if all signal/memo refs were resolved
-        if (!value.includes('()')) {
-          csrInlinableConstants.set(constant.name, value)
-        }
-      }
-    }
-    resolveChainedRefs(csrInlinableConstants)
-
-    const templateHtml = generateCsrTemplate(
-      _ir.root, propNamesForTemplate, csrInlinableConstants, signalMap, memoMap
-    )
-    if (templateHtml) {
-      defParts.push(`template: (props) => \`${templateHtml}\``)
-    }
   }
+  // Note: When canGenerateStaticTemplate() returns false, no template is emitted.
+  // The component is still hydrated correctly via init function; it just cannot be
+  // dynamically created via createComponent() in loops. The CSR fallback template
+  // generation (generateCsrTemplate) is only used by the CSR render() path, not here,
+  // because regex-based constant inlining can corrupt string literals containing
+  // CSS class names that coincidentally match constant names (e.g., "size-4" vs `size`).
   if (isCommentScope) {
     defParts.push('comment: true')
   }
