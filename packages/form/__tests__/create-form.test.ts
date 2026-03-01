@@ -102,6 +102,20 @@ describe("createForm", () => {
       expect(email.dirty()).toBe(false);
     });
 
+    test("dirty uses value comparison, not reference equality", () => {
+      const objSchema = z.object({ tags: z.array(z.string()) });
+      const form = createForm({
+        schema: objSchema,
+        defaultValues: { tags: ["a", "b"] },
+      });
+      const tags = form.field("tags");
+      tags.setValue(["a", "b", "c"]);
+      expect(tags.dirty()).toBe(true);
+      // New array with same contents as default
+      tags.setValue(["a", "b"]);
+      expect(tags.dirty()).toBe(false);
+    });
+
     test("handleInput reads e.target.value", () => {
       const form = createForm({
         schema,
@@ -273,6 +287,30 @@ describe("createForm", () => {
       await flush();
       expect(onSubmit).not.toHaveBeenCalled();
     });
+
+    test("resets isSubmitting when async onSubmit rejects", async () => {
+      const onSubmit = mock(() => Promise.reject(new Error("Server error")));
+      const form = createForm({
+        schema,
+        defaultValues: { email: "test@example.com", password: "12345678" },
+        onSubmit,
+      });
+      await form.handleSubmit(createSubmitEvent());
+      expect(form.isSubmitting()).toBe(false);
+    });
+
+    test("resets isSubmitting when sync onSubmit throws", async () => {
+      const onSubmit = mock(() => {
+        throw new Error("Unexpected error");
+      });
+      const form = createForm({
+        schema,
+        defaultValues: { email: "test@example.com", password: "12345678" },
+        onSubmit,
+      });
+      await form.handleSubmit(createSubmitEvent());
+      expect(form.isSubmitting()).toBe(false);
+    });
   });
 
   describe("reset", () => {
@@ -306,6 +344,34 @@ describe("createForm", () => {
       expect(email.error()).toBe("");
       expect(email.touched()).toBe(false);
       expect(email.dirty()).toBe(false);
+    });
+
+    test("reset restores validateOn timing (clears validatedFields)", async () => {
+      const form = createForm({
+        schema,
+        defaultValues: { email: "", password: "" },
+        validateOn: "blur",
+        revalidateOn: "input",
+      });
+      const email = form.field("email");
+
+      // Trigger first validation → switches to revalidateOn: "input"
+      email.setValue("bad");
+      email.handleBlur();
+      await flush();
+      expect(email.error()).toBe("Invalid email");
+
+      // Reset clears validatedFields → back to validateOn: "blur"
+      form.reset();
+      email.setValue("bad-again");
+      await flush();
+      // Should NOT validate on input after reset (validateOn is "blur")
+      expect(email.error()).toBe("");
+
+      // Should validate on blur again
+      email.handleBlur();
+      await flush();
+      expect(email.error()).toBe("Invalid email");
     });
   });
 

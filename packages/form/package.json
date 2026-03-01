@@ -36,13 +36,13 @@
     "directory": "packages/form"
   },
   "peerDependencies": {
-    "@barefootjs/dom": ">=0.0.1"
+    "@barefootjs/dom": ">=0.0.1",
+    "@standard-schema/spec": "^1.0.0"
   },
   "dependencies": {
     "@standard-schema/utils": "^0.3.0"
   },
   "devDependencies": {
-    "@standard-schema/spec": "^1.0.0",
     "typescript": "^5.0.0",
     "zod": "^3.24.0"
   }

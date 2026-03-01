@@ -95,6 +95,7 @@ export function createForm<
 
     const signals = getOrCreateFieldSignals(name);
     const defaultValue = (defaultValues as Record<string, unknown>)[name];
+    const serializedDefault = JSON.stringify(defaultValue);
 
     const fieldReturn: FieldReturn<Input[K]> = {
       value: signals.value[0] as () => Input[K],
@@ -104,7 +105,7 @@ export function createForm<
 
       setValue(value: Input[K]) {
         signals.value[1](value);
-        signals.dirty[1](value !== defaultValue);
+        signals.dirty[1](JSON.stringify(value) !== serializedDefault);
         if (shouldValidate(name, "input")) {
           runFieldValidation(name);
         }
@@ -154,14 +155,15 @@ export function createForm<
 
   // --- Form actions ---
 
-  function handleSubmit(e: Event): void {
+  async function handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
 
     const values = getCurrentValues();
 
     setIsSubmitting(true);
 
-    validateSchema(schema, values).then((validationErrors) => {
+    try {
+      const validationErrors = await validateSchema(schema, values);
       const hasErrors = Object.keys(validationErrors).length > 0;
 
       if (hasErrors) {
@@ -170,7 +172,6 @@ export function createForm<
           signals.error[1](message);
           validatedFields.add(name);
         }
-        setIsSubmitting(false);
         return;
       }
 
@@ -179,21 +180,15 @@ export function createForm<
         signals.error[1]("");
       }
 
-      if (!onSubmit) {
-        setIsSubmitting(false);
-        return;
+      if (onSubmit) {
+        await onSubmit(values as StandardSchemaV1.InferOutput<TSchema>);
       }
-
-      const submitResult = onSubmit(values as StandardSchemaV1.InferOutput<TSchema>);
-      if (submitResult && typeof submitResult.then === "function") {
-        submitResult.then(
-          () => setIsSubmitting(false),
-          () => setIsSubmitting(false),
-        );
-      } else {
-        setIsSubmitting(false);
-      }
-    });
+    } catch {
+      // onSubmit errors are silently caught to prevent unhandled rejections.
+      // Use onSubmit's own try/catch to handle errors explicitly.
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function reset(): void {

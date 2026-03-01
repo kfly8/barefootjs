@@ -56,7 +56,7 @@ export interface FormReturn<
   /** All current errors keyed by field name (memo) */
   errors: Memo<Record<string, string>>;
   /** Form submit handler — call with the submit event */
-  handleSubmit: (e: Event) => void;
+  handleSubmit: (e: Event) => Promise<void>;
   /** Reset all fields to default values and clear errors */
   reset: () => void;
   /** Manually set an error on a field (e.g. server-side errors) */
