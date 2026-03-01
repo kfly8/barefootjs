@@ -92,7 +92,7 @@ Expressions in attributes are reactive:
 
 ## Limitations
 
-BarefootJS compiles JSX into server templates (Go `html/template`, Hono JSX, etc.) **and** client JS. Some JavaScript expressions cannot be translated into server template syntax.
+BarefootJS compiles JSX into marked templates (Go `html/template`, Hono JSX, etc.) **and** client JS. Some JavaScript expressions cannot be translated into marked template syntax.
 
 When the compiler encounters an unsupported expression, it emits a **compile error** (`BF021`). Add [`/* @client */`](./client-directive.md) to explicitly opt into client-only evaluation for these expressions.
 
@@ -108,7 +108,7 @@ When the compiler encounters an unsupported expression, it emits a **compile err
 {/* @client */ items().filter(x => x.tags().filter(t => t.active).length > 0)}
 ```
 
-**Unsupported array methods** — `.reduce()`, `.forEach()`, `.flatMap()` and others cannot be translated to server template syntax:
+**Unsupported array methods** — `.reduce()`, `.forEach()`, `.flatMap()` and others cannot be translated to marked template syntax:
 
 ```tsx
 // ❌ Compile error (BF021)

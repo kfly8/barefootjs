@@ -16,7 +16,7 @@
 
 ### 3. [Core Concepts](./core-concepts.md)
 
-- [Two-Phase Compilation](./core-concepts/compilation.md) — JSX → IR → server template + client JS
+- [Two-Phase Compilation](./core-concepts/compilation.md) — JSX → IR → marked template + client JS
 - [Signal-Based Reactivity](./core-concepts/reactivity.md) — Fine-grained reactivity with signals, effects, and memos
 - [Hydration Model](./core-concepts/hydration.md) — Marker-driven hydration for server-rendered HTML
 - [`"use client"` Directive](./core-concepts/use-client.md) — Marking components for client-side interactivity

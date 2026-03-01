@@ -74,7 +74,7 @@ function todoItem() { ... }
 
 ## Compilation Output
 
-A client component compiles into a server template and a client init function. Here is a minimal example to illustrate the full pipeline:
+A client component compiles into a marked template and a client init function. Here is a minimal example to illustrate the full pipeline:
 
 **Source:**
 
@@ -93,7 +93,7 @@ export function Toggle() {
 }
 ```
 
-**Server template (Hono):**
+**Marked template (Hono):**
 
 <!-- tabs:adapter -->
 <!-- tab:Hono -->

@@ -9,7 +9,7 @@ Hydration is the process of making server-rendered HTML interactive. BarefootJS 
 
 ## Hydration Markers
 
-The compiler inserts `bf-*` attributes into the server template. These tell the client JS where to attach behavior:
+The compiler inserts `bf-*` attributes into the marked template. These tell the client JS where to attach behavior:
 
 | Marker | Purpose | Example |
 |--------|---------|---------|

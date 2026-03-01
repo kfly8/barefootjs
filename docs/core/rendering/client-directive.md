@@ -9,10 +9,10 @@ The `/* @client */` comment directive marks a JSX expression for **client-only e
 
 ## When to Use
 
-When the compiler encounters an expression it cannot translate to a server template, it emits a **compile error** (`BF021`). Adding `/* @client */` resolves the error by explicitly opting into client-only evaluation.
+When the compiler encounters an expression it cannot translate to a marked template, it emits a **compile error** (`BF021`). Adding `/* @client */` resolves the error by explicitly opting into client-only evaluation.
 
 ```
-error[BF021]: Expression cannot be compiled to server template
+error[BF021]: Expression cannot be compiled to marked template
 
   --> src/components/Dashboard.tsx:15:10
    |
@@ -27,7 +27,7 @@ See [JSX Compatibility — Limitations](./jsx-compatibility.md#limitations) for 
 
 ## How It Works
 
-With `/* @client */`, the compiler skips server template generation for the expression. The server outputs a comment marker and the client JS evaluates the expression entirely:
+With `/* @client */`, the compiler skips marked template generation for the expression. The server outputs a comment marker and the client JS evaluates the expression entirely:
 
 **Server output:**
 
@@ -47,7 +47,7 @@ insert(scope, 'slot_5', () => todos().filter(t => !t.done).length)
 
 ### Unsupported patterns
 
-Patterns that the compiler cannot translate to server templates require `/* @client */`:
+Patterns that the compiler cannot translate to marked templates require `/* @client */`:
 
 ```tsx
 // Nested higher-order methods
@@ -69,9 +69,9 @@ checked={/* @client */ todos().every(t => t.done)}
 <strong>{/* @client */ todos().filter(t => !t.done).length}</strong>
 ```
 
-Compare with the [TodoAppSSR version](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoAppSSR.tsx), which omits `/* @client */` and lets the compiler generate server template equivalents for the same expressions.
+Compare with the [TodoAppSSR version](https://github.com/kfly8/barefootjs/blob/main/examples/shared/components/TodoAppSSR.tsx), which omits `/* @client */` and lets the compiler generate marked template equivalents for the same expressions.
 
 
 ## Trade-off
 
-`/* @client */` means the expression has **no server-rendered content** — the user sees the placeholder until client JS loads and evaluates. Use it only when the compiler cannot generate a server template equivalent. For expressions that the compiler can handle, omit the directive to get server-rendered initial values.
+`/* @client */` means the expression has **no server-rendered content** — the user sees the placeholder until client JS loads and evaluates. Use it only when the compiler cannot generate a marked template equivalent. For expressions that the compiler can handle, omit the directive to get server-rendered initial values.

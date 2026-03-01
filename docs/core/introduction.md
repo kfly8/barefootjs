@@ -9,7 +9,7 @@ description: What is BarefootJS, why it exists, and its design philosophy
 
 BarefootJS is a compiler that transforms JSX components into server-rendered templates and minimal client-side JavaScript.
 
-Write familiar JSX with fine-grained reactivity — the compiler splits it into a **server template** for your backend and a **tiny hydration script** for the browser.
+Write familiar JSX with fine-grained reactivity — the compiler splits it into a **marked template** for your backend and a **tiny hydration script** for the browser.
 
 ```tsx
 "use client"
@@ -31,7 +31,7 @@ This single file compiles into two outputs:
 
 <!-- tabs:adapter -->
 <!-- tab:Hono -->
-**Server template** — Renders static HTML with hydration markers:
+**Marked template** — Renders static HTML with hydration markers:
 
 ```tsx
 export function Counter(props) {
@@ -45,7 +45,7 @@ export function Counter(props) {
 ```
 
 <!-- tab:Go Template -->
-**Server template** — Go `html/template` with hydration markers:
+**Marked template** — Go `html/template` with hydration markers:
 
 ```go-template
 {{define "Counter"}}

@@ -1,6 +1,6 @@
 ---
 title: Two-Phase Compilation
-description: How BarefootJS compiles JSX into server templates and client JS
+description: How BarefootJS compiles JSX into marked templates and client JS
 ---
 
 # Two-Phase Compilation
@@ -48,7 +48,7 @@ Phase 1 produces an IR that records:
 - A reactive expression `count()` at `slot_0`
 - A click handler on the button at `slot_1`
 
-Phase 2a produces a server template:
+Phase 2a produces a marked template:
 
 <!-- tabs:adapter -->
 <!-- tab:Hono -->
