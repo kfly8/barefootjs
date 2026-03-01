@@ -48,6 +48,7 @@ import { ProgressPage } from './pages/progress'
 import { RadioGroupPage } from './pages/radio-group'
 import { DrawerPage } from './pages/drawer'
 import { SheetPage } from './pages/sheet'
+import { SidebarPage } from './pages/sidebar'
 import { HoverCardPage } from './pages/hover-card'
 import { MenubarPage } from './pages/menubar'
 import { TablePage } from './pages/table'
@@ -203,6 +204,10 @@ export function createApp() {
             <a href="/docs/components/select" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Select</h3>
               <p className="text-xs text-muted-foreground">Dropdown selection control</p>
+            </a>
+            <a href="/docs/components/sidebar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+              <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Sidebar</h3>
+              <p className="text-xs text-muted-foreground">Collapsible navigation panel</p>
             </a>
             <a href="/docs/components/separator" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Separator</h3>
@@ -512,6 +517,11 @@ export function createApp() {
   // Sheet documentation
   app.get('/docs/components/sheet', (c) => {
     return c.render(<SheetPage />)
+  })
+
+  // Sidebar documentation
+  app.get('/docs/components/sidebar', (c) => {
+    return c.render(<SidebarPage />)
   })
 
   // Table documentation

@@ -37,6 +37,7 @@ export const componentOrder = [
   { slug: 'resizable', title: 'Resizable' },
   { slug: 'scroll-area', title: 'Scroll Area' },
   { slug: 'select', title: 'Select' },
+  { slug: 'sidebar', title: 'Sidebar' },
   { slug: 'separator', title: 'Separator' },
   { slug: 'skeleton', title: 'Skeleton' },
   { slug: 'sheet', title: 'Sheet' },

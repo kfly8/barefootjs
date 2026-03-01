@@ -65,9 +65,10 @@ const strokePaths = {
   'arrow-right': 'M5 12h14m-7-7 7 7-7 7',
   'ellipsis': 'M5 12h.01M12 12h.01M19 12h.01',
   'arrow-up-down': 'm21 16-4 4-4-4M17 20V4M3 8l4-4 4 4M7 4v16',
+  'panel-left': 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M3 3h12v18H3zM9 3v18',
 } as const
 
-export type IconName = keyof typeof strokePaths | 'github' | 'search' | 'settings' | 'globe' | 'log-out' | 'circle-help'
+export type IconName = keyof typeof strokePaths | 'github' | 'search' | 'settings' | 'globe' | 'log-out' | 'circle-help' | 'panel-left'
 
 // Icons that need butt linecap for proper visual centering
 const buttLinecapIcons = ['plus', 'minus'] as const
@@ -350,6 +351,16 @@ export function InfoIcon({ size, className = '', ...props }: IconProps) {
   )
 }
 
+export function PanelLeftIcon({ size, className = '', ...props }: IconProps) {
+  const sizeAttrs = size ? { width: sizeMap[size], height: sizeMap[size] } : {}
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" {...sizeAttrs} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`shrink-0 ${className}`} aria-hidden="true" {...props}>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M9 3v18" />
+    </svg>
+  )
+}
+
 // Generic Icon component for dynamic icon selection
 export function Icon({ name, size = 'md', className = '', ...props }: { name: IconName } & IconProps) {
   const s = sizeMap[size]
@@ -376,6 +387,10 @@ export function Icon({ name, size = 'md', className = '', ...props }: { name: Ic
 
   if (name === 'circle-help') {
     return <CircleHelpIcon size={size} className={className} {...props} />
+  }
+
+  if (name === 'panel-left') {
+    return <PanelLeftIcon size={size} className={className} {...props} />
   }
 
   const path = strokePaths[name as keyof typeof strokePaths]
