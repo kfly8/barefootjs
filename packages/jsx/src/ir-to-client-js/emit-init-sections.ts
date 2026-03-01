@@ -1023,7 +1023,8 @@ export function buildSignalAndMemoMaps(ctx: ClientJsContext): {
 export function emitRegistrationAndHydration(
   lines: string[],
   ctx: ClientJsContext,
-  _ir: ComponentIR
+  _ir: ComponentIR,
+  usedAsChild?: Set<string>
 ): void {
   const name = ctx.componentName
 
@@ -1043,8 +1044,9 @@ export function emitRegistrationAndHydration(
     if (templateHtml) {
       defParts.push(`template: (props) => \`${templateHtml}\``)
     }
-  } else {
-    // CSR fallback: generate template with signals replaced by initial values.
+  } else if (usedAsChild?.has(name)) {
+    // CSR fallback: only emit when this component is used as a child by another
+    // component in the same file. Top-level-only components skip this to save bytes.
     // transformExpr() uses string literal protection to prevent regex corruption
     // of CSS class names (e.g., 'size-4' when constant 'size' exists).
     const { signalMap, memoMap } = buildSignalAndMemoMaps(ctx)
@@ -1074,6 +1076,7 @@ export function emitRegistrationAndHydration(
       defParts.push(`template: (props) => \`${templateHtml}\``)
     }
   }
+  // No else: top-level-only components skip template entirely (save bytes)
   if (isCommentScope) {
     defParts.push('comment: true')
   }

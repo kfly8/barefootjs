@@ -1821,7 +1821,7 @@ describe('Compiler', () => {
       expect(content).not.toMatch(/\bclasses\b/)
     })
 
-    test('signal-dependent constant gets CSR fallback template', () => {
+    test('signal-dependent constant: no CSR fallback for top-level-only component', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -1840,10 +1840,42 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Signal-dependent constants are re-promoted in CSR fallback;
-      // template is generated with signal initial values inlined
-      expect(content).toContain('template:')
-      expect(content).toContain("hydrate('Display', { init: initDisplay, template:")
+      // Top-level-only: no CSR fallback template (saves bytes)
+      expect(content).not.toContain('template:')
+      expect(content).toContain("hydrate('Display', { init: initDisplay })")
+    })
+
+    test('signal-dependent constant gets CSR fallback when used as child', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Display() {
+          const [count, setCount] = createSignal(0)
+          const label = count()
+          return <div onClick={() => setCount(n => n + 1)}>{label}</div>
+        }
+
+        export function Wrapper() {
+          const [show, setShow] = createSignal(true)
+          return (
+            <div>
+              {show() && <Display />}
+              <button onClick={() => setShow(v => !v)}>toggle</button>
+            </div>
+          )
+        }
+      `
+
+      const result = compileJSXSync(source, 'Display.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Display IS used as a child by Wrapper → gets CSR fallback with template
+      expect(content).toMatch(/hydrate\('Display',.*template:/)
     })
 
     test('issue #343 full reproduction: local constant in disabled attribute', () => {
@@ -3566,7 +3598,7 @@ describe('Compiler', () => {
   })
 
   describe('hydrate() template generation for signal-bearing components', () => {
-    test('Counter with signals: CSR fallback template generated', () => {
+    test('Counter (top-level only): NO CSR fallback template', () => {
       const source = `
         'use client'
         import { createSignal, createMemo } from '@barefootjs/dom'
@@ -3590,14 +3622,12 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // CSR fallback generates template with signals replaced by initial values
-      expect(content).toContain("hydrate('Counter', { init: initCounter, template:")
-      expect(content).toContain('template:')
-      // Verify counter-container class is preserved (not corrupted by regex)
-      expect(content).toContain('counter-container')
+      // Top-level-only component: no CSR fallback template (saves bytes)
+      expect(content).toContain("hydrate('Counter', { init: initCounter })")
+      expect(content).not.toContain('template:')
     })
 
-    test('ItemList with signals and loop: CSR fallback template generated', () => {
+    test('ItemList (top-level only): NO CSR fallback template', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3621,11 +3651,12 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
 
-      // CSR fallback template includes loops and signal initial values
-      expect(clientJs!.content).toContain("hydrate('ItemList', { init: initItemList, template:")
+      // Top-level-only: no CSR fallback
+      expect(clientJs!.content).toContain("hydrate('ItemList', { init: initItemList })")
+      expect(clientJs!.content).not.toContain('template:')
     })
 
-    test('child stateless component gets template, parent with signals gets CSR fallback', () => {
+    test('child stateless component gets template, parent (top-level) skips CSR fallback', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3651,14 +3682,54 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Stateless Child gets a static template
+      // Stateless Child gets a static template (always useful)
       expect(content).toContain("hydrate('Child', { init: initChild, template:")
 
-      // Parent with signals gets CSR fallback template
-      expect(content).toContain("hydrate('Parent', { init: initParent, template:")
+      // Parent is NOT used as a child — no CSR fallback
+      expect(content).toContain("hydrate('Parent', { init: initParent })")
+      expect(content).not.toMatch(/hydrate\('Parent',.*template:/)
     })
 
-    test('client-only expression: CSR fallback template generated', () => {
+    test('component used as child gets CSR fallback template', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function StatusBadge(props: { active: boolean }) {
+          const [flash, setFlash] = createSignal(false)
+          return (
+            <span className={flash() ? 'flash' : ''} onClick={() => setFlash(v => !v)}>
+              {props.active ? 'on' : 'off'}
+            </span>
+          )
+        }
+
+        export function Dashboard() {
+          const [items, setItems] = createSignal([{ id: 1, active: true }])
+          return (
+            <div>
+              {items().map(item => (
+                <StatusBadge active={item.active} />
+              ))}
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Dashboard.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // StatusBadge IS used as a child by Dashboard → gets CSR fallback template
+      expect(content).toMatch(/hydrate\('StatusBadge',.*template:/)
+
+      // Dashboard is NOT used as a child → no CSR fallback
+      expect(content).not.toMatch(/hydrate\('Dashboard',.*template:/)
+    })
+
+    test('client-only expression (top-level only): NO CSR fallback template', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3678,11 +3749,14 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
 
-      // CSR fallback template generated even for client-only expressions
-      expect(clientJs!.content).toContain("hydrate('Filtered', { init: initFiltered, template:")
+      // Top-level-only: no CSR fallback
+      expect(clientJs!.content).toContain("hydrate('Filtered', { init: initFiltered })")
+      expect(clientJs!.content).not.toContain('template:')
     })
 
     test('string literals in CSS classes are not corrupted by constant inlining', () => {
+      // Use a parent+child scenario so the child (Icon) gets a CSR fallback template,
+      // which exercises the transformExpr() string-literal protection path.
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3701,6 +3775,16 @@ describe('Compiler', () => {
             </svg>
           )
         }
+
+        export function IconGallery() {
+          return (
+            <div>
+              <Icon size="sm" />
+              <Icon size="md" />
+              <Icon size="lg" />
+            </div>
+          )
+        }
       `
       const result = compileJSXSync(source, 'Icon.tsx', { adapter })
       expect(result.errors).toHaveLength(0)
@@ -3708,6 +3792,9 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
+
+      // Icon is used as a child → gets CSR fallback with template
+      expect(content).toMatch(/hydrate\('Icon',.*template:/)
 
       // String literals 'size-4', 'size-6', 'size-8' must NOT be corrupted
       // by the constant `size` being inlined into them

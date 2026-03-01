@@ -34,7 +34,7 @@ import {
  * Orchestrate client JS code generation: analyze dependencies, emit code sections,
  * and resolve imports. Returns the complete init function + registration code.
  */
-export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingComponents?: string[]): string {
+export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, siblingComponents?: string[], usedAsChild?: Set<string>): string {
   const lines: string[] = []
   const name = ctx.componentName
 
@@ -217,7 +217,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   emitRefCallbacks(lines, ctx, conditionalSlotIds)
   emitEffectsAndOnMounts(lines, ctx)
   emitProviderAndChildInits(lines, ctx)
-  emitRegistrationAndHydration(lines, ctx, _ir)
+  emitRegistrationAndHydration(lines, ctx, _ir, usedAsChild)
 
   const generatedCode = lines.join('\n')
   const usedImports = detectUsedImports(generatedCode)
@@ -329,9 +329,10 @@ export function generateElementRefs(ctx: ClientJsContext): string {
 
 /**
  * Recursively collect component names from IR children.
- * Used to ensure all nested components are imported.
+ * Used to ensure all nested components are imported, and to detect
+ * which components are used as children (for conditional CSR fallback).
  */
-function collectComponentNamesFromIR(nodes: IRNode[], names: Set<string>): void {
+export function collectComponentNamesFromIR(nodes: IRNode[], names: Set<string>): void {
   for (const node of nodes) {
     if (node.type === 'component') {
       names.add(node.name)
@@ -341,6 +342,18 @@ function collectComponentNamesFromIR(nodes: IRNode[], names: Set<string>): void 
     } else if (node.type === 'conditional') {
       collectComponentNamesFromIR([node.whenTrue], names)
       collectComponentNamesFromIR([node.whenFalse], names)
+    } else if (node.type === 'loop') {
+      collectComponentNamesFromIR(node.children, names)
+      if (node.childComponent) {
+        names.add(node.childComponent.name)
+        collectComponentNamesFromIR(node.childComponent.children, names)
+      }
+      if (node.nestedComponents) {
+        for (const nested of node.nestedComponents) {
+          names.add(nested.name)
+          collectComponentNamesFromIR(nested.children, names)
+        }
+      }
     }
   }
 }
