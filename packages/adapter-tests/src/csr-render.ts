@@ -127,6 +127,9 @@ const updateClientMarker = () => {}
 const initChild = () => {}
 const createComponent = () => null
 const createPortal = () => {}
+const applyRestAttrs = () => {}
+const provideContext = () => {}
+const useContext = () => undefined
 
 // --- Execute client JS (registers templates via hydrate()) ---
 ${strippedCode}

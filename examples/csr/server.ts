@@ -29,7 +29,10 @@ const server = Bun.serve({
 
     // Static files: compiled JS
     if (path.startsWith('/static/')) {
-      const filePath = resolve(DIST_DIR, path.replace('/static/', ''))
+      const filePath = resolve(DIST_DIR, path.slice('/static/'.length))
+      if (!filePath.startsWith(DIST_DIR + '/') && filePath !== DIST_DIR) {
+        return new Response('Forbidden', { status: 403 })
+      }
       const file = Bun.file(filePath)
       if (await file.exists()) {
         const ext = filePath.split('.').pop()
@@ -41,7 +44,10 @@ const server = Bun.serve({
 
     // Shared styles
     if (path.startsWith('/shared/')) {
-      const filePath = resolve(SHARED_DIR, path.replace('/shared/', ''))
+      const filePath = resolve(SHARED_DIR, path.slice('/shared/'.length))
+      if (!filePath.startsWith(SHARED_DIR + '/') && filePath !== SHARED_DIR) {
+        return new Response('Forbidden', { status: 403 })
+      }
       const file = Bun.file(filePath)
       if (await file.exists()) {
         const ext = filePath.split('.').pop()

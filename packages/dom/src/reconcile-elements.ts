@@ -68,7 +68,12 @@ export function reconcileElements<T>(
         const hasFocus = existingEl.contains(document.activeElement)
 
         if (hasFocus) {
-          // Preserve existing element to maintain focus state
+          // Preserve existing element to maintain focus state.
+          // Re-render a temporary element to extract updated attribute state,
+          // then sync attributes from the temp to the existing element.
+          // TODO: createEl() creates a full component instance with reactive effects.
+          // The tempEl is never added to DOM, but its effects remain subscribed to
+          // signals until GC collects them. A proper fix requires scope-level disposal.
           const tempEl = createEl()
           syncElementState(existingEl, tempEl)
           fragment.appendChild(existingEl)
