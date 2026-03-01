@@ -279,12 +279,7 @@ for (const componentPath of components) {
       // Generate merged import statement with sorted names
       const sortedImports = [...allImportNames].sort()
       const importStatement = `import { ${sortedImports.join(', ')} } from './barefoot.js'\n\n`
-      let clientJsContent = importStatement + clientJsParts.join('\n')
-      if (config.minify) {
-        // @ts-expect-error minifySyntax is supported at runtime but missing from older bun-types
-        const transpiler = new Bun.Transpiler({ minifyWhitespace: true, minifySyntax: true })
-        clientJsContent = transpiler.transformSync(clientJsContent)
-      }
+      const clientJsContent = importStatement + clientJsParts.join('\n')
       writeFileSync(clientPath, clientJsContent)
       console.log(`  Client:   ${componentName}.client.js`)
     }
@@ -464,5 +459,19 @@ function combineClientJsFiles(): void {
 
 // Combine parent-child client JS
 combineClientJsFiles()
+
+// Minify client JS (after combine so all files are final)
+if (config.minify) {
+  // @ts-expect-error minifySyntax is supported at runtime but missing from older bun-types
+  const transpiler = new Bun.Transpiler({ minifyWhitespace: true, minifySyntax: true })
+  const clientFiles = readdirSync(clientDir).filter(f => f.endsWith('.js'))
+  for (const file of clientFiles) {
+    const filePath = resolve(clientDir, file)
+    const content = readFileSync(filePath, 'utf-8')
+    if (content) {
+      writeFileSync(filePath, transpiler.transformSync(content))
+    }
+  }
+}
 
 console.log('\nDone!')
