@@ -16,9 +16,10 @@ export async function run(args: string[], ctx: CliContext): Promise<void> {
     process.exit(1)
   }
 
-  const minify = args.includes('--minify')
   const tsConfig = await loadBuildConfig(tsConfigPath)
-  const config = resolveBuildConfigFromTs(projectDir, tsConfig, { minify })
+  const overrides: { minify?: boolean } = {}
+  if (args.includes('--minify')) overrides.minify = true
+  const config = resolveBuildConfigFromTs(projectDir, tsConfig, overrides)
 
   console.log(`Adapter: ${config.adapter.name}`)
   console.log(`Source dirs: ${config.componentDirs.join(', ')}`)
