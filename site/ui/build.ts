@@ -261,6 +261,23 @@ async function combineClientJs(manifestData: typeof manifest): Promise<void> {
 // Combine parent-child client JS
 await combineClientJs(manifest)
 
+// Minify client JS (after combine so all files are final)
+// @ts-expect-error minifySyntax is supported at runtime but missing from older bun-types
+const transpiler = new Bun.Transpiler({ minifyWhitespace: true, minifySyntax: true })
+for (const [, entry] of Object.entries(manifest)) {
+  if (!entry.clientJs) continue
+  const filePath = resolve(DIST_DIR, entry.clientJs)
+  try {
+    const content = await Bun.file(filePath).text()
+    if (content) {
+      await Bun.write(filePath, transpiler.transformSync(content))
+    }
+  } catch {
+    // File may not exist
+  }
+}
+console.log('Minified: client JS files')
+
 // Generate index.ts for re-exporting all components (handles subdirectories)
 async function collectExports(dir: string, prefix: string = ''): Promise<string[]> {
   const exports: string[] = []
