@@ -74,12 +74,12 @@ export function insert(
       const html = branch.template()
       const existingEl = find(scope, `[${BF_COND}="${id}"]`)
       if (existingEl) {
-        // Check if the existing element type matches what we expect
-        // For simple cases, compare tag names from templates
-        const expectedTag = getFirstTagFromTemplate(html)
-        const actualTag = existingEl.tagName.toLowerCase()
+        // Compare full opening tag signatures to detect branch mismatch.
+        // Tag-name-only comparison fails when both branches use the same tag (e.g., <div>).
+        const expectedSig = getTemplateRootSignature(html)
+        const existingSig = existingEl.outerHTML.match(/^<[^>]+>/)?.[0] ?? null
 
-        if (expectedTag && actualTag !== expectedTag) {
+        if (expectedSig && existingSig && expectedSig !== existingSig) {
           // DOM doesn't match expected branch - need to swap
           if (isFragmentCond) {
             updateFragmentConditional(scope, id, html)
@@ -147,12 +147,14 @@ function autoFocusConditionalElement(scope: Element, id: string): void {
 }
 
 /**
- * Extract the first tag name from an HTML template string.
- * Returns lowercase tag name or null if not found.
+ * Extract the root element's opening tag from an HTML template string.
+ * Returns the full opening tag (e.g., `<div class="foo" bf-c="s0">`) for comparison.
+ * This allows distinguishing between conditional branches that share the same tag name
+ * but differ in attributes (e.g., two different `<div>` branches).
  */
-function getFirstTagFromTemplate(template: string): string | null {
-  const match = template.match(/^<(\w+)/)
-  return match ? match[1].toLowerCase() : null
+function getTemplateRootSignature(template: string): string | null {
+  const match = template.match(/^<[^>]+>/)
+  return match ? match[0] : null
 }
 
 /**

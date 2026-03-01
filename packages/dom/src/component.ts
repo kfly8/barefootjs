@@ -189,11 +189,17 @@ export function renderChild(
   }
 
   const html = templateFn(props).trim()
-  // Inject bf-s scope attribute with ~ child prefix into the root element.
+  // Inject bf-s scope attribute with ~ child prefix into the first element tag.
   // The ~ prefix marks this as a child component so hydrate()'s requestAnimationFrame
   // re-check skips it (the parent initializes it via initChild instead).
   // The optional slot suffix (e.g., "_s5") enables $c() slot-based lookup from the parent.
-  return html.replace(/^(<\w+)/, `$1 bf-s="~${name}_${id}${suffix}"${keyAttr}`)
+  // Templates may start with comment markers (e.g., <!--bf-cond-start:...-->),
+  // so we find the first element tag rather than assuming it's at position 0.
+  const firstElMatch = html.match(/<(\w+)/)
+  if (!firstElMatch) return html
+  const insertPos = html.indexOf(firstElMatch[0])
+  return html.slice(0, insertPos) +
+    html.slice(insertPos).replace(/^(<\w+)/, `$1 bf-s="~${name}_${id}${suffix}"${keyAttr}`)
 }
 
 /**

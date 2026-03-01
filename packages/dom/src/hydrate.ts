@@ -23,6 +23,10 @@ import type { ComponentDef } from './types'
  * @param def - Component definition (init function + optional template + comment flag)
  */
 export function hydrate(name: string, def: ComponentDef): void {
+  // Ensure name is always set on the def so createComponentFromDef()
+  // doesn't rely on def.init.name (which may be lost under minification).
+  def.name = name
+
   // Register component for parent-child communication
   registerComponent(name, def.init)
 
