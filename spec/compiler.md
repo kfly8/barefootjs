@@ -203,7 +203,7 @@ createEffect(() => {
 
 ### Hydration Markers
 
-1. **Marked Template**: Server-side template with hydration markers
+1. **Marked Template**: Template with hydration markers (used for both SSR and CSR)
 
    | Marker | Purpose | Example |
    |--------|---------|---------|
@@ -288,7 +288,7 @@ interface TemplateAdapter {
 | BF010 | Unknown signal reference |
 | BF011 | Signal used outside component |
 | BF020 | Invalid JSX expression |
-| BF021 | Unsupported JSX pattern (e.g., filter predicate or sort comparator too complex for SSR) |
+| BF021 | Unsupported JSX pattern (e.g., filter predicate or sort comparator too complex for template compilation) |
 | BF030 | Type inference failed |
 | BF031 | Props type mismatch |
 | BF043 | Props destructuring breaks reactivity |
@@ -368,7 +368,7 @@ error[BF021]: Expression cannot be compiled to marked template: Sort comparator 
 ))}
 ```
 
-When `@client` is present, the compiler skips SSR for that expression without emitting an error.
+When `@client` is present, the compiler skips template generation for that expression without emitting an error.
 
 ### Signal/Memo Getter Not Called (BF044)
 
