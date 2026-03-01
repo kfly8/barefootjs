@@ -452,11 +452,6 @@ export interface CompileOptions {
    * Example: 'components' → classes prefixed with 'layer-components:'
    */
   cssLayerPrefix?: string
-  /** Force CSR template generation for all components, even top-level ones.
-   * Normally only components used as children get CSR templates to save bytes.
-   * Enable for CSR conformance testing or standalone CSR rendering.
-   */
-  forceTemplates?: boolean
 }
 
 export interface FileOutput {

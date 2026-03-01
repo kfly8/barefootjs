@@ -1,13 +1,18 @@
 /**
  * CSR test renderer
  *
- * Compiles JSX source with HonoAdapter, extracts template functions from
- * client JS output, and evaluates them to produce HTML.
- * Used by CSR conformance tests to compare against SSR reference output.
+ * Uses lower-level compiler APIs (analyzeComponent, jsxToIR, generateClientJs)
+ * to produce client JS with forced CSR template generation.
+ * No adapter is needed — only the client JS template function is evaluated.
  */
 
-import { compileJSXSync } from '@barefootjs/jsx'
-import type { TemplateAdapter } from '@barefootjs/jsx'
+import {
+  analyzeComponent,
+  jsxToIR,
+  generateClientJs,
+  analyzeClientNeeds,
+  type ComponentIR,
+} from '@barefootjs/jsx'
 import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
@@ -16,45 +21,83 @@ const CSR_TEMP_DIR = resolve(import.meta.dir, '../.csr-render-temp')
 export interface CsrRenderOptions {
   /** JSX source code */
   source: string
-  /** Template adapter to use */
-  adapter: TemplateAdapter
   /** Props to inject (optional) */
   props?: Record<string, unknown>
   /** Additional component files (filename → source) */
   components?: Record<string, string>
 }
 
+/**
+ * Compile JSX source to client JS with CSR template via lower-level APIs.
+ * Forces template generation by adding the component name to usedAsChild.
+ */
+function compileToClientJs(source: string, filePath: string): string {
+  const ctx = analyzeComponent(source, filePath)
+
+  if (!ctx.jsxReturn) {
+    const errors = ctx.errors.filter(e => e.severity === 'error')
+    if (errors.length > 0) {
+      throw new Error(`Compilation errors in ${filePath}:\n${errors.map(e => e.message).join('\n')}`)
+    }
+    return ''
+  }
+
+  const ir = jsxToIR(ctx)
+  if (!ir) return ''
+
+  const errors = ctx.errors.filter(e => e.severity === 'error')
+  if (errors.length > 0) {
+    throw new Error(`Compilation errors in ${filePath}:\n${errors.map(e => e.message).join('\n')}`)
+  }
+
+  const componentIR: ComponentIR = {
+    version: '0.1',
+    metadata: {
+      componentName: ctx.componentName || 'Unknown',
+      hasDefaultExport: ctx.hasDefaultExport,
+      isClientComponent: ctx.hasUseClientDirective,
+      typeDefinitions: ctx.typeDefinitions,
+      propsType: ctx.propsType,
+      propsParams: ctx.propsParams,
+      propsObjectName: ctx.propsObjectName,
+      restPropsName: ctx.restPropsName,
+      restPropsExpandedKeys: ctx.restPropsExpandedKeys,
+      signals: ctx.signals,
+      memos: ctx.memos,
+      effects: ctx.effects,
+      onMounts: ctx.onMounts,
+      imports: ctx.imports,
+      localFunctions: ctx.localFunctions,
+      localConstants: ctx.localConstants,
+    },
+    root: ir,
+    errors: [],
+  }
+  componentIR.metadata.clientAnalysis = analyzeClientNeeds(componentIR)
+
+  // Force CSR template by including this component in usedAsChild
+  const usedAsChild = new Set([componentIR.metadata.componentName])
+  return generateClientJs(componentIR, undefined, usedAsChild)
+}
+
 export async function renderCsrComponent(options: CsrRenderOptions): Promise<string> {
-  const { source, adapter, props = {}, components } = options
+  const { source, props = {}, components } = options
 
   // Compile child components first and collect their client JS
   const childClientJsList: string[] = []
   if (components) {
     for (const [filename, childSource] of Object.entries(components)) {
-      const childResult = compileJSXSync(childSource, filename, { adapter, forceTemplates: true })
-      const childErrors = childResult.errors.filter(e => e.severity === 'error')
-      if (childErrors.length > 0) {
-        throw new Error(`Compilation errors in ${filename}:\n${childErrors.map(e => e.message).join('\n')}`)
-      }
-      const clientJs = childResult.files.find(f => f.type === 'clientJs')
-      if (clientJs) {
-        childClientJsList.push(clientJs.content)
-      }
+      const clientJs = compileToClientJs(childSource, filename)
+      if (clientJs) childClientJsList.push(clientJs)
     }
   }
 
-  // Compile parent source with forceTemplates to ensure CSR template generation
-  const result = compileJSXSync(source, 'component.tsx', { adapter, forceTemplates: true })
-  const errors = result.errors.filter(e => e.severity === 'error')
-  if (errors.length > 0) {
-    throw new Error(`Compilation errors:\n${errors.map(e => e.message).join('\n')}`)
-  }
-
-  const clientJsFile = result.files.find(f => f.type === 'clientJs')
-  if (!clientJsFile) throw new Error('No client JS in compile output')
+  // Compile main component
+  const clientJs = compileToClientJs(source, 'component.tsx')
+  if (!clientJs) throw new Error('No client JS generated')
 
   // Build evaluation module
-  const allClientJs = [...childClientJsList, clientJsFile.content].join('\n')
+  const allClientJs = [...childClientJsList, clientJs].join('\n')
   const code = buildCsrEvalModule(allClientJs, props)
 
   await mkdir(CSR_TEMP_DIR, { recursive: true })
