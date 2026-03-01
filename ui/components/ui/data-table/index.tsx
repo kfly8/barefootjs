@@ -57,17 +57,15 @@ function DataTableColumnHeader({ title, sorted = false, onSort, className = '', 
       {...props}
     >
       {title}
-      {sorted === 'asc' && (
+      {sorted === 'asc' ? (
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="m18 15-6-6-6 6" />
         </svg>
-      )}
-      {sorted === 'desc' && (
+      ) : sorted === 'desc' ? (
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="m6 9 6 6 6-6" />
         </svg>
-      )}
-      {sorted === false && (
+      ) : (
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="m21 16-4 4-4-4" />
           <path d="M17 20V4" />
