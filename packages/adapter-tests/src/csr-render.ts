@@ -29,10 +29,8 @@ export async function renderCsrComponent(options: CsrRenderOptions): Promise<str
 
   // Compile child components first and collect their client JS
   const childClientJsList: string[] = []
-  const componentKeys = new Set<string>()
   if (components) {
     for (const [filename, childSource] of Object.entries(components)) {
-      componentKeys.add(filename)
       const childResult = compileJSXSync(childSource, filename, { adapter })
       const childErrors = childResult.errors.filter(e => e.severity === 'error')
       if (childErrors.length > 0) {

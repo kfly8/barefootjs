@@ -13,9 +13,10 @@ import { normalizeHTML } from '../jsx-runner'
 import { renderCsrComponent } from '../csr-render'
 
 describe('CSR Conformance Tests', () => {
-  // Fixtures that don't produce client JS (stateless, no signals/effects)
-  // These components don't need CSR mode — they are fully rendered server-side.
-  const noClientJs = new Set([
+  // Fixtures to skip in CSR conformance tests.
+  // Each entry documents why the fixture cannot be tested in CSR mode.
+  const skipFixtures = new Set([
+    // Stateless components: no client JS emitted (fully server-rendered)
     'props-static',
     'nested-elements',
     'void-elements',
@@ -24,12 +25,12 @@ describe('CSR Conformance Tests', () => {
     'fragment',
     'default-props',
     // Local array variable (items) is not available at CSR template module scope.
-    // This is a fundamental limitation: CSR templates only have access to props, not local consts.
+    // CSR templates only have access to props and signals, not file-scope constants.
     'static-array-children',
   ])
 
   for (const fixture of jsxFixtures) {
-    if (noClientJs.has(fixture.id)) continue
+    if (skipFixtures.has(fixture.id)) continue
     if (!fixture.expectedHtml) continue
 
     test(`[${fixture.id}] ${fixture.description}`, async () => {
