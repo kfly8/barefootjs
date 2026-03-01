@@ -32,24 +32,25 @@ export interface CsrRenderOptions {
  * Compile JSX source to client JS with CSR template via lower-level APIs.
  * Forces template generation by adding the component name to usedAsChild.
  */
+function throwIfErrors(ctx: { errors: Array<{ severity: string; message: string }> }, filePath: string): void {
+  const errors = ctx.errors.filter(e => e.severity === 'error')
+  if (errors.length > 0) {
+    throw new Error(`Compilation errors in ${filePath}:\n${errors.map(e => e.message).join('\n')}`)
+  }
+}
+
 function compileToClientJs(source: string, filePath: string): string {
   const ctx = analyzeComponent(source, filePath)
 
   if (!ctx.jsxReturn) {
-    const errors = ctx.errors.filter(e => e.severity === 'error')
-    if (errors.length > 0) {
-      throw new Error(`Compilation errors in ${filePath}:\n${errors.map(e => e.message).join('\n')}`)
-    }
+    throwIfErrors(ctx, filePath)
     return ''
   }
 
   const ir = jsxToIR(ctx)
   if (!ir) return ''
 
-  const errors = ctx.errors.filter(e => e.severity === 'error')
-  if (errors.length > 0) {
-    throw new Error(`Compilation errors in ${filePath}:\n${errors.map(e => e.message).join('\n')}`)
-  }
+  throwIfErrors(ctx, filePath)
 
   const componentIR: ComponentIR = {
     version: '0.1',
