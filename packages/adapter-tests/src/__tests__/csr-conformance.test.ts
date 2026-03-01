@@ -7,7 +7,6 @@
  */
 
 import { describe, test, expect } from 'bun:test'
-import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { jsxFixtures } from '../../fixtures'
 import { normalizeHTML } from '../jsx-runner'
 import { renderCsrComponent } from '../csr-render'
@@ -34,11 +33,8 @@ describe('CSR Conformance Tests', () => {
     if (!fixture.expectedHtml) continue
 
     test(`[${fixture.id}] ${fixture.description}`, async () => {
-      const adapter = new HonoAdapter()
-
       const html = await renderCsrComponent({
         source: fixture.source,
-        adapter,
         props: fixture.props,
         components: fixture.components,
       })

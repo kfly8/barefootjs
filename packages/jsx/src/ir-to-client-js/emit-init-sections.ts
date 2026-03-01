@@ -248,7 +248,7 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         }
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    const __el_${v} = $t(__scope, '${elem.slotId}')`)
+          lines.push(`    const [__el_${v}] = $t(__scope, '${elem.slotId}')`)
           lines.push(`    if (__el_${v}) __el_${v}.nodeValue = String(__val)`)
         }
       } else {
@@ -257,7 +257,7 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         // parent prop is undefined (e.g. prev?.title when prev is undefined).
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    const __el_${v} = $t(__scope, '${elem.slotId}')`)
+          lines.push(`    const [__el_${v}] = $t(__scope, '${elem.slotId}')`)
           lines.push(`    if (__el_${v}) __el_${v}.nodeValue = String(${expr})`)
         }
       }
@@ -337,8 +337,11 @@ function emitBranchBindings(
     eventsBySlot.get(event.slotId)!.push(event)
   }
 
-  for (const slotId of allSlotIds) {
-    lines.push(`      const _${varSlotId(slotId)} = $(__branchScope, '${slotId}')`)
+  if (allSlotIds.size > 0) {
+    const slotArr = [...allSlotIds]
+    const vars = slotArr.map(id => `_${varSlotId(id)}`).join(', ')
+    const args = slotArr.map(id => `'${id}'`).join(', ')
+    lines.push(`      const [${vars}] = $(__branchScope, ${args})`)
   }
 
   for (const [slotId, slotEvents] of eventsBySlot) {
@@ -683,10 +686,8 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       const first = props[0]
       const varSuffix = first.slotId ? varSlotId(first.slotId).replace(/-/g, '_') : first.componentName
       const varName = `__${first.componentName}_${varSuffix}El`
-      const selectorBase = first.slotId
-        ? `$c(__scope, '${first.slotId}')`
-        : `$c(__scope, '${first.componentName}')`
-      lines.push(`    const ${varName} = ${selectorBase}`)
+      const selectorArg = first.slotId ? first.slotId : first.componentName
+      lines.push(`    const [${varName}] = $c(__scope, '${selectorArg}')`)
       lines.push(`    if (${varName}) {`)
       for (const prop of props) {
         if (prop.attrName === 'class') {

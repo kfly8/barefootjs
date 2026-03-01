@@ -303,7 +303,7 @@ async function compileMultipleComponents(
 // Helpers
 // =============================================================================
 
-function buildMetadata(
+export function buildMetadata(
   ctx: ReturnType<typeof analyzeComponent>
 ): IRMetadata {
   return {

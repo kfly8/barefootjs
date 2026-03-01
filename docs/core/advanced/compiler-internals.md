@@ -228,13 +228,12 @@ export function initCounter(__scope, props = {}) {
   const doubled = createMemo(() => count() * 2)
   const displayValue = `Count: ${count()}`      // late constant (reactive deps)
 
-  // 5. Element references
+  // 5. Element references (always destructured, always returns array)
   //    $()  — regular elements:  find(scope, '[bf="id"]')
   //    $t() — text nodes:        find comment marker <!--bf:id-->
   //    $c() — child components:  find(scope, '[bf-s$="_id"]')
-  const _s3 = $(__scope, 's3')
-  const _s0 = $t(__scope, 's0')
-  const _s2 = $t(__scope, 's2')
+  const [_s3] = $(__scope, 's3')
+  const [_s0, _s2] = $t(__scope, 's0', 's2')
 
   // 6. Dynamic text updates
   createEffect(() => {
