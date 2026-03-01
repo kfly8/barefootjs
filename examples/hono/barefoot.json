@@ -1,0 +1,14 @@
+{
+  "$schema": "https://barefootjs.dev/schema/barefoot.json",
+  "paths": {
+    "components": "components",
+    "tokens": "tokens",
+    "meta": "meta"
+  },
+  "build": {
+    "adapter": "hono",
+    "components": ["components", "../shared/components"],
+    "outDir": "dist",
+    "scriptCollection": true
+  }
+}

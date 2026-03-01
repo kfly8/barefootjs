@@ -6,6 +6,9 @@
   "private": true,
   "main": "./src/index.ts",
   "dependencies": {
+    "@barefootjs/dom": "workspace:*",
+    "@barefootjs/go-template": "workspace:*",
+    "@barefootjs/hono": "workspace:*",
     "@barefootjs/jsx": "workspace:*",
     "@barefootjs/preview": "workspace:*"
   }

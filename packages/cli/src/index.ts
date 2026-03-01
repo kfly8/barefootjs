@@ -15,6 +15,7 @@ function printUsage() {
   console.log(`Usage: barefoot <command> [options]
 
 Commands:
+  build [--minify]            Compile components using barefoot.json config
   init [--name <name>]        Initialize a new BarefootJS project
   add <component...> [--force] [--registry <url>] Add components to your project
   search <query> [--dir <path>] [--registry <url>] Search components by name/category/tags
@@ -40,6 +41,12 @@ Workflow:
 }
 
 switch (command) {
+  case 'build': {
+    const { run } = await import('./commands/build')
+    await run(commandArgs, ctx)
+    break
+  }
+
   case 'init': {
     const { run } = await import('./commands/init')
     run(commandArgs, ctx)

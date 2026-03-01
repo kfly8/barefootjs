@@ -3,6 +3,25 @@
 import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 
+export interface BuildSection {
+  /** Adapter name: "hono" | "go-template" */
+  adapter: string
+  /** Adapter-specific options (e.g. { packageName: "main" } for Go) */
+  adapterOptions?: Record<string, unknown>
+  /** Source directories relative to barefoot.json (default: ["components"]) */
+  components?: string[]
+  /** Output directory (default: "dist") */
+  outDir?: string
+  /** CSS layer prefix for component scoping */
+  cssLayerPrefix?: string
+  /** Minify client JS output (default: false) */
+  minify?: boolean
+  /** Add content hash to client JS filenames (default: false) */
+  contentHash?: boolean
+  /** Inject Hono script collection wrapper (default: true when adapter is "hono") */
+  scriptCollection?: boolean
+}
+
 export interface BarefootConfig {
   $schema?: string
   name?: string
@@ -11,6 +30,7 @@ export interface BarefootConfig {
     tokens: string
     meta: string
   }
+  build?: BuildSection
 }
 
 export interface CliContext {
