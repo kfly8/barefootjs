@@ -885,6 +885,55 @@ describe('Compiler', () => {
     })
   })
 
+  describe('batch element refs', () => {
+    test('emits destructured batch call for 2+ regular slots', () => {
+      const source = `
+        'use client'
+
+        export function Form() {
+          return (
+            <form>
+              <input onClick={() => {}} />
+              <button onClick={() => {}}>Submit</button>
+              <span onClick={() => {}}>Help</span>
+            </form>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Form.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Should emit batch pattern: const [_s0, _s1, _s2] = $(__scope, ...)
+      expect(content).toMatch(/const \[_s\d+, _s\d+/)
+      expect(content).toMatch(/\$\(__scope, 's\d+', 's\d+'/)
+    })
+
+    test('emits single call for 1 slot', () => {
+      const source = `
+        'use client'
+
+        export function Button() {
+          return <button onClick={() => console.log('hi')}>Click</button>
+        }
+      `
+      const result = compileJSXSync(source, 'Button.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Single slot should remain scalar: const _s0 = $(__scope, 's0')
+      expect(content).toMatch(/const _s\d+ = \$\(__scope, 's\d+'\)/)
+      // Should NOT use destructured form
+      expect(content).not.toMatch(/const \[_s\d+\] = \$/)
+    })
+  })
+
   describe('transparent fragment (Context Provider pattern)', () => {
     test('detects <>{children}</> as transparent', () => {
       const source = `
@@ -2386,9 +2435,18 @@ describe('Compiler', () => {
       const content = clientJs!.content
 
       // Each slot variable should be declared at most once
-      const slotDeclarations = content.match(/const _s\d+ =/g) || []
-      const uniqueDeclarations = new Set(slotDeclarations)
-      expect(slotDeclarations.length).toBe(uniqueDeclarations.size)
+      // Match both single (const _sN =) and batch (const [_sN, _sM] =) patterns
+      const singleDecls = content.match(/const _s\d+ =/g) || []
+      const batchDecls = content.match(/const \[([^\]]+)\]/g) || []
+      const allVars = [
+        ...singleDecls.map(d => d.replace(' =', '')),
+        ...batchDecls.flatMap(d => {
+          const inner = d.match(/\[([^\]]+)\]/)
+          return inner ? inner[1].split(',').map(v => 'const ' + v.trim()) : []
+        })
+      ]
+      const uniqueVars = new Set(allVars)
+      expect(allVars.length).toBe(uniqueVars.size)
 
       // Component slot ref ($c) and reconcileTemplates should both be present
       expect(content).toContain('$c(__scope')
@@ -2901,9 +2959,9 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
 
       // Should use $(__scope, '^sN') for the lookup (raw ID with ^)
-      expect(clientJs!.content).toMatch(/\$\(__scope, '\^s\d+'\)/)
-      // Should use _sN (without ^) for variable name
-      expect(clientJs!.content).toMatch(/const _s\d+ = \$\(__scope, '\^s\d+'\)/)
+      expect(clientJs!.content).toMatch(/\$\(__scope, '\^s\d+'/)
+      // Should use _sN (without ^) for variable name — single or batch form
+      expect(clientJs!.content).toMatch(/(?:const _s\d+ = \$\(__scope, '\^s\d+'\)|const \[.*_s\d+.*\] = \$\(__scope, .*'\^s\d+')/)
     })
 
     test('reactive expressions inside component children get ^-prefixed slotId', () => {

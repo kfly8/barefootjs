@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
-import { findScope, find, $, $c } from '../src/query'
+import { findScope, find, $, $c, $t } from '../src/query'
 import { hydratedScopes } from '../src/hydration-state'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
@@ -431,5 +431,203 @@ describe('$ (parent-owned slots)', () => {
   test('returns null for null scope with ^-prefixed slot', () => {
     const el = $(null, '^s0')
     expect(el).toBeNull()
+  })
+})
+
+describe('$ (batch mode)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('returns array for 2+ IDs', () => {
+    document.body.innerHTML = `
+      <div bf-s="Demo_abc">
+        <button bf="s0">btn0</button>
+        <input bf="s1" />
+        <span bf="s2">text</span>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Demo_abc"]')
+    const [el0, el1, el2] = $(scope, 's0', 's1', 's2') as (Element | null)[]
+    expect(el0?.textContent).toBe('btn0')
+    expect(el1?.tagName.toLowerCase()).toBe('input')
+    expect(el2?.textContent).toBe('text')
+  })
+
+  test('batch with mix of regular and ^-prefixed IDs', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <button bf="s0">regular</button>
+        <div bf-s="~Child_xyz">
+          <span bf="^s1">parent-owned</span>
+        </div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')
+    const [el0, el1] = $(scope, 's0', '^s1') as (Element | null)[]
+    expect(el0?.textContent).toBe('regular')
+    expect(el1?.textContent).toBe('parent-owned')
+  })
+
+  test('batch with null scope returns array of nulls', () => {
+    const results = $(null, 's0', 's1') as (Element | null)[]
+    expect(results).toEqual([null, null])
+  })
+
+  test('batch with missing elements returns null for those slots', () => {
+    document.body.innerHTML = `
+      <div bf-s="Demo_abc">
+        <button bf="s0">exists</button>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Demo_abc"]')
+    const [el0, el1] = $(scope, 's0', 's1') as (Element | null)[]
+    expect(el0?.textContent).toBe('exists')
+    expect(el1).toBeNull()
+  })
+})
+
+describe('$t (single mode)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('finds text node after comment marker', () => {
+    document.body.innerHTML = `
+      <div bf-s="Counter_abc"><!--bf:s0-->42<!--/--></div>
+    `
+    const scope = document.querySelector('[bf-s="Counter_abc"]')
+    const textNode = $t(scope, 's0')
+    expect(textNode).not.toBeNull()
+    expect(textNode?.nodeValue).toBe('42')
+  })
+
+  test('creates text node when none exists after marker', () => {
+    document.body.innerHTML = `
+      <div bf-s="Counter_abc"><!--bf:s0--><!--/--></div>
+    `
+    const scope = document.querySelector('[bf-s="Counter_abc"]')
+    const textNode = $t(scope, 's0')
+    expect(textNode).not.toBeNull()
+    expect(textNode?.nodeValue).toBe('')
+  })
+
+  test('returns null for null scope', () => {
+    expect($t(null, 's0')).toBeNull()
+  })
+
+  test('returns null for missing marker', () => {
+    document.body.innerHTML = `
+      <div bf-s="Counter_abc">no markers here</div>
+    `
+    const scope = document.querySelector('[bf-s="Counter_abc"]')
+    expect($t(scope, 's0')).toBeNull()
+  })
+
+  test('does not find marker inside nested child scope', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <div bf-s="Child_xyz"><!--bf:s0-->nested<!--/--></div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')
+    expect($t(scope, 's0')).toBeNull()
+  })
+
+  test('finds ^-prefixed marker (parent-owned)', () => {
+    document.body.innerHTML = `
+      <div bf-s="Parent_abc">
+        <div bf-s="~Child_xyz"><!--bf:^s1-->owned<!--/--></div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Parent_abc"]')
+    const textNode = $t(scope, '^s1')
+    expect(textNode).not.toBeNull()
+    expect(textNode?.nodeValue).toBe('owned')
+  })
+})
+
+describe('$t (batch mode)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('finds multiple text nodes in single TreeWalker pass', () => {
+    document.body.innerHTML = `
+      <div bf-s="Demo_abc">
+        <p><!--bf:s0-->hello<!--/--></p>
+        <p><!--bf:s1-->world<!--/--></p>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Demo_abc"]')
+    const [t0, t1] = $t(scope, 's0', 's1') as (Text | null)[]
+    expect(t0?.nodeValue).toBe('hello')
+    expect(t1?.nodeValue).toBe('world')
+  })
+
+  test('batch with null scope returns array of nulls', () => {
+    const results = $t(null, 's0', 's1') as (Text | null)[]
+    expect(results).toEqual([null, null])
+  })
+
+  test('batch with missing markers returns null for those slots', () => {
+    document.body.innerHTML = `
+      <div bf-s="Demo_abc">
+        <p><!--bf:s0-->found<!--/--></p>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="Demo_abc"]')
+    const [t0, t1] = $t(scope, 's0', 's1') as (Text | null)[]
+    expect(t0?.nodeValue).toBe('found')
+    expect(t1).toBeNull()
+  })
+
+  test('batch creates text nodes when none exist after markers', () => {
+    document.body.innerHTML = `
+      <div bf-s="Demo_abc"><!--bf:s0--><!--/--><!--bf:s1--><!--/--></div>
+    `
+    const scope = document.querySelector('[bf-s="Demo_abc"]')
+    const [t0, t1] = $t(scope, 's0', 's1') as (Text | null)[]
+    expect(t0).not.toBeNull()
+    expect(t0?.nodeValue).toBe('')
+    expect(t1).not.toBeNull()
+    expect(t1?.nodeValue).toBe('')
+  })
+})
+
+describe('$c (batch mode)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('finds multiple child scopes by slot ID', () => {
+    document.body.innerHTML = `
+      <div bf-s="App_abc">
+        <div bf-s="App_abc_s0">child0</div>
+        <div bf-s="App_abc_s1">child1</div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="App_abc"]')!
+    const [c0, c1] = $c(scope, 's0', 's1') as (Element | null)[]
+    expect(c0?.textContent).toBe('child0')
+    expect(c1?.textContent).toBe('child1')
+  })
+
+  test('batch with mix of slot IDs and component names', () => {
+    document.body.innerHTML = `
+      <div bf-s="App_abc">
+        <div bf-s="App_abc_s0">slot</div>
+        <div bf-s="~Counter_xyz">counter</div>
+      </div>
+    `
+    const scope = document.querySelector('[bf-s="App_abc"]')!
+    const [c0, c1] = $c(scope, 's0', 'Counter') as (Element | null)[]
+    expect(c0?.textContent).toBe('slot')
+    expect(c1?.textContent).toBe('counter')
+  })
+
+  test('batch with null scope returns array of nulls', () => {
+    const results = $c(null, 's0', 's1') as (Element | null)[]
+    expect(results).toEqual([null, null])
   })
 })

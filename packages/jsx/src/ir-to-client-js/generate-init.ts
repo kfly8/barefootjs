@@ -309,22 +309,29 @@ export function generateElementRefs(ctx: ClientJsContext): string {
 
   const refLines: string[] = []
 
-  // Regular element slots use $() shorthand for find(scope, '[bf="id"]')
-  for (const slotId of regularSlots) {
-    refLines.push(`  const _${varSlotId(slotId)} = $(__scope, '${slotId}')`)
-  }
-
-  // Text slots use $t() to find Text nodes via comment markers <!--bf:id-->
-  for (const slotId of textSlots) {
-    refLines.push(`  const _${varSlotId(slotId)} = $t(__scope, '${slotId}')`)
-  }
-
-  // Component slots use $c() shorthand for find(scope, '[bf-s$="_id"]')
-  for (const slotId of componentSlots) {
-    refLines.push(`  const _${varSlotId(slotId)} = $c(__scope, '${slotId}')`)
-  }
+  // Emit element ref declarations, batching 2+ slots into destructured calls
+  emitSlotRefs(refLines, [...regularSlots], '$')
+  emitSlotRefs(refLines, [...textSlots], '$t')
+  emitSlotRefs(refLines, [...componentSlots], '$c')
 
   return refLines.join('\n')
+}
+
+/**
+ * Emit element ref declarations for a set of slot IDs using the given finder function.
+ * Single slot: `const _sN = fn(__scope, 'sN')`
+ * Multiple slots: `const [_sN, _sM] = fn(__scope, 'sN', 'sM')`
+ */
+function emitSlotRefs(lines: string[], slotIds: string[], fn: string): void {
+  if (slotIds.length === 0) return
+  if (slotIds.length === 1) {
+    const id = slotIds[0]
+    lines.push(`  const _${varSlotId(id)} = ${fn}(__scope, '${id}')`)
+    return
+  }
+  const vars = slotIds.map(id => `_${varSlotId(id)}`).join(', ')
+  const args = slotIds.map(id => `'${id}'`).join(', ')
+  lines.push(`  const [${vars}] = ${fn}(__scope, ${args})`)
 }
 
 /**

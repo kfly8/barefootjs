@@ -384,15 +384,29 @@ function findInPortals(scopeId: string, selector: string): Element | null {
  * ignoring scope boundaries. This handles elements passed as children to child
  * components — they are owned by the parent but rendered inside the child's scope.
  *
+ * Supports batch mode: pass multiple IDs to get an array of results.
+ * Single ID returns a scalar (backward compatible).
+ *
  * @param scope - The scope element to search within
  * @param id - The slot ID (e.g., 's0' or '^s3')
- * @returns The matching element or null
+ * @returns The matching element or null (scalar for 1 ID, array for 2+)
  */
-export function $(scope: Element | null, id: string): Element | null {
-  if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
-    return findParentOwned(scope, id)
+export function $(scope: Element | null, id: string): Element | null
+export function $(scope: Element | null, id1: string, id2: string, ...rest: string[]): (Element | null)[]
+export function $(scope: Element | null, ...ids: string[]): Element | null | (Element | null)[] {
+  if (ids.length === 1) {
+    const id = ids[0]
+    if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
+      return findParentOwned(scope, id)
+    }
+    return find(scope, `[${BF_SLOT}="${id}"]`)
   }
-  return find(scope, `[${BF_SLOT}="${id}"]`)
+  return ids.map(id => {
+    if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
+      return findParentOwned(scope, id)
+    }
+    return find(scope, `[${BF_SLOT}="${id}"]`)
+  })
 }
 
 /**
@@ -451,11 +465,22 @@ function findParentOwned(scope: Element | null, id: string): Element | null {
  * - Slot ID (e.g., 's1'): uses suffix match [bf-s$="_s1"]
  * - Component name (e.g., 'Counter'): uses prefix match [bf-s^="Counter_"]
  *
+ * Supports batch mode: pass multiple IDs to get an array of results.
+ *
  * @param scope - The scope element to search within
  * @param id - Slot ID suffix or component name
- * @returns The matching element or null
+ * @returns The matching element or null (scalar for 1 ID, array for 2+)
  */
-export function $c(scope: Element | null, id: string): Element | null {
+export function $c(scope: Element | null, id: string): Element | null
+export function $c(scope: Element | null, id1: string, id2: string, ...rest: string[]): (Element | null)[]
+export function $c(scope: Element | null, ...ids: string[]): Element | null | (Element | null)[] {
+  if (ids.length === 1) {
+    return $cSingle(scope, ids[0])
+  }
+  return ids.map(id => $cSingle(scope, id))
+}
+
+function $cSingle(scope: Element | null, id: string): Element | null {
   // Strip ^ prefix defensively — component slot IDs should never have it,
   // but guard against compiler edge cases to avoid silent initialization failures.
   const cleanId = id.startsWith(BF_PARENT_OWNED_PREFIX) ? id.slice(1) : id
@@ -477,11 +502,23 @@ export function $c(scope: Element | null, id: string): Element | null {
  * Returns the Text node after the start comment marker so that
  * createEffect can update it via .nodeValue without needing a wrapper <span>.
  *
+ * Supports batch mode: pass multiple IDs to find all text nodes in a single
+ * TreeWalker pass, with early exit when all markers are found.
+ *
  * @param scope - The component scope element to search within
  * @param id - The slot ID (e.g., 's0' or '^s3')
- * @returns The Text node or null
+ * @returns The Text node or null (scalar for 1 ID, array for 2+)
  */
-export function $t(scope: Element | null, id: string): Text | null {
+export function $t(scope: Element | null, id: string): Text | null
+export function $t(scope: Element | null, id1: string, id2: string, ...rest: string[]): (Text | null)[]
+export function $t(scope: Element | null, ...ids: string[]): Text | null | (Text | null)[] {
+  if (ids.length === 1) {
+    return $tSingle(scope, ids[0])
+  }
+  return $tBatch(scope, ids)
+}
+
+function $tSingle(scope: Element | null, id: string): Text | null {
   if (!scope) return null
   // Keep the full id (including ^ prefix) for marker matching —
   // parent-owned slots produce <!--bf:^sN--> in the HTML.
@@ -501,17 +538,60 @@ export function $t(scope: Element | null, id: string): Text | null {
       if (!isParentOwned && !commentBelongsToScope(comment, scope, commentInfo)) {
         continue
       }
-      const next = comment.nextSibling
-      if (next?.nodeType === Node.TEXT_NODE) {
-        return next as Text
-      }
-      // No text node exists (empty initial value) — create one
-      const textNode = document.createTextNode('')
-      comment.parentNode?.insertBefore(textNode, comment.nextSibling)
-      return textNode
+      return textNodeAfterComment(comment)
     }
   }
   return null
+}
+
+/**
+ * Batch mode: single TreeWalker pass to find all text node markers at once.
+ * Early-exits when all markers are found.
+ */
+function $tBatch(scope: Element | null, ids: string[]): (Text | null)[] {
+  const results: (Text | null)[] = new Array(ids.length).fill(null)
+  if (!scope) return results
+
+  const commentInfo = commentScopeRegistry.get(scope)
+  const searchRoot: Node = commentInfo ? (commentInfo.commentNode.parentNode ?? scope) : scope
+
+  // Build marker → index map for O(1) lookup during walk
+  const markerMap = new Map<string, { index: number; isParentOwned: boolean }>()
+  for (let i = 0; i < ids.length; i++) {
+    markerMap.set(`bf:${ids[i]}`, {
+      index: i,
+      isParentOwned: ids[i].startsWith(BF_PARENT_OWNED_PREFIX),
+    })
+  }
+
+  let remaining = ids.length
+  const walker = document.createTreeWalker(searchRoot, NodeFilter.SHOW_COMMENT)
+  while (walker.nextNode() && remaining > 0) {
+    const comment = walker.currentNode as Comment
+    const entry = markerMap.get(comment.nodeValue ?? '')
+    if (!entry || results[entry.index] !== null) continue
+
+    if (!entry.isParentOwned && !commentBelongsToScope(comment, scope, commentInfo)) {
+      continue
+    }
+    results[entry.index] = textNodeAfterComment(comment)
+    remaining--
+  }
+  return results
+}
+
+/**
+ * Get or create the Text node immediately after a comment marker.
+ */
+function textNodeAfterComment(comment: Comment): Text {
+  const next = comment.nextSibling
+  if (next?.nodeType === Node.TEXT_NODE) {
+    return next as Text
+  }
+  // No text node exists (empty initial value) — create one
+  const textNode = document.createTextNode('')
+  comment.parentNode?.insertBefore(textNode, comment.nextSibling)
+  return textNode
 }
 
 /**
