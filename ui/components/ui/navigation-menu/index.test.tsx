@@ -1,0 +1,246 @@
+import { describe, test, expect } from 'bun:test'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import { renderToTest } from '@barefootjs/test'
+
+const source = readFileSync(resolve(__dirname, 'index.tsx'), 'utf-8')
+
+// ---------------------------------------------------------------------------
+// NavigationMenu (stateful — activeValue signal, Provider wrapping)
+// ---------------------------------------------------------------------------
+
+describe('NavigationMenu', () => {
+  const result = renderToTest(source, 'navigation-menu.tsx', 'NavigationMenu')
+
+  test('has no compiler errors', () => {
+    expect(result.errors).toEqual([])
+  })
+
+  test('isClient is true', () => {
+    expect(result.isClient).toBe(true)
+  })
+
+  test('componentName is NavigationMenu', () => {
+    expect(result.componentName).toBe('NavigationMenu')
+  })
+
+  test('has activeValue signal', () => {
+    expect(result.signals).toContain('activeValue')
+  })
+
+  test('renders as nav with data-slot=navigation-menu', () => {
+    const nav = result.find({ tag: 'nav' })
+    expect(nav).not.toBeNull()
+    expect(nav!.props['data-slot']).toBe('navigation-menu')
+  })
+
+  test('has resolved CSS classes', () => {
+    const nav = result.find({ tag: 'nav' })!
+    expect(nav.classes).toContain('relative')
+  })
+
+  test('toStructure() shows nav element', () => {
+    const structure = result.toStructure()
+    expect(structure).toContain('nav')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// NavigationMenuList (stateless — styled <ul>)
+// ---------------------------------------------------------------------------
+
+describe('NavigationMenuList', () => {
+  const result = renderToTest(source, 'navigation-menu.tsx', 'NavigationMenuList')
+
+  test('has no compiler errors', () => {
+    expect(result.errors).toEqual([])
+  })
+
+  test('componentName is NavigationMenuList', () => {
+    expect(result.componentName).toBe('NavigationMenuList')
+  })
+
+  test('no signals (stateless)', () => {
+    expect(result.signals).toEqual([])
+  })
+
+  test('renders as ul with data-slot=navigation-menu-list', () => {
+    expect(result.root.tag).toBe('ul')
+    expect(result.root.props['data-slot']).toBe('navigation-menu-list')
+  })
+
+  test('has resolved CSS classes', () => {
+    expect(result.root.classes).toContain('flex')
+    expect(result.root.classes).toContain('items-center')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// NavigationMenuItem (stateless — <li> wrapper with data-value)
+// ---------------------------------------------------------------------------
+
+describe('NavigationMenuItem', () => {
+  const result = renderToTest(source, 'navigation-menu.tsx', 'NavigationMenuItem')
+
+  test('has no compiler errors', () => {
+    expect(result.errors).toEqual([])
+  })
+
+  test('componentName is NavigationMenuItem', () => {
+    expect(result.componentName).toBe('NavigationMenuItem')
+  })
+
+  test('no signals (stateless)', () => {
+    expect(result.signals).toEqual([])
+  })
+
+  test('renders as li with data-slot=navigation-menu-item', () => {
+    expect(result.root.tag).toBe('li')
+    expect(result.root.props['data-slot']).toBe('navigation-menu-item')
+  })
+
+  test('has data-value attribute', () => {
+    expect(result.root.props).toHaveProperty('data-value')
+  })
+
+  test('has relative positioning class', () => {
+    expect(result.root.classes).toContain('relative')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// NavigationMenuTrigger (stateful — ref handler with useContext, createEffect)
+// ---------------------------------------------------------------------------
+
+describe('NavigationMenuTrigger', () => {
+  const result = renderToTest(source, 'navigation-menu.tsx', 'NavigationMenuTrigger')
+
+  test('has no compiler errors', () => {
+    expect(result.errors).toEqual([])
+  })
+
+  test('componentName is NavigationMenuTrigger', () => {
+    expect(result.componentName).toBe('NavigationMenuTrigger')
+  })
+
+  test('renders as <button>', () => {
+    const button = result.find({ tag: 'button' })
+    expect(button).not.toBeNull()
+  })
+
+  test('has data-slot=navigation-menu-trigger', () => {
+    const button = result.find({ tag: 'button' })!
+    expect(button.props['data-slot']).toBe('navigation-menu-trigger')
+  })
+
+  test('has aria-haspopup=menu', () => {
+    const button = result.find({ tag: 'button' })!
+    expect(button.aria).toHaveProperty('haspopup')
+  })
+
+  test('has aria-expanded attribute', () => {
+    const button = result.find({ tag: 'button' })!
+    expect(button.aria).toHaveProperty('expanded')
+  })
+
+  test('has data-state=closed initially', () => {
+    const button = result.find({ tag: 'button' })!
+    expect(button.dataState).toBe('closed')
+  })
+
+  test('contains chevron SVG', () => {
+    const svg = result.find({ tag: 'svg' })
+    expect(svg).not.toBeNull()
+  })
+
+  test('has resolved CSS classes', () => {
+    const button = result.find({ tag: 'button' })!
+    expect(button.classes).toContain('inline-flex')
+    expect(button.classes).toContain('items-center')
+    expect(button.classes).toContain('rounded-md')
+    expect(button.classes).toContain('cursor-pointer')
+  })
+
+  test('toStructure() shows trigger button with ARIA', () => {
+    const structure = result.toStructure()
+    expect(structure).toContain('button')
+    expect(structure).toContain('[aria-haspopup]')
+    expect(structure).toContain('[aria-expanded]')
+    expect(structure).toContain('svg')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// NavigationMenuContent (stateful — portal, positioning, timer management)
+// ---------------------------------------------------------------------------
+
+describe('NavigationMenuContent', () => {
+  const result = renderToTest(source, 'navigation-menu.tsx', 'NavigationMenuContent')
+
+  test('has no compiler errors', () => {
+    expect(result.errors).toEqual([])
+  })
+
+  test('componentName is NavigationMenuContent', () => {
+    expect(result.componentName).toBe('NavigationMenuContent')
+  })
+
+  test('root tag is div', () => {
+    expect(result.root.tag).toBe('div')
+  })
+
+  test('has data-slot=navigation-menu-content', () => {
+    expect(result.root.props['data-slot']).toBe('navigation-menu-content')
+  })
+
+  test('has data-state=closed initially', () => {
+    expect(result.root.dataState).toBe('closed')
+  })
+
+  test('has resolved CSS classes', () => {
+    expect(result.root.classes).toContain('fixed')
+    expect(result.root.classes).toContain('z-50')
+    expect(result.root.classes).toContain('rounded-md')
+  })
+
+  test('toStructure() shows content with data-state', () => {
+    const structure = result.toStructure()
+    expect(structure).toContain('[data-state]')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// NavigationMenuLink (stateless — <a> with active page support)
+// ---------------------------------------------------------------------------
+
+describe('NavigationMenuLink', () => {
+  const result = renderToTest(source, 'navigation-menu.tsx', 'NavigationMenuLink')
+
+  test('has no compiler errors', () => {
+    expect(result.errors).toEqual([])
+  })
+
+  test('componentName is NavigationMenuLink', () => {
+    expect(result.componentName).toBe('NavigationMenuLink')
+  })
+
+  test('no signals (stateless)', () => {
+    expect(result.signals).toEqual([])
+  })
+
+  test('renders as <a> with data-slot=navigation-menu-link', () => {
+    expect(result.root.tag).toBe('a')
+    expect(result.root.props['data-slot']).toBe('navigation-menu-link')
+  })
+
+  test('has resolved CSS classes', () => {
+    expect(result.root.classes).toContain('block')
+    expect(result.root.classes).toContain('rounded-md')
+    expect(result.root.classes).toContain('no-underline')
+  })
+
+  test('toStructure() shows link element', () => {
+    const structure = result.toStructure()
+    expect(structure).toContain('a')
+  })
+})
