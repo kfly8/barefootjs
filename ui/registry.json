@@ -172,6 +172,12 @@
       "description": "A responsive table component for displaying structured data"
     },
     {
+      "name": "sidebar",
+      "type": "registry:ui",
+      "title": "Sidebar",
+      "description": "A composable, collapsible sidebar component with responsive mobile support"
+    },
+    {
       "name": "spinner",
       "type": "registry:ui",
       "title": "Spinner",
