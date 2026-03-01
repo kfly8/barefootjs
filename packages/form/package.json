@@ -1,0 +1,49 @@
+{
+  "name": "@barefootjs/form",
+  "version": "0.0.1",
+  "description": "Signal-based form management for BarefootJS",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "bun run build:js && bun run build:types",
+    "build:js": "bun build ./src/index.ts --outdir ./dist --format esm",
+    "build:types": "tsc --emitDeclarationOnly --outDir ./dist",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "form",
+    "signals",
+    "reactive",
+    "barefoot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kfly8/barefootjs",
+    "directory": "packages/form"
+  },
+  "peerDependencies": {
+    "@barefootjs/dom": ">=0.0.1"
+  },
+  "dependencies": {
+    "@standard-schema/utils": "^0.3.0"
+  },
+  "devDependencies": {
+    "@standard-schema/spec": "^1.0.0",
+    "typescript": "^5.0.0",
+    "zod": "^3.24.0"
+  }
+}
