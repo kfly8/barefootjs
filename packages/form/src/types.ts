@@ -60,5 +60,8 @@ export interface FormReturn<
   /** Reset all fields to default values and clear errors */
   reset: () => void;
   /** Manually set an error on a field (e.g. server-side errors) */
-  setError: (name: string, message: string) => void;
+  setError: (
+    name: string & keyof StandardSchemaV1.InferInput<TSchema>,
+    message: string,
+  ) => void;
 }
