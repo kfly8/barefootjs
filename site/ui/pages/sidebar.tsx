@@ -192,7 +192,7 @@ const floatingCode = `"use client"
 import {
   Sidebar, SidebarContent, SidebarGroup,
   SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
-  SidebarInset, SidebarInput, SidebarMenu, SidebarMenuBadge,
+  SidebarInset, SidebarMenu, SidebarMenuBadge,
   SidebarMenuButton, SidebarMenuItem, SidebarMenuAction,
   SidebarProvider, SidebarTrigger,
 } from '@/components/ui/sidebar'
@@ -203,7 +203,10 @@ function SidebarFloating() {
       <SidebarProvider>
         <Sidebar variant="floating">
           <SidebarHeader>
-            <SidebarInput placeholder="Search..." />
+            <div className="flex items-center gap-2 px-2 py-1">
+              <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">S</div>
+              <span className="text-sm font-semibold">Slack</span>
+            </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>

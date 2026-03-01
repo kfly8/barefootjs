@@ -109,12 +109,12 @@ test.describe('Sidebar Documentation Page', () => {
   })
 
   test.describe('Floating Variant', () => {
-    test('renders floating sidebar with search input', async ({ page }) => {
+    test('renders floating sidebar with menu items', async ({ page }) => {
       const demo = page.locator('[bf-s^="SidebarFloatingDemo_"]').first()
       await expect(demo).toBeVisible()
 
-      const input = demo.locator('[data-slot="sidebar-input"]')
-      await expect(input).toBeVisible()
+      const generalButton = demo.locator('[data-slot="sidebar-menu-button"]:has-text("general")')
+      await expect(generalButton).toBeVisible()
     })
 
     test('renders menu badges', async ({ page }) => {

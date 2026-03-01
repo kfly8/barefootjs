@@ -25,7 +25,6 @@ import {
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
-  SidebarInput,
   SidebarMenuAction,
 } from '@ui/components/ui/sidebar'
 import {
@@ -200,7 +199,10 @@ export function SidebarFloatingDemo() {
       <SidebarProvider>
         <Sidebar variant="floating">
           <SidebarHeader>
-            <SidebarInput placeholder="Search..." />
+            <div className="flex items-center gap-2 px-2 py-1">
+              <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">S</div>
+              <span className="text-sm font-semibold">Slack</span>
+            </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
