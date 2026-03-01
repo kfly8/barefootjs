@@ -96,7 +96,12 @@ export async function compileJSX(
     type: 'markedTemplate',
   })
 
-  const clientJs = generateClientJs(componentIR)
+  // When forceTemplates is enabled, treat the component as "used as child"
+  // so that CSR fallback template is always generated.
+  const usedAsChild = options.forceTemplates
+    ? new Set([componentIR.metadata.componentName])
+    : undefined
+  const clientJs = generateClientJs(componentIR, undefined, usedAsChild)
   if (clientJs) {
     files.push({
       path: entryPath.replace(/\.tsx?$/, '.client.js'),
@@ -157,6 +162,12 @@ function compileMultipleComponentsSync(
   const usedAsChild = new Set<string>()
   for (const { componentIR } of entries) {
     collectComponentNamesFromIR([componentIR.root], usedAsChild)
+  }
+  // When forceTemplates is enabled, include all component names
+  if (options.forceTemplates) {
+    for (const name of componentNames) {
+      usedAsChild.add(name)
+    }
   }
 
   // --- Pass 2: adapter.generate + generateClientJs ---
@@ -393,7 +404,12 @@ export function compileJSXSync(
     type: 'markedTemplate',
   })
 
-  const clientJs = generateClientJs(componentIR)
+  // When forceTemplates is enabled, treat the component as "used as child"
+  // so that CSR fallback template is always generated.
+  const usedAsChild = options.forceTemplates
+    ? new Set([componentIR.metadata.componentName])
+    : undefined
+  const clientJs = generateClientJs(componentIR, undefined, usedAsChild)
   if (clientJs) {
     files.push({
       path: filePath.replace(/\.tsx?$/, '.client.js'),

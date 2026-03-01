@@ -31,7 +31,7 @@ export async function renderCsrComponent(options: CsrRenderOptions): Promise<str
   const childClientJsList: string[] = []
   if (components) {
     for (const [filename, childSource] of Object.entries(components)) {
-      const childResult = compileJSXSync(childSource, filename, { adapter })
+      const childResult = compileJSXSync(childSource, filename, { adapter, forceTemplates: true })
       const childErrors = childResult.errors.filter(e => e.severity === 'error')
       if (childErrors.length > 0) {
         throw new Error(`Compilation errors in ${filename}:\n${childErrors.map(e => e.message).join('\n')}`)
@@ -43,8 +43,8 @@ export async function renderCsrComponent(options: CsrRenderOptions): Promise<str
     }
   }
 
-  // Compile parent source
-  const result = compileJSXSync(source, 'component.tsx', { adapter })
+  // Compile parent source with forceTemplates to ensure CSR template generation
+  const result = compileJSXSync(source, 'component.tsx', { adapter, forceTemplates: true })
   const errors = result.errors.filter(e => e.severity === 'error')
   if (errors.length > 0) {
     throw new Error(`Compilation errors:\n${errors.map(e => e.message).join('\n')}`)
