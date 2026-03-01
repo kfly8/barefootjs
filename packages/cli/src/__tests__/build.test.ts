@@ -125,6 +125,30 @@ export function Counter(props: CounterProps) {
     const result = addScriptCollection(input, 'Test', 'Test.client.js')
     expect(result).toBeDefined()
   })
+
+  test('handles destructured params with arrow function defaults', () => {
+    const input = `import { jsx } from 'hono/jsx'
+
+export function Textarea({ className = '', onInput = () => {}, onChange = () => {}, ...props }: TextareaProps) {
+  return (<textarea class={className} {...props} />)
+}`
+
+    const result = addScriptCollection(input, 'textarea', 'textarea-abc123.js')
+
+    // Script collector must be inside the Textarea function body, NOT inside a default param
+    expect(result).toContain('__bfInlineScripts')
+    expect(result).toContain('__bfWrap')
+
+    // Verify __bfInlineScripts is declared AFTER the function opening brace,
+    // not inside an arrow function default value
+    const funcBodyMatch = result.match(/\.\.\.props\s*\}\s*:\s*TextareaProps\)\s*\{/)
+    expect(funcBodyMatch).not.toBeNull()
+    // After the function body opening, the next thing should be the script collector
+    if (funcBodyMatch) {
+      const afterFuncBody = result.slice(result.indexOf(funcBodyMatch[0]) + funcBodyMatch[0].length)
+      expect(afterFuncBody.trimStart().startsWith('let __bfInlineScripts')).toBe(true)
+    }
+  })
 })
 
 // ── resolveBuildConfig ───────────────────────────────────────────────────

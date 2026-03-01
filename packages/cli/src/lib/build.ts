@@ -154,13 +154,44 @@ function __bfWrap(jsx: any, scripts: string[]) {
   } catch {}
 `
 
-  // Insert script collector at the start of each export function
-  let modifiedRest = restOfFile.replace(
-    /export function (\w+)\(([^)]*)\)([^{]*)\{/g,
-    (_match, name, params, rest) => {
-      return `export function ${name}(${params})${rest}{${scriptCollector}`
+  // Insert script collector at the start of each export function body.
+  // Uses paren counting instead of regex to correctly handle nested
+  // delimiters in destructured params (e.g. `onInput = () => {}`).
+  let modifiedRest = restOfFile
+  const exportFuncPattern = /export function \w+\s*\(/g
+  const insertions: Array<{ index: number; text: string }> = []
+  let efMatch: RegExpExecArray | null
+  while ((efMatch = exportFuncPattern.exec(restOfFile)) !== null) {
+    const openParenPos = efMatch.index + efMatch[0].length - 1
+    // Count parens to find matching ')'
+    let depth = 1
+    let i = openParenPos + 1
+    while (i < restOfFile.length && depth > 0) {
+      const ch = restOfFile[i]
+      if (ch === "'" || ch === '"' || ch === '`') {
+        i++
+        while (i < restOfFile.length) {
+          if (restOfFile[i] === '\\') { i += 2; continue }
+          if (restOfFile[i] === ch) { i++; break }
+          i++
+        }
+        continue
+      }
+      if (ch === '(') depth++
+      else if (ch === ')') depth--
+      i++
     }
-  )
+    // i is now right after matching ')'; find the next '{' for function body
+    while (i < restOfFile.length && restOfFile[i] !== '{') i++
+    if (i < restOfFile.length) {
+      insertions.push({ index: i + 1, text: scriptCollector })
+    }
+  }
+  // Apply insertions from back to front to preserve indices
+  for (let ii = insertions.length - 1; ii >= 0; ii--) {
+    const ins = insertions[ii]
+    modifiedRest = modifiedRest.slice(0, ins.index) + ins.text + modifiedRest.slice(ins.index)
+  }
 
   // Wrap each return (...) with __bfWrap((...), __bfInlineScripts)
   // Process from back to front to preserve offsets
