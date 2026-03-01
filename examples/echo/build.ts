@@ -5,10 +5,10 @@
  */
 
 import { analyzeComponent, listExportedComponents, jsxToIR, generateClientJs, combineParentChildClientJs, type ComponentIR } from '@barefootjs/jsx'
-import { GoTemplateAdapter } from '@barefootjs/go-template'
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { spawnSync } from 'node:child_process'
+import config from './barefoot.config'
 
 
 const projectRoot = import.meta.dirname
@@ -49,8 +49,8 @@ const barefootDest = resolve(clientDir, 'barefoot.js')
 copyFileSync(domDistFile, barefootDest)
 console.log('  Copied: barefoot.js\n')
 
-// Create adapter (package name 'main' for direct use in main.go)
-const adapter = new GoTemplateAdapter({ packageName: 'main' })
+// Use adapter from barefoot.config.ts
+const adapter = config.adapter
 
 // Collect all types for combined components.go
 const allTypeParts: string[] = []

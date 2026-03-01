@@ -99,7 +99,7 @@ export function generateHash(content: string): string {
   return hash.toString(16).slice(0, 8)
 }
 
-// ── Resolve BuildConfig from BuildSection ────────────────────────────────
+// ── Resolve BuildConfig from BarefootBuildConfig ─────────────────────────
 
 /**
  * Resolve a BuildConfig from a BarefootBuildConfig (from barefoot.config.ts).
