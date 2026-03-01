@@ -11,8 +11,8 @@ export async function run(args: string[], ctx: CliContext): Promise<void> {
   if (!tsConfigPath) {
     console.error('Error: barefoot.config.ts not found.')
     console.error('Create one:')
-    console.error('  import { hono } from "@barefootjs/hono/build"')
-    console.error('  export default hono({ components: ["components"] })')
+    console.error('  import { createConfig } from "@barefootjs/hono/build"')
+    console.error('  export default createConfig({ components: ["components"] })')
     process.exit(1)
   }
 

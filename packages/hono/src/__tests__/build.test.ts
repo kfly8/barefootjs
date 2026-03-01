@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { addScriptCollection, hono } from '../build'
+import { addScriptCollection, createConfig } from '../build'
 
 // ── addScriptCollection ──────────────────────────────────────────────
 
@@ -53,26 +53,26 @@ export function Textarea({ className = '', onInput = () => {}, onChange = () => 
   })
 })
 
-// ── hono() factory ──────────────────────────────────────────────────
+// ── createConfig() factory ──────────────────────────────────────────
 
-describe('hono()', () => {
+describe('createConfig()', () => {
   test('creates config with HonoAdapter', () => {
-    const config = hono()
+    const config = createConfig()
     expect(config.adapter.name).toBe('hono')
   })
 
   test('sets transformMarkedTemplate by default', () => {
-    const config = hono()
+    const config = createConfig()
     expect(config.transformMarkedTemplate).toBe(addScriptCollection)
   })
 
   test('disables transformMarkedTemplate when scriptCollection is false', () => {
-    const config = hono({ scriptCollection: false })
+    const config = createConfig({ scriptCollection: false })
     expect(config.transformMarkedTemplate).toBeUndefined()
   })
 
   test('passes through build options', () => {
-    const config = hono({
+    const config = createConfig({
       components: ['src'],
       outDir: 'build',
       minify: true,

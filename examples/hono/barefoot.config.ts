@@ -1,6 +1,6 @@
-import { hono } from '@barefootjs/hono/build'
+import { createConfig } from '@barefootjs/hono/build'
 
-export default hono({
+export default createConfig({
   components: ['components', '../shared/components'],
   outDir: 'dist',
 })

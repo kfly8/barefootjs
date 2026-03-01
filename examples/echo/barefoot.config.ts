@@ -1,6 +1,6 @@
-import { goTemplate } from '@barefootjs/go-template/build'
+import { createConfig } from '@barefootjs/go-template/build'
 
-export default goTemplate({
+export default createConfig({
   components: ['../shared/components'],
   outDir: 'dist',
   adapterOptions: { packageName: 'main' },

@@ -26,7 +26,7 @@ export interface HonoBuildOptions {
  * Uses structural typing — does not import BarefootBuildConfig to avoid
  * circular dependency between @barefootjs/hono and @barefootjs/cli.
  */
-export function hono(options: HonoBuildOptions = {}) {
+export function createConfig(options: HonoBuildOptions = {}) {
   const useScriptCollection = options.scriptCollection ?? true
 
   return {

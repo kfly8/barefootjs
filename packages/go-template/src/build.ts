@@ -24,7 +24,7 @@ export interface GoTemplateBuildOptions {
  * Uses structural typing — does not import BarefootBuildConfig to avoid
  * circular dependency between @barefootjs/go-template and @barefootjs/cli.
  */
-export function goTemplate(options: GoTemplateBuildOptions = {}) {
+export function createConfig(options: GoTemplateBuildOptions = {}) {
   return {
     adapter: new GoTemplateAdapter(options.adapterOptions),
     components: options.components,
