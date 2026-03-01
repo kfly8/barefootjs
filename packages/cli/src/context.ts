@@ -20,6 +20,8 @@ export interface BuildSection {
   contentHash?: boolean
   /** Inject Hono script collection wrapper (default: true when adapter is "hono") */
   scriptCollection?: boolean
+  /** Output only client JS, skip marked templates (default: false) */
+  clientOnly?: boolean
 }
 
 export interface BarefootConfig {

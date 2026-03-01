@@ -20,6 +20,12 @@ import { HonoAdapter } from '@barefootjs/hono/adapter'
 import { mkdir, readdir } from 'node:fs/promises'
 import { dirname, resolve, join, relative } from 'node:path'
 import { loadContentFromDisk } from './lib/content-loader'
+import {
+  hasUseClientDirective,
+  discoverComponentFiles,
+  generateHash,
+  addScriptCollection,
+} from '../../packages/cli/src/lib/build'
 
 const ROOT_DIR = dirname(import.meta.path)
 const CONTENT_DIR = resolve(ROOT_DIR, '../../docs/core')
@@ -58,78 +64,6 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 // ── 3. Compile "use client" components ────────────────────────
-
-function hasUseClientDirective(content: string): boolean {
-  let trimmed = content.trimStart()
-  while (trimmed.startsWith('/*')) {
-    const endIndex = trimmed.indexOf('*/')
-    if (endIndex === -1) break
-    trimmed = trimmed.slice(endIndex + 2).trimStart()
-  }
-  while (trimmed.startsWith('//')) {
-    const endIndex = trimmed.indexOf('\n')
-    if (endIndex === -1) break
-    trimmed = trimmed.slice(endIndex + 1).trimStart()
-  }
-  return trimmed.startsWith('"use client"') || trimmed.startsWith("'use client'")
-}
-
-function generateHash(content: string): string {
-  const hash = Bun.hash(content)
-  return hash.toString(16).slice(0, 8)
-}
-
-function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
-  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\n"
-  const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
-  if (!importMatch) return content
-
-  const beforeImports = importMatch[1]
-  const existingImports = importMatch[2]
-  const restOfFile = content.slice(importMatch[0].length)
-
-  const scriptCollector = `
-  // Script collection for client JS hydration
-  try {
-    const __c = useRequestContext()
-    const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
-    const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
-    if (!__outputScripts.has('__barefoot__')) {
-      __outputScripts.add('__barefoot__')
-      __scripts.push({ src: '/static/components/barefoot.js' })
-    }
-    if (!__outputScripts.has('${componentId}')) {
-      __outputScripts.add('${componentId}')
-      __scripts.push({ src: '/static/components/${clientJsPath}' })
-    }
-    __c.set('bfCollectedScripts', __scripts)
-    __c.set('bfOutputScripts', __outputScripts)
-  } catch {}
-`
-
-  const modifiedRest = restOfFile.replace(
-    /export function (\w+)\(([^)]*)\)([^{]*)\{/g,
-    (match, name, params, rest) => {
-      return `export function ${name}(${params})${rest}{${scriptCollector}`
-    }
-  )
-
-  return beforeImports + existingImports + importStatement + modifiedRest
-}
-
-async function discoverComponentFiles(dir: string): Promise<string[]> {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
-  const files: string[] = []
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...await discoverComponentFiles(fullPath))
-    } else if (entry.name.endsWith('.tsx')) {
-      files.push(fullPath)
-    }
-  }
-  return files
-}
 
 // Manifest
 const manifest: Record<string, { clientJs?: string; markedTemplate: string }> = {

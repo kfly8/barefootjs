@@ -142,6 +142,7 @@ describe('resolveBuildConfig', () => {
     expect(config.minify).toBe(false)
     expect(config.contentHash).toBe(false)
     expect(config.scriptCollection).toBe(true) // default true for hono
+    expect(config.clientOnly).toBe(false)
   })
 
   test('resolves defaults for go-template adapter', () => {
@@ -149,6 +150,15 @@ describe('resolveBuildConfig', () => {
     const config = resolveBuildConfig(projectDir, section)
 
     expect(config.scriptCollection).toBe(false) // default false for non-hono
+    expect(config.clientOnly).toBe(false)
+  })
+
+  test('resolves clientOnly option', () => {
+    const section: BuildSection = { adapter: 'hono', clientOnly: true }
+    const config = resolveBuildConfig(projectDir, section)
+
+    expect(config.clientOnly).toBe(true)
+    expect(config.scriptCollection).toBe(true) // still defaults for hono
   })
 
   test('applies overrides', () => {

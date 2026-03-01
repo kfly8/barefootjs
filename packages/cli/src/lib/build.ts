@@ -25,6 +25,8 @@ export interface BuildConfig {
   contentHash: boolean
   /** Inject Hono script collection wrapper */
   scriptCollection: boolean
+  /** Output only client JS, skip marked templates and manifest */
+  clientOnly: boolean
 }
 
 export interface BuildResult {
@@ -210,6 +212,7 @@ export function resolveBuildConfig(
     minify: overrides?.minify ?? section.minify ?? false,
     contentHash: section.contentHash ?? false,
     scriptCollection: section.scriptCollection ?? isHono,
+    clientOnly: section.clientOnly ?? false,
   }
 }
 
@@ -338,8 +341,8 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
       console.log(`Generated: components/${clientJsFilename}`)
     }
 
-    // 5d. Write marked template (with script collection if configured)
-    if (markedJsxContent) {
+    // 5d. Write marked template (skip in clientOnly mode)
+    if (markedJsxContent && !config.clientOnly) {
       let outputContent = markedJsxContent
       if (hasClientJs && config.scriptCollection) {
         outputContent = addScriptCollection(markedJsxContent, baseNameNoExt, clientJsFilename)
@@ -349,9 +352,11 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
     }
 
     // 5e. Manifest entry
-    manifest[baseNameNoExt] = {
-      markedTemplate: `components/${baseFileName}`,
-      clientJs: hasClientJs ? `components/${clientJsFilename}` : undefined,
+    if (!config.clientOnly) {
+      manifest[baseNameNoExt] = {
+        markedTemplate: `components/${baseFileName}`,
+        clientJs: hasClientJs ? `components/${clientJsFilename}` : undefined,
+      }
     }
 
     compiledCount++
@@ -379,12 +384,14 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
     }
   }
 
-  // 7. Write manifest
-  await Bun.write(
-    resolve(componentsOutDir, 'manifest.json'),
-    JSON.stringify(manifest, null, 2)
-  )
-  console.log('Generated: components/manifest.json')
+  // 7. Write manifest (skip in clientOnly mode)
+  if (!config.clientOnly) {
+    await Bun.write(
+      resolve(componentsOutDir, 'manifest.json'),
+      JSON.stringify(manifest, null, 2)
+    )
+    console.log('Generated: components/manifest.json')
+  }
 
   return { compiledCount, skippedCount, errorCount, manifest }
 }
