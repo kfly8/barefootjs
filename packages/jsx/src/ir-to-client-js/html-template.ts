@@ -6,6 +6,29 @@ import type { IRNode } from '../types'
 import { isBooleanAttr } from '../html-constants'
 import { toHtmlAttrName, attrValueToString, quotePropName } from './utils'
 
+/**
+ * Protect string literals from regex-based replacements.
+ * Returns protect/restore functions that extract string literals before
+ * regex replacements and restore them after.
+ */
+export function createStringProtector(): {
+  protect: (s: string) => string
+  restore: (s: string) => string
+} {
+  const strings: string[] = []
+  const protect = (s: string): string => {
+    return s.replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, (match) => {
+      const idx = strings.length
+      strings.push(match)
+      return `__STRLIT_${idx}__`
+    })
+  }
+  const restore = (s: string): string => {
+    return s.replace(/__STRLIT_(\d+)__/g, (_, idx) => strings[Number(idx)])
+  }
+  return { protect, restore }
+}
+
 const VOID_ELEMENTS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
   'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
@@ -205,13 +228,14 @@ export function irToComponentTemplate(
   inlinableConstants?: Map<string, string>
 ): string {
   const transformExpr = (expr: string): string => {
-    let result = expr
+    const { protect, restore } = createStringProtector()
+    let result = protect(expr)
 
     // First: inline constant references with their resolved values (#343)
     // Parenthesized to prevent operator precedence issues
     if (inlinableConstants && inlinableConstants.size > 0) {
       for (const [constName, constValue] of inlinableConstants) {
-        result = result.replace(new RegExp(`(?<!\\.)\\b${constName}\\b`, 'g'), `(${constValue})`)
+        result = result.replace(new RegExp(`(?<!\\.)\\b${constName}\\b`, 'g'), `(${protect(constValue)})`)
       }
     }
 
@@ -223,7 +247,7 @@ export function irToComponentTemplate(
       const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?![a-zA-Z0-9_$])`, 'g')
       result = result.replace(pattern, `props.${propName}`)
     }
-    return result
+    return restore(result)
   }
 
   switch (node.type) {
@@ -436,26 +460,28 @@ export function generateCsrTemplate(
   insideLoop?: boolean,
 ): string {
   const transformExpr = (expr: string): string => {
-    let result = expr
+    const { protect, restore } = createStringProtector()
+    let result = protect(expr)
 
     // Replace signal getter calls with initial values: count() → (props.initial ?? 0)
+    // Protect new string literals from inlined values
     if (signalMap && signalMap.size > 0) {
       for (const [getter, initialValue] of signalMap) {
-        result = result.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initialValue})`)
+        result = result.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${protect(initialValue)})`)
       }
     }
 
     // Replace memo getter calls with computation expressions: doubled() → ((props.initial ?? 0) * 2)
     if (memoMap && memoMap.size > 0) {
       for (const [name, computation] of memoMap) {
-        result = result.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
+        result = result.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${protect(computation)})`)
       }
     }
 
     // Inline constant references with their resolved values
     if (inlinableConstants && inlinableConstants.size > 0) {
       for (const [constName, constValue] of inlinableConstants) {
-        result = result.replace(new RegExp(`(?<!\\.)\\b${constName}\\b`, 'g'), `(${constValue})`)
+        result = result.replace(new RegExp(`(?<!\\.)\\b${constName}\\b`, 'g'), `(${protect(constValue)})`)
       }
     }
 
@@ -463,12 +489,12 @@ export function generateCsrTemplate(
     // Inlined constant values may contain signal/memo calls that need resolution.
     if (signalMap && signalMap.size > 0) {
       for (const [getter, initialValue] of signalMap) {
-        result = result.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initialValue})`)
+        result = result.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${protect(initialValue)})`)
       }
     }
     if (memoMap && memoMap.size > 0) {
       for (const [name, computation] of memoMap) {
-        result = result.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
+        result = result.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${protect(computation)})`)
       }
     }
 
@@ -477,7 +503,7 @@ export function generateCsrTemplate(
       const pattern = new RegExp(`(?<!props\\.)(?<!['"\\w])\\b${propName}\\b(?![a-zA-Z0-9_$])`, 'g')
       result = result.replace(pattern, `props.${propName}`)
     }
-    return result
+    return restore(result)
   }
 
   const recurse = (n: IRNode): string => generateCsrTemplate(n, propNames, inlinableConstants, signalMap, memoMap, insideLoop)

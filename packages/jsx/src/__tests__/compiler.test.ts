@@ -1821,7 +1821,7 @@ describe('Compiler', () => {
       expect(content).not.toMatch(/\bclasses\b/)
     })
 
-    test('signal-dependent constant prevents template generation', () => {
+    test('signal-dependent constant gets CSR fallback template', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -1840,9 +1840,10 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Signal-dependent constants prevent static template; no template emitted
-      expect(content).not.toContain('template:')
-      expect(content).toContain("hydrate('Display', { init: initDisplay })")
+      // Signal-dependent constants are re-promoted in CSR fallback;
+      // template is generated with signal initial values inlined
+      expect(content).toContain('template:')
+      expect(content).toContain("hydrate('Display', { init: initDisplay, template:")
     })
 
     test('issue #343 full reproduction: local constant in disabled attribute', () => {
@@ -3565,7 +3566,7 @@ describe('Compiler', () => {
   })
 
   describe('hydrate() template generation for signal-bearing components', () => {
-    test('Counter with signals: no template in hydrate (signals prevent static template)', () => {
+    test('Counter with signals: CSR fallback template generated', () => {
       const source = `
         'use client'
         import { createSignal, createMemo } from '@barefootjs/dom'
@@ -3589,13 +3590,14 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Components with signals that fail canGenerateStaticTemplate() are hydrated
-      // without a template. The init function handles hydration directly.
-      expect(content).toContain("hydrate('Counter', { init: initCounter })")
-      expect(content).not.toContain('template:')
+      // CSR fallback generates template with signals replaced by initial values
+      expect(content).toContain("hydrate('Counter', { init: initCounter, template:")
+      expect(content).toContain('template:')
+      // Verify counter-container class is preserved (not corrupted by regex)
+      expect(content).toContain('counter-container')
     })
 
-    test('ItemList with signals and loop: no template in hydrate', () => {
+    test('ItemList with signals and loop: CSR fallback template generated', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3619,11 +3621,11 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
 
-      // No template for components with signals that can't be statically templated
-      expect(clientJs!.content).toContain("hydrate('ItemList', { init: initItemList })")
+      // CSR fallback template includes loops and signal initial values
+      expect(clientJs!.content).toContain("hydrate('ItemList', { init: initItemList, template:")
     })
 
-    test('child stateless component gets template, parent with signals does not', () => {
+    test('child stateless component gets template, parent with signals gets CSR fallback', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3649,14 +3651,14 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Stateless Child gets a template
+      // Stateless Child gets a static template
       expect(content).toContain("hydrate('Child', { init: initChild, template:")
 
-      // Parent with signals does not get a template
-      expect(content).toContain("hydrate('Parent', { init: initParent })")
+      // Parent with signals gets CSR fallback template
+      expect(content).toContain("hydrate('Parent', { init: initParent, template:")
     })
 
-    test('client-only expression: no template in hydrate', () => {
+    test('client-only expression: CSR fallback template generated', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3676,8 +3678,44 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
 
-      // No template for components with signals
-      expect(clientJs!.content).toContain("hydrate('Filtered', { init: initFiltered })")
+      // CSR fallback template generated even for client-only expressions
+      expect(clientJs!.content).toContain("hydrate('Filtered', { init: initFiltered, template:")
+    })
+
+    test('string literals in CSS classes are not corrupted by constant inlining', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        type Size = 'sm' | 'md' | 'lg'
+        const sizeClasses: Record<Size, string> = {
+          sm: 'size-4',
+          md: 'size-6',
+          lg: 'size-8',
+        }
+        export function Icon(props: { size?: Size }) {
+          const [active, setActive] = createSignal(false)
+          const size = props.size ?? 'md'
+          return (
+            <svg className={sizeClasses[size]} onClick={() => setActive(v => !v)}>
+              <circle />
+            </svg>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Icon.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // String literals 'size-4', 'size-6', 'size-8' must NOT be corrupted
+      // by the constant `size` being inlined into them
+      expect(content).toContain("'size-4'")
+      expect(content).toContain("'size-6'")
+      expect(content).toContain("'size-8'")
+      // The word 'size' inside 'size-4' should not be replaced with the constant value
+      expect(content).not.toMatch(/'\(props\.size/)
     })
   })
 })
