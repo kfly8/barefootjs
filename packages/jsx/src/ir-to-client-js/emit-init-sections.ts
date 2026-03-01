@@ -686,10 +686,8 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       const first = props[0]
       const varSuffix = first.slotId ? varSlotId(first.slotId).replace(/-/g, '_') : first.componentName
       const varName = `__${first.componentName}_${varSuffix}El`
-      const selectorBase = first.slotId
-        ? `$c(__scope, '${first.slotId}')`
-        : `$c(__scope, '${first.componentName}')`
-      lines.push(`    const ${varName} = ${selectorBase}`)
+      const selectorArg = first.slotId ? first.slotId : first.componentName
+      lines.push(`    const [${varName}] = $c(__scope, '${selectorArg}')`)
       lines.push(`    if (${varName}) {`)
       for (const prop of props) {
         if (prop.attrName === 'class') {
