@@ -22,8 +22,8 @@ import {
   hasUseClientDirective,
   discoverComponentFiles as discoverFiles,
   generateHash,
-  addScriptCollection,
 } from '../../packages/cli/src/lib/build'
+import { addScriptCollection } from '../../packages/hono/src/build'
 
 const ROOT_DIR = dirname(import.meta.path)
 

@@ -3,10 +3,8 @@ import {
   hasUseClientDirective,
   discoverComponentFiles,
   generateHash,
-  addScriptCollection,
-  resolveBuildConfig,
+  resolveBuildConfigFromTs,
 } from '../lib/build'
-import type { BuildSection } from '../context'
 import { mkdirSync, writeFileSync, rmSync } from 'fs'
 import { resolve } from 'path'
 import { tmpdir } from 'os'
@@ -99,108 +97,49 @@ describe('generateHash', () => {
   })
 })
 
-// ── addScriptCollection ──────────────────────────────────────────────────
+// ── resolveBuildConfigFromTs ─────────────────────────────────────────────
 
-describe('addScriptCollection', () => {
-  test('injects imports and script collector into exported function', () => {
-    const input = `import { jsx } from 'hono/jsx'
-
-export function Counter(props: CounterProps) {
-  return (<div>hello</div>)
-}`
-
-    const result = addScriptCollection(input, 'Counter', 'Counter.client.js')
-
-    expect(result).toContain("import { useRequestContext } from 'hono/jsx-renderer'")
-    expect(result).toContain("import { Fragment } from 'hono/jsx'")
-    expect(result).toContain('__bfWrap')
-    expect(result).toContain('bfCollectedScripts')
-    expect(result).toContain("'Counter'")
-    expect(result).toContain('Counter.client.js')
-  })
-
-  test('preserves content when no import match', () => {
-    const input = 'const x = 1'
-    // Should not throw, returns unchanged or minimally modified
-    const result = addScriptCollection(input, 'Test', 'Test.client.js')
-    expect(result).toBeDefined()
-  })
-
-  test('handles destructured params with arrow function defaults', () => {
-    const input = `import { jsx } from 'hono/jsx'
-
-export function Textarea({ className = '', onInput = () => {}, onChange = () => {}, ...props }: TextareaProps) {
-  return (<textarea class={className} {...props} />)
-}`
-
-    const result = addScriptCollection(input, 'textarea', 'textarea-abc123.js')
-
-    // Script collector must be inside the Textarea function body, NOT inside a default param
-    expect(result).toContain('__bfInlineScripts')
-    expect(result).toContain('__bfWrap')
-
-    // Verify __bfInlineScripts is declared AFTER the function opening brace,
-    // not inside an arrow function default value
-    const funcBodyMatch = result.match(/\.\.\.props\s*\}\s*:\s*TextareaProps\)\s*\{/)
-    expect(funcBodyMatch).not.toBeNull()
-    // After the function body opening, the next thing should be the script collector
-    if (funcBodyMatch) {
-      const afterFuncBody = result.slice(result.indexOf(funcBodyMatch[0]) + funcBodyMatch[0].length)
-      expect(afterFuncBody.trimStart().startsWith('let __bfInlineScripts')).toBe(true)
-    }
-  })
-})
-
-// ── resolveBuildConfig ───────────────────────────────────────────────────
-
-describe('resolveBuildConfig', () => {
+describe('resolveBuildConfigFromTs', () => {
   const projectDir = '/test/project'
+  const mockAdapter = { name: 'mock', extension: '.mock' } as any
 
-  test('resolves defaults for hono adapter', () => {
-    const section: BuildSection = { adapter: 'hono' }
-    const config = resolveBuildConfig(projectDir, section)
+  test('resolves defaults', () => {
+    const config = resolveBuildConfigFromTs(projectDir, { adapter: mockAdapter })
 
-    expect(config.adapter).toBe('hono')
+    expect(config.adapter).toBe(mockAdapter)
     expect(config.componentDirs).toEqual(['/test/project/components'])
     expect(config.outDir).toBe('/test/project/dist')
     expect(config.minify).toBe(false)
     expect(config.contentHash).toBe(false)
-    expect(config.scriptCollection).toBe(true) // default true for hono
     expect(config.clientOnly).toBe(false)
+    expect(config.transformMarkedTemplate).toBeUndefined()
   })
 
-  test('resolves defaults for go-template adapter', () => {
-    const section: BuildSection = { adapter: 'go-template' }
-    const config = resolveBuildConfig(projectDir, section)
+  test('resolves with transformMarkedTemplate hook', () => {
+    const hook = (c: string) => c
+    const config = resolveBuildConfigFromTs(projectDir, {
+      adapter: mockAdapter,
+      transformMarkedTemplate: hook,
+    })
 
-    expect(config.scriptCollection).toBe(false) // default false for non-hono
-    expect(config.clientOnly).toBe(false)
-  })
-
-  test('resolves clientOnly option', () => {
-    const section: BuildSection = { adapter: 'hono', clientOnly: true }
-    const config = resolveBuildConfig(projectDir, section)
-
-    expect(config.clientOnly).toBe(true)
-    expect(config.scriptCollection).toBe(true) // still defaults for hono
+    expect(config.transformMarkedTemplate).toBe(hook)
   })
 
   test('applies overrides', () => {
-    const section: BuildSection = {
-      adapter: 'hono',
-      minify: false,
-    }
-    const config = resolveBuildConfig(projectDir, section, { minify: true })
+    const config = resolveBuildConfigFromTs(
+      projectDir,
+      { adapter: mockAdapter, minify: false },
+      { minify: true }
+    )
 
     expect(config.minify).toBe(true)
   })
 
   test('resolves custom component dirs', () => {
-    const section: BuildSection = {
-      adapter: 'hono',
+    const config = resolveBuildConfigFromTs(projectDir, {
+      adapter: mockAdapter,
       components: ['src/components', '../shared'],
-    }
-    const config = resolveBuildConfig(projectDir, section)
+    })
 
     expect(config.componentDirs).toEqual([
       '/test/project/src/components',
@@ -209,11 +148,10 @@ describe('resolveBuildConfig', () => {
   })
 
   test('resolves custom outDir', () => {
-    const section: BuildSection = {
-      adapter: 'hono',
+    const config = resolveBuildConfigFromTs(projectDir, {
+      adapter: mockAdapter,
       outDir: 'build/output',
-    }
-    const config = resolveBuildConfig(projectDir, section)
+    })
 
     expect(config.outDir).toBe('/test/project/build/output')
   })

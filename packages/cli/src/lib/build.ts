@@ -1,20 +1,17 @@
 // Core build module: shared pipeline for `barefoot build`.
 
 import { compileJSX, combineParentChildClientJs } from '@barefootjs/jsx'
+import type { TemplateAdapter } from '@barefootjs/jsx'
 import { mkdir, readdir, stat } from 'node:fs/promises'
 import { resolve, basename, relative } from 'node:path'
-import { createAdapter } from './adapter-factory'
-import type { BuildSection } from '../context'
 
 // ── Types ────────────────────────────────────────────────────────────────
 
 export interface BuildConfig {
   /** Absolute path to the project directory (where barefoot.json lives) */
   projectDir: string
-  /** Adapter name */
-  adapter: string
-  /** Adapter-specific options */
-  adapterOptions?: Record<string, unknown>
+  /** Adapter instance */
+  adapter: TemplateAdapter
   /** Source component directories (absolute paths) */
   componentDirs: string[]
   /** Output directory (absolute path) */
@@ -23,10 +20,10 @@ export interface BuildConfig {
   minify: boolean
   /** Add content hash to filenames */
   contentHash: boolean
-  /** Inject Hono script collection wrapper */
-  scriptCollection: boolean
   /** Output only client JS, skip marked templates and manifest */
   clientOnly: boolean
+  /** Adapter-specific post-processing hook for marked templates */
+  transformMarkedTemplate?: (content: string, componentId: string, clientJsPath: string) => string
 }
 
 export interface BuildResult {
@@ -102,148 +99,31 @@ export function generateHash(content: string): string {
   return hash.toString(16).slice(0, 8)
 }
 
-/**
- * Add Hono script collection wrapper to an SSR marked template.
- * Injects imports, a helper function, and script collector into each
- * exported component function.
- */
-export function addScriptCollection(content: string, componentId: string, clientJsPath: string): string {
-  const importStatement = "import { useRequestContext } from 'hono/jsx-renderer'\nimport { Fragment } from 'hono/jsx'\n"
-
-  // Find the last import statement and add our import after it
-  const importMatch = content.match(/^([\s\S]*?)((?:import[^\n]+\n)*)/m)
-  if (!importMatch) {
-    return content
-  }
-
-  const beforeImports = importMatch[1]
-  const existingImports = importMatch[2]
-  const restOfFile = content.slice(importMatch[0].length)
-
-  // Helper function to wrap JSX with inline script tags (for Suspense streaming)
-  const helperFn = `
-function __bfWrap(jsx: any, scripts: string[]) {
-  if (scripts.length === 0) return jsx
-  return <Fragment>{jsx}{scripts.map(s => <script type="module" src={s} />)}</Fragment>
-}
-`
-
-  // Script collection code to insert at the start of each component function.
-  // When BfScripts has already rendered (e.g., inside Suspense boundaries),
-  // scripts are output inline instead of being collected.
-  const scriptCollector = `
-  let __bfInlineScripts: string[] = []
-  // Script collection for client JS hydration
-  try {
-    const __c = useRequestContext()
-    const __scripts: { src: string }[] = __c.get('bfCollectedScripts') || []
-    const __outputScripts: Set<string> = __c.get('bfOutputScripts') || new Set()
-    const __bfRendered = __c.get('bfScriptsRendered')
-    if (!__outputScripts.has('__barefoot__')) {
-      __outputScripts.add('__barefoot__')
-      if (__bfRendered) __bfInlineScripts.push('/static/components/barefoot.js')
-      else __scripts.push({ src: '/static/components/barefoot.js' })
-    }
-    if (!__outputScripts.has('${componentId}')) {
-      __outputScripts.add('${componentId}')
-      if (__bfRendered) __bfInlineScripts.push('/static/components/${clientJsPath}')
-      else __scripts.push({ src: '/static/components/${clientJsPath}' })
-    }
-    __c.set('bfCollectedScripts', __scripts)
-    __c.set('bfOutputScripts', __outputScripts)
-  } catch {}
-`
-
-  // Insert script collector at the start of each export function body.
-  // Uses paren counting instead of regex to correctly handle nested
-  // delimiters in destructured params (e.g. `onInput = () => {}`).
-  let modifiedRest = restOfFile
-  const exportFuncPattern = /export function \w+\s*\(/g
-  const insertions: Array<{ index: number; text: string }> = []
-  let efMatch: RegExpExecArray | null
-  while ((efMatch = exportFuncPattern.exec(restOfFile)) !== null) {
-    const openParenPos = efMatch.index + efMatch[0].length - 1
-    // Count parens to find matching ')'
-    let depth = 1
-    let i = openParenPos + 1
-    while (i < restOfFile.length && depth > 0) {
-      const ch = restOfFile[i]
-      if (ch === "'" || ch === '"' || ch === '`') {
-        i++
-        while (i < restOfFile.length) {
-          if (restOfFile[i] === '\\') { i += 2; continue }
-          if (restOfFile[i] === ch) { i++; break }
-          i++
-        }
-        continue
-      }
-      if (ch === '(') depth++
-      else if (ch === ')') depth--
-      i++
-    }
-    // i is now right after matching ')'; find the next '{' for function body
-    while (i < restOfFile.length && restOfFile[i] !== '{') i++
-    if (i < restOfFile.length) {
-      insertions.push({ index: i + 1, text: scriptCollector })
-    }
-  }
-  // Apply insertions from back to front to preserve indices
-  for (let ii = insertions.length - 1; ii >= 0; ii--) {
-    const ins = insertions[ii]
-    modifiedRest = modifiedRest.slice(0, ins.index) + ins.text + modifiedRest.slice(ins.index)
-  }
-
-  // Wrap each return (...) with __bfWrap((...), __bfInlineScripts)
-  // Process from back to front to preserve offsets
-  const returnPattern = /return\s*\(/g
-  const returnMatches: Array<{ index: number; length: number }> = []
-  let m: RegExpExecArray | null
-  while ((m = returnPattern.exec(modifiedRest)) !== null) {
-    returnMatches.push({ index: m.index, length: m[0].length })
-  }
-  // Process from last to first to keep earlier offsets valid
-  for (let ri = returnMatches.length - 1; ri >= 0; ri--) {
-    const rm = returnMatches[ri]
-    const afterOpen = rm.index + rm.length // position after 'return ('
-    let depth = 1
-    let ci = afterOpen
-    while (ci < modifiedRest.length && depth > 0) {
-      if (modifiedRest[ci] === '(') depth++
-      else if (modifiedRest[ci] === ')') depth--
-      ci++
-    }
-    // ci is right after the matching ')'; insert wrap closing there
-    modifiedRest = modifiedRest.slice(0, ci) + ', __bfInlineScripts)' + modifiedRest.slice(ci)
-    // Replace 'return (' with 'return __bfWrap(('
-    modifiedRest = modifiedRest.slice(0, rm.index) + 'return __bfWrap((' + modifiedRest.slice(rm.index + rm.length)
-  }
-
-  return beforeImports + existingImports + importStatement + helperFn + modifiedRest
-}
-
 // ── Resolve BuildConfig from BuildSection ────────────────────────────────
 
-export function resolveBuildConfig(
+/**
+ * Resolve a BuildConfig from a BarefootBuildConfig (from barefoot.config.ts).
+ * Resolves relative paths against projectDir.
+ */
+export function resolveBuildConfigFromTs(
   projectDir: string,
-  section: BuildSection,
+  tsConfig: { adapter: TemplateAdapter; components?: string[]; outDir?: string; minify?: boolean; contentHash?: boolean; clientOnly?: boolean; transformMarkedTemplate?: (content: string, componentId: string, clientJsPath: string) => string },
   overrides?: { minify?: boolean }
 ): BuildConfig {
-  const componentDirs = (section.components ?? ['components']).map(
+  const componentDirs = (tsConfig.components ?? ['components']).map(
     dir => resolve(projectDir, dir)
   )
-  const outDir = resolve(projectDir, section.outDir ?? 'dist')
-  const isHono = section.adapter === 'hono'
+  const outDir = resolve(projectDir, tsConfig.outDir ?? 'dist')
 
   return {
     projectDir,
-    adapter: section.adapter,
-    adapterOptions: section.adapterOptions,
+    adapter: tsConfig.adapter,
     componentDirs,
     outDir,
-    minify: overrides?.minify ?? section.minify ?? false,
-    contentHash: section.contentHash ?? false,
-    scriptCollection: section.scriptCollection ?? isHono,
-    clientOnly: section.clientOnly ?? false,
+    minify: overrides?.minify ?? tsConfig.minify ?? false,
+    contentHash: tsConfig.contentHash ?? false,
+    clientOnly: tsConfig.clientOnly ?? false,
+    transformMarkedTemplate: tsConfig.transformMarkedTemplate,
   }
 }
 
@@ -281,8 +161,8 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
     console.warn('Warning: @barefootjs/dom dist not found. Skipping barefoot.js copy.')
   }
 
-  // 2. Create adapter
-  const adapter = await createAdapter(config.adapter, config.adapterOptions)
+  // 2. Adapter (already instantiated in config)
+  const adapter = config.adapter
 
   // 3. Discover component files
   const allFiles: string[] = []
@@ -375,8 +255,8 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
     // 5d. Write marked template (skip in clientOnly mode)
     if (markedJsxContent && !config.clientOnly) {
       let outputContent = markedJsxContent
-      if (hasClientJs && config.scriptCollection) {
-        outputContent = addScriptCollection(markedJsxContent, baseNameNoExt, clientJsFilename)
+      if (hasClientJs && config.transformMarkedTemplate) {
+        outputContent = config.transformMarkedTemplate(markedJsxContent, baseNameNoExt, clientJsFilename)
       }
       await Bun.write(resolve(componentsOutDir, baseFileName), outputContent)
       console.log(`Generated: components/${baseFileName}`)

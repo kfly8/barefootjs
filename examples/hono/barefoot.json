@@ -4,11 +4,5 @@
     "components": "components",
     "tokens": "tokens",
     "meta": "meta"
-  },
-  "build": {
-    "adapter": "hono",
-    "components": ["components", "../shared/components"],
-    "outDir": "dist",
-    "scriptCollection": true
   }
 }
