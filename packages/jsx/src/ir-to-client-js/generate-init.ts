@@ -8,12 +8,13 @@ import { varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
 import { valueReferencesReactiveData, getControlledPropName, detectPropsWithPropertyAccess } from './prop-handling'
 import { IMPORT_PLACEHOLDER, MODULE_CONSTANTS_PLACEHOLDER, detectUsedImports, collectUserDomImports } from './imports'
+import { type Declaration, providedNames, sortDeclarations } from './declaration-sort'
 import {
   collectConditionalSlotIds,
   emitPropsExtraction,
-  emitEarlyConstants,
-  emitSignalsAndMemos,
-  emitFunctionsAndHandlers,
+  emitDeclaration,
+  emitControlledSignalEffect,
+  emitPropsEventHandlers,
   emitDynamicTextUpdates,
   emitClientOnlyExpressions,
   emitReactiveAttributeUpdates,
@@ -75,16 +76,13 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
 
   const neededProps = new Set<string>()
   const neededConstants: ConstantInfo[] = []
-  const outputConstants = new Set<string>()
   const moduleLevelConstants: ConstantInfo[] = []
   const moduleLevelConstantNames = new Set<string>()
 
   for (const constant of ctx.localConstants) {
     if (usedIdentifiers.has(constant.name)) {
       if (!constant.value) {
-        // `let x` with no initializer — always needed, no module-level hoist
         neededConstants.push(constant)
-        outputConstants.add(constant.name)
         continue
       }
 
@@ -98,10 +96,8 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
         continue
       }
 
-      // Arrow functions handled separately; 'props' provided by function parameter
-      if (!trimmedValue.includes('=>') && constant.name !== 'props') {
+      if (constant.name !== 'props') {
         neededConstants.push(constant)
-        outputConstants.add(constant.name)
 
         const refs = valueReferencesReactiveData(constant.value, ctx)
         for (const propName of refs.usedProps) {
@@ -144,48 +140,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
 
   emitPropsExtraction(lines, ctx, neededProps, propsWithPropertyAccess, propsUsedAsLoopArrays)
 
-  // Split constants into early (no signal/memo deps) and late (has signal/memo deps)
-  const signalNames = new Set(ctx.signals.map(s => s.getter))
-  const memoNames = new Set(ctx.memos.map(m => m.name))
-
-  const earlyConstants: ConstantInfo[] = []
-  const lateConstants: ConstantInfo[] = []
-  for (const constant of neededConstants) {
-    if (!constant.value) {
-      // No initializer (e.g. `let x`) — classify as early (no reactive deps)
-      earlyConstants.push(constant)
-      continue
-    }
-    const value = constant.value
-    let dependsOnReactive = false
-    for (const sigName of signalNames) {
-      if (new RegExp(`\\b${sigName}\\b`).test(value)) {
-        dependsOnReactive = true
-        break
-      }
-    }
-    if (!dependsOnReactive) {
-      for (const memoName of memoNames) {
-        if (new RegExp(`\\b${memoName}\\b`).test(value)) {
-          dependsOnReactive = true
-          break
-        }
-      }
-    }
-    if (dependsOnReactive) {
-      lateConstants.push(constant)
-    } else {
-      earlyConstants.push(constant)
-    }
-  }
-
-  emitEarlyConstants(lines, earlyConstants)
-
-  // Emit functions/handlers before signals so that signal initializers can
-  // reference local functions (e.g. `createSignal(toArray(props.x))`).
-  // Arrow-function bodies are lazy and don't depend on signals at definition time. (#365)
-  emitFunctionsAndHandlers(lines, ctx, usedIdentifiers, outputConstants, usedFunctions, neededProps)
-
+  // Build unified Declaration[] and sort by dependency order (#508)
   const controlledSignals: Array<{ signal: typeof ctx.signals[0]; propName: string }> = []
   for (const signal of ctx.signals) {
     const controlledPropName = getControlledPropName(signal, ctx.propsParams, ctx.propsObjectName)
@@ -193,7 +148,74 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
       controlledSignals.push({ signal, propName: controlledPropName })
     }
   }
-  emitSignalsAndMemos(lines, ctx, controlledSignals, lateConstants)
+
+  const declarations: Declaration[] = []
+
+  // Collect constants
+  for (const constant of neededConstants) {
+    declarations.push({
+      kind: 'constant',
+      info: constant,
+      sourceIndex: constant.loc.start.line,
+    })
+  }
+
+  // Collect functions
+  for (const fn of ctx.localFunctions) {
+    if (usedIdentifiers.has(fn.name)) {
+      declarations.push({
+        kind: 'function',
+        info: fn,
+        sourceIndex: fn.loc.start.line,
+      })
+    }
+  }
+
+  // Collect signals
+  for (const signal of ctx.signals) {
+    const controlled = controlledSignals.find(c => c.signal === signal)
+    declarations.push({
+      kind: 'signal',
+      info: signal,
+      controlledPropName: controlled?.propName ?? null,
+      sourceIndex: signal.loc.start.line,
+    })
+  }
+
+  // Collect memos
+  for (const memo of ctx.memos) {
+    declarations.push({
+      kind: 'memo',
+      info: memo,
+      sourceIndex: memo.loc.start.line,
+    })
+  }
+
+  // Build the set of all names defined by declarations for dependency filtering
+  const declNameSet = new Set<string>()
+  for (const decl of declarations) {
+    for (const name of providedNames(decl)) {
+      declNameSet.add(name)
+    }
+  }
+
+  const sorted = sortDeclarations(declarations, declNameSet)
+
+  // Emit sorted declarations
+  let emittedAny = false
+  for (const decl of sorted) {
+    emitDeclaration(lines, decl, ctx, controlledSignals)
+    if (decl.kind === 'signal' && decl.controlledPropName) {
+      emitControlledSignalEffect(lines, decl.info, decl.controlledPropName, ctx)
+    }
+    emittedAny = true
+  }
+  if (emittedAny) {
+    lines.push('')
+  }
+
+  // Emit props-based event handlers (not local definitions)
+  emitPropsEventHandlers(lines, ctx, usedFunctions, neededProps)
 
   const elementRefs = generateElementRefs(ctx)
   if (elementRefs) {
