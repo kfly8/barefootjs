@@ -807,6 +807,34 @@ function valueOnlyUsesKnownNames(value: string, knownNames: Set<string>): boolea
 }
 
 /**
+ * Resolve chained references within a constants map.
+ * If constant A references constant B, replace B's name in A's value with B's resolved value.
+ */
+export function resolveChainedRefs(constants: Map<string, string>): void {
+  let changed = true
+  const maxIterations = constants.size + 1
+  let iteration = 0
+  while (changed && iteration < maxIterations) {
+    changed = false
+    iteration++
+    for (const [constName, constValue] of constants) {
+      let newValue = constValue
+      for (const [otherName, otherValue] of constants) {
+        if (otherName === constName) continue
+        const replaced = newValue.replace(new RegExp(`(?<!\\.)\\b${otherName}\\b`, 'g'), `(${otherValue})`)
+        if (replaced !== newValue) {
+          newValue = replaced
+          changed = true
+        }
+      }
+      if (newValue !== constValue) {
+        constants.set(constName, newValue)
+      }
+    }
+  }
+}
+
+/**
  * Build the inlinable constants map and unsafe local names set from a context.
  * Extracted for reuse by both emitRegistrationAndHydration and generateTemplateOnlyMount (#435).
  */
@@ -878,28 +906,7 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
     inlinableConstants.set(constant.name, trimmedValue)
   }
 
-  // Resolve chained references
-  let changed = true
-  const maxIterations = inlinableConstants.size + 1
-  let iteration = 0
-  while (changed && iteration < maxIterations) {
-    changed = false
-    iteration++
-    for (const [constName, constValue] of inlinableConstants) {
-      let newValue = constValue
-      for (const [otherName, otherValue] of inlinableConstants) {
-        if (otherName === constName) continue
-        const replaced = newValue.replace(new RegExp(`(?<!\\.)\\b${otherName}\\b`, 'g'), `(${otherValue})`)
-        if (replaced !== newValue) {
-          newValue = replaced
-          changed = true
-        }
-      }
-      if (newValue !== constValue) {
-        inlinableConstants.set(constName, newValue)
-      }
-    }
-  }
+  resolveChainedRefs(inlinableConstants)
 
   // Demote constants whose value still references an unsafe name
   const toRemove: string[] = []
@@ -934,9 +941,17 @@ export function buildSignalAndMemoMaps(ctx: ClientJsContext): {
   const signalMap = new Map<string, string>()
   for (const signal of ctx.signals) {
     let initialValue = signal.initialValue
-    // Normalize custom props object name to 'props.'
+    // Normalize custom props object name to 'props.' and add default fallback
+    // to match emitSignalsAndMemos() behavior (prevents undefined rendering in CSR)
     if (ctx.propsObjectName && initialValue.startsWith(propsPrefix)) {
-      initialValue = 'props.' + initialValue.slice(propsPrefix.length)
+      const propRef = 'props.' + initialValue.slice(propsPrefix.length)
+      if (!initialValue.includes('??')) {
+        initialValue = `${propRef} ?? ${inferDefaultValue(signal.type)}`
+      } else {
+        initialValue = propRef
+      }
+    } else if (initialValue.startsWith('props.') && !initialValue.includes('??')) {
+      initialValue = `${initialValue} ?? ${inferDefaultValue(signal.type)}`
     }
     signalMap.set(signal.getter, initialValue)
   }
@@ -945,9 +960,17 @@ export function buildSignalAndMemoMaps(ctx: ClientJsContext): {
   for (const memo of ctx.memos) {
     let expr = memo.computation
     // Extract the function body from arrow function: () => count() * 2 → count() * 2
-    const arrowMatch = expr.match(/^\(\)\s*=>\s*(.+)$/)
+    // Supports both expression arrows `() => expr` and block arrows `() => { return expr }`
+    const arrowMatch = expr.match(/^\(\)\s*=>\s*(.+)$/s)
     if (arrowMatch) {
-      expr = arrowMatch[1]
+      const body = arrowMatch[1].trim()
+      if (body.startsWith('{')) {
+        // Block body: extract return expression
+        const returnMatch = body.match(/return\s+(.+?)\s*[;}]?\s*}$/)
+        expr = returnMatch ? returnMatch[1] : expr
+      } else {
+        expr = body
+      }
     }
     // Replace signal getter calls with initial values
     for (const [getter, initial] of signalMap) {
@@ -986,8 +1009,31 @@ export function emitRegistrationAndHydration(
   } else {
     // CSR fallback: use generateCsrTemplate which handles signals, memos, loops, and child components
     const { signalMap, memoMap } = buildSignalAndMemoMaps(ctx)
+
+    // Re-promote demoted constants by resolving their signal/memo references.
+    // buildInlinableConstants() demotes constants that reference signals/memos (e.g.,
+    // `classes = \`base ${checked() ? 'active' : ''}\``), but for CSR templates we can
+    // inline them by substituting signal/memo calls with their initial values.
+    const csrInlinableConstants = new Map(inlinableConstants)
+    for (const constant of ctx.localConstants) {
+      if (unsafeLocalNames.has(constant.name) && constant.value && !constant.value.includes('=>')) {
+        let value = constant.value.trim()
+        for (const [getter, initial] of signalMap) {
+          value = value.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initial})`)
+        }
+        for (const [name, computation] of memoMap) {
+          value = value.replace(new RegExp(`\\b${name}\\(\\)`, 'g'), `(${computation})`)
+        }
+        // Only re-promote if all signal/memo refs were resolved
+        if (!value.includes('()')) {
+          csrInlinableConstants.set(constant.name, value)
+        }
+      }
+    }
+    resolveChainedRefs(csrInlinableConstants)
+
     const templateHtml = generateCsrTemplate(
-      _ir.root, propNamesForTemplate, inlinableConstants, signalMap, memoMap
+      _ir.root, propNamesForTemplate, csrInlinableConstants, signalMap, memoMap
     )
     if (templateHtml) {
       defParts.push(`template: (props) => \`${templateHtml}\``)
