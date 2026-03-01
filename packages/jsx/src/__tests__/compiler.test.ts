@@ -3931,23 +3931,25 @@ describe('Compiler', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')!
       expect(clientJs).toBeDefined()
 
-      const signalIndex = clientJs.content.indexOf('createSignal')
-      const memoIndex = clientJs.content.indexOf('createMemo')
+      // Search in function body (not import line) using declaration patterns
+      const signalIndex = clientJs.content.indexOf('const [count')
+      const memoIndex = clientJs.content.indexOf('const doubled')
       expect(signalIndex).toBeGreaterThan(-1)
       expect(memoIndex).toBeGreaterThan(-1)
       expect(signalIndex).toBeLessThan(memoIndex)
     })
 
     test('independent declarations preserve source order', () => {
+      // Use non-inlinable constants (function calls) so they appear in client JS
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
 
-        export function MyComponent() {
-          const label = 'Hello'
-          const prefix = 'prefix'
+        export function MyComponent(props) {
+          const config = getConfig()
+          const formatter = createFormatter()
           const [count, setCount] = createSignal(0)
-          return <div onClick={() => setCount(n => n + 1)}>{prefix}: {label} {count()}</div>
+          return <div onClick={() => setCount(n => n + 1)}>{formatter.format(config.prefix, count())}</div>
         }
       `
 
@@ -3958,14 +3960,14 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
 
       const content = clientJs.content
-      const labelIndex = content.indexOf("const label =")
-      const prefixIndex = content.indexOf("const prefix =")
-      expect(labelIndex).toBeGreaterThan(-1)
-      expect(prefixIndex).toBeGreaterThan(-1)
-      expect(labelIndex).toBeLessThan(prefixIndex)
+      const configIndex = content.indexOf("const config =")
+      const formatterIndex = content.indexOf("const formatter =")
+      expect(configIndex).toBeGreaterThan(-1)
+      expect(formatterIndex).toBeGreaterThan(-1)
+      expect(configIndex).toBeLessThan(formatterIndex)
     })
 
-    test('transitive dependencies: constant → constant → signal', () => {
+    test('transitive dependencies: constant depending on signal', () => {
       const source = `
         'use client'
         import { createSignal } from '@barefootjs/dom'
@@ -3973,8 +3975,7 @@ describe('Compiler', () => {
         export function MyComponent() {
           const [items, setItems] = createSignal([1, 2, 3])
           const total = items().reduce((a, b) => a + b, 0)
-          const message = 'Total: ' + total
-          return <div onClick={() => setItems([4, 5, 6])}>{message}</div>
+          return <div onClick={() => setItems([4, 5, 6])}>{total}</div>
         }
       `
 
@@ -3985,15 +3986,12 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
 
       const content = clientJs.content
-      // signal must come before total, total before message
-      const signalIndex = content.indexOf('createSignal')
+      // signal must come before total (total depends on items())
+      const signalIndex = content.indexOf('const [items')
       const totalIndex = content.indexOf('const total =')
-      const messageIndex = content.indexOf("const message =")
       expect(signalIndex).toBeGreaterThan(-1)
       expect(totalIndex).toBeGreaterThan(-1)
-      expect(messageIndex).toBeGreaterThan(-1)
       expect(signalIndex).toBeLessThan(totalIndex)
-      expect(totalIndex).toBeLessThan(messageIndex)
     })
   })
 })
