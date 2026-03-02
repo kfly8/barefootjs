@@ -1594,8 +1594,14 @@ function isSignalOrMemoArray(array: string, ctx: TransformContext): boolean {
 }
 
 /**
- * Check if an expression is reactive, using the TypeChecker when available
- * with a regex-based fallback for backward compatibility.
+ * Check if an expression is reactive.
+ *
+ * Detection strategy:
+ * 1. TypeChecker: walk AST to find Reactive<T> branded types (signals, memos, FieldReturn, etc.)
+ * 2. Signal/memo regex: fallback for when TypeChecker cannot resolve types (e.g., virtual file paths)
+ * 3. Props regex: props are always potentially reactive (parent passes getters) but aren't
+ *    branded with Reactive<T> since users define props interfaces directly.
+ *    Regex is the right tool here — props detection is name-based by design.
  */
 function isReactiveExpression(expr: string, ctx: TransformContext, astNode?: ts.Node): boolean {
   // Type-checker path: walk AST to find Reactive<T> branded types
@@ -1605,12 +1611,26 @@ function isReactiveExpression(expr: string, ctx: TransformContext, astNode?: ts.
     }
   }
 
-  // Regex fallback (always runs to maintain backward compatibility)
-  return isReactiveExpressionRegex(expr, ctx)
+  // Signal/memo regex fallback — needed when TypeChecker cannot resolve imported types
+  // (e.g., virtual file paths in tests, missing type declarations)
+  if (isSignalOrMemoReference(expr, ctx)) {
+    return true
+  }
+
+  // Props are always potentially reactive (parent may pass signal getters),
+  // but they don't carry Reactive<T> brand since users define props types directly.
+  if (isPropsReference(expr, ctx)) {
+    return true
+  }
+
+  return false
 }
 
-function isReactiveExpressionRegex(expr: string, ctx: TransformContext): boolean {
-  // Check for signal calls: count()
+/**
+ * Regex-based signal/memo detection.
+ * Complements TypeChecker for cases where imported types can't be resolved.
+ */
+function isSignalOrMemoReference(expr: string, ctx: TransformContext): boolean {
   for (const signal of ctx.analyzer.signals) {
     const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
     if (pattern.test(expr)) {
@@ -1618,7 +1638,6 @@ function isReactiveExpressionRegex(expr: string, ctx: TransformContext): boolean
     }
   }
 
-  // Check for memo calls: doubled()
   for (const memo of ctx.analyzer.memos) {
     const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
     if (pattern.test(expr)) {
@@ -1626,24 +1645,11 @@ function isReactiveExpressionRegex(expr: string, ctx: TransformContext): boolean
     }
   }
 
-  // Check for props references (both direct references and function calls)
-  // Props need to be dynamic so SSR can render them correctly
-  // But exclude 'children' as it's server-rendered, not dynamically updated
-  for (const prop of ctx.analyzer.propsParams) {
-    if (prop.name === 'children') continue
-    const pattern = new RegExp(`\\b${prop.name}\\b`)
-    if (pattern.test(expr)) {
-      return true
-    }
-  }
-
-  // Check if expression is a local constant that references props/signals/memos
-  // e.g., const classes = `${className} ${variant}` and then class={classes}
+  // Check if expression uses a constant that references signals/memos
   for (const constant of ctx.analyzer.localConstants) {
     const constPattern = new RegExp(`\\b${constant.name}\\b`)
     if (constPattern.test(expr)) {
-      // Check if the constant's value contains reactive references
-      if (constant.value && isReactiveValueRegex(constant.value, ctx)) {
+      if (constant.value && isSignalOrMemoReference(constant.value, ctx)) {
         return true
       }
     }
@@ -1652,28 +1658,27 @@ function isReactiveExpressionRegex(expr: string, ctx: TransformContext): boolean
   return false
 }
 
-function isReactiveValueRegex(value: string, ctx: TransformContext): boolean {
-  // Check for props references in the value
+/**
+ * Check if an expression references props (excluding children).
+ * Props are always treated as reactive because the parent component
+ * may pass signal getters as prop values.
+ */
+function isPropsReference(expr: string, ctx: TransformContext): boolean {
   for (const prop of ctx.analyzer.propsParams) {
+    if (prop.name === 'children') continue
     const pattern = new RegExp(`\\b${prop.name}\\b`)
-    if (pattern.test(value)) {
+    if (pattern.test(expr)) {
       return true
     }
   }
 
-  // Check for signal calls in the value
-  for (const signal of ctx.analyzer.signals) {
-    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
-    if (pattern.test(value)) {
-      return true
-    }
-  }
-
-  // Check for memo calls in the value
-  for (const memo of ctx.analyzer.memos) {
-    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
-    if (pattern.test(value)) {
-      return true
+  // Check if expression uses a local constant derived from props
+  for (const constant of ctx.analyzer.localConstants) {
+    const constPattern = new RegExp(`\\b${constant.name}\\b`)
+    if (constPattern.test(expr)) {
+      if (constant.value && isPropsReference(constant.value, ctx)) {
+        return true
+      }
     }
   }
 
