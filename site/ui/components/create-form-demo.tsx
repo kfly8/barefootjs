@@ -4,6 +4,10 @@
  *
  * Interactive demos for schema-driven form management using createForm.
  * Demonstrates Standard Schema validation with Zod.
+ *
+ * Note: The compiler recognizes direct signal calls (e.g. count()) as reactive,
+ * but not method calls on objects (e.g. form.isSubmitting(), username.error()).
+ * We use createMemo to bridge external reactive APIs into compiler-trackable signals.
  */
 
 import { createMemo } from '@barefootjs/dom'
@@ -28,14 +32,16 @@ export function ProfileFormDemo() {
   })
 
   const username = form.field('username')
-  const loading = createMemo(() => form.isSubmitting())
+  const usernameValue = createMemo(() => username.value())
+  const usernameError = createMemo(() => username.error())
+  const submitting = createMemo(() => form.isSubmitting())
 
   return (
     <form onSubmit={form.handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium leading-none">Username</label>
         <Input
-          value={username.value()}
+          value={usernameValue()}
           onInput={username.handleInput}
           onBlur={username.handleBlur}
           placeholder="barefootjs"
@@ -43,10 +49,10 @@ export function ProfileFormDemo() {
         <p className="text-sm text-muted-foreground">
           This is your public display name.
         </p>
-        <p className="error-message text-sm text-destructive min-h-5">{username.error()}</p>
+        <p className="error-message text-sm text-destructive min-h-5">{usernameError()}</p>
       </div>
-      <Button type="submit" disabled={loading()}>
-        <span className="button-text">{loading() ? 'Submitting...' : 'Submit'}</span>
+      <Button type="submit" disabled={submitting()}>
+        <span className="button-text">{submitting() ? 'Submitting...' : 'Submit'}</span>
       </Button>
     </form>
   )
@@ -71,7 +77,11 @@ export function LoginFormDemo() {
 
   const email = form.field('email')
   const password = form.field('password')
-  const loading = createMemo(() => form.isSubmitting())
+  const emailValue = createMemo(() => email.value())
+  const emailError = createMemo(() => email.error())
+  const passwordValue = createMemo(() => password.value())
+  const passwordError = createMemo(() => password.error())
+  const submitting = createMemo(() => form.isSubmitting())
 
   return (
     <form onSubmit={form.handleSubmit} className="space-y-4">
@@ -79,26 +89,26 @@ export function LoginFormDemo() {
         <label className="text-sm font-medium leading-none">Email</label>
         <Input
           type="email"
-          value={email.value()}
+          value={emailValue()}
           onInput={email.handleInput}
           onBlur={email.handleBlur}
           placeholder="you@example.com"
         />
-        <p className="email-error text-sm text-destructive min-h-5">{email.error()}</p>
+        <p className="email-error text-sm text-destructive min-h-5">{emailError()}</p>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium leading-none">Password</label>
         <Input
           type="password"
-          value={password.value()}
+          value={passwordValue()}
           onInput={password.handleInput}
           onBlur={password.handleBlur}
           placeholder="Enter password"
         />
-        <p className="password-error text-sm text-destructive min-h-5">{password.error()}</p>
+        <p className="password-error text-sm text-destructive min-h-5">{passwordError()}</p>
       </div>
-      <Button type="submit" disabled={loading()}>
-        <span className="button-text">{loading() ? 'Signing in...' : 'Sign in'}</span>
+      <Button type="submit" disabled={submitting()}>
+        <span className="button-text">{submitting() ? 'Signing in...' : 'Sign in'}</span>
       </Button>
     </form>
   )
@@ -121,7 +131,9 @@ export function NotificationsFormDemo() {
 
   const marketing = form.field('marketing')
   const security = form.field('security')
-  const loading = createMemo(() => form.isSubmitting())
+  const marketingValue = createMemo(() => marketing.value())
+  const securityValue = createMemo(() => security.value())
+  const submitting = createMemo(() => form.isSubmitting())
   const dirty = createMemo(() => form.isDirty())
 
   return (
@@ -142,7 +154,7 @@ export function NotificationsFormDemo() {
               </p>
             </div>
             <Switch
-              checked={marketing.value()}
+              checked={marketingValue()}
               onCheckedChange={(checked) => marketing.setValue(checked)}
             />
           </div>
@@ -154,15 +166,15 @@ export function NotificationsFormDemo() {
               </p>
             </div>
             <Switch
-              checked={security.value()}
+              checked={securityValue()}
               onCheckedChange={(checked) => security.setValue(checked)}
             />
           </div>
         </div>
       </div>
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading() || !dirty()}>
-          <span className="button-text">{loading() ? 'Saving...' : 'Save preferences'}</span>
+        <Button type="submit" disabled={submitting() || !dirty()}>
+          <span className="button-text">{submitting() ? 'Saving...' : 'Save preferences'}</span>
         </Button>
         {dirty() ? (
           <Button type="button" variant="outline" onClick={() => form.reset()}>
@@ -203,7 +215,11 @@ export function ServerErrorFormDemo() {
 
   const email = form.field('email')
   const username = form.field('username')
-  const loading = createMemo(() => form.isSubmitting())
+  const emailValue = createMemo(() => email.value())
+  const emailError = createMemo(() => email.error())
+  const usernameValue = createMemo(() => username.value())
+  const usernameError = createMemo(() => username.error())
+  const submitting = createMemo(() => form.isSubmitting())
 
   return (
     <form onSubmit={form.handleSubmit} className="space-y-4">
@@ -211,28 +227,28 @@ export function ServerErrorFormDemo() {
         <label className="text-sm font-medium leading-none">Email</label>
         <Input
           type="email"
-          value={email.value()}
+          value={emailValue()}
           onInput={email.handleInput}
           onBlur={email.handleBlur}
           placeholder="you@example.com"
         />
-        <p className="email-error text-sm text-destructive min-h-5">{email.error()}</p>
+        <p className="email-error text-sm text-destructive min-h-5">{emailError()}</p>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium leading-none">Username</label>
         <Input
-          value={username.value()}
+          value={usernameValue()}
           onInput={username.handleInput}
           onBlur={username.handleBlur}
           placeholder="Enter username"
         />
-        <p className="username-error text-sm text-destructive min-h-5">{username.error()}</p>
+        <p className="username-error text-sm text-destructive min-h-5">{usernameError()}</p>
       </div>
       <p className="text-xs text-muted-foreground">
         Try "taken@example.com" or username "admin" to see server errors.
       </p>
-      <Button type="submit" disabled={loading()}>
-        <span className="button-text">{loading() ? 'Registering...' : 'Register'}</span>
+      <Button type="submit" disabled={submitting()}>
+        <span className="button-text">{submitting() ? 'Registering...' : 'Register'}</span>
       </Button>
     </form>
   )

@@ -59,3 +59,32 @@ export function collectUserDomImports(ir: ComponentIR): string[] {
   }
   return userImports
 }
+
+/**
+ * Collect external (non-DOM, non-component) imports that are used in generated code.
+ * These are third-party libraries like @barefootjs/form, zod, etc. that need to be
+ * preserved in client JS output so the browser can resolve them via import map.
+ */
+export function collectExternalImports(ir: ComponentIR, generatedCode: string): string[] {
+  const importLines: string[] = []
+  for (const imp of ir.metadata.imports) {
+    // Skip type-only, DOM (handled separately), and component imports
+    if (imp.isTypeOnly) continue
+    if (imp.source === '@barefootjs/dom') continue
+    if (imp.source.startsWith('@ui/') || imp.source.startsWith('./') || imp.source.startsWith('../')) continue
+
+    // Check which specifiers are actually used in the generated code
+    const usedSpecs: string[] = []
+    for (const spec of imp.specifiers) {
+      const localName = spec.alias || spec.name
+      if (new RegExp(`\\b${localName}\\b`).test(generatedCode)) {
+        usedSpecs.push(spec.alias ? `${spec.name} as ${spec.alias}` : spec.name)
+      }
+    }
+
+    if (usedSpecs.length > 0) {
+      importLines.push(`import { ${usedSpecs.join(', ')} } from '${imp.source}'`)
+    }
+  }
+  return importLines
+}

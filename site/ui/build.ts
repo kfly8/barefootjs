@@ -122,11 +122,17 @@ if (formBuildResult.outputs.length > 0) {
 }
 
 // Bundle zod for client-side use (needed by createForm demos)
+// Use a wrapper to ensure named exports (z) are preserved in the ESM bundle,
+// since the CJS entry only produces a default export when bundled directly.
 console.log('Building zod for site...')
+const zodWrapper = resolve(ROOT_DIR, '.zod-esm-wrapper.ts')
+await Bun.write(zodWrapper, `export { z } from 'zod';\n`)
 const zodBuildResult = await Bun.build({
-  entrypoints: [require.resolve('zod')],
+  entrypoints: [zodWrapper],
   format: 'esm',
 })
+// Clean up temporary wrapper
+await Bun.file(zodWrapper).exists() && await import('node:fs/promises').then(fs => fs.unlink(zodWrapper))
 if (zodBuildResult.outputs.length > 0) {
   const zodDir = resolve(DIST_DIR, 'lib')
   await mkdir(zodDir, { recursive: true })
