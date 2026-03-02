@@ -31,104 +31,264 @@ const tocItems: TocItem[] = [
   { id: 'api-reference', title: 'API Reference' },
 ]
 
-// Code examples
-const profileFormCode = `import { createForm } from '@barefootjs/form'
+// --- Code examples ---
+
+const profileFormCode = `"use client"
+
+import { createMemo } from '@barefootjs/dom'
+import { createForm } from '@barefootjs/form'
 import { z } from 'zod'
 
+function ProfileForm() {
+  const form = createForm({
+    schema: z.object({
+      username: z.string()
+        .min(1, 'Username is required')
+        .max(30, 'Username must be at most 30 characters'),
+    }),
+    defaultValues: { username: '' },
+    onSubmit: async (data) => {
+      await fetch('/api/profile', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    },
+  })
+
+  const username = form.field('username')
+  const usernameValue = createMemo(() => username.value())
+  const usernameError = createMemo(() => username.error())
+  const submitting = createMemo(() => form.isSubmitting())
+
+  return (
+    <form onSubmit={form.handleSubmit}>
+      <label>Username</label>
+      <input
+        value={usernameValue()}
+        onInput={username.handleInput}
+        onBlur={username.handleBlur}
+      />
+      <p>{usernameError()}</p>
+      <button type="submit" disabled={submitting()}>
+        {submitting() ? 'Submitting...' : 'Submit'}
+      </button>
+    </form>
+  )
+}`
+
+const valibotSchemaCode = `import { createForm } from '@barefootjs/form'
+import * as v from 'valibot'
+
+// Just swap the schema — everything else stays the same
 const form = createForm({
-  schema: z.object({
-    username: z.string().min(2).max(30),
+  schema: v.object({
+    username: v.pipe(
+      v.string(),
+      v.minLength(1, 'Username is required'),
+      v.maxLength(30, 'Username must be at most 30 characters'),
+    ),
   }),
   defaultValues: { username: '' },
-  onSubmit: async (data) => {
-    // Send data to your API
-  },
-})
-
-const username = form.field('username')
-
-<form onSubmit={form.handleSubmit}>
-  <Input
-    value={username.value()}
-    onInput={username.handleInput}
-    onBlur={username.handleBlur}
-  />
-  <p>{username.error()}</p>
-  <Button disabled={form.isSubmitting()}>Submit</Button>
-</form>`
-
-const loginFormCode = `import { createForm } from '@barefootjs/form'
-import { z } from 'zod'
-
-const form = createForm({
-  schema: z.object({
-    email: z.string().email(),
-    password: z.string().min(8),
-  }),
-  defaultValues: { email: '', password: '' },
-  validateOn: 'blur',       // Validate when user leaves field
-  revalidateOn: 'input',    // Re-validate on every keystroke after first error
   onSubmit: async (data) => { /* ... */ },
-})
-
-const email = form.field('email')
-const password = form.field('password')
-
-<form onSubmit={form.handleSubmit}>
-  <Input
-    value={email.value()}
-    onInput={email.handleInput}
-    onBlur={email.handleBlur}
-  />
-  <p>{email.error()}</p>
-  {/* ... */}
-</form>`
-
-const notificationsFormCode = `import { createForm } from '@barefootjs/form'
-import { z } from 'zod'
-
-const form = createForm({
-  schema: z.object({
-    marketing: z.boolean(),
-    security: z.boolean(),
-  }),
-  defaultValues: { marketing: false, security: true },
-  onSubmit: async (data) => { /* ... */ },
-})
-
-const marketing = form.field('marketing')
-
-// Use setValue for non-input components like Switch
-<Switch
-  checked={marketing.value()}
-  onCheckedChange={(checked) => marketing.setValue(checked)}
-/>
-
-// Track dirty state for conditional UI
-<Button disabled={!form.isDirty()}>Save</Button>
-<Button onClick={() => form.reset()}>Reset</Button>`
-
-const serverErrorCode = `import { createForm } from '@barefootjs/form'
-import { z } from 'zod'
-
-const form = createForm({
-  schema: z.object({
-    email: z.string().email(),
-    username: z.string().min(2),
-  }),
-  defaultValues: { email: '', username: '' },
-  onSubmit: async (data) => {
-    const res = await fetch('/api/register', { ... })
-    if (!res.ok) {
-      const errors = await res.json()
-      // Set server-side errors on specific fields
-      form.setError('email', errors.email)
-      return
-    }
-  },
 })`
 
-const installCode = `bun add @barefootjs/form zod`
+const arktypeSchemaCode = `import { createForm } from '@barefootjs/form'
+import { type } from 'arktype'
+
+const form = createForm({
+  schema: type({
+    username: '1 <= string <= 30',
+  }),
+  defaultValues: { username: '' },
+  onSubmit: async (data) => { /* ... */ },
+})`
+
+const loginFormCode = `"use client"
+
+import { createMemo } from '@barefootjs/dom'
+import { createForm } from '@barefootjs/form'
+import { z } from 'zod'
+
+function LoginForm() {
+  const form = createForm({
+    schema: z.object({
+      email: z.string().email('Please enter a valid email address'),
+      password: z.string().min(8, 'Password must be at least 8 characters'),
+    }),
+    defaultValues: { email: '', password: '' },
+    validateOn: 'blur',       // Validate when user leaves field
+    revalidateOn: 'input',    // Re-validate on every keystroke after first error
+    onSubmit: async (data) => {
+      await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    },
+  })
+
+  const email = form.field('email')
+  const password = form.field('password')
+  const emailValue = createMemo(() => email.value())
+  const emailError = createMemo(() => email.error())
+  const passwordValue = createMemo(() => password.value())
+  const passwordError = createMemo(() => password.error())
+  const submitting = createMemo(() => form.isSubmitting())
+
+  return (
+    <form onSubmit={form.handleSubmit}>
+      <div>
+        <label>Email</label>
+        <input
+          type="email"
+          value={emailValue()}
+          onInput={email.handleInput}
+          onBlur={email.handleBlur}
+        />
+        <p>{emailError()}</p>
+      </div>
+      <div>
+        <label>Password</label>
+        <input
+          type="password"
+          value={passwordValue()}
+          onInput={password.handleInput}
+          onBlur={password.handleBlur}
+        />
+        <p>{passwordError()}</p>
+      </div>
+      <button type="submit" disabled={submitting()}>
+        {submitting() ? 'Signing in...' : 'Sign in'}
+      </button>
+    </form>
+  )
+}`
+
+const notificationsFormCode = `"use client"
+
+import { createMemo } from '@barefootjs/dom'
+import { createForm } from '@barefootjs/form'
+import { Switch } from './ui/switch'
+import { z } from 'zod'
+
+function NotificationsForm() {
+  const form = createForm({
+    schema: z.object({
+      marketing: z.boolean(),
+      security: z.boolean(),
+    }),
+    defaultValues: { marketing: false, security: true },
+    onSubmit: async (data) => {
+      await fetch('/api/notifications', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    },
+  })
+
+  const marketing = form.field('marketing')
+  const security = form.field('security')
+  const marketingValue = createMemo(() => marketing.value())
+  const securityValue = createMemo(() => security.value())
+  const submitting = createMemo(() => form.isSubmitting())
+  const dirty = createMemo(() => form.isDirty())
+
+  return (
+    <form onSubmit={form.handleSubmit}>
+      {/* Use setValue() for custom components like Switch */}
+      <Switch
+        checked={marketingValue()}
+        onCheckedChange={(checked) => marketing.setValue(checked)}
+      />
+      <Switch
+        checked={securityValue()}
+        onCheckedChange={(checked) => security.setValue(checked)}
+      />
+      <button type="submit" disabled={submitting() || !dirty()}>
+        Save preferences
+      </button>
+      {dirty() ? (
+        <button type="button" onClick={() => form.reset()}>
+          Reset
+        </button>
+      ) : null}
+    </form>
+  )
+}`
+
+const serverErrorCode = `"use client"
+
+import { createMemo } from '@barefootjs/dom'
+import { createForm } from '@barefootjs/form'
+import { z } from 'zod'
+
+function RegisterForm() {
+  const form = createForm({
+    schema: z.object({
+      email: z.string().email('Please enter a valid email address'),
+      username: z.string().min(1, 'Username is required'),
+    }),
+    defaultValues: { email: '', username: '' },
+    validateOn: 'blur',
+    revalidateOn: 'input',
+    onSubmit: async (data) => {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const errors = await res.json()
+        // Set server-side errors on specific fields
+        if (errors.email) form.setError('email', errors.email)
+        if (errors.username) form.setError('username', errors.username)
+        return
+      }
+    },
+  })
+
+  const email = form.field('email')
+  const username = form.field('username')
+  const emailValue = createMemo(() => email.value())
+  const emailError = createMemo(() => email.error())
+  const usernameValue = createMemo(() => username.value())
+  const usernameError = createMemo(() => username.error())
+  const submitting = createMemo(() => form.isSubmitting())
+
+  return (
+    <form onSubmit={form.handleSubmit}>
+      <div>
+        <label>Email</label>
+        <input
+          type="email"
+          value={emailValue()}
+          onInput={email.handleInput}
+          onBlur={email.handleBlur}
+        />
+        <p>{emailError()}</p>
+      </div>
+      <div>
+        <label>Username</label>
+        <input
+          value={usernameValue()}
+          onInput={username.handleInput}
+          onBlur={username.handleBlur}
+        />
+        <p>{usernameError()}</p>
+      </div>
+      <button type="submit" disabled={submitting()}>
+        {submitting() ? 'Registering...' : 'Register'}
+      </button>
+    </form>
+  )
+}`
+
+const installCode = `# With Zod
+bun add @barefootjs/form zod
+
+# With Valibot
+bun add @barefootjs/form valibot
+
+# With ArkType
+bun add @barefootjs/form arktype`
 
 export function CreateFormPage() {
   return (
@@ -152,18 +312,26 @@ export function CreateFormPage() {
             <p className="text-muted-foreground">
               <code className="text-foreground">createForm</code> provides schema-driven form management using{' '}
               <a href="https://github.com/standard-schema/standard-schema" className="text-foreground underline underline-offset-4">Standard Schema</a> for validation.
-              It works with any schema library that implements the Standard Schema spec (Zod, Valibot, ArkType, etc.).
+              It works with any schema library that implements the Standard Schema spec — Zod, Valibot, ArkType, and more.
             </p>
             <p className="text-muted-foreground mt-2">
               Key features:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-1 mt-2">
-              <li><strong>Schema-driven validation</strong>: Define your schema once, get type-safe field access and validation</li>
+              <li><strong>Any Standard Schema validator</strong>: Zod, Valibot, ArkType — just swap the schema, everything else stays the same</li>
               <li><strong>Configurable timing</strong>: <code className="text-foreground">validateOn</code> and <code className="text-foreground">revalidateOn</code> control when validation runs</li>
               <li><strong>Field controllers</strong>: <code className="text-foreground">form.field("name")</code> returns value, error, touched, dirty, and handlers</li>
               <li><strong>Server errors</strong>: <code className="text-foreground">form.setError()</code> for server-side validation feedback</li>
               <li><strong>Dirty tracking</strong>: <code className="text-foreground">form.isDirty()</code> compares current values against defaults</li>
             </ul>
+            <div className="mt-4 p-3 rounded-lg border border-border bg-card">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Note:</strong>{' '}
+                The BarefootJS compiler recognizes direct signal calls (e.g. <code className="text-foreground">count()</code>) as reactive,
+                but not method calls on objects (e.g. <code className="text-foreground">form.isSubmitting()</code>).
+                Use <code className="text-foreground">createMemo</code> to bridge <code className="text-foreground">createForm</code>'s reactive API into compiler-trackable signals.
+              </p>
+            </div>
           </div>
         </Section>
 
@@ -184,6 +352,25 @@ export function CreateFormPage() {
               <p className="text-sm text-muted-foreground mt-2">
                 Basic usage: one field with schema validation. The form validates on submit by default.
               </p>
+
+              <div className="mt-6 space-y-4">
+                <h4 className="text-sm font-medium text-foreground">Using other validators</h4>
+                <p className="text-sm text-muted-foreground">
+                  <code className="text-foreground">createForm</code> accepts any{' '}
+                  <a href="https://github.com/standard-schema/standard-schema" className="text-foreground underline underline-offset-4">Standard Schema</a> validator.
+                  Just swap the schema definition — the rest of the component stays exactly the same.
+                </p>
+
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Valibot</p>
+                  <CodeBlock code={valibotSchemaCode} lang="tsx" />
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ArkType</p>
+                  <CodeBlock code={arktypeSchemaCode} lang="tsx" />
+                </div>
+              </div>
             </div>
 
             <div id="login-form">
@@ -231,7 +418,7 @@ export function CreateFormPage() {
             <div className="p-4 bg-muted rounded-lg">
               <h3 className="font-semibold text-foreground mb-2">createForm(options)</h3>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li><code className="text-foreground">schema</code> — Standard Schema object (e.g. Zod schema)</li>
+                <li><code className="text-foreground">schema</code> — Standard Schema object (Zod, Valibot, ArkType, etc.)</li>
                 <li><code className="text-foreground">defaultValues</code> — Initial field values</li>
                 <li><code className="text-foreground">validateOn</code> — When to first validate: <code className="text-foreground">"input"</code> | <code className="text-foreground">"blur"</code> | <code className="text-foreground">"submit"</code> (default: <code className="text-foreground">"submit"</code>)</li>
                 <li><code className="text-foreground">revalidateOn</code> — When to re-validate after first error: <code className="text-foreground">"input"</code> | <code className="text-foreground">"blur"</code> | <code className="text-foreground">"submit"</code> (default: <code className="text-foreground">"input"</code>)</li>

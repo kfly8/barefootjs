@@ -3,7 +3,7 @@
  * CreateFormDemo Components
  *
  * Interactive demos for schema-driven form management using createForm.
- * Demonstrates Standard Schema validation with Zod.
+ * Demonstrates Standard Schema validation (Zod, Valibot, ArkType, etc.).
  *
  * Note: The compiler recognizes direct signal calls (e.g. count()) as reactive,
  * but not method calls on objects (e.g. form.isSubmitting(), username.error()).
@@ -23,7 +23,7 @@ import { z } from 'zod'
 export function ProfileFormDemo() {
   const form = createForm({
     schema: z.object({
-      username: z.string().min(2, 'Username must be at least 2 characters').max(30, 'Username must be at most 30 characters'),
+      username: z.string().min(1, 'Username is required').max(30, 'Username must be at most 30 characters'),
     }),
     defaultValues: { username: '' },
     onSubmit: async () => {
