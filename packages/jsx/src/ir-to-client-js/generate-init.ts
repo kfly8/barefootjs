@@ -7,7 +7,7 @@ import type { ClientJsContext } from './types'
 import { varSlotId } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions } from './identifiers'
 import { valueReferencesReactiveData, getControlledPropName, detectPropsWithPropertyAccess } from './prop-handling'
-import { IMPORT_PLACEHOLDER, MODULE_CONSTANTS_PLACEHOLDER, detectUsedImports, collectUserDomImports } from './imports'
+import { IMPORT_PLACEHOLDER, MODULE_CONSTANTS_PLACEHOLDER, detectUsedImports, collectUserDomImports, collectExternalImports } from './imports'
 import { type Declaration, providedNames, sortDeclarations } from './declaration-sort'
 import {
   collectConditionalSlotIds,
@@ -251,6 +251,10 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   const sortedImports = [...usedImports].sort()
   const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/dom'`
 
+  // Collect external (non-DOM) imports used in the generated code
+  const externalImportLines = collectExternalImports(_ir, generatedCode)
+  const allImportLines = [importLine, ...externalImportLines].join('\n')
+
   // Module-level constants use `var` with nullish coalescing for safe
   // re-declaration when multiple components in the same file share context
   let moduleConstantsCode = ''
@@ -264,7 +268,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   }
 
   return generatedCode
-    .replace(IMPORT_PLACEHOLDER, importLine)
+    .replace(IMPORT_PLACEHOLDER, allImportLines)
     .replace(MODULE_CONSTANTS_PLACEHOLDER, moduleConstantsCode)
 }
 
