@@ -50,7 +50,7 @@ export async function compileJSX(
   }
 
   // Single component flow
-  const ctx = analyzeComponent(source, entryPath)
+  const ctx = analyzeComponent(source, entryPath, undefined, options.program)
 
   if (!ctx.jsxReturn) {
     errors.push(...ctx.errors)  // Only analyzer errors
@@ -126,7 +126,7 @@ function compileMultipleComponentsSync(
   const entries: { componentIR: ComponentIR; ctx: ReturnType<typeof analyzeComponent> }[] = []
 
   for (const componentName of componentNames) {
-    const ctx = analyzeComponent(source, filePath, componentName)
+    const ctx = analyzeComponent(source, filePath, componentName, options.program)
 
     if (!ctx.jsxReturn) {
       errors.push(...ctx.errors)
@@ -347,7 +347,7 @@ export function compileJSXSync(
   }
 
   // Single component flow
-  const ctx = analyzeComponent(source, filePath)
+  const ctx = analyzeComponent(source, filePath, undefined, options.program)
 
   if (!ctx.jsxReturn) {
     errors.push(...ctx.errors)  // Only analyzer errors

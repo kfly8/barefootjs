@@ -28,6 +28,7 @@ import type {
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
 import { createError, ErrorCodes } from './errors'
+import { containsReactiveExpression } from './reactivity-checker'
 
 // =============================================================================
 // Transform Context
@@ -40,6 +41,8 @@ interface TransformContext {
   slotIdCounter: number
   isRoot: boolean
   insideComponentChildren: boolean
+  /** TypeScript type checker for type-based reactivity detection (null = regex fallback) */
+  checker: ts.TypeChecker | null
   /** Shortcut for analyzer.getJS(node) */
   getJS(node: ts.Node): string
 }
@@ -52,6 +55,7 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
     slotIdCounter: 0,
     isRoot: true,
     insideComponentChildren: false,
+    checker: analyzer.checker,
     getJS(node: ts.Node): string {
       return analyzer.getJS(node)
     },
@@ -606,7 +610,7 @@ function transformExpression(
 
   // Regular expression
   const exprText = ctx.getJS(expr)
-  const reactive = isReactiveExpression(exprText, ctx)
+  const reactive = isReactiveExpression(exprText, ctx, expr)
   // @client expressions always need slotId and are treated as reactive for client-side evaluation
   const needsSlot = reactive || isClientOnly
   const slotId = needsSlot ? generateSlotId(ctx) : null
@@ -631,7 +635,7 @@ function transformConditional(
   ctx: TransformContext
 ): IRConditional {
   const condition = ctx.getJS(node.condition)
-  const reactive = isReactiveExpression(condition, ctx)
+  const reactive = isReactiveExpression(condition, ctx, node.condition)
   const slotId = reactive ? generateSlotId(ctx) : null
 
   // Transform both branches
@@ -655,7 +659,7 @@ function transformLogicalAnd(
   ctx: TransformContext
 ): IRConditional {
   const condition = ctx.getJS(node.left)
-  const reactive = isReactiveExpression(condition, ctx)
+  const reactive = isReactiveExpression(condition, ctx, node.left)
   const slotId = reactive ? generateSlotId(ctx) : null
 
   const whenTrue = transformConditionalBranch(node.right, ctx)
@@ -710,7 +714,7 @@ function transformConditionalBranch(
     type: 'expression',
     expr: exprText,
     typeInfo: inferExpressionType(node, ctx),
-    reactive: isReactiveExpression(exprText, ctx),
+    reactive: isReactiveExpression(exprText, ctx, node),
     slotId: null,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
@@ -1589,7 +1593,23 @@ function isSignalOrMemoArray(array: string, ctx: TransformContext): boolean {
   return false
 }
 
-function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
+/**
+ * Check if an expression is reactive, using the TypeChecker when available
+ * with a regex-based fallback for backward compatibility.
+ */
+function isReactiveExpression(expr: string, ctx: TransformContext, astNode?: ts.Node): boolean {
+  // Type-checker path: walk AST to find Reactive<T> branded types
+  if (ctx.checker && astNode) {
+    if (containsReactiveExpression(astNode, ctx.checker)) {
+      return true
+    }
+  }
+
+  // Regex fallback (always runs to maintain backward compatibility)
+  return isReactiveExpressionRegex(expr, ctx)
+}
+
+function isReactiveExpressionRegex(expr: string, ctx: TransformContext): boolean {
   // Check for signal calls: count()
   for (const signal of ctx.analyzer.signals) {
     const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
@@ -1623,7 +1643,7 @@ function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
     const constPattern = new RegExp(`\\b${constant.name}\\b`)
     if (constPattern.test(expr)) {
       // Check if the constant's value contains reactive references
-      if (constant.value && isReactiveValue(constant.value, ctx)) {
+      if (constant.value && isReactiveValueRegex(constant.value, ctx)) {
         return true
       }
     }
@@ -1632,7 +1652,7 @@ function isReactiveExpression(expr: string, ctx: TransformContext): boolean {
   return false
 }
 
-function isReactiveValue(value: string, ctx: TransformContext): boolean {
+function isReactiveValueRegex(value: string, ctx: TransformContext): boolean {
   // Check for props references in the value
   for (const prop of ctx.analyzer.propsParams) {
     const pattern = new RegExp(`\\b${prop.name}\\b`)
