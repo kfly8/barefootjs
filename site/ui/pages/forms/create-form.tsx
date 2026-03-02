@@ -35,7 +35,6 @@ const tocItems: TocItem[] = [
 
 const profileFormCode = `"use client"
 
-import { createMemo } from '@barefootjs/dom'
 import { createForm } from '@barefootjs/form'
 import { z } from 'zod'
 
@@ -56,21 +55,18 @@ function ProfileForm() {
   })
 
   const username = form.field('username')
-  const usernameValue = createMemo(() => username.value())
-  const usernameError = createMemo(() => username.error())
-  const submitting = createMemo(() => form.isSubmitting())
 
   return (
     <form onSubmit={form.handleSubmit}>
       <label>Username</label>
       <input
-        value={usernameValue()}
+        value={username.value()}
         onInput={username.handleInput}
         onBlur={username.handleBlur}
       />
-      <p>{usernameError()}</p>
-      <button type="submit" disabled={submitting()}>
-        {submitting() ? 'Submitting...' : 'Submit'}
+      <p>{username.error()}</p>
+      <button type="submit" disabled={form.isSubmitting()}>
+        {form.isSubmitting() ? 'Submitting...' : 'Submit'}
       </button>
     </form>
   )
@@ -105,7 +101,6 @@ const form = createForm({
 
 const loginFormCode = `"use client"
 
-import { createMemo } from '@barefootjs/dom'
 import { createForm } from '@barefootjs/form'
 import { z } from 'zod'
 
@@ -128,11 +123,6 @@ function LoginForm() {
 
   const email = form.field('email')
   const password = form.field('password')
-  const emailValue = createMemo(() => email.value())
-  const emailError = createMemo(() => email.error())
-  const passwordValue = createMemo(() => password.value())
-  const passwordError = createMemo(() => password.error())
-  const submitting = createMemo(() => form.isSubmitting())
 
   return (
     <form onSubmit={form.handleSubmit}>
@@ -140,24 +130,24 @@ function LoginForm() {
         <label>Email</label>
         <input
           type="email"
-          value={emailValue()}
+          value={email.value()}
           onInput={email.handleInput}
           onBlur={email.handleBlur}
         />
-        <p>{emailError()}</p>
+        <p>{email.error()}</p>
       </div>
       <div>
         <label>Password</label>
         <input
           type="password"
-          value={passwordValue()}
+          value={password.value()}
           onInput={password.handleInput}
           onBlur={password.handleBlur}
         />
-        <p>{passwordError()}</p>
+        <p>{password.error()}</p>
       </div>
-      <button type="submit" disabled={submitting()}>
-        {submitting() ? 'Signing in...' : 'Sign in'}
+      <button type="submit" disabled={form.isSubmitting()}>
+        {form.isSubmitting() ? 'Signing in...' : 'Sign in'}
       </button>
     </form>
   )
@@ -165,7 +155,6 @@ function LoginForm() {
 
 const notificationsFormCode = `"use client"
 
-import { createMemo } from '@barefootjs/dom'
 import { createForm } from '@barefootjs/form'
 import { Switch } from './ui/switch'
 import { z } from 'zod'
@@ -187,26 +176,22 @@ function NotificationsForm() {
 
   const marketing = form.field('marketing')
   const security = form.field('security')
-  const marketingValue = createMemo(() => marketing.value())
-  const securityValue = createMemo(() => security.value())
-  const submitting = createMemo(() => form.isSubmitting())
-  const dirty = createMemo(() => form.isDirty())
 
   return (
     <form onSubmit={form.handleSubmit}>
       {/* Use setValue() for custom components like Switch */}
       <Switch
-        checked={marketingValue()}
+        checked={marketing.value()}
         onCheckedChange={(checked) => marketing.setValue(checked)}
       />
       <Switch
-        checked={securityValue()}
+        checked={security.value()}
         onCheckedChange={(checked) => security.setValue(checked)}
       />
-      <button type="submit" disabled={submitting() || !dirty()}>
+      <button type="submit" disabled={form.isSubmitting() || !form.isDirty()}>
         Save preferences
       </button>
-      {dirty() ? (
+      {form.isDirty() ? (
         <button type="button" onClick={() => form.reset()}>
           Reset
         </button>
@@ -217,7 +202,6 @@ function NotificationsForm() {
 
 const serverErrorCode = `"use client"
 
-import { createMemo } from '@barefootjs/dom'
 import { createForm } from '@barefootjs/form'
 import { z } from 'zod'
 
@@ -247,11 +231,6 @@ function RegisterForm() {
 
   const email = form.field('email')
   const username = form.field('username')
-  const emailValue = createMemo(() => email.value())
-  const emailError = createMemo(() => email.error())
-  const usernameValue = createMemo(() => username.value())
-  const usernameError = createMemo(() => username.error())
-  const submitting = createMemo(() => form.isSubmitting())
 
   return (
     <form onSubmit={form.handleSubmit}>
@@ -259,23 +238,23 @@ function RegisterForm() {
         <label>Email</label>
         <input
           type="email"
-          value={emailValue()}
+          value={email.value()}
           onInput={email.handleInput}
           onBlur={email.handleBlur}
         />
-        <p>{emailError()}</p>
+        <p>{email.error()}</p>
       </div>
       <div>
         <label>Username</label>
         <input
-          value={usernameValue()}
+          value={username.value()}
           onInput={username.handleInput}
           onBlur={username.handleBlur}
         />
-        <p>{usernameError()}</p>
+        <p>{username.error()}</p>
       </div>
-      <button type="submit" disabled={submitting()}>
-        {submitting() ? 'Registering...' : 'Register'}
+      <button type="submit" disabled={form.isSubmitting()}>
+        {form.isSubmitting() ? 'Registering...' : 'Register'}
       </button>
     </form>
   )
@@ -324,14 +303,6 @@ export function CreateFormPage() {
               <li><strong>Server errors</strong>: <code className="text-foreground">form.setError()</code> for server-side validation feedback</li>
               <li><strong>Dirty tracking</strong>: <code className="text-foreground">form.isDirty()</code> compares current values against defaults</li>
             </ul>
-            <div className="mt-4 p-3 rounded-lg border border-border bg-card">
-              <p className="text-sm text-muted-foreground">
-                <strong className="text-foreground">Note:</strong>{' '}
-                The BarefootJS compiler recognizes direct signal calls (e.g. <code className="text-foreground">count()</code>) as reactive,
-                but not method calls on objects (e.g. <code className="text-foreground">form.isSubmitting()</code>).
-                Use <code className="text-foreground">createMemo</code> to bridge <code className="text-foreground">createForm</code>'s reactive API into compiler-trackable signals.
-              </p>
-            </div>
           </div>
         </Section>
 
