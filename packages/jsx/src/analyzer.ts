@@ -27,6 +27,12 @@ import path from 'path'
  * Create a TypeScript program for a single file to enable type-based reactivity detection.
  * Uses a virtual CompilerHost that injects the source string as a virtual file
  * and delegates to the real file system for node_modules resolution.
+ *
+ * Note: Module resolution depends on node_modules being reachable from the file's
+ * directory. If the file path is virtual or node_modules isn't accessible,
+ * imported types may resolve to `any` and the signal/memo regex fallback kicks in.
+ * For full type resolution in build tools, pass a pre-built ts.Program via
+ * CompileOptions.program instead.
  */
 function createProgramForFile(
   source: string,
@@ -43,7 +49,6 @@ function createProgramForFile(
       strict: true,
       skipLibCheck: true,
       noEmit: true,
-      // Enable resolving from node_modules
       baseUrl: path.dirname(normalizedPath),
     }
 
