@@ -34,6 +34,14 @@ import { containsReactiveExpression } from './reactivity-checker'
 // Transform Context
 // =============================================================================
 
+/** Pre-compiled regex patterns for reactivity detection */
+interface ReactivityPatterns {
+  signals: { getter: string; pattern: RegExp }[]
+  memos: { name: string; pattern: RegExp }[]
+  props: { name: string; pattern: RegExp }[]
+  constants: { name: string; value: string | undefined; pattern: RegExp }[]
+}
+
 interface TransformContext {
   analyzer: AnalyzerContext
   sourceFile: ts.SourceFile
@@ -41,6 +49,7 @@ interface TransformContext {
   slotIdCounter: number
   isRoot: boolean
   insideComponentChildren: boolean
+  patterns: ReactivityPatterns
   /** Shortcut for analyzer.getJS(node) */
   getJS(node: ts.Node): string
 }
@@ -53,6 +62,24 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
     slotIdCounter: 0,
     isRoot: true,
     insideComponentChildren: false,
+    patterns: {
+      signals: analyzer.signals.map(s => ({
+        getter: s.getter,
+        pattern: new RegExp(`\\b${s.getter}\\s*\\(`),
+      })),
+      memos: analyzer.memos.map(m => ({
+        name: m.name,
+        pattern: new RegExp(`\\b${m.name}\\s*\\(`),
+      })),
+      props: analyzer.propsParams
+        .filter(p => p.name !== 'children')
+        .map(p => ({ name: p.name, pattern: new RegExp(`\\b${p.name}\\b`) })),
+      constants: analyzer.localConstants.map(c => ({
+        name: c.name,
+        value: c.value,
+        pattern: new RegExp(`\\b${c.name}\\b`),
+      })),
+    },
     getJS(node: ts.Node): string {
       return analyzer.getJS(node)
     },
@@ -1571,22 +1598,12 @@ function checkBareSignalOrMemoIdentifier(
  * Props and local constants are considered static (don't change at runtime).
  */
 function isSignalOrMemoArray(array: string, ctx: TransformContext): boolean {
-  // Check for signal calls: todos()
-  for (const signal of ctx.analyzer.signals) {
-    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
-    if (pattern.test(array)) {
-      return true
-    }
+  for (const { pattern } of ctx.patterns.signals) {
+    if (pattern.test(array)) return true
   }
-
-  // Check for memo calls: filteredItems()
-  for (const memo of ctx.analyzer.memos) {
-    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
-    if (pattern.test(array)) {
-      return true
-    }
+  for (const { pattern } of ctx.patterns.memos) {
+    if (pattern.test(array)) return true
   }
-
   return false
 }
 
@@ -1627,28 +1644,21 @@ function isReactiveExpression(expr: string, ctx: TransformContext, astNode?: ts.
  * Regex-based signal/memo detection.
  * Complements TypeChecker for cases where imported types can't be resolved.
  */
-function isSignalOrMemoReference(expr: string, ctx: TransformContext): boolean {
-  for (const signal of ctx.analyzer.signals) {
-    const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
-    if (pattern.test(expr)) {
-      return true
-    }
+function isSignalOrMemoReference(expr: string, ctx: TransformContext, visited?: Set<string>): boolean {
+  for (const { pattern } of ctx.patterns.signals) {
+    if (pattern.test(expr)) return true
   }
-
-  for (const memo of ctx.analyzer.memos) {
-    const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
-    if (pattern.test(expr)) {
-      return true
-    }
+  for (const { pattern } of ctx.patterns.memos) {
+    if (pattern.test(expr)) return true
   }
 
   // Check if expression uses a constant that references signals/memos
-  for (const constant of ctx.analyzer.localConstants) {
-    const constPattern = new RegExp(`\\b${constant.name}\\b`)
-    if (constPattern.test(expr)) {
-      if (constant.value && isSignalOrMemoReference(constant.value, ctx)) {
-        return true
-      }
+  for (const c of ctx.patterns.constants) {
+    if (visited?.has(c.name)) continue
+    if (c.pattern.test(expr) && c.value) {
+      const next = visited ?? new Set<string>()
+      next.add(c.name)
+      if (isSignalOrMemoReference(c.value, ctx, next)) return true
     }
   }
 
@@ -1660,22 +1670,18 @@ function isSignalOrMemoReference(expr: string, ctx: TransformContext): boolean {
  * Props are always treated as reactive because the parent component
  * may pass signal getters as prop values.
  */
-function isPropsReference(expr: string, ctx: TransformContext): boolean {
-  for (const prop of ctx.analyzer.propsParams) {
-    if (prop.name === 'children') continue
-    const pattern = new RegExp(`\\b${prop.name}\\b`)
-    if (pattern.test(expr)) {
-      return true
-    }
+function isPropsReference(expr: string, ctx: TransformContext, visited?: Set<string>): boolean {
+  for (const { pattern } of ctx.patterns.props) {
+    if (pattern.test(expr)) return true
   }
 
   // Check if expression uses a local constant derived from props
-  for (const constant of ctx.analyzer.localConstants) {
-    const constPattern = new RegExp(`\\b${constant.name}\\b`)
-    if (constPattern.test(expr)) {
-      if (constant.value && isPropsReference(constant.value, ctx)) {
-        return true
-      }
+  for (const c of ctx.patterns.constants) {
+    if (visited?.has(c.name)) continue
+    if (c.pattern.test(expr) && c.value) {
+      const next = visited ?? new Set<string>()
+      next.add(c.name)
+      if (isPropsReference(c.value, ctx, next)) return true
     }
   }
 
