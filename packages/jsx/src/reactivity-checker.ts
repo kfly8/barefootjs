@@ -24,14 +24,27 @@ export function isReactiveType(type: ts.Type): boolean {
  * against the TypeChecker to find Reactive<T>-branded types.
  */
 export function containsReactiveExpression(node: ts.Node, checker: ts.TypeChecker): boolean {
-  // Check identifiers and property accesses directly
-  if (ts.isIdentifier(node) || ts.isPropertyAccessExpression(node)) {
+  // Property access chains (e.g., username.error): check the whole expression,
+  // then recurse only into the object part (not the name) to avoid redundant checks
+  if (ts.isPropertyAccessExpression(node)) {
     try {
       const type = checker.getTypeAtLocation(node)
       if (isReactiveType(type)) return true
     } catch {
       // Type resolution can fail for some nodes; continue walking
     }
+    return containsReactiveExpression(node.expression, checker)
+  }
+
+  // Check identifiers directly
+  if (ts.isIdentifier(node)) {
+    try {
+      const type = checker.getTypeAtLocation(node)
+      if (isReactiveType(type)) return true
+    } catch {
+      // continue
+    }
+    return false
   }
 
   // Check call expressions — the callee might be Reactive<() => T>

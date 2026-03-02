@@ -34,10 +34,10 @@ import path from 'path'
  * For full type resolution in build tools, pass a pre-built ts.Program via
  * CompileOptions.program instead.
  */
-function createProgramForFile(
+export function createProgramForFile(
   source: string,
   filePath: string
-): { sourceFile: ts.SourceFile; checker: ts.TypeChecker } | null {
+): { program: ts.Program; sourceFile: ts.SourceFile; checker: ts.TypeChecker } | null {
   try {
     const normalizedPath = path.resolve(filePath)
 
@@ -77,7 +77,7 @@ function createProgramForFile(
 
     if (!sourceFile) return null
 
-    return { sourceFile, checker: program.getTypeChecker() }
+    return { program, sourceFile, checker: program.getTypeChecker() }
   } catch {
     // Fall back to regex-based detection
     return null
@@ -94,16 +94,18 @@ export function analyzeComponent(
   targetComponentName?: string,
   program?: ts.Program
 ): AnalyzerContext {
-  let sourceFile: ts.SourceFile
+  let sourceFile: ts.SourceFile | undefined
   let checker: ts.TypeChecker | null = null
 
   if (program) {
     // Use the pre-built program's source file and checker
-    sourceFile = program.getSourceFile(filePath)!
-    checker = program.getTypeChecker()
+    sourceFile = program.getSourceFile(filePath)
+    if (sourceFile) {
+      checker = program.getTypeChecker()
+    }
   }
 
-  if (!sourceFile!) {
+  if (!sourceFile) {
     sourceFile = ts.createSourceFile(
       filePath,
       source,

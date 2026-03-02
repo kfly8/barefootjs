@@ -41,8 +41,6 @@ interface TransformContext {
   slotIdCounter: number
   isRoot: boolean
   insideComponentChildren: boolean
-  /** TypeScript type checker for type-based reactivity detection (null = regex fallback) */
-  checker: ts.TypeChecker | null
   /** Shortcut for analyzer.getJS(node) */
   getJS(node: ts.Node): string
 }
@@ -55,7 +53,6 @@ function createTransformContext(analyzer: AnalyzerContext): TransformContext {
     slotIdCounter: 0,
     isRoot: true,
     insideComponentChildren: false,
-    checker: analyzer.checker,
     getJS(node: ts.Node): string {
       return analyzer.getJS(node)
     },
@@ -1605,8 +1602,8 @@ function isSignalOrMemoArray(array: string, ctx: TransformContext): boolean {
  */
 function isReactiveExpression(expr: string, ctx: TransformContext, astNode?: ts.Node): boolean {
   // Type-checker path: walk AST to find Reactive<T> branded types
-  if (ctx.checker && astNode) {
-    if (containsReactiveExpression(astNode, ctx.checker)) {
+  if (ctx.analyzer.checker && astNode) {
+    if (containsReactiveExpression(astNode, ctx.analyzer.checker)) {
       return true
     }
   }
@@ -1692,26 +1689,10 @@ function isPropsReference(expr: string, ctx: TransformContext): boolean {
 function hasReactiveAttributes(attrs: IRAttribute[], ctx: TransformContext): boolean {
   for (const attr of attrs) {
     if (attr.dynamic && attr.value) {
-      // Get the string value to check for reactivity
       const valueToCheck = getAttributeValueAsString(attr.value)
       if (!valueToCheck) continue
 
-      // Check for signal getter calls
-      for (const signal of ctx.analyzer.signals) {
-        const pattern = new RegExp(`\\b${signal.getter}\\s*\\(`)
-        if (pattern.test(valueToCheck)) {
-          return true
-        }
-      }
-      // Check for memo calls
-      for (const memo of ctx.analyzer.memos) {
-        const pattern = new RegExp(`\\b${memo.name}\\s*\\(`)
-        if (pattern.test(valueToCheck)) {
-          return true
-        }
-      }
-      // Check for props references (props.xxx may be reactive when passed as getters from parent)
-      if (/\bprops\.\w+/.test(valueToCheck)) {
+      if (isSignalOrMemoReference(valueToCheck, ctx) || isPropsReference(valueToCheck, ctx)) {
         return true
       }
     }
