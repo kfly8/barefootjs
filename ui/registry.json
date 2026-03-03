@@ -64,6 +64,12 @@
       "description": "A command menu with search, keyboard navigation, and filtering"
     },
     {
+      "name": "combobox",
+      "type": "registry:ui",
+      "title": "Combobox",
+      "description": "Autocomplete input with searchable dropdown"
+    },
+    {
       "name": "context-menu",
       "type": "registry:ui",
       "title": "Context Menu",
