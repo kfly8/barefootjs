@@ -19,7 +19,9 @@ import {
   type IRTemplateLiteral,
   type ParamInfo,
   type AdapterOutput,
+  type TemplateSections,
   type TemplateAdapter,
+  extractFunctionParams,
   isBooleanAttr,
 } from '@barefootjs/jsx'
 
@@ -69,15 +71,23 @@ export class HonoAdapter implements TemplateAdapter {
     const types = this.generateTypes(ir)
     const component = this.generateComponent(ir)
 
-    // Add default export if the original had one
     const defaultExport = ir.metadata.hasDefaultExport
       ? `\nexport default ${this.componentName}`
       : ''
 
+    const sections: TemplateSections = {
+      imports,
+      types: types || '',
+      component,
+      defaultExport,
+    }
+
+    // Assemble template for backward compat (external consumers using output.template)
     const template = [imports, types, component].filter(Boolean).join('\n\n') + defaultExport
 
     return {
       template,
+      sections,
       types: types || undefined,
       extension: this.extension,
     }
@@ -347,8 +357,9 @@ export class HonoAdapter implements TemplateAdapter {
       lines.push(`  const ${memo.name} = ${memo.computation}`)
     }
 
-    // Include local constants
+    // Include local constants (skip exported ones — they are at module level)
     for (const constant of ir.metadata.localConstants) {
+      if (constant.isExported) continue
       const keyword = constant.declarationKind ?? 'const'
       if (!constant.value) {
         lines.push(`  ${keyword} ${constant.name}`)
@@ -371,7 +382,7 @@ export class HonoAdapter implements TemplateAdapter {
       if (isArrowFunc) {
         // Generate a stub function for SSR (these may be referenced as props)
         // Extract parameters if possible
-        const params = this.extractFunctionParams(value)
+        const params = extractFunctionParams(value)
         lines.push(`  ${keyword} ${constant.name} = (${params}) => {}`)
       } else {
         // Output non-function constants directly
@@ -379,41 +390,14 @@ export class HonoAdapter implements TemplateAdapter {
       }
     }
 
-    // Include local functions (helper functions defined at module level)
+    // Include local functions (skip exported ones — they are at module level)
     for (const func of ir.metadata.localFunctions) {
+      if (func.isExported) continue
       const params = func.params.map((p) => p.name).join(', ')
       lines.push(`  function ${func.name}(${params}) ${func.body}`)
     }
 
     return lines.join('\n')
-  }
-
-  private extractFunctionParams(value: string): string {
-    // Match arrow function parameters: (a, b) => ... or a => ...
-    const arrowMatch = value.match(/^(?:async\s*)?\(([^)]*)\)\s*(?::\s*[^=]+)?\s*=>/)
-    if (arrowMatch) {
-      // Remove type annotations from parameters
-      return arrowMatch[1]
-        .split(',')
-        .map((p) => p.trim().split(':')[0].split('=')[0].trim())
-        .filter(Boolean)
-        .join(', ')
-    }
-    // Single param arrow function: a => ...
-    const singleMatch = value.match(/^(?:async\s*)?(\w+)\s*=>/)
-    if (singleMatch) {
-      return singleMatch[1]
-    }
-    // Function expression: function(a, b) { ... }
-    const funcMatch = value.match(/^(?:async\s*)?function\s*\w*\s*\(([^)]*)\)/)
-    if (funcMatch) {
-      return funcMatch[1]
-        .split(',')
-        .map((p) => p.trim().split(':')[0].split('=')[0].trim())
-        .filter(Boolean)
-        .join(', ')
-    }
-    return ''
   }
 
   // ===========================================================================

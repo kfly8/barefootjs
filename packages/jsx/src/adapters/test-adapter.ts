@@ -17,7 +17,7 @@ import type {
   IRFragment,
   ParamInfo,
 } from '../types'
-import { type AdapterOutput, BaseAdapter } from './interface'
+import { type AdapterOutput, type TemplateSections, BaseAdapter } from './interface'
 
 export class TestAdapter extends BaseAdapter {
   name = 'test'
@@ -36,10 +36,19 @@ export class TestAdapter extends BaseAdapter {
       ? `\nexport default ${this.componentName}`
       : ''
 
+    const sections: TemplateSections = {
+      imports,
+      types: types || '',
+      component,
+      defaultExport,
+    }
+
+    // Assemble template for backward compat
     const template = [imports, types, component].filter(Boolean).join('\n\n') + defaultExport
 
     return {
       template,
+      sections,
       types: types || undefined,
       extension: this.extension,
     }
@@ -176,6 +185,7 @@ export class TestAdapter extends BaseAdapter {
     }
 
     for (const constant of ir.metadata.localConstants) {
+      if (constant.isExported) continue
       const keyword = constant.declarationKind ?? 'const'
       if (!constant.value) {
         lines.push(`  ${keyword} ${constant.name}`)
@@ -193,6 +203,13 @@ export class TestAdapter extends BaseAdapter {
       } else {
         lines.push(`  ${keyword} ${constant.name} = ${constant.value}`)
       }
+    }
+
+    // Include local functions (skip exported ones — they are at module level)
+    for (const func of ir.metadata.localFunctions) {
+      if (func.isExported) continue
+      const params = func.params.map((p) => p.name).join(', ')
+      lines.push(`  function ${func.name}(${params}) ${func.body}`)
     }
 
     return lines.join('\n')
