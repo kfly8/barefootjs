@@ -3,6 +3,7 @@
  * Each function appends to a lines[] array.
  */
 
+import ts from 'typescript'
 import type { ComponentIR, SignalInfo, IRFragment } from '../types'
 import type { Declaration } from './declaration-sort'
 import { isBooleanAttr } from '../html-constants'
@@ -754,45 +755,79 @@ const JS_BUILTINS = new Set([
 ])
 
 /**
+ * Extract free variable references from an expression using TypeScript AST.
+ * Returns the set of identifier names that are in "reference" position
+ * (not object property keys, not member access properties, not parameter names).
+ * Returns null if the expression cannot be parsed.
+ */
+function extractFreeIdentifiers(expr: string): Set<string> | null {
+  // Wrap in parens to disambiguate object literals from block statements
+  const sourceFile = ts.createSourceFile(
+    'expr.ts', `(${expr})`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX
+  )
+
+  if (sourceFile.statements.length === 0) return null
+  const firstStmt = sourceFile.statements[0]
+  if (!ts.isExpressionStatement(firstStmt)) return null
+
+  const ids = new Set<string>()
+  const boundNames = new Set<string>()
+
+  function visit(node: ts.Node): void {
+    if (ts.isIdentifier(node)) {
+      const parent = node.parent
+
+      // foo.bar → skip bar (property name in member access)
+      if (parent && ts.isPropertyAccessExpression(parent) && parent.name === node) return
+      // { key: value } → skip key (property name in object literal)
+      if (parent && ts.isPropertyAssignment(parent) && parent.name === node) return
+      // function parameters → skip (bound, not free)
+      if (parent && ts.isParameter(parent) && parent.name === node) return
+      // variable declaration names → skip
+      if (parent && ts.isVariableDeclaration(parent) && parent.name === node) return
+      // arrow/function parameters tracked via boundNames
+      if (boundNames.has(node.text)) return
+
+      ids.add(node.text)
+      return
+    }
+
+    // Track arrow function parameters as bound names
+    if (ts.isArrowFunction(node)) {
+      const params: string[] = []
+      for (const p of node.parameters) {
+        if (ts.isIdentifier(p.name)) {
+          params.push(p.name.text)
+          boundNames.add(p.name.text)
+        }
+      }
+      ts.forEachChild(node, visit)
+      for (const p of params) {
+        boundNames.delete(p)
+      }
+      return
+    }
+
+    ts.forEachChild(node, visit)
+  }
+
+  visit(firstStmt.expression)
+  return ids
+}
+
+/**
  * Check that an expression value only references identifiers known within
  * the component scope (or JavaScript built-ins). Returns false if the value
  * contains references to file-scope variables that won't be available in
  * the generated client JS module scope.
  */
 function valueOnlyUsesKnownNames(value: string, knownNames: Set<string>): boolean {
-  // Strip string literal content to avoid false-positive identifier matches.
-  // For template literals, extract only ${...} expression parts.
-  let codeParts = value
-    .replace(/'(?:[^'\\]|\\.)*'/g, '')
-    .replace(/"(?:[^"\\]|\\.)*"/g, '')
+  const freeIds = extractFreeIdentifiers(value)
+  if (freeIds === null) return false // Cannot parse → assume unsafe
 
-  if (codeParts.includes('`')) {
-    const exprParts: string[] = []
-    const templateExprRegex = /\$\{([^}]*)\}/g
-    let match
-    while ((match = templateExprRegex.exec(codeParts)) !== null) {
-      exprParts.push(match[1])
-    }
-    // Keep non-template-literal code, replace template literals with extracted expressions
-    codeParts = codeParts.replace(/`[^`]*`/g, '') + ' ' + exprParts.join(' ')
-  }
-
-  const identifiers = codeParts.matchAll(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g)
-  for (const m of identifiers) {
-    const id = m[1]
+  for (const id of freeIds) {
     if (JS_BUILTINS.has(id)) continue
     if (knownNames.has(id)) continue
-
-    // Skip identifiers in object property key position: { key: value } or { key1: v1, key2: v2 }
-    // These are property names, not variable references.
-    const beforeStr = codeParts.slice(0, m.index!).trimEnd()
-    const lastCharBefore = beforeStr[beforeStr.length - 1]
-    if (lastCharBefore === '{' || lastCharBefore === ',') {
-      const afterPos = m.index! + id.length
-      const remaining = codeParts.slice(afterPos).trimStart()
-      if (remaining.startsWith(':') && !remaining.startsWith('::')) continue
-    }
-
     return false
   }
   return true
