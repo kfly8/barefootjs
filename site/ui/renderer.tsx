@@ -89,6 +89,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Combobox', href: '/docs/components/combobox' },
       { title: 'Context Menu', href: '/docs/components/context-menu' },
       { title: 'Data Table', href: '/docs/components/data-table' },
+      { title: 'Date Picker', href: '/docs/components/date-picker' },
       { title: 'Dialog', href: '/docs/components/dialog' },
       { title: 'Drawer', href: '/docs/components/drawer' },
       { title: 'Dropdown Menu', href: '/docs/components/dropdown-menu' },
@@ -162,7 +163,7 @@ export const renderer = jsxRenderer(
     const pageTitle = title || 'BarefootJS Components'
 
     // Resolve prev/next links for mobile page navigation
-    const slugMatch = currentPath.match(/\/docs\/components\/([^/]+)/)
+    const slugMatch = currentPath.match(/\/(?:docs\/)?components\/([^/]+)/)
     const navLinks = slugMatch ? getNavLinks(slugMatch[1]) : {}
     return (
       <WithPredictableIds>
