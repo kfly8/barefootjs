@@ -9,7 +9,6 @@ import {
   BasicFieldArrayDemo,
   DuplicateValidationDemo,
   MinMaxFieldsDemo,
-  StaticListDemo,
 } from '@/components/field-arrays-demo'
 import {
   PageHeader,
@@ -23,7 +22,6 @@ import { TableOfContents } from '@/components/table-of-contents'
 const tocItems: TocItem[] = [
   { id: 'pattern-overview', title: 'Pattern Overview' },
   { id: 'examples', title: 'Examples' },
-  { id: 'static-list', title: 'Static List' },
   { id: 'key-points', title: 'Key Points' },
 ]
 
@@ -99,19 +97,6 @@ const duplicateCount = createMemo(() => {
 {duplicateCount() > 0 && (
   <p className="text-amber-400">{duplicateCount()} duplicate(s) detected</p>
 )}`
-
-const staticListCode = `"use client"
-import { createSignal } from '@barefootjs/dom'
-
-const options = ['Alpha', 'Beta', 'Gamma']
-const [selected, setSelected] = createSignal('Alpha')
-
-{options.map(opt => (
-  <button onClick={() => setSelected(opt)}>
-    {opt}
-  </button>
-))}
-<p>Selected: {selected()}</p>`
 
 const minMaxFieldsCode = `import { createSignal, createMemo } from '@barefootjs/dom'
 
@@ -199,21 +184,6 @@ export function FieldArraysPage() {
             <Example title="Min/Max Field Constraints" code={minMaxFieldsCode}>
               <div className="max-w-md">
                 <MinMaxFieldsDemo />
-              </div>
-            </Example>
-          </div>
-        </Section>
-
-        {/* Static List */}
-        <Section id="static-list" title="Static List">
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Maps over a static (non-signal) array with <code className="text-foreground">onClick</code> on plain elements.
-              Verifies event delegation for static arrays.
-            </p>
-            <Example title="Static Array with onClick" code={staticListCode}>
-              <div className="max-w-md">
-                <StaticListDemo />
               </div>
             </Example>
           </div>
