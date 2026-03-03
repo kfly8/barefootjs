@@ -20,7 +20,7 @@ import {
 import { getNavLinks } from '../../components/shared/PageNavigation'
 
 const tocItems: TocItem[] = [
-  { id: 'playground', title: 'Playground' },
+  { id: 'preview', title: 'Preview' },
   { id: 'installation', title: 'Installation' },
   { id: 'usage', title: 'Usage' },
   { id: 'api-reference', title: 'API Reference' },

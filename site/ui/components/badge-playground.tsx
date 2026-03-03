@@ -13,6 +13,8 @@
 
 import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
 import { CheckIcon, CopyIcon } from '@ui/components/ui/icon'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@ui/components/ui/select'
+import { Input } from '@ui/components/ui/input'
 
 type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline'
 
@@ -84,7 +86,7 @@ function BadgePlayground(props: {}) {
   }
 
   return (
-    <div id="playground" className="border border-border rounded-lg overflow-hidden scroll-mt-16">
+    <div id="preview" className="border border-border rounded-lg overflow-hidden scroll-mt-16">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px]">
         {/* Preview */}
         <div className="flex items-center justify-center min-h-[140px] p-8 bg-card relative overflow-hidden">
@@ -96,22 +98,23 @@ function BadgePlayground(props: {}) {
         <div className="border-t lg:border-t-0 lg:border-l border-border p-6 space-y-4 bg-background">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground block">variant</label>
-            <select
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              onChange={(e: Event) => setVariant((e.target as HTMLSelectElement).value as BadgeVariant)}
-            >
-              <option value="default">default</option>
-              <option value="secondary">secondary</option>
-              <option value="destructive">destructive</option>
-              <option value="outline">outline</option>
-            </select>
+            <Select value={variant()} onValueChange={(v: string) => setVariant(v as BadgeVariant)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select variant..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">default</SelectItem>
+                <SelectItem value="secondary">secondary</SelectItem>
+                <SelectItem value="destructive">destructive</SelectItem>
+                <SelectItem value="outline">outline</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground block">children</label>
-            <input
+            <Input
               type="text"
               value="Badge"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               onInput={(e: Event) => setText((e.target as HTMLInputElement).value)}
             />
           </div>
