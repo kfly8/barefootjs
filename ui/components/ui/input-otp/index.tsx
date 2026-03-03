@@ -65,7 +65,7 @@ const caretClasses = 'h-4 w-px animate-caret-blink bg-foreground duration-1000'
 /**
  * Props for InputOTP component.
  */
-interface InputOTPProps extends Omit<HTMLBaseAttributes, 'onChange'> {
+interface InputOTPProps extends HTMLBaseAttributes {
   /** Maximum number of characters */
   maxLength: number
   /** Controlled value */
@@ -73,7 +73,7 @@ interface InputOTPProps extends Omit<HTMLBaseAttributes, 'onChange'> {
   /** Default value for uncontrolled mode */
   defaultValue?: string
   /** Callback when value changes */
-  onChange?: (value: string) => void
+  onValueChange?: (value: string) => void
   /** Callback when all slots are filled */
   onComplete?: (value: string) => void
   /** Pattern to validate input (default: digits only) */
@@ -92,7 +92,7 @@ interface InputOTPProps extends Omit<HTMLBaseAttributes, 'onChange'> {
  *
  * @param props.maxLength - Number of OTP characters
  * @param props.value - Controlled value
- * @param props.onChange - Callback when value changes
+ * @param props.onValueChange - Callback when value changes
  * @param props.onComplete - Callback when fully filled
  * @param props.pattern - Validation pattern (default: digits only)
  * @param props.disabled - Whether disabled
@@ -110,7 +110,7 @@ function InputOTP(props: InputOTPProps) {
     if (props.value === undefined) {
       setInternalValue(truncated)
     }
-    props.onChange?.(truncated)
+    props.onValueChange?.(truncated)
     if (truncated.length === props.maxLength) {
       props.onComplete?.(truncated)
     }
@@ -328,12 +328,12 @@ interface InputOTPSeparatorProps extends HTMLBaseAttributes {
 
 /**
  * Visual separator between OTP groups.
- * Renders a minus icon.
+ * Renders children or a minus icon by default.
  */
-function InputOTPSeparator({ ...props }: InputOTPSeparatorProps) {
+function InputOTPSeparator({ children, ...props }: InputOTPSeparatorProps) {
   return (
     <div data-slot="input-otp-separator" role="separator" {...props}>
-      <MinusIcon />
+      {children ?? <MinusIcon />}
     </div>
   )
 }

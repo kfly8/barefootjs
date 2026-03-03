@@ -147,6 +147,42 @@ test.describe('Input OTP Documentation Page', () => {
       await expect(verifyButton).toBeEnabled()
     })
 
+    test('clicking verify shows loading state and success message', async ({ page }) => {
+      const section = page.locator('[bf-s^="InputOTPFormDemo_"]:not([data-slot])').first()
+      const input = section.locator('input[data-otp-input]')
+
+      await input.focus()
+      await input.pressSequentially('123456')
+
+      // Use programmatic click because Playwright's CDP click
+      // does not trigger onclick property handlers set by hydration
+      const result = await page.evaluate(() => {
+        const section = document.querySelector('[bf-s^="InputOTPFormDemo_"]:not([data-slot])') as HTMLElement
+        const btn = section?.querySelector('button[bf="s11"]') as HTMLButtonElement
+        btn?.click()
+        return btn?.textContent
+      })
+      expect(result).toBe('Verifying...')
+
+      await expect(section.locator('text=Code verified successfully!')).toBeVisible({ timeout: 5000 })
+    })
+
+    test('clicking verify with wrong code shows error message', async ({ page }) => {
+      const section = page.locator('[bf-s^="InputOTPFormDemo_"]:not([data-slot])').first()
+      const input = section.locator('input[data-otp-input]')
+
+      await input.focus()
+      await input.pressSequentially('999999')
+
+      await page.evaluate(() => {
+        const section = document.querySelector('[bf-s^="InputOTPFormDemo_"]:not([data-slot])') as HTMLElement
+        const btn = section?.querySelector('button[bf="s11"]') as HTMLButtonElement
+        btn?.click()
+      })
+
+      await expect(section.locator('text=Invalid code. Please try again.')).toBeVisible({ timeout: 5000 })
+    })
+
     test('resend code button is initially enabled', async ({ page }) => {
       const section = page.locator('[bf-s^="InputOTPFormDemo_"]:not([data-slot])').first()
       const resendButton = section.locator('button:has-text("Resend code")')

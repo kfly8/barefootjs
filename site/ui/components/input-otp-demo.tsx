@@ -14,8 +14,7 @@ import {
   InputOTPSeparator,
 } from '@ui/components/ui/input-otp'
 
-// Pattern constant (same as exported from input-otp, defined here
-// because "use client" modules don't export non-function values)
+// Defined locally because @ui/ alias is not resolvable in client-side JS
 const REGEXP_ONLY_DIGITS_AND_CHARS = /^[a-zA-Z0-9]+$/
 
 /**
@@ -27,7 +26,7 @@ export function InputOTPPreviewDemo() {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <InputOTP maxLength={6} value={value()} onChange={setValue}>
+      <InputOTP maxLength={6} value={value()} onValueChange={setValue}>
         <InputOTPGroup>
           <InputOTPSlot index={0} />
           <InputOTPSlot index={1} />
@@ -144,7 +143,7 @@ export function InputOTPFormDemo() {
         </p>
       </div>
 
-      <InputOTP maxLength={6} value={value()} onChange={setValue} disabled={status() === 'loading' || status() === 'success'}>
+      <InputOTP maxLength={6} value={value()} onValueChange={setValue} disabled={status() === 'loading' || status() === 'success'}>
         <InputOTPGroup>
           <InputOTPSlot index={0} />
           <InputOTPSlot index={1} />

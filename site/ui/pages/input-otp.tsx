@@ -46,7 +46,7 @@ export function InputOTPPreviewDemo() {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <InputOTP maxLength={6} value={value()} onChange={setValue}>
+      <InputOTP maxLength={6} value={value()} onValueChange={setValue}>
         <InputOTPGroup>
           <InputOTPSlot index={0} />
           <InputOTPSlot index={1} />
@@ -164,7 +164,7 @@ export function InputOTPFormDemo() {
 
   return (
     <div className="space-y-4">
-      <InputOTP maxLength={6} value={value()} onChange={setValue}
+      <InputOTP maxLength={6} value={value()} onValueChange={setValue}
         disabled={status() === 'loading' || status() === 'success'}>
         <InputOTPGroup>
           <InputOTPSlot index={0} />
@@ -212,7 +212,7 @@ const inputOTPProps: PropDefinition[] = [
     description: 'The default value for uncontrolled mode.',
   },
   {
-    name: 'onChange',
+    name: 'onValueChange',
     type: '(value: string) => void',
     description: 'Event handler called when the value changes.',
   },
