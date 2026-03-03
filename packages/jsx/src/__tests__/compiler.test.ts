@@ -1147,7 +1147,7 @@ describe('Compiler', () => {
       expect(clientJs).toBeDefined()
       expect(clientJs?.content).toContain('initToggle')
       // Both branches should have click handlers collected
-      expect(clientJs?.content).toContain('onclick')
+      expect(clientJs?.content).toContain("addEventListener('click'")
     })
 
     test('collects reactive attributes from conditional return branches', () => {
@@ -2688,7 +2688,7 @@ describe('Compiler', () => {
       const content = clientJs!.content
 
       // Event delegation should be generated for the static array
-      expect(content).toContain('.onclick = (e) => {')
+      expect(content).toContain(".addEventListener('click', (e) => {")
       expect(content).toContain('target.closest')
       expect(content).toContain('Array.from(')
       expect(content).toContain('handleClick(item.id)')
@@ -2752,7 +2752,7 @@ describe('Compiler', () => {
 
       // Dynamic array should use reconcileTemplates and event delegation
       expect(content).toContain('reconcileTemplates')
-      expect(content).toContain('.onclick = (e) => {')
+      expect(content).toContain(".addEventListener('click', (e) => {")
       expect(content).toContain('handleClick(item.id)')
     })
   })
@@ -4585,8 +4585,8 @@ describe('Compiler', () => {
       // Should include handleSubmit reference
       expect(clientJs!.content).toContain('handleSubmit')
 
-      // Should have onclick binding
-      expect(clientJs!.content).toContain('onclick')
+      // Should have addEventListener click binding
+      expect(clientJs!.content).toContain("addEventListener('click'")
     })
 
     test('insert() template contains comment markers for text branches', () => {
