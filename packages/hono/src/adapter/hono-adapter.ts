@@ -19,7 +19,9 @@ import {
   type IRTemplateLiteral,
   type ParamInfo,
   type AdapterOutput,
+  type TemplateSections,
   type TemplateAdapter,
+  extractFunctionParams,
   isBooleanAttr,
 } from '@barefootjs/jsx'
 
@@ -69,16 +71,23 @@ export class HonoAdapter implements TemplateAdapter {
     const types = this.generateTypes(ir)
     const component = this.generateComponent(ir)
 
-    // Add default export if the original had one
     const defaultExport = ir.metadata.hasDefaultExport
       ? `\nexport default ${this.componentName}`
       : ''
 
-    const moduleExports = this.generateModuleExports(ir)
-    const template = [imports, types, moduleExports, component].filter(Boolean).join('\n\n') + defaultExport
+    const sections: TemplateSections = {
+      imports,
+      types: types || '',
+      component,
+      defaultExport,
+    }
+
+    // Assemble template for backward compat (external consumers using output.template)
+    const template = [imports, types, component].filter(Boolean).join('\n\n') + defaultExport
 
     return {
       template,
+      sections,
       types: types || undefined,
       extension: this.extension,
     }
@@ -167,48 +176,6 @@ export class HonoAdapter implements TemplateAdapter {
       return ir.metadata.propsType.raw
     }
     return null
-  }
-
-  // ===========================================================================
-  // Module-level Exports
-  // ===========================================================================
-
-  private generateModuleExports(ir: ComponentIR): string | null {
-    const lines: string[] = []
-
-    for (const constant of ir.metadata.localConstants) {
-      if (!constant.isExported) continue
-      const keyword = constant.declarationKind ?? 'const'
-      if (!constant.value) {
-        lines.push(`export ${keyword} ${constant.name}`)
-        continue
-      }
-      const value = constant.value.trim()
-      // Skip client-only constructs
-      if (/^createContext\b/.test(value) || /^new WeakMap\b/.test(value)) continue
-
-      const isArrowFunc =
-        value.startsWith('async (') ||
-        value.startsWith('async(') ||
-        value.startsWith('function') ||
-        /^\w+\s*=>/.test(value) ||
-        /^\([^)]*\)\s*=>/.test(value)
-
-      if (isArrowFunc) {
-        const params = this.extractFunctionParams(value)
-        lines.push(`export ${keyword} ${constant.name} = (${params}) => {}`)
-      } else {
-        lines.push(`export ${keyword} ${constant.name} = ${constant.value}`)
-      }
-    }
-
-    for (const func of ir.metadata.localFunctions) {
-      if (!func.isExported) continue
-      const params = func.params.map((p) => p.name).join(', ')
-      lines.push(`export function ${func.name}(${params}) ${func.body}`)
-    }
-
-    return lines.length > 0 ? lines.join('\n') : null
   }
 
   // ===========================================================================
@@ -415,7 +382,7 @@ export class HonoAdapter implements TemplateAdapter {
       if (isArrowFunc) {
         // Generate a stub function for SSR (these may be referenced as props)
         // Extract parameters if possible
-        const params = this.extractFunctionParams(value)
+        const params = extractFunctionParams(value)
         lines.push(`  ${keyword} ${constant.name} = (${params}) => {}`)
       } else {
         // Output non-function constants directly
@@ -431,34 +398,6 @@ export class HonoAdapter implements TemplateAdapter {
     }
 
     return lines.join('\n')
-  }
-
-  private extractFunctionParams(value: string): string {
-    // Match arrow function parameters: (a, b) => ... or a => ...
-    const arrowMatch = value.match(/^(?:async\s*)?\(([^)]*)\)\s*(?::\s*[^=]+)?\s*=>/)
-    if (arrowMatch) {
-      // Remove type annotations from parameters
-      return arrowMatch[1]
-        .split(',')
-        .map((p) => p.trim().split(':')[0].split('=')[0].trim())
-        .filter(Boolean)
-        .join(', ')
-    }
-    // Single param arrow function: a => ...
-    const singleMatch = value.match(/^(?:async\s*)?(\w+)\s*=>/)
-    if (singleMatch) {
-      return singleMatch[1]
-    }
-    // Function expression: function(a, b) { ... }
-    const funcMatch = value.match(/^(?:async\s*)?function\s*\w*\s*\(([^)]*)\)/)
-    if (funcMatch) {
-      return funcMatch[1]
-        .split(',')
-        .map((p) => p.trim().split(':')[0].split('=')[0].trim())
-        .filter(Boolean)
-        .join(', ')
-    }
-    return ''
   }
 
   // ===========================================================================

@@ -15,6 +15,7 @@ import type { TemplateAdapter } from './adapters/interface'
 import { analyzeComponent, listExportedComponents, createProgramForFile, needsTypeBasedDetection } from './analyzer'
 import { jsxToIR } from './jsx-to-ir'
 import { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'
+import { generateModuleExports } from './module-exports'
 import { collectComponentNamesFromIR } from './ir-to-client-js/generate-init'
 import { applyCssLayerPrefix } from './css-layer-prefixer'
 
@@ -89,10 +90,21 @@ export async function compileJSX(
 
   const adapter = options.adapter
   const adapterOutput = adapter.generate(componentIR)
+  const moduleExports = generateModuleExports(componentIR)
+
+  // Use structured sections if available, otherwise fall back to template
+  let content: string
+  if (adapterOutput.sections) {
+    const s = adapterOutput.sections
+    content = [s.imports, s.types, moduleExports, s.component]
+      .filter(Boolean).join('\n\n') + (s.defaultExport || '')
+  } else {
+    content = adapterOutput.template
+  }
 
   files.push({
     path: entryPath.replace(/\.tsx?$/, adapter.extension),
-    content: adapterOutput.template,
+    content,
     type: 'markedTemplate',
   })
 
@@ -167,40 +179,53 @@ function compileMultipleComponentsSync(
 
   for (const { componentIR } of entries) {
     const adapterOutput = adapter.generate(componentIR)
-    const fullContent = adapterOutput.template
+    const moduleExports = generateModuleExports(componentIR)
 
-    // Parse output to separate imports, types, module exports, and component
-    const lines = fullContent.split('\n')
-    const importLines: string[] = []
-    const typeLines: string[] = []
-    const moduleExportLines: string[] = []
-    const componentLines: string[] = []
-    let inComponent = false
+    let imports: string
+    let types: string
+    let component: string
 
-    for (const line of lines) {
-      if (line.startsWith('export function ')) {
-        const funcName = line.match(/^export function (\w+)/)?.[1]
-        if (funcName && componentNames.includes(funcName)) {
-          inComponent = true
+    if (adapterOutput.sections) {
+      // Use structured sections directly — no string parsing needed
+      const s = adapterOutput.sections
+      imports = s.imports
+      types = s.types
+      component = s.component + (s.defaultExport || '')
+    } else {
+      // Fallback: parse template string (for adapters without sections)
+      const lines = adapterOutput.template.split('\n')
+      const importLines: string[] = []
+      const typeLines: string[] = []
+      const componentLines: string[] = []
+      let inComponent = false
+
+      for (const line of lines) {
+        if (line.startsWith('export function ')) {
+          const funcName = line.match(/^export function (\w+)/)?.[1]
+          if (funcName && componentNames.includes(funcName)) {
+            inComponent = true
+          }
+        }
+
+        if (inComponent) {
+          componentLines.push(line)
+        } else if (line.startsWith('import ')) {
+          importLines.push(line)
+        } else if (line.trim()) {
+          typeLines.push(line)
         }
       }
 
-      if (inComponent) {
-        componentLines.push(line)
-      } else if (line.startsWith('import ')) {
-        importLines.push(line)
-      } else if (line.startsWith('export const ') || line.startsWith('export let ') || line.startsWith('export function ')) {
-        moduleExportLines.push(line)
-      } else if (line.trim()) {
-        typeLines.push(line)
-      }
+      imports = importLines.join('\n')
+      types = typeLines.join('\n')
+      component = componentLines.join('\n')
     }
 
     allOutputs.push({
-      imports: importLines.join('\n'),
-      types: typeLines.join('\n'),
-      moduleExports: moduleExportLines.join('\n'),
-      component: componentLines.join('\n'),
+      imports,
+      types,
+      moduleExports: moduleExports || '',
+      component,
       clientJs: generateClientJs(componentIR, componentNames, usedAsChild) || undefined,
     })
   }
@@ -410,10 +435,21 @@ export function compileJSXSync(
 
   const adapter = options.adapter
   const adapterOutput = adapter.generate(componentIR)
+  const moduleExports = generateModuleExports(componentIR)
+
+  // Use structured sections if available, otherwise fall back to template
+  let content: string
+  if (adapterOutput.sections) {
+    const s = adapterOutput.sections
+    content = [s.imports, s.types, moduleExports, s.component]
+      .filter(Boolean).join('\n\n') + (s.defaultExport || '')
+  } else {
+    content = adapterOutput.template
+  }
 
   files.push({
     path: filePath.replace(/\.tsx?$/, adapter.extension),
-    content: adapterOutput.template,
+    content,
     type: 'markedTemplate',
   })
 

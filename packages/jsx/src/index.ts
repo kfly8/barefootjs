@@ -39,9 +39,12 @@ export { analyzeComponent, listExportedComponents, type AnalyzerContext } from '
 // JSX to IR transformer
 export { jsxToIR } from './jsx-to-ir'
 
+// Module exports generation (compiler layer)
+export { generateModuleExports, extractFunctionParams } from './module-exports'
+
 // Adapters
 export { BaseAdapter } from './adapters/interface'
-export type { TemplateAdapter, AdapterOutput, AdapterGenerateOptions } from './adapters/interface'
+export type { TemplateAdapter, AdapterOutput, AdapterGenerateOptions, TemplateSections } from './adapters/interface'
 
 // Client JS Generator
 export { generateClientJs, analyzeClientNeeds } from './ir-to-client-js'

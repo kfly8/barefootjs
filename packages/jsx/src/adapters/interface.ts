@@ -14,8 +14,19 @@ import type {
   IRComponent,
 } from '../types'
 
+export interface TemplateSections {
+  imports: string
+  types: string
+  component: string
+  defaultExport: string
+}
+
 export interface AdapterOutput {
+  /** Complete assembled template string (backward compat for external consumers) */
   template: string
+  /** Structured sections for compiler assembly. When present, compiler uses these
+   *  instead of re-parsing template. */
+  sections?: TemplateSections
   types?: string // Generated types (for typed languages)
   extension: string
 }
