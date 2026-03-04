@@ -700,6 +700,12 @@ export class HonoAdapter implements TemplateAdapter {
     let keyValue: string | null = null
 
     for (const prop of comp.props) {
+      if (prop.jsxChildren?.length) {
+        // JSX prop: render children inline as JSX fragment
+        const rendered = prop.jsxChildren.map(c => this.renderNode(c)).join('')
+        parts.push(`${prop.name}={<>${rendered}</>}`)
+        continue
+      }
       if (prop.name === '...') {
         parts.push(`{...${prop.value}}`)
       } else if (prop.name === 'key') {

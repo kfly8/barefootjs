@@ -6,7 +6,7 @@ import type { IRNode, IRElement, IREvent } from '../types'
 import type { ClientJsContext, LoopChildEvent } from './types'
 import { attrValueToString, quotePropName } from './utils'
 import { isReactiveExpression, collectEventHandlersFromIR, collectConditionalBranchEvents, collectConditionalBranchRefs, collectLoopChildEvents } from './reactivity'
-import { irToHtmlTemplate } from './html-template'
+import { irToHtmlTemplate, irChildrenToJsExpr } from './html-template'
 import { expandDynamicPropValue } from './prop-handling'
 
 /** Build rest spread names from context (rest/props spreads handled by applyRestAttrs, not spreadAttrs). */
@@ -156,6 +156,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
 
         // Reactive props need effects to update the element when values change
         for (const prop of node.props) {
+          if (prop.jsxChildren) continue
           if (prop.name.startsWith('on') && prop.name.length > 2) continue
           const value = prop.value
           if (value.endsWith('()')) {
@@ -195,6 +196,10 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           prop.name[2] === prop.name[2].toUpperCase()
         if (isEventHandler) {
           propsForInit.push(`${quotePropName(prop.name)}: ${prop.value}`)
+        } else if (prop.jsxChildren) {
+          // JSX prop: generate getter using IR children → JS expression
+          const jsxExpr = irChildrenToJsExpr(prop.jsxChildren)
+          propsForInit.push(`get ${quotePropName(prop.name)}() { return ${jsxExpr} }`)
         } else if (prop.dynamic) {
           const expandedValue = expandDynamicPropValue(prop.value, ctx)
           propsForInit.push(`get ${quotePropName(prop.name)}() { return ${expandedValue} }`)
@@ -235,6 +240,15 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       })
       for (const child of node.children) {
         collectElements(child, ctx)
+      }
+      // Traverse JSX prop children so events, reactive expressions,
+      // and nested components inside JSX props are collected
+      for (const prop of node.props) {
+        if (prop.jsxChildren) {
+          for (const child of prop.jsxChildren) {
+            collectElements(child, ctx)
+          }
+        }
       }
       break
 

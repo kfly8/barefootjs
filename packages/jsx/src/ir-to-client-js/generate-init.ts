@@ -365,6 +365,12 @@ export function collectComponentNamesFromIR(nodes: IRNode[], names: Set<string>)
     if (node.type === 'component') {
       names.add(node.name)
       collectComponentNamesFromIR(node.children, names)
+      // Traverse JSX prop children for nested component references
+      for (const prop of node.props) {
+        if (prop.jsxChildren) {
+          collectComponentNamesFromIR(prop.jsxChildren, names)
+        }
+      }
     } else if (node.type === 'element' || node.type === 'fragment' || node.type === 'provider') {
       collectComponentNamesFromIR(node.children, names)
     } else if (node.type === 'conditional') {

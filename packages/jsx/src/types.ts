@@ -318,6 +318,8 @@ export interface IRProp {
   dynamic: boolean
   isLiteral: boolean // true if value came from a string literal attribute (e.g., value="account")
   loc: SourceLocation
+  /** When the prop value is a JSX element/fragment, store the transformed IR nodes here */
+  jsxChildren?: IRNode[]
 }
 
 // =============================================================================
