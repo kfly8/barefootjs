@@ -36,7 +36,7 @@ See `spec/testing.md` for full testing specification with APIs, patterns, and ex
 | Compiler unit | Transformation rules, error codes, analysis | `packages/jsx/src/__tests__/` | ms |
 | Component IR | Structure, a11y, signals, classes | `ui/components/ui/*/index.test.tsx` | ms |
 | Adapter conformance | IR → HTML output per adapter | `packages/adapter-tests/fixtures/` | ms |
-| CSR conformance | Client JS → correct DOM output | `packages/adapter-tests/` | ms |
+| CSR conformance | Client JS → correct DOM output | `packages/adapter-tests/src/__tests__/csr-conformance.test.ts` | ms |
 | Runtime unit | Signals, DOM ops, hydration primitives | `packages/dom/__tests__/` | ms |
 | E2E | User interactions, hydration, visual | `site/ui/e2e/` | seconds |
 

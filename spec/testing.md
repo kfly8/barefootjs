@@ -143,6 +143,9 @@ Verify that a component's JSX produces the correct IR structure — tags, attrib
 ```typescript
 import { renderToTest } from '@barefootjs/test'
 
+// renderToTest(source: string, filePath: string, componentName?: string): TestResult
+// componentName is optional — when omitted, the first exported function is used.
+
 interface TestResult {
   root: TestNode
   componentName: string
@@ -291,7 +294,7 @@ runJSXConformanceTests({
 
 ---
 
-## Layer 3b: CSR Conformance Tests
+## Layer 4: CSR Conformance Tests
 
 **Location:** `packages/adapter-tests/src/__tests__/csr-conformance.test.ts`
 **Runner:** `bun test`
