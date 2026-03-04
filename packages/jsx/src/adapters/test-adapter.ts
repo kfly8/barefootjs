@@ -334,6 +334,12 @@ export class TestAdapter extends BaseAdapter {
     const parts: string[] = []
 
     for (const prop of comp.props) {
+      if (prop.jsxChildren?.length) {
+        // JSX prop: render children inline
+        const rendered = prop.jsxChildren.map(c => this.renderNode(c)).join('')
+        parts.push(`${prop.name}={<>${rendered}</>}`)
+        continue
+      }
       if (prop.name === '...') {
         parts.push(`{...${prop.value}}`)
       } else if (prop.dynamic) {

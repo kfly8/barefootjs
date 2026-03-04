@@ -1630,6 +1630,34 @@ function processComponentProps(
     if (!ts.isJsxAttribute(attr)) continue
 
     const name = attr.name.getText(ctx.sourceFile)
+
+    // Detect JSX element/fragment as prop value: controls={<select ... />}
+    // Also handle parenthesized JSX: controls={(<div>...</div>)}
+    if (attr.initializer && ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+      let jsxExpr = attr.initializer.expression
+      // Unwrap parenthesized expression: controls={(<div>...</div>)}
+      while (ts.isParenthesizedExpression(jsxExpr)) {
+        jsxExpr = jsxExpr.expression
+      }
+      if (ts.isJsxElement(jsxExpr) || ts.isJsxSelfClosingElement(jsxExpr) || ts.isJsxFragment(jsxExpr)) {
+        const prevInsideComponentChildren = ctx.insideComponentChildren
+        ctx.insideComponentChildren = true
+        const irNode = transformNode(jsxExpr, ctx)
+        ctx.insideComponentChildren = prevInsideComponentChildren
+        if (irNode) {
+          props.push({
+            name,
+            value: '__jsx_prop',
+            dynamic: true,
+            isLiteral: false,
+            loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
+            jsxChildren: [irNode],
+          })
+          continue
+        }
+      }
+    }
+
     const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
 
     // For component props, convert IRTemplateLiteral back to string expression

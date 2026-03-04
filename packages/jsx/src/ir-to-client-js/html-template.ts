@@ -111,6 +111,11 @@ export function irToHtmlTemplate(node: IRNode, restSpreadNames?: Set<string>): s
         .filter(p => p.name !== '...' && !p.name.startsWith('...') && p.name !== 'key')
         .filter(p => !(p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()))
         .map(p => {
+          // JSX prop: render children inline as template literal
+          if (p.jsxChildren?.length) {
+            const childHtml = p.jsxChildren.map(c => recurse(c)).join('')
+            return `${quotePropName(p.name)}: \`${childHtml}\``
+          }
           if (p.isLiteral) return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
           return `${quotePropName(p.name)}: ${p.value}`
         })
@@ -169,6 +174,10 @@ function irNodeToJsExprs(node: IRNode): string[] {
         .map(p => {
           if (p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()) {
             return `${quotePropName(p.name)}: ${p.value}`
+          }
+          // JSX prop: generate getter using IR children → JS expression
+          if (p.jsxChildren?.length) {
+            return `get ${quotePropName(p.name)}() { return ${irChildrenToJsExpr(p.jsxChildren)} }`
           }
           if (p.isLiteral) {
             return `get ${quotePropName(p.name)}() { return ${JSON.stringify(p.value)} }`
@@ -332,6 +341,10 @@ export function irToComponentTemplate(
         .filter(p => p.name !== '...' && !p.name.startsWith('...') && p.name !== 'key')
         .filter(p => !(p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()))
         .map(p => {
+          if (p.jsxChildren?.length) {
+            const childHtml = p.jsxChildren.map(c => irToComponentTemplate(c, propNames, inlinableConstants, restSpreadNames)).join('')
+            return `${quotePropName(p.name)}: \`${childHtml}\``
+          }
           if (p.isLiteral) return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
           const valueStr = attrValueToString(p.value)
           return `${quotePropName(p.name)}: ${valueStr ? transformExpr(valueStr) : JSON.stringify(p.value)}`
@@ -609,6 +622,10 @@ export function generateCsrTemplate(
         .filter(p => p.name !== '...' && !p.name.startsWith('...') && p.name !== 'key')
         .filter(p => !(p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase()))
         .map(p => {
+          if (p.jsxChildren?.length) {
+            const childHtml = p.jsxChildren.map(c => generateCsrTemplate(c, propNames, inlinableConstants, signalMap, memoMap, insideLoop, restSpreadNames)).join('')
+            return `${quotePropName(p.name)}: \`${childHtml}\``
+          }
           if (p.isLiteral) return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
           const valueStr = attrValueToString(p.value)
           return `${quotePropName(p.name)}: ${valueStr ? transformExpr(valueStr) : JSON.stringify(p.value)}`
