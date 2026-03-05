@@ -4,9 +4,13 @@ import { GlobalRegistrator } from '@happy-dom/global-registrator'
 // Register happy-dom globals for SVG support
 GlobalRegistrator.register()
 
-import { createBarChart } from '../bar-chart'
-import { applyChartCSSVariables } from '../chart-container'
-import type { ChartConfig, BarChartOptions } from '../types'
+import { applyChartCSSVariables, initChartContainer } from '../chart-container'
+import { initBarChart } from '../bar-chart'
+import { initBar } from '../bar'
+import { initCartesianGrid } from '../cartesian-grid'
+import { initXAxis } from '../x-axis'
+import { initYAxis } from '../y-axis'
+import type { ChartConfig } from '../types'
 
 const chartConfig: ChartConfig = {
   desktop: { label: 'Desktop', color: 'hsl(221 83% 53%)' },
@@ -24,12 +28,58 @@ const chartData = [
 
 function createContainer(): HTMLElement {
   const el = document.createElement('div')
-  // happy-dom doesn't compute layout, so set explicit dimensions
   Object.defineProperty(el, 'getBoundingClientRect', {
     value: () => ({ width: 400, height: 200, top: 0, left: 0, right: 400, bottom: 200, x: 0, y: 0, toJSON: () => {} }),
   })
   document.body.appendChild(el)
   return el
+}
+
+/**
+ * Helper: initialize a full chart by calling init functions in sequence
+ * (simulates what the compiler does with initChild calls)
+ */
+function initFullChart(
+  container: HTMLElement,
+  options: {
+    data: Record<string, unknown>[]
+    config: ChartConfig
+    bars: { dataKey: string; fill?: string; radius?: number }[]
+    xAxis?: { dataKey: string; tickFormatter?: (v: string) => string; hide?: boolean }
+    yAxis?: boolean | { hide?: boolean; tickFormatter?: (v: number) => string }
+    grid?: { vertical?: boolean; horizontal?: boolean }
+  },
+): void {
+  // Init ChartContainer (applies CSS variables, provides config context)
+  initChartContainer(container, { config: options.config })
+
+  // Init BarChart (provides chart context to children)
+  initBarChart(container, { data: options.data })
+
+  // Init grid
+  if (options.grid) {
+    const gridScope = document.createElement('span')
+    initCartesianGrid(gridScope, options.grid)
+  }
+
+  // Init X axis
+  if (options.xAxis) {
+    const xScope = document.createElement('span')
+    initXAxis(xScope, options.xAxis)
+  }
+
+  // Init Y axis
+  if (options.yAxis) {
+    const yScope = document.createElement('span')
+    const yProps = typeof options.yAxis === 'boolean' ? {} : options.yAxis
+    initYAxis(yScope, yProps)
+  }
+
+  // Init bars
+  for (const bar of options.bars) {
+    const barScope = document.createElement('span')
+    initBar(barScope, bar)
+  }
 }
 
 describe('applyChartCSSVariables', () => {
@@ -42,14 +92,14 @@ describe('applyChartCSSVariables', () => {
   })
 })
 
-describe('createBarChart', () => {
+describe('initBarChart + child components', () => {
   let container: HTMLElement
 
   beforeEach(() => {
     container = createContainer()
   })
 
-  const baseOptions: BarChartOptions = {
+  const baseOptions = {
     data: chartData,
     config: chartConfig,
     bars: [{ dataKey: 'desktop', fill: 'var(--color-desktop)', radius: 4 }],
@@ -59,26 +109,26 @@ describe('createBarChart', () => {
   }
 
   test('creates an SVG element inside the container', () => {
-    createBarChart(container, baseOptions)
+    initFullChart(container, baseOptions)
     const svg = container.querySelector('svg')
     expect(svg).not.toBeNull()
   })
 
   test('renders the correct number of bar rects', () => {
-    createBarChart(container, baseOptions)
+    initFullChart(container, baseOptions)
     const rects = container.querySelectorAll('rect[data-key="desktop"]')
     expect(rects.length).toBe(chartData.length)
   })
 
   test('renders X axis labels', () => {
-    createBarChart(container, baseOptions)
+    initFullChart(container, baseOptions)
     const texts = container.querySelectorAll('.chart-x-axis text')
     expect(texts.length).toBe(chartData.length)
     expect(texts[0].textContent).toBe('Jan')
   })
 
   test('supports tickFormatter for X axis', () => {
-    createBarChart(container, {
+    initFullChart(container, {
       ...baseOptions,
       xAxis: { dataKey: 'month', tickFormatter: (v) => v.slice(0, 1) },
     })
@@ -87,19 +137,19 @@ describe('createBarChart', () => {
   })
 
   test('renders Y axis labels', () => {
-    createBarChart(container, baseOptions)
+    initFullChart(container, baseOptions)
     const texts = container.querySelectorAll('.chart-y-axis text')
     expect(texts.length).toBeGreaterThan(0)
   })
 
   test('renders grid lines when grid option is provided', () => {
-    createBarChart(container, baseOptions)
+    initFullChart(container, baseOptions)
     const lines = container.querySelectorAll('.chart-grid line')
     expect(lines.length).toBeGreaterThan(0)
   })
 
   test('supports multiple bar series', () => {
-    createBarChart(container, {
+    initFullChart(container, {
       ...baseOptions,
       bars: [
         { dataKey: 'desktop', fill: 'var(--color-desktop)' },
@@ -112,15 +162,8 @@ describe('createBarChart', () => {
     expect(mobileBars.length).toBe(chartData.length)
   })
 
-  test('destroy removes the SVG', () => {
-    const instance = createBarChart(container, baseOptions)
-    expect(container.querySelector('svg')).not.toBeNull()
-    instance.destroy()
-    expect(container.querySelector('svg')).toBeNull()
-  })
-
   test('applies CSS variables from config', () => {
-    createBarChart(container, baseOptions)
+    initFullChart(container, baseOptions)
     expect(container.style.getPropertyValue('--color-desktop')).toBe('hsl(221 83% 53%)')
   })
 })

@@ -3,11 +3,20 @@
  * BarChartDemo Components
  *
  * Interactive demos for the Bar Chart component.
- * Uses @barefootjs/chart to render SVG bar charts with D3 scales.
+ * Uses JSX component API with @barefootjs/chart.
  */
 
-import { createSignal, onMount, createEffect, onCleanup } from '@barefootjs/dom'
-import { createBarChart, applyChartCSSVariables, type ChartConfig, type BarChartOptions } from '@barefootjs/chart'
+import { createSignal } from '@barefootjs/dom'
+import type { ChartConfig } from '@barefootjs/chart'
+import {
+  ChartContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ChartTooltip,
+} from '@ui/components/ui/chart'
 
 const chartConfig: ChartConfig = {
   desktop: { label: 'Desktop', color: 'hsl(221 83% 53%)' },
@@ -27,35 +36,21 @@ const chartData = [
  * Preview demo — monthly visitors bar chart
  */
 export function BarChartPreviewDemo() {
-  onMount(() => {
-    const container = document.querySelector('[data-chart-demo="preview"]') as HTMLElement
-    if (!container) return
-    applyChartCSSVariables(container, chartConfig)
-    const instance = createBarChart(container, {
-      data: chartData,
-      config: chartConfig,
-      bars: [
-        { dataKey: 'desktop', fill: 'var(--color-desktop)', radius: 4 },
-      ],
-      xAxis: { dataKey: 'month', tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-      tooltip: true,
-    })
-    onCleanup(() => instance.destroy())
-  })
-
   return (
     <div className="w-full space-y-2">
       <div>
         <h4 className="text-sm font-medium">Monthly Visitors</h4>
         <p className="text-xs text-muted-foreground">January - June 2024</p>
       </div>
-      <div
-        data-chart-demo="preview"
-        className="w-full"
-        style="color:hsl(var(--foreground))"
-      />
+      <ChartContainer config={chartConfig} className="w-full">
+        <BarChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="month" tickFormatter={(v: string) => v.slice(0, 3)} />
+          <YAxis />
+          <ChartTooltip />
+          <Bar dataKey="desktop" fill={'var(--color-desktop)'} radius={4} />
+        </BarChart>
+      </ChartContainer>
     </div>
   )
 }
@@ -64,30 +59,16 @@ export function BarChartPreviewDemo() {
  * Basic demo — minimal bar chart
  */
 export function BarChartBasicDemo() {
-  onMount(() => {
-    const container = document.querySelector('[data-chart-demo="basic"]') as HTMLElement
-    if (!container) return
-    applyChartCSSVariables(container, chartConfig)
-    const instance = createBarChart(container, {
-      data: chartData,
-      config: chartConfig,
-      bars: [
-        { dataKey: 'desktop', fill: 'var(--color-desktop)', radius: 4 },
-      ],
-      xAxis: { dataKey: 'month', tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-    })
-    onCleanup(() => instance.destroy())
-  })
-
   return (
     <div className="w-full">
-      <div
-        data-chart-demo="basic"
-        className="w-full"
-        style="color:hsl(var(--foreground))"
-      />
+      <ChartContainer config={chartConfig} className="w-full">
+        <BarChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="month" tickFormatter={(v: string) => v.slice(0, 3)} />
+          <YAxis />
+          <Bar dataKey="desktop" fill={'var(--color-desktop)'} radius={4} />
+        </BarChart>
+      </ChartContainer>
     </div>
   )
 }
@@ -96,25 +77,6 @@ export function BarChartBasicDemo() {
  * Multiple series demo — grouped bars for desktop and mobile
  */
 export function BarChartMultipleDemo() {
-  onMount(() => {
-    const container = document.querySelector('[data-chart-demo="multiple"]') as HTMLElement
-    if (!container) return
-    applyChartCSSVariables(container, chartConfig)
-    const instance = createBarChart(container, {
-      data: chartData,
-      config: chartConfig,
-      bars: [
-        { dataKey: 'desktop', fill: 'var(--color-desktop)', radius: 4 },
-        { dataKey: 'mobile', fill: 'var(--color-mobile)', radius: 4 },
-      ],
-      xAxis: { dataKey: 'month', tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-      tooltip: true,
-    })
-    onCleanup(() => instance.destroy())
-  })
-
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-4">
@@ -127,11 +89,16 @@ export function BarChartMultipleDemo() {
           <span className="text-xs text-muted-foreground">Mobile</span>
         </div>
       </div>
-      <div
-        data-chart-demo="multiple"
-        className="w-full"
-        style="color:hsl(var(--foreground))"
-      />
+      <ChartContainer config={chartConfig} className="w-full">
+        <BarChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="month" tickFormatter={(v: string) => v.slice(0, 3)} />
+          <YAxis />
+          <ChartTooltip />
+          <Bar dataKey="desktop" fill={'var(--color-desktop)'} radius={4} />
+          <Bar dataKey="mobile" fill={'var(--color-mobile)'} radius={4} />
+        </BarChart>
+      </ChartContainer>
     </div>
   )
 }
@@ -141,31 +108,6 @@ export function BarChartMultipleDemo() {
  */
 export function BarChartInteractiveDemo() {
   const [category, setCategory] = createSignal<'desktop' | 'mobile'>('desktop')
-
-  createEffect(() => {
-    const container = document.querySelector('[data-chart-demo="interactive"]') as HTMLElement
-    if (!container) return
-
-    // Clear previous chart and tooltip
-    const oldSvg = container.querySelector('svg')
-    if (oldSvg) oldSvg.remove()
-    const oldTooltip = container.querySelector('.chart-tooltip')
-    if (oldTooltip) oldTooltip.remove()
-
-    applyChartCSSVariables(container, chartConfig)
-    const currentCategory = category()
-    createBarChart(container, {
-      data: chartData,
-      config: chartConfig,
-      bars: [
-        { dataKey: currentCategory, fill: `var(--color-${currentCategory})`, radius: 4 },
-      ],
-      xAxis: { dataKey: 'month', tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-      tooltip: true,
-    })
-  })
 
   return (
     <div className="w-full space-y-4">
@@ -192,11 +134,15 @@ export function BarChartInteractiveDemo() {
           Mobile
         </button>
       </div>
-      <div
-        data-chart-demo="interactive"
-        className="w-full"
-        style="color:hsl(var(--foreground))"
-      />
+      <ChartContainer config={chartConfig} className="w-full">
+        <BarChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="month" tickFormatter={(v: string) => v.slice(0, 3)} />
+          <YAxis />
+          <ChartTooltip />
+          <Bar dataKey={category()} fill={`var(--color-${category()})`} radius={4} />
+        </BarChart>
+      </ChartContainer>
     </div>
   )
 }

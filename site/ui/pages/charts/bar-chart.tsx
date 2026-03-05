@@ -31,12 +31,7 @@ const tocItems: TocItem[] = [
 
 const previewCode = `"use client"
 
-import { onMount, onCleanup } from "@barefootjs/dom"
-import {
-  createBarChart,
-  applyChartCSSVariables,
-  type ChartConfig,
-} from "@barefootjs/chart"
+import type { ChartConfig } from "@barefootjs/chart"
 
 const chartConfig: ChartConfig = {
   desktop: { label: "Desktop", color: "hsl(221 83% 53%)" },
@@ -52,42 +47,29 @@ const chartData = [
 ]
 
 export function BarChartPreviewDemo() {
-  onMount(() => {
-    const container = document.querySelector(
-      '[data-chart-demo="preview"]'
-    ) as HTMLElement
-    if (!container) return
-    applyChartCSSVariables(container, chartConfig)
-    const instance = createBarChart(container, {
-      data: chartData,
-      config: chartConfig,
-      bars: [
-        { dataKey: "desktop", fill: "var(--color-desktop)", radius: 4 },
-      ],
-      xAxis: {
-        dataKey: "month",
-        tickFormatter: (v) => v.slice(0, 3),
-      },
-      yAxis: true,
-      grid: { vertical: false },
-      tooltip: true,
-    })
-    onCleanup(() => instance.destroy())
-  })
-
   return (
-    <div
-      data-chart-demo="preview"
-      className="w-full"
-      style="min-height:250px"
-    />
+    <ChartContainer config={chartConfig} className="w-full">
+      <BarChart data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="month"
+          tickFormatter={(v: string) => v.slice(0, 3)}
+        />
+        <YAxis />
+        <ChartTooltip />
+        <Bar
+          dataKey="desktop"
+          fill="var(--color-desktop)"
+          radius={4}
+        />
+      </BarChart>
+    </ChartContainer>
   )
 }`
 
 const basicCode = `"use client"
 
-import { onMount, onCleanup } from "@barefootjs/dom"
-import { createBarChart, applyChartCSSVariables, type ChartConfig } from "@barefootjs/chart"
+import type { ChartConfig } from "@barefootjs/chart"
 
 const chartConfig: ChartConfig = {
   desktop: { label: "Desktop", color: "hsl(221 83% 53%)" },
@@ -103,28 +85,28 @@ const chartData = [
 ]
 
 export function BarChartBasicDemo() {
-  onMount(() => {
-    const el = document.querySelector('[data-chart-demo="basic"]') as HTMLElement
-    if (!el) return
-    applyChartCSSVariables(el, chartConfig)
-    const instance = createBarChart(el, {
-      data: chartData,
-      config: chartConfig,
-      bars: [{ dataKey: "desktop", fill: "var(--color-desktop)", radius: 4 }],
-      xAxis: { dataKey: "month", tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-    })
-    onCleanup(() => instance.destroy())
-  })
-
-  return <div data-chart-demo="basic" className="w-full" style="min-height:250px" />
+  return (
+    <ChartContainer config={chartConfig} className="w-full">
+      <BarChart data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="month"
+          tickFormatter={(v: string) => v.slice(0, 3)}
+        />
+        <YAxis />
+        <Bar
+          dataKey="desktop"
+          fill="var(--color-desktop)"
+          radius={4}
+        />
+      </BarChart>
+    </ChartContainer>
+  )
 }`
 
 const multipleCode = `"use client"
 
-import { onMount, onCleanup } from "@barefootjs/dom"
-import { createBarChart, applyChartCSSVariables, type ChartConfig } from "@barefootjs/chart"
+import type { ChartConfig } from "@barefootjs/chart"
 
 const chartConfig: ChartConfig = {
   desktop: { label: "Desktop", color: "hsl(221 83% 53%)" },
@@ -138,32 +120,27 @@ const chartData = [
 ]
 
 export function BarChartMultipleDemo() {
-  onMount(() => {
-    const el = document.querySelector('[data-chart-demo="multiple"]') as HTMLElement
-    if (!el) return
-    applyChartCSSVariables(el, chartConfig)
-    const instance = createBarChart(el, {
-      data: chartData,
-      config: chartConfig,
-      bars: [
-        { dataKey: "desktop", fill: "var(--color-desktop)", radius: 4 },
-        { dataKey: "mobile", fill: "var(--color-mobile)", radius: 4 },
-      ],
-      xAxis: { dataKey: "month", tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-      tooltip: true,
-    })
-    onCleanup(() => instance.destroy())
-  })
-
-  return <div data-chart-demo="multiple" className="w-full" style="min-height:250px" />
+  return (
+    <ChartContainer config={chartConfig} className="w-full">
+      <BarChart data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="month"
+          tickFormatter={(v: string) => v.slice(0, 3)}
+        />
+        <YAxis />
+        <ChartTooltip />
+        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  )
 }`
 
 const interactiveCode = `"use client"
 
-import { createSignal, createEffect, onCleanup } from "@barefootjs/dom"
-import { createBarChart, applyChartCSSVariables, type ChartConfig } from "@barefootjs/chart"
+import { createSignal } from "@barefootjs/dom"
+import type { ChartConfig } from "@barefootjs/chart"
 
 const chartConfig: ChartConfig = {
   desktop: { label: "Desktop", color: "hsl(221 83% 53%)" },
@@ -171,75 +148,133 @@ const chartConfig: ChartConfig = {
 }
 
 export function BarChartInteractiveDemo() {
-  const [category, setCategory] = createSignal<"desktop" | "mobile">("desktop")
-
-  createEffect(() => {
-    const el = document.querySelector('[data-chart-demo="interactive"]') as HTMLElement
-    if (!el) return
-    const oldSvg = el.querySelector("svg")
-    if (oldSvg) oldSvg.remove()
-
-    applyChartCSSVariables(el, chartConfig)
-    const c = category()
-    createBarChart(el, {
-      data: chartData,
-      config: chartConfig,
-      bars: [{ dataKey: c, fill: \\\`var(--color-\\\${c})\\\`, radius: 4 }],
-      xAxis: { dataKey: "month", tickFormatter: (v) => v.slice(0, 3) },
-      yAxis: true,
-      grid: { vertical: false },
-      tooltip: true,
-    })
-  })
+  const [category, setCategory] =
+    createSignal<"desktop" | "mobile">("desktop")
 
   return (
     <div>
       <div className="flex gap-2 mb-4">
-        <button onClick={() => setCategory("desktop")}>Desktop</button>
-        <button onClick={() => setCategory("mobile")}>Mobile</button>
+        <button onClick={() => setCategory("desktop")}>
+          Desktop
+        </button>
+        <button onClick={() => setCategory("mobile")}>
+          Mobile
+        </button>
       </div>
-      <div data-chart-demo="interactive" className="w-full" style="min-height:250px" />
+      <ChartContainer config={chartConfig} className="w-full">
+        <BarChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="month"
+            tickFormatter={(v: string) => v.slice(0, 3)}
+          />
+          <YAxis />
+          <ChartTooltip />
+          <Bar
+            dataKey={category()}
+            fill={\\\`var(--color-\\\${category()})\\\`}
+            radius={4}
+          />
+        </BarChart>
+      </ChartContainer>
     </div>
   )
 }`
 
-const chartProps: PropDefinition[] = [
+const barChartProps: PropDefinition[] = [
   {
     name: 'data',
     type: 'Record<string, unknown>[]',
     description: 'Array of data objects. Each object represents one group on the X axis.',
   },
+]
+
+const chartContainerProps: PropDefinition[] = [
   {
     name: 'config',
     type: 'ChartConfig',
     description: 'Maps each data key to a label and color. Sets CSS variables for theming.',
   },
   {
-    name: 'bars',
-    type: 'BarConfig[]',
-    description: 'Array of bar series. Each entry specifies dataKey, fill color, and optional radius.',
+    name: 'className',
+    type: 'string',
+    description: 'Additional CSS class names for the container element.',
+  },
+]
+
+const barProps: PropDefinition[] = [
+  {
+    name: 'dataKey',
+    type: 'string',
+    description: 'The key in the data objects to use for bar values.',
   },
   {
-    name: 'xAxis',
-    type: 'XAxisConfig',
-    description: 'X axis settings: dataKey for labels, optional tickFormatter.',
+    name: 'fill',
+    type: 'string',
+    defaultValue: 'currentColor',
+    description: 'Fill color for the bars. Supports CSS variables like var(--color-desktop).',
   },
   {
-    name: 'yAxis',
-    type: 'YAxisConfig | boolean',
+    name: 'radius',
+    type: 'number',
+    defaultValue: '0',
+    description: 'Border radius for rounded bar corners.',
+  },
+]
+
+const xAxisProps: PropDefinition[] = [
+  {
+    name: 'dataKey',
+    type: 'string',
+    description: 'The key in the data objects to use for X axis labels.',
+  },
+  {
+    name: 'tickFormatter',
+    type: '(value: string) => string',
+    description: 'Custom formatter for tick labels.',
+  },
+  {
+    name: 'hide',
+    type: 'boolean',
     defaultValue: 'false',
-    description: 'Y axis settings. Pass true for defaults or an object with tickFormatter.',
+    description: 'Hide the X axis.',
+  },
+]
+
+const yAxisProps: PropDefinition[] = [
+  {
+    name: 'tickFormatter',
+    type: '(value: number) => string',
+    description: 'Custom formatter for tick labels.',
   },
   {
-    name: 'grid',
-    type: 'CartesianGridConfig',
-    description: 'Grid line settings. Control horizontal and vertical grid lines independently.',
-  },
-  {
-    name: 'tooltip',
-    type: 'TooltipConfig | boolean',
+    name: 'hide',
+    type: 'boolean',
     defaultValue: 'false',
-    description: 'Enable tooltip on bar hover. Pass true for defaults or an object with labelFormatter.',
+    description: 'Hide the Y axis.',
+  },
+]
+
+const cartesianGridProps: PropDefinition[] = [
+  {
+    name: 'vertical',
+    type: 'boolean',
+    defaultValue: 'true',
+    description: 'Show vertical grid lines.',
+  },
+  {
+    name: 'horizontal',
+    type: 'boolean',
+    defaultValue: 'true',
+    description: 'Show horizontal grid lines.',
+  },
+]
+
+const chartTooltipProps: PropDefinition[] = [
+  {
+    name: 'labelFormatter',
+    type: '(label: string) => string',
+    description: 'Custom formatter for the tooltip label.',
   },
 ]
 
@@ -249,7 +284,7 @@ export function BarChartPage() {
       <div className="space-y-12">
         <PageHeader
           title="Bar Chart"
-          description="A bar chart component built with SVG and D3 scales."
+          description="A composable bar chart built with SVG and D3 scales."
           {...getChartNavLinks('bar-chart')}
         />
 
@@ -278,7 +313,36 @@ export function BarChartPage() {
         </Section>
 
         <Section id="api-reference" title="API Reference">
-          <PropsTable props={chartProps} />
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">BarChart</h3>
+              <PropsTable props={barChartProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">ChartContainer</h3>
+              <PropsTable props={chartContainerProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Bar</h3>
+              <PropsTable props={barProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">XAxis</h3>
+              <PropsTable props={xAxisProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">YAxis</h3>
+              <PropsTable props={yAxisProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">CartesianGrid</h3>
+              <PropsTable props={cartesianGridProps} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">ChartTooltip</h3>
+              <PropsTable props={chartTooltipProps} />
+            </div>
+          </div>
         </Section>
       </div>
     </DocPage>

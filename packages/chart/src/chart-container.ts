@@ -1,3 +1,5 @@
+import { provideContext } from '@barefootjs/dom'
+import { ChartConfigContext } from './context'
 import type { ChartConfig } from './types'
 
 /**
@@ -11,4 +13,16 @@ export function applyChartCSSVariables(
   for (const [key, value] of Object.entries(config)) {
     container.style.setProperty(`--color-${key}`, value.color)
   }
+}
+
+/**
+ * Init function for ChartContainer component.
+ * Applies CSS variables, sets foreground color, and provides config via context.
+ */
+export function initChartContainer(scope: Element, props: Record<string, unknown>): void {
+  const el = scope as HTMLElement
+  const config = (props.config as ChartConfig) ?? {}
+  applyChartCSSVariables(el, config)
+  el.style.color = 'hsl(var(--foreground))'
+  provideContext(ChartConfigContext, { config })
 }

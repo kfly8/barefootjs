@@ -1,34 +1,72 @@
-import type { BarConfig } from './types'
-import type { ScaleBand, ScaleLinear } from 'd3-scale'
+import { useContext, createEffect, onCleanup } from '@barefootjs/dom'
+import { BarChartContext } from './context'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 /**
- * Render bar rectangles for all series into an SVG group.
+ * Init function for Bar component.
+ * Registers itself with BarChart context and renders bar rects.
+ * Props are read inside effects to support reactive signal-driven values.
  */
-export function renderBars(
-  parent: SVGGElement,
-  data: Record<string, unknown>[],
-  bars: BarConfig[],
-  xScale: ScaleBand<string>,
-  yScale: ScaleLinear<number, number>,
-  height: number,
-  xDataKey: string,
-): void {
-  const bandwidth = xScale.bandwidth()
-  const barWidth = bars.length > 1 ? bandwidth / bars.length : bandwidth
+export function initBar(_scope: Element, props: Record<string, unknown>): void {
+  const ctx = useContext(BarChartContext)
 
-  for (let barIdx = 0; barIdx < bars.length; barIdx++) {
-    const bar = bars[barIdx]
-    const g = document.createElementNS(SVG_NS, 'g')
-    g.setAttribute('class', `chart-bar chart-bar-${bar.dataKey}`)
+  let currentDataKey: string | null = null
+
+  // Registration effect: re-register when dataKey changes
+  createEffect(() => {
+    const dataKey = props.dataKey as string
+    const fill = (props.fill as string) ?? 'currentColor'
+    const radius = (props.radius as number) ?? 0
+
+    if (currentDataKey !== null) {
+      ctx.unregisterBar(currentDataKey)
+    }
+    ctx.registerBar({ dataKey, fill, radius })
+    currentDataKey = dataKey
+  })
+
+  onCleanup(() => {
+    if (currentDataKey !== null) ctx.unregisterBar(currentDataKey)
+  })
+
+  // Rendering effect: re-render when signals or props change
+  let barGroup: SVGGElement | null = null
+
+  createEffect(() => {
+    const dataKey = props.dataKey as string
+    const fill = (props.fill as string) ?? 'currentColor'
+    const radius = (props.radius as number) ?? 0
+
+    const g = ctx.svgGroup()
+    const xs = ctx.xScale()
+    const ys = ctx.yScale()
+    if (!g || !xs || !ys) return
+
+    // Clear previous bars
+    if (barGroup) {
+      barGroup.remove()
+      barGroup = null
+    }
+
+    const data = ctx.data()
+    const xKey = ctx.xDataKey()
+    const allBars = ctx.bars()
+    const barCount = allBars.length
+    const bandwidth = xs.bandwidth()
+    const barWidth = barCount > 1 ? bandwidth / barCount : bandwidth
+    const barIndex = allBars.findIndex((b) => b.dataKey === dataKey)
+    const innerHeight = ctx.innerHeight()
+
+    barGroup = document.createElementNS(SVG_NS, 'g')
+    barGroup.setAttribute('class', `chart-bar chart-bar-${dataKey}`)
 
     for (const datum of data) {
-      const xValue = String(datum[xDataKey])
-      const yValue = Number(datum[bar.dataKey]) || 0
-      const x = (xScale(xValue) ?? 0) + barIdx * barWidth
-      const y = yScale(yValue)
-      const barHeight = height - y
+      const xValue = String(datum[xKey])
+      const yValue = Number(datum[dataKey]) || 0
+      const x = (xs(xValue) ?? 0) + barIndex * barWidth
+      const y = ys(yValue)
+      const barHeight = innerHeight - y
 
       if (barHeight <= 0) continue
 
@@ -37,20 +75,20 @@ export function renderBars(
       rect.setAttribute('y', String(y))
       rect.setAttribute('width', String(barWidth))
       rect.setAttribute('height', String(barHeight))
-      rect.setAttribute('fill', bar.fill ?? 'currentColor')
+      rect.setAttribute('fill', fill)
 
-      if (bar.radius && bar.radius > 0) {
-        rect.setAttribute('rx', String(bar.radius))
-        rect.setAttribute('ry', String(bar.radius))
+      if (radius > 0) {
+        rect.setAttribute('rx', String(radius))
+        rect.setAttribute('ry', String(radius))
       }
 
       rect.setAttribute('data-x', xValue)
       rect.setAttribute('data-y', String(yValue))
-      rect.setAttribute('data-key', bar.dataKey)
+      rect.setAttribute('data-key', dataKey)
 
-      g.appendChild(rect)
+      barGroup.appendChild(rect)
     }
 
-    parent.appendChild(g)
-  }
+    g.appendChild(barGroup)
+  })
 }

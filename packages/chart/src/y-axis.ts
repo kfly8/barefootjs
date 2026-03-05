@@ -1,47 +1,59 @@
-import type { YAxisConfig } from './types'
-import type { ScaleLinear } from 'd3-scale'
+import { useContext, createEffect } from '@barefootjs/dom'
+import { BarChartContext } from './context'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 /**
- * Render Y axis ticks and labels into an SVG group.
+ * Init function for YAxis component.
+ * Renders Y axis tick labels via context.
  */
-export function renderYAxis(
-  parent: SVGGElement,
-  scale: ScaleLinear<number, number>,
-  config: YAxisConfig,
-): void {
-  if (config.hide) return
+export function initYAxis(_scope: Element, props: Record<string, unknown>): void {
+  const ctx = useContext(BarChartContext)
+  const hide = props.hide as boolean | undefined
+  const tickFormatter = props.tickFormatter as ((value: number) => string) | undefined
 
-  const g = document.createElementNS(SVG_NS, 'g')
-  g.setAttribute('class', 'chart-y-axis')
+  if (hide) return
 
-  // Axis line
-  const line = document.createElementNS(SVG_NS, 'line')
-  line.setAttribute('x1', '0')
-  line.setAttribute('x2', '0')
-  line.setAttribute('y1', String(scale.range()[0]))
-  line.setAttribute('y2', String(scale.range()[1]))
-  line.setAttribute('stroke', 'currentColor')
-  line.setAttribute('stroke-opacity', '0.1')
-  g.appendChild(line)
+  let axisGroup: SVGGElement | null = null
 
-  // Tick labels
-  for (const tick of scale.ticks()) {
-    const y = scale(tick)
-    const text = document.createElementNS(SVG_NS, 'text')
-    text.setAttribute('x', '-8')
-    text.setAttribute('y', String(y))
-    text.setAttribute('text-anchor', 'end')
-    text.setAttribute('dominant-baseline', 'middle')
-    text.setAttribute('fill', 'currentColor')
-    text.setAttribute('opacity', '0.5')
-    text.setAttribute('font-size', '12')
-    text.textContent = config.tickFormatter
-      ? config.tickFormatter(tick)
-      : String(tick)
-    g.appendChild(text)
-  }
+  createEffect(() => {
+    const g = ctx.svgGroup()
+    const ys = ctx.yScale()
+    if (!g || !ys) return
 
-  parent.appendChild(g)
+    if (axisGroup) {
+      axisGroup.remove()
+      axisGroup = null
+    }
+
+    axisGroup = document.createElementNS(SVG_NS, 'g')
+    axisGroup.setAttribute('class', 'chart-y-axis')
+
+    // Axis line
+    const line = document.createElementNS(SVG_NS, 'line')
+    line.setAttribute('x1', '0')
+    line.setAttribute('x2', '0')
+    line.setAttribute('y1', String(ys.range()[0]))
+    line.setAttribute('y2', String(ys.range()[1]))
+    line.setAttribute('stroke', 'currentColor')
+    line.setAttribute('stroke-opacity', '0.1')
+    axisGroup.appendChild(line)
+
+    // Tick labels
+    for (const tick of ys.ticks()) {
+      const y = ys(tick)
+      const text = document.createElementNS(SVG_NS, 'text')
+      text.setAttribute('x', '-8')
+      text.setAttribute('y', String(y))
+      text.setAttribute('text-anchor', 'end')
+      text.setAttribute('dominant-baseline', 'middle')
+      text.setAttribute('fill', 'currentColor')
+      text.setAttribute('opacity', '0.5')
+      text.setAttribute('font-size', '12')
+      text.textContent = tickFormatter ? tickFormatter(tick) : String(tick)
+      axisGroup.appendChild(text)
+    }
+
+    g.appendChild(axisGroup)
+  })
 }
