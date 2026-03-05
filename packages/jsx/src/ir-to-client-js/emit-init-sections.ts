@@ -1087,8 +1087,9 @@ export function emitRegistrationAndHydration(
   if (ctx.restPropsName) restSpreadNames.add(ctx.restPropsName)
   if (ctx.propsObjectName) restSpreadNames.add(ctx.propsObjectName)
 
-  const isCommentScope = _ir.root.type === 'fragment'
-    && (_ir.root as IRFragment).needsScopeComment
+  const isCommentScope = (_ir.root.type === 'fragment'
+    && (_ir.root as IRFragment).needsScopeComment)
+    || _ir.root.type === 'component'
 
   // Build ComponentDef object for hydrate()
   const defParts: string[] = [`init: init${name}`]

@@ -8,8 +8,8 @@
 
 import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
 import { CopyButton } from './copy-button'
-import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
 import { highlightJsx } from './shared/playground-highlight'
+import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@ui/components/ui/select'
 import { Input } from '@ui/components/ui/input'
 
@@ -85,47 +85,45 @@ function ButtonPlayground(_props: {}) {
   return (
     <PlaygroundLayout
       previewDataAttr="data-button-preview"
-      controls={
-        <>
-          <PlaygroundControl label="variant">
-            <Select value={variant()} onValueChange={(v: string) => setVariant(v as ButtonVariant)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select variant..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">default</SelectItem>
-                <SelectItem value="destructive">destructive</SelectItem>
-                <SelectItem value="outline">outline</SelectItem>
-                <SelectItem value="secondary">secondary</SelectItem>
-                <SelectItem value="ghost">ghost</SelectItem>
-                <SelectItem value="link">link</SelectItem>
-              </SelectContent>
-            </Select>
-          </PlaygroundControl>
-          <PlaygroundControl label="size">
-            <Select value={size()} onValueChange={(v: string) => setSize(v as ButtonSize)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select size..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">default</SelectItem>
-                <SelectItem value="sm">sm</SelectItem>
-                <SelectItem value="lg">lg</SelectItem>
-                <SelectItem value="icon">icon</SelectItem>
-                <SelectItem value="icon-sm">icon-sm</SelectItem>
-                <SelectItem value="icon-lg">icon-lg</SelectItem>
-              </SelectContent>
-            </Select>
-          </PlaygroundControl>
-          <PlaygroundControl label="children">
-            <Input
-              type="text"
-              value="Button"
-              onInput={(e: Event) => setText((e.target as HTMLInputElement).value)}
-            />
-          </PlaygroundControl>
-        </>
-      }
+      controls={<>
+        <PlaygroundControl label="variant">
+          <Select value={variant()} onValueChange={(v: string) => setVariant(v as ButtonVariant)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select variant..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">default</SelectItem>
+              <SelectItem value="destructive">destructive</SelectItem>
+              <SelectItem value="outline">outline</SelectItem>
+              <SelectItem value="secondary">secondary</SelectItem>
+              <SelectItem value="ghost">ghost</SelectItem>
+              <SelectItem value="link">link</SelectItem>
+            </SelectContent>
+          </Select>
+        </PlaygroundControl>
+        <PlaygroundControl label="size">
+          <Select value={size()} onValueChange={(v: string) => setSize(v as ButtonSize)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select size..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">default</SelectItem>
+              <SelectItem value="sm">sm</SelectItem>
+              <SelectItem value="lg">lg</SelectItem>
+              <SelectItem value="icon">icon</SelectItem>
+              <SelectItem value="icon-sm">icon-sm</SelectItem>
+              <SelectItem value="icon-lg">icon-lg</SelectItem>
+            </SelectContent>
+          </Select>
+        </PlaygroundControl>
+        <PlaygroundControl label="children">
+          <Input
+            type="text"
+            value="Button"
+            onInput={(e: Event) => setText((e.target as HTMLInputElement).value)}
+          />
+        </PlaygroundControl>
+      </>}
       copyButton={<CopyButton code={codeText()} />}
     />
   )

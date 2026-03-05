@@ -7,6 +7,7 @@
  * 3. Code display (highlighted JSX + copy button)
  *
  * Stateless components — no "use client" needed.
+ * Safe to use from "use client" playground components thanks to __slot().
  */
 
 import type { Child } from 'hono/jsx'

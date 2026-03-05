@@ -1262,6 +1262,58 @@ describe('Client JS generation', () => {
     })
   })
 
+  describe('comment scope flag for component roots (#515)', () => {
+    test('component-root client component generates mount with comment: true', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        import { Layout } from './Layout'
+        export function Wrapper() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <Layout count={count()} />
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Wrapper.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // hydrate() should include comment: true for component roots
+      expect(content).toMatch(/hydrate\('Wrapper',/)
+      expect(content).toContain('comment: true')
+    })
+
+    test('element-root client component does NOT generate comment: true', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return (
+            <div>
+              <span>{count()}</span>
+              <button onClick={() => setCount(c => c + 1)}>+</button>
+            </div>
+          )
+        }
+      `
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // hydrate() should NOT include comment flag for element roots
+      expect(content).not.toContain('comment:')
+      expect(content).not.toContain('comment: true')
+    })
+  })
+
   describe('let variable declarations (#482)', () => {
     test('let without initializer is emitted in client JS', () => {
       const source = `
