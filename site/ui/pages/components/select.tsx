@@ -5,8 +5,8 @@
  * Part of the #515 page redesign initiative.
  */
 
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from '@/components/ui/select'
 import { SelectPlayground } from '@/components/select-playground'
+import { SelectGroupedDemo } from '@/components/select-demo'
 import {
   DocPage,
   PageHeader,
@@ -36,25 +36,26 @@ import {
 } from "@/components/ui/select"
 
 function SelectDemo() {
-  const [fruit, setFruit] = createSignal("")
+  const [timezone, setTimezone] = createSignal("")
 
   return (
-    <Select value={fruit()} onValueChange={setFruit}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select a fruit..." />
+    <Select value={timezone()} onValueChange={setTimezone}>
+      <SelectTrigger className="w-[280px]">
+        <SelectValue placeholder="Select timezone..." />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Fruits</SelectLabel>
-          <SelectItem value="apple">Apple</SelectItem>
-          <SelectItem value="banana">Banana</SelectItem>
-          <SelectItem value="orange">Orange</SelectItem>
+          <SelectLabel>North America</SelectLabel>
+          <SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
+          <SelectItem value="cst">Central Standard Time (CST)</SelectItem>
+          <SelectItem value="mst">Mountain Standard Time (MST)</SelectItem>
+          <SelectItem value="pst">Pacific Standard Time (PST)</SelectItem>
         </SelectGroup>
         <SelectSeparator />
         <SelectGroup>
-          <SelectLabel>Vegetables</SelectLabel>
-          <SelectItem value="carrot">Carrot</SelectItem>
-          <SelectItem value="potato">Potato</SelectItem>
+          <SelectLabel>Europe</SelectLabel>
+          <SelectItem value="gmt">Greenwich Mean Time (GMT)</SelectItem>
+          <SelectItem value="cet">Central European Time (CET)</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -130,25 +131,7 @@ export function SelectRefPage() {
         {/* Usage */}
         <Section id="usage" title="Usage">
           <Example title="" code={usageCode}>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a fruit..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Fruits</SelectLabel>
-                  <SelectItem value="apple">Apple</SelectItem>
-                  <SelectItem value="banana">Banana</SelectItem>
-                  <SelectItem value="orange">Orange</SelectItem>
-                </SelectGroup>
-                <SelectSeparator />
-                <SelectGroup>
-                  <SelectLabel>Vegetables</SelectLabel>
-                  <SelectItem value="carrot">Carrot</SelectItem>
-                  <SelectItem value="potato">Potato</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <SelectGroupedDemo />
           </Example>
         </Section>
 
