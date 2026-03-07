@@ -20,7 +20,7 @@ function TextareaPlayground(_props: {}) {
   const [error, setError] = createSignal(false)
   const [rows, setRows] = createSignal('')
 
-  const props = (): HighlightProp[] => [
+  const propDefs = (): HighlightProp[] => [
     { name: 'placeholder', value: placeholder(), defaultValue: '' },
     { name: 'disabled', value: String(disabled()), defaultValue: 'false', kind: 'boolean' },
     { name: 'error', value: String(error()), defaultValue: 'false', kind: 'boolean' },
@@ -28,7 +28,7 @@ function TextareaPlayground(_props: {}) {
   ]
 
   createEffect(() => {
-    const p = props()
+    const p = propDefs()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsxSelfClosing('Textarea', p)
   })
@@ -72,7 +72,7 @@ function TextareaPlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsxSelfClosing('Textarea', props())} />}
+      copyButton={<CopyButton code={plainJsxSelfClosing('Textarea', propDefs())} />}
     />
   )
 }

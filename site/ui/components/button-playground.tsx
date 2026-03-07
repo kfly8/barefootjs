@@ -22,13 +22,13 @@ function ButtonPlayground(_props: {}) {
   const [size, setSize] = createSignal<ButtonSize>('default')
   const [text, setText] = createSignal('Button')
 
-  const props = (): HighlightProp[] => [
+  const propDefs = (): HighlightProp[] => [
     { name: 'variant', value: variant(), defaultValue: 'default' },
     { name: 'size', value: size(), defaultValue: 'default' },
   ]
 
   createEffect(() => {
-    const p = props()
+    const p = propDefs()
     const t = text()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsx('Button', p, t)
@@ -77,7 +77,7 @@ function ButtonPlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsx('Button', props(), text())} />}
+      copyButton={<CopyButton code={plainJsx('Button', propDefs(), text())} />}
     />
   )
 }

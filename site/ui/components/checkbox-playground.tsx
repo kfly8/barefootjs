@@ -16,13 +16,13 @@ function CheckboxPlayground(_props: {}) {
   const [defaultChecked, setDefaultChecked] = createSignal(false)
   const [disabled, setDisabled] = createSignal(false)
 
-  const props = (): HighlightProp[] => [
+  const propDefs = (): HighlightProp[] => [
     { name: 'defaultChecked', value: String(defaultChecked()), defaultValue: 'false', kind: 'boolean' },
     { name: 'disabled', value: String(disabled()), defaultValue: 'false', kind: 'boolean' },
   ]
 
   createEffect(() => {
-    const p = props()
+    const p = propDefs()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsxSelfClosing('Checkbox', p)
   })
@@ -50,7 +50,7 @@ function CheckboxPlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsxSelfClosing('Checkbox', props())} />}
+      copyButton={<CopyButton code={plainJsxSelfClosing('Checkbox', propDefs())} />}
     />
   )
 }
