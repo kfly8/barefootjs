@@ -17,12 +17,12 @@ function LabelPlayground(_props: {}) {
   const [text, setText] = createSignal('Email')
   const [htmlFor, setHtmlFor] = createSignal('email')
 
-  const propDefs = (): HighlightProp[] => [
+  const props = (): HighlightProp[] => [
     { name: 'for', value: htmlFor(), defaultValue: '' },
   ]
 
   createEffect(() => {
-    const p = propDefs()
+    const p = props()
     const t = text()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsx('Label', p, t)
@@ -48,7 +48,7 @@ function LabelPlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsx('Label', propDefs(), text())} />}
+      copyButton={<CopyButton code={plainJsx('Label', props(), text())} />}
     />
   )
 }

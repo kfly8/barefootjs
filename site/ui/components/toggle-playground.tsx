@@ -22,14 +22,14 @@ function TogglePlayground(_props: {}) {
   const [size, setSize] = createSignal<ToggleSize>('default')
   const [pressed, setPressed] = createSignal(false)
 
-  const propDefs = (): HighlightProp[] => [
+  const props = (): HighlightProp[] => [
     { name: 'variant', value: variant(), defaultValue: 'default' },
     { name: 'size', value: size(), defaultValue: 'default' },
     { name: 'defaultPressed', value: String(pressed()), defaultValue: 'false', kind: 'boolean' },
   ]
 
   createEffect(() => {
-    const p = propDefs()
+    const p = props()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsx('Toggle', p, 'Toggle')
   })
@@ -77,7 +77,7 @@ function TogglePlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsx('Toggle', propDefs(), 'Toggle')} />}
+      copyButton={<CopyButton code={plainJsx('Toggle', props(), 'Toggle')} />}
     />
   )
 }

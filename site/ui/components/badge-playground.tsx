@@ -20,12 +20,12 @@ function BadgePlayground(_props: {}) {
   const [variant, setVariant] = createSignal<BadgeVariant>('default')
   const [text, setText] = createSignal('Badge')
 
-  const propDefs = (): HighlightProp[] => [
+  const props = (): HighlightProp[] => [
     { name: 'variant', value: variant(), defaultValue: 'default' },
   ]
 
   createEffect(() => {
-    const p = propDefs()
+    const p = props()
     const t = text()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsx('Badge', p, t)
@@ -57,7 +57,7 @@ function BadgePlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsx('Badge', propDefs(), text())} />}
+      copyButton={<CopyButton code={plainJsx('Badge', props(), text())} />}
     />
   )
 }

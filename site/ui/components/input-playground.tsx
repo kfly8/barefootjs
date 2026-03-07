@@ -21,14 +21,14 @@ function InputPlayground(_props: {}) {
   const [placeholder, setPlaceholder] = createSignal('Enter text...')
   const [disabled, setDisabled] = createSignal(false)
 
-  const propDefs = (): HighlightProp[] => [
+  const props = (): HighlightProp[] => [
     { name: 'type', value: type(), defaultValue: 'text' },
     { name: 'placeholder', value: placeholder(), defaultValue: '' },
     { name: 'disabled', value: String(disabled()), defaultValue: 'false', kind: 'boolean' },
   ]
 
   createEffect(() => {
-    const p = propDefs()
+    const p = props()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsxSelfClosing('Input', p)
   })
@@ -72,7 +72,7 @@ function InputPlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsxSelfClosing('Input', propDefs())} />}
+      copyButton={<CopyButton code={plainJsxSelfClosing('Input', props())} />}
     />
   )
 }

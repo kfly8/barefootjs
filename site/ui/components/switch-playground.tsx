@@ -17,13 +17,13 @@ function SwitchPlayground(_props: {}) {
   const [defaultChecked, setDefaultChecked] = createSignal(false)
   const [disabled, setDisabled] = createSignal(false)
 
-  const propDefs = (): HighlightProp[] => [
+  const props = (): HighlightProp[] => [
     { name: 'defaultChecked', value: String(defaultChecked()), defaultValue: 'false', kind: 'boolean' },
     { name: 'disabled', value: String(disabled()), defaultValue: 'false', kind: 'boolean' },
   ]
 
   createEffect(() => {
-    const p = propDefs()
+    const p = props()
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (codeEl) codeEl.innerHTML = highlightJsxSelfClosing('Switch', p)
   })
@@ -46,7 +46,7 @@ function SwitchPlayground(_props: {}) {
           />
         </PlaygroundControl>
       </>}
-      copyButton={<CopyButton code={plainJsxSelfClosing('Switch', propDefs())} />}
+      copyButton={<CopyButton code={plainJsxSelfClosing('Switch', props())} />}
     />
   )
 }
