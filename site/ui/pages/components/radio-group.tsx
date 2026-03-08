@@ -32,32 +32,49 @@ import { createSignal } from "@barefootjs/dom"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 function RadioGroupDemo() {
-  const [value, setValue] = createSignal("default")
+  const [plan, setPlan] = createSignal("free")
 
   return (
-    <div className="space-y-4">
-      <RadioGroup defaultValue="default" onValueChange={setValue}>
+    <div className="space-y-6">
+      {/* Uncontrolled with defaultValue */}
+      <RadioGroup defaultValue="email">
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="default" />
-          <span className="text-sm font-medium leading-none">Default</span>
+          <RadioGroupItem value="email" />
+          <span className="text-sm font-medium leading-none">Email</span>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="comfortable" />
-          <span className="text-sm font-medium leading-none">Comfortable</span>
+          <RadioGroupItem value="sms" />
+          <span className="text-sm font-medium leading-none">SMS</span>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="compact" />
-          <span className="text-sm font-medium leading-none">Compact</span>
+          <RadioGroupItem value="push" />
+          <span className="text-sm font-medium leading-none">Push notification</span>
         </div>
       </RadioGroup>
-      <div className="flex items-center space-x-2 opacity-50">
-        <RadioGroup disabled>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="disabled" />
-            <span className="text-sm font-medium leading-none">Disabled</span>
-          </div>
-        </RadioGroup>
-      </div>
+
+      {/* Controlled with onValueChange */}
+      <RadioGroup value={plan()} onValueChange={setPlan}>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="free" />
+          <span className="text-sm font-medium leading-none">Free</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="pro" />
+          <span className="text-sm font-medium leading-none">Pro</span>
+        </div>
+      </RadioGroup>
+
+      {/* Disabled */}
+      <RadioGroup disabled defaultValue="on">
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="on" />
+          <span className="text-sm font-medium leading-none">On</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="off" />
+          <span className="text-sm font-medium leading-none">Off</span>
+        </div>
+      </RadioGroup>
     </div>
   )
 }`
@@ -121,29 +138,41 @@ export function RadioGroupRefPage() {
         {/* Usage */}
         <Section id="usage" title="Usage">
           <Example title="" code={usageCode}>
-            <div className="space-y-4">
-              <RadioGroup defaultValue="default">
+            <div className="space-y-6">
+              <RadioGroup defaultValue="email">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="default" />
-                  <span className="text-sm font-medium leading-none">Default</span>
+                  <RadioGroupItem value="email" />
+                  <span className="text-sm font-medium leading-none">Email</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="comfortable" />
-                  <span className="text-sm font-medium leading-none">Comfortable</span>
+                  <RadioGroupItem value="sms" />
+                  <span className="text-sm font-medium leading-none">SMS</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="compact" />
-                  <span className="text-sm font-medium leading-none">Compact</span>
+                  <RadioGroupItem value="push" />
+                  <span className="text-sm font-medium leading-none">Push notification</span>
                 </div>
               </RadioGroup>
-              <div className="opacity-50">
-                <RadioGroup disabled>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="disabled" />
-                    <span className="text-sm font-medium leading-none">Disabled</span>
-                  </div>
-                </RadioGroup>
-              </div>
+              <RadioGroup defaultValue="free">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="free" />
+                  <span className="text-sm font-medium leading-none">Free</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pro" />
+                  <span className="text-sm font-medium leading-none">Pro</span>
+                </div>
+              </RadioGroup>
+              <RadioGroup disabled defaultValue="on">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="on" />
+                  <span className="text-sm font-medium leading-none">On</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="off" />
+                  <span className="text-sm font-medium leading-none">Off</span>
+                </div>
+              </RadioGroup>
             </div>
           </Example>
         </Section>
