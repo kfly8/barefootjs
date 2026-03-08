@@ -1,0 +1,211 @@
+name: PR Preview — Site UI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/dom/**'
+      - 'packages/jsx/**'
+      - 'packages/hono/**'
+      - 'packages/form/**'
+      - 'packages/chart/**'
+      - 'ui/**'
+      - 'site/ui/**'
+      - 'site/shared/**'
+      - '.github/workflows/pr-preview.yml'
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: |
+          bun run --filter '@barefootjs/dom' build
+          bun run --filter '@barefootjs/jsx' build
+          bun run --filter '@barefootjs/hono' build
+          bun run --filter '@barefootjs/form' build
+          bun run --filter '@barefootjs/chart' build
+
+      - name: Build site/ui
+        run: cd site/ui && bun run build
+
+      - name: Generate preview summary HTML
+        run: |
+          node -e "
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('site/ui/dist/components/manifest.json', 'utf8'));
+          const components = Object.entries(manifest)
+            .filter(([name]) => name !== '__barefoot__')
+            .sort(([a], [b]) => a.localeCompare(b));
+          const html = \`<!DOCTYPE html>
+          <html lang=\"en\">
+          <head>
+            <meta charset=\"UTF-8\">
+            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+            <title>PR #\${process.env.PR_NUMBER} — BarefootJS UI Preview Summary</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: system-ui, -apple-system, sans-serif; padding: 2rem; max-width: 960px; margin: 0 auto; color: #1a1a2e; background: #fafafa; }
+              h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+              .meta { color: #666; font-size: 0.875rem; margin-bottom: 2rem; }
+              .meta a { color: #2563eb; text-decoration: none; }
+              table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+              th { text-align: left; padding: 0.75rem 1rem; background: #f1f5f9; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+              td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem; }
+              tr:last-child td { border-bottom: none; }
+              .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+              .badge-client { background: #dbeafe; color: #1d4ed8; }
+              .badge-server { background: #f0fdf4; color: #15803d; }
+              .component-name { font-weight: 500; font-family: ui-monospace, monospace; }
+              .file-path { color: #94a3b8; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+              .summary { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+              .summary-item { padding: 1rem 1.5rem; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+              .summary-number { font-size: 1.5rem; font-weight: 700; }
+              .summary-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+            </style>
+          </head>
+          <body>
+            <h1>BarefootJS UI — Preview Summary</h1>
+            <p class=\"meta\">
+              PR <a href=\"https://github.com/\${process.env.REPO}/pull/\${process.env.PR_NUMBER}\">#\${process.env.PR_NUMBER}</a>
+              · Commit \${process.env.COMMIT_SHA?.slice(0, 7)}
+              · Built \${new Date().toISOString().split('T')[0]}
+            </p>
+            <div class=\"summary\">
+              <div class=\"summary-item\">
+                <div class=\"summary-number\">\${components.length}</div>
+                <div class=\"summary-label\">Components</div>
+              </div>
+              <div class=\"summary-item\">
+                <div class=\"summary-number\">\${components.filter(([,v]) => v.clientJs).length}</div>
+                <div class=\"summary-label\">With Client JS</div>
+              </div>
+              <div class=\"summary-item\">
+                <div class=\"summary-number\">\${components.filter(([,v]) => !v.clientJs).length}</div>
+                <div class=\"summary-label\">Server Only</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Component</th><th>Type</th><th>Files</th></tr>
+              </thead>
+              <tbody>
+                \${components.map(([name, entry]) => \\\`<tr>
+                  <td class=\"component-name\">\${name}</td>
+                  <td>\${entry.clientJs
+                    ? '<span class=\"badge badge-client\">Client</span>'
+                    : '<span class=\"badge badge-server\">Server</span>'}</td>
+                  <td>
+                    <span class=\"file-path\">\${entry.markedTemplate}</span>
+                    \${entry.clientJs ? '<br><span class=\"file-path\">' + entry.clientJs + '</span>' : ''}
+                  </td>
+                </tr>\\\`).join('')}
+              </tbody>
+            </table>
+          </body>
+          </html>\`;
+          fs.writeFileSync('preview-summary.html', html);
+          console.log('Generated preview-summary.html with ' + components.length + ' components');
+          "
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+
+      - name: Upload site build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-pr-${{ github.event.pull_request.number }}-site-ui
+          path: site/ui/dist/
+          retention-days: 7
+
+      - name: Upload preview summary (non-zipped)
+        uses: actions/upload-artifact@v7
+        with:
+          name: preview-pr-${{ github.event.pull_request.number }}-summary
+          path: preview-summary.html
+          archive: false
+          retention-days: 7
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const runId = context.runId;
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+            const marker = '<!-- pr-preview-comment -->';
+
+            const body = `${marker}
+            ### 📦 PR Preview — Site UI
+
+            | Artifact | Description |
+            |----------|-------------|
+            | [Site UI Build](https://github.com/${owner}/${repo}/actions/runs/${runId}/artifacts) | Full \`dist/\` build output (zipped) |
+            | [Preview Summary](https://github.com/${owner}/${repo}/actions/runs/${runId}/artifacts) | Component manifest overview (single HTML, non-zipped) |
+
+            <sub>Commit: ${sha} · [Workflow run](https://github.com/${owner}/${repo}/actions/runs/${runId})</sub>`;
+
+            // Update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: prNumber, body,
+              });
+            }
+
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+
+    steps:
+      - name: Delete PR preview artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const prefix = `preview-pr-${prNumber}`;
+
+            const { data: { artifacts } } = await github.rest.actions.listArtifactsForRepo({
+              owner, repo, per_page: 100,
+            });
+
+            const toDelete = artifacts.filter(a => a.name.startsWith(prefix));
+            for (const artifact of toDelete) {
+              await github.rest.actions.deleteArtifact({
+                owner, repo, artifact_id: artifact.id,
+              });
+              console.log(`Deleted artifact: ${artifact.name}`);
+            }
