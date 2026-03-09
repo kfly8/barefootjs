@@ -26,7 +26,7 @@ export function ResizableHorizontalDemo() {
           <span className="font-semibold">One</span>
         </div>
       </ResizablePanel>
-      <ResizableHandle />
+      <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50}>
         <div className="flex h-[200px] items-center justify-center p-6">
           <span className="font-semibold">Two</span>
