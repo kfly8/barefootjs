@@ -127,6 +127,14 @@ function RadioGroupItem(props: RadioGroupItemProps) {
       el.setAttribute('aria-checked', String(isSelected))
       el.setAttribute('data-state', isSelected ? 'checked' : 'unchecked')
 
+      // Reflect group-level disabled onto the button element
+      const isDisabled = props.disabled || ctx.disabled()
+      if (isDisabled) {
+        el.setAttribute('disabled', '')
+      } else {
+        el.removeAttribute('disabled')
+      }
+
       // Update indicator dot visibility
       const indicator = el.querySelector('[data-slot="radio-group-indicator"]') as HTMLElement
       if (indicator) {
