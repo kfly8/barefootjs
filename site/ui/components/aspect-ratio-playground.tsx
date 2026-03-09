@@ -13,16 +13,16 @@ import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@ui/components/ui/select'
 import { AspectRatio } from '@ui/components/ui/aspect-ratio'
 
-type RatioOption = '16 / 9' | '4 / 3' | '1' | '21 / 9'
+type RatioOption = '16/9' | '4/3' | '1' | '21/9'
 
 function AspectRatioPlayground(_props: {}) {
-  const [ratio, setRatio] = createSignal<RatioOption>('16 / 9')
+  const [ratio, setRatio] = createSignal<RatioOption>('16/9')
 
-  const ratioValue = (): number => {
+  const ratioNumber = (): number => {
     const r = ratio()
-    if (r === '16 / 9') return 16 / 9
-    if (r === '4 / 3') return 4 / 3
-    if (r === '21 / 9') return 21 / 9
+    if (r === '16/9') return 16 / 9
+    if (r === '4/3') return 4 / 3
+    if (r === '21/9') return 21 / 9
     return 1
   }
 
@@ -40,8 +40,8 @@ function AspectRatioPlayground(_props: {}) {
     <PlaygroundLayout
       previewDataAttr="data-aspect-ratio-preview"
       previewContent={
-        <div className="w-full max-w-xs">
-          <AspectRatio ratio={ratioValue()} className="overflow-hidden rounded-lg bg-muted">
+        <div className="w-64">
+          <AspectRatio ratio={ratioNumber()} className="overflow-hidden rounded-lg bg-muted">
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-sm text-muted-foreground">{ratio()}</span>
             </div>
@@ -55,10 +55,10 @@ function AspectRatioPlayground(_props: {}) {
               <SelectValue placeholder="Select ratio..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="16 / 9">16 / 9</SelectItem>
-              <SelectItem value="4 / 3">4 / 3</SelectItem>
+              <SelectItem value="16/9">16/9</SelectItem>
+              <SelectItem value="4/3">4/3</SelectItem>
               <SelectItem value="1">1</SelectItem>
-              <SelectItem value="21 / 9">21 / 9</SelectItem>
+              <SelectItem value="21/9">21/9</SelectItem>
             </SelectContent>
           </Select>
         </PlaygroundControl>

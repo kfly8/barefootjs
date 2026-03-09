@@ -311,14 +311,14 @@ function rewriteDestructuredPropsInExpr(expr: string, ctx: ClientJsContext): str
   let result = expr
   for (const prop of ctx.propsParams) {
     if (prop.name === 'children') continue
-    const pattern = new RegExp(`\\b${prop.name}\\b`, 'g')
+    const pattern = new RegExp(`(?<![-.])\\b${prop.name}\\b`, 'g')
     if (!pattern.test(result)) continue
 
     const defaultVal = prop.defaultValue
     const replacement = defaultVal
       ? `(${PROPS_PARAM}.${prop.name} ?? ${defaultVal.includes('=>') ? `(${defaultVal})` : defaultVal})`
       : `${PROPS_PARAM}.${prop.name}`
-    result = result.replace(new RegExp(`\\b${prop.name}\\b`, 'g'), replacement)
+    result = result.replace(new RegExp(`(?<![-.])\\b${prop.name}\\b`, 'g'), replacement)
   }
 
   return result
