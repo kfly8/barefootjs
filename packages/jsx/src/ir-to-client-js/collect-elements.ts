@@ -3,9 +3,9 @@
  */
 
 import type { IRNode, IRElement } from '../types'
-import type { ClientJsContext, LoopChildEvent } from './types'
+import type { ClientJsContext, LoopChildEvent, LoopChildReactiveAttr } from './types'
 import { attrValueToString, quotePropName, PROPS_PARAM } from './utils'
-import { isReactiveExpression, collectEventHandlersFromIR, collectConditionalBranchEvents, collectConditionalBranchRefs, collectLoopChildEvents } from './reactivity'
+import { isReactiveExpression, collectEventHandlersFromIR, collectConditionalBranchEvents, collectConditionalBranchRefs, collectLoopChildEvents, collectLoopChildReactiveAttrs } from './reactivity'
 import { irToHtmlTemplate, irChildrenToJsExpr } from './html-template'
 import { expandDynamicPropValue, expandConstantForReactivity } from './prop-handling'
 
@@ -104,9 +104,11 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       if (node.slotId && !insideConditional) {
         const childHandlers: string[] = []
         const childEvents: LoopChildEvent[] = []
+        const childReactiveAttrs: LoopChildReactiveAttr[] = []
         for (const child of node.children) {
           childHandlers.push(...collectEventHandlersFromIR(child))
           childEvents.push(...collectLoopChildEvents(child))
+          childReactiveAttrs.push(...collectLoopChildReactiveAttrs(child, ctx))
         }
 
         if (node.childComponent) {
@@ -126,6 +128,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           template: node.childComponent ? '' : (node.children[0] ? irToHtmlTemplate(node.children[0], buildRestSpreadNames(ctx)) : ''),
           childEventHandlers: childHandlers,
           childEvents,
+          childReactiveAttrs,
           childComponent: node.childComponent,
           nestedComponents: node.nestedComponents,
           isStaticArray: node.isStaticArray,
@@ -174,11 +177,16 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       // Only handle spreads whose source matches the component's rest/props parameter name.
       // Other identifiers (e.g., local variables) may not exist in the compiled init scope.
       // Always use PROPS_PARAM as the actual source since the init function parameter is PROPS_PARAM.
-      const spreadProp = node.props.find(p => p.name === '...' || p.name.startsWith('...'))
+      // Find the spread prop matching the component's rest/props parameter.
+      // A component may have multiple spreads (e.g., <Tag {...childProps} {...props}>).
+      // We need to find the one that matches, not just the first spread.
       const restName = ctx.restPropsName
       const propsObjName = ctx.propsObjectName
-      const isKnownSource = spreadProp && (spreadProp.value === restName || spreadProp.value === propsObjName)
-      const spreadSource = isKnownSource ? PROPS_PARAM : null
+      const knownSpreadProp = node.props.find(p =>
+        (p.name === '...' || p.name.startsWith('...')) &&
+        (p.value === restName || p.value === propsObjName)
+      )
+      const spreadSource = knownSpreadProp ? PROPS_PARAM : null
 
       const propsForInit: string[] = []
       const explicitPropNames: string[] = []

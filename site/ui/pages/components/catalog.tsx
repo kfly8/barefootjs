@@ -6,6 +6,7 @@
  * Ref: #517
  */
 
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -19,17 +20,10 @@ import { Slider } from '@/components/ui/slider'
 import { Toggle } from '@/components/ui/toggle'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
+import { CatalogFilter } from '@/components/catalog-filter'
 
 // Tag definitions for filtering
 export type ComponentTag = 'input' | 'display' | 'feedback' | 'navigation' | 'layout'
-
-const tagLabels: Record<ComponentTag, string> = {
-  input: 'Input',
-  display: 'Display',
-  feedback: 'Feedback',
-  navigation: 'Navigation',
-  layout: 'Layout',
-}
 
 interface CatalogEntry {
   slug: string
@@ -399,38 +393,30 @@ const catalogEntries: CatalogEntry[] = [
   },
 ]
 
-const allTags: ComponentTag[] = ['input', 'display', 'feedback', 'navigation', 'layout']
-
-function TagChip({ tag, active }: { tag: string; active?: boolean }) {
-  const base = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer'
-  const cls = active
-    ? `${base} bg-primary text-primary-foreground`
-    : `${base} bg-secondary text-secondary-foreground hover:bg-secondary/80`
-  return <span className={cls}>{tag}</span>
-}
-
 function ComponentCard({ entry }: { entry: CatalogEntry }) {
   const href = `/docs/components/${entry.slug}`
   return (
     <a
       href={href}
-      className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline overflow-hidden"
+      className="no-underline"
+      data-catalog-card
+      data-tags={entry.tags.join(' ')}
     >
-      {/* Preview area */}
-      <div className="flex items-center justify-center p-6 min-h-[120px] bg-muted/30">
-        {entry.preview ? (
-          entry.preview()
-        ) : (
-          <span className="text-2xl font-semibold text-muted-foreground/40 select-none">
-            {entry.title.charAt(0)}
-          </span>
-        )}
-      </div>
-      {/* Label area */}
-      <div className="px-4 py-3 border-t border-border">
-        <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">{entry.title}</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">{entry.description}</p>
-      </div>
+      <Card className="overflow-hidden py-0 gap-0 hover:border-ring transition-colors">
+        <CardContent className="flex items-center justify-center p-6 min-h-[120px] bg-muted/30">
+          {entry.preview ? (
+            entry.preview()
+          ) : (
+            <span className="text-2xl font-semibold text-muted-foreground/40 select-none">
+              {entry.title.charAt(0)}
+            </span>
+          )}
+        </CardContent>
+        <CardHeader className="px-4 py-3 border-t border-border">
+          <CardTitle className="text-sm">{entry.title}</CardTitle>
+          <CardDescription className="mt-0.5">{entry.description}</CardDescription>
+        </CardHeader>
+      </Card>
     </a>
   )
 }
@@ -446,13 +432,8 @@ export function ComponentCatalogPage() {
         </p>
       </div>
 
-      {/* Tag filter chips */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
-        <TagChip tag="All" active />
-        {allTags.map(tag => (
-          <TagChip tag={tagLabels[tag]} />
-        ))}
-      </div>
+      {/* Search + tag filter */}
+      <CatalogFilter />
 
       {/* Card grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

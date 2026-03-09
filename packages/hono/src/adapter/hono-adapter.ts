@@ -343,7 +343,7 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Handle if-statement roots (early return pattern)
     if (isIfStatement) {
-      const ifCode = this.renderIfStatement(ir.root as IRIfStatement)
+      const ifCode = this.renderIfStatement(ir.root as IRIfStatement, { isRootOfClientComponent: true })
       lines.push(ifCode)
       lines.push(`}`)
       return lines.join('\n')
@@ -564,7 +564,7 @@ export class HonoAdapter implements TemplateAdapter {
    * Render an if-statement chain as function-level code.
    * This is used for components with early return patterns.
    */
-  renderIfStatement(ifStmt: IRIfStatement): string {
+  renderIfStatement(ifStmt: IRIfStatement, ctx?: { isRootOfClientComponent?: boolean }): string {
     const lines: string[] = []
 
     // Generate scope variables declared in this if block
@@ -573,7 +573,7 @@ export class HonoAdapter implements TemplateAdapter {
     }
 
     // Render the consequent (then branch) JSX
-    const consequent = this.renderNode(ifStmt.consequent)
+    const consequent = this.renderNode(ifStmt.consequent, ctx)
 
     // Build the if statement
     lines.unshift(`  if (${ifStmt.condition}) {`)
@@ -586,12 +586,12 @@ export class HonoAdapter implements TemplateAdapter {
     if (ifStmt.alternate) {
       if (ifStmt.alternate.type === 'if-statement') {
         // else if chain - recursively render
-        const elseIfCode = this.renderIfStatement(ifStmt.alternate as IRIfStatement)
+        const elseIfCode = this.renderIfStatement(ifStmt.alternate as IRIfStatement, ctx)
         // Replace the leading 'if' with 'else if'
         lines.push(elseIfCode.replace(/^\s*if/, '  else if'))
       } else {
         // Final else branch with regular JSX
-        const alternate = this.renderNode(ifStmt.alternate)
+        const alternate = this.renderNode(ifStmt.alternate, ctx)
         lines.push(`  return (`)
         lines.push(`    ${alternate}`)
         lines.push(`  )`)
@@ -624,6 +624,10 @@ export class HonoAdapter implements TemplateAdapter {
       } else {
         scopeAttr = ` __instanceId={__scopeId}${propsPassAttr}`
       }
+      // Also pass bf-s for asChild/Slot patterns where the component forwards
+      // props to a DOM element via {...props}. This ensures the final element
+      // has bf-s for hydration queries.
+      scopeAttr += ' bf-s={__bfChild ? `~${__scopeId}` : __scopeId}'
     } else if (ctx?.isInsideLoop) {
       // Components inside loops should generate their own unique scope IDs
       // Pass __bfScope so they use it as fallback but generate unique IDs

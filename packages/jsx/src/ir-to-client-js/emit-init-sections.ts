@@ -482,6 +482,50 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
         }
       }
 
+      // Reactive attribute effects for plain elements in static arrays.
+      // Static arrays are server-rendered once, so signal-dependent attributes
+      // (e.g., className that reads activeTag()) need createEffect to update the DOM.
+      if (!elem.childComponent && elem.childReactiveAttrs.length > 0) {
+        const v = varSlotId(elem.slotId)
+        lines.push(`  // Reactive attributes in static array children`)
+        lines.push(`  if (_${v}) {`)
+        const indexParam = elem.index || '__idx'
+        lines.push(`    ${elem.array}.forEach((${elem.param}, ${indexParam}) => {`)
+        lines.push(`      const __iterEl = _${v}.children[${indexParam}]`)
+        lines.push(`      if (__iterEl) {`)
+        // Group attrs by childSlotId to avoid duplicate const declarations
+        const attrsBySlot = new Map<string, typeof elem.childReactiveAttrs>()
+        for (const attr of elem.childReactiveAttrs) {
+          if (!attrsBySlot.has(attr.childSlotId)) {
+            attrsBySlot.set(attr.childSlotId, [])
+          }
+          attrsBySlot.get(attr.childSlotId)!.push(attr)
+        }
+        for (const [slotId, attrs] of attrsBySlot) {
+          lines.push(`        const __t_${slotId} = __iterEl.matches('[bf="${slotId}"]') ? __iterEl : __iterEl.querySelector('[bf="${slotId}"]')`)
+          lines.push(`        if (__t_${slotId}) {`)
+          for (const attr of attrs) {
+            const htmlAttrName = toHtmlAttrName(attr.attrName)
+            lines.push(`          createEffect(() => {`)
+            if (isBooleanAttr(htmlAttrName)) {
+              lines.push(`            __t_${slotId}.${htmlAttrName} = !!(${attr.expression})`)
+            } else if (attr.attrName === 'className') {
+              lines.push(`            __t_${slotId}.className = ${attr.expression}`)
+            } else if (attr.presenceOrUndefined) {
+              lines.push(`            __t_${slotId}.toggleAttribute('${htmlAttrName}', !!(${attr.expression}))`)
+            } else {
+              lines.push(`            __t_${slotId}.setAttribute('${htmlAttrName}', ${attr.expression})`)
+            }
+            lines.push(`          })`)
+          }
+          lines.push(`        }`)
+        }
+        lines.push(`      }`)
+        lines.push(`    })`)
+        lines.push(`  }`)
+        lines.push('')
+      }
+
       // Event delegation for plain elements in static arrays (#537)
       // Static arrays have no data-key/bf-i markers, so walk up from target to
       // the container's direct child and use indexOf for index lookup.
