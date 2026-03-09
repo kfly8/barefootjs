@@ -3,16 +3,14 @@
  * Catalog Filter Component
  *
  * Client-side tag filtering for the component catalog.
- * Chip active states use declarative reactive className via .map().
+ * Uses Badge component for filter chips with reactive variant.
  * Card visibility uses createEffect + DOM queries since cards
  * are rendered by a separate server component.
  * Ref: #517
  */
 
 import { createSignal, createEffect } from '@barefootjs/dom'
-
-const chipActive = 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer select-none bg-primary text-primary-foreground'
-const chipInactive = 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer select-none bg-secondary text-secondary-foreground hover:bg-secondary/80'
+import { Badge } from '@/components/ui/badge'
 
 const tagOptions = [
   { label: 'All', value: '' },
@@ -40,13 +38,13 @@ export function CatalogFilter() {
   return (
     <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
       {tagOptions.map(opt => (
-        <button
-          type="button"
-          className={activeTag() === opt.value ? chipActive : chipInactive}
+        <Badge
+          variant={activeTag() === opt.value ? 'default' : 'secondary'}
+          className="cursor-pointer"
           onClick={() => setActiveTag(prev => prev === opt.value ? '' : opt.value)}
         >
           {opt.label}
-        </button>
+        </Badge>
       ))}
     </div>
   )

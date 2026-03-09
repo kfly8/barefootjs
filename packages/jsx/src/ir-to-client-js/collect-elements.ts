@@ -177,11 +177,16 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
       // Only handle spreads whose source matches the component's rest/props parameter name.
       // Other identifiers (e.g., local variables) may not exist in the compiled init scope.
       // Always use PROPS_PARAM as the actual source since the init function parameter is PROPS_PARAM.
-      const spreadProp = node.props.find(p => p.name === '...' || p.name.startsWith('...'))
+      // Find the spread prop matching the component's rest/props parameter.
+      // A component may have multiple spreads (e.g., <Tag {...childProps} {...props}>).
+      // We need to find the one that matches, not just the first spread.
       const restName = ctx.restPropsName
       const propsObjName = ctx.propsObjectName
-      const isKnownSource = spreadProp && (spreadProp.value === restName || spreadProp.value === propsObjName)
-      const spreadSource = isKnownSource ? PROPS_PARAM : null
+      const knownSpreadProp = node.props.find(p =>
+        (p.name === '...' || p.name.startsWith('...')) &&
+        (p.value === restName || p.value === propsObjName)
+      )
+      const spreadSource = knownSpreadProp ? PROPS_PARAM : null
 
       const propsForInit: string[] = []
       const explicitPropNames: string[] = []
