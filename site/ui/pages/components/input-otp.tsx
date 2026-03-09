@@ -34,7 +34,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
   InputOTPSeparator,
-  REGEXP_ONLY_DIGITS_AND_CHARS,
 } from "@/components/ui/input-otp"
 
 function InputOTPDemo() {
@@ -43,7 +42,7 @@ function InputOTPDemo() {
   return (
     <InputOTP
       maxLength={6}
-      pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+      pattern="digits-and-chars"
       value={value()}
       onValueChange={setValue}
     >
@@ -91,9 +90,9 @@ const inputOTPProps: PropDefinition[] = [
   },
   {
     name: 'pattern',
-    type: 'RegExp',
-    defaultValue: 'REGEXP_ONLY_DIGITS',
-    description: 'Regular expression to validate each character. Use REGEXP_ONLY_DIGITS, REGEXP_ONLY_CHARS, or REGEXP_ONLY_DIGITS_AND_CHARS.',
+    type: "RegExp | 'digits' | 'chars' | 'digits-and-chars'",
+    defaultValue: "'digits'",
+    description: "Pattern to validate each character. Use a preset name ('digits', 'chars', 'digits-and-chars') or a RegExp.",
   },
   {
     name: 'disabled',

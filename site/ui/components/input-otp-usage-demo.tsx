@@ -15,7 +15,7 @@ import {
 
 export function InputOTPUsageDemo() {
   return (
-    <InputOTP maxLength={6}>
+    <InputOTP maxLength={6} pattern="digits-and-chars">
       <InputOTPGroup>
         <InputOTPSlot index={0} />
         <InputOTPSlot index={1} />
