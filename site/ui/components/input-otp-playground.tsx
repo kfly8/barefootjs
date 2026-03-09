@@ -8,39 +8,22 @@
 
 import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
 import { CopyButton } from './copy-button'
-import { hlPlain, hlTag, hlAttr, hlStr } from './shared/playground-highlight'
+import { hlPlain, hlTag, hlAttr } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
 import { Checkbox } from '@ui/components/ui/checkbox'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@ui/components/ui/select'
-import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@ui/components/ui/input-otp'
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@ui/components/ui/input-otp'
 
 function highlightInputOTPJsx(maxLength: number, disabled: boolean): string {
   const disabledProp = disabled ? ` ${hlAttr('disabled')}` : ''
   const lines = [
     `${hlPlain('&lt;')}${hlTag('InputOTP')} ${hlAttr('maxLength')}${hlPlain('={')}${maxLength}${hlPlain('}')}${disabledProp}${hlPlain('&gt;')}`,
+    `  ${hlPlain('&lt;')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`,
   ]
-
-  if (maxLength === 4) {
-    lines.push(`  ${hlPlain('&lt;')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
-    for (let i = 0; i < 4; i++) {
-      lines.push(`    ${hlPlain('&lt;')}${hlTag('InputOTPSlot')} ${hlAttr('index')}${hlPlain('={')}${i}${hlPlain('}')} ${hlPlain('/&gt;')}`)
-    }
-    lines.push(`  ${hlPlain('&lt;/')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
-  } else {
-    const half = Math.floor(maxLength / 2)
-    lines.push(`  ${hlPlain('&lt;')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
-    for (let i = 0; i < half; i++) {
-      lines.push(`    ${hlPlain('&lt;')}${hlTag('InputOTPSlot')} ${hlAttr('index')}${hlPlain('={')}${i}${hlPlain('}')} ${hlPlain('/&gt;')}`)
-    }
-    lines.push(`  ${hlPlain('&lt;/')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
-    lines.push(`  ${hlPlain('&lt;')}${hlTag('InputOTPSeparator')} ${hlPlain('/&gt;')}`)
-    lines.push(`  ${hlPlain('&lt;')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
-    for (let i = half; i < maxLength; i++) {
-      lines.push(`    ${hlPlain('&lt;')}${hlTag('InputOTPSlot')} ${hlAttr('index')}${hlPlain('={')}${i}${hlPlain('}')} ${hlPlain('/&gt;')}`)
-    }
-    lines.push(`  ${hlPlain('&lt;/')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
+  for (let i = 0; i < maxLength; i++) {
+    lines.push(`    ${hlPlain('&lt;')}${hlTag('InputOTPSlot')} ${hlAttr('index')}${hlPlain('={')}${i}${hlPlain('}')} ${hlPlain('/&gt;')}`)
   }
-
+  lines.push(`  ${hlPlain('&lt;/')}${hlTag('InputOTPGroup')}${hlPlain('&gt;')}`)
   lines.push(`${hlPlain('&lt;/')}${hlTag('InputOTP')}${hlPlain('&gt;')}`)
   return lines.join('\n')
 }
@@ -55,7 +38,8 @@ function InputOTPPlayground(_props: {}) {
     const ml = maxLengthNum()
     const parts: string[] = [`maxLength={${ml}}`]
     if (disabled()) parts.push('disabled')
-    return `<InputOTP ${parts.join(' ')}>...</InputOTP>`
+    const slots = Array.from({ length: ml }, (_, i) => `    <InputOTPSlot index={${i}} />`).join('\n')
+    return `<InputOTP ${parts.join(' ')}>\n  <InputOTPGroup>\n${slots}\n  </InputOTPGroup>\n</InputOTP>`
   })
 
   createEffect(() => {
@@ -67,24 +51,45 @@ function InputOTPPlayground(_props: {}) {
     }
   })
 
+  // Toggle visibility of pre-rendered variants based on maxLength
+  const show4 = (el: HTMLElement) => {
+    createEffect(() => {
+      el.style.display = maxLengthNum() === 4 ? '' : 'none'
+    })
+  }
+  const show6 = (el: HTMLElement) => {
+    createEffect(() => {
+      el.style.display = maxLengthNum() === 6 ? '' : 'none'
+    })
+  }
+
   return (
     <PlaygroundLayout
       previewDataAttr="data-input-otp-preview"
-      previewContent={
-        <InputOTP maxLength={maxLengthNum()} disabled={disabled()}>
-          <InputOTPGroup>
-            <InputOTPSlot index={0} />
-            <InputOTPSlot index={1} />
-            <InputOTPSlot index={2} />
-          </InputOTPGroup>
-          <InputOTPSeparator />
-          <InputOTPGroup>
-            <InputOTPSlot index={3} />
-            <InputOTPSlot index={4} />
-            <InputOTPSlot index={5} />
-          </InputOTPGroup>
-        </InputOTP>
-      }
+      previewContent={<>
+        <div ref={show4}>
+          <InputOTP maxLength={4} disabled={disabled()}>
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+        <div ref={show6}>
+          <InputOTP maxLength={6} disabled={disabled()}>
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+      </>}
       controls={<>
         <PlaygroundControl label="maxLength">
           <Select value={maxLength()} onValueChange={(v: string) => setMaxLength(v)}>
