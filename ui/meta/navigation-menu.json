@@ -1,0 +1,149 @@
+{
+  "name": "navigation-menu",
+  "title": "Navigation Menu",
+  "category": "display",
+  "description": "Navigation Menu Components A collection of links for navigating websites. Typically displayed horizontally at the top of pages. Uses hover-with-delay to show content panels, unlike Menubar which is click-to-open. Architecture: Root-level context with activeValue signal coordinates which menu is open. Timer IDs stored on root element dataset for portal-safe access. WeakMap captures trigger refs before portal. Features: - Hover to open with configurable delay (200ms default) - Close delay (300ms default) allows moving to content - Click to toggle - ArrowLeft/Right keyboard navigation between triggers - ESC to close - Portal content to body for overflow escape - NavigationMenuLink with active page support",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "NavigationMenuList children"
+    },
+    {
+      "name": "delayDuration",
+      "type": "number",
+      "required": false,
+      "default": "200",
+      "description": "Delay in ms before opening on hover."
+    },
+    {
+      "name": "closeDelay",
+      "type": "number",
+      "required": false,
+      "default": "300",
+      "description": "Delay in ms before closing after mouse leave."
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "NavigationMenuList",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "NavigationMenuItem children"
+        }
+      ]
+    },
+    {
+      "name": "NavigationMenuItem",
+      "description": "",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "description": "Unique value identifying this item"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "NavigationMenuTrigger and NavigationMenuContent, or NavigationMenuLink"
+        }
+      ]
+    },
+    {
+      "name": "NavigationMenuTrigger",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content (text label)"
+        }
+      ]
+    },
+    {
+      "name": "NavigationMenuContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Content panel"
+        }
+      ]
+    },
+    {
+      "name": "NavigationMenuLink",
+      "description": "",
+      "props": [
+        {
+          "name": "href",
+          "type": "string",
+          "required": false,
+          "description": "Link URL"
+        },
+        {
+          "name": "active",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this link is the active page"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Link content"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic navigation menu",
+      "code": "<NavigationMenu>\n  <NavigationMenuList>\n    <NavigationMenuItem>\n      <NavigationMenuTrigger>Getting Started</NavigationMenuTrigger>\n      <NavigationMenuContent>\n        <NavigationMenuLink href=\"/docs\">Documentation</NavigationMenuLink>\n      </NavigationMenuContent>\n    </NavigationMenuItem>\n  </NavigationMenuList>\n</NavigationMenu>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-expanded",
+      "aria-haspopup",
+      "aria-current"
+    ],
+    "dataAttributes": [
+      "data-slot",
+      "data-state",
+      "data-value"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/navigation-menu/index.tsx",
+  "signals": [
+    {
+      "getter": "activeValue",
+      "setter": "setActiveValue",
+      "initialValue": "''"
+    }
+  ]
+}

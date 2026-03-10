@@ -1,0 +1,40 @@
+{
+  "name": "aspect-ratio",
+  "title": "Aspect Ratio",
+  "category": "display",
+  "description": "Aspect Ratio Component Displays content within a desired width-to-height ratio. Uses CSS aspect-ratio property for layout.",
+  "tags": [],
+  "stateful": false,
+  "props": [
+    {
+      "name": "ratio",
+      "type": "number",
+      "required": false,
+      "description": "Width-to-height ratio (e.g. 16/9, 4/3, 1)"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Content to display within the aspect ratio container"
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "<AspectRatio ratio={16 / 9}>\n  <img src=\"/photo.jpg\" className=\"object-cover w-full h-full\" />\n</AspectRatio>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [],
+  "source": "ui/components/ui/aspect-ratio/index.tsx"
+}

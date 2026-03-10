@@ -19,9 +19,7 @@
     }
   ],
   "accessibility": {
-    "ariaAttributes": [
-      "aria-invalid"
-    ],
+    "ariaAttributes": [],
     "dataAttributes": [
       "data-slot"
     ]

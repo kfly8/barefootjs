@@ -1,0 +1,145 @@
+{
+  "name": "carousel",
+  "title": "Carousel",
+  "category": "display",
+  "description": "Carousel Components A carousel with motion and swipe built using Embla Carousel. Uses context pattern (like Dialog) for parent-child communication. Context is ONLY consumed inside ref callbacks (client-side hydration). Orientation is passed via data-orientation attribute for SSR.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "orientation",
+      "type": "'horizontal' | 'vertical'",
+      "required": false,
+      "description": "Scroll orientation"
+    },
+    {
+      "name": "opts",
+      "type": "EmblaOptionsType",
+      "required": false,
+      "description": "Embla Carousel options"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Carousel content"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "CarouselContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Carousel items"
+        },
+        {
+          "name": "orientation",
+          "type": "'horizontal' | 'vertical'",
+          "required": false,
+          "description": "Orientation override (read from parent via data attribute during SSR)"
+        }
+      ]
+    },
+    {
+      "name": "CarouselItem",
+      "description": "",
+      "props": [
+        {
+          "name": "orientation",
+          "type": "'horizontal' | 'vertical'",
+          "required": false,
+          "description": "Scroll orientation (must match parent Carousel)"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Slide content"
+        }
+      ]
+    },
+    {
+      "name": "CarouselPrevious",
+      "description": "",
+      "props": [
+        {
+          "name": "orientation",
+          "type": "'horizontal' | 'vertical'",
+          "required": false,
+          "description": "Scroll orientation (must match parent Carousel)"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content override"
+        }
+      ]
+    },
+    {
+      "name": "CarouselNext",
+      "description": "",
+      "props": [
+        {
+          "name": "orientation",
+          "type": "'horizontal' | 'vertical'",
+          "required": false,
+          "description": "Scroll orientation (must match parent Carousel)"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Button content override"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic carousel",
+      "code": "<Carousel>\n  <CarouselContent>\n    <CarouselItem>Slide 1</CarouselItem>\n    <CarouselItem>Slide 2</CarouselItem>\n    <CarouselItem>Slide 3</CarouselItem>\n  </CarouselContent>\n  <CarouselPrevious />\n  <CarouselNext />\n</Carousel>"
+    }
+  ],
+  "accessibility": {
+    "role": "region, group",
+    "ariaAttributes": [
+      "aria-roledescription",
+      "aria-label",
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-orientation",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/carousel/index.tsx",
+  "signals": [
+    {
+      "getter": "canScrollPrev",
+      "setter": "setCanScrollPrev",
+      "initialValue": "false"
+    },
+    {
+      "getter": "canScrollNext",
+      "setter": "setCanScrollNext",
+      "initialValue": "false"
+    }
+  ]
+}

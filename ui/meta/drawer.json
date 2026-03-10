@@ -173,7 +173,6 @@
     "role": "dialog",
     "ariaAttributes": [
       "aria-modal",
-      "aria-invalid",
       "aria-labelledby",
       "aria-describedby"
     ],

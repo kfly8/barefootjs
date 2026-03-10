@@ -1,0 +1,161 @@
+{
+  "name": "chart",
+  "title": "Chart",
+  "category": "display",
+  "description": "Chart JSX Components \"use client\" wrappers that delegate to @barefootjs/chart init functions via ref callbacks. Follows the Dialog pattern: ref runs during init, before children's initChild calls, so provideContext/useContext works.",
+  "tags": [
+    "multi-component"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "config",
+      "type": "ChartConfig",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "children",
+      "type": "unknown",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "BarChart",
+      "description": "",
+      "props": [
+        {
+          "name": "data",
+          "type": "Record<string, unknown>[]",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "children",
+          "type": "unknown",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Bar",
+      "description": "",
+      "props": [
+        {
+          "name": "dataKey",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "fill",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "radius",
+          "type": "number",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "CartesianGrid",
+      "description": "",
+      "props": [
+        {
+          "name": "vertical",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "horizontal",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "XAxis",
+      "description": "",
+      "props": [
+        {
+          "name": "dataKey",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "tickFormatter",
+          "type": "(value: string) => string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "hide",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "YAxis",
+      "description": "",
+      "props": [
+        {
+          "name": "hide",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tickFormatter",
+          "type": "(value: number) => string",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "ChartTooltip",
+      "description": "",
+      "props": [
+        {
+          "name": "labelFormatter",
+          "type": "(label: string) => string",
+          "required": false,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "examples": [],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/chart"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/chart/index.tsx"
+}

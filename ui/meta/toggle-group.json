@@ -111,7 +111,6 @@
   "accessibility": {
     "role": "group",
     "ariaAttributes": [
-      "aria-invalid",
       "aria-pressed"
     ],
     "dataAttributes": [

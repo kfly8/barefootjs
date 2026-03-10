@@ -1,0 +1,176 @@
+{
+  "name": "calendar",
+  "title": "Calendar",
+  "category": "display",
+  "description": "Calendar Component A date picker calendar with month navigation. Supports single date and date range selection modes. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+  "tags": [
+    "stateful",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultMonth",
+      "type": "Date",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "showOutsideDays",
+      "type": "boolean",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "disabled",
+      "type": "boolean | ((date: Date) => boolean)",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "fromDate",
+      "type": "Date",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "toDate",
+      "type": "Date",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "weekStartsOn",
+      "type": "0 | 1",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "numberOfMonths",
+      "type": "number",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "className",
+      "type": "string",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "examples": [
+    {
+      "title": "Single mode (controlled)",
+      "code": "<Calendar selected={date()} onSelect={setDate} />"
+    },
+    {
+      "title": "Range mode",
+      "code": "<Calendar mode=\"range\" selected={range()} onSelect={setRange} numberOfMonths={2} />"
+    },
+    {
+      "title": "With constraints",
+      "code": "<Calendar fromDate={new Date()} toDate={addDays(new Date(), 30)} />"
+    }
+  ],
+  "accessibility": {
+    "role": "grid",
+    "ariaAttributes": [
+      "aria-selected",
+      "aria-label"
+    ],
+    "dataAttributes": [
+      "data-disabled",
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/calendar/index.tsx",
+  "signals": [
+    {
+      "getter": "currentYear",
+      "setter": "setCurrentYear",
+      "initialValue": "initialMonth.getFullYear()"
+    },
+    {
+      "getter": "currentMonth",
+      "setter": "setCurrentMonth",
+      "initialValue": "initialMonth.getMonth()"
+    },
+    {
+      "getter": "internalSelected",
+      "setter": "setInternalSelected",
+      "initialValue": "!isRangeMode() ? (props).defaultSelected : undefined"
+    },
+    {
+      "getter": "internalRange",
+      "setter": "setInternalRange",
+      "initialValue": "isRangeMode() ? (props).selected : undefined"
+    }
+  ],
+  "memos": [
+    {
+      "name": "selectedDate",
+      "deps": [
+        "internalSelected"
+      ]
+    },
+    {
+      "name": "selectedRange",
+      "deps": [
+        "internalRange"
+      ]
+    },
+    {
+      "name": "weekdays",
+      "deps": []
+    },
+    {
+      "name": "weeks0",
+      "deps": [
+        "currentYear",
+        "currentMonth"
+      ]
+    },
+    {
+      "name": "monthLabel0",
+      "deps": [
+        "currentYear",
+        "currentMonth"
+      ]
+    },
+    {
+      "name": "weeks1",
+      "deps": [
+        "currentYear",
+        "currentMonth"
+      ]
+    },
+    {
+      "name": "monthLabel1",
+      "deps": [
+        "currentYear",
+        "currentMonth"
+      ]
+    },
+    {
+      "name": "isPrevDisabled",
+      "deps": [
+        "currentYear",
+        "currentMonth"
+      ]
+    },
+    {
+      "name": "isNextDisabled",
+      "deps": [
+        "currentYear",
+        "currentMonth"
+      ]
+    }
+  ]
+}

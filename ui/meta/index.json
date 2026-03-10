@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-02-24T13:13:36.535Z",
+  "generatedAt": "2026-03-09T15:19:42.638Z",
   "components": [
     {
       "name": "accordion",
@@ -61,6 +61,14 @@
       ]
     },
     {
+      "name": "aspect-ratio",
+      "title": "Aspect Ratio",
+      "category": "display",
+      "description": "Aspect Ratio Component Displays content within a desired width-to-height ratio. Uses CSS aspect-ratio property for layout.",
+      "tags": [],
+      "stateful": false
+    },
+    {
       "name": "avatar",
       "title": "Avatar",
       "category": "display",
@@ -114,6 +122,17 @@
       "stateful": false
     },
     {
+      "name": "calendar",
+      "title": "Calendar",
+      "category": "display",
+      "description": "Calendar Component A date picker calendar with month navigation. Supports single date and date range selection modes. Supports both controlled and uncontrolled modes. Inspired by shadcn/ui with CSS variable theming support.",
+      "tags": [
+        "stateful",
+        "aria"
+      ],
+      "stateful": true
+    },
+    {
       "name": "card",
       "title": "Card",
       "category": "layout",
@@ -130,6 +149,43 @@
         "CardImage",
         "CardAction",
         "CardFooter"
+      ]
+    },
+    {
+      "name": "carousel",
+      "title": "Carousel",
+      "category": "display",
+      "description": "Carousel Components A carousel with motion and swipe built using Embla Carousel. Uses context pattern (like Dialog) for parent-child communication. Context is ONLY consumed inside ref callbacks (client-side hydration). Orientation is passed via data-orientation attribute for SSR.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "CarouselContent",
+        "CarouselItem",
+        "CarouselPrevious",
+        "CarouselNext"
+      ]
+    },
+    {
+      "name": "chart",
+      "title": "Chart",
+      "category": "display",
+      "description": "Chart JSX Components \"use client\" wrappers that delegate to @barefootjs/chart init functions via ref callbacks. Follows the Dialog pattern: ref runs during init, before children's initChild calls, so provideContext/useContext works.",
+      "tags": [
+        "multi-component"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "BarChart",
+        "Bar",
+        "CartesianGrid",
+        "XAxis",
+        "YAxis",
+        "ChartTooltip"
       ]
     },
     {
@@ -160,6 +216,30 @@
       "subComponents": [
         "CollapsibleTrigger",
         "CollapsibleContent"
+      ]
+    },
+    {
+      "name": "combobox",
+      "title": "Combobox",
+      "category": "display",
+      "description": "Combobox Components An autocomplete input with searchable dropdown. Composes Popover (portal, positioning, click-outside, ESC) with Command-style search filtering and keyboard navigation. State management uses createContext/useContext for parent-child communication. Root Combobox manages open/value/search state, children consume via context. Features: - Search filtering (case-insensitive substring) - Arrow key navigation within filtered results - Enter to select, ESC to close - Click outside to close - Check indicator on selected item - Portal for Content (escape overflow clipping) - Accessibility (role=\"combobox\", role=\"listbox\", role=\"option\") - data-state attribute-driven styling",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "ComboboxTrigger",
+        "ComboboxValue",
+        "ComboboxContent",
+        "ComboboxInput",
+        "ComboboxEmpty",
+        "ComboboxItem",
+        "ComboboxGroup",
+        "ComboboxSeparator"
       ]
     },
     {
@@ -212,6 +292,34 @@
         "ContextMenuSeparator",
         "ContextMenuShortcut",
         "ContextMenuGroup"
+      ]
+    },
+    {
+      "name": "data-table",
+      "title": "Data Table",
+      "category": "display",
+      "description": "Data Table Helper Components Reusable sub-components for building sortable, filterable, paginated tables. Compose with the existing Table component for data display patterns.",
+      "tags": [
+        "multi-component",
+        "aria"
+      ],
+      "stateful": false,
+      "subComponents": [
+        "DataTablePagination"
+      ]
+    },
+    {
+      "name": "date-picker",
+      "title": "Date Picker",
+      "category": "display",
+      "description": "DatePicker and DateRangePicker Components Composable date picker built on Popover + Button + Calendar. Inspired by shadcn/ui with CSS variable theming support. - DatePicker: Single date selection, auto-closes on select - DateRangePicker: Range selection, stays open until range is complete",
+      "tags": [
+        "stateful",
+        "multi-component"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "DateRangePicker"
       ]
     },
     {
@@ -336,6 +444,7 @@
         "MenuIcon",
         "ArrowLeftIcon",
         "ArrowRightIcon",
+        "ArrowUpDownIcon",
         "EllipsisIcon",
         "GitHubIcon",
         "SettingsIcon",
@@ -346,7 +455,27 @@
         "CircleCheckIcon",
         "CircleXIcon",
         "TriangleAlertIcon",
-        "InfoIcon"
+        "InfoIcon",
+        "PanelLeftIcon"
+      ]
+    },
+    {
+      "name": "input-otp",
+      "title": "Input OTP",
+      "category": "display",
+      "description": "Input OTP Components An accessible one-time password input with copy-paste support. Uses a hidden <input> for actual text entry with visual slot display. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. InputOTP manages value/focus state, InputOTPSlot consumes via context.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "InputOTPGroup",
+        "InputOTPSlot",
+        "InputOTPSeparator"
       ]
     },
     {
@@ -395,6 +524,27 @@
         "MenubarSeparator",
         "MenubarShortcut",
         "MenubarGroup"
+      ]
+    },
+    {
+      "name": "navigation-menu",
+      "title": "Navigation Menu",
+      "category": "display",
+      "description": "Navigation Menu Components A collection of links for navigating websites. Typically displayed horizontally at the top of pages. Uses hover-with-delay to show content panels, unlike Menubar which is click-to-open. Architecture: Root-level context with activeValue signal coordinates which menu is open. Timer IDs stored on root element dataset for portal-safe access. WeakMap captures trigger refs before portal. Features: - Hover to open with configurable delay (200ms default) - Close delay (300ms default) allows moving to content - Click to toggle - ArrowLeft/Right keyboard navigation between triggers - ESC to close - Portal content to body for overflow escape - NavigationMenuLink with active page support",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "portal",
+        "context",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "NavigationMenuList",
+        "NavigationMenuItem",
+        "NavigationMenuTrigger",
+        "NavigationMenuContent",
+        "NavigationMenuLink"
       ]
     },
     {
@@ -557,6 +707,44 @@
         "SheetDescription",
         "SheetFooter",
         "SheetClose"
+      ]
+    },
+    {
+      "name": "sidebar",
+      "title": "Sidebar",
+      "category": "display",
+      "description": "Sidebar Components A composable, collapsible sidebar component with responsive mobile support. Renders as a Sheet overlay on mobile, fixed panel on desktop. Ported from shadcn/ui with BarefootJS signal-based reactivity.",
+      "tags": [
+        "stateful",
+        "multi-component",
+        "context",
+        "controlled",
+        "aria"
+      ],
+      "stateful": true,
+      "subComponents": [
+        "Sidebar",
+        "SidebarTrigger",
+        "SidebarRail",
+        "SidebarInset",
+        "SidebarInput",
+        "SidebarHeader",
+        "SidebarFooter",
+        "SidebarSeparator",
+        "SidebarContent",
+        "SidebarGroup",
+        "SidebarGroupLabel",
+        "SidebarGroupAction",
+        "SidebarGroupContent",
+        "SidebarMenu",
+        "SidebarMenuItem",
+        "SidebarMenuButton",
+        "SidebarMenuAction",
+        "SidebarMenuBadge",
+        "SidebarMenuSkeleton",
+        "SidebarMenuSub",
+        "SidebarMenuSubItem",
+        "SidebarMenuSubButton"
       ]
     },
     {
