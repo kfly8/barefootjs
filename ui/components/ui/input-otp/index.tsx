@@ -38,6 +38,20 @@ export const REGEXP_ONLY_DIGITS = /^\d+$/
 export const REGEXP_ONLY_CHARS = /^[a-zA-Z]+$/
 export const REGEXP_ONLY_DIGITS_AND_CHARS = /^[a-zA-Z0-9]+$/
 
+// String preset names (serializable for hydration)
+type PatternPreset = 'digits' | 'chars' | 'digits-and-chars'
+const patternPresets: Record<PatternPreset, RegExp> = {
+  'digits': REGEXP_ONLY_DIGITS,
+  'chars': REGEXP_ONLY_CHARS,
+  'digits-and-chars': REGEXP_ONLY_DIGITS_AND_CHARS,
+}
+
+function resolvePattern(pattern: RegExp | PatternPreset | undefined): RegExp {
+  if (pattern === undefined) return REGEXP_ONLY_DIGITS
+  if (typeof pattern === 'string') return patternPresets[pattern] ?? REGEXP_ONLY_DIGITS
+  return pattern
+}
+
 // Context for InputOTP → InputOTPSlot state sharing
 interface InputOTPContextValue {
   value: () => string
@@ -76,8 +90,8 @@ interface InputOTPProps extends HTMLBaseAttributes {
   onValueChange?: (value: string) => void
   /** Callback when all slots are filled */
   onComplete?: (value: string) => void
-  /** Pattern to validate input (default: digits only) */
-  pattern?: RegExp
+  /** Pattern to validate input. Accepts a RegExp or a preset name: 'digits' | 'chars' | 'digits-and-chars'. Default: 'digits'. */
+  pattern?: RegExp | PatternPreset
   /** Whether the input is disabled */
   disabled?: boolean
   /** Container className override */
@@ -103,7 +117,7 @@ function InputOTP(props: InputOTPProps) {
   const [isFocused, setIsFocused] = createSignal(false)
 
   const getValue = () => props.value !== undefined ? (props.value ?? '') : internalValue()
-  const pattern = props.pattern ?? REGEXP_ONLY_DIGITS
+  const pattern = resolvePattern(props.pattern)
 
   const updateValue = (newValue: string) => {
     const truncated = newValue.slice(0, props.maxLength)

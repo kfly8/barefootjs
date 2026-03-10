@@ -36,16 +36,12 @@ type ToggleSize = 'default' | 'sm' | 'lg'
 // Base classes from shadcn/ui toggleVariants
 const toggleBaseClasses = 'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-[invalid]:ring-destructive/20 dark:aria-[invalid]:ring-destructive/40 aria-[invalid]:border-destructive whitespace-nowrap data-[state=on]:bg-accent data-[state=on]:text-accent-foreground hover:bg-muted hover:text-muted-foreground'
 
-const toggleVariantClasses: Record<ToggleVariant, string> = {
-  default: 'bg-transparent',
-  outline: 'border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground',
-}
+// Variant/size classes defined via data-attribute selectors so they stay in the
+// compiled className (with layer-components: prefix). This avoids CSS @layer
+// conflicts that occur when classes are added dynamically via classList.add().
+const toggleVariantClasses = 'bg-transparent data-[variant=outline]:border data-[variant=outline]:border-input data-[variant=outline]:shadow-xs data-[variant=outline]:hover:bg-accent data-[variant=outline]:hover:text-accent-foreground'
 
-const toggleSizeClasses: Record<ToggleSize, string> = {
-  default: 'h-9 px-2 min-w-9',
-  sm: 'h-8 px-1.5 min-w-8',
-  lg: 'h-10 px-2.5 min-w-10',
-}
+const toggleSizeClasses = 'data-[size=default]:h-9 data-[size=default]:px-2 data-[size=default]:min-w-9 data-[size=sm]:h-8 data-[size=sm]:px-1.5 data-[size=sm]:min-w-8 data-[size=lg]:h-10 data-[size=lg]:px-2.5 data-[size=lg]:min-w-10'
 
 // ToggleGroupItem extra classes from shadcn/ui (applied on top of toggle base)
 const toggleGroupItemClasses = 'w-auto min-w-0 shrink-0 rounded-none shadow-none first:rounded-l-md last:rounded-r-md focus:z-10 focus-visible:z-10 data-[variant=outline]:border-l-0 data-[variant=outline]:first:border-l'
@@ -183,27 +179,21 @@ function ToggleGroupItem(props: ToggleGroupItemProps) {
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(ToggleGroupContext)
 
-    const variant: ToggleVariant = ctx.variant()
-    const size: ToggleSize = ctx.size()
-
-    // Apply variant/size classes at mount time
-    const variantClass = toggleVariantClasses[variant]
-    const sizeClass = toggleSizeClasses[size]
-    for (const cls of variantClass.split(' ')) {
-      if (cls) el.classList.add(cls)
-    }
-    for (const cls of sizeClass.split(' ')) {
-      if (cls) el.classList.add(cls)
-    }
-
-    // Set data-variant for CSS styling (outline border handling)
-    el.setAttribute('data-variant', variant)
-    el.setAttribute('data-size', size)
-
     createEffect(() => {
+      const variant = ctx.variant()
+      const size = ctx.size()
       const isSelected = ctx.value().includes(props.value)
+
+      // Update selection state
       el.setAttribute('aria-pressed', String(isSelected))
       el.setAttribute('data-state', isSelected ? 'on' : 'off')
+
+      // Set data attributes — variant/size styling is driven by these via
+      // data-[variant=...] / data-[size=...] selectors in the static className.
+      // This keeps all classes in the compiled output with layer-components: prefix,
+      // avoiding CSS @layer specificity conflicts from runtime classList.add().
+      el.setAttribute('data-variant', variant)
+      el.setAttribute('data-size', size)
     })
 
     el.addEventListener('click', () => {
@@ -219,7 +209,7 @@ function ToggleGroupItem(props: ToggleGroupItemProps) {
       aria-pressed="false"
       disabled={props.disabled ?? false}
       id={props.id}
-      className={`${toggleBaseClasses} ${toggleGroupItemClasses} ${props.className ?? ''}`}
+      className={`${toggleBaseClasses} ${toggleVariantClasses} ${toggleSizeClasses} ${toggleGroupItemClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
