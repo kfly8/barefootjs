@@ -15,6 +15,12 @@ import { createApp } from './routes'
 
 const app = createApp()
 
+// Serve llms.txt
+app.use('/llms.txt', serveStatic({
+  root: './dist',
+  rewriteRequestPath: () => '/llms.txt',
+}))
+
 // Static file serving (Bun-specific)
 app.use('/static/*', serveStatic({
   root: './dist',

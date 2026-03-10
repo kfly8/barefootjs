@@ -1,0 +1,49 @@
+# BarefootJS
+
+> JSX → Marked Template + client JS compiler. Signal-based reactivity for any backend.
+
+## Core Concepts
+
+- [Clean Overrides](https://barefootjs.dev/docs/core-concepts/clean-overrides.md): CSS Cascade Layers ensure user styles always beat component defaults
+- [Two-Phase Compilation](https://barefootjs.dev/docs/core-concepts/compilation.md): How BarefootJS compiles JSX into marked templates and client JS
+- [Hydration Model](https://barefootjs.dev/docs/core-concepts/hydration.md): Marker-driven hydration that makes server-rendered HTML interactive
+- [Signal-Based Reactivity](https://barefootjs.dev/docs/core-concepts/reactivity.md): Fine-grained reactivity with signals, effects, and memos
+- ["use client" Directive](https://barefootjs.dev/docs/core-concepts/use-client.md): Marking components for client-side interactivity
+
+## Reactivity
+
+- [createEffect](https://barefootjs.dev/docs/reactivity/create-effect.md): Runs a function and re-runs it whenever its tracked signal dependencies change.
+- [createMemo](https://barefootjs.dev/docs/reactivity/create-memo.md): Creates a cached derived value that recomputes only when its dependencies change.
+- [createSignal](https://barefootjs.dev/docs/reactivity/create-signal.md): Creates a reactive getter/setter pair for managing state.
+- [onCleanup](https://barefootjs.dev/docs/reactivity/on-cleanup.md): Registers a cleanup function that runs when the owning effect re-runs or the component is destroyed.
+- [onMount](https://barefootjs.dev/docs/reactivity/on-mount.md): Runs a callback once when the component initializes, without tracking signal dependencies.
+- [Props Reactivity](https://barefootjs.dev/docs/reactivity/props-reactivity.md): How prop access patterns determine whether reactive updates propagate in BarefootJS components.
+- [untrack](https://barefootjs.dev/docs/reactivity/untrack.md): Executes a function without tracking signal dependencies in the current reactive context.
+
+## Rendering
+
+- [/* @client */ Directive](https://barefootjs.dev/docs/rendering/client-directive.md): Mark JSX expressions for client-only evaluation when the compiler cannot translate them to server templates.
+- [Fragment](https://barefootjs.dev/docs/rendering/fragment.md): Using fragments to render children without a wrapper element, including transparent fragment behavior.
+- [JSX Compatibility](https://barefootjs.dev/docs/rendering/jsx-compatibility.md): Standard JSX syntax support in BarefootJS, including control flow and common patterns from React and SolidJS.
+
+## Components
+
+- [Children & Slots](https://barefootjs.dev/docs/components/children-slots.md): Accept nested JSX content via the children prop and enable polymorphic rendering with the Slot component.
+- [Component Authoring](https://barefootjs.dev/docs/components/component-authoring.md): Learn how to write server and client components in BarefootJS using JSX functions.
+- [Context API](https://barefootjs.dev/docs/components/context-api.md): Share state with deeply nested children without prop drilling using createContext and useContext.
+- [Portals](https://barefootjs.dev/docs/components/portals.md): Render elements outside their parent DOM hierarchy for overlays, modals, and tooltips.
+- [Props & Type Safety](https://barefootjs.dev/docs/components/props-type-safety.md): Type component props with TypeScript interfaces and preserve type information through compilation.
+
+## Adapters
+
+- [Adapter Architecture](https://barefootjs.dev/docs/adapters/adapter-architecture.md): How adapters convert the compiler's IR into server-renderable template formats.
+- [Writing a Custom Adapter](https://barefootjs.dev/docs/adapters/custom-adapter.md): Step-by-step guide to building a custom adapter using the TestAdapter as a reference.
+- [Go Template Adapter](https://barefootjs.dev/docs/adapters/go-template-adapter.md): Generate Go html/template files and type definitions from the compiler's IR.
+- [Hono Adapter](https://barefootjs.dev/docs/adapters/hono-adapter.md): Generate Hono JSX templates from the compiler's IR for Hono-based servers.
+
+## Advanced
+
+- [Compiler Internals](https://barefootjs.dev/docs/advanced/compiler-internals.md): How the BarefootJS compiler transforms JSX into marked templates and client JavaScript.
+- [Error Codes Reference](https://barefootjs.dev/docs/advanced/error-codes.md): Complete list of BF-prefixed compiler error codes with explanations and fixes.
+- [IR Schema Reference](https://barefootjs.dev/docs/advanced/ir-schema.md): JSON tree structure of the Intermediate Representation consumed by adapters and client-JS generation.
+- [Performance Optimization](https://barefootjs.dev/docs/advanced/performance.md): Strategies to minimize bundle size, reduce hydration cost, and optimize runtime reactivity
