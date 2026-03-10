@@ -11,14 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from '@ui/components/ui/toggle-group'
 export function ToggleGroupUsageDemo() {
   return (
     <div className="space-y-6">
-      {/* Single selection */}
-      <ToggleGroup type="single" defaultValue="center">
-        <ToggleGroupItem value="left">Left</ToggleGroupItem>
-        <ToggleGroupItem value="center">Center</ToggleGroupItem>
-        <ToggleGroupItem value="right">Right</ToggleGroupItem>
-      </ToggleGroup>
-
-      {/* Outline variant */}
+      {/* Outline variant — single selection */}
       <ToggleGroup type="single" variant="outline" defaultValue="M">
         <ToggleGroupItem value="S">S</ToggleGroupItem>
         <ToggleGroupItem value="M">M</ToggleGroupItem>
@@ -30,12 +23,6 @@ export function ToggleGroupUsageDemo() {
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
         <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
-      </ToggleGroup>
-
-      {/* Disabled */}
-      <ToggleGroup type="single" disabled>
-        <ToggleGroupItem value="a">A</ToggleGroupItem>
-        <ToggleGroupItem value="b">B</ToggleGroupItem>
       </ToggleGroup>
     </div>
   )

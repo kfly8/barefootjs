@@ -32,20 +32,13 @@ import { createSignal } from "@barefootjs/dom"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 function ToggleGroupDemo() {
-  const [alignment, setAlignment] = createSignal("center")
+  const [size, setSize] = createSignal("M")
   const [formats, setFormats] = createSignal<string[]>([])
 
   return (
     <div className="space-y-6">
-      {/* Single selection */}
-      <ToggleGroup type="single" defaultValue="center" onValueChange={setAlignment}>
-        <ToggleGroupItem value="left">Left</ToggleGroupItem>
-        <ToggleGroupItem value="center">Center</ToggleGroupItem>
-        <ToggleGroupItem value="right">Right</ToggleGroupItem>
-      </ToggleGroup>
-
-      {/* Outline variant */}
-      <ToggleGroup type="single" variant="outline" defaultValue="M">
+      {/* Outline variant — single selection */}
+      <ToggleGroup type="single" variant="outline" defaultValue="M" onValueChange={setSize}>
         <ToggleGroupItem value="S">S</ToggleGroupItem>
         <ToggleGroupItem value="M">M</ToggleGroupItem>
         <ToggleGroupItem value="L">L</ToggleGroupItem>
@@ -56,12 +49,6 @@ function ToggleGroupDemo() {
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
         <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
-      </ToggleGroup>
-
-      {/* Disabled */}
-      <ToggleGroup type="single" disabled>
-        <ToggleGroupItem value="a">A</ToggleGroupItem>
-        <ToggleGroupItem value="b">B</ToggleGroupItem>
       </ToggleGroup>
     </div>
   )
