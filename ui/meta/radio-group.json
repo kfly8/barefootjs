@@ -76,7 +76,6 @@
   "accessibility": {
     "role": "radiogroup, radio",
     "ariaAttributes": [
-      "aria-invalid",
       "aria-checked"
     ],
     "dataAttributes": [

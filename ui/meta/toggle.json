@@ -76,7 +76,6 @@
   ],
   "accessibility": {
     "ariaAttributes": [
-      "aria-invalid",
       "aria-pressed"
     ],
     "dataAttributes": [

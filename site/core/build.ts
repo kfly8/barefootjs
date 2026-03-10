@@ -38,6 +38,9 @@ const SHARED_DIR = resolve(ROOT_DIR, '../shared')
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const LANDING_COMPONENTS_DIR = resolve(ROOT_DIR, 'landing/components')
 
+import { scanCoreDocs } from '../../packages/cli/src/lib/docs-loader'
+import { generateCoreLlmsTxt } from '../../packages/cli/src/lib/llms-txt-generator'
+
 console.log('Building BarefootJS site...\n')
 
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
@@ -327,5 +330,11 @@ for (const file of logoFiles) {
 if (logoFiles.length > 0) {
   console.log(`Copied: dist/logos/, dist/static/logos/ (${logoFiles.length} files)`)
 }
+
+// ── 10. Generate llms.txt ──────────────────────────────────────
+const coreDocs = scanCoreDocs(CONTENT_DIR)
+const coreLlmsTxt = generateCoreLlmsTxt(coreDocs, 'https://barefootjs.dev/docs')
+await Bun.write(resolve(DIST_DIR, 'llms.txt'), coreLlmsTxt)
+console.log('Generated: dist/llms.txt')
 
 console.log('\nBuild complete!')

@@ -1,0 +1,203 @@
+{
+  "name": "combobox",
+  "title": "Combobox",
+  "category": "display",
+  "description": "Combobox Components An autocomplete input with searchable dropdown. Composes Popover (portal, positioning, click-outside, ESC) with Command-style search filtering and keyboard navigation. State management uses createContext/useContext for parent-child communication. Root Combobox manages open/value/search state, children consume via context. Features: - Search filtering (case-insensitive substring) - Arrow key navigation within filtered results - Enter to select, ESC to close - Click outside to close - Check indicator on selected item - Portal for Content (escape overflow clipping) - Accessibility (role=\"combobox\", role=\"listbox\", role=\"option\") - data-state attribute-driven styling",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "portal",
+    "context",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "value",
+      "type": "string",
+      "required": false,
+      "description": "Controlled selected value"
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when the selected value changes"
+    },
+    {
+      "name": "filter",
+      "type": "(value: string, search: string) => boolean",
+      "required": false,
+      "description": "Custom filter function"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Children"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "ComboboxTrigger",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Trigger content (typically ComboboxValue)"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxValue",
+      "description": "",
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Placeholder text when no value is selected"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Content children"
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'end'",
+          "required": false,
+          "description": "Alignment relative to trigger"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxInput",
+      "description": "",
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Placeholder text"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether disabled"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxEmpty",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxItem",
+      "description": "",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "The value for this item"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether this item is disabled"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Item content (label text)"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxGroup",
+      "description": "",
+      "props": [
+        {
+          "name": "heading",
+          "type": "string",
+          "required": false,
+          "description": "Group heading text"
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Children"
+        }
+      ]
+    },
+    {
+      "name": "ComboboxSeparator",
+      "description": "",
+      "props": []
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic usage",
+      "code": "const [value, setValue] = createSignal('')\n\n<Combobox value={value()} onValueChange={setValue}>\n  <ComboboxTrigger>\n    <ComboboxValue placeholder=\"Select framework...\" />\n  </ComboboxTrigger>\n  <ComboboxContent>\n    <ComboboxInput placeholder=\"Search...\" />\n    <ComboboxEmpty>No results found.</ComboboxEmpty>\n    <ComboboxItem value=\"next\">Next.js</ComboboxItem>\n    <ComboboxItem value=\"svelte\">SvelteKit</ComboboxItem>\n  </ComboboxContent>\n</Combobox>"
+    }
+  ],
+  "accessibility": {
+    "role": "combobox, listbox, option, group, separator",
+    "ariaAttributes": [
+      "aria-expanded",
+      "aria-haspopup",
+      "aria-autocomplete",
+      "aria-disabled",
+      "aria-selected",
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot",
+      "data-value"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/combobox/index.tsx",
+  "signals": [
+    {
+      "getter": "open",
+      "setter": "setOpen",
+      "initialValue": "false"
+    },
+    {
+      "getter": "search",
+      "setter": "setSearch",
+      "initialValue": "''"
+    }
+  ]
+}

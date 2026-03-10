@@ -1,0 +1,439 @@
+{
+  "name": "sidebar",
+  "title": "Sidebar",
+  "category": "display",
+  "description": "Sidebar Components A composable, collapsible sidebar component with responsive mobile support. Renders as a Sheet overlay on mobile, fixed panel on desktop. Ported from shadcn/ui with BarefootJS signal-based reactivity.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "defaultOpen",
+      "type": "boolean",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "open",
+      "type": "boolean",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "onOpenChange",
+      "type": "(open: boolean) => void",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "Sidebar",
+      "description": "",
+      "props": [
+        {
+          "name": "side",
+          "type": "SidebarSide",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "variant",
+          "type": "SidebarVariant",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "collapsible",
+          "type": "SidebarCollapsible",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarTrigger",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarRail",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "SidebarInset",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarInput",
+      "description": "",
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarHeader",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarFooter",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarSeparator",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "SidebarContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarGroup",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarGroupLabel",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarGroupAction",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarGroupContent",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenu",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuItem",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuButton",
+      "description": "",
+      "props": [
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "variant",
+          "type": "SidebarMenuButtonVariant",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "SidebarMenuButtonSize",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tooltip",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuAction",
+      "description": "",
+      "props": [
+        {
+          "name": "showOnHover",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuBadge",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuSkeleton",
+      "description": "",
+      "props": [
+        {
+          "name": "showIcon",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuSub",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuSubItem",
+      "description": "",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SidebarMenuSubButton",
+      "description": "",
+      "props": [
+        {
+          "name": "size",
+          "type": "SidebarMenuSubButtonSize",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "variants": {
+    "SidebarSide": [
+      "left",
+      "right"
+    ],
+    "SidebarVariant": [
+      "sidebar",
+      "floating",
+      "inset"
+    ],
+    "SidebarMenuButtonVariant": [
+      "default",
+      "outline"
+    ],
+    "SidebarMenuButtonSize": [
+      "default",
+      "sm",
+      "lg"
+    ],
+    "SidebarMenuSubButtonSize": [
+      "sm",
+      "md"
+    ]
+  },
+  "examples": [
+    {
+      "title": "Basic sidebar layout",
+      "code": "<SidebarProvider>\n  <Sidebar>\n    <SidebarHeader>...</SidebarHeader>\n    <SidebarContent>\n      <SidebarGroup>\n        <SidebarGroupLabel>Menu</SidebarGroupLabel>\n        <SidebarGroupContent>\n          <SidebarMenu>\n            <SidebarMenuItem>\n              <SidebarMenuButton>Home</SidebarMenuButton>\n            </SidebarMenuItem>\n          </SidebarMenu>\n        </SidebarGroupContent>\n      </SidebarGroup>\n    </SidebarContent>\n  </Sidebar>\n  <SidebarInset>\n    <header><SidebarTrigger /></header>\n    <main>Content</main>\n  </SidebarInset>\n</SidebarProvider>"
+    }
+  ],
+  "accessibility": {
+    "role": "none",
+    "ariaAttributes": [
+      "aria-hidden",
+      "aria-label"
+    ],
+    "dataAttributes": [
+      "data-state",
+      "data-slot",
+      "data-side",
+      "data-sidebar",
+      "data-orientation"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/sidebar/index.tsx",
+  "signals": [
+    {
+      "getter": "internalOpen",
+      "setter": "setInternalOpen",
+      "initialValue": "props.defaultOpen !== false"
+    },
+    {
+      "getter": "openMobile",
+      "setter": "setOpenMobile",
+      "initialValue": "false"
+    },
+    {
+      "getter": "isMobile",
+      "setter": "setIsMobile",
+      "initialValue": "false"
+    }
+  ]
+}

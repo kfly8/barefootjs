@@ -20,6 +20,12 @@ server.use('/static/*', serveStatic({
   rewriteRequestPath: (path) => path.replace('/static', ''),
 }))
 
+// Serve llms.txt
+server.use('/llms.txt', serveStatic({
+  root: './dist',
+  rewriteRequestPath: () => '/llms.txt',
+}))
+
 // Mount the main app
 const app = await createApp(content, pages)
 server.route('/', app)

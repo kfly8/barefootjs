@@ -1,0 +1,155 @@
+{
+  "name": "date-picker",
+  "title": "Date Picker",
+  "category": "display",
+  "description": "DatePicker and DateRangePicker Components Composable date picker built on Popover + Button + Calendar. Inspired by shadcn/ui with CSS variable theming support. - DatePicker: Single date selection, auto-closes on select - DateRangePicker: Range selection, stays open until range is complete",
+  "tags": [
+    "stateful",
+    "multi-component"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "selected",
+      "type": "Date",
+      "required": false,
+      "description": "Currently selected date"
+    },
+    {
+      "name": "onSelect",
+      "type": "(date: Date | undefined) => void",
+      "required": false,
+      "description": "Callback when date selection changes"
+    },
+    {
+      "name": "formatDate",
+      "type": "(date: Date) => string",
+      "required": false,
+      "description": "Custom date formatter. Default: Intl.DateTimeFormat"
+    },
+    {
+      "name": "placeholder",
+      "type": "string",
+      "required": false,
+      "description": "Placeholder text when no date is selected"
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the picker is disabled"
+    },
+    {
+      "name": "disabledDates",
+      "type": "(date: Date) => boolean",
+      "required": false,
+      "description": "Function to disable specific dates"
+    },
+    {
+      "name": "align",
+      "type": "'start' | 'center' | 'end'",
+      "required": false,
+      "description": "Alignment of the popover relative to trigger"
+    },
+    {
+      "name": "triggerClassName",
+      "type": "string",
+      "required": false,
+      "description": "Additional classes for the trigger button"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "DateRangePicker",
+      "description": "Props for DateRangePicker component.",
+      "props": [
+        {
+          "name": "selected",
+          "type": "DateRange",
+          "required": false,
+          "description": "Currently selected date range"
+        },
+        {
+          "name": "onSelect",
+          "type": "(range: DateRange | undefined) => void",
+          "required": false,
+          "description": "Callback when range selection changes"
+        },
+        {
+          "name": "formatDate",
+          "type": "(date: Date) => string",
+          "required": false,
+          "description": "Custom date formatter. Default: Intl.DateTimeFormat"
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Placeholder text when no range is selected"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether the picker is disabled"
+        },
+        {
+          "name": "disabledDates",
+          "type": "(date: Date) => boolean",
+          "required": false,
+          "description": "Function to disable specific dates"
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'center' | 'end'",
+          "required": false,
+          "description": "Alignment of the popover relative to trigger"
+        },
+        {
+          "name": "numberOfMonths",
+          "type": "number",
+          "required": false,
+          "description": "Number of months to display"
+        },
+        {
+          "name": "triggerClassName",
+          "type": "string",
+          "required": false,
+          "description": "Additional classes for the trigger button"
+        }
+      ]
+    }
+  ],
+  "examples": [],
+  "accessibility": {
+    "ariaAttributes": [],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "button",
+      "popover",
+      "calendar"
+    ],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/date-picker/index.tsx",
+  "signals": [
+    {
+      "getter": "open",
+      "setter": "setOpen",
+      "initialValue": "false"
+    }
+  ],
+  "memos": [
+    {
+      "name": "displayText",
+      "deps": []
+    }
+  ]
+}

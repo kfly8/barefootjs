@@ -58,8 +58,8 @@
   "accessibility": {
     "role": "checkbox",
     "ariaAttributes": [
-      "aria-invalid",
-      "aria-checked"
+      "aria-checked",
+      "aria-invalid"
     ],
     "dataAttributes": [
       "data-state",

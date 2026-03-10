@@ -1,0 +1,150 @@
+{
+  "name": "input-otp",
+  "title": "Input OTP",
+  "category": "display",
+  "description": "Input OTP Components An accessible one-time password input with copy-paste support. Uses a hidden <input> for actual text entry with visual slot display. Inspired by shadcn/ui with CSS variable theming support. State management uses createContext/useContext for parent-child communication. InputOTP manages value/focus state, InputOTPSlot consumes via context.",
+  "tags": [
+    "stateful",
+    "multi-component",
+    "context",
+    "controlled",
+    "aria"
+  ],
+  "stateful": true,
+  "props": [
+    {
+      "name": "maxLength",
+      "type": "number",
+      "required": true,
+      "description": "Maximum number of characters"
+    },
+    {
+      "name": "value",
+      "type": "string",
+      "required": false,
+      "description": "Controlled value"
+    },
+    {
+      "name": "defaultValue",
+      "type": "string",
+      "required": false,
+      "description": "Default value for uncontrolled mode"
+    },
+    {
+      "name": "onValueChange",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when value changes"
+    },
+    {
+      "name": "onComplete",
+      "type": "(value: string) => void",
+      "required": false,
+      "description": "Callback when all slots are filled"
+    },
+    {
+      "name": "pattern",
+      "type": "RegExp",
+      "required": false,
+      "description": "Pattern to validate input (default: digits only)"
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether the input is disabled"
+    },
+    {
+      "name": "containerClassName",
+      "type": "string",
+      "required": false,
+      "description": "Container className override"
+    },
+    {
+      "name": "children",
+      "type": "Child",
+      "required": false,
+      "description": "Slot children"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "InputOTPGroup",
+      "description": "Props for InputOTPGroup component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "InputOTPSlot children"
+        }
+      ]
+    },
+    {
+      "name": "InputOTPSlot",
+      "description": "Props for InputOTPSlot component.",
+      "props": [
+        {
+          "name": "index",
+          "type": "number",
+          "required": true,
+          "description": "Zero-based index of this slot"
+        }
+      ]
+    },
+    {
+      "name": "InputOTPSeparator",
+      "description": "Props for InputOTPSeparator component.",
+      "props": [
+        {
+          "name": "children",
+          "type": "Child",
+          "required": false,
+          "description": "Custom separator content"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 6-digit OTP",
+      "code": "<InputOTP maxLength={6}>\n  <InputOTPGroup>\n    <InputOTPSlot index={0} />\n    <InputOTPSlot index={1} />\n    <InputOTPSlot index={2} />\n  </InputOTPGroup>\n  <InputOTPSeparator />\n  <InputOTPGroup>\n    <InputOTPSlot index={3} />\n    <InputOTPSlot index={4} />\n    <InputOTPSlot index={5} />\n  </InputOTPGroup>\n</InputOTP>"
+    }
+  ],
+  "accessibility": {
+    "role": "separator",
+    "ariaAttributes": [
+      "aria-label"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [
+      "icon"
+    ],
+    "external": [
+      "@barefootjs/dom"
+    ]
+  },
+  "related": [],
+  "source": "ui/components/ui/input-otp/index.tsx",
+  "signals": [
+    {
+      "getter": "internalValue",
+      "setter": "setInternalValue",
+      "initialValue": "props.defaultValue ?? ''"
+    },
+    {
+      "getter": "activeIndex",
+      "setter": "setActiveIndex",
+      "initialValue": "-1"
+    },
+    {
+      "getter": "isFocused",
+      "setter": "setIsFocused",
+      "initialValue": "false"
+    }
+  ]
+}

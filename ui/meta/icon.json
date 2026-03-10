@@ -97,6 +97,11 @@
       "props": []
     },
     {
+      "name": "ArrowUpDownIcon",
+      "description": "",
+      "props": []
+    },
+    {
       "name": "EllipsisIcon",
       "description": "",
       "props": []
@@ -148,6 +153,11 @@
     },
     {
       "name": "InfoIcon",
+      "description": "",
+      "props": []
+    },
+    {
+      "name": "PanelLeftIcon",
       "description": "",
       "props": []
     }

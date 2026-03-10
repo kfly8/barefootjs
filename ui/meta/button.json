@@ -69,9 +69,7 @@
     }
   ],
   "accessibility": {
-    "ariaAttributes": [
-      "aria-invalid"
-    ],
+    "ariaAttributes": [],
     "dataAttributes": []
   },
   "dependencies": {

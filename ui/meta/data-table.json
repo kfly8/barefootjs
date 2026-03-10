@@ -1,0 +1,93 @@
+{
+  "name": "data-table",
+  "title": "Data Table",
+  "category": "display",
+  "description": "Data Table Helper Components Reusable sub-components for building sortable, filterable, paginated tables. Compose with the existing Table component for data display patterns.",
+  "tags": [
+    "multi-component",
+    "aria"
+  ],
+  "stateful": false,
+  "props": [
+    {
+      "name": "title",
+      "type": "string",
+      "required": true,
+      "description": "Column title"
+    },
+    {
+      "name": "sorted",
+      "type": "SortDirection",
+      "required": false,
+      "description": "Current sort direction"
+    },
+    {
+      "name": "onSort",
+      "type": "() => void",
+      "required": false,
+      "description": "Callback when sort is toggled"
+    }
+  ],
+  "subComponents": [
+    {
+      "name": "DataTablePagination",
+      "description": "",
+      "props": [
+        {
+          "name": "page",
+          "type": "number",
+          "required": true,
+          "description": "Current page (0-indexed)"
+        },
+        {
+          "name": "pageCount",
+          "type": "number",
+          "required": true,
+          "description": "Total number of pages"
+        },
+        {
+          "name": "onPageChange",
+          "type": "(page: number) => void",
+          "required": true,
+          "description": "Callback when page changes"
+        },
+        {
+          "name": "selectedCount",
+          "type": "number",
+          "required": false,
+          "description": "Number of selected rows (optional)"
+        },
+        {
+          "name": "totalCount",
+          "type": "number",
+          "required": false,
+          "description": "Total number of rows (optional)"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Sortable column header",
+      "code": "<DataTableColumnHeader\n  title=\"Amount\"\n  sorted=\"asc\"\n  onSort={() => handleSort('amount')}\n/>"
+    },
+    {
+      "title": "Pagination",
+      "code": "<DataTablePagination\n  page={page()}\n  pageCount={totalPages()}\n  onPageChange={setPage}\n/>"
+    }
+  ],
+  "accessibility": {
+    "ariaAttributes": [
+      "aria-hidden"
+    ],
+    "dataAttributes": [
+      "data-slot"
+    ]
+  },
+  "dependencies": {
+    "internal": [],
+    "external": []
+  },
+  "related": [],
+  "source": "ui/components/ui/data-table/index.tsx"
+}

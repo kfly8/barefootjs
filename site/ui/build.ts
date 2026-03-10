@@ -24,6 +24,8 @@ import {
   generateHash,
   resolveRelativeImports,
 } from '../../packages/cli/src/lib/build'
+import { loadIndex } from '../../packages/cli/src/lib/meta-loader'
+import { generateUiLlmsTxt } from '../../packages/cli/src/lib/llms-txt-generator'
 import { addScriptCollection } from '../../packages/hono/src/build'
 
 const ROOT_DIR = dirname(import.meta.path)
@@ -517,5 +519,12 @@ const headersContent = `/r/*
 `
 await Bun.write(resolve(DIST_DIR, '_headers'), headersContent)
 console.log('Generated: dist/_headers')
+
+// Generate llms.txt from component metadata
+const META_DIR = resolve(ROOT_DIR, '../../ui/meta')
+const metaIndex = loadIndex(META_DIR)
+const uiLlmsTxt = generateUiLlmsTxt(metaIndex, 'https://ui.barefootjs.dev/r')
+await Bun.write(resolve(DIST_DIR, 'llms.txt'), uiLlmsTxt)
+console.log('Generated: dist/llms.txt')
 
 console.log('\nBuild complete!')

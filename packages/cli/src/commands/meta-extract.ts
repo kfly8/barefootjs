@@ -8,6 +8,8 @@ import path from 'path'
 import { analyzeComponent, listExportedComponents } from '@barefootjs/jsx'
 import type { AnalyzerContext } from '@barefootjs/jsx'
 import type { CliContext } from '../context'
+import { generateCoreLlmsTxt, generateUiLlmsTxt } from '../lib/llms-txt-generator'
+import { scanCoreDocs } from '../lib/docs-loader'
 import { extractDescription, extractExamples, parsePropsFromDefinition, extractJsdocBefore } from '../lib/parse-jsdoc'
 import { categoryMap, relatedMap, detectTags } from '../lib/categories'
 import type { ComponentMeta, MetaIndex, MetaIndexEntry, PropMeta, SubComponentMeta, SignalMeta, MemoMeta, EffectMeta, CompilerErrorMeta } from '../lib/types'
@@ -315,5 +317,19 @@ export async function run(_args: string[], ctx: CliContext): Promise<void> {
     JSON.stringify(index, null, 2) + '\n',
   )
 
-  console.log(`Extracted metadata for ${count} components → ui/meta/`)
+  // Generate llms.txt files
+  const uiLlmsTxt = generateUiLlmsTxt(index, 'https://ui.barefootjs.dev/r')
+  writeFileSync(path.join(ctx.metaDir, 'llms.txt'), uiLlmsTxt)
+
+  const docsDir = path.join(ctx.root, 'docs/core')
+  if (existsSync(docsDir)) {
+    const coreDocs = scanCoreDocs(docsDir)
+    const coreLlmsTxt = generateCoreLlmsTxt(coreDocs, 'https://barefootjs.dev/docs')
+    writeFileSync(path.join(docsDir, 'llms.txt'), coreLlmsTxt)
+    console.log(`Extracted metadata for ${count} components → ui/meta/`)
+    console.log('Generated: ui/meta/llms.txt, docs/core/llms.txt')
+  } else {
+    console.log(`Extracted metadata for ${count} components → ui/meta/`)
+    console.log('Generated: ui/meta/llms.txt')
+  }
 }
