@@ -9,12 +9,9 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 
 // Component pages
-import { AspectRatioPage } from './pages/aspect-ratio'
 import { AspectRatioRefPage } from './pages/components/aspect-ratio'
 import { AlertPage } from './pages/alert'
 import { AlertDialogPage } from './pages/alert-dialog'
-import { AvatarPage } from './pages/avatar'
-import { BadgePage } from './pages/badge'
 import { BadgeRefPage } from './pages/components/badge'
 import { ButtonRefPage } from './pages/components/button'
 import { ComboboxRefPage } from './pages/components/combobox'
@@ -37,7 +34,6 @@ import { SliderRefPage } from './pages/components/slider'
 import { ToggleGroupRefPage } from './pages/components/toggle-group'
 import { BreadcrumbPage } from './pages/breadcrumb'
 import { CalendarPage } from './pages/calendar'
-import { CardPage } from './pages/card'
 import { CheckboxPage } from './pages/checkbox'
 import { CheckboxRefPage } from './pages/components/checkbox'
 import { InputPage } from './pages/input'
@@ -134,7 +130,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
               <p className="text-xs text-muted-foreground">Modal dialog for important confirmations</p>
             </a>
-            <a href="/docs/components/aspect-ratio" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/aspect-ratio" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Aspect Ratio</h3>
               <p className="text-xs text-muted-foreground">Content within a desired ratio</p>
             </a>
@@ -142,7 +138,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Avatar</h3>
               <p className="text-xs text-muted-foreground">User profile image with fallback</p>
             </a>
-            <a href="/docs/components/badge" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/badge" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Badge</h3>
               <p className="text-xs text-muted-foreground">Small status indicator labels</p>
             </a>
@@ -372,12 +368,7 @@ export function createApp() {
     return c.render(<ComponentCatalogPage />)
   })
 
-  // Aspect Ratio documentation
-  app.get('/docs/components/aspect-ratio', (c) => {
-    return c.render(<AspectRatioPage />)
-  })
-
-  // Aspect Ratio reference page (redesigned #515)
+  // Aspect Ratio reference page
   app.get('/components/aspect-ratio', (c) => {
     return c.render(<AspectRatioRefPage />)
   })
@@ -392,17 +383,7 @@ export function createApp() {
     return c.render(<AlertDialogPage />)
   })
 
-  // Avatar documentation
-  app.get('/docs/components/avatar', (c) => {
-    return c.render(<AvatarPage />)
-  })
-
-  // Badge documentation
-  app.get('/docs/components/badge', (c) => {
-    return c.render(<BadgePage />)
-  })
-
-  // Badge reference page (redesigned #515)
+  // Badge reference page
   app.get('/components/badge', (c) => {
     return c.render(<BadgeRefPage />)
   })
@@ -475,16 +456,6 @@ export function createApp() {
   // Breadcrumb documentation
   app.get('/docs/components/breadcrumb', (c) => {
     return c.render(<BreadcrumbPage />)
-  })
-
-// Calendar documentation
-  app.get('/docs/components/calendar', (c) => {
-    return c.render(<CalendarPage />)
-  })
-
-  // Card documentation
-  app.get('/docs/components/card', (c) => {
-    return c.render(<CardPage />)
   })
 
   // Collapsible documentation
