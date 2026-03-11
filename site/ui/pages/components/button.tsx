@@ -6,6 +6,7 @@
  */
 
 import { Button } from '@/components/ui/button'
+import { PlusIcon } from '@/components/ui/icon'
 import { ButtonPlayground } from '@/components/button-playground'
 import {
   DocPage,
@@ -23,6 +24,10 @@ const tocItems: TocItem[] = [
   { id: 'preview', title: 'Preview' },
   { id: 'installation', title: 'Installation' },
   { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'size', title: 'Size', branch: 'start' },
+  { id: 'icon', title: 'Icon', branch: 'child' },
+  { id: 'as-child', title: 'As Child', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
@@ -45,6 +50,24 @@ function ButtonDemo() {
     </div>
   )
 }`
+
+const sizeCode = `<Button size="sm">Small</Button>
+<Button size="default">Default</Button>
+<Button size="lg">Large</Button>`
+
+const iconCode = `<Button size="icon-sm" aria-label="Add">
+  <PlusIcon />
+</Button>
+<Button size="icon" aria-label="Add">
+  <PlusIcon />
+</Button>
+<Button size="icon-lg" aria-label="Add">
+  <PlusIcon />
+</Button>`
+
+const asChildCode = `<Button asChild>
+  <a href="/home">Go Home</a>
+</Button>`
 
 const buttonProps: PropDefinition[] = [
   {
@@ -107,6 +130,35 @@ export function ButtonRefPage() {
               </Button>
             </div>
           </Example>
+        </Section>
+
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div className="space-y-8">
+            <Example title="Size" code={sizeCode} showLineNumbers={false}>
+              <Button size="sm">Small</Button>
+              <Button size="default">Default</Button>
+              <Button size="lg">Large</Button>
+            </Example>
+
+            <Example title="Icon" code={iconCode}>
+              <Button size="icon-sm" aria-label="Add">
+                <PlusIcon />
+              </Button>
+              <Button size="icon" aria-label="Add">
+                <PlusIcon />
+              </Button>
+              <Button size="icon-lg" aria-label="Add">
+                <PlusIcon />
+              </Button>
+            </Example>
+
+            <Example title="As Child" code={asChildCode} showLineNumbers={false}>
+              <Button asChild>
+                <a href="/home">Go Home</a>
+              </Button>
+            </Example>
+          </div>
         </Section>
 
         {/* API Reference */}
