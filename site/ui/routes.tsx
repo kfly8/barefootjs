@@ -38,7 +38,6 @@ import { CheckboxPage } from './pages/checkbox'
 import { CheckboxRefPage } from './pages/components/checkbox'
 import { InputPage } from './pages/input'
 import { InputOTPPage } from './pages/input-otp'
-import { LabelPage } from './pages/label'
 import { SliderPage } from './pages/slider'
 import { SwitchPage } from './pages/switch'
 import { AccordionPage } from './pages/accordion'
@@ -212,7 +211,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Input OTP</h3>
               <p className="text-xs text-muted-foreground">One-time password input</p>
             </a>
-            <a href="/docs/components/label" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/label" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Label</h3>
               <p className="text-xs text-muted-foreground">Accessible label for form controls</p>
             </a>
@@ -494,11 +493,6 @@ export function createApp() {
   // Input OTP documentation
   app.get('/docs/components/input-otp', (c) => {
     return c.render(<InputOTPPage />)
-  })
-
-  // Label documentation
-  app.get('/docs/components/label', (c) => {
-    return c.render(<LabelPage />)
   })
 
   // Slider documentation

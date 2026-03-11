@@ -7,6 +7,7 @@
 
 import { Label } from '@/components/ui/label'
 import { LabelPlayground } from '@/components/label-playground'
+import { LabelFormDemo, LabelDisabledDemo } from '@/components/label-demo'
 import {
   DocPage,
   PageHeader,
@@ -23,6 +24,9 @@ const tocItems: TocItem[] = [
   { id: 'preview', title: 'Preview' },
   { id: 'installation', title: 'Installation' },
   { id: 'usage', title: 'Usage' },
+  { id: 'examples', title: 'Examples' },
+  { id: 'form', title: 'Form', branch: 'start' },
+  { id: 'disabled', title: 'Disabled', branch: 'end' },
   { id: 'api-reference', title: 'API Reference' },
 ]
 
@@ -34,6 +38,34 @@ function LabelDemo() {
     <div className="grid w-full max-w-sm items-center gap-1.5">
       <Label for="email">Email</Label>
       <Input type="email" id="email" placeholder="Email" />
+    </div>
+  )
+}`
+
+const formCode = `import { Label } from '@/components/ui/label'
+
+function LabelForm() {
+  return (
+    <div className="flex flex-col gap-4 max-w-sm">
+      <div className="grid w-full items-center gap-1.5">
+        <Label for="name">Name</Label>
+        <input id="name" type="text" placeholder="Enter your name" />
+      </div>
+      <div className="grid w-full items-center gap-1.5">
+        <Label for="email">Email</Label>
+        <input id="email" type="email" placeholder="Enter your email" />
+      </div>
+    </div>
+  )
+}`
+
+const disabledCode = `import { Label } from '@/components/ui/label'
+
+function LabelDisabled() {
+  return (
+    <div className="group" data-disabled="true">
+      <Label for="disabled-input">Disabled field</Label>
+      <input id="disabled-input" type="text" disabled placeholder="Cannot edit" />
     </div>
   )
 }`
@@ -87,6 +119,19 @@ export function LabelRefPage() {
               />
             </div>
           </Example>
+        </Section>
+
+        {/* Examples */}
+        <Section id="examples" title="Examples">
+          <div className="space-y-8">
+            <Example title="Form" code={formCode}>
+              <LabelFormDemo />
+            </Example>
+
+            <Example title="Disabled" code={disabledCode}>
+              <LabelDisabledDemo />
+            </Example>
+          </div>
         </Section>
 
         {/* API Reference */}
