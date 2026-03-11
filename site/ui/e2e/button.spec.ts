@@ -1,71 +1,44 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Button Documentation Page', () => {
+test.describe('Button Reference Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/components/button')
+    await page.goto('/components/button')
   })
 
-  test.describe('Interactive Counter', () => {
-    test('increments count on click', async ({ page }) => {
-      const counterButton = page.locator('button:has-text("Clicked")')
+  test.describe('Props Playground', () => {
+    test('changing children text updates preview button', async ({ page }) => {
+      const preview = page.locator('[data-button-preview]')
+      const section = page.locator('#preview')
+      const input = section.locator('input[type="text"]')
 
-      // Get initial text
-      const initialText = await counterButton.textContent()
-      expect(initialText).toContain('Clicked')
-      expect(initialText).toContain('0')
-
-      // Click and verify count changes
-      await counterButton.click()
-      await expect(counterButton).toContainText('1')
+      await input.fill('Click me')
+      await expect(preview.locator('button')).toContainText('Click me')
     })
 
-    test('increments count multiple times', async ({ page }) => {
-      const counterButton = page.locator('button:has-text("Clicked")')
-      await counterButton.click()
-      await counterButton.click()
-      await counterButton.click()
-      await expect(counterButton).toContainText('3')
-    })
-  })
+    test('changing variant updates preview button class', async ({ page }) => {
+      const preview = page.locator('[data-button-preview]')
+      const section = page.locator('#preview')
 
-  test.describe('Button asChild', () => {
-    test('renders link with button styling', async ({ page }) => {
-      const link = page.locator('[data-testid="as-child-link"]')
-      await expect(link).toBeVisible()
-      // Should be an <a> tag, not <button>
-      await expect(link).toHaveAttribute('role', 'button')
+      // Open variant select and pick "outline"
+      await section.locator('button[role="combobox"]').first().click()
+      await page.locator('[role="option"]:has-text("outline")').click()
+
+      // Preview button should have outline variant class
+      const btn = preview.locator('button')
+      await expect(btn).toHaveClass(/border/)
     })
 
-    test('toggles aria-expanded on click', async ({ page }) => {
-      const link = page.locator('[data-testid="as-child-link"]')
+    test('changing size updates preview button class', async ({ page }) => {
+      const preview = page.locator('[data-button-preview]')
+      const section = page.locator('#preview')
 
-      // Initially collapsed
-      await expect(link).toHaveAttribute('aria-expanded', 'false')
-      await expect(link).toContainText('Collapsed')
+      // Open size select (second combobox) and pick "sm"
+      await section.locator('button[role="combobox"]').nth(1).click()
+      await page.locator('[role="option"]:has-text("sm")').first().click()
 
-      // Click to expand
-      await link.click()
-
-      // aria-expanded should update reactively
-      await expect(link).toHaveAttribute('aria-expanded', 'true')
-      await expect(link).toContainText('Expanded')
-    })
-
-    test('reactive state syncs across elements', async ({ page }) => {
-      const link = page.locator('[data-testid="as-child-link"]')
-      const state = page.locator('[data-testid="as-child-state"]')
-
-      // Initially closed
-      await expect(state).toContainText('Closed')
-
-      // Click to toggle
-      await link.click()
-      await expect(state).toContainText('Open')
-
-      // Click again to toggle back
-      await link.click()
-      await expect(state).toContainText('Closed')
+      // Preview button should have sm size class
+      const btn = preview.locator('button')
+      await expect(btn).toHaveClass(/h-8/)
     })
   })
-
 })
