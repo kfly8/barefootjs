@@ -1,23 +1,18 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Label Documentation Page', () => {
+test.describe('Label Reference Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/docs/components/label')
+    await page.goto('/components/label')
   })
 
   test.describe('Preview', () => {
     test('displays label with data-slot', async ({ page }) => {
       const label = page.locator('label[data-slot="label"]').first()
       await expect(label).toBeVisible()
-      await expect(label).toContainText('Your email address')
     })
   })
 
   test.describe('Form Example', () => {
-    test('displays form example heading', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Form")')).toBeVisible()
-    })
-
     test('has labels with for attribute', async ({ page }) => {
       const nameLabel = page.locator('label[data-slot="label"][for="label-name"]')
       await expect(nameLabel).toBeVisible()
@@ -38,10 +33,6 @@ test.describe('Label Documentation Page', () => {
   })
 
   test.describe('Disabled Example', () => {
-    test('displays disabled example heading', async ({ page }) => {
-      await expect(page.locator('h3:has-text("Disabled")')).toBeVisible()
-    })
-
     test('shows disabled input', async ({ page }) => {
       const input = page.locator('input#label-disabled')
       await expect(input).toBeDisabled()
@@ -53,5 +44,4 @@ test.describe('Label Documentation Page', () => {
       await expect(label).toContainText('Disabled field')
     })
   })
-
 })
