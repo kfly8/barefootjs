@@ -266,8 +266,6 @@ interface DrawerContentProps extends HTMLBaseAttributes {
  * @param props.ariaDescribedby - ID of description for accessibility
  */
 function DrawerContent(props: DrawerContentProps) {
-  const direction = props.direction ?? 'bottom'
-
   const handleMount = (el: HTMLElement) => {
     // Portal to body
     if (el && el.parentNode !== document.body && !isSSRPortal(el)) {
@@ -286,9 +284,10 @@ function DrawerContent(props: DrawerContentProps) {
       for (const fn of cleanupFns) fn()
       cleanupFns = []
 
+      const dir = props.direction ?? 'bottom'
       const isOpen = ctx.open()
       el.dataset.state = isOpen ? 'open' : 'closed'
-      el.className = `${drawerContentBaseClasses} ${directionClasses[direction]} ${isOpen ? directionOpenClasses[direction] : directionClosedClasses[direction]} ${props.className ?? ''}`
+      el.className = `${drawerContentBaseClasses} ${directionClasses[dir]} ${isOpen ? directionOpenClasses[dir] : directionClosedClasses[dir]} ${props.className ?? ''}`
 
       if (isOpen) {
         // Scroll lock
@@ -350,7 +349,7 @@ function DrawerContent(props: DrawerContentProps) {
       aria-describedby={props.ariaDescribedby}
       tabindex={-1}
       id={props.id}
-      className={`${drawerContentBaseClasses} ${directionClasses[direction]} ${directionClosedClasses[direction]} ${props.className ?? ''}`}
+      className={`${drawerContentBaseClasses} ${directionClasses[props.direction ?? 'bottom']} ${directionClosedClasses[props.direction ?? 'bottom']} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
