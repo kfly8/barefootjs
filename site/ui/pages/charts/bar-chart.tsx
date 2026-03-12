@@ -8,6 +8,7 @@ import {
   BarChartMultipleDemo,
   BarChartInteractiveDemo,
 } from '@/components/bar-chart-demo'
+import { BarChartPlayground } from '@/components/bar-chart-playground'
 import {
   DocPage,
   PageHeader,
@@ -21,7 +22,9 @@ import {
 import { getChartNavLinks } from '../../components/shared/PageNavigation'
 
 const tocItems: TocItem[] = [
+  { id: 'preview', title: 'Preview' },
   { id: 'installation', title: 'Installation' },
+  { id: 'usage', title: 'Usage' },
   { id: 'examples', title: 'Examples' },
   { id: 'basic', title: 'Basic', branch: 'start' },
   { id: 'multiple', title: 'Multiple', branch: 'child' },
@@ -29,9 +32,18 @@ const tocItems: TocItem[] = [
   { id: 'api-reference', title: 'API Reference' },
 ]
 
-const previewCode = `"use client"
+const usageCode = `"use client"
 
 import type { ChartConfig } from "@barefootjs/chart"
+import {
+  ChartContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ChartTooltip,
+} from "@/components/ui/chart"
 
 const chartConfig: ChartConfig = {
   desktop: { label: "Desktop", color: "hsl(221 83% 53%)" },
@@ -46,7 +58,7 @@ const chartData = [
   { month: "June", desktop: 214 },
 ]
 
-export function BarChartPreviewDemo() {
+export function MyBarChart() {
   return (
     <ChartContainer config={chartConfig} className="w-full">
       <BarChart data={chartData}>
@@ -278,6 +290,7 @@ const chartTooltipProps: PropDefinition[] = [
   },
 ]
 
+/** Legacy export for /docs/charts/bar-chart route */
 export function BarChartPage() {
   return (
     <DocPage slug="bar-chart" toc={tocItems}>
@@ -288,12 +301,17 @@ export function BarChartPage() {
           {...getChartNavLinks('bar-chart')}
         />
 
-        <Example title="" code={previewCode}>
-          <BarChartPreviewDemo />
-        </Example>
+        {/* Props Playground */}
+        <BarChartPlayground />
 
         <Section id="installation" title="Installation">
           <PackageManagerTabs command="bun add @barefootjs/chart" />
+        </Section>
+
+        <Section id="usage" title="Usage">
+          <Example title="" code={usageCode}>
+            <BarChartPreviewDemo />
+          </Example>
         </Section>
 
         <Section id="examples" title="Examples">
@@ -348,3 +366,6 @@ export function BarChartPage() {
     </DocPage>
   )
 }
+
+/** RefPage export for /charts/bar-chart route */
+export { BarChartPage as BarChartRefPage }

@@ -71,7 +71,7 @@ import { SpinnerPage } from './pages/spinner'
 import { ComponentCatalogPage } from './pages/components/catalog'
 
 // Chart pages
-import { BarChartPage } from './pages/charts/bar-chart'
+import { BarChartPage, BarChartRefPage } from './pages/charts/bar-chart'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -650,7 +650,12 @@ export function createApp() {
     return c.render(<TablePage />)
   })
 
-  // Bar Chart documentation
+  // Bar Chart reference page
+  app.get('/charts/bar-chart', (c) => {
+    return c.render(<BarChartRefPage />)
+  })
+
+  // Bar Chart documentation (legacy)
   app.get('/docs/charts/bar-chart', (c) => {
     return c.render(<BarChartPage />)
   })
