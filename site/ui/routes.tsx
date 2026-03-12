@@ -37,7 +37,7 @@ import { CheckboxRefPage } from './pages/components/checkbox'
 import { AccordionRefPage } from './pages/components/accordion'
 import { CollapsibleRefPage } from './pages/components/collapsible'
 import { CommandRefPage } from './pages/components/command'
-import { TabsPage } from './pages/tabs'
+import { TabsRefPage } from './pages/components/tabs'
 import { DialogRefPage } from './pages/components/dialog'
 import { ContextMenuRefPage } from './pages/components/context-menu'
 import { DatePickerRefPage } from './pages/components/date-picker'
@@ -267,7 +267,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Table</h3>
               <p className="text-xs text-muted-foreground">Responsive data table</p>
             </a>
-            <a href="/docs/components/tabs" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/tabs" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Tabs</h3>
               <p className="text-xs text-muted-foreground">Tabbed content navigation</p>
             </a>
@@ -474,9 +474,9 @@ export function createApp() {
     return c.render(<AccordionRefPage />)
   })
 
-  // Tabs documentation
-  app.get('/docs/components/tabs', (c) => {
-    return c.render(<TabsPage />)
+  // Tabs reference page (migrated from /docs/components/tabs)
+  app.get('/components/tabs', (c) => {
+    return c.render(<TabsRefPage />)
   })
 
   // Date Picker reference page
