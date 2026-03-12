@@ -47,7 +47,7 @@ import { TooltipPage } from './pages/tooltip'
 import { ResizableRefPage } from './pages/components/resizable'
 import { ScrollAreaRefPage } from './pages/components/scroll-area'
 import { SeparatorRefPage } from './pages/components/separator'
-import { PortalPage } from './pages/portal'
+import { PortalRefPage } from './pages/components/portal'
 import { PaginationRefPage } from './pages/components/pagination'
 import { PopoverRefPage } from './pages/components/popover'
 import { ProgressRefPage } from './pages/components/progress'
@@ -536,9 +536,9 @@ export function createApp() {
   })
 
 
-  // Portal documentation
-  app.get('/docs/components/portal', (c) => {
-    return c.render(<PortalPage />)
+  // Portal reference page
+  app.get('/components/portal', (c) => {
+    return c.render(<PortalRefPage />)
   })
 
   // Menubar reference page
