@@ -79,7 +79,7 @@ const menuEntries: SidebarEntry[] = [
       { title: 'Aspect Ratio', href: '/components/aspect-ratio' },
       { title: 'Avatar', href: '/components/avatar' },
       { title: 'Badge', href: '/components/badge' },
-      { title: 'Breadcrumb', href: '/docs/components/breadcrumb' },
+      { title: 'Breadcrumb', href: '/components/breadcrumb' },
       { title: 'Button', href: '/components/button' },
       { title: 'Calendar', href: '/components/calendar' },
       { title: 'Card', href: '/components/card' },
