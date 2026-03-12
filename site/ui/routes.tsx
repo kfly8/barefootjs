@@ -32,7 +32,7 @@ import { RadioGroupRefPage } from './pages/components/radio-group'
 import { InputOTPRefPage } from './pages/components/input-otp'
 import { SliderRefPage } from './pages/components/slider'
 import { ToggleGroupRefPage } from './pages/components/toggle-group'
-import { BreadcrumbPage } from './pages/breadcrumb'
+import { BreadcrumbRefPage } from './pages/components/breadcrumb'
 import { CalendarPage } from './pages/calendar'
 import { CheckboxRefPage } from './pages/components/checkbox'
 import { AccordionRefPage } from './pages/components/accordion'
@@ -124,7 +124,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Badge</h3>
               <p className="text-xs text-muted-foreground">Small status indicator labels</p>
             </a>
-            <a href="/docs/components/breadcrumb" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/breadcrumb" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Breadcrumb</h3>
               <p className="text-xs text-muted-foreground">Navigation hierarchy trail</p>
             </a>
@@ -435,9 +435,9 @@ export function createApp() {
     return c.render(<TableRefPage />)
   })
 
-  // Breadcrumb documentation
-  app.get('/docs/components/breadcrumb', (c) => {
-    return c.render(<BreadcrumbPage />)
+  // Breadcrumb reference page
+  app.get('/components/breadcrumb', (c) => {
+    return c.render(<BreadcrumbRefPage />)
   })
 
   // Collapsible documentation
