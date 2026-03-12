@@ -62,6 +62,7 @@ import { ComponentCatalogPage } from './pages/components/catalog'
 
 // Chart pages
 import { BarChartRefPage } from './pages/charts/bar-chart'
+import { PieChartRefPage } from './pages/charts/pie-chart'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -601,6 +602,11 @@ export function createApp() {
   // Bar Chart reference page
   app.get('/charts/bar-chart', (c) => {
     return c.render(<BarChartRefPage />)
+  })
+
+  // Pie Chart reference page
+  app.get('/charts/pie-chart', (c) => {
+    return c.render(<PieChartRefPage />)
   })
 
   // Controlled Input pattern documentation

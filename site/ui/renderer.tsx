@@ -141,6 +141,7 @@ const menuEntries: SidebarEntry[] = [
     title: 'Charts',
     links: [
       { title: 'Bar Chart', href: '/docs/charts/bar-chart' },
+      { title: 'Pie Chart', href: '/docs/charts/pie-chart' },
     ],
   },
 ]

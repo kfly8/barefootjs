@@ -16,6 +16,9 @@ import {
   initXAxis as xAxisInit,
   initYAxis as yAxisInit,
   initChartTooltip as chartTooltipInit,
+  initPieChart as pieChartInit,
+  initPie as pieInit,
+  initPieTooltip as pieTooltipInit,
 } from '@barefootjs/chart'
 
 /** Color and label configuration for chart data series */
@@ -55,6 +58,24 @@ interface YAxisProps {
 }
 
 interface ChartTooltipProps {
+  labelFormatter?: (label: string) => string
+}
+
+interface PieChartProps {
+  data: Record<string, unknown>[]
+  children?: unknown
+}
+
+interface PieProps {
+  dataKey: string
+  nameKey?: string
+  fill?: string
+  innerRadius?: number
+  outerRadius?: number
+  paddingAngle?: number
+}
+
+interface PieTooltipProps {
   labelFormatter?: (label: string) => string
 }
 
@@ -122,6 +143,34 @@ function ChartTooltip(props: ChartTooltipProps) {
   return <span data-slot="chart-tooltip" style="display:none" ref={handleMount} />
 }
 
+function PieChart(props: PieChartProps) {
+  const handleMount = (el: HTMLElement) => {
+    pieChartInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return (
+    <div data-slot="pie-chart" ref={handleMount}>
+      {props.children}
+    </div>
+  )
+}
+
+function Pie(props: PieProps) {
+  const handleMount = (el: HTMLElement) => {
+    pieInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return <span data-slot="pie" style="display:none" ref={handleMount} />
+}
+
+function PieTooltip(props: PieTooltipProps) {
+  const handleMount = (el: HTMLElement) => {
+    pieTooltipInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return <span data-slot="pie-tooltip" style="display:none" ref={handleMount} />
+}
+
 export {
   ChartContainer,
   BarChart,
@@ -130,6 +179,9 @@ export {
   XAxis,
   YAxis,
   ChartTooltip,
+  PieChart,
+  Pie,
+  PieTooltip,
 }
 
 export type {
@@ -140,4 +192,7 @@ export type {
   XAxisProps,
   YAxisProps,
   ChartTooltipProps,
+  PieChartProps,
+  PieProps,
+  PieTooltipProps,
 }

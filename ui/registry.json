@@ -65,6 +65,12 @@
       "description": "A bar chart component built with SVG and D3 scales"
     },
     {
+      "name": "pie-chart",
+      "type": "registry:ui",
+      "title": "Pie Chart",
+      "description": "A pie chart component built with SVG and D3 shapes"
+    },
+    {
       "name": "carousel",
       "type": "registry:ui",
       "title": "Carousel",
