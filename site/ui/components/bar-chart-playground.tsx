@@ -14,7 +14,6 @@ import {
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@ui/components/ui/select'
 import { Checkbox } from '@ui/components/ui/checkbox'
-import type { ChartConfig } from '@barefootjs/chart'
 import {
   ChartContainer,
   BarChart,
@@ -25,7 +24,7 @@ import {
   ChartTooltip,
 } from '@ui/components/ui/chart'
 
-const chartConfig: ChartConfig = {
+const chartConfig: Record<string, { label: string; color: string }> = {
   desktop: { label: "Desktop", color: "hsl(221 83% 53%)" },
 }
 
