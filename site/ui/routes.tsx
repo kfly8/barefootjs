@@ -51,7 +51,7 @@ import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
 import { PopoverPage } from './pages/popover'
 import { ProgressPage } from './pages/progress'
-import { DrawerPage } from './pages/drawer'
+import { DrawerRefPage } from './pages/components/drawer'
 import { SheetPage } from './pages/sheet'
 import { SidebarPage } from './pages/sidebar'
 import { HoverCardRefPage } from './pages/components/hover-card'
@@ -175,7 +175,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Dialog</h3>
               <p className="text-xs text-muted-foreground">Modal overlay with custom content</p>
             </a>
-            <a href="/docs/components/drawer" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/drawer" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Drawer</h3>
               <p className="text-xs text-muted-foreground">Slide-out panel from screen edge</p>
             </a>
@@ -582,9 +582,9 @@ export function createApp() {
     return c.render(<ScrollAreaRefPage />)
   })
 
-  // Drawer documentation
-  app.get('/docs/components/drawer', (c) => {
-    return c.render(<DrawerPage />)
+  // Drawer reference page (migrated from /docs/components/drawer)
+  app.get('/components/drawer', (c) => {
+    return c.render(<DrawerRefPage />)
   })
 
   // Sheet documentation
