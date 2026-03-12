@@ -37,10 +37,10 @@ import { CalendarPage } from './pages/calendar'
 import { CheckboxRefPage } from './pages/components/checkbox'
 import { AccordionRefPage } from './pages/components/accordion'
 import { CollapsiblePage } from './pages/collapsible'
-import { CommandPage } from './pages/command'
+import { CommandRefPage } from './pages/components/command'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
-import { ContextMenuPage } from './pages/context-menu'
+import { ContextMenuRefPage } from './pages/components/context-menu'
 import { DatePickerPage } from './pages/date-picker'
 import { DropdownMenuPage } from './pages/dropdown-menu'
 import { ToastPage } from './pages/toast'
@@ -152,7 +152,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Collapsible</h3>
               <p className="text-xs text-muted-foreground">Expandable content section</p>
             </a>
-            <a href="/docs/components/command" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/command" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Command</h3>
               <p className="text-xs text-muted-foreground">Search and command menu</p>
             </a>
@@ -160,7 +160,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Combobox</h3>
               <p className="text-xs text-muted-foreground">Autocomplete input with searchable dropdown</p>
             </a>
-            <a href="/docs/components/context-menu" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/context-menu" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Context Menu</h3>
               <p className="text-xs text-muted-foreground">Right-click menu at cursor position</p>
             </a>
@@ -445,9 +445,9 @@ export function createApp() {
     return c.render(<CollapsiblePage />)
   })
 
-  // Command documentation
-  app.get('/docs/components/command', (c) => {
-    return c.render(<CommandPage />)
+  // Command reference page
+  app.get('/components/command', (c) => {
+    return c.render(<CommandRefPage />)
   })
 
   // Checkbox reference page
@@ -490,9 +490,9 @@ export function createApp() {
     return c.render(<DialogPage />)
   })
 
-  // Context Menu documentation
-  app.get('/docs/components/context-menu', (c) => {
-    return c.render(<ContextMenuPage />)
+  // Context Menu reference page
+  app.get('/components/context-menu', (c) => {
+    return c.render(<ContextMenuRefPage />)
   })
 
 // Dropdown Menu documentation
