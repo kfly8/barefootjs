@@ -45,9 +45,11 @@ function AvatarPlayground(_props: {}) {
       previewDataAttr="data-avatar-preview"
       previewContent={
         <Avatar>
-          {mode() === 'image' && (
-            <AvatarImage src="https://github.com/kfly8.png" alt="@kfly8" />
-          )}
+          <AvatarImage
+            src="https://avatars.githubusercontent.com/u/722500?v=4"
+            alt="@kfly8"
+            style={mode() === 'image' ? '' : 'display:none'}
+          />
           <AvatarFallback>{fallback()}</AvatarFallback>
         </Avatar>
       }
