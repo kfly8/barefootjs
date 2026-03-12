@@ -19,6 +19,8 @@ import {
   initPieChart as pieChartInit,
   initPie as pieInit,
   initPieTooltip as pieTooltipInit,
+  initLineChart as lineChartInit,
+  initLine as lineInit,
 } from '@barefootjs/chart'
 
 /** Color and label configuration for chart data series */
@@ -55,6 +57,19 @@ interface XAxisProps {
 interface YAxisProps {
   hide?: boolean
   tickFormatter?: (value: number) => string
+}
+
+interface LineChartProps {
+  data: Record<string, unknown>[]
+  children?: unknown
+}
+
+interface LineProps {
+  dataKey: string
+  stroke?: string
+  strokeWidth?: number
+  type?: 'linear' | 'monotone'
+  dot?: boolean
 }
 
 interface ChartTooltipProps {
@@ -171,10 +186,32 @@ function PieTooltip(props: PieTooltipProps) {
   return <span data-slot="pie-tooltip" style="display:none" ref={handleMount} />
 }
 
+function LineChart(props: LineChartProps) {
+  const handleMount = (el: HTMLElement) => {
+    lineChartInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return (
+    <div data-slot="line-chart" ref={handleMount}>
+      {props.children}
+    </div>
+  )
+}
+
+function Line(props: LineProps) {
+  const handleMount = (el: HTMLElement) => {
+    lineInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return <span data-slot="line" style="display:none" ref={handleMount} />
+}
+
 export {
   ChartContainer,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -188,6 +225,8 @@ export type {
   ChartContainerProps,
   BarChartProps,
   BarProps,
+  LineChartProps,
+  LineProps,
   CartesianGridProps,
   XAxisProps,
   YAxisProps,
