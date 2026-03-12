@@ -38,7 +38,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/dom'
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 
@@ -284,7 +284,7 @@ function ComboboxValue(props: ComboboxValueProps) {
 function ComboboxContent(props: ComboboxContentProps) {
   const handleMount = (el: HTMLElement) => {
     // Get trigger ref before portal
-    const triggerEl = el.parentElement?.querySelector('[data-slot="combobox-trigger"]') as HTMLElement
+    const triggerEl = findSiblingSlot(el, '[data-slot="combobox-trigger"]')
     if (triggerEl) contentTriggerMap.set(el, triggerEl)
 
     // Portal to body to escape overflow clipping

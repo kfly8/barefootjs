@@ -30,7 +30,7 @@
  * ```
  */
 
-import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/dom'
 import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 
@@ -172,7 +172,7 @@ interface PopoverContentProps extends HTMLBaseAttributes {
 function PopoverContent(props: PopoverContentProps) {
   const handleMount = (el: HTMLElement) => {
     // Get trigger ref before portal (while still inside Popover container)
-    const triggerEl = el.parentElement?.querySelector('[data-slot="popover-trigger"]') as HTMLElement
+    const triggerEl = findSiblingSlot(el, '[data-slot="popover-trigger"]')
     if (triggerEl) contentTriggerMap.set(el, triggerEl)
 
     // Portal to body to escape overflow clipping

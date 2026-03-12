@@ -32,7 +32,7 @@
  * ```
  */
 
-import { createContext, useContext, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/dom'
 import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 
@@ -231,7 +231,7 @@ interface HoverCardContentProps extends HTMLBaseAttributes {
 function HoverCardContent(props: HoverCardContentProps) {
   const handleMount = (el: HTMLElement) => {
     // Capture references before portal (while still inside HoverCard container)
-    const triggerEl = el.parentElement?.querySelector('[data-slot="hover-card-trigger"]') as HTMLElement
+    const triggerEl = findSiblingSlot(el, '[data-slot="hover-card-trigger"]')
     const rootEl = el.closest('[data-slot="hover-card"]') as HTMLElement
     if (triggerEl) contentTriggerMap.set(el, triggerEl)
     if (rootEl) contentRootMap.set(el, rootEl)

@@ -34,7 +34,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/dom'
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 
@@ -242,7 +242,7 @@ interface SelectContentProps extends HTMLBaseAttributes {
 function SelectContent(props: SelectContentProps) {
   const handleMount = (el: HTMLElement) => {
     // Get trigger ref before portal
-    const triggerEl = el.parentElement?.querySelector('[data-slot="select-trigger"]') as HTMLElement
+    const triggerEl = findSiblingSlot(el, '[data-slot="select-trigger"]')
     if (triggerEl) contentTriggerMap.set(el, triggerEl)
 
     // Portal to body to escape overflow clipping

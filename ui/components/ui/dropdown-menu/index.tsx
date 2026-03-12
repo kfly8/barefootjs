@@ -36,7 +36,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/dom'
 import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 
@@ -224,7 +224,7 @@ interface DropdownMenuContentProps extends HTMLBaseAttributes {
 function DropdownMenuContent(props: DropdownMenuContentProps) {
   const handleMount = (el: HTMLElement) => {
     // Get trigger ref before portal (while still inside DropdownMenu container)
-    const triggerEl = el.parentElement?.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement
+    const triggerEl = findSiblingSlot(el, '[data-slot="dropdown-menu-trigger"]')
     if (triggerEl) contentTriggerMap.set(el, triggerEl)
 
     // Portal to body to escape overflow clipping

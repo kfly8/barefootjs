@@ -35,7 +35,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/dom'
 import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 
@@ -195,7 +195,7 @@ interface ContextMenuContentProps extends HTMLBaseAttributes {
 function ContextMenuContent(props: ContextMenuContentProps) {
   const handleMount = (el: HTMLElement) => {
     // Get trigger ref before portal (while still inside ContextMenu container)
-    const triggerEl = el.parentElement?.querySelector('[data-slot="context-menu-trigger"]') as HTMLElement
+    const triggerEl = findSiblingSlot(el, '[data-slot="context-menu-trigger"]')
     if (triggerEl) contentTriggerMap.set(el, triggerEl)
 
     // Portal to body to escape overflow clipping

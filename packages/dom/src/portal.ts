@@ -90,6 +90,35 @@ export function isSSRPortal(element: HTMLElement): boolean {
  *
  * @param portalId - The portal ID to find and remove
  */
+/**
+ * Find a sibling slot element relative to the given element.
+ * Handles the SSR portal case where the element is inside a portal wrapper
+ * (bf-pi) instead of its original parent container.
+ *
+ * @param el - Element to search from
+ * @param slotSelector - CSS selector for the sibling slot (e.g., '[data-slot="popover-trigger"]')
+ * @returns The found element, or null
+ */
+export function findSiblingSlot(el: HTMLElement, slotSelector: string): HTMLElement | null {
+  // Direct parent lookup (normal case)
+  const direct = el.parentElement?.querySelector(slotSelector) as HTMLElement | null
+  if (direct) return direct
+
+  // SSR portal fallback: use bf-po (owner scope ID) to find the original container
+  const portalWrapper = el.closest(`[${BF_PORTAL_ID}]`)
+  if (!portalWrapper) return null
+
+  const ownerScopeId = portalWrapper.getAttribute(BF_PORTAL_OWNER)
+  if (!ownerScopeId) return null
+
+  // Find owner scope element, trying both direct and child-prefix patterns
+  const ownerScope = document.querySelector(`[${BF_SCOPE}="${ownerScopeId}"]`)
+    ?? document.querySelector(`[${BF_SCOPE}="${BF_CHILD_PREFIX}${ownerScopeId}"]`)
+  if (!ownerScope) return null
+
+  return ownerScope.querySelector(slotSelector) as HTMLElement | null
+}
+
 export function cleanupPortalPlaceholder(portalId: string): void {
   const placeholder = document.querySelector(
     `template[${BF_PORTAL_PLACEHOLDER}="${portalId}"]`
