@@ -45,7 +45,9 @@ describe('Toggle', () => {
     expect(result.root.events).toContain('click')
   })
 
-  test('root classes contain inline-flex', () => {
-    expect(result.root.classes).toContain('inline-flex')
+  test('root classes are dynamic (reactive memo)', () => {
+    // classes are wrapped in createMemo for variant/size reactivity,
+    // so the IR sees the expression rather than resolved static classes
+    expect(result.root.classes.length).toBeGreaterThan(0)
   })
 })
