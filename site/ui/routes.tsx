@@ -37,32 +37,35 @@ import { CheckboxRefPage } from './pages/components/checkbox'
 import { AccordionRefPage } from './pages/components/accordion'
 import { CollapsibleRefPage } from './pages/components/collapsible'
 import { CommandRefPage } from './pages/components/command'
-import { TabsPage } from './pages/tabs'
+import { TabsRefPage } from './pages/components/tabs'
 import { DialogRefPage } from './pages/components/dialog'
 import { ContextMenuRefPage } from './pages/components/context-menu'
 import { DatePickerRefPage } from './pages/components/date-picker'
 import { DropdownMenuRefPage } from './pages/components/dropdown-menu'
-import { ToastPage } from './pages/toast'
-import { TooltipPage } from './pages/tooltip'
+import { ToastRefPage } from './pages/components/toast'
+import { TooltipRefPage } from './pages/components/tooltip'
 import { ResizableRefPage } from './pages/components/resizable'
 import { ScrollAreaRefPage } from './pages/components/scroll-area'
 import { SeparatorRefPage } from './pages/components/separator'
-import { PortalPage } from './pages/portal'
+import { PortalRefPage } from './pages/components/portal'
 import { PaginationRefPage } from './pages/components/pagination'
 import { PopoverRefPage } from './pages/components/popover'
 import { ProgressRefPage } from './pages/components/progress'
 import { DrawerRefPage } from './pages/components/drawer'
-import { SheetPage } from './pages/sheet'
-import { SidebarPage } from './pages/sidebar'
+import { SheetRefPage } from './pages/components/sheet'
+import { SidebarRefPage } from './pages/components/sidebar'
 import { HoverCardRefPage } from './pages/components/hover-card'
 import { MenubarRefPage } from './pages/components/menubar'
 import { NavigationMenuRefPage } from './pages/components/navigation-menu'
-import { SpinnerPage } from './pages/spinner'
+import { SpinnerRefPage } from './pages/components/spinner'
 import { ComponentCatalogPage } from './pages/components/catalog'
 
 // Chart pages
 import { BarChartRefPage } from './pages/charts/bar-chart'
 import { RadarChartRefPage } from './pages/charts/radar-chart'
+import { PieChartRefPage } from './pages/charts/pie-chart'
+import { AreaChartRefPage } from './pages/charts/area-chart'
+import { LineChartRefPage } from './pages/charts/line-chart'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -236,7 +239,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Select</h3>
               <p className="text-xs text-muted-foreground">Dropdown selection control</p>
             </a>
-            <a href="/docs/components/sidebar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/sidebar" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Sidebar</h3>
               <p className="text-xs text-muted-foreground">Collapsible navigation panel</p>
             </a>
@@ -248,7 +251,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Skeleton</h3>
               <p className="text-xs text-muted-foreground">Placeholder loading indicator</p>
             </a>
-            <a href="/docs/components/sheet" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/sheet" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Sheet</h3>
               <p className="text-xs text-muted-foreground">Side panel overlay</p>
             </a>
@@ -256,7 +259,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Slider</h3>
               <p className="text-xs text-muted-foreground">Range value selector</p>
             </a>
-            <a href="/docs/components/spinner" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/spinner" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Spinner</h3>
               <p className="text-xs text-muted-foreground">Animated loading indicator</p>
             </a>
@@ -268,7 +271,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Table</h3>
               <p className="text-xs text-muted-foreground">Responsive data table</p>
             </a>
-            <a href="/docs/components/tabs" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/tabs" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Tabs</h3>
               <p className="text-xs text-muted-foreground">Tabbed content navigation</p>
             </a>
@@ -276,7 +279,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Textarea</h3>
               <p className="text-xs text-muted-foreground">Multi-line text input</p>
             </a>
-            <a href="/docs/components/toast" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/toast" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Toast</h3>
               <p className="text-xs text-muted-foreground">Temporary notification message</p>
             </a>
@@ -288,7 +291,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Toggle Group</h3>
               <p className="text-xs text-muted-foreground">Group of toggle buttons</p>
             </a>
-            <a href="/docs/components/tooltip" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/tooltip" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Tooltip</h3>
               <p className="text-xs text-muted-foreground">Informational text on hover</p>
             </a>
@@ -460,9 +463,9 @@ export function createApp() {
     return c.render(<InputRefPage />)
   })
 
-  // Spinner documentation
-  app.get('/docs/components/spinner', (c) => {
-    return c.render(<SpinnerPage />)
+  // Spinner reference page
+  app.get('/components/spinner', (c) => {
+    return c.render(<SpinnerRefPage />)
   })
 
   // Switch reference page
@@ -475,9 +478,9 @@ export function createApp() {
     return c.render(<AccordionRefPage />)
   })
 
-  // Tabs documentation
-  app.get('/docs/components/tabs', (c) => {
-    return c.render(<TabsPage />)
+  // Tabs reference page (migrated from /docs/components/tabs)
+  app.get('/components/tabs', (c) => {
+    return c.render(<TabsRefPage />)
   })
 
   // Date Picker reference page
@@ -500,9 +503,9 @@ export function createApp() {
     return c.render(<DropdownMenuRefPage />)
   })
 
-  // Toast documentation
-  app.get('/docs/components/toast', (c) => {
-    return c.render(<ToastPage />)
+  // Toast reference page
+  app.get('/components/toast', (c) => {
+    return c.render(<ToastRefPage />)
   })
 
   // Radio Group reference page (redesigned #515)
@@ -525,9 +528,9 @@ export function createApp() {
     return c.render(<ToggleGroupRefPage />)
   })
 
-  // Tooltip documentation
-  app.get('/docs/components/tooltip', (c) => {
-    return c.render(<TooltipPage />)
+  // Tooltip reference page
+  app.get('/components/tooltip', (c) => {
+    return c.render(<TooltipRefPage />)
   })
 
 
@@ -537,9 +540,9 @@ export function createApp() {
   })
 
 
-  // Portal documentation
-  app.get('/docs/components/portal', (c) => {
-    return c.render(<PortalPage />)
+  // Portal reference page
+  app.get('/components/portal', (c) => {
+    return c.render(<PortalRefPage />)
   })
 
   // Menubar reference page
@@ -588,14 +591,14 @@ export function createApp() {
     return c.render(<DrawerRefPage />)
   })
 
-  // Sheet documentation
-  app.get('/docs/components/sheet', (c) => {
-    return c.render(<SheetPage />)
+  // Sheet reference page (redesigned)
+  app.get('/components/sheet', (c) => {
+    return c.render(<SheetRefPage />)
   })
 
-  // Sidebar documentation
-  app.get('/docs/components/sidebar', (c) => {
-    return c.render(<SidebarPage />)
+  // Sidebar reference page (migrated from /docs/components/sidebar)
+  app.get('/components/sidebar', (c) => {
+    return c.render(<SidebarRefPage />)
   })
 
 
@@ -607,6 +610,21 @@ export function createApp() {
   // Radar Chart reference page
   app.get('/charts/radar-chart', (c) => {
     return c.render(<RadarChartRefPage />)
+  })
+
+  // Pie Chart reference page
+  app.get('/charts/pie-chart', (c) => {
+    return c.render(<PieChartRefPage />)
+  })
+
+  // Area Chart reference page
+  app.get('/charts/area-chart', (c) => {
+    return c.render(<AreaChartRefPage />)
+  })
+
+  // Line Chart reference page
+  app.get('/charts/line-chart', (c) => {
+    return c.render(<LineChartRefPage />)
   })
 
   // Controlled Input pattern documentation
