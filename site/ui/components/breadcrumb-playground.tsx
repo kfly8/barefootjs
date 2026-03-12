@@ -21,6 +21,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from '@ui/components/ui/breadcrumb'
+import { ChevronRightIcon } from '@ui/components/ui/icon'
 
 type SeparatorStyle = 'default' | 'slash'
 
@@ -71,7 +72,7 @@ function BreadcrumbPlayground(_props: {}) {
     if (codeEl) codeEl.innerHTML = highlightJsxTree(t)
   })
 
-  const separatorContent = () => separator() === 'slash' ? '/' : undefined
+  const isSlash = () => separator() === 'slash'
 
   return (
     <PlaygroundLayout
@@ -82,17 +83,17 @@ function BreadcrumbPlayground(_props: {}) {
             <BreadcrumbItem>
               <BreadcrumbLink href="#">Home</BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator>{separatorContent()}</BreadcrumbSeparator>
+            <BreadcrumbSeparator>{isSlash() ? '/' : <ChevronRightIcon />}</BreadcrumbSeparator>
             {showEllipsis() && <>
               <BreadcrumbItem>
                 <BreadcrumbEllipsis />
               </BreadcrumbItem>
-              <BreadcrumbSeparator>{separatorContent()}</BreadcrumbSeparator>
+              <BreadcrumbSeparator>{isSlash() ? '/' : <ChevronRightIcon />}</BreadcrumbSeparator>
             </>}
             <BreadcrumbItem>
               <BreadcrumbLink href="#">Components</BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator>{separatorContent()}</BreadcrumbSeparator>
+            <BreadcrumbSeparator>{isSlash() ? '/' : <ChevronRightIcon />}</BreadcrumbSeparator>
             <BreadcrumbItem>
               <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
             </BreadcrumbItem>
