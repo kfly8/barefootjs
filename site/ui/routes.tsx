@@ -10,8 +10,8 @@ import { renderer } from './renderer'
 
 // Component pages
 import { AspectRatioRefPage } from './pages/components/aspect-ratio'
-import { AlertPage } from './pages/alert'
-import { AlertDialogPage } from './pages/alert-dialog'
+import { AlertRefPage } from './pages/components/alert'
+import { AlertDialogRefPage } from './pages/components/alert-dialog'
 import { BadgeRefPage } from './pages/components/badge'
 import { ButtonRefPage } from './pages/components/button'
 import { ComboboxRefPage } from './pages/components/combobox'
@@ -32,12 +32,12 @@ import { RadioGroupRefPage } from './pages/components/radio-group'
 import { InputOTPRefPage } from './pages/components/input-otp'
 import { SliderRefPage } from './pages/components/slider'
 import { ToggleGroupRefPage } from './pages/components/toggle-group'
-import { BreadcrumbPage } from './pages/breadcrumb'
+import { BreadcrumbRefPage } from './pages/components/breadcrumb'
 import { CalendarPage } from './pages/calendar'
 import { CheckboxRefPage } from './pages/components/checkbox'
 import { AccordionRefPage } from './pages/components/accordion'
-import { CollapsiblePage } from './pages/collapsible'
-import { CommandRefPage } from './pages/components/command'
+import { CollapsibleRefPage } from './pages/components/collapsible'
+import { CommandPage } from './pages/command'
 import { TabsPage } from './pages/tabs'
 import { DialogPage } from './pages/dialog'
 import { ContextMenuRefPage } from './pages/components/context-menu'
@@ -62,7 +62,7 @@ import { SpinnerPage } from './pages/spinner'
 import { ComponentCatalogPage } from './pages/components/catalog'
 
 // Chart pages
-import { BarChartPage } from './pages/charts/bar-chart'
+import { BarChartRefPage } from './pages/charts/bar-chart'
 
 // Form pattern pages
 import { ControlledInputPage } from './pages/forms/controlled-input'
@@ -104,11 +104,11 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Accordion</h3>
               <p className="text-xs text-muted-foreground">Vertically collapsing content sections</p>
             </a>
-            <a href="/docs/components/alert" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/alert" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert</h3>
               <p className="text-xs text-muted-foreground">Callout for important content</p>
             </a>
-            <a href="/docs/components/alert-dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/alert-dialog" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Alert Dialog</h3>
               <p className="text-xs text-muted-foreground">Modal dialog for important confirmations</p>
             </a>
@@ -124,7 +124,7 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Badge</h3>
               <p className="text-xs text-muted-foreground">Small status indicator labels</p>
             </a>
-            <a href="/docs/components/breadcrumb" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/breadcrumb" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Breadcrumb</h3>
               <p className="text-xs text-muted-foreground">Navigation hierarchy trail</p>
             </a>
@@ -148,11 +148,11 @@ export function createApp() {
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Checkbox</h3>
               <p className="text-xs text-muted-foreground">Toggle selection control</p>
             </a>
-            <a href="/docs/components/collapsible" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/components/collapsible" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Collapsible</h3>
               <p className="text-xs text-muted-foreground">Expandable content section</p>
             </a>
-            <a href="/components/command" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
+            <a href="/docs/components/command" className="group flex flex-col rounded-xl border border-border hover:border-ring transition-colors no-underline p-6 space-y-2">
               <h3 className="text-sm font-medium text-foreground group-hover:text-foreground">Command</h3>
               <p className="text-xs text-muted-foreground">Search and command menu</p>
             </a>
@@ -355,14 +355,14 @@ export function createApp() {
     return c.render(<AspectRatioRefPage />)
   })
 
-  // Alert documentation
-  app.get('/docs/components/alert', (c) => {
-    return c.render(<AlertPage />)
+  // Alert reference page
+  app.get('/components/alert', (c) => {
+    return c.render(<AlertRefPage />)
   })
 
-  // Alert Dialog documentation
-  app.get('/docs/components/alert-dialog', (c) => {
-    return c.render(<AlertDialogPage />)
+  // Alert Dialog reference page
+  app.get('/components/alert-dialog', (c) => {
+    return c.render(<AlertDialogRefPage />)
   })
 
   // Badge reference page
@@ -435,19 +435,19 @@ export function createApp() {
     return c.render(<TableRefPage />)
   })
 
-  // Breadcrumb documentation
-  app.get('/docs/components/breadcrumb', (c) => {
-    return c.render(<BreadcrumbPage />)
+  // Breadcrumb reference page
+  app.get('/components/breadcrumb', (c) => {
+    return c.render(<BreadcrumbRefPage />)
   })
 
-  // Collapsible documentation
-  app.get('/docs/components/collapsible', (c) => {
-    return c.render(<CollapsiblePage />)
+  // Collapsible reference page
+  app.get('/components/collapsible', (c) => {
+    return c.render(<CollapsibleRefPage />)
   })
 
-  // Command reference page
-  app.get('/components/command', (c) => {
-    return c.render(<CommandRefPage />)
+  // Command documentation
+  app.get('/docs/components/command', (c) => {
+    return c.render(<CommandPage />)
   })
 
   // Checkbox reference page
@@ -599,9 +599,9 @@ export function createApp() {
   })
 
 
-  // Bar Chart documentation
-  app.get('/docs/charts/bar-chart', (c) => {
-    return c.render(<BarChartPage />)
+  // Bar Chart reference page
+  app.get('/charts/bar-chart', (c) => {
+    return c.render(<BarChartRefPage />)
   })
 
   // Controlled Input pattern documentation
