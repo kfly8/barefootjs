@@ -482,8 +482,9 @@ function MenubarItem(props: MenubarItemProps) {
       data-slot="menubar-item"
       role="menuitem"
       id={props.id}
-      tabindex={0}
-      className={`${menubarItemBaseClasses} ${menubarItemDefaultClasses}`}
+      aria-disabled={props.disabled || undefined}
+      tabindex={props.disabled ? -1 : 0}
+      className={`${menubarItemBaseClasses} ${props.disabled ? menubarItemDisabledClasses : props.variant === 'destructive' ? menubarItemDestructiveClasses : menubarItemDefaultClasses} ${props.className ?? ''}`}
       ref={handleMount}
     >
       {props.children}
