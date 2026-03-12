@@ -52,7 +52,6 @@ import { TooltipPage } from './pages/tooltip'
 import { ResizableRefPage } from './pages/components/resizable'
 import { ScrollAreaRefPage } from './pages/components/scroll-area'
 import { SeparatorRefPage } from './pages/components/separator'
-import { SkeletonPage } from './pages/skeleton'
 import { TextareaPage } from './pages/textarea'
 import { PortalPage } from './pages/portal'
 import { PaginationPage } from './pages/pagination'
@@ -563,10 +562,6 @@ export function createApp() {
     return c.render(<SeparatorRefPage />)
   })
 
-  // Skeleton documentation
-  app.get('/docs/components/skeleton', (c) => {
-    return c.render(<SkeletonPage />)
-  })
 
   // Textarea documentation
   app.get('/docs/components/textarea', (c) => {
