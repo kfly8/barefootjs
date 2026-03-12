@@ -75,6 +75,46 @@ export interface ChartTooltipProps {
   labelFormatter?: (label: string) => string
 }
 
+/** Registration info for a pie slice */
+export interface PieRegistration {
+  dataKey: string
+  fill: string
+}
+
+/** Props for PieChart */
+export interface PieChartProps {
+  data: Record<string, unknown>[]
+  children?: unknown
+}
+
+/** Props for Pie */
+export interface PieProps {
+  dataKey: string
+  nameKey: string
+  fill?: string
+  innerRadius?: number
+  outerRadius?: number
+  paddingAngle?: number
+}
+
+/** Props for PieTooltip */
+export interface PieTooltipProps {
+  labelFormatter?: (label: string) => string
+}
+
+/** Context value shared between PieChart and its children */
+export interface PieChartContextValue {
+  svgGroup: () => SVGGElement | null
+  container: () => HTMLElement | null
+  data: () => Record<string, unknown>[]
+  width: () => number
+  height: () => number
+  config: () => ChartConfig
+  pies: () => PieRegistration[]
+  registerPie: (pie: PieRegistration) => void
+  unregisterPie: (dataKey: string) => void
+}
+
 /** Context value shared between BarChart and its children */
 export interface BarChartContextValue {
   svgGroup: () => SVGGElement | null
