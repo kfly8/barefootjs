@@ -62,6 +62,7 @@ export const componentOrder = [
 export const chartOrder = [
   { slug: 'area-chart', title: 'Area Chart' },
   { slug: 'bar-chart', title: 'Bar Chart' },
+  { slug: 'line-chart', title: 'Line Chart' },
 ]
 
 // Get prev/next links for a chart page

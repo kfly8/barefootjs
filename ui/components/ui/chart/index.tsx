@@ -22,6 +22,8 @@ import {
   initAreaYAxis as areaYAxisInit,
   initAreaCartesianGrid as areaCartesianGridInit,
   initAreaChartTooltip as areaChartTooltipInit,
+  initLineChart as lineChartInit,
+  initLine as lineInit,
 } from '@barefootjs/chart'
 
 /** Color and label configuration for chart data series */
@@ -65,6 +67,11 @@ interface AreaChartProps {
   children?: unknown
 }
 
+interface LineChartProps {
+  data: Record<string, unknown>[]
+  children?: unknown
+}
+
 interface AreaProps {
   dataKey: string
   fill?: string
@@ -90,6 +97,14 @@ interface AreaYAxisProps {
 
 interface AreaChartTooltipProps {
   labelFormatter?: (label: string) => string
+}
+
+interface LineProps {
+  dataKey: string
+  stroke?: string
+  strokeWidth?: number
+  type?: 'linear' | 'monotone'
+  dot?: boolean
 }
 
 interface ChartTooltipProps {
@@ -212,12 +227,34 @@ function AreaChartTooltip(props: AreaChartTooltipProps) {
   return <span data-slot="area-chart-tooltip" style="display:none" ref={handleMount} />
 }
 
+function LineChart(props: LineChartProps) {
+  const handleMount = (el: HTMLElement) => {
+    lineChartInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return (
+    <div data-slot="line-chart" ref={handleMount}>
+      {props.children}
+    </div>
+  )
+}
+
+function Line(props: LineProps) {
+  const handleMount = (el: HTMLElement) => {
+    lineInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return <span data-slot="line" style="display:none" ref={handleMount} />
+}
+
 export {
   ChartContainer,
   BarChart,
   Bar,
   AreaChart,
   Area,
+  LineChart,
+  Line,
   CartesianGrid,
   AreaCartesianGrid,
   XAxis,
@@ -238,6 +275,8 @@ export type {
   AreaXAxisProps,
   AreaYAxisProps,
   AreaChartTooltipProps,
+  LineChartProps,
+  LineProps,
   CartesianGridProps,
   XAxisProps,
   YAxisProps,

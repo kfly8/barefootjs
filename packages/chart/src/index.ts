@@ -7,6 +7,8 @@ export { initBarChart } from './bar-chart'
 export { initBar } from './bar'
 export { initAreaChart } from './area-chart'
 export { initArea } from './area'
+export { initLineChart } from './line-chart'
+export { initLine } from './line'
 export { initCartesianGrid } from './cartesian-grid'
 export { initXAxis } from './x-axis'
 export { initYAxis } from './y-axis'
@@ -26,6 +28,8 @@ export type {
   BarProps,
   AreaChartProps,
   AreaProps,
+  LineChartProps,
+  LineProps,
   CartesianGridProps,
   XAxisProps,
   YAxisProps,
