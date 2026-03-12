@@ -106,8 +106,8 @@ function RadialChartPlayground(_props: {}) {
     <PlaygroundLayout
       previewDataAttr="data-radial-chart-preview"
       previewContent={
-        <div className="w-full min-w-[300px]">
-          <ChartContainer config={chartConfig} className="w-full">
+        <div className="w-full min-w-[300px] max-w-[400px] mx-auto">
+          <ChartContainer config={chartConfig} className="w-full max-w-[400px] mx-auto">
             <RadialChart data={chartData} innerRadius={innerRadius()} outerRadius={110} endAngle={endAngle()}>
               <RadialBar dataKey="visitors" />
             </RadialChart>

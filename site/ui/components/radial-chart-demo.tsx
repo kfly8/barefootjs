@@ -41,7 +41,7 @@ export function RadialChartPreviewDemo() {
         <h4 className="text-sm font-medium">Browser Visitors</h4>
         <p className="text-xs text-muted-foreground">January - June 2024</p>
       </div>
-      <ChartContainer config={chartConfig} className="w-full">
+      <ChartContainer config={chartConfig} className="w-full max-w-[400px] mx-auto">
         <RadialChart data={chartData} innerRadius={50} outerRadius={110}>
           <RadialBar dataKey="visitors" />
         </RadialChart>
@@ -55,8 +55,8 @@ export function RadialChartPreviewDemo() {
  */
 export function RadialChartBasicDemo() {
   return (
-    <div className="w-full">
-      <ChartContainer config={chartConfig} className="w-full">
+    <div className="w-full max-w-[400px] mx-auto">
+      <ChartContainer config={chartConfig} className="w-full max-w-[400px] mx-auto">
         <RadialChart data={chartData} innerRadius={50} outerRadius={110}>
           <RadialBar dataKey="visitors" />
         </RadialChart>
@@ -77,7 +77,7 @@ export function RadialChartLabelDemo() {
         <h4 className="text-sm font-medium">Total Visitors</h4>
         <p className="text-xs text-muted-foreground">With center label</p>
       </div>
-      <ChartContainer config={chartConfig} className="w-full">
+      <ChartContainer config={chartConfig} className="w-full max-w-[400px] mx-auto">
         <RadialChart data={chartData} innerRadius={60} outerRadius={110}>
           <RadialBar dataKey="visitors" />
           <RadialChartLabel>
@@ -104,7 +104,7 @@ export function RadialChartHalfDemo() {
         <h4 className="text-sm font-medium">Half Circle</h4>
         <p className="text-xs text-muted-foreground">Custom start and end angle</p>
       </div>
-      <ChartContainer config={chartConfig} className="w-full">
+      <ChartContainer config={chartConfig} className="w-full max-w-[400px] mx-auto">
         <RadialChart data={chartData} startAngle={180} endAngle={0} innerRadius={50} outerRadius={110}>
           <RadialBar dataKey="visitors" />
         </RadialChart>
@@ -146,7 +146,7 @@ export function RadialChartInteractiveDemo() {
           Top 3
         </button>
       </div>
-      <ChartContainer config={chartConfig} className="w-full">
+      <ChartContainer config={chartConfig} className="w-full max-w-[400px] mx-auto">
         <RadialChart data={showAll() ? fullData : topThree} innerRadius={50} outerRadius={110}>
           <RadialBar dataKey="visitors" />
         </RadialChart>

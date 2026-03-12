@@ -15,9 +15,8 @@ export function initRadialChart(scope: Element, props: Record<string, unknown>):
 
   const el = scope as HTMLElement
   const containerRect = el.getBoundingClientRect()
-  const size = Math.min(containerRect.width || 300, containerRect.height || 300) || 300
-  const width = containerRect.width || size
-  const height = size
+  const width = containerRect.width || 300
+  const height = width
 
   el.style.height = `${height}px`
   el.style.minHeight = ''
