@@ -1,5 +1,5 @@
 // Export context for JSX wrapper components
-export { BarChartContext, RadarChartContext, PieChartContext, AreaChartContext, ChartConfigContext } from './context'
+export { BarChartContext, RadialChartContext, RadarChartContext, PieChartContext, AreaChartContext, ChartConfigContext } from './context'
 
 // Export init functions for JSX wrapper ref callbacks
 export { applyChartCSSVariables, initChartContainer } from './chart-container'
@@ -13,6 +13,9 @@ export { initCartesianGrid } from './cartesian-grid'
 export { initXAxis } from './x-axis'
 export { initYAxis } from './y-axis'
 export { initChartTooltip } from './tooltip'
+export { initRadialChart } from './radial-chart'
+export { initRadialBar } from './radial-bar'
+export { initRadialChartLabel } from './radial-chart-label'
 export { initRadarChart } from './radar-chart'
 export { initRadar } from './radar'
 export { initPolarGrid } from './polar-grid'
@@ -30,6 +33,7 @@ export { initAreaChartTooltip } from './area-tooltip'
 export type {
   ChartConfig,
   BarRegistration,
+  RadialBarRegistration,
   RadarRegistration,
   PieRegistration,
   AreaRegistration,
@@ -47,6 +51,9 @@ export type {
   XAxisProps,
   YAxisProps,
   ChartTooltipProps,
+  RadialChartProps,
+  RadialBarProps,
+  RadialChartLabelProps,
   RadarChartProps,
   RadarProps,
   PolarGridProps,

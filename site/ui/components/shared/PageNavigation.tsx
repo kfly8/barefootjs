@@ -65,6 +65,7 @@ export const chartOrder = [
   { slug: 'line-chart', title: 'Line Chart' },
   { slug: 'pie-chart', title: 'Pie Chart' },
   { slug: 'radar-chart', title: 'Radar Chart' },
+  { slug: 'radial-chart', title: 'Radial Chart' },
 ]
 
 // Get prev/next links for a chart page

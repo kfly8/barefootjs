@@ -18,6 +18,9 @@ import {
   initXAxis as xAxisInit,
   initYAxis as yAxisInit,
   initChartTooltip as chartTooltipInit,
+  initRadialChart as radialChartInit,
+  initRadialBar as radialBarInit,
+  initRadialChartLabel as radialChartLabelInit,
   initRadarChart as radarChartInit,
   initRadar as radarInit,
   initPolarGrid as polarGridInit,
@@ -117,6 +120,25 @@ interface LineProps {
 
 interface ChartTooltipProps {
   labelFormatter?: (label: string) => string
+}
+
+interface RadialChartProps {
+  data: Record<string, unknown>[]
+  innerRadius?: number
+  outerRadius?: number
+  startAngle?: number
+  endAngle?: number
+  children?: unknown
+}
+
+interface RadialBarProps {
+  dataKey: string
+  fill?: string
+  stackId?: string
+}
+
+interface RadialChartLabelProps {
+  children?: unknown
 }
 
 interface RadarChartProps {
@@ -225,6 +247,38 @@ function ChartTooltip(props: ChartTooltipProps) {
   }
 
   return <span data-slot="chart-tooltip" style="display:none" ref={handleMount} />
+}
+
+function RadialChart(props: RadialChartProps) {
+  const handleMount = (el: HTMLElement) => {
+    radialChartInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return (
+    <div data-slot="radial-chart" ref={handleMount}>
+      {props.children}
+    </div>
+  )
+}
+
+function RadialBar(props: RadialBarProps) {
+  const handleMount = (el: HTMLElement) => {
+    radialBarInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return <span data-slot="radial-bar" style="display:none" ref={handleMount} />
+}
+
+function RadialChartLabel(props: RadialChartLabelProps) {
+  const handleMount = (el: HTMLElement) => {
+    radialChartLabelInit(el, props as unknown as Record<string, unknown>)
+  }
+
+  return (
+    <span data-slot="radial-chart-label" ref={handleMount}>
+      {props.children}
+    </span>
+  )
 }
 
 function RadarChart(props: RadarChartProps) {
@@ -371,6 +425,7 @@ function Line(props: LineProps) {
   return <span data-slot="line" style="display:none" ref={handleMount} />
 }
 
+
 export {
   ChartContainer,
   BarChart,
@@ -386,6 +441,9 @@ export {
   YAxis,
   AreaYAxis,
   ChartTooltip,
+  RadialChart,
+  RadialBar,
+  RadialChartLabel,
   RadarChart,
   Radar,
   PolarGrid,
@@ -413,6 +471,9 @@ export type {
   XAxisProps,
   YAxisProps,
   ChartTooltipProps,
+  RadialChartProps,
+  RadialBarProps,
+  RadialChartLabelProps,
   RadarChartProps,
   RadarProps,
   PolarGridProps,
