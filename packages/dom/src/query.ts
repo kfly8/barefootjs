@@ -465,41 +465,51 @@ function $cSingle(scope: Element | null, id: string): Element | null {
     // and "_s3" (direct child). When the parent scope ID is known, verify the
     // candidate is a direct child by checking the scope ID contains
     // "{parentScopeId}_{slotId}" without intermediate slot segments.
-    const parentScopeId = getScopeId(scope)
     const result = find(scope, `[${BF_SCOPE}$="_${cleanId}"]`)
-    if (result && parentScopeId) {
-      // When find() returns scope itself, this is a fragment root / inlined component
-      // where the child's scope IS the parent's scope element. Accept it as-is.
-      if (result === scope) return result
+    if (!result) return null
 
-      const raw = result.getAttribute(BF_SCOPE) ?? ''
-      const childScopeId = raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
-      const expectedSuffix = `${parentScopeId}_${cleanId}`
-      if (!childScopeId.endsWith(expectedSuffix)) {
-        // Found a nested scope (e.g., _s0_s3) instead of direct child (_s3).
-        // Fall back to searching all candidates.
-        return findDirectChild(scope, `[${BF_SCOPE}$="_${cleanId}"]`, parentScopeId, cleanId)
-      }
+    // When find() returns scope itself, this is a fragment root / inlined component
+    // where the child's scope IS the parent's scope element. Accept it as-is.
+    if (result === scope) return result
+
+    // For dual-registered elements (comment scope proxy + bf-s), try both
+    // scope IDs. Fragment-root components scope their children to the comment
+    // scope ID, while the proxied child component scopes its children to the
+    // bf-s scope ID. Both sets of children live in the same DOM subtree.
+    const parentScopeIds = getDualScopeIds(scope)
+    if (parentScopeIds.length === 0) return result
+
+    const raw = result.getAttribute(BF_SCOPE) ?? ''
+    const childScopeId = raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
+
+    for (const parentId of parentScopeIds) {
+      if (childScopeId.endsWith(`${parentId}_${cleanId}`)) return result
     }
-    return result
+
+    // Fall back to searching all candidates with each parent ID.
+    const selector = `[${BF_SCOPE}$="_${cleanId}"]`
+    for (const parentId of parentScopeIds) {
+      const directChild = findDirectChild(scope, selector, parentId, cleanId)
+      if (directChild) return directChild
+    }
+
+    return null
   }
   // Component name prefix match - support both child (~Name_) and root (Name_) scopes
   return find(scope, `[${BF_SCOPE}^="${BF_CHILD_PREFIX}${cleanId}_"], [${BF_SCOPE}^="${cleanId}_"]`)
 }
 
 /**
- * Get the scope ID from an element, stripping the ~ child prefix if present.
+ * Get all possible parent scope IDs for child resolution.
  *
- * When an element is both a comment scope proxy AND has its own bf-s attribute,
- * we must determine which ID the children are scoped to:
- * - If bf-s is a sub-scope of the comment scope (e.g., comment="Foo_xxx", bf-s="Foo_xxx_s0"),
- *   children use bf-s as their parent (e.g., "~Foo_xxx_s0_s6"). Return bf-s.
- * - If bf-s belongs to a wrapping component (unrelated to comment scope),
- *   children use the comment scope ID. Return comment scope ID.
- * - If only one source exists, use that.
+ * Dual-registered elements (comment scope proxy + bf-s attribute) host children
+ * from two components: the fragment-root component (comment scope) and the
+ * proxied child component (bf-s). Both IDs are returned so $cSingle can try each.
+ *
+ * Returns deduplicated array of scope IDs, comment scope first (most common case).
  */
-function getScopeId(scope: Element | null): string | null {
-  if (!scope) return null
+function getDualScopeIds(scope: Element | null): string[] {
+  if (!scope) return []
 
   const raw = scope.getAttribute(BF_SCOPE)
   const bfScopeId = raw ? (raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw) : null
@@ -507,14 +517,12 @@ function getScopeId(scope: Element | null): string | null {
   const commentInfo = commentScopeRegistry.get(scope)
   const commentScopeId = commentInfo?.scopeId ?? null
 
-  if (bfScopeId && commentScopeId) {
-    // bf-s is a sub-scope of the comment scope — children are scoped to bf-s
-    if (bfScopeId.startsWith(commentScopeId + '_')) return bfScopeId
-    // bf-s belongs to a different (wrapping) component — children are scoped to comment scope
-    return commentScopeId
+  if (commentScopeId && bfScopeId && commentScopeId !== bfScopeId) {
+    return [commentScopeId, bfScopeId]
   }
 
-  return bfScopeId ?? commentScopeId ?? null
+  const id = commentScopeId ?? bfScopeId
+  return id ? [id] : []
 }
 
 /**
