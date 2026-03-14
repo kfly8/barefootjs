@@ -47,7 +47,7 @@ const breadcrumbLinkClasses = 'hover:text-foreground transition-colors'
 const breadcrumbPageClasses = 'text-foreground font-normal'
 
 // BreadcrumbSeparator classes
-const breadcrumbSeparatorClasses = '[&>svg]:size-3.5'
+const breadcrumbSeparatorClasses = 'flex items-center [&>svg]:size-3.5'
 
 // BreadcrumbEllipsis classes
 const breadcrumbEllipsisClasses = 'flex size-5 items-center justify-center [&>svg]:size-4'

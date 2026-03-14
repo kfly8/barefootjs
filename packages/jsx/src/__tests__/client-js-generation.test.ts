@@ -345,7 +345,7 @@ describe('Client JS generation', () => {
       // variable (e.g., prev) is undefined and property access would throw.
       // Pattern: try { __val = prev.title } catch { return }
       expect(content).toMatch(/try \{ __val = prev\.title \} catch \{ return \}/)
-      expect(content).toMatch(/if \(__el_\w+ && !__val\?\.__isSlot\) __el_\w+\.nodeValue = String\(__val\)/)
+      expect(content).toMatch(/if \(__el_\w+ && !__val\?\.__isSlot\) __el_\w+\.nodeValue = String\(__val \?\? ''\)/)
     })
 
     test('still defaults props with property access to {} when not used as conditional guard', () => {
@@ -678,9 +678,8 @@ describe('Client JS generation', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Top-level-only: no CSR fallback template (saves bytes)
-      expect(content).not.toContain('template:')
-      expect(content).toContain("hydrate('Display', { init: initDisplay })")
+      // All components get CSR fallback templates for cross-file conditional use
+      expect(content).toMatch(/hydrate\('Display',.*template:/)
     })
 
     test('signal-dependent constant gets CSR fallback when used as child', () => {
@@ -1914,8 +1913,10 @@ describe('Client JS generation', () => {
       expect(clientJs).toBeDefined()
       const content = clientJs!.content
 
-      // Rest props spread should use applyRestAttrs, not spreadAttrs
-      expect(content).not.toContain('spreadAttrs(')
+      // Rest props spread in init function should NOT use spreadAttrs.
+      // (CSR fallback template may use spreadAttrs — that's correct for template rendering.)
+      const initBody = content.split(/hydrate\(/)[0]
+      expect(initBody).not.toContain('spreadAttrs(')
     })
 
     test('multiple spreads: rest props identified when not first spread (#599)', () => {
@@ -2170,6 +2171,31 @@ describe('Client JS generation', () => {
       expect(content).toContain('createEffect')
       // Should include the default value in the rewrite
       expect(content).toContain("_p.label ?? 'tag'")
+    })
+
+    test('text node renders empty string for nullish reactive values', () => {
+      // Regression: String(undefined) renders "undefined" instead of ""
+      // The generated client JS must use String(__val ?? '') for text nodes
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/dom'
+
+        export function Greeting(props: { name?: string }) {
+          return <span>{props.name}</span>
+        }
+      `
+
+      const result = compileJSXSync(source, 'Greeting.tsx', { adapter })
+      const errors = result.errors.filter(e => e.severity === 'error')
+      expect(errors).toHaveLength(0)
+
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      const content = clientJs!.content
+
+      // Text node assignment must guard against nullish values
+      expect(content).toContain("String(__val ?? '')")
+      expect(content).not.toMatch(/\.nodeValue = String\(__val\)(?! )/)
     })
   })
 })

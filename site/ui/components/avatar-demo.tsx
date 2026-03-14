@@ -14,7 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@ui/components/ui/avatar'
 export function AvatarDemo() {
   return (
     <Avatar>
-      <AvatarImage src="https://github.com/kfly8.png" alt="@kfly8" />
+      <AvatarImage src="https://avatars.githubusercontent.com/u/722500?v=4" alt="@kfly8" />
       <AvatarFallback>KF</AvatarFallback>
     </Avatar>
   )
@@ -38,7 +38,7 @@ export function AvatarGroupDemo() {
   return (
     <div className="flex -space-x-3">
       <Avatar className="border-2 border-background">
-        <AvatarImage src="https://github.com/kfly8.png" alt="@kfly8" />
+        <AvatarImage src="https://avatars.githubusercontent.com/u/722500?v=4" alt="@kfly8" />
         <AvatarFallback>KF</AvatarFallback>
       </Avatar>
       <Avatar className="border-2 border-background">

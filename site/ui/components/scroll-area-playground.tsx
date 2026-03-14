@@ -37,7 +37,7 @@ function ScrollAreaPlayground(_props: {}) {
     <PlaygroundLayout
       previewDataAttr="data-scroll-area-preview"
       previewContent={
-        <ScrollArea class="h-48 w-48 rounded-md border" type={type()}>
+        <ScrollArea className="h-48 w-48 rounded-md border" type={type()}>
           <div className="p-4">
             <h4 className="mb-4 text-sm font-medium leading-none">Tags</h4>
             {tags.map((tag) => (

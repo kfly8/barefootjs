@@ -106,12 +106,12 @@ function Toggle(props: ToggleProps) {
   // Determine current pressed state: use controlled if provided, otherwise internal
   const isPressed = createMemo(() => isControlled() ? controlledPressed() : internalPressed())
 
-  // Resolve variant and size
-  const variant = props.variant ?? 'default'
-  const size = props.size ?? 'default'
-
-  // Classes
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.className ?? ''}`
+  // Classes — read props inside createMemo for reactivity
+  const classes = createMemo(() => {
+    const variant = props.variant ?? 'default'
+    const size = props.size ?? 'default'
+    return `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.className ?? ''}`
+  })
 
   // Click handler that works for both controlled and uncontrolled modes
   const handleClick = (e: MouseEvent) => {
@@ -145,7 +145,7 @@ function Toggle(props: ToggleProps) {
       id={props.id}
       aria-pressed={isPressed()}
       disabled={props.disabled ?? false}
-      className={classes}
+      className={classes()}
       onClick={handleClick}
     >
       {props.children}

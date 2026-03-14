@@ -218,12 +218,12 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         lines.push(`    const __val = ${expr}`)
         for (const elem of normalElems) {
           const v = varSlotId(elem.slotId)
-          lines.push(`    if (_${v} && !__val?.__isSlot) _${v}.nodeValue = String(__val)`)
+          lines.push(`    if (_${v} && !__val?.__isSlot) _${v}.nodeValue = String(__val ?? '')`)
         }
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
           lines.push(`    const [__el_${v}] = $t(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${v} && !__val?.__isSlot) __el_${v}.nodeValue = String(__val)`)
+          lines.push(`    if (__el_${v} && !__val?.__isSlot) __el_${v}.nodeValue = String(__val ?? '')`)
         }
       } else {
         // Only conditional elements — evaluate expression unconditionally
@@ -238,7 +238,7 @@ export function emitDynamicTextUpdates(lines: string[], ctx: ClientJsContext): v
         for (const elem of conditionalElems) {
           const v = varSlotId(elem.slotId)
           lines.push(`    const [__el_${v}] = $t(__scope, '${elem.slotId}')`)
-          lines.push(`    if (__el_${v} && !__val?.__isSlot) __el_${v}.nodeValue = String(__val)`)
+          lines.push(`    if (__el_${v} && !__val?.__isSlot) __el_${v}.nodeValue = String(__val ?? '')`)
         }
       }
       lines.push(`  })`)
@@ -411,76 +411,12 @@ export function emitClientOnlyConditionals(lines: string[], ctx: ClientJsContext
   }
 }
 
-/** Emit reconcileElements/reconcileTemplates calls for dynamic loops, and static array child initialization. */
+/** Emit reconcileElements/reconcileTemplates calls for dynamic loops, and static array non-initChild updates. */
 export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
   for (const elem of ctx.loopElements) {
     if (elem.isStaticArray) {
-      if (elem.childComponent) {
-        const { name, props } = elem.childComponent
-        const v = varSlotId(elem.slotId)
-
-        const propsEntries = props.map((p) => {
-          if (p.isEventHandler) {
-            return `${quotePropName(p.name)}: ${p.value}`
-          } else if (p.isLiteral) {
-            return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
-          } else {
-            return `get ${quotePropName(p.name)}() { return ${p.value} }`
-          }
-        })
-        const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
-
-        lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
-        lines.push(`  if (_${v}) {`)
-        // Use both suffix match (for inlined stateless components whose bf-s uses
-        // parent scope + slotId, e.g. ~ParentName_hash_s3) and prefix match (for
-        // stateful components whose bf-s uses their own name, e.g. ToggleItem_hash)
-        const namePrefixSelector = `[bf-s^="~${name}_"], [bf-s^="${name}_"]`
-        const childSelector = elem.childComponent.slotId
-          ? `[bf-s$="_${elem.childComponent.slotId}"], ${namePrefixSelector}`
-          : namePrefixSelector
-        lines.push(`    const __childScopes = _${v}.querySelectorAll('${childSelector}')`)
-        const indexParam = elem.index || '__idx'
-        lines.push(`    __childScopes.forEach((childScope, ${indexParam}) => {`)
-        lines.push(`      const ${elem.param} = ${elem.array}[${indexParam}]`)
-        lines.push(`      initChild('${name}', childScope, ${propsExpr})`)
-        lines.push(`    })`)
-        lines.push(`  }`)
-        lines.push('')
-      }
-
-      if (elem.nestedComponents && elem.nestedComponents.length > 0) {
-        const v = varSlotId(elem.slotId)
-        for (const comp of elem.nestedComponents) {
-          const propsEntries = comp.props.map((p) => {
-            if (p.isEventHandler) {
-              return `${quotePropName(p.name)}: ${p.value}`
-            } else if (p.isLiteral) {
-              return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
-            } else {
-              return `get ${quotePropName(p.name)}() { return ${p.value} }`
-            }
-          })
-          const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
-
-          const selector = comp.slotId
-            ? `[bf-s$="_${comp.slotId}"]`
-            : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
-
-          lines.push(`  // Initialize nested ${comp.name} in static array`)
-          lines.push(`  if (_${v}) {`)
-          const indexParam = elem.index || '__idx'
-          lines.push(`    ${elem.array}.forEach((${elem.param}, ${indexParam}) => {`)
-          lines.push(`      const __iterEl = _${v}.children[${indexParam}]`)
-          lines.push(`      if (__iterEl) {`)
-          lines.push(`        const __compEl = __iterEl.querySelector('${selector}')`)
-          lines.push(`        if (__compEl) initChild('${comp.name}', __compEl, ${propsExpr})`)
-          lines.push(`      }`)
-          lines.push(`    })`)
-          lines.push(`  }`)
-          lines.push('')
-        }
-      }
+      // Static array initChild calls are deferred to emitStaticArrayChildInits()
+      // so that parent context providers (provideContext) run first.
 
       // Reactive attribute effects for plain elements in static arrays.
       // Static arrays are server-rendered once, so signal-dependent attributes
@@ -859,6 +795,85 @@ export function emitProviderAndChildInits(lines: string[], ctx: ClientJsContext)
   }
 }
 
+/**
+ * Emit initChild calls for static array children.
+ * Must run AFTER emitProviderAndChildInits so that parent components
+ * have already provided their context (e.g., SelectContext) before
+ * array children (e.g., SelectItem) call useContext().
+ */
+export function emitStaticArrayChildInits(lines: string[], ctx: ClientJsContext): void {
+  for (const elem of ctx.loopElements) {
+    if (!elem.isStaticArray) continue
+
+    if (elem.childComponent) {
+      const { name, props } = elem.childComponent
+      const v = varSlotId(elem.slotId)
+
+      const propsEntries = props.map((p) => {
+        if (p.isEventHandler) {
+          return `${quotePropName(p.name)}: ${p.value}`
+        } else if (p.isLiteral) {
+          return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
+        } else {
+          return `get ${quotePropName(p.name)}() { return ${p.value} }`
+        }
+      })
+      const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
+
+      lines.push(`  // Initialize static array children (hydrate skips nested instances)`)
+      lines.push(`  if (_${v}) {`)
+      // Use both suffix match (for inlined stateless components whose bf-s uses
+      // parent scope + slotId, e.g. ~ParentName_hash_s3) and prefix match (for
+      // stateful components whose bf-s uses their own name, e.g. ToggleItem_hash)
+      const namePrefixSelector = `[bf-s^="~${name}_"], [bf-s^="${name}_"]`
+      const childSelector = elem.childComponent.slotId
+        ? `[bf-s$="_${elem.childComponent.slotId}"], ${namePrefixSelector}`
+        : namePrefixSelector
+      lines.push(`    const __childScopes = _${v}.querySelectorAll('${childSelector}')`)
+      const indexParam = elem.index || '__idx'
+      lines.push(`    __childScopes.forEach((childScope, ${indexParam}) => {`)
+      lines.push(`      const ${elem.param} = ${elem.array}[${indexParam}]`)
+      lines.push(`      initChild('${name}', childScope, ${propsExpr})`)
+      lines.push(`    })`)
+      lines.push(`  }`)
+      lines.push('')
+    }
+
+    if (elem.nestedComponents && elem.nestedComponents.length > 0) {
+      const v = varSlotId(elem.slotId)
+      for (const comp of elem.nestedComponents) {
+        const propsEntries = comp.props.map((p) => {
+          if (p.isEventHandler) {
+            return `${quotePropName(p.name)}: ${p.value}`
+          } else if (p.isLiteral) {
+            return `${quotePropName(p.name)}: ${JSON.stringify(p.value)}`
+          } else {
+            return `get ${quotePropName(p.name)}() { return ${p.value} }`
+          }
+        })
+        const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
+
+        const selector = comp.slotId
+          ? `[bf-s$="_${comp.slotId}"]`
+          : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
+
+        lines.push(`  // Initialize nested ${comp.name} in static array`)
+        lines.push(`  if (_${v}) {`)
+        const indexParam = elem.index || '__idx'
+        lines.push(`    ${elem.array}.forEach((${elem.param}, ${indexParam}) => {`)
+        lines.push(`      const __iterEl = _${v}.children[${indexParam}]`)
+        lines.push(`      if (__iterEl) {`)
+        lines.push(`        const __compEl = __iterEl.querySelector('${selector}')`)
+        lines.push(`        if (__compEl) initChild('${comp.name}', __compEl, ${propsExpr})`)
+        lines.push(`      }`)
+        lines.push(`    })`)
+        lines.push(`  }`)
+        lines.push('')
+      }
+    }
+  }
+}
+
 // JavaScript built-in identifiers that are always available at any scope
 const JS_BUILTINS = new Set([
   'true', 'false', 'null', 'undefined', 'NaN', 'Infinity',
@@ -1150,7 +1165,6 @@ export function emitRegistrationAndHydration(
   lines: string[],
   ctx: ClientJsContext,
   _ir: ComponentIR,
-  usedAsChild?: Set<string>
 ): string {
   const name = ctx.componentName
 
@@ -1176,9 +1190,10 @@ export function emitRegistrationAndHydration(
     if (templateHtml) {
       defParts.push(`template: (${PROPS_PARAM}) => \`${templateHtml}\``)
     }
-  } else if (usedAsChild?.has(name)) {
-    // CSR fallback: only emit when this component is used as a child by another
-    // component in the same file. Top-level-only components skip this to save bytes.
+  } else {
+    // CSR fallback: emit for all components that can't generate static templates.
+    // Components may be imported and used in conditional branches in other files,
+    // where renderChild() needs a registered template to render HTML correctly.
     const { signalMap, memoMap } = buildSignalAndMemoMaps(ctx)
     const csrInlinableConstants = buildCsrInlinableConstants(ctx, inlinableConstants, unsafeLocalNames, signalMap, memoMap)
 
