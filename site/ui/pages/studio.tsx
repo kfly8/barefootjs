@@ -404,12 +404,13 @@ const componentPatterns: Record<string, ComponentPattern> = {
 
 // ─── Style Preset Data ───────────────────────────────────────
 //
-// Presets define the structural skeleton: radius, shadow depth, and font.
+// Presets define the structural skeleton: spacing, radius, shadow depth, and font.
 // Colors are a separate concern — users customize them independently.
 
 interface StylePreset {
   name: string
   description: string
+  spacing: string
   radius: string
   shadow: {
     sm: string
@@ -444,6 +445,7 @@ const stylePresets: StylePreset[] = [
   {
     name: 'Default',
     description: 'The classic shadcn/ui look. Clean and familiar.',
+    spacing: '0.25rem',
     radius: '0.625rem',
     shadow: {
       sm:      '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -456,6 +458,7 @@ const stylePresets: StylePreset[] = [
   {
     name: 'Sharp',
     description: 'Boxy and sharp. Pairs well with mono fonts.',
+    spacing: '0.25rem',
     radius: '0',
     shadow: {
       sm:      '0 1px 2px 0 rgb(0 0 0 / 0.04)',
@@ -467,7 +470,8 @@ const stylePresets: StylePreset[] = [
   },
   {
     name: 'Soft',
-    description: 'Soft and rounded, with generous curves.',
+    description: 'Soft and rounded, with generous spacing.',
+    spacing: '0.3rem',
     radius: '1rem',
     shadow: {
       sm:      '0 1px 3px 0 rgb(0 0 0 / 0.06)',
@@ -478,8 +482,9 @@ const stylePresets: StylePreset[] = [
     font: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
   },
   {
-    name: 'Flat',
-    description: 'Minimal elevation. Borders over shadows.',
+    name: 'Compact',
+    description: 'Dense layout for data-heavy interfaces.',
+    spacing: '0.2rem',
     radius: '0.375rem',
     shadow: {
       sm:      'none',
@@ -595,6 +600,17 @@ function TokenPanel() {
                 <div className="text-[9px] opacity-70">{preset.description}</div>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Spacing */}
+        <div className="space-y-1">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Spacing</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-muted-foreground" data-studio-spacing-label>0.25rem</span>
+          </div>
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <input type="range" min="0.15" max="0.4" step="0.01" className="flex-1 h-1 accent-primary" data-studio-spacing-slider />
           </div>
         </div>
 
@@ -1246,6 +1262,13 @@ const studioScript = `
     activeStyle = name;
     var root = document.documentElement;
 
+    // Spacing
+    if (name === 'Default') {
+      root.style.removeProperty('--spacing');
+    } else {
+      root.style.setProperty('--spacing', preset.spacing);
+    }
+
     // Radius
     if (name === 'Default') {
       root.style.removeProperty('--radius');
@@ -1270,6 +1293,12 @@ const studioScript = `
     } else {
       root.style.setProperty('--font-sans', preset.font);
     }
+
+    // Update spacing label + slider
+    var spacingLabel = document.querySelector('[data-studio-spacing-label]');
+    if (spacingLabel) spacingLabel.textContent = preset.spacing;
+    var spacingSlider = document.querySelector('[data-studio-spacing-slider]');
+    if (spacingSlider) spacingSlider.value = parseFloat(preset.spacing);
 
     // Update radius label + slider
     var radiusLabel = document.querySelector('[data-studio-radius-label]');
@@ -1361,6 +1390,14 @@ const studioScript = `
     } else if (slider.hasAttribute('data-studio-slider-h')) {
       token = slider.getAttribute('data-studio-slider-h');
       component = 'h';
+    } else if (slider.hasAttribute('data-studio-spacing-slider')) {
+      // Spacing slider
+      var val = parseFloat(slider.value);
+      var spacingVal = val + 'rem';
+      document.documentElement.style.setProperty('--spacing', spacingVal);
+      var spacingLabel = document.querySelector('[data-studio-spacing-label]');
+      if (spacingLabel) spacingLabel.textContent = spacingVal;
+      return;
     } else if (slider.hasAttribute('data-studio-radius-slider')) {
       // Radius slider
       var val = parseFloat(slider.value);
@@ -1427,7 +1464,11 @@ const studioScript = `
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-  // ── Initialize radius slider ──
+  // ── Initialize sliders ──
+  var spacingSlider = document.querySelector('[data-studio-spacing-slider]');
+  if (spacingSlider) {
+    spacingSlider.value = parseFloat(stylePresets[0].spacing);
+  }
   var radiusSlider = document.querySelector('[data-studio-radius-slider]');
   if (radiusSlider) {
     radiusSlider.value = parseFloat(stylePresets[0].radius);
