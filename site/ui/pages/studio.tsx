@@ -164,9 +164,36 @@ function IconCheck({ className, size }: { className?: string; size?: number }) {
 
 function ColorSwatch({ name }: { name: string }) {
   return (
-    <div className="flex items-center gap-2 py-0.5">
-      <div className="w-3.5 h-3.5 rounded-sm border border-border" style={{ backgroundColor: `var(--${name})` }} />
-      <span className="text-[11px] font-mono text-foreground">--{name}</span>
+    <div>
+      <button
+        className="flex items-center gap-2 py-0.5 w-full text-left hover:bg-muted/50 rounded-sm px-0.5 -mx-0.5 transition-colors"
+        data-studio-color-edit={name}
+      >
+        <div className="w-3.5 h-3.5 rounded-sm border border-border shrink-0" style={{ backgroundColor: `var(--${name})` }} data-studio-color-preview={name} />
+        <span className="text-[11px] font-mono text-foreground">--{name}</span>
+      </button>
+      {/* Inline OKLCH editor — hidden by default */}
+      <div className="hidden pl-1 pr-0.5 pb-1.5 pt-1 space-y-1" data-studio-color-editor={name}>
+        <div className="flex items-center gap-1.5 mb-1">
+          <div className="w-5 h-5 rounded border border-border shrink-0" style={{ backgroundColor: `var(--${name})` }} data-studio-color-editor-preview={name} />
+          <span className="text-[10px] font-mono text-muted-foreground" data-studio-color-value={name} />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] text-muted-foreground w-5 shrink-0">L</span>
+          <input type="range" min="0" max="1" step="0.005" className="flex-1 h-1 accent-primary" data-studio-slider-l={name} />
+          <span className="text-[9px] font-mono text-muted-foreground w-7 text-right" data-studio-label-l={name} />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] text-muted-foreground w-5 shrink-0">C</span>
+          <input type="range" min="0" max="0.4" step="0.005" className="flex-1 h-1 accent-primary" data-studio-slider-c={name} />
+          <span className="text-[9px] font-mono text-muted-foreground w-7 text-right" data-studio-label-c={name} />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] text-muted-foreground w-5 shrink-0">H</span>
+          <input type="range" min="0" max="360" step="1" className="flex-1 h-1 accent-primary" data-studio-slider-h={name} />
+          <span className="text-[9px] font-mono text-muted-foreground w-7 text-right" data-studio-label-h={name} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -198,6 +225,12 @@ function TokenPanel() {
                 {preset.name}
               </button>
             ))}
+            <button
+              className="px-2 py-1 text-[11px] rounded-md border transition-colors border-border text-muted-foreground hover:border-ring hidden"
+              data-studio-preset="Custom"
+            >
+              Custom
+            </button>
           </div>
         </div>
 
@@ -220,6 +253,9 @@ function TokenPanel() {
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 border-2 border-foreground bg-muted" style={{ borderRadius: 'var(--radius)' }} />
             <span className="text-[11px] font-mono text-muted-foreground" data-studio-radius-label>0.625rem</span>
+          </div>
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <input type="range" min="0" max="1.5" step="0.125" className="flex-1 h-1 accent-primary" data-studio-radius-slider />
           </div>
         </div>
 
@@ -817,32 +853,91 @@ const zoomScript = `
 })();
 `
 
-// ─── Preset Script ──────────────────────────────────────────
+// ─── Studio Script (Presets + Token Editing) ────────────────
 
 // Serialize preset data for the client script
 const presetsJson = JSON.stringify(
   presets.map(p => ({ name: p.name, colors: p.colors, radius: p.radius }))
 )
 
-const presetScript = `
+const studioScript = `
 (function() {
   var presets = ${presetsJson};
   var activePreset = 'Default';
+  var customTokens = {};
+  var customRadius = null;
 
   function isDark() {
     return document.documentElement.classList.contains('dark');
   }
 
+  function getMode() {
+    return isDark() ? 'dark' : 'light';
+  }
+
+  // ── Parse oklch string into {l, c, h} ──
+  function parseOklch(str) {
+    var m = str.match(/oklch\\(([\\d.]+)\\s+([\\d.]+)\\s+([\\d.]+)/);
+    if (!m) return { l: 0.5, c: 0, h: 0 };
+    return { l: parseFloat(m[1]), c: parseFloat(m[2]), h: parseFloat(m[3]) };
+  }
+
+  function buildOklch(l, c, h) {
+    return 'oklch(' + l.toFixed(3) + ' ' + c.toFixed(3) + ' ' + h + ')';
+  }
+
+  // ── Get current token value (custom > preset > default) ──
+  function getTokenValue(token, mode) {
+    if (customTokens[token] && customTokens[token][mode]) {
+      return customTokens[token][mode];
+    }
+    var preset = presets.find(function(p) { return p.name === activePreset; });
+    if (preset && preset.colors[token]) {
+      return preset.colors[token][mode];
+    }
+    return presets[0].colors[token] ? presets[0].colors[token][mode] : 'oklch(0.5 0 0)';
+  }
+
+  // ── Update preset button styles ──
+  function updatePresetButtons() {
+    var hasCustom = Object.keys(customTokens).length > 0 || customRadius !== null;
+    var customBtn = document.querySelector('[data-studio-preset="Custom"]');
+    if (customBtn) {
+      if (hasCustom) customBtn.classList.remove('hidden');
+      else customBtn.classList.add('hidden');
+    }
+
+    var buttons = document.querySelectorAll('[data-studio-preset]');
+    buttons.forEach(function(btn) {
+      var name = btn.getAttribute('data-studio-preset');
+      var isActive = hasCustom ? name === 'Custom' : name === activePreset;
+      if (isActive) {
+        btn.className = btn.className
+          .replace('border-border text-muted-foreground hover:border-ring', '')
+          .replace('border-ring bg-accent text-accent-foreground font-medium', '')
+          .replace(' hidden', '')
+          .trim() + ' border-ring bg-accent text-accent-foreground font-medium';
+      } else {
+        btn.className = btn.className
+          .replace('border-ring bg-accent text-accent-foreground font-medium', '')
+          .replace('border-border text-muted-foreground hover:border-ring', '')
+          .trim() + ' border-border text-muted-foreground hover:border-ring';
+      }
+    });
+  }
+
+  // ── Apply preset ──
   function applyPreset(name, animate) {
     var preset = presets.find(function(p) { return p.name === name; });
     if (!preset) return;
 
     activePreset = name;
+    customTokens = {};
+    customRadius = null;
     var root = document.documentElement;
-    var mode = isDark() ? 'dark' : 'light';
+    var mode = getMode();
 
     if (name === 'Default') {
-      // Remove overrides to restore stylesheet values
       var allTokens = Object.keys(presets[0].colors);
       allTokens.forEach(function(token) {
         root.style.removeProperty('--' + token);
@@ -855,45 +950,188 @@ const presetScript = `
       root.style.setProperty('--radius', preset.radius);
     }
 
-    // Update radius label
+    // Update radius label + slider
     var radiusLabel = document.querySelector('[data-studio-radius-label]');
     if (radiusLabel) radiusLabel.textContent = preset.radius;
+    var radiusSlider = document.querySelector('[data-studio-radius-slider]');
+    if (radiusSlider) radiusSlider.value = parseFloat(preset.radius);
 
-    // Update active button styles
-    var buttons = document.querySelectorAll('[data-studio-preset]');
-    buttons.forEach(function(btn) {
-      var isActive = btn.getAttribute('data-studio-preset') === name;
-      if (isActive) {
-        btn.className = btn.className
-          .replace('border-border text-muted-foreground hover:border-ring', '')
-          .replace('border-ring bg-accent text-accent-foreground font-medium', '')
-          .trim() + ' border-ring bg-accent text-accent-foreground font-medium';
-      } else {
-        btn.className = btn.className
-          .replace('border-ring bg-accent text-accent-foreground font-medium', '')
-          .replace('border-border text-muted-foreground hover:border-ring', '')
-          .trim() + ' border-border text-muted-foreground hover:border-ring';
+    // Close all open editors and refresh their values
+    document.querySelectorAll('[data-studio-color-editor]').forEach(function(ed) {
+      ed.classList.add('hidden');
+    });
+
+    updatePresetButtons();
+  }
+
+  // ── Re-apply overrides for current mode ──
+  function reapplyForMode() {
+    var root = document.documentElement;
+    var mode = getMode();
+
+    // Re-apply preset colors
+    if (activePreset !== 'Default') {
+      var preset = presets.find(function(p) { return p.name === activePreset; });
+      if (preset) {
+        Object.keys(preset.colors).forEach(function(token) {
+          if (!customTokens[token]) {
+            root.style.setProperty('--' + token, preset.colors[token][mode]);
+          }
+        });
       }
+    }
+
+    // Re-apply custom tokens for the new mode
+    Object.keys(customTokens).forEach(function(token) {
+      if (customTokens[token][mode]) {
+        root.style.setProperty('--' + token, customTokens[token][mode]);
+      }
+    });
+
+    // Update any open editor to show the new mode's values
+    document.querySelectorAll('[data-studio-color-editor]').forEach(function(ed) {
+      if (ed.classList.contains('hidden')) return;
+      var token = ed.getAttribute('data-studio-color-editor');
+      updateEditorSliders(token);
     });
   }
 
-  // Click handler for preset buttons
+  // ── Update editor sliders to match current token value ──
+  function updateEditorSliders(token) {
+    var mode = getMode();
+    var val = getTokenValue(token, mode);
+    var parsed = parseOklch(val);
+
+    var sliderL = document.querySelector('[data-studio-slider-l="' + token + '"]');
+    var sliderC = document.querySelector('[data-studio-slider-c="' + token + '"]');
+    var sliderH = document.querySelector('[data-studio-slider-h="' + token + '"]');
+    var labelL = document.querySelector('[data-studio-label-l="' + token + '"]');
+    var labelC = document.querySelector('[data-studio-label-c="' + token + '"]');
+    var labelH = document.querySelector('[data-studio-label-h="' + token + '"]');
+    var valueEl = document.querySelector('[data-studio-color-value="' + token + '"]');
+
+    if (sliderL) sliderL.value = parsed.l;
+    if (sliderC) sliderC.value = parsed.c;
+    if (sliderH) sliderH.value = parsed.h;
+    if (labelL) labelL.textContent = parsed.l.toFixed(3);
+    if (labelC) labelC.textContent = parsed.c.toFixed(3);
+    if (labelH) labelH.textContent = Math.round(parsed.h);
+    if (valueEl) valueEl.textContent = val;
+  }
+
+  // ── Click on ColorSwatch → toggle editor ──
+  document.addEventListener('click', function(e) {
+    var trigger = e.target.closest('[data-studio-color-edit]');
+    if (!trigger) return;
+    e.preventDefault();
+    var token = trigger.getAttribute('data-studio-color-edit');
+    var editor = document.querySelector('[data-studio-color-editor="' + token + '"]');
+    if (!editor) return;
+
+    var isHidden = editor.classList.contains('hidden');
+
+    // Close all editors first
+    document.querySelectorAll('[data-studio-color-editor]').forEach(function(ed) {
+      ed.classList.add('hidden');
+    });
+
+    if (isHidden) {
+      editor.classList.remove('hidden');
+      updateEditorSliders(token);
+    }
+  });
+
+  // ── Slider input → update token ──
+  document.addEventListener('input', function(e) {
+    var slider = e.target;
+    var token = null;
+    var component = null;
+
+    // Check which slider type
+    if (slider.hasAttribute('data-studio-slider-l')) {
+      token = slider.getAttribute('data-studio-slider-l');
+      component = 'l';
+    } else if (slider.hasAttribute('data-studio-slider-c')) {
+      token = slider.getAttribute('data-studio-slider-c');
+      component = 'c';
+    } else if (slider.hasAttribute('data-studio-slider-h')) {
+      token = slider.getAttribute('data-studio-slider-h');
+      component = 'h';
+    } else if (slider.hasAttribute('data-studio-radius-slider')) {
+      // Radius slider
+      var val = parseFloat(slider.value);
+      customRadius = val + 'rem';
+      document.documentElement.style.setProperty('--radius', customRadius);
+      var radiusLabel = document.querySelector('[data-studio-radius-label]');
+      if (radiusLabel) radiusLabel.textContent = customRadius;
+      updatePresetButtons();
+      return;
+    } else {
+      return;
+    }
+
+    var mode = getMode();
+    var currentVal = getTokenValue(token, mode);
+    var parsed = parseOklch(currentVal);
+
+    // Update the changed component
+    if (component === 'l') parsed.l = parseFloat(slider.value);
+    if (component === 'c') parsed.c = parseFloat(slider.value);
+    if (component === 'h') parsed.h = parseFloat(slider.value);
+
+    var newVal = buildOklch(parsed.l, parsed.c, parsed.h);
+
+    // Store in customTokens
+    if (!customTokens[token]) {
+      customTokens[token] = {};
+      // Seed the other mode with the preset value
+      var otherMode = mode === 'light' ? 'dark' : 'light';
+      customTokens[token][otherMode] = getTokenValue(token, otherMode);
+    }
+    customTokens[token][mode] = newVal;
+
+    // Apply immediately
+    document.documentElement.style.setProperty('--' + token, newVal);
+
+    // Update labels
+    var labelL = document.querySelector('[data-studio-label-l="' + token + '"]');
+    var labelC = document.querySelector('[data-studio-label-c="' + token + '"]');
+    var labelH = document.querySelector('[data-studio-label-h="' + token + '"]');
+    var valueEl = document.querySelector('[data-studio-color-value="' + token + '"]');
+    if (labelL) labelL.textContent = parsed.l.toFixed(3);
+    if (labelC) labelC.textContent = parsed.c.toFixed(3);
+    if (labelH) labelH.textContent = Math.round(parsed.h);
+    if (valueEl) valueEl.textContent = newVal;
+
+    updatePresetButtons();
+  });
+
+  // ── Preset button click ──
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('[data-studio-preset]');
     if (!btn) return;
+    // Ignore clicks on color edit buttons inside the panel
+    if (e.target.closest('[data-studio-color-edit]')) return;
     var name = btn.getAttribute('data-studio-preset');
+    if (name === 'Custom') return; // Custom is not clickable
     applyPreset(name, true);
   });
 
-  // Re-apply on dark mode toggle (MutationObserver)
+  // ── Dark mode toggle → re-apply ──
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(m) {
-      if (m.attributeName === 'class' && activePreset !== 'Default') {
-        applyPreset(activePreset, false);
+      if (m.attributeName === 'class') {
+        reapplyForMode();
       }
     });
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  // ── Initialize radius slider ──
+  var radiusSlider = document.querySelector('[data-studio-radius-slider]');
+  if (radiusSlider) {
+    radiusSlider.value = parseFloat(presets[0].radius);
+  }
 })();
 `
 
@@ -931,7 +1169,7 @@ export function StudioPage() {
       {/* Behavior scripts */}
       <script dangerouslySetInnerHTML={{ __html: zoomScript }} />
       <script dangerouslySetInnerHTML={{ __html: detailScript }} />
-      <script dangerouslySetInnerHTML={{ __html: presetScript }} />
+      <script dangerouslySetInnerHTML={{ __html: studioScript }} />
     </div>
   )
 }
