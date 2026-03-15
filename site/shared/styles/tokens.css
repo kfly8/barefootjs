@@ -29,10 +29,10 @@
 
   /* ── Border radius ───────────────────────────────────── */
   --radius: 0.625rem;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 
   /* ── Transitions ─────────────────────────────────────── */
   --duration-fast: 0.15s;
