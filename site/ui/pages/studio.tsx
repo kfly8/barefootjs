@@ -28,6 +28,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent, ComboboxInput, ComboboxEmpty, ComboboxItem } from '@/components/ui/combobox'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { Calendar } from '@/components/ui/calendar'
 
 // ─── Component Pattern Data ─────────────────────────────────
 
@@ -789,10 +790,10 @@ function CanvasContent() {
       <GroupIsland title="Input & Form Controls">
         <PreviewItem name="Button">
           <div className="flex flex-wrap gap-1">
-            <Button size="sm">Primary</Button>
-            <Button variant="outline" size="sm">Outline</Button>
-            <Button variant="secondary" size="sm">Secondary</Button>
-            <Button variant="destructive" size="sm">Destructive</Button>
+            <Button size="sm" className="h-7 text-[11px] px-2">Primary</Button>
+            <Button variant="outline" size="sm" className="h-7 text-[11px] px-2">Outline</Button>
+            <Button variant="secondary" size="sm" className="h-7 text-[11px] px-2">Secondary</Button>
+            <Button variant="destructive" size="sm" className="h-7 text-[11px] px-2">Destructive</Button>
           </div>
         </PreviewItem>
 
@@ -859,7 +860,9 @@ function CanvasContent() {
         </PreviewItem>
 
         <PreviewItem name="Calendar">
-          <div className="text-[11px] text-muted-foreground">March 2026</div>
+          <div className="origin-top-left" style="transform: scale(0.78); width: 128%; margin-bottom: -50px">
+            <Calendar />
+          </div>
         </PreviewItem>
 
         <PreviewItem name="Date Picker">
