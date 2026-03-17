@@ -949,9 +949,9 @@ function CanvasContent() {
 
         <PreviewItem name="Table">
           <div className="w-full text-[10px]">
-            <div className="flex border-b border-border py-0.5 font-medium text-muted-foreground"><span className="flex-1">Name</span><span className="w-12 text-right">Status</span></div>
-            <div className="flex py-0.5 text-foreground"><span className="flex-1">Proj A</span><span className="w-12 text-right">Active</span></div>
-            <div className="flex py-0.5 text-foreground"><span className="flex-1">Proj B</span><span className="w-12 text-right">Draft</span></div>
+            <div className="flex border-b border-border py-0.5 font-medium text-muted-foreground"><span className="flex-1">Name</span><span className="w-10 text-right">Role</span><span className="w-12 text-right">Status</span></div>
+            <div className="flex border-b border-border py-0.5 text-foreground"><span className="flex-1">Alice</span><span className="w-10 text-right text-muted-foreground">Admin</span><span className="w-12 text-right">Active</span></div>
+            <div className="flex py-0.5 text-foreground"><span className="flex-1">Bob</span><span className="w-10 text-right text-muted-foreground">Editor</span><span className="w-12 text-right">Draft</span></div>
           </div>
         </PreviewItem>
 
