@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogOverlay, AlertDialogContent
 import { Dialog, DialogTrigger, DialogOverlay, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
 import { ToastProvider, Toast, ToastTitle, ToastDescription, ToastClose } from '@/components/ui/toast'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -94,6 +95,8 @@ export function StudioCanvas() {
   const [activeTab, setActiveTab] = createSignal('account')
   // Dropdown Menu state
   const [dropdownOpen, setDropdownOpen] = createSignal(false)
+  // Context Menu state
+  const [contextMenuOpen, setContextMenuOpen] = createSignal(false)
 
   const handleSort = (key: 'name' | 'priority') => {
     if (sortKey() === key) {
@@ -473,7 +476,19 @@ export function StudioCanvas() {
         </PreviewItem>
 
         <PreviewItem name="Context Menu">
-          <div className="text-[10px] text-muted-foreground italic">Right-click menu</div>
+          <ContextMenu open={contextMenuOpen()} onOpenChange={setContextMenuOpen}>
+            <ContextMenuTrigger>
+              <div className="flex items-center justify-center w-full h-16 rounded-md border border-dashed border-border text-[11px] text-muted-foreground">
+                Right-click here
+              </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuItem>Back</ContextMenuItem>
+              <ContextMenuItem>Forward</ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem>Reload</ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
         </PreviewItem>
 
         <PreviewItem name="Command">
