@@ -20,6 +20,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogTrigger, AlertDialogOverlay, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { Dialog, DialogTrigger, DialogOverlay, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
+import { ToastProvider, Toast, ToastTitle, ToastDescription, ToastClose } from '@/components/ui/toast'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -86,6 +87,8 @@ export function StudioCanvas() {
   const [alertDialogOpen, setAlertDialogOpen] = createSignal(false)
   // Dialog state
   const [dialogOpen, setDialogOpen] = createSignal(false)
+  // Toast state
+  const [toastOpen, setToastOpen] = createSignal(false)
 
   const handleSort = (key: 'name' | 'priority') => {
     if (sortKey() === key) {
@@ -400,9 +403,18 @@ export function StudioCanvas() {
         </PreviewItem>
 
         <PreviewItem name="Toast">
-          <div className="w-full rounded border border-border bg-background p-2 shadow-sm">
-            <div className="text-[11px] font-medium text-foreground">Saved</div>
-          </div>
+          <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={() => setToastOpen(true)}>
+            Show Toast
+          </Button>
+          <ToastProvider position="bottom-right">
+            <Toast variant="success" open={toastOpen()} onOpenChange={setToastOpen}>
+              <div className="flex-1">
+                <ToastTitle>Saved</ToastTitle>
+                <ToastDescription>Your changes have been saved.</ToastDescription>
+              </div>
+              <ToastClose onClick={() => setToastOpen(false)} />
+            </Toast>
+          </ToastProvider>
         </PreviewItem>
 
         <PreviewItem name="Progress">
