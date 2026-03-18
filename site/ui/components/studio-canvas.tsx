@@ -101,6 +101,8 @@ export function StudioCanvas() {
   const [dropdownOpen, setDropdownOpen] = createSignal(false)
   // Context Menu state
   const [contextMenuOpen, setContextMenuOpen] = createSignal(false)
+  // Accordion state
+  const [accordionOpen, setAccordionOpen] = createSignal<string | null>('a11y')
 
   const handleSort = (key: 'name' | 'priority') => {
     if (sortKey() === key) {
@@ -576,9 +578,13 @@ export function StudioCanvas() {
       <GroupIsland title="Layout & Overlay">
         <PreviewItem name="Accordion">
           <Accordion className="w-full">
-            <AccordionItem value="a11y" open>
-              <AccordionTrigger className="text-[11px] py-1">Is it accessible?</AccordionTrigger>
-              <AccordionContent className="text-[10px] pb-1">Yes, WAI-ARIA.</AccordionContent>
+            <AccordionItem value="a11y" open={accordionOpen() === 'a11y'} onOpenChange={(v) => setAccordionOpen(v ? 'a11y' : null)}>
+              <AccordionTrigger className="py-2 text-[11px]">Is it accessible?</AccordionTrigger>
+              <AccordionContent className="text-[10px]">Yes. WAI-ARIA compliant.</AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="styled" open={accordionOpen() === 'styled'} onOpenChange={(v) => setAccordionOpen(v ? 'styled' : null)}>
+              <AccordionTrigger className="py-2 text-[11px]">Is it styled?</AccordionTrigger>
+              <AccordionContent className="text-[10px]">Yes. Default styles included.</AccordionContent>
             </AccordionItem>
           </Accordion>
         </PreviewItem>
