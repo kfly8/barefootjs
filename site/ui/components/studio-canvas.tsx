@@ -34,6 +34,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { DatePicker } from '@/components/ui/date-picker'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { DataTableColumnHeader } from '@/components/ui/data-table'
 
@@ -323,7 +324,17 @@ export function StudioCanvas() {
         </PreviewItem>
 
         <PreviewItem name="Carousel">
-          <div className="text-[10px] text-muted-foreground italic">Content slider</div>
+          <div className="w-full px-12">
+            <Carousel>
+              <CarouselContent>
+                <CarouselItem><div className="flex items-center justify-center h-16 rounded-md bg-muted text-[11px] text-muted-foreground">1</div></CarouselItem>
+                <CarouselItem><div className="flex items-center justify-center h-16 rounded-md bg-muted text-[11px] text-muted-foreground">2</div></CarouselItem>
+                <CarouselItem><div className="flex items-center justify-center h-16 rounded-md bg-muted text-[11px] text-muted-foreground">3</div></CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
         </PreviewItem>
 
         <PreviewItem name="Skeleton">
