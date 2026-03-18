@@ -112,6 +112,7 @@ export function StudioCanvas() {
   const [sheetOpen, setSheetOpen] = createSignal(false)
   // Drawer state
   const [drawerOpen, setDrawerOpen] = createSignal(false)
+  const [drawerGoal, setDrawerGoal] = createSignal(350)
 
   const handleSort = (key: 'name' | 'priority') => {
     if (sortKey() === key) {
@@ -641,14 +642,45 @@ export function StudioCanvas() {
             </DrawerTrigger>
             <DrawerOverlay />
             <DrawerContent direction="bottom" ariaLabelledby="studio-drawer-title">
+              <div className="mx-auto w-full max-w-sm">
               <DrawerHandle />
               <DrawerHeader>
                 <DrawerTitle id="studio-drawer-title">Move Goal</DrawerTitle>
                 <DrawerDescription>Set your daily activity goal.</DrawerDescription>
               </DrawerHeader>
+              <div className="p-4 pb-0">
+                <div className="flex items-center justify-center space-x-4">
+                  <Button variant="outline" size="icon" className="size-8 rounded-full" onClick={() => setDrawerGoal(Math.max(200, drawerGoal() - 10))} disabled={drawerGoal() <= 200}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+                  </Button>
+                  <div className="flex-1 text-center">
+                    <div className="text-6xl font-bold tracking-tighter">{drawerGoal()}</div>
+                    <div className="text-xs uppercase text-muted-foreground tracking-wider">Calories/day</div>
+                  </div>
+                  <Button variant="outline" size="icon" className="size-8 rounded-full" onClick={() => setDrawerGoal(Math.min(500, drawerGoal() + 10))} disabled={drawerGoal() >= 500}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  </Button>
+                </div>
+                <div className="flex items-end justify-center gap-1 mt-4 h-16">
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:60%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:40%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:50%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:35%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:55%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:45%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:65%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:50%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:60%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:40%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:55%"></div>
+                  <div className="bg-primary/20 w-3 rounded-t" style="height:70%"></div>
+                </div>
+              </div>
               <DrawerFooter>
-                <DrawerClose>Close</DrawerClose>
+                <Button onClick={() => setDrawerOpen(false)}>Submit</Button>
+                <DrawerClose>Cancel</DrawerClose>
               </DrawerFooter>
+              </div>
             </DrawerContent>
           </Drawer>
         </PreviewItem>
