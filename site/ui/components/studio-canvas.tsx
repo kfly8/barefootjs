@@ -29,6 +29,7 @@ import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem, Menu
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from '@/components/ui/navigation-menu'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Sheet, SheetTrigger, SheetOverlay, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet'
 import { Drawer, DrawerTrigger, DrawerOverlay, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -703,7 +704,9 @@ export function StudioCanvas() {
         </PreviewItem>
 
         <PreviewItem name="Tooltip">
-          <div className="px-1.5 py-0.5 rounded bg-foreground text-background text-[10px]">Tooltip</div>
+          <Tooltip content="Add to library" placement="right">
+            <Button variant="outline" size="sm" className="h-7 text-[11px] px-2">Hover me</Button>
+          </Tooltip>
         </PreviewItem>
 
         <PreviewItem name="Hover Card">
