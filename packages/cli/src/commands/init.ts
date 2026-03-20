@@ -154,7 +154,7 @@ export async function run(args: string[], ctx: CliContext): Promise<void> {
       const registry = await res.json() as { items: { name: string }[] }
       const allNames = registry.items.map(i => i.name)
       if (allNames.length > 0) {
-        await addFromRegistry(allNames, registryUrl, projectDir, config, true)
+        await addFromRegistry(allNames, registryUrl, projectDir, config, true, true)
       }
     } catch (err) {
       console.log(`  Skipped component download: ${err instanceof Error ? err.message : err}`)

@@ -5,8 +5,7 @@ import path from 'path'
 import type { CliContext } from '../context'
 import { findBarefootJson, loadBarefootConfig, type BarefootConfig } from '../context'
 import { resolveDependencies } from '../lib/dependency-resolver'
-import { fetchRegistryItem } from '../lib/meta-loader'
-import type { MetaIndex, MetaIndexEntry, ComponentMeta } from '../lib/types'
+import type { MetaIndex, MetaIndexEntry, ComponentMeta, RegistryItem } from '../lib/types'
 
 export async function run(args: string[], ctx: CliContext): Promise<void> {
   const force = args.includes('--force')
@@ -42,16 +41,41 @@ export async function run(args: string[], ctx: CliContext): Promise<void> {
   const config = loadBarefootConfig(configPath)
 
   if (registryUrl) {
-    await addFromRegistry(componentNames, registryUrl, projectDir, config, force)
+    await addFromRegistry(componentNames, registryUrl, projectDir, config, force, false)
   } else {
     addFromLocal(componentNames, ctx, projectDir, config, force)
   }
 }
 
 /**
+ * Fetch a single registry item. Returns null if skipErrors is true and fetch fails.
+ */
+async function tryFetchRegistryItem(
+  registryUrl: string,
+  name: string,
+  skipErrors: boolean,
+): Promise<RegistryItem | null> {
+  const base = registryUrl.endsWith('/') ? registryUrl : `${registryUrl}/`
+  const url = `${base}${name}.json`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+    if (!res.ok) {
+      if (skipErrors) return null
+      console.error(`Error: Registry returned HTTP ${res.status} for ${url}`)
+      process.exit(1)
+    }
+    return await res.json()
+  } catch (err) {
+    if (skipErrors) return null
+    console.error(`Error: Failed to fetch component "${name}" from ${url}: ${err instanceof Error ? err.message : err}`)
+    process.exit(1)
+  }
+}
+
+/**
  * Add components from a remote registry.
- * Phase 1: Fetch all registry items (all-or-nothing).
- * Phase 2: Write files only if all fetches succeeded.
+ * Phase 1: Fetch all registry items.
+ * Phase 2: Write files only if all fetches succeeded (or skip failures when skipErrors=true).
  */
 export async function addFromRegistry(
   componentNames: string[],
@@ -59,11 +83,17 @@ export async function addFromRegistry(
   projectDir: string,
   config: BarefootConfig,
   force: boolean,
+  skipErrors = false,
 ): Promise<void> {
   // Phase 1: Fetch all registry items
-  const items = await Promise.all(
-    componentNames.map(name => fetchRegistryItem(registryUrl, name))
+  const results = await Promise.all(
+    componentNames.map(name => tryFetchRegistryItem(registryUrl, name, skipErrors))
   )
+  const items = results.filter((item): item is RegistryItem => item !== null)
+  const skippedComponents = componentNames.filter((_, i) => results[i] === null)
+  if (skippedComponents.length > 0) {
+    console.log(`  Skipped ${skippedComponents.length} unavailable component(s)`)
+  }
 
   // Merge all files into a deduplication map (path → content)
   const fileMap = new Map<string, string>()
