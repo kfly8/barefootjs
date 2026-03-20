@@ -22,6 +22,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import { CatalogFilter } from '@/components/catalog-filter'
 import { Accordion, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Calendar } from '@/components/ui/calendar'
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -115,10 +117,16 @@ const catalogEntries: CatalogEntry[] = [
     description: 'User profile image with fallback',
     tags: ['display'],
     preview: () => (
-      <div className="flex -space-x-2">
-        <Avatar><AvatarFallback>CN</AvatarFallback></Avatar>
-        <Avatar><AvatarFallback>JD</AvatarFallback></Avatar>
-        <Avatar><AvatarFallback>AB</AvatarFallback></Avatar>
+      <div className="flex items-center gap-2">
+        <div style="box-shadow: 0 0 0 2px var(--ring); border-radius: 9999px;">
+          <Avatar><AvatarFallback>CN</AvatarFallback></Avatar>
+        </div>
+        <div style="box-shadow: 0 0 0 2px var(--ring); border-radius: 9999px;">
+          <Avatar><AvatarFallback>JD</AvatarFallback></Avatar>
+        </div>
+        <div style="box-shadow: 0 0 0 2px var(--ring); border-radius: 9999px;">
+          <Avatar><AvatarFallback>AB</AvatarFallback></Avatar>
+        </div>
       </div>
     ),
   },
@@ -167,18 +175,44 @@ const catalogEntries: CatalogEntry[] = [
     title: 'Calendar',
     description: 'Date picker with month navigation',
     tags: ['input'],
+    preview: () => (
+      <div className="w-[180px] h-[100px] overflow-hidden">
+        <div style="transform: scale(0.55); transform-origin: top center;">
+          <Calendar />
+        </div>
+      </div>
+    ),
   },
   {
     slug: 'card',
     title: 'Card',
     description: 'Container for grouped content',
     tags: ['display'],
+    preview: () => (
+      <Card className="w-full max-w-[180px]">
+        <CardHeader className="p-3">
+          <CardTitle className="text-xs">Card Title</CardTitle>
+          <CardDescription className="text-xs">Description</CardDescription>
+        </CardHeader>
+      </Card>
+    ),
   },
   {
     slug: 'carousel',
     title: 'Carousel',
     description: 'Motion and swipe content slider',
     tags: ['display'],
+    preview: () => (
+      <div className="w-full max-w-[200px]">
+        <Carousel>
+          <CarouselContent>
+            <CarouselItem>
+              <div className="flex items-center justify-center h-16 bg-muted rounded-md text-sm font-medium">Slide 1</div>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
+      </div>
+    ),
   },
   {
     slug: 'checkbox',
