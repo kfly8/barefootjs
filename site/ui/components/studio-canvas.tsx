@@ -32,6 +32,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Tooltip } from '@/components/ui/tooltip'
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Sheet, SheetTrigger, SheetOverlay, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet'
 import { Drawer, DrawerTrigger, DrawerOverlay, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -745,7 +746,17 @@ export function StudioCanvas() {
         </PreviewItem>
 
         <PreviewItem name="Resizable">
-          <div className="text-[10px] text-muted-foreground italic">Resize</div>
+          <div className="w-full rounded-md border border-border overflow-hidden">
+            <ResizablePanelGroup direction="horizontal">
+              <ResizablePanel defaultSize={50}>
+                <div className="flex h-16 items-center justify-center text-[11px] text-muted-foreground">A</div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50}>
+                <div className="flex h-16 items-center justify-center text-[11px] text-muted-foreground">B</div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
         </PreviewItem>
 
         <PreviewItem name="Portal">
