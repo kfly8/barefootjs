@@ -8,7 +8,7 @@
 
 import { createSignal, createEffect } from '@barefootjs/dom'
 import { CopyButton } from './copy-button'
-import { highlightJsx, plainJsx, type HighlightProp } from './shared/playground-highlight'
+import { highlightJsxTree, plainJsx, type HighlightProp, type JsxTreeNode } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@ui/components/ui/select'
 import { Input } from '@ui/components/ui/input'
@@ -41,21 +41,23 @@ function InputGroupPlayground(_props: {}) {
     const codeEl = document.querySelector('[data-playground-code]') as HTMLElement
     if (!codeEl) return
 
+    const inputNode: JsxTreeNode = { tag: 'InputGroupInput', props: [{ name: 'placeholder', value: p, defaultValue: '' }] }
+
+    let tree: JsxTreeNode
     if (a === 'none') {
-      codeEl.innerHTML = highlightJsx('InputGroup', [], `\n  ${highlightJsx('InputGroupInput', [{ name: 'placeholder', value: p, defaultValue: '' }], '')}\n`)
+      tree = { tag: 'InputGroup', children: [inputNode] }
     } else {
-      const addonProps = a === 'inline-start'
+      const addonProps: HighlightProp[] = a === 'inline-start'
         ? []
         : [{ name: 'align', value: a, defaultValue: 'inline-start' }]
-      const addonJsx = highlightJsx('InputGroupAddon', addonProps, `\n    ${highlightJsx('InputGroupText', [], t)}\n  `)
-      const inputJsx = highlightJsx('InputGroupInput', [{ name: 'placeholder', value: p, defaultValue: '' }], '')
+      const addonNode: JsxTreeNode = { tag: 'InputGroupAddon', props: addonProps, children: [{ tag: 'InputGroupText', children: t }] }
 
-      if (a === 'inline-start') {
-        codeEl.innerHTML = highlightJsx('InputGroup', [], `\n  ${addonJsx}\n  ${inputJsx}\n`)
-      } else {
-        codeEl.innerHTML = highlightJsx('InputGroup', [], `\n  ${inputJsx}\n  ${addonJsx}\n`)
-      }
+      tree = a === 'inline-start'
+        ? { tag: 'InputGroup', children: [addonNode, inputNode] }
+        : { tag: 'InputGroup', children: [inputNode, addonNode] }
     }
+
+    codeEl.innerHTML = highlightJsxTree(tree)
   })
 
   return (
