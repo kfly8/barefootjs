@@ -59,71 +59,44 @@ function WithPredictableIds({ children }: { children: any }) {
 }
 
 import { themeInitScript } from '@barefootjs/site-shared/lib/theme-init'
+import { categoryOrder, categoryLabels, getComponentsByCategory, blockEntries } from './components/shared/component-registry'
 
-// Sidebar menu data
-const menuEntries: SidebarEntry[] = [
+// Sidebar menu data — split into sections with visual separators
+const startEntries: SidebarEntry[] = [
   {
-    title: 'Get Started',
+    title: 'Docs',
     defaultOpen: true,
     links: [
       { title: 'Introduction', href: '/' },
-      { title: 'Studio', href: '/studio' },
     ],
   },
+]
+
+// Component categories + Charts generated from registry
+const componentEntries: SidebarEntry[] = [
+  ...categoryOrder.map((category) => ({
+    title: categoryLabels[category],
+    defaultOpen: false,
+    links: getComponentsByCategory(category).map((entry) => ({
+      title: entry.title,
+      href: `/components/${entry.slug}`,
+    })),
+  })),
   {
-    title: 'Components',
+    title: 'Charts',
     links: [
-      { title: 'Browse All', href: '/components' },
-      { title: 'Accordion', href: '/components/accordion' },
-      { title: 'Alert', href: '/components/alert' },
-      { title: 'Alert Dialog', href: '/components/alert-dialog' },
-      { title: 'Aspect Ratio', href: '/components/aspect-ratio' },
-      { title: 'Avatar', href: '/components/avatar' },
-      { title: 'Badge', href: '/components/badge' },
-      { title: 'Breadcrumb', href: '/components/breadcrumb' },
-      { title: 'Button', href: '/components/button' },
-      { title: 'Calendar', href: '/components/calendar' },
-      { title: 'Card', href: '/components/card' },
-      { title: 'Carousel', href: '/components/carousel' },
-      { title: 'Checkbox', href: '/components/checkbox' },
-      { title: 'Collapsible', href: '/components/collapsible' },
-      { title: 'Command', href: '/components/command' },
-      { title: 'Combobox', href: '/components/combobox' },
-      { title: 'Context Menu', href: '/components/context-menu' },
-      { title: 'Data Table', href: '/components/data-table' },
-      { title: 'Date Picker', href: '/components/date-picker' },
-      { title: 'Dialog', href: '/components/dialog' },
-      { title: 'Drawer', href: '/components/drawer' },
-      { title: 'Dropdown Menu', href: '/components/dropdown-menu' },
-      { title: 'Hover Card', href: '/components/hover-card' },
-      { title: 'Input', href: '/components/input' },
-      { title: 'Input OTP', href: '/components/input-otp' },
-      { title: 'Label', href: '/components/label' },
-      { title: 'Menubar', href: '/components/menubar' },
-      { title: 'Navigation Menu', href: '/components/navigation-menu' },
-      { title: 'Pagination', href: '/components/pagination' },
-      { title: 'Popover', href: '/components/popover' },
-      { title: 'Progress', href: '/components/progress' },
-      { title: 'Radio Group', href: '/components/radio-group' },
-      { title: 'Resizable', href: '/components/resizable' },
-      { title: 'Scroll Area', href: '/components/scroll-area' },
-      { title: 'Select', href: '/components/select' },
-      { title: 'Sidebar', href: '/components/sidebar' },
-      { title: 'Separator', href: '/components/separator' },
-      { title: 'Skeleton', href: '/components/skeleton' },
-      { title: 'Sheet', href: '/components/sheet' },
-      { title: 'Slider', href: '/components/slider' },
-      { title: 'Spinner', href: '/components/spinner' },
-      { title: 'Switch', href: '/components/switch' },
-      { title: 'Table', href: '/components/table' },
-      { title: 'Tabs', href: '/components/tabs' },
-      { title: 'Textarea', href: '/components/textarea' },
-      { title: 'Toast', href: '/components/toast' },
-      { title: 'Toggle', href: '/components/toggle' },
-      { title: 'Toggle Group', href: '/components/toggle-group' },
-      { title: 'Tooltip', href: '/components/tooltip' },
+      { title: 'Area Chart', href: '/charts/area-chart' },
+      { title: 'Bar Chart', href: '/charts/bar-chart' },
+      { title: 'Line Chart', href: '/charts/line-chart' },
+      { title: 'Pie Chart', href: '/charts/pie-chart' },
+      { title: 'Radar Chart', href: '/charts/radar-chart' },
+      { title: 'Radial Chart', href: '/charts/radial-chart' },
     ],
   },
+]
+
+// Patterns — composition guides and page-level layouts
+const patternEntries: SidebarEntry[] = [
   {
     title: 'Forms',
     links: [
@@ -136,19 +109,18 @@ const menuEntries: SidebarEntry[] = [
   },
   {
     title: 'Blocks',
-    links: [],
+    defaultOpen: false,
+    links: blockEntries.map((entry) => ({
+      title: entry.title,
+      href: `/components/${entry.slug}`,
+    })),
   },
-  {
-    title: 'Charts',
-    links: [
-      { title: 'Area Chart', href: '/charts/area-chart' },
-      { title: 'Bar Chart', href: '/charts/bar-chart' },
-      { title: 'Line Chart', href: '/charts/line-chart' },
-      { title: 'Pie Chart', href: '/charts/pie-chart' },
-      { title: 'Radar Chart', href: '/charts/radar-chart' },
-      { title: 'Radial Chart', href: '/charts/radial-chart' },
-    ],
-  },
+]
+
+// Tools — CLI and design system utilities
+const toolEntries: SidebarEntry[] = [
+  { title: 'CLI', href: '/docs/cli' },
+  { title: 'Studio', href: '/studio' },
 ]
 
 // Import map for resolving bare module specifiers in client JS
@@ -218,7 +190,19 @@ export const renderer = jsxRenderer(
                 aria-label="Main navigation"
                 data-sidebar-menu
               >
-                <SidebarNav entries={menuEntries} currentPath={currentPath} />
+                <SidebarNav entries={startEntries} currentPath={currentPath} />
+                <div className="pt-3 mt-3 border-t border-border">
+                  <span className="block px-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Components</span>
+                </div>
+                <SidebarNav entries={componentEntries} currentPath={currentPath} />
+                <div className="pt-3 mt-3 border-t border-border">
+                  <span className="block px-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patterns</span>
+                </div>
+                <SidebarNav entries={patternEntries} currentPath={currentPath} />
+                <div className="pt-3 mt-3 border-t border-border">
+                  <span className="block px-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tools</span>
+                </div>
+                <SidebarNav entries={toolEntries} currentPath={currentPath} />
               </nav>
             )}
             <div className={currentPath === '/studio' ? '' : 'sm:pl-56'}>

@@ -151,8 +151,8 @@ export function StudioCanvas() {
 
   return (
     <div className="space-y-4 p-4 lg:pl-68">
-      {/* Input & Form Controls */}
-      <GroupIsland title="Input & Form Controls">
+      {/* Input */}
+      <GroupIsland title="Input">
         <PreviewItem name="Button">
           <div className="flex flex-wrap gap-1">
             <Button size="sm" className="h-7 text-[11px] px-2">Primary</Button>
@@ -269,8 +269,8 @@ export function StudioCanvas() {
         </PreviewItem>
       </GroupIsland>
 
-      {/* Display & Data */}
-      <GroupIsland title="Display & Data">
+      {/* Display */}
+      <GroupIsland title="Display">
         <div className="col-span-2">
         <PreviewItem name="Card">
           <Card className="w-full">
@@ -624,8 +624,8 @@ export function StudioCanvas() {
         </PreviewItem>
       </GroupIsland>
 
-      {/* Layout & Overlay */}
-      <GroupIsland title="Layout & Overlay">
+      {/* Layout */}
+      <GroupIsland title="Layout">
         <PreviewItem name="Accordion">
           <Accordion className="w-full">
             <AccordionItem value="a11y" open={accordionOpen() === 'a11y'} onOpenChange={(v) => setAccordionOpen(v ? 'a11y' : null)}>

@@ -1,0 +1,104 @@
+/**
+ * Component Registry — Single source of truth for component metadata
+ *
+ * Shared across: sidebar, home page, catalog, PageNavigation, and studio.
+ * Categories follow industry-standard functional classification
+ * (Ant Design, MUI, Chakra UI, Spectrum all use similar groupings).
+ */
+
+export type ComponentCategory = 'input' | 'display' | 'feedback' | 'navigation' | 'layout'
+
+export interface ComponentEntry {
+  slug: string
+  title: string
+  description: string
+  category: ComponentCategory
+}
+
+export interface BlockEntry {
+  slug: string
+  title: string
+  description: string
+}
+
+export const categoryOrder: ComponentCategory[] = ['input', 'display', 'feedback', 'navigation', 'layout']
+
+export const categoryLabels: Record<ComponentCategory, string> = {
+  input: 'Input',
+  display: 'Display',
+  feedback: 'Feedback',
+  navigation: 'Navigation',
+  layout: 'Layout',
+}
+
+// All components sorted alphabetically within each category
+export const componentEntries: ComponentEntry[] = [
+  // Input (15)
+  { slug: 'button', title: 'Button', description: 'Clickable actions with multiple variants', category: 'input' },
+  { slug: 'calendar', title: 'Calendar', description: 'Date picker with month navigation', category: 'input' },
+  { slug: 'checkbox', title: 'Checkbox', description: 'Toggle selection control', category: 'input' },
+  { slug: 'combobox', title: 'Combobox', description: 'Autocomplete input with dropdown', category: 'input' },
+  { slug: 'date-picker', title: 'Date Picker', description: 'Date selection with calendar popup', category: 'input' },
+  { slug: 'input', title: 'Input', description: 'Text input field', category: 'input' },
+  { slug: 'input-otp', title: 'Input OTP', description: 'One-time password input', category: 'input' },
+  { slug: 'label', title: 'Label', description: 'Accessible label for form controls', category: 'input' },
+  { slug: 'radio-group', title: 'Radio Group', description: 'Single-select option group', category: 'input' },
+  { slug: 'select', title: 'Select', description: 'Dropdown selection control', category: 'input' },
+  { slug: 'slider', title: 'Slider', description: 'Range value selector', category: 'input' },
+  { slug: 'switch', title: 'Switch', description: 'On/off toggle control', category: 'input' },
+  { slug: 'textarea', title: 'Textarea', description: 'Multi-line text input', category: 'input' },
+  { slug: 'toggle', title: 'Toggle', description: 'Two-state pressed button', category: 'input' },
+  { slug: 'toggle-group', title: 'Toggle Group', description: 'Group of toggle buttons', category: 'input' },
+
+  // Display (9)
+  { slug: 'aspect-ratio', title: 'Aspect Ratio', description: 'Content within a desired ratio', category: 'display' },
+  { slug: 'avatar', title: 'Avatar', description: 'User profile image with fallback', category: 'display' },
+  { slug: 'badge', title: 'Badge', description: 'Small status indicator labels', category: 'display' },
+  { slug: 'card', title: 'Card', description: 'Container for grouped content', category: 'display' },
+  { slug: 'carousel', title: 'Carousel', description: 'Motion and swipe content slider', category: 'display' },
+  { slug: 'data-table', title: 'Data Table', description: 'Sortable, filterable data table', category: 'display' },
+  { slug: 'separator', title: 'Separator', description: 'Visual divider between content', category: 'display' },
+  { slug: 'skeleton', title: 'Skeleton', description: 'Placeholder loading indicator', category: 'display' },
+  { slug: 'table', title: 'Table', description: 'Responsive data table', category: 'display' },
+
+  // Feedback (6)
+  { slug: 'alert', title: 'Alert', description: 'Callout for important content', category: 'feedback' },
+  { slug: 'alert-dialog', title: 'Alert Dialog', description: 'Modal dialog for important confirmations', category: 'feedback' },
+  { slug: 'dialog', title: 'Dialog', description: 'Modal overlay with custom content', category: 'feedback' },
+  { slug: 'progress', title: 'Progress', description: 'Task completion indicator bar', category: 'feedback' },
+  { slug: 'spinner', title: 'Spinner', description: 'Animated loading indicator', category: 'feedback' },
+  { slug: 'toast', title: 'Toast', description: 'Temporary notification message', category: 'feedback' },
+
+  // Navigation (10)
+  { slug: 'accordion', title: 'Accordion', description: 'Vertically collapsing content sections', category: 'navigation' },
+  { slug: 'breadcrumb', title: 'Breadcrumb', description: 'Navigation hierarchy trail', category: 'navigation' },
+  { slug: 'collapsible', title: 'Collapsible', description: 'Expandable content section', category: 'navigation' },
+  { slug: 'command', title: 'Command', description: 'Search and command menu', category: 'navigation' },
+  { slug: 'context-menu', title: 'Context Menu', description: 'Right-click menu at cursor position', category: 'navigation' },
+  { slug: 'dropdown-menu', title: 'Dropdown Menu', description: 'Action menu triggered by a button', category: 'navigation' },
+  { slug: 'menubar', title: 'Menubar', description: 'Desktop application menu bar', category: 'navigation' },
+  { slug: 'navigation-menu', title: 'Navigation Menu', description: 'Hover-activated navigation links', category: 'navigation' },
+  { slug: 'pagination', title: 'Pagination', description: 'Page navigation controls', category: 'navigation' },
+  { slug: 'tabs', title: 'Tabs', description: 'Tabbed content navigation', category: 'navigation' },
+
+  // Layout (8)
+  { slug: 'drawer', title: 'Drawer', description: 'Slide-out panel from screen edge', category: 'layout' },
+  { slug: 'hover-card', title: 'Hover Card', description: 'Preview card on hover', category: 'layout' },
+  { slug: 'popover', title: 'Popover', description: 'Floating content anchored to a trigger', category: 'layout' },
+  { slug: 'portal', title: 'Portal', description: 'Renders content outside DOM hierarchy', category: 'layout' },
+  { slug: 'resizable', title: 'Resizable', description: 'Draggable resize panels', category: 'layout' },
+  { slug: 'scroll-area', title: 'Scroll Area', description: 'Custom scrollbar container', category: 'layout' },
+  { slug: 'sheet', title: 'Sheet', description: 'Side panel overlay', category: 'layout' },
+  { slug: 'tooltip', title: 'Tooltip', description: 'Informational text on hover', category: 'layout' },
+]
+
+// Blocks — page-level composition patterns
+export const blockEntries: BlockEntry[] = [
+  { slug: 'sidebar', title: 'Sidebar', description: 'Collapsible navigation panel' },
+]
+
+// Helper: get components filtered by category
+export function getComponentsByCategory(category: ComponentCategory): ComponentEntry[] {
+  return componentEntries.filter(e => e.category === category)
+}
+
