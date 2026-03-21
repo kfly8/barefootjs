@@ -53,9 +53,11 @@ type ButtonGroupOrientation = 'horizontal' | 'vertical'
 const baseClasses = 'flex w-fit items-stretch [&>*]:focus-visible:relative [&>*]:focus-visible:z-10'
 
 // Orientation-specific classes
+// Uses -ml-px / -mt-px to overlap adjacent borders instead of removing them,
+// which avoids visual mismatches between elements with different backgrounds.
 const orientationClasses: Record<ButtonGroupOrientation, string> = {
-  horizontal: '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none',
-  vertical: 'flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 [&>*:not(:last-child)]:rounded-b-none',
+  horizontal: '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:-ml-px [&>*:not(:last-child)]:rounded-r-none',
+  vertical: 'flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:-mt-px [&>*:not(:last-child)]:rounded-b-none',
 }
 
 /**
@@ -99,7 +101,7 @@ function ButtonGroup({
 }
 
 // Base classes for ButtonGroupText
-const textBaseClasses = 'flex items-center gap-2 rounded-md border bg-muted px-4 text-sm font-medium shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4'
+const textBaseClasses = 'flex items-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4'
 
 /**
  * Props for the ButtonGroupText component.
