@@ -73,9 +73,10 @@ test.describe('Resizable Reference Page', () => {
     })
 
     test('panels show correct labels', async ({ page }) => {
-      await expect(page.locator('text=Sidebar').first()).toBeVisible()
-      await expect(page.locator('text=Content').first()).toBeVisible()
-      await expect(page.locator('text=Aside').first()).toBeVisible()
+      const panels = page.locator('[data-slot="resizable-panel"]')
+      await expect(panels.filter({ hasText: 'Sidebar' }).first()).toBeVisible()
+      await expect(panels.filter({ hasText: 'Content' }).first()).toBeVisible()
+      await expect(panels.filter({ hasText: 'Aside' }).first()).toBeVisible()
     })
   })
 

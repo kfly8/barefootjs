@@ -13,33 +13,14 @@ test.describe('Home Page', () => {
     await expect(page.locator('text=Pick a component')).toBeVisible()
   })
 
-  test('displays component showcase section', async ({ page }) => {
-    await expect(page.locator('#components h2')).toContainText('Components')
+  test('displays Browse All Components CTA', async ({ page }) => {
+    const cta = page.locator('a[href="/components"]')
+    await expect(cta).toBeVisible()
+    await expect(cta).toContainText('Browse All Components')
   })
 
-  test('displays component preview cards', async ({ page }) => {
-    await expect(page.locator('#components a[href="/components/accordion"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/button"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/card"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/command"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/dialog"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/select"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/slider"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/switch"]')).toBeVisible()
-    await expect(page.locator('#components a[href="/components/tabs"]')).toBeVisible()
-  })
-
-  test('displays form patterns section', async ({ page }) => {
-    await expect(page.locator('h2:has-text("Form Patterns")')).toBeVisible()
-    await expect(page.locator('#form-patterns a[href="/docs/forms/controlled-input"]')).toBeVisible()
-    await expect(page.locator('#form-patterns a[href="/docs/forms/field-arrays"]')).toBeVisible()
-    await expect(page.locator('#form-patterns a[href="/docs/forms/submit"]')).toBeVisible()
-    await expect(page.locator('#form-patterns a[href="/docs/forms/validation"]')).toBeVisible()
-  })
-
-  test('navigates to Button page on click', async ({ page }) => {
-    await page.locator('#components a[href="/components/button"]').click()
-    await expect(page).toHaveURL('/components/button')
-    await expect(page.locator('h1')).toContainText('Button')
+  test('navigates to components page on CTA click', async ({ page }) => {
+    await page.locator('a[href="/components"]').click()
+    await expect(page).toHaveURL('/components')
   })
 })
