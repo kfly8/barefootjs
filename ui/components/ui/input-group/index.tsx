@@ -31,14 +31,14 @@ import type { Child } from '../../../types'
 
 // --- InputGroup ---
 
-const inputGroupClasses = 'group/input-group relative flex w-full items-center rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none dark:bg-input/30 h-9 min-w-0 has-[>textarea]:h-auto'
+const inputGroupClasses = 'group/input-group relative flex w-full items-center rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none dark:bg-input/30 h-9 min-w-0 has-[textarea]:h-auto'
 
 // Variants based on alignment of addons
 const inputGroupAlignClasses = [
-  'has-[>[data-align=inline-start]]:[&>input]:pl-2',
-  'has-[>[data-align=inline-end]]:[&>input]:pr-2',
-  'has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3',
-  'has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3',
+  'has-[[data-align=inline-start]]:[&_input]:pl-2',
+  'has-[[data-align=inline-end]]:[&_input]:pr-2',
+  'has-[[data-align=block-start]]:h-auto has-[[data-align=block-start]]:flex-col has-[[data-align=block-start]]:[&_input]:pb-3',
+  'has-[[data-align=block-end]]:h-auto has-[[data-align=block-end]]:flex-col has-[[data-align=block-end]]:[&_input]:pt-3',
 ].join(' ')
 
 // Focus state propagated from child input
@@ -69,13 +69,13 @@ function InputGroup({ className = '', children, ...props }: InputGroupProps) {
 
 type InputGroupAddonAlign = 'inline-start' | 'inline-end' | 'block-start' | 'block-end'
 
-const inputGroupAddonBaseClasses = 'flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*="size-"])]:size-4'
+const inputGroupAddonBaseClasses = 'flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&_kbd]:rounded-[calc(var(--radius)-5px)] [&_svg:not([class*="size-"])]:size-4'
 
 const inputGroupAddonAlignClasses: Record<InputGroupAddonAlign, string> = {
-  'inline-start': 'order-first pl-3 has-[>button]:ml-[-0.45rem] has-[>kbd]:ml-[-0.35rem]',
-  'inline-end': 'order-last pr-3 has-[>button]:mr-[-0.45rem] has-[>kbd]:mr-[-0.35rem]',
-  'block-start': 'order-first w-full justify-start px-3 pt-3 group-has-[>input]/input-group:pt-2.5 [.border-b]:pb-3',
-  'block-end': 'order-last w-full justify-start px-3 pb-3 group-has-[>input]/input-group:pb-2.5 [.border-t]:pt-3',
+  'inline-start': 'order-first pl-3 has-[button]:ml-[-0.45rem] has-[kbd]:ml-[-0.35rem]',
+  'inline-end': 'order-last pr-3 has-[button]:mr-[-0.45rem] has-[kbd]:mr-[-0.35rem]',
+  'block-start': 'order-first w-full justify-start px-3 pt-3 group-has-[input]/input-group:pt-2.5 [.border-b]:pb-3',
+  'block-end': 'order-last w-full justify-start px-3 pb-3 group-has-[input]/input-group:pb-2.5 [.border-t]:pt-3',
 }
 
 interface InputGroupAddonProps extends HTMLBaseAttributes {
@@ -105,10 +105,10 @@ type InputGroupButtonSize = 'xs' | 'sm' | 'icon-xs' | 'icon-sm'
 const inputGroupButtonBaseClasses = 'inline-flex items-center justify-center gap-2 text-sm shadow-none whitespace-nowrap rounded-md font-medium transition-all outline-none text-foreground hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*="size-"])]:size-4 shrink-0 [&_svg]:shrink-0'
 
 const inputGroupButtonSizeClasses: Record<InputGroupButtonSize, string> = {
-  xs: 'h-6 gap-1 rounded-[calc(var(--radius)-5px)] px-2 has-[>svg]:px-2 [&>svg:not([class*="size-"])]:size-3.5',
-  sm: 'h-8 gap-1.5 rounded-md px-2.5 has-[>svg]:px-2.5',
-  'icon-xs': 'size-6 rounded-[calc(var(--radius)-5px)] p-0 has-[>svg]:p-0',
-  'icon-sm': 'size-8 p-0 has-[>svg]:p-0',
+  xs: 'h-6 gap-1 rounded-[calc(var(--radius)-5px)] px-2 has-[svg]:px-2 [&_svg:not([class*="size-"])]:size-3.5',
+  sm: 'h-8 gap-1.5 rounded-md px-2.5 has-[svg]:px-2.5',
+  'icon-xs': 'size-6 rounded-[calc(var(--radius)-5px)] p-0 has-[svg]:p-0',
+  'icon-sm': 'size-8 p-0 has-[svg]:p-0',
 }
 
 interface InputGroupButtonProps extends ButtonHTMLAttributes {
