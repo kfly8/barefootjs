@@ -21,6 +21,7 @@ import { Toggle } from '@/components/ui/toggle'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import { CatalogFilter } from '@/components/catalog-filter'
+import { type ComponentCategory } from '../../components/shared/component-registry'
 import { Accordion, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Calendar } from '@/components/ui/calendar'
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
@@ -47,7 +48,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip } from '@/components/ui/tooltip'
 
 // Tag definitions for filtering
-export type ComponentTag = 'input' | 'display' | 'feedback' | 'navigation' | 'layout'
+export type ComponentTag = ComponentCategory
 
 interface CatalogEntry {
   slug: string

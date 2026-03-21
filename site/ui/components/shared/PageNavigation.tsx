@@ -5,58 +5,10 @@
  * The PageNavigation component itself is in site/shared/components/page-navigation.tsx.
  */
 
-// Component order for navigation (alphabetical)
-export const componentOrder = [
-  { slug: 'accordion', title: 'Accordion' },
-  { slug: 'alert', title: 'Alert' },
-  { slug: 'alert-dialog', title: 'Alert Dialog' },
-  { slug: 'aspect-ratio', title: 'Aspect Ratio' },
-  { slug: 'avatar', title: 'Avatar' },
-  { slug: 'badge', title: 'Badge' },
-  { slug: 'breadcrumb', title: 'Breadcrumb' },
-  { slug: 'button', title: 'Button' },
-  { slug: 'calendar', title: 'Calendar' },
-  { slug: 'card', title: 'Card' },
-  { slug: 'carousel', title: 'Carousel' },
-  { slug: 'checkbox', title: 'Checkbox' },
-  { slug: 'collapsible', title: 'Collapsible' },
-  { slug: 'command', title: 'Command' },
-  { slug: 'combobox', title: 'Combobox' },
-  { slug: 'context-menu', title: 'Context Menu' },
-  { slug: 'data-table', title: 'Data Table' },
-  { slug: 'date-picker', title: 'Date Picker' },
-  { slug: 'dialog', title: 'Dialog' },
-  { slug: 'drawer', title: 'Drawer' },
-  { slug: 'dropdown-menu', title: 'Dropdown Menu' },
-  { slug: 'hover-card', title: 'Hover Card' },
-  { slug: 'input', title: 'Input' },
-  { slug: 'input-otp', title: 'Input OTP' },
-  { slug: 'label', title: 'Label' },
-  { slug: 'menubar', title: 'Menubar' },
-  { slug: 'navigation-menu', title: 'Navigation Menu' },
-  { slug: 'pagination', title: 'Pagination' },
-  { slug: 'popover', title: 'Popover' },
-  { slug: 'portal', title: 'Portal' },
-  { slug: 'progress', title: 'Progress' },
-  { slug: 'radio-group', title: 'Radio Group' },
-  { slug: 'resizable', title: 'Resizable' },
-  { slug: 'scroll-area', title: 'Scroll Area' },
-  { slug: 'select', title: 'Select' },
-  { slug: 'sidebar', title: 'Sidebar' },
-  { slug: 'separator', title: 'Separator' },
-  { slug: 'skeleton', title: 'Skeleton' },
-  { slug: 'sheet', title: 'Sheet' },
-  { slug: 'slider', title: 'Slider' },
-  { slug: 'spinner', title: 'Spinner' },
-  { slug: 'switch', title: 'Switch' },
-  { slug: 'table', title: 'Table' },
-  { slug: 'tabs', title: 'Tabs' },
-  { slug: 'textarea', title: 'Textarea' },
-  { slug: 'toast', title: 'Toast' },
-  { slug: 'toggle', title: 'Toggle' },
-  { slug: 'toggle-group', title: 'Toggle Group' },
-  { slug: 'tooltip', title: 'Tooltip' },
-]
+import { componentEntries } from './component-registry'
+
+// Component order for navigation (follows sidebar order: category-based, alphabetical within each)
+export const componentOrder = componentEntries.map(e => ({ slug: e.slug, title: e.title }))
 
 // Chart order for navigation (alphabetical)
 export const chartOrder = [
