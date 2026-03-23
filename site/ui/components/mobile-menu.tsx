@@ -8,6 +8,7 @@
 
 import { createSignal, createEffect } from '@barefootjs/dom'
 import { XIcon, ChevronRightIcon } from '@ui/components/ui/icon'
+import { categoryOrder, categoryLabels, getComponentsByCategory, blockEntries } from './shared/component-registry'
 
 const summaryClass = 'flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden'
 const menuLinkClass = 'block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline'
@@ -51,15 +52,26 @@ export function MobileMenu() {
     }
 
     if (currentPath === '/') {
-      openCategory('get-started')
-    } else if (currentPath.startsWith('/docs/components') || (currentPath.startsWith('/components/') && currentPath !== '/components')) {
-      openCategory('components')
+      openCategory('docs')
+    } else if (currentPath.startsWith('/components/') && currentPath !== '/components') {
+      // Open the matching component category
+      for (const cat of categoryOrder) {
+        const entries = getComponentsByCategory(cat)
+        if (entries.some(e => currentPath === `/components/${e.slug}`)) {
+          openCategory(`components-${cat}`)
+          break
+        }
+      }
+      // Check blocks
+      if (blockEntries.some(e => currentPath === `/components/${e.slug}`)) {
+        openCategory('blocks')
+      }
+    } else if (currentPath.startsWith('/charts/')) {
+      openCategory('charts')
     } else if (currentPath.startsWith('/docs/forms')) {
       openCategory('forms')
-    } else if (currentPath.startsWith('/blocks')) {
-      openCategory('blocks')
-    } else if (currentPath.startsWith('/docs/charts')) {
-      openCategory('charts')
+    } else if (currentPath.startsWith('/docs/cli') || currentPath === '/studio') {
+      openCategory('tools')
     }
 
     const openMenu = (): void => {
@@ -189,9 +201,10 @@ export function MobileMenu() {
 
           <nav className="p-4 overflow-y-auto h-[calc(100%-48px)]">
             <div className="space-y-1">
-              <details data-category="get-started" className="mb-2 group">
+              {/* Docs */}
+              <details data-category="docs" className="mb-2 group">
                 <summary className={summaryClass}>
-                  <span>Get Started</span>
+                  <span>Docs</span>
                   <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
                 <div className="pl-2 py-1 space-y-0.5">
@@ -199,28 +212,42 @@ export function MobileMenu() {
                 </div>
               </details>
 
-              <details data-category="components" className="mb-2 group">
+              {/* Components — grouped by category */}
+              <div className="pt-3 mt-3 border-t border-border">
+                <span className="block px-4 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Components</span>
+              </div>
+              {categoryOrder.map((cat) => (
+                <details data-category={`components-${cat}`} className="mb-2 group">
+                  <summary className={summaryClass}>
+                    <span>{categoryLabels[cat]}</span>
+                    <ChevronRightIcon size="sm" className={chevronClass} />
+                  </summary>
+                  <div className="pl-2 py-1 space-y-0.5">
+                    {getComponentsByCategory(cat).map((entry) => (
+                      <a href={`/components/${entry.slug}`} className={menuLinkClass}>{entry.title}</a>
+                    ))}
+                  </div>
+                </details>
+              ))}
+              <details data-category="charts" className="mb-2 group">
                 <summary className={summaryClass}>
-                  <span>Components</span>
+                  <span>Charts</span>
                   <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
                 <div className="pl-2 py-1 space-y-0.5">
-                  <a href="/components/accordion" className={menuLinkClass}>Accordion</a>
-                  <a href="/components/badge" className={menuLinkClass}>Badge</a>
-                  <a href="/components/button" className={menuLinkClass}>Button</a>
-                  <a href="/components/card" className={menuLinkClass}>Card</a>
-                  <a href="/components/checkbox" className={menuLinkClass}>Checkbox</a>
-                  <a href="/components/dialog" className={menuLinkClass}>Dialog</a>
-                  <a href="/components/dropdown-menu" className={menuLinkClass}>Dropdown Menu</a>
-                  <a href="/components/input" className={menuLinkClass}>Input</a>
-                  <a href="/components/select" className={menuLinkClass}>Select</a>
-                  <a href="/components/switch" className={menuLinkClass}>Switch</a>
-                  <a href="/components/tabs" className={menuLinkClass}>Tabs</a>
-                  <a href="/components/toast" className={menuLinkClass}>Toast</a>
-                  <a href="/components/tooltip" className={menuLinkClass}>Tooltip</a>
+                  <a href="/charts/area-chart" className={menuLinkClass}>Area Chart</a>
+                  <a href="/charts/bar-chart" className={menuLinkClass}>Bar Chart</a>
+                  <a href="/charts/line-chart" className={menuLinkClass}>Line Chart</a>
+                  <a href="/charts/pie-chart" className={menuLinkClass}>Pie Chart</a>
+                  <a href="/charts/radar-chart" className={menuLinkClass}>Radar Chart</a>
+                  <a href="/charts/radial-chart" className={menuLinkClass}>Radial Chart</a>
                 </div>
               </details>
 
+              {/* Patterns */}
+              <div className="pt-3 mt-3 border-t border-border">
+                <span className="block px-4 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patterns</span>
+              </div>
               <details data-category="forms" className="mb-2 group">
                 <summary className={summaryClass}>
                   <span>Forms</span>
@@ -228,29 +255,30 @@ export function MobileMenu() {
                 </summary>
                 <div className="pl-2 py-1 space-y-0.5">
                   <a href="/docs/forms/controlled-input" className={menuLinkClass}>Controlled Input</a>
+                  <a href="/docs/forms/create-form" className={menuLinkClass}>createForm</a>
                   <a href="/docs/forms/field-arrays" className={menuLinkClass}>Field Arrays</a>
                   <a href="/docs/forms/submit" className={menuLinkClass}>Submit</a>
                   <a href="/docs/forms/validation" className={menuLinkClass}>Validation</a>
                 </div>
               </details>
-
               <details data-category="blocks" className="mb-2 group">
                 <summary className={summaryClass}>
                   <span>Blocks</span>
                   <ChevronRightIcon size="sm" className={chevronClass} />
                 </summary>
-                <div className="pl-2 py-1 space-y-0.5"></div>
-              </details>
-
-              <details data-category="charts" className="mb-2 group">
-                <summary className={summaryClass}>
-                  <span>Charts</span>
-                  <ChevronRightIcon size="sm" className={chevronClass} />
-                </summary>
                 <div className="pl-2 py-1 space-y-0.5">
-                  <a href="/charts/bar-chart" className={menuLinkClass}>Bar Chart</a>
+                  {blockEntries.map((entry) => (
+                    <a href={`/components/${entry.slug}`} className={menuLinkClass}>{entry.title}</a>
+                  ))}
                 </div>
               </details>
+
+              {/* Tools */}
+              <div className="pt-3 mt-3 border-t border-border">
+                <span className="block px-4 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tools</span>
+              </div>
+              <a href="/docs/cli" className={menuLinkClass}>CLI</a>
+              <a href="/studio" className={menuLinkClass}>Studio</a>
             </div>
           </nav>
         </div>
