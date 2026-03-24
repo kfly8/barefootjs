@@ -37,8 +37,7 @@ test.describe('Sidebar Reference Page', () => {
       await expect(footer).toContainText('john@acme.com')
     })
 
-    // TODO: SidebarProvider toggle reactivity not working after hydration — context signal chain broken
-    test.skip('toggle button collapses/expands sidebar', async ({ page }) => {
+    test('toggle button collapses/expands sidebar', async ({ page }) => {
       const basicDemo = page.locator('[bf-s^="SidebarBasicDemo_"]').first()
       const trigger = basicDemo.locator('[data-slot="sidebar-trigger"]').first()
 
@@ -55,7 +54,7 @@ test.describe('Sidebar Reference Page', () => {
       await expect(sidebarWrapper).toHaveAttribute('data-state', 'expanded')
     })
 
-    test.skip('keyboard shortcut Ctrl+B toggles sidebar', async ({ page }) => {
+    test('keyboard shortcut Ctrl+B toggles sidebar', async ({ page }) => {
       const basicDemo = page.locator('[bf-s^="SidebarBasicDemo_"]').first()
       const sidebarWrapper = basicDemo.locator('[data-slot="sidebar-wrapper"]').first()
 

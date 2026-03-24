@@ -15,8 +15,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(trigger.locator('[data-slot="combobox-value"]')).toContainText('Select framework...')
     })
 
-    // TODO: Combobox open/close reactivity not working after hydration — context signal chain broken
-    test.skip('click opens dropdown', async ({ page }) => {
+    test('click opens dropdown', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -28,7 +27,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(content.locator('[data-slot="combobox-item"][data-value="svelte"]')).toBeVisible()
     })
 
-    test.skip('select item updates trigger label and closes dropdown', async ({ page }) => {
+    test('select item updates trigger label and closes dropdown', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -44,7 +43,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(trigger.locator('[data-slot="combobox-value"]')).toContainText('Next.js')
     })
 
-    test.skip('ESC closes dropdown', async ({ page }) => {
+    test('ESC closes dropdown', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -57,7 +56,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(content).toHaveCount(0)
     })
 
-    test.skip('click outside closes dropdown', async ({ page }) => {
+    test('click outside closes dropdown', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -70,7 +69,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(content).toHaveCount(0)
     })
 
-    test.skip('value display updates after selection', async ({ page }) => {
+    test('value display updates after selection', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
       const valueText = section.locator('.selected-value')
@@ -86,7 +85,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(valueText).toContainText('nuxt')
     })
 
-    test.skip('selected item shows check indicator', async ({ page }) => {
+    test('selected item shows check indicator', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -103,7 +102,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(nextItem).toHaveAttribute('aria-selected', 'true')
     })
 
-    test.skip('has correct ARIA roles', async ({ page }) => {
+    test('has correct ARIA roles', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -121,7 +120,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(items.first()).toHaveAttribute('role', 'option')
     })
 
-    test.skip('search filters items', async ({ page }) => {
+    test('search filters items', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -143,7 +142,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(visibleItems.first()).toContainText('Next.js')
     })
 
-    test.skip('empty state shows when no items match', async ({ page }) => {
+    test('empty state shows when no items match', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -160,7 +159,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(empty).toContainText('No framework found.')
     })
 
-    test.skip('keyboard navigation with arrow keys', async ({ page }) => {
+    test('keyboard navigation with arrow keys', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -188,7 +187,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(items.nth(1)).toHaveAttribute('data-selected', 'true')
     })
 
-    test.skip('Enter key selects highlighted item', async ({ page }) => {
+    test('Enter key selects highlighted item', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -207,7 +206,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(trigger.locator('[data-slot="combobox-value"]')).toContainText('SvelteKit')
     })
 
-    test.skip('search is cleared after selection', async ({ page }) => {
+    test('search is cleared after selection', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxBasicDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -247,7 +246,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(section.locator('.summary-text')).toContainText('No selections yet')
     })
 
-    test.skip('selecting values updates summary', async ({ page }) => {
+    test('selecting values updates summary', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxFormDemo_"]:not([data-slot])').first()
       const triggers = section.locator('[data-slot="combobox-trigger"]')
       const summaryText = section.locator('.summary-text')
@@ -270,7 +269,7 @@ test.describe('Combobox Reference Page', () => {
   })
 
   test.describe('Grouped Demo', () => {
-    test.skip('group headings visible', async ({ page }) => {
+    test('group headings visible', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxGroupedDemo_"]:not([data-slot])').first()
       await expect(section).toBeVisible()
 
@@ -283,7 +282,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(content.locator('[data-slot="combobox-group-heading"]').filter({ hasText: 'Asia' })).toBeVisible()
     })
 
-    test.skip('separators present', async ({ page }) => {
+    test('separators present', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxGroupedDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 
@@ -294,7 +293,7 @@ test.describe('Combobox Reference Page', () => {
       expect(await separators.count()).toBe(2)
     })
 
-    test.skip('selection from groups works', async ({ page }) => {
+    test('selection from groups works', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxGroupedDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
       const valueText = section.locator('.selected-timezone')
@@ -313,7 +312,7 @@ test.describe('Combobox Reference Page', () => {
       await expect(trigger.locator('[data-slot="combobox-value"]')).toContainText('Japan Standard Time')
     })
 
-    test.skip('search filters across groups', async ({ page }) => {
+    test('search filters across groups', async ({ page }) => {
       const section = page.locator('[bf-s^="ComboboxGroupedDemo_"]:not([data-slot])').first()
       const trigger = section.locator('[data-slot="combobox-trigger"]')
 

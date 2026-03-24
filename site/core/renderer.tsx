@@ -8,7 +8,7 @@
 
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 import { navigation, type NavItem } from './lib/navigation'
-import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } from '../shared/components/sidebar'
+import { SidebarNav, type SidebarEntry, type SidebarGroup, type SidebarLink } from '../shared/components/sidebar-page-nav'
 import { PageNav, type PageNavLink } from '../shared/components/page-nav'
 import { PageNavigation } from '../shared/components/page-navigation'
 import { BfScripts } from '../../packages/hono/src/scripts'

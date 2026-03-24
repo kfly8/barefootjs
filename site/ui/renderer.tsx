@@ -21,7 +21,7 @@ declare module 'hono' {
 import { BfScripts } from '../../packages/hono/src/scripts'
 import { BfPortals } from '../../packages/hono/src/portals'
 import { BfPreload, type Manifest } from '../../packages/hono/src/preload'
-import { SidebarNav, type SidebarEntry } from '../shared/components/sidebar'
+import { SidebarNav, type SidebarEntry } from '../shared/components/sidebar-page-nav'
 import { Header } from '../shared/components/header'
 import { MobileMenu } from '@/components/mobile-menu'
 import { MobilePageNav } from '../shared/components/mobile-page-nav'

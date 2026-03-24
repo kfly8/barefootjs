@@ -16,7 +16,7 @@
 
 import { compileJSX, combineParentChildClientJs } from '@barefootjs/jsx'
 import { HonoAdapter } from '@barefootjs/hono/adapter'
-import { mkdir, readdir } from 'node:fs/promises'
+import { mkdir, readdir, rm } from 'node:fs/promises'
 import { dirname, resolve, join, relative } from 'node:path'
 import {
   hasUseClientDirective,
@@ -85,6 +85,8 @@ const docsComponentFiles = await discoverComponentFiles(DOCS_COMPONENTS_DIR)
 const sharedComponentFiles = await discoverFiles(SHARED_COMPONENTS_DIR)
 const componentFiles = [...uiComponentFiles, ...docsComponentFiles, ...sharedComponentFiles]
 
+// Clean dist directory to remove stale artifacts from previous builds
+await rm(DIST_DIR, { recursive: true, force: true })
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
 // Build and copy barefoot.js from @barefootjs/dom
