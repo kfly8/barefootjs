@@ -1736,7 +1736,7 @@ function processComponentProps(
       }
     }
 
-    const { value, dynamic, isLiteral } = getAttributeValue(attr, ctx)
+    const { value, dynamic, isLiteral, presenceOrUndefined } = getAttributeValue(attr, ctx)
 
     // For component props, convert IRTemplateLiteral back to string expression
     // since props are passed to components as-is
@@ -1748,6 +1748,7 @@ function processComponentProps(
       dynamic,
       isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
+      presenceOrUndefined,
     })
   }
 

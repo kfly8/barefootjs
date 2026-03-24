@@ -289,6 +289,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
               propName: prop.name,
               attrName,
               expression: expandedValue,
+              presenceOrUndefined: prop.presenceOrUndefined,
             })
           }
         } else if (prop.isLiteral) {

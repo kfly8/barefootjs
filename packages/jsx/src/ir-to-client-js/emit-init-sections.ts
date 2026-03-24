@@ -749,6 +749,11 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
           lines.push(`      if (${varName}.value !== __val) ${varName}.value = __val`)
         } else if (isBooleanAttr(prop.attrName)) {
           lines.push(`      ${varName}.${prop.attrName} = !!(${prop.expression})`)
+        } else if (prop.presenceOrUndefined) {
+          // aria-* requires explicit "true" value per WAI-ARIA spec
+          const attrVal = prop.attrName.startsWith('aria-') ? 'true' : ''
+          lines.push(`      if (${prop.expression}) ${varName}.setAttribute('${prop.attrName}', '${attrVal}')`)
+          lines.push(`      else ${varName}.removeAttribute('${prop.attrName}')`)
         } else {
           // Handle null/undefined: remove attribute instead of setting "undefined"
           lines.push(`      { const __v = ${prop.expression}; if (__v != null) ${varName}.setAttribute('${prop.attrName}', String(__v)); else ${varName}.removeAttribute('${prop.attrName}') }`)

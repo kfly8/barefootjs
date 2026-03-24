@@ -69,6 +69,7 @@ export interface ReactiveChildProp {
   propName: string // The prop name (e.g., 'className')
   attrName: string // The DOM attribute name (e.g., 'class')
   expression: string // The expanded expression (with props.xxx references)
+  presenceOrUndefined?: boolean // true when `expr || undefined` pattern is detected
 }
 
 export interface DynamicElement {
