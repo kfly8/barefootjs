@@ -30,7 +30,7 @@ import { createSignal, createMemo } from '@barefootjs/dom'
 // All dimensions use spacing-relative classes so they scale proportionally with --spacing.
 // At default (0.25rem): track 36×20px, padding 2px, content 32×16px, thumb 16px.
 // Track semicircle center aligns with thumb center → concentric at both positions.
-const trackBaseClasses = 'peer inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
+const trackBaseClasses = 'peer inline-flex h-5 w-9 shrink-0 items-center rounded-xl p-0.5 shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
 
 // Focus visible classes (ring-based, no border shift)
 const trackFocusClasses = 'focus-visible:ring-ring/50 focus-visible:ring-[3px]'
@@ -43,7 +43,7 @@ const trackStateClasses = [
 ].join(' ')
 
 // Thumb: spacing-relative size, scales with track
-const thumbBaseClasses = 'pointer-events-none block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
+const thumbBaseClasses = 'pointer-events-none block size-4 rounded-xl bg-background shadow-sm ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
 
 // Translate: spacing-relative (content width - thumb = w-9 - 2*p-0.5 - size-4 = 4 units)
 const thumbStateClasses = [

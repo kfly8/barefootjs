@@ -945,11 +945,13 @@ const studioScript = `
 
   // Derived radius variables that reference --radius
   function setRadiusDerived(target, radiusVal) {
+    target.style.setProperty('--radius-xl', 'calc(' + radiusVal + ' * 1.4)');
     target.style.setProperty('--radius-lg', radiusVal);
     target.style.setProperty('--radius-md', 'calc(' + radiusVal + ' - 2px)');
     target.style.setProperty('--radius-sm', 'calc(' + radiusVal + ' - 4px)');
   }
   function removeRadiusDerived(target) {
+    target.style.removeProperty('--radius-xl');
     target.style.removeProperty('--radius-lg');
     target.style.removeProperty('--radius-md');
     target.style.removeProperty('--radius-sm');
