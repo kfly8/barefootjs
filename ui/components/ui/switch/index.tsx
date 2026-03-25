@@ -27,10 +27,10 @@ import { createSignal, createMemo } from '@barefootjs/dom'
  * ```
  */
 
-// All dimensions use fixed pixels so --spacing changes don't break the switch.
-// Track: 18×34px, padding 1px → content 16×32px, thumb 16×16px.
-// Track radius 9px, thumb radius 8px → uniform 1px concentric gap.
-const trackBaseClasses = 'peer inline-flex h-[18px] w-[34px] shrink-0 items-center rounded-full p-[1px] shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
+// All dimensions use spacing-relative classes so they scale proportionally with --spacing.
+// At default (0.25rem): track 36×20px, padding 2px, content 32×16px, thumb 16px.
+// Track semicircle center aligns with thumb center → concentric at both positions.
+const trackBaseClasses = 'peer inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
 
 // Focus visible classes (ring-based, no border shift)
 const trackFocusClasses = 'focus-visible:ring-ring/50 focus-visible:ring-[3px]'
@@ -42,13 +42,13 @@ const trackStateClasses = [
   '[&[data-state=checked]]:bg-primary',
 ].join(' ')
 
-// Thumb: fixed 16×16px, immune to --spacing changes
-const thumbBaseClasses = 'pointer-events-none block h-[16px] w-[16px] rounded-full bg-background shadow-sm ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
+// Thumb: spacing-relative size, scales with track
+const thumbBaseClasses = 'pointer-events-none block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
 
-// Translate: fixed 16px (32px content - 16px thumb)
+// Translate: spacing-relative (content width - thumb = w-9 - 2*p-0.5 - size-4 = 4 units)
 const thumbStateClasses = [
   '[&[data-state=unchecked]]:translate-x-0',
-  '[&[data-state=checked]]:translate-x-[16px]',
+  '[&[data-state=checked]]:translate-x-4',
 ].join(' ')
 
 /**
