@@ -43,9 +43,9 @@ import { Separator } from '@ui/components/ui/separator'
 
 // Static stats data
 const stats = [
-  { title: 'Total Revenue', value: '$45,231.89', change: '+20.1% from last month' },
+  { title: 'Total Revenue', value: '$45.2K', change: '+20.1% from last month' },
   { title: 'Orders', value: '2,350', change: '+180 from last month' },
-  { title: 'Customers', value: '12,234', change: '+19% from last month' },
+  { title: 'Customers', value: '1,234', change: '+19% from last month' },
   { title: 'Conversion Rate', value: '3.2%', change: '+0.4% from last month' },
 ]
 

@@ -9,15 +9,15 @@ test.describe('Dashboard Block', () => {
     test('renders all four stat cards', async ({ page }) => {
       const section = page.locator('[bf-s^="DashboardDemo_"]:not([data-slot])').first()
       await expect(section.locator('text=Total Revenue')).toBeVisible()
-      await expect(section.locator('text=$45,231.89')).toBeVisible()
+      await expect(section.locator('text=$45.2K')).toBeVisible()
       await expect(section.locator('text=2,350')).toBeVisible()
-      await expect(section.locator('text=12,234')).toBeVisible()
+      await expect(section.locator('text=1,234')).toBeVisible()
       await expect(section.locator('text=Conversion Rate')).toBeVisible()
     })
 
     test('renders stat values', async ({ page }) => {
       const section = page.locator('[bf-s^="DashboardDemo_"]:not([data-slot])').first()
-      await expect(section.locator('text=$45,231.89')).toBeVisible()
+      await expect(section.locator('text=$45.2K')).toBeVisible()
       await expect(section.locator('text=2,350')).toBeVisible()
     })
   })
