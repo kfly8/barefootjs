@@ -3,12 +3,46 @@
  * Each function appends to a lines[] array.
  */
 
-import type { ComponentIR, SignalInfo, IRFragment } from '../types'
+import type { AttrMeta, ComponentIR, SignalInfo, IRFragment } from '../types'
 import type { Declaration } from './declaration-sort'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef, ConditionalBranchChildComponent, LoopChildEvent } from './types'
 import { inferDefaultValue, toHtmlAttrName, toDomEventName, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId, PROPS_PARAM } from './utils'
 import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, generateCsrTemplate, irChildrenToJsExpr, createStringProtector } from './html-template'
+
+/**
+ * Generate JS statements to update a DOM attribute reactively.
+ * Centralizes the attribute-type dispatch (value, class, boolean, presence, generic)
+ * so that new AttrMeta flags are handled in one place.
+ */
+function emitAttrUpdate(target: string, attrName: string, expression: string, meta: AttrMeta): string[] {
+  const htmlName = toHtmlAttrName(attrName)
+  if (htmlName === 'class') {
+    return [
+      `{ const __v = ${expression}; if (__v != null) ${target}.setAttribute('class', String(__v)); else ${target}.removeAttribute('class') }`,
+    ]
+  }
+  if (htmlName === 'value') {
+    return [
+      `const __val = String(${expression})`,
+      `if (${target}.value !== __val) ${target}.value = __val`,
+    ]
+  }
+  if (isBooleanAttr(htmlName)) {
+    return [`${target}.${htmlName} = !!(${expression})`]
+  }
+  if (meta.presenceOrUndefined) {
+    // aria-* requires explicit "true" value per WAI-ARIA spec
+    const attrVal = htmlName.startsWith('aria-') ? 'true' : ''
+    return [
+      `if (${expression}) ${target}.setAttribute('${htmlName}', '${attrVal}')`,
+      `else ${target}.removeAttribute('${htmlName}')`,
+    ]
+  }
+  return [
+    `{ const __v = ${expression}; if (__v != null) ${target}.setAttribute('${htmlName}', String(__v)); else ${target}.removeAttribute('${htmlName}') }`,
+  ]
+}
 
 /**
  * Collect slot IDs that are inside conditionals (handled by insert()).
@@ -277,20 +311,8 @@ export function emitReactiveAttributeUpdates(lines: string[], ctx: ClientJsConte
         // Rewrite destructured prop references to props.xxx for live reactivity.
         // Destructured props are const-captured once; effects must read from props object.
         const expression = rewriteDestructuredPropsInExpr(attr.expression, ctx)
-        const htmlAttrName = toHtmlAttrName(attr.attrName)
-        if (htmlAttrName === 'value') {
-          lines.push(`      const __val = String(${expression})`)
-          lines.push(`      if (_${v}.value !== __val) _${v}.value = __val`)
-        } else if (isBooleanAttr(htmlAttrName)) {
-          lines.push(`      _${v}.${htmlAttrName} = !!(${expression})`)
-        } else if (attr.presenceOrUndefined) {
-          // aria-* requires explicit "true" value per WAI-ARIA spec
-          const attrVal = htmlAttrName.startsWith('aria-') ? 'true' : ''
-          lines.push(`      if (${expression}) _${v}.setAttribute('${htmlAttrName}', '${attrVal}')`)
-          lines.push(`      else _${v}.removeAttribute('${htmlAttrName}')`)
-        } else {
-          // Handle null/undefined: remove attribute instead of setting "undefined"
-          lines.push(`      { const __v = ${expression}; if (__v != null) _${v}.setAttribute('${htmlAttrName}', String(__v)); else _${v}.removeAttribute('${htmlAttrName}') }`)
+        for (const stmt of emitAttrUpdate(`_${v}`, attr.attrName, expression, attr)) {
+          lines.push(`      ${stmt}`)
         }
       }
       lines.push(`    }`)
@@ -451,16 +473,9 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           lines.push(`        const __t_${slotId} = __iterEl.matches('[bf="${slotId}"]') ? __iterEl : __iterEl.querySelector('[bf="${slotId}"]')`)
           lines.push(`        if (__t_${slotId}) {`)
           for (const attr of attrs) {
-            const htmlAttrName = toHtmlAttrName(attr.attrName)
             lines.push(`          createEffect(() => {`)
-            if (isBooleanAttr(htmlAttrName)) {
-              lines.push(`            __t_${slotId}.${htmlAttrName} = !!(${attr.expression})`)
-            } else if (attr.attrName === 'className') {
-              lines.push(`            __t_${slotId}.className = ${attr.expression}`)
-            } else if (attr.presenceOrUndefined) {
-              lines.push(`            __t_${slotId}.toggleAttribute('${htmlAttrName}', !!(${attr.expression}))`)
-            } else {
-              lines.push(`            __t_${slotId}.setAttribute('${htmlAttrName}', ${attr.expression})`)
+            for (const stmt of emitAttrUpdate(`__t_${slotId}`, attr.attrName, attr.expression, attr)) {
+              lines.push(`            ${stmt}`)
             }
             lines.push(`          })`)
           }
@@ -741,22 +756,8 @@ export function emitReactiveChildProps(lines: string[], ctx: ClientJsContext): v
       lines.push(`    const [${varName}] = $c(__scope, '${selectorArg}')`)
       lines.push(`    if (${varName}) {`)
       for (const prop of props) {
-        if (prop.attrName === 'class') {
-          lines.push(`      ${varName}.setAttribute('class', ${prop.expression})`)
-        // Use DOM property assignment for value and boolean attrs (see emitReactivePropBindings)
-        } else if (prop.attrName === 'value') {
-          lines.push(`      const __val = String(${prop.expression})`)
-          lines.push(`      if (${varName}.value !== __val) ${varName}.value = __val`)
-        } else if (isBooleanAttr(prop.attrName)) {
-          lines.push(`      ${varName}.${prop.attrName} = !!(${prop.expression})`)
-        } else if (prop.presenceOrUndefined) {
-          // aria-* requires explicit "true" value per WAI-ARIA spec
-          const attrVal = prop.attrName.startsWith('aria-') ? 'true' : ''
-          lines.push(`      if (${prop.expression}) ${varName}.setAttribute('${prop.attrName}', '${attrVal}')`)
-          lines.push(`      else ${varName}.removeAttribute('${prop.attrName}')`)
-        } else {
-          // Handle null/undefined: remove attribute instead of setting "undefined"
-          lines.push(`      { const __v = ${prop.expression}; if (__v != null) ${varName}.setAttribute('${prop.attrName}', String(__v)); else ${varName}.removeAttribute('${prop.attrName}') }`)
+        for (const stmt of emitAttrUpdate(varName, prop.attrName, prop.expression, prop)) {
+          lines.push(`      ${stmt}`)
         }
       }
       lines.push(`    }`)

@@ -3,6 +3,7 @@
  */
 
 import type {
+  AttrMeta,
   IREvent,
   IRLoopChildComponent,
   SignalInfo,
@@ -63,13 +64,12 @@ export interface ReactiveComponentProp {
  * These are props that depend on parent's props and need
  * createEffect to update the child component's DOM attributes.
  */
-export interface ReactiveChildProp {
+export interface ReactiveChildProp extends AttrMeta {
   componentName: string
   slotId: string | null
   propName: string // The prop name (e.g., 'className')
   attrName: string // The DOM attribute name (e.g., 'class')
   expression: string // The expanded expression (with props.xxx references)
-  presenceOrUndefined?: boolean // true when `expr || undefined` pattern is detected
 }
 
 export interface DynamicElement {
@@ -114,11 +114,10 @@ export interface LoopChildEvent {
   handler: string // Handler expression (may reference loop param)
 }
 
-export interface LoopChildReactiveAttr {
+export interface LoopChildReactiveAttr extends AttrMeta {
   childSlotId: string // bf slot ID of the element with reactive attr
   attrName: string // 'className', 'disabled', etc.
   expression: string // Expression that reads signals
-  presenceOrUndefined?: boolean
 }
 
 export interface LoopElement {
@@ -158,11 +157,10 @@ export interface ChildInit {
   propsExpr: string // e.g., "{ onAdd: handleAdd }"
 }
 
-export interface ReactiveAttribute {
+export interface ReactiveAttribute extends AttrMeta {
   slotId: string
   attrName: string
   expression: string
-  presenceOrUndefined?: boolean
 }
 
 export interface ClientOnlyElement {

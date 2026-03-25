@@ -297,13 +297,31 @@ export type IRTemplatePart =
   | { type: 'string'; value: string }
   | { type: 'ternary'; condition: string; whenTrue: string; whenFalse: string }
 
-export interface IRAttribute {
+/**
+ * Attribute metadata shared across all attribute-like interfaces.
+ * Adding a field here automatically propagates it through the entire pipeline
+ * (IRAttribute → ReactiveAttribute / ReactiveChildProp / LoopChildReactiveAttr → emit).
+ */
+export interface AttrMeta {
+  presenceOrUndefined?: boolean // true when `expr || undefined` pattern is detected
+}
+
+/**
+ * Copy all AttrMeta fields from a source object.
+ * Use this at every propagation point so new fields are automatically included.
+ */
+export function pickAttrMeta(src: AttrMeta): AttrMeta {
+  return {
+    ...(src.presenceOrUndefined !== undefined && { presenceOrUndefined: src.presenceOrUndefined }),
+  }
+}
+
+export interface IRAttribute extends AttrMeta {
   name: string
   value: string | IRTemplateLiteral | null // null for boolean attrs like 'disabled'
   dynamic: boolean
   isLiteral: boolean // true if value came from a string literal attribute
   loc: SourceLocation
-  presenceOrUndefined?: boolean // true when `expr || undefined` pattern is detected
 }
 
 export interface IREvent {
@@ -312,13 +330,12 @@ export interface IREvent {
   loc: SourceLocation
 }
 
-export interface IRProp {
+export interface IRProp extends AttrMeta {
   name: string
   value: string
   dynamic: boolean
   isLiteral: boolean // true if value came from a string literal attribute (e.g., value="account")
   loc: SourceLocation
-  presenceOrUndefined?: boolean // true when `expr || undefined` pattern is detected
   /** When the prop value is a JSX element/fragment, store the transformed IR nodes here */
   jsxChildren?: IRNode[]
 }

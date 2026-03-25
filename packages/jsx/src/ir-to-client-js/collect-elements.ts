@@ -2,7 +2,7 @@
  * IR tree traversal → collect elements into ClientJsContext.
  */
 
-import type { IRNode, IRElement, IRProp } from '../types'
+import { type IRNode, type IRElement, type IRProp, pickAttrMeta } from '../types'
 import type { ClientJsContext, ConditionalBranchChildComponent, LoopChildEvent, LoopChildReactiveAttr } from './types'
 import { attrValueToString, quotePropName, PROPS_PARAM } from './utils'
 import { isReactiveExpression, collectEventHandlersFromIR, collectConditionalBranchEvents, collectConditionalBranchRefs, collectConditionalBranchChildComponents, collectLoopChildEvents, collectLoopChildReactiveAttrs } from './reactivity'
@@ -289,7 +289,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
               propName: prop.name,
               attrName,
               expression: expandedValue,
-              presenceOrUndefined: prop.presenceOrUndefined,
+              ...pickAttrMeta(prop),
             })
           }
         } else if (prop.isLiteral) {
@@ -405,7 +405,7 @@ function collectFromElement(element: IRElement, ctx: ClientJsContext, _insideCon
             slotId: element.slotId,
             attrName: attr.name,
             expression: expandedValueStr,
-            presenceOrUndefined: attr.presenceOrUndefined,
+            ...pickAttrMeta(attr),
           })
         }
       }

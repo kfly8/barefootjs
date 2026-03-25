@@ -5,25 +5,26 @@
  */
 
 import ts from 'typescript'
-import type {
-  IRNode,
-  IRElement,
-  IRText,
-  IRExpression,
-  IRConditional,
-  IRLoop,
-  IRLoopChildComponent,
-  IRComponent,
-  IRFragment,
-  IRIfStatement,
-  IRProvider,
-  IRAttribute,
-  IREvent,
-  IRProp,
-  IRTemplateLiteral,
-  IRTemplatePart,
-  SourceLocation,
-  TypeInfo,
+import {
+  type IRNode,
+  type IRElement,
+  type IRText,
+  type IRExpression,
+  type IRConditional,
+  type IRLoop,
+  type IRLoopChildComponent,
+  type IRComponent,
+  type IRFragment,
+  type IRIfStatement,
+  type IRProvider,
+  type IRAttribute,
+  type IREvent,
+  type IRProp,
+  type IRTemplateLiteral,
+  type IRTemplatePart,
+  type SourceLocation,
+  type TypeInfo,
+  pickAttrMeta,
 } from './types'
 import { type AnalyzerContext, getSourceLocation } from './analyzer-context'
 import { parseExpression, isSupported, parseBlockBody, type ParsedExpr, type ParsedStatement } from './expression-parser'
@@ -1510,14 +1511,15 @@ function processAttributes(
     }
 
     // Regular attribute
-    const { value, dynamic, isLiteral, presenceOrUndefined } = getAttributeValue(attr, ctx)
+    const attrResult = getAttributeValue(attr, ctx)
+    const { value, dynamic, isLiteral } = attrResult
     attrs.push({
       name,
       value,
       dynamic,
       isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
-      presenceOrUndefined,
+      ...pickAttrMeta(attrResult),
     })
   }
 
@@ -1736,7 +1738,8 @@ function processComponentProps(
       }
     }
 
-    const { value, dynamic, isLiteral, presenceOrUndefined } = getAttributeValue(attr, ctx)
+    const attrResult = getAttributeValue(attr, ctx)
+    const { value, dynamic, isLiteral } = attrResult
 
     // For component props, convert IRTemplateLiteral back to string expression
     // since props are passed to components as-is
@@ -1748,7 +1751,7 @@ function processComponentProps(
       dynamic,
       isLiteral,
       loc: getSourceLocation(attr, ctx.sourceFile, ctx.filePath),
-      presenceOrUndefined,
+      ...pickAttrMeta(attrResult),
     })
   }
 

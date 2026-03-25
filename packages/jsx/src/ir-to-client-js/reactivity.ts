@@ -2,7 +2,7 @@
  * Reactivity detection: reactive expression checking, event/ref collection.
  */
 
-import type { IRNode, IRElement, IRProp } from '../types'
+import { type IRNode, type IRElement, type IRProp, pickAttrMeta } from '../types'
 import type {
   ClientJsContext,
   ConditionalBranchEvent,
@@ -254,7 +254,7 @@ export function collectLoopChildReactiveAttrs(
             childSlotId: el.slotId,
             attrName: attr.name,
             expression: expanded,
-            presenceOrUndefined: attr.presenceOrUndefined,
+            ...pickAttrMeta(attr),
           })
         }
       }

@@ -37,7 +37,7 @@ describe('reactive attributes inside .map() callbacks', () => {
     expect(clientJs).toBeDefined()
     // Should generate createEffect for reactive className
     expect(clientJs!.content).toContain('createEffect')
-    expect(clientJs!.content).toContain('className')
+    expect(clientJs!.content).toContain("setAttribute('class'")
     expect(clientJs!.content).toContain('activeTag()')
   })
 
@@ -122,7 +122,7 @@ describe('reactive attributes inside .map() callbacks', () => {
 
     const clientJs = result.files.find(f => f.type === 'clientJs')
     expect(clientJs).toBeDefined()
-    expect(clientJs!.content).toContain('className')
+    expect(clientJs!.content).toContain("setAttribute('class'")
     expect(clientJs!.content).toContain('disabled')
 
     // Verify no duplicate const declarations for same slot
