@@ -27,11 +27,13 @@ import { createSignal, createMemo } from '@barefootjs/dom'
  * ```
  */
 
-// Base classes for the switch track (h-5 w-9 matches shadcn/ui dimensions)
-const trackBaseClasses = 'peer inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent p-0 shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
+// Track: 18×34px with 1px padding → 16×32px content area = exactly fits size-4 thumb.
+// Track semicircle radius 9px, thumb radius 8px → uniform 1px gap at both positions.
+// All integer pixels for zoom resilience.
+const trackBaseClasses = 'peer inline-flex h-[18px] w-[34px] shrink-0 items-center rounded-full p-px shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50'
 
-// Focus visible classes
-const trackFocusClasses = 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
+// Focus visible classes (ring-based, no border shift)
+const trackFocusClasses = 'focus-visible:ring-ring/50 focus-visible:ring-[3px]'
 
 // State classes using data-state attribute selectors for reactivity
 const trackStateClasses = [
@@ -40,10 +42,10 @@ const trackStateClasses = [
   '[&[data-state=checked]]:bg-primary',
 ].join(' ')
 
-// Thumb base classes
-const thumbBaseClasses = 'pointer-events-none block size-4 rounded-full bg-background ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
+// Thumb base classes (size-4 = 16px fits exactly in 16px content area)
+const thumbBaseClasses = 'pointer-events-none block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform dark:[&[data-state=unchecked]]:bg-foreground dark:[&[data-state=checked]]:bg-primary-foreground'
 
-// Thumb state classes using data-state attribute selectors
+// Thumb translate: 32px content - 16px thumb = 16px travel = translate-x-4
 const thumbStateClasses = [
   '[&[data-state=unchecked]]:translate-x-0',
   '[&[data-state=checked]]:translate-x-4',
