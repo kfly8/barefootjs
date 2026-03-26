@@ -96,7 +96,7 @@ export function emitPropsExtraction(
       if (defaultVal) {
         // Wrap arrow function defaults in parentheses to avoid operator precedence issues
         // e.g., `props.onInput ?? () => {}` is a syntax error; must be `props.onInput ?? (() => {})`
-        const wrappedDefault = defaultVal.includes('=>') ? `(${defaultVal})` : defaultVal
+        const wrappedDefault = prop?.defaultContainsArrow ? `(${defaultVal})` : defaultVal
         lines.push(`  const ${propName} = ${PROPS_PARAM}.${propName} ?? ${wrappedDefault}`)
       } else if (propsUsedAsLoopArrays.has(propName)) {
         lines.push(`  const ${propName} = ${PROPS_PARAM}.${propName} ?? []`)
@@ -338,7 +338,7 @@ function rewriteDestructuredPropsInExpr(expr: string, ctx: ClientJsContext): str
 
     const defaultVal = prop.defaultValue
     const replacement = defaultVal
-      ? `(${PROPS_PARAM}.${prop.name} ?? ${defaultVal.includes('=>') ? `(${defaultVal})` : defaultVal})`
+      ? `(${PROPS_PARAM}.${prop.name} ?? ${prop.defaultContainsArrow ? `(${defaultVal})` : defaultVal})`
       : `${PROPS_PARAM}.${prop.name}`
     result = result.replace(new RegExp(`(?<![-.])\\b${prop.name}\\b`, 'g'), replacement)
   }
@@ -947,8 +947,9 @@ function valueOnlyUsesKnownNames(freeIds: Set<string>, knownNames: Set<string>):
 /**
  * Resolve chained references within a constants map.
  * If constant A references constant B, replace B's name in A's value with B's resolved value.
+ * Uses pre-computed freeIdentifiers to skip unnecessary regex replacements.
  */
-export function resolveChainedRefs(constants: Map<string, string>): void {
+export function resolveChainedRefs(constants: Map<string, string>, freeIdsMap?: Map<string, Set<string>>): void {
   let changed = true
   const maxIterations = constants.size + 1
   let iteration = 0
@@ -969,8 +970,14 @@ export function resolveChainedRefs(constants: Map<string, string>): void {
       // containing 'size-4') from regex-based identifier replacement
       const { protect, restore } = createStringProtector()
       let newValue = protect(constValue)
+      const freeIds = freeIdsMap?.get(constName)
       for (const [otherName, otherValue] of constants) {
         if (otherName === constName) continue
+        // Use freeIdentifiers to skip constants that are definitely not referenced.
+        // On subsequent iterations the value may have been expanded beyond what
+        // freeIdentifiers tracks, so fall through to regex when freeIds is unavailable
+        // or when the iteration is > 1 (values have been mutated).
+        if (freeIds && iteration === 1 && !freeIds.has(otherName)) continue
         const replaced = newValue.replace(new RegExp(`(?<![-.])\\b${otherName}\\b`, 'g'), `(${protect(otherValue)})`)
         if (replaced !== newValue) {
           newValue = replaced
@@ -1021,27 +1028,33 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
     }
     const trimmedValue = constant.value.trim()
 
-    if (trimmedValue.includes('=>')) {
+    // Use AST-derived flag instead of string inspection
+    if (constant.containsArrow) {
       unsafeLocalNames.add(constant.name)
       continue
     }
 
-    if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
+    // Use AST-derived flag instead of regex
+    if (constant.isSystemConstruct) {
       continue
     }
 
+    // Use pre-computed freeIdentifiers instead of regex
     let dependsOnReactive = false
-    for (const sigName of signalGetters) {
-      if (new RegExp(`\\b${sigName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
-    }
-    if (!dependsOnReactive) {
-      for (const setterName of signalSetters) {
-        if (new RegExp(`\\b${setterName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
+    const freeIds = constant.freeIdentifiers
+    if (freeIds) {
+      for (const sigName of signalGetters) {
+        if (freeIds.has(sigName)) { dependsOnReactive = true; break }
       }
-    }
-    if (!dependsOnReactive) {
-      for (const mName of memoNames) {
-        if (new RegExp(`\\b${mName}\\b`).test(trimmedValue)) { dependsOnReactive = true; break }
+      if (!dependsOnReactive) {
+        for (const setterName of signalSetters) {
+          if (freeIds.has(setterName)) { dependsOnReactive = true; break }
+        }
+      }
+      if (!dependsOnReactive) {
+        for (const mName of memoNames) {
+          if (freeIds.has(mName)) { dependsOnReactive = true; break }
+        }
       }
     }
 
@@ -1058,16 +1071,43 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
     inlinableConstants.set(constant.name, trimmedValue)
   }
 
-  resolveChainedRefs(inlinableConstants)
+  // Build freeIdentifiers lookup for resolveChainedRefs
+  const freeIdsMap = new Map<string, Set<string>>()
+  for (const constant of ctx.localConstants) {
+    if (constant.freeIdentifiers) {
+      freeIdsMap.set(constant.name, constant.freeIdentifiers)
+    }
+  }
 
-  // Demote constants whose value still references an unsafe name
+  resolveChainedRefs(inlinableConstants, freeIdsMap)
+
+  // Demote constants whose value still references an unsafe name.
+  // Use freeIdentifiers from the original constant for initial check,
+  // then fall back to checking the resolved value (which may have been
+  // expanded by resolveChainedRefs and no longer matches the original freeIdentifiers).
   const toRemove: string[] = []
   for (const [constName, constValue] of inlinableConstants) {
-    for (const unsafeName of unsafeLocalNames) {
-      if (new RegExp(`\\b${unsafeName}\\b`).test(constValue)) {
-        toRemove.push(constName)
-        break
+    const constFreeIds = freeIdsMap.get(constName)
+    let isUnsafe = false
+    if (constFreeIds) {
+      for (const unsafeName of unsafeLocalNames) {
+        if (constFreeIds.has(unsafeName)) { isUnsafe = true; break }
       }
+    }
+    // After chained resolution, the constValue may contain identifiers
+    // from inlined constants that are themselves unsafe. Fall back to
+    // regex for the resolved value since freeIdentifiers reflect the
+    // original source, not the resolved string.
+    if (!isUnsafe) {
+      for (const unsafeName of unsafeLocalNames) {
+        if (new RegExp(`\\b${unsafeName}\\b`).test(constValue)) {
+          isUnsafe = true
+          break
+        }
+      }
+    }
+    if (isUnsafe) {
+      toRemove.push(constName)
     }
   }
   for (const removeName of toRemove) {
@@ -1172,7 +1212,7 @@ export function buildCsrInlinableConstants(
 ): Map<string, string> {
   const csrInlinableConstants = new Map(inlinableConstants)
   for (const constant of ctx.localConstants) {
-    if (unsafeLocalNames.has(constant.name) && constant.value && !constant.value.includes('=>')) {
+    if (unsafeLocalNames.has(constant.name) && constant.value && !constant.containsArrow) {
       let value = constant.value.trim()
       for (const [getter, initial] of signalMap) {
         value = value.replace(new RegExp(`\\b${getter}\\(\\)`, 'g'), `(${initial})`)

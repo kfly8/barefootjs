@@ -67,6 +67,8 @@ export interface ParamInfo {
   type: TypeInfo
   optional: boolean
   defaultValue?: string
+  /** When true, the default value contains an arrow function or function expression (computed from AST). */
+  defaultContainsArrow?: boolean
 }
 
 // =============================================================================
@@ -112,6 +114,10 @@ export interface IRExpression {
   loc: SourceLocation
   /** When true, expression should be evaluated on client side only */
   clientOnly?: boolean
+  /** When true, expression calls signal getters or memos (has reactive `foo()` pattern). */
+  callsReactiveGetters?: boolean
+  /** When true, expression contains function call(s) — any `identifier()` pattern (computed from AST). */
+  hasFunctionCalls?: boolean
 }
 
 export interface IRConditional {
@@ -411,6 +417,10 @@ export interface ConstantInfo {
   isJsx?: boolean
   /** When true, the initializer is a JSX-returning function inlined at call sites (#569). */
   isJsxFunction?: boolean
+  /** When true, the initializer contains an arrow function or function expression (computed from AST). */
+  containsArrow?: boolean
+  /** When true, the initializer is createContext() or new WeakMap() (computed from AST). */
+  isSystemConstruct?: boolean
 }
 
 export interface TypeDefinition {

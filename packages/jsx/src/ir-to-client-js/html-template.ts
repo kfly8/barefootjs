@@ -459,7 +459,8 @@ export function canGenerateStaticTemplate(
 
     case 'expression':
       if (hasUnsafeRef(node.expr)) return false
-      if (node.expr.includes('()') && !isSimplePropExpression(node.expr, propNames)) {
+      // Use AST-derived hasFunctionCalls flag when available, fall back to string check
+      if (node.hasFunctionCalls && !isSimplePropExpression(node.expr, propNames)) {
         return false
       }
       return true

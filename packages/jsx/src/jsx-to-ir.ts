@@ -55,6 +55,40 @@ interface TransformContext {
   getJS(node: ts.Node): string
 }
 
+/**
+ * Walk an expression AST to check if it calls any known signal getter or memo.
+ */
+function exprCallsReactiveGetters(expr: ts.Expression, ctx: TransformContext): boolean {
+  let found = false
+  function visit(n: ts.Node) {
+    if (found) return
+    if (ts.isCallExpression(n) && ts.isIdentifier(n.expression)) {
+      const name = n.expression.text
+      if (ctx.analyzer.signals.some(s => s.getter === name) || ctx.analyzer.memos.some(m => m.name === name)) {
+        found = true
+        return
+      }
+    }
+    ts.forEachChild(n, visit)
+  }
+  visit(expr)
+  return found
+}
+
+/**
+ * Walk an expression AST to check if it contains any function call (identifier followed by arguments).
+ */
+function exprHasFunctionCalls(expr: ts.Expression): boolean {
+  let found = false
+  function visit(n: ts.Node) {
+    if (found) return
+    if (ts.isCallExpression(n)) { found = true; return }
+    ts.forEachChild(n, visit)
+  }
+  visit(expr)
+  return found
+}
+
 function createTransformContext(analyzer: AnalyzerContext): TransformContext {
   return {
     analyzer,
@@ -680,6 +714,10 @@ function transformExpression(
   const needsSlot = reactive || isClientOnly
   const slotId = needsSlot ? generateSlotId(ctx) : null
 
+  // Compute AST-derived flags for Phase 2 optimization
+  const callsReactive = exprCallsReactiveGetters(expr, ctx)
+  const hasCalls = exprHasFunctionCalls(expr)
+
   return {
     type: 'expression',
     expr: exprText,
@@ -687,6 +725,8 @@ function transformExpression(
     reactive,
     slotId,
     clientOnly: isClientOnly || undefined,
+    callsReactiveGetters: callsReactive || undefined,
+    hasFunctionCalls: hasCalls || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
@@ -842,6 +882,8 @@ function transformNullishCoalescing(
     typeInfo: inferExpressionType(node.left, ctx),
     reactive,
     slotId: null,
+    callsReactiveGetters: exprCallsReactiveGetters(node.left, ctx) || undefined,
+    hasFunctionCalls: exprHasFunctionCalls(node.left) || undefined,
     loc: getSourceLocation(node.left, ctx.sourceFile, ctx.filePath),
   }
 
@@ -913,6 +955,8 @@ function transformConditionalBranch(
     typeInfo: inferExpressionType(node, ctx),
     reactive: isReactiveExpression(exprText, ctx, node),
     slotId: null,
+    callsReactiveGetters: exprCallsReactiveGetters(node, ctx) || undefined,
+    hasFunctionCalls: exprHasFunctionCalls(node) || undefined,
     loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
   }
 }
