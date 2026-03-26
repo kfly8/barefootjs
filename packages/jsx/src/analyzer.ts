@@ -839,6 +839,29 @@ function extractFreeIdentifiersFromNode(node: ts.Node): Set<string> {
   return ids
 }
 
+/**
+ * Check if an AST node contains an arrow function or function expression.
+ */
+function nodeContainsArrow(node: ts.Node): boolean {
+  let found = false
+  function visit(n: ts.Node) {
+    if (found) return
+    if (ts.isArrowFunction(n) || ts.isFunctionExpression(n)) { found = true; return }
+    ts.forEachChild(n, visit)
+  }
+  visit(node)
+  return found
+}
+
+/**
+ * Check if an AST node is a createContext() call or new WeakMap() expression.
+ */
+function getSystemConstructKind(node: ts.Node): 'createContext' | 'weakMap' | undefined {
+  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'createContext') return 'createContext'
+  if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'WeakMap') return 'weakMap'
+  return undefined
+}
+
 function collectConstant(
   node: ts.VariableDeclaration,
   ctx: AnalyzerContext,
@@ -916,6 +939,10 @@ function collectConstant(
     ? extractFreeIdentifiersFromNode(node.initializer)
     : undefined
 
+  // Compute AST-derived flags for Phase 2 optimization
+  const containsArrow = node.initializer ? nodeContainsArrow(node.initializer) : false
+  const systemConstructKind = node.initializer ? getSystemConstructKind(node.initializer) : undefined
+
   ctx.localConstants.push({
     name,
     value,
@@ -927,6 +954,8 @@ function collectConstant(
     freeIdentifiers,
     isJsx,
     isJsxFunction: isJsxFunction || undefined,
+    containsArrow: containsArrow || undefined,
+    systemConstructKind,
   })
 }
 
@@ -1007,11 +1036,13 @@ function extractProps(param: ts.ParameterDeclaration, ctx: AnalyzerContext): voi
           continue
         }
 
+        const defaultContainsArrow = element.initializer ? nodeContainsArrow(element.initializer) : false
         ctx.propsParams.push({
           name: localName,
           type: { kind: 'unknown', raw: 'unknown' },
           optional: !!element.initializer,
           defaultValue,
+          defaultContainsArrow: defaultContainsArrow || undefined,
         })
       }
     }

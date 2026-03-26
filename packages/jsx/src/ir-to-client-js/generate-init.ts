@@ -95,11 +95,9 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
         continue
       }
 
-      const trimmedValue = constant.value.trim()
-
       // createContext() and new WeakMap() must be at module level to enable
       // cross-component sharing (unique Symbol / identity-based store)
-      if (/^createContext\b/.test(trimmedValue) || /^new WeakMap\b/.test(trimmedValue)) {
+      if (constant.systemConstructKind) {
         moduleLevelConstants.push(constant)
         moduleLevelConstantNames.add(constant.name)
         continue
@@ -118,7 +116,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   for (const provider of ctx.providerSetups) {
     if (!moduleLevelConstantNames.has(provider.contextName)) {
       const contextConstant = ctx.localConstants.find(
-        (c) => c.name === provider.contextName && c.value && /^createContext\b/.test(c.value.trim())
+        (c) => c.name === provider.contextName && c.systemConstructKind === 'createContext'
       )
       if (contextConstant) {
         moduleLevelConstants.push(contextConstant)
