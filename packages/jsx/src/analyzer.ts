@@ -856,12 +856,10 @@ function nodeContainsArrow(node: ts.Node): boolean {
 /**
  * Check if an AST node is a createContext() call or new WeakMap() expression.
  */
-function isSystemConstructNode(node: ts.Node): boolean {
-  // createContext(...)
-  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'createContext') return true
-  // new WeakMap(...)
-  if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'WeakMap') return true
-  return false
+function getSystemConstructKind(node: ts.Node): 'createContext' | 'weakMap' | undefined {
+  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'createContext') return 'createContext'
+  if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'WeakMap') return 'weakMap'
+  return undefined
 }
 
 function collectConstant(
@@ -943,7 +941,7 @@ function collectConstant(
 
   // Compute AST-derived flags for Phase 2 optimization
   const containsArrow = node.initializer ? nodeContainsArrow(node.initializer) : false
-  const isSystemConstruct = node.initializer ? isSystemConstructNode(node.initializer) : false
+  const systemConstructKind = node.initializer ? getSystemConstructKind(node.initializer) : undefined
 
   ctx.localConstants.push({
     name,
@@ -957,7 +955,7 @@ function collectConstant(
     isJsx,
     isJsxFunction: isJsxFunction || undefined,
     containsArrow: containsArrow || undefined,
-    isSystemConstruct: isSystemConstruct || undefined,
+    systemConstructKind,
   })
 }
 

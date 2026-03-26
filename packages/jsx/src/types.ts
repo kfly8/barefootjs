@@ -419,8 +419,8 @@ export interface ConstantInfo {
   isJsxFunction?: boolean
   /** When true, the initializer contains an arrow function or function expression (computed from AST). */
   containsArrow?: boolean
-  /** When true, the initializer is createContext() or new WeakMap() (computed from AST). */
-  isSystemConstruct?: boolean
+  /** The kind of system construct, if the initializer is createContext() or new WeakMap(). */
+  systemConstructKind?: 'createContext' | 'weakMap'
 }
 
 export interface TypeDefinition {

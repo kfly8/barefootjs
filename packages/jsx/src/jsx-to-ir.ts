@@ -53,21 +53,28 @@ interface TransformContext {
   patterns: ReactivityPatterns
   /** Shortcut for analyzer.getJS(node) */
   getJS(node: ts.Node): string
+  /** Cached set of reactive getter names (signal getters + memo names) for O(1) lookup */
+  _reactiveGetterNames?: Set<string>
 }
 
 /**
  * Walk an expression AST to check if it calls any known signal getter or memo.
+ * Uses a pre-built Set for O(1) lookup per call expression.
  */
 function exprCallsReactiveGetters(expr: ts.Expression, ctx: TransformContext): boolean {
+  // Build reactive name set once per component (cached on ctx)
+  if (!ctx._reactiveGetterNames) {
+    ctx._reactiveGetterNames = new Set<string>()
+    for (const s of ctx.analyzer.signals) ctx._reactiveGetterNames.add(s.getter)
+    for (const m of ctx.analyzer.memos) ctx._reactiveGetterNames.add(m.name)
+  }
+  const names = ctx._reactiveGetterNames
+
   let found = false
   function visit(n: ts.Node) {
     if (found) return
     if (ts.isCallExpression(n) && ts.isIdentifier(n.expression)) {
-      const name = n.expression.text
-      if (ctx.analyzer.signals.some(s => s.getter === name) || ctx.analyzer.memos.some(m => m.name === name)) {
-        found = true
-        return
-      }
+      if (names.has(n.expression.text)) { found = true; return }
     }
     ts.forEachChild(n, visit)
   }
@@ -76,7 +83,9 @@ function exprCallsReactiveGetters(expr: ts.Expression, ctx: TransformContext): b
 }
 
 /**
- * Walk an expression AST to check if it contains any function call (identifier followed by arguments).
+ * Walk an expression AST to check if it contains any CallExpression.
+ * Catches all call patterns: identifier(), obj.method(), fn?.(), IIFEs, etc.
+ * Used by canGenerateStaticTemplate() to detect expressions unsafe for static rendering.
  */
 function exprHasFunctionCalls(expr: ts.Expression): boolean {
   let found = false

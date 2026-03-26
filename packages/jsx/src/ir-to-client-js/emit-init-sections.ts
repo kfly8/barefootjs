@@ -1035,7 +1035,7 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
     }
 
     // Use AST-derived flag instead of regex
-    if (constant.isSystemConstruct) {
+    if (constant.systemConstructKind) {
       continue
     }
 
