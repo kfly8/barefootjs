@@ -45,7 +45,7 @@ test.describe('Kanban Board Block', () => {
   // closest('[data-key]') finds inner data-key instead of outer, and inner
   // loop variable (task) is undefined in delegation scope.
   // See memory: compiler-reconcile-templates-events.md
-  test.describe.skip('Move Tasks', () => {
+  test.describe('Move Tasks', () => {
     test('move right moves task from To Do to In Progress', async ({ page }) => {
       const section = page.locator('[bf-s^="KanbanDemo_"]:not([data-slot])').first()
       const columns = section.locator('.kanban-column')
@@ -106,7 +106,7 @@ test.describe('Kanban Board Block', () => {
     })
   })
 
-  test.describe.skip('Delete Task', () => {
+  test.describe('Delete Task', () => {
     test('delete removes task and updates count', async ({ page }) => {
       const section = page.locator('[bf-s^="KanbanDemo_"]:not([data-slot])').first()
       const column = section.locator('.kanban-column').first()
@@ -117,7 +117,7 @@ test.describe('Kanban Board Block', () => {
     })
   })
 
-  test.describe.skip('Toast', () => {
+  test.describe('Toast', () => {
     test('moving task shows toast', async ({ page }) => {
       const section = page.locator('[bf-s^="KanbanDemo_"]:not([data-slot])').first()
       const firstTask = section.locator('.kanban-column').nth(0).locator('.task-card').first()
