@@ -8,6 +8,7 @@
 import { getTemplate } from './template'
 import { getComponentInit } from './registry'
 import { hydratedScopes } from './hydration-state'
+import { untrack } from './reactive'
 import { BF_SCOPE } from './attrs'
 import type { ComponentDef } from './types'
 
@@ -64,15 +65,21 @@ export function createComponent(
     return createPlaceholder(name, key)
   }
 
-  // 2. Evaluate children from props getter
+  // 2. Evaluate children and props for template HTML generation.
+  // Use untrack() so signal reads during prop evaluation don't contaminate
+  // the caller's effect tracking. This prevents full list re-render when
+  // e.g. an Input's value={signal()} changes during typing.
+  // Component reactivity is handled by init()'s own createEffect calls.
   const childrenDescriptor = Object.getOwnPropertyDescriptor(props, 'children')
-  const children = childrenDescriptor && typeof childrenDescriptor.get === 'function'
-    ? childrenDescriptor.get()
-    : props.children
+  const children = untrack(() =>
+    childrenDescriptor && typeof childrenDescriptor.get === 'function'
+      ? childrenDescriptor.get()
+      : props.children
+  )
 
   // 3. Generate HTML from props
   // When children contain DOM elements, pass empty children for shell HTML
-  const unwrappedProps = unwrapPropsForTemplate(props)
+  const unwrappedProps = untrack(() => unwrapPropsForTemplate(props))
   const hasDomChildren = children != null && hasDomElements(children)
   if (hasDomChildren) {
     unwrappedProps.children = ''
