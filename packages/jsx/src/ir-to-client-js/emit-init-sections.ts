@@ -7,7 +7,7 @@ import type { AttrMeta, ComponentIR, SignalInfo, IRFragment } from '../types'
 import type { Declaration } from './declaration-sort'
 import { isBooleanAttr } from '../html-constants'
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef, ConditionalBranchChildComponent, ConditionalBranchTextEffect, LoopChildEvent, LoopElement } from './types'
-import { inferDefaultValue, toHtmlAttrName, toDomEventName, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId, PROPS_PARAM } from './utils'
+import { inferDefaultValue, toHtmlAttrName, toDomEventName, wrapHandlerInBlock, buildChainedArrayExpr, quotePropName, varSlotId, bodyReferencesComponentScope, PROPS_PARAM } from './utils'
 import { addCondAttrToTemplate, canGenerateStaticTemplate, irToComponentTemplate, generateCsrTemplate, irChildrenToJsExpr, createStringProtector } from './html-template'
 
 /**
@@ -487,11 +487,12 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           attrsBySlot.get(attr.childSlotId)!.push(attr)
         }
         for (const [slotId, attrs] of attrsBySlot) {
-          lines.push(`        const __t_${slotId} = __iterEl.matches('[bf="${slotId}"]') ? __iterEl : __iterEl.querySelector('[bf="${slotId}"]')`)
-          lines.push(`        if (__t_${slotId}) {`)
+          const varName = `__t_${varSlotId(slotId)}`
+          lines.push(`        const ${varName} = __iterEl.matches('[bf="${slotId}"]') ? __iterEl : __iterEl.querySelector('[bf="${slotId}"]')`)
+          lines.push(`        if (${varName}) {`)
           for (const attr of attrs) {
             lines.push(`          createEffect(() => {`)
-            for (const stmt of emitAttrUpdate(`__t_${slotId}`, attr.attrName, attr.expression, attr)) {
+            for (const stmt of emitAttrUpdate(varName, attr.attrName, attr.expression, attr)) {
               lines.push(`            ${stmt}`)
             }
             lines.push(`          })`)
@@ -1245,6 +1246,9 @@ export function buildInlinableConstants(ctx: ClientJsContext): {
   if (ctx.propsObjectName) componentScopeNames.add(ctx.propsObjectName)
 
   for (const fn of ctx.localFunctions) {
+    // Module-level functions that don't reference component internals
+    // are emitted at module scope, so they are available in the template.
+    if (fn.isModule && !bodyReferencesComponentScope(fn.body, componentScopeNames)) continue
     unsafeLocalNames.add(fn.name)
   }
 
