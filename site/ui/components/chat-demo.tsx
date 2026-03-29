@@ -317,7 +317,10 @@ export function ChatDemo() {
             </div>
           </ScrollArea>
 
-          {/* Typing indicator — outside ScrollArea to test conditional rendering */}
+          {/* Typing indicator — placed outside the message loop container
+              to avoid reconcileElements destroying the comment markers.
+              See: reconcileElements clears all non-keyed siblings in its
+              container, including conditional comment markers and ref divs. */}
           {isTyping() ? (
             <div className="typing-indicator flex justify-start px-4 pb-2">
               <div className="bg-muted rounded-2xl px-4 py-2">
