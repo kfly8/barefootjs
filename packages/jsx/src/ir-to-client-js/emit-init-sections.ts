@@ -487,11 +487,12 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
           attrsBySlot.get(attr.childSlotId)!.push(attr)
         }
         for (const [slotId, attrs] of attrsBySlot) {
-          lines.push(`        const __t_${slotId} = __iterEl.matches('[bf="${slotId}"]') ? __iterEl : __iterEl.querySelector('[bf="${slotId}"]')`)
-          lines.push(`        if (__t_${slotId}) {`)
+          const varName = `__t_${varSlotId(slotId)}`
+          lines.push(`        const ${varName} = __iterEl.matches('[bf="${slotId}"]') ? __iterEl : __iterEl.querySelector('[bf="${slotId}"]')`)
+          lines.push(`        if (${varName}) {`)
           for (const attr of attrs) {
             lines.push(`          createEffect(() => {`)
-            for (const stmt of emitAttrUpdate(`__t_${slotId}`, attr.attrName, attr.expression, attr)) {
+            for (const stmt of emitAttrUpdate(varName, attr.attrName, attr.expression, attr)) {
               lines.push(`            ${stmt}`)
             }
             lines.push(`          })`)
