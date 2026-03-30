@@ -10,6 +10,19 @@ import { commentScopeRegistry, getCommentScopeBoundary } from './scope'
 import { hydratedScopes } from './hydration-state'
 import { BF_SCOPE, BF_SLOT, BF_CHILD_PREFIX, BF_PORTAL_OWNER, BF_PARENT_OWNED_PREFIX, BF_SCOPE_COMMENT_PREFIX } from './attrs'
 
+// --- helpers ---
+
+/** Strip the child component prefix (~) from a scope ID. */
+function stripChildPrefix(raw: string): string {
+  return raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
+}
+
+/** Read bf-s attribute and strip child prefix. Returns null when absent. */
+function getScopeId(el: Element | null): string | null {
+  const raw = el?.getAttribute(BF_SCOPE)
+  return raw ? stripChildPrefix(raw) : null
+}
+
 // --- findScope ---
 
 /**
@@ -51,7 +64,7 @@ export function findScope(
   const rawScope = parentEl?.getAttribute(BF_SCOPE)
   if (rawScope) {
     // Strip child prefix for name matching
-    const scopeId = rawScope.startsWith(BF_CHILD_PREFIX) ? rawScope.slice(1) : rawScope
+    const scopeId = stripChildPrefix(rawScope)
     // Accept if it matches the name prefix OR if it's a child slot pattern
     // (when initChild passes the scope element directly)
     if (
@@ -112,9 +125,7 @@ function findScopeByComment(
     // Extract scope ID from comment value: "bf-scope:Name_xxx" or "bf-scope:~Name_xxx|propsJson"
     let scopeId = value.slice(prefix.length)
     // Strip child prefix
-    if (scopeId.startsWith(BF_CHILD_PREFIX)) {
-      scopeId = scopeId.slice(1)
-    }
+    scopeId = stripChildPrefix(scopeId)
     // Strip props JSON suffix
     const pipeIdx = scopeId.indexOf('|')
     if (pipeIdx >= 0) {
@@ -176,17 +187,12 @@ function belongsToScope(
   const rawElementScope = element.getAttribute(BF_SCOPE)
   if (rawElementScope) {
     // Strip child prefix for ID comparison
-    const elementScope = rawElementScope.startsWith(BF_CHILD_PREFIX)
-      ? rawElementScope.slice(1)
-      : rawElementScope
+    const elementScope = stripChildPrefix(rawElementScope)
     // When looking for child scope elements (bf-s selectors),
     // accept only scopes whose ID is parentScopeId + "_sN" (single slot suffix).
     // Reject nested scopes like parentScopeId + "_sM_sN" which belong to an intermediate scope.
     if (isLookingForScope) {
-      const rawScopeId = scope.getAttribute(BF_SCOPE)
-      const scopeId = rawScopeId?.startsWith(BF_CHILD_PREFIX)
-        ? rawScopeId.slice(1)
-        : rawScopeId
+      const scopeId = getScopeId(scope)
       if (scopeId && elementScope.startsWith(scopeId + '_')) {
         const remainder = elementScope.slice(scopeId.length + 1)
         return /^s\d+$/.test(remainder)
@@ -257,7 +263,8 @@ function findFirstInScope(
  */
 export function find(
   scope: Element | null,
-  selector: string
+  selector: string,
+  ignoreScope?: boolean
 ): Element | null {
   if (!scope) return null
 
@@ -269,7 +276,7 @@ export function find(
   const commentInfo = commentScopeRegistry.get(scope)
   if (commentInfo) {
     // Search within the comment scope range (siblings between comment markers)
-    const found = findInCommentScopeRange(commentInfo.commentNode, selector, isLookingForScope)
+    const found = findInCommentScopeRange(commentInfo.commentNode, selector, isLookingForScope, ignoreScope)
     if (found) return found
 
     // Also search portals owned by this scope
@@ -279,13 +286,12 @@ export function find(
   // For non-scope selectors, check if scope itself matches first
   if (!isLookingForScope && scope.matches?.(selector)) return scope
 
-  // Search descendants, excluding nested scopes for slot searches
-  // For scope selectors, prioritize finding child scope elements
-  const found = findFirstInScope(
-    scope.querySelectorAll(selector),
-    scope,
-    isLookingForScope
-  )
+  // Search descendants.
+  // When ignoreScope is true (parent-owned slots), skip scope boundary checks
+  // because the ^ prefix guarantees the element is owned by the calling scope.
+  const found = ignoreScope
+    ? scope.querySelector(selector)
+    : findFirstInScope(scope.querySelectorAll(selector), scope, isLookingForScope)
   if (found) return found
 
   // For scope selectors, if no descendant found, check if scope itself matches
@@ -303,11 +309,9 @@ export function find(
       for (const sibling of siblings) {
         if (sibling === scope) continue
         if (sibling.matches?.(selector)) return sibling
-        const siblingFound = findFirstInScope(
-          sibling.querySelectorAll(selector),
-          sibling,
-          isLookingForScope
-        )
+        const siblingFound = ignoreScope
+          ? sibling.querySelector(selector)
+          : findFirstInScope(sibling.querySelectorAll(selector), sibling, isLookingForScope)
         if (siblingFound) return siblingFound
       }
     }
@@ -326,7 +330,8 @@ export function find(
 function findInCommentScopeRange(
   commentNode: Comment,
   selector: string,
-  isLookingForScope: boolean
+  isLookingForScope: boolean,
+  ignoreScope?: boolean
 ): Element | null {
   const boundary = getCommentScopeBoundary(commentNode)
   let node: Node | null = commentNode.nextSibling
@@ -337,7 +342,7 @@ function findInCommentScopeRange(
       // Check if this element matches
       if (el.matches?.(selector)) return el
       // Search within this element
-      if (!isLookingForScope) {
+      if (!isLookingForScope && !ignoreScope) {
         // For slot searches, find first match that's not in a nested scope
         const matches = el.querySelectorAll(selector)
         for (const match of matches) {
@@ -345,7 +350,7 @@ function findInCommentScopeRange(
           if (!nearestScope) return match
         }
       } else {
-        // For scope searches, just find matching descendants
+        // For scope searches or ignoreScope, just find matching descendants
         const match = el.querySelector(selector)
         if (match) return match
       }
@@ -401,62 +406,11 @@ export function qsa(el: Element | null, selector: string): Element | null {
  */
 export function $(scope: Element | null, ...ids: string[]): (Element | null)[] {
   return ids.map(id => {
-    if (id.startsWith(BF_PARENT_OWNED_PREFIX)) {
-      return findParentOwned(scope, id)
-    }
-    return find(scope, `[${BF_SLOT}="${id}"]`)
+    // Parent-owned slots (^-prefixed) search all descendants ignoring scope boundaries,
+    // because the ^ prefix guarantees the element is owned by the calling scope.
+    const ignoreScope = id.startsWith(BF_PARENT_OWNED_PREFIX)
+    return find(scope, `[${BF_SLOT}="${id}"]`, ignoreScope || undefined)
   })
-}
-
-/**
- * Find a parent-owned slot element that may be rendered inside a child component's scope.
- * Unlike regular find(), this searches ALL descendants without scope boundary checks,
- * because the ^ prefix guarantees the element is owned by this (parent) scope.
- */
-function findParentOwned(scope: Element | null, id: string): Element | null {
-  if (!scope) return null
-  const selector = `[${BF_SLOT}="${id}"]`
-
-  // Check scope itself
-  if (scope.matches?.(selector)) return scope
-
-  // Search ALL descendants (no belongsToScope check — ^ guarantees parent ownership)
-  const match = scope.querySelector(selector)
-  if (match) return match
-
-  // Fragment root siblings
-  const scopeId = scope.getAttribute(BF_SCOPE)
-  if (scopeId) {
-    const parent = scope.parentElement
-    if (parent) {
-      const siblings = parent.querySelectorAll(`[${BF_SCOPE}="${scopeId}"]`)
-      for (const sibling of siblings) {
-        if (sibling === scope) continue
-        const siblingMatch = sibling.querySelector(selector)
-        if (siblingMatch) return siblingMatch
-      }
-    }
-    // Search portals
-    return findInPortals(scopeId, selector)
-  }
-
-  // Comment-based scope
-  const commentInfo = commentScopeRegistry.get(scope)
-  if (commentInfo) {
-    const boundary = getCommentScopeBoundary(commentInfo.commentNode)
-    let node: Node | null = commentInfo.commentNode.nextSibling
-    while (node && node !== boundary) {
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const el = node as Element
-        if (el.matches?.(selector)) return el
-        const innerMatch = el.querySelector(selector)
-        if (innerMatch) return innerMatch
-      }
-      node = node.nextSibling
-    }
-  }
-
-  return null
 }
 
 /**
@@ -493,8 +447,7 @@ function $cSingle(scope: Element | null, id: string): Element | null {
     const parentScopeIds = getDualScopeIds(scope)
     if (parentScopeIds.length === 0) return result
 
-    const raw = result.getAttribute(BF_SCOPE) ?? ''
-    const childScopeId = raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
+    const childScopeId = getScopeId(result) ?? ''
 
     for (const parentId of parentScopeIds) {
       if (childScopeId.endsWith(`${parentId}_${cleanId}`)) return result
@@ -525,8 +478,7 @@ function $cSingle(scope: Element | null, id: string): Element | null {
 function getDualScopeIds(scope: Element | null): string[] {
   if (!scope) return []
 
-  const raw = scope.getAttribute(BF_SCOPE)
-  const bfScopeId = raw ? (raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw) : null
+  const bfScopeId = getScopeId(scope)
 
   const commentInfo = commentScopeRegistry.get(scope)
   const commentScopeId = commentInfo?.scopeId ?? null
@@ -562,8 +514,7 @@ function findDirectChild(
       if (node.nodeType === Node.ELEMENT_NODE) {
         const candidates = (node as Element).querySelectorAll(selector)
         for (const candidate of candidates) {
-          const raw = candidate.getAttribute(BF_SCOPE) ?? ''
-          const id = raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
+          const id = getScopeId(candidate) ?? ''
           if (id.endsWith(expectedSuffix)) return candidate
         }
       }
@@ -575,8 +526,7 @@ function findDirectChild(
   // Regular scope — search descendants
   const candidates = scope.querySelectorAll(selector)
   for (const candidate of candidates) {
-    const raw = candidate.getAttribute(BF_SCOPE) ?? ''
-    const id = raw.startsWith(BF_CHILD_PREFIX) ? raw.slice(1) : raw
+    const id = getScopeId(candidate) ?? ''
     if (id.endsWith(expectedSuffix)) return candidate
   }
 
