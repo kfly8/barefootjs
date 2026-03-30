@@ -13,6 +13,14 @@ import type { LoopElement } from './types'
 export const PROPS_PARAM = '_p'
 
 /**
+ * HTML attribute constants for generated code.
+ * Values must match packages/dom/src/attrs.ts (runtime).
+ */
+export const DATA_KEY = 'data-key'
+export const DATA_KEY_PREFIX = 'data-key-'
+export const DATA_BF_PH = 'data-bf-ph'
+
+/**
  * Strip ^ prefix from slot ID for use as JavaScript variable name.
  * `^s3` → `s3` (since `_^s3` is not a valid identifier)
  */
