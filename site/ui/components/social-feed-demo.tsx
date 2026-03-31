@@ -189,7 +189,8 @@ export function SocialFeedDemo() {
         </div>
       </div>
 
-      {/* Post list */}
+      {/* Post list — wrapper div separates loop container from stats bar */}
+      <div className="space-y-6">
       {posts().map(post => (
         <div key={post.id} className="rounded-lg border">
           {/* Post header */}
@@ -312,6 +313,7 @@ export function SocialFeedDemo() {
           ) : null}
         </div>
       ))}
+      </div>
     </div>
   )
 }
