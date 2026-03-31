@@ -362,20 +362,123 @@ function emitDynamicLoopEventDelegation(lines: string[], elem: LoopElement): voi
   }
 }
 
+/** Nesting-level-separated data for composite loop emission. */
+interface CompositeLoopContext {
+  elem: LoopElement
+  outerComps: LoopElement['nestedComponents'] & {}
+  innerComps: LoopElement['nestedComponents'] & {}
+  outerEvents: LoopChildEvent[]
+  innerEvents: LoopChildEvent[]
+  innerLoopInfo: { array: string; param: string; key: string; depth: number; containerSlotId?: string | null } | null
+}
+
+/** Emit a single addEventListener call for a child event on a given element. */
+function emitEventSetup(ls: string[], indent: string, elVar: string, ev: LoopChildEvent): void {
+  const handler = ev.handler.trim().startsWith('(') || ev.handler.trim().startsWith('function')
+    ? `(${ev.handler})(e)`
+    : ev.handler
+  ls.push(`${indent}{ const __e = qsa(${elVar}, '[bf="${ev.childSlotId}"]'); if (__e) __e.addEventListener('${toDomEventName(ev.eventName)}', (e) => { ${handler} }) }`)
+}
+
+/** Build the component-finder CSS selector for SSR hydration initChild. */
+function buildCompSelector(comp: { slotId?: string | null; name: string }): string {
+  return comp.slotId
+    ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
+    : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
+}
+
+/**
+ * Emit component replacement + event setup for a list of components and events.
+ * Used for both outer-level and inner-level items in renderItem body.
+ *
+ * For new elements (CSR): replaces placeholders with createComponent.
+ * For SSR elements (hydration): finds scope elements and calls initChild.
+ */
+function emitComponentAndEventSetup(
+  ls: string[],
+  indent: string,
+  elVar: string,
+  comps: CompositeLoopContext['outerComps'],
+  events: LoopChildEvent[],
+  mode: 'csr' | 'ssr',
+): void {
+  for (const comp of comps) {
+    const propsExpr = buildComponentPropsExpr(comp)
+    if (mode === 'csr') {
+      const phId = comp.slotId || comp.name
+      const keyProp = comp.props.find(p => p.name === 'key')
+      const keyArg = keyProp ? `, ${keyProp.value}` : ''
+      ls.push(`${indent}{ const __ph = ${elVar}.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) __ph.replaceWith(createComponent('${comp.name}', ${propsExpr}${keyArg})) }`)
+    } else {
+      const selector = buildCompSelector(comp)
+      ls.push(`${indent}{ const __c = ${elVar}.querySelector('${selector}'); if (__c) initChild('${comp.name}', ${elVar}, ${propsExpr}) }`)
+    }
+  }
+  for (const ev of events) {
+    emitEventSetup(ls, indent, elVar, ev)
+  }
+}
+
+/**
+ * Emit the renderItem function body for composite loops.
+ * Creates element from template, replaces placeholders, sets up events.
+ */
+function emitCompositeRenderItemBody(ls: string[], indent: string, ctx: CompositeLoopContext): void {
+  ls.push(`${indent}const __tpl = document.createElement('template')`)
+  if (ctx.elem.mapPreamble) {
+    ls.push(`${indent}${ctx.elem.mapPreamble}`)
+  }
+  ls.push(`${indent}__tpl.innerHTML = \`${ctx.elem.template}\``)
+  ls.push(`${indent}const __el = __tpl.content.firstElementChild.cloneNode(true)`)
+
+  // Outer-level component + event setup
+  emitComponentAndEventSetup(ls, indent, '__el', ctx.outerComps, ctx.outerEvents, 'csr')
+
+  // Inner loop component + event setup
+  if (ctx.innerLoopInfo && (ctx.innerComps.length > 0 || ctx.innerEvents.length > 0)) {
+    const inner = ctx.innerLoopInfo
+    ls.push(`${indent}// Initialize inner loop components and events`)
+    ls.push(`${indent}${inner.array}.forEach((${inner.param}) => {`)
+    if (inner.key) {
+      ls.push(`${indent}  const __innerEl = __el.querySelector('[${keyAttrName(inner.depth)}="' + ${inner.key} + '"]')`)
+    } else {
+      ls.push(`${indent}  const __innerEl = null`)
+    }
+    ls.push(`${indent}  if (!__innerEl) return`)
+    emitComponentAndEventSetup(ls, `${indent}  `, '__innerEl', ctx.innerComps, ctx.innerEvents, 'csr')
+    ls.push(`${indent}})`)
+  }
+
+  ls.push(`${indent}return __el`)
+}
+
+/**
+ * Emit the hydration afterTag callback for composite loops.
+ * Initializes components and events on SSR-rendered elements.
+ */
+function emitCompositeHydrationSetup(ls: string[], ctx: CompositeLoopContext): void {
+  // Outer-level component + event setup on SSR elements
+  emitComponentAndEventSetup(ls, '        ', '__hChild', ctx.outerComps, ctx.outerEvents, 'ssr')
+
+  // Inner loop items in SSR
+  if (ctx.innerLoopInfo && (ctx.innerComps.length > 0 || ctx.innerEvents.length > 0)) {
+    const inner = ctx.innerLoopInfo
+    const containerSelector = inner.containerSlotId ? `'[bf="${inner.containerSlotId}"]'` : 'null'
+    ls.push(`        { const __ic = ${containerSelector !== 'null' ? `__hChild.querySelector(${containerSelector})` : '__hChild'}`)
+    ls.push(`        if (__ic) ${inner.array}.forEach((${inner.param}, __innerIdx) => {`)
+    ls.push(`          const __innerEl = __ic.children[__innerIdx]`)
+    ls.push(`          if (!__innerEl) return`)
+    if (inner.key) {
+      ls.push(`          __innerEl.setAttribute('${keyAttrName(inner.depth)}', String(${inner.key}))`)
+    }
+    emitComponentAndEventSetup(ls, '          ', '__innerEl', ctx.innerComps, ctx.innerEvents, 'ssr')
+    ls.push(`        }) }`)
+  }
+}
+
 /**
  * Emit reconcileElements with composite rendering for dynamic loops whose
  * native-element body contains child components.
- *
- * Generates:
- * 1. A hydration pass that tags SSR elements with data-key and initializes
- *    child components via initChild() + sets up events via addEventListener
- * 2. A createEffect with reconcileElements where renderItem creates elements
- *    from a placeholder template, replaces placeholders with createComponent(),
- *    and attaches events directly.
- *
- * Events and components at different nesting levels are handled separately:
- * - Outer level (loopDepth=0): direct querySelector on the item element
- * - Inner level (loopDepth>0): iterate inner array, find elements by data-key-N
  */
 function emitCompositeElementReconciliation(
   lines: string[],
@@ -387,126 +490,29 @@ function emitCompositeElementReconciliation(
   const indexParam = elem.index || '__idx'
 
   const nestedComps = elem.nestedComponents!
-
-  // Separate components and events by nesting level
-  const outerComps = nestedComps.filter(c => !c.loopDepth || c.loopDepth === 0)
-  const innerComps = nestedComps.filter(c => (c.loopDepth ?? 0) > 0)
-  const outerEvents = elem.childEvents.filter(ev => ev.nestedLoops.length === 0)
-  const innerEvents = elem.childEvents.filter(ev => ev.nestedLoops.length > 0)
-
-  // Extract inner loop info: prefer IR-derived innerLoops, fall back to event nesting info
-  const innerLoopInfo = elem.innerLoops?.[0]
-    ?? (innerEvents.length > 0 ? innerEvents[0].nestedLoops[0] : null)
-
-  // Helper: emit event handler setup
-  const emitEventSetup = (ls: string[], indent: string, elVar: string, ev: LoopChildEvent): void => {
-    const handler = ev.handler.trim().startsWith('(') || ev.handler.trim().startsWith('function')
-      ? `(${ev.handler})(e)`
-      : ev.handler
-    ls.push(`${indent}{ const __e = qsa(${elVar}, '[bf="${ev.childSlotId}"]'); if (__e) __e.addEventListener('${toDomEventName(ev.eventName)}', (e) => { ${handler} }) }`)
+  const ctx: CompositeLoopContext = {
+    elem,
+    outerComps: nestedComps.filter(c => !c.loopDepth || c.loopDepth === 0),
+    innerComps: nestedComps.filter(c => (c.loopDepth ?? 0) > 0),
+    outerEvents: elem.childEvents.filter(ev => ev.nestedLoops.length === 0),
+    innerEvents: elem.childEvents.filter(ev => ev.nestedLoops.length > 0),
+    innerLoopInfo: elem.innerLoops?.[0]
+      ?? (elem.childEvents.filter(ev => ev.nestedLoops.length > 0).length > 0
+        ? elem.childEvents.filter(ev => ev.nestedLoops.length > 0)[0].nestedLoops[0]
+        : null),
   }
 
-  // Helper: emit renderItem body (shared between hydration tracking and reconciliation)
-  const emitRenderItemBody = (ls: string[], indent: string): void => {
-    ls.push(`${indent}const __tpl = document.createElement('template')`)
-    if (elem.mapPreamble) {
-      ls.push(`${indent}${elem.mapPreamble}`)
-    }
-    ls.push(`${indent}__tpl.innerHTML = \`${elem.template}\``)
-    ls.push(`${indent}const __el = __tpl.content.firstElementChild.cloneNode(true)`)
-
-    // Replace outer-level component placeholders
-    for (const comp of outerComps) {
-      const phId = comp.slotId || comp.name
-      const propsExpr = buildComponentPropsExpr(comp)
-      const keyProp = comp.props.find(p => p.name === 'key')
-      const keyArg = keyProp ? `, ${keyProp.value}` : ''
-      ls.push(`${indent}{ const __ph = __el.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) __ph.replaceWith(createComponent('${comp.name}', ${propsExpr}${keyArg})) }`)
-    }
-
-    // Set up outer-level events
-    for (const ev of outerEvents) {
-      emitEventSetup(ls, indent, '__el', ev)
-    }
-
-    // Handle inner loop: iterate array, find elements by data-key-N
-    if (innerLoopInfo && (innerComps.length > 0 || innerEvents.length > 0)) {
-      const inner = innerLoopInfo
-      ls.push(`${indent}// Initialize inner loop components and events`)
-      ls.push(`${indent}${inner.array}.forEach((${inner.param}) => {`)
-      if (inner.key) {
-        ls.push(`${indent}  const __innerEl = __el.querySelector('[${keyAttrName(inner.depth)}="' + ${inner.key} + '"]')`)
-      } else {
-        ls.push(`${indent}  const __innerEl = null`)
-      }
-      ls.push(`${indent}  if (!__innerEl) return`)
-      for (const comp of innerComps) {
-        const phId = comp.slotId || comp.name
-        const propsExpr = buildComponentPropsExpr(comp)
-        const keyProp = comp.props.find(p => p.name === 'key')
-        const keyArg = keyProp ? `, ${keyProp.value}` : ''
-        ls.push(`${indent}  { const __ph = __innerEl.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) __ph.replaceWith(createComponent('${comp.name}', ${propsExpr}${keyArg})) }`)
-      }
-      for (const ev of innerEvents) {
-        emitEventSetup(ls, `${indent}  `, '__innerEl', ev)
-      }
-      ls.push(`${indent}})`)
-    }
-
-    ls.push(`${indent}return __el`)
-  }
-
-  // Single createEffect with hydration-aware first run
-  // Pattern: first run preserves SSR content and calls renderItem once for signal tracking.
-  // Subsequent runs call reconcileElements normally.
   lines.push(`  createEffect(() => {`)
   lines.push(`    const __arr = ${chainedExpr}`)
   lines.push(`    const __renderItem = (${elem.param}, ${indexParam}) => {`)
-  emitRenderItemBody(lines, '      ')
+  emitCompositeRenderItemBody(lines, '      ', ctx)
   lines.push(`    }`)
   lines.push('')
   emitHydrationTagging(lines, elem, vLoop, indexParam, (ls) => {
-    // Initialize outer-level child components in SSR markup
-    for (const comp of outerComps) {
-      const selector = comp.slotId
-        ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
-        : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
-      const propsExpr = buildComponentPropsExpr(comp)
-      ls.push(`        { const __c = __hChild.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
-    }
-    // Set up outer-level events on SSR elements
-    for (const ev of outerEvents) {
-      emitEventSetup(ls, '        ', '__hChild', ev)
-    }
-    // Handle inner loop items in SSR
-    if (innerLoopInfo && (innerComps.length > 0 || innerEvents.length > 0)) {
-      const inner = innerLoopInfo
-      const containerSelector = inner.containerSlotId ? `'[bf="${inner.containerSlotId}"]'` : 'null'
-      ls.push(`        { const __ic = ${containerSelector !== 'null' ? `__hChild.querySelector(${containerSelector})` : '__hChild'}`)
-      ls.push(`        if (__ic) ${inner.array}.forEach((${inner.param}, __innerIdx) => {`)
-      ls.push(`          const __innerEl = __ic.children[__innerIdx]`)
-      ls.push(`          if (!__innerEl) return`)
-      if (inner.key) {
-        ls.push(`          __innerEl.setAttribute('${keyAttrName(inner.depth)}', String(${inner.key}))`)
-      }
-      for (const comp of innerComps) {
-        const selector = comp.slotId
-          ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
-          : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
-        const propsExpr = buildComponentPropsExpr(comp)
-        ls.push(`          { const __c = __innerEl.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
-      }
-      for (const ev of innerEvents) {
-        emitEventSetup(ls, '          ', '__innerEl', ev)
-      }
-      ls.push(`        }) }`)
-    }
+    emitCompositeHydrationSetup(ls, ctx)
   })
   lines.push('')
   // Blur active element before reconciliation to avoid syncElementState issues.
-  // Composite elements have duplicate internal slot IDs (e.g., multiple Badge components
-  // each with bf="s0") which cause syncElementState to overwrite text incorrectly.
-  // Also, syncElementState can't handle conditional structure changes (comment → element).
   lines.push(`    if (_${vLoop}?.contains(document.activeElement)) document.activeElement?.blur()`)
   lines.push(`    reconcileElements(_${vLoop}, __arr, ${keyFn}, __renderItem)`)
   lines.push(`  })`)
