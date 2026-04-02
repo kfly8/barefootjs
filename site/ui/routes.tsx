@@ -70,6 +70,7 @@ import { MultiStepFormRefPage } from './pages/components/multi-step-form'
 import { TasksTableRefPage } from './pages/components/tasks-table'
 import { SocialFeedRefPage } from './pages/components/social-feed'
 import { FileBrowserRefPage } from './pages/components/file-browser'
+import { CartRefPage } from './pages/components/cart'
 import { HoverCardRefPage } from './pages/components/hover-card'
 import { MenubarRefPage } from './pages/components/menubar'
 import { NavigationMenuRefPage } from './pages/components/navigation-menu'
@@ -486,6 +487,11 @@ export function createApp() {
   // File Browser block page
   app.get('/components/file-browser', (c) => {
     return c.render(<FileBrowserRefPage />)
+  })
+
+  // Cart block page
+  app.get('/components/cart', (c) => {
+    return c.render(<CartRefPage />)
   })
 
   // Bar Chart reference page
