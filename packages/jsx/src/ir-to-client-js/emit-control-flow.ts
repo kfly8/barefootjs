@@ -5,7 +5,7 @@
  */
 
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef, ConditionalBranchChildComponent, ConditionalBranchTextEffect, ConditionalBranchLoop, LoopChildEvent, LoopElement } from './types'
-import { toDomEventName, wrapHandlerInBlock, varSlotId, buildChainedArrayExpr, quotePropName, DATA_KEY, DATA_BF_PH, keyAttrName } from './utils'
+import { toDomEventName, wrapHandlerInBlock, varSlotId, buildChainedArrayExpr, quotePropName, DATA_KEY, DATA_KEY_PREFIX, DATA_BF_PH, keyAttrName } from './utils'
 import { addCondAttrToTemplate, irChildrenToJsExpr } from './html-template'
 import { emitAttrUpdate } from './emit-reactive'
 
@@ -80,9 +80,14 @@ function emitBranchBindings(
 
     // Emit loop reconciliation effects for loops inside this branch.
     // The loop's container is found via $() and updated reactively via reconcileElements.
+    // SSR templates use data-key-1 for loops inside conditionals (depth 1 in the
+    // inline template), but reconcileElements uses data-key (depth 0 for independent loops).
+    // Rename SSR attributes on hydration so reconcileElements can find them.
     for (const loop of branchLoops) {
       const cv = varSlotId(loop.containerSlotId)
       lines.push(`      const [__loop_${cv}] = $(__branchScope, '${loop.containerSlotId}')`)
+      // Rename SSR data-key-1 → data-key for reconcileElements compatibility
+      lines.push(`      if (__loop_${cv}) getLoopChildren(__loop_${cv}).forEach(__el => { if (__el.hasAttribute('${DATA_KEY_PREFIX}1') && !__el.hasAttribute('${DATA_KEY}')) { __el.setAttribute('${DATA_KEY}', __el.getAttribute('${DATA_KEY_PREFIX}1')); __el.removeAttribute('${DATA_KEY_PREFIX}1') } })`)
       const keyFn = loop.key
         ? `(${loop.param}${loop.index ? `, ${loop.index}` : ''}) => String(${loop.key})`
         : 'null'

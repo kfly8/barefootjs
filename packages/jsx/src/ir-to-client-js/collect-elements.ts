@@ -542,8 +542,10 @@ function collectBranchLoops(node: IRNode): ConditionalBranchLoop[] {
         break
       case 'loop': {
         if (!parentSlotId) break
-        // Build the item template from loop children
-        const childTemplate = n.children.map(c => irToHtmlTemplate(c)).join('')
+        // Build the item template from loop children.
+        // Use loopDepth=0: this loop gets its own reconcileElements (independent
+        // from the conditional's template), so items use data-key (not data-key-1).
+        const childTemplate = n.children.map(c => irToHtmlTemplate(c, undefined, 0)).join('')
         loops.push({
           array: n.array,
           param: n.param,
