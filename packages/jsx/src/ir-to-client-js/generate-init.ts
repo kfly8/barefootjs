@@ -171,7 +171,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   const componentScopeNames = new Set<string>()
   for (const s of ctx.signals) {
     componentScopeNames.add(s.getter)
-    componentScopeNames.add(s.setter)
+    if (s.setter) componentScopeNames.add(s.setter)
   }
   for (const m of ctx.memos) componentScopeNames.add(m.name)
   for (const c of ctx.localConstants) componentScopeNames.add(c.name)
