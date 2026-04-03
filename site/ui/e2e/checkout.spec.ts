@@ -81,6 +81,9 @@ test.describe('Checkout Block', () => {
     await expect(section.locator('text=Wireless Headphones')).toBeVisible()
     await expect(section.locator('text=USB-C Hub Adapter')).toBeVisible()
     await expect(section.locator('text=Mechanical Keyboard')).toBeVisible()
+    // Quantity badge for USB-C Hub (quantity 2) — composite loop + inner conditional
+    await expect(section.locator('[data-slot="badge"]:has-text("2")')).toBeVisible()
+
     // Remove button works (composite loop inside conditional is reactive)
     const removeBtn = section.locator('button:has-text("✕")').first()
     await removeBtn.click()
