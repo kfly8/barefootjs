@@ -93,9 +93,6 @@ export function ensureLoopMarkers(container: HTMLElement, itemCount: number): vo
  * @param renderItem - Function that returns an HTMLElement for each item
  * @param firstElement - Pre-created element for first item (avoids duplicate creation when caller already rendered item 0)
  */
-// Track previous items array per container to skip reconciliation when unchanged.
-const prevItemsMap = new WeakMap<HTMLElement, unknown[]>()
-
 export function reconcileElements<T>(
   container: HTMLElement | null,
   items: T[],
@@ -104,13 +101,6 @@ export function reconcileElements<T>(
   firstElement?: HTMLElement
 ): void {
   if (!container || !items) return
-
-  // Fast path: if the items array reference is identical to the previous call,
-  // the list data hasn't changed — skip all DOM work. This prevents unnecessary
-  // reconciliation when unrelated signals (e.g., editText inside a loop body)
-  // trigger the parent effect but the memo-cached array stays the same.
-  if (prevItemsMap.get(container) === items) return
-  prevItemsMap.set(container, items)
 
   // Find loop boundary markers if present.
   // When markers exist, only elements between <!--bf-loop--> and <!--/bf-loop-->
