@@ -167,6 +167,19 @@ export function reconcileElements<T>(
     }
   }
 
+  // Record which key has focus BEFORE removing elements from DOM.
+  // After removal, document.activeElement resets to <body>.
+  let focusedKey: string | null = null
+  const activeEl = document.activeElement
+  if (activeEl && activeEl !== document.body) {
+    for (const [key, el] of existingByKey) {
+      if (el.contains(activeEl)) {
+        focusedKey = key
+        break
+      }
+    }
+  }
+
   // Remove old keyed elements (only within loop range if markers exist)
   for (const child of loopChildren) {
     if ((child as HTMLElement).dataset?.key !== undefined) {
@@ -199,28 +212,20 @@ export function reconcileElements<T>(
           newEl.setAttribute(BF_KEY, key)
         }
         fragment.appendChild(newEl)
+      } else if (focusedKey === key) {
+        // Preserve existing element to maintain focus state.
+        // Re-render a temporary element to extract updated attribute state,
+        // then sync attributes from the temp to the existing element.
+        const tempEl = createEl()
+        syncElementState(existingEl, tempEl)
+        fragment.appendChild(existingEl)
       } else {
-        // Element is already initialized - decide whether to sync or replace
-        const hasFocus = existingEl.contains(document.activeElement)
-
-        if (hasFocus) {
-          // Preserve existing element to maintain focus state.
-          // Re-render a temporary element to extract updated attribute state,
-          // then sync attributes from the temp to the existing element.
-          // TODO: createEl() creates a full component instance with reactive effects.
-          // The tempEl is never added to DOM, but its effects remain subscribed to
-          // signals until GC collects them. A proper fix requires scope-level disposal.
-          const tempEl = createEl()
-          syncElementState(existingEl, tempEl)
-          fragment.appendChild(existingEl)
-        } else {
-          // No focus to preserve - use the temp element directly
-          const tempEl = createEl()
-          if (!tempEl.dataset.key) {
-            tempEl.setAttribute(BF_KEY, key)
-          }
-          fragment.appendChild(tempEl)
+        // No focus to preserve - use the new element directly
+        const newEl = createEl()
+        if (!newEl.dataset.key) {
+          newEl.setAttribute(BF_KEY, key)
         }
+        fragment.appendChild(newEl)
       }
     } else {
       // Create new element via renderItem (which calls createComponent)

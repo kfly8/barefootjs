@@ -697,8 +697,6 @@ function emitCompositeElementReconciliation(
     emitCompositeHydrationSetup(ls, ctx)
   })
   lines.push('')
-  // Blur active element before reconciliation to avoid syncElementState issues.
-  lines.push(`    if (_${vLoop}?.contains(document.activeElement)) document.activeElement?.blur()`)
   lines.push(`    reconcileElements(_${vLoop}, __arr, ${keyFn}, __renderItem)`)
   lines.push(`  })`)
 }
