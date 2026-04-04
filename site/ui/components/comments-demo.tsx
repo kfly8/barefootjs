@@ -106,7 +106,6 @@ export function CommentsDemo() {
   const [comments, setComments] = createSignal<Comment[]>(initialComments)
   const [sortMode, setSortMode] = createSignal<SortMode>('newest')
   const [newCommentText, setNewCommentText] = createSignal('')
-  const [editText, setEditText] = createSignal('')
 
   // Memo chain stage 1: sort comments
   const sortedComments = createMemo(() => {
@@ -155,24 +154,20 @@ export function CommentsDemo() {
   }
 
   const startEditing = (commentId: number) => {
-    const comment = comments().find(c => c.id === commentId)
-    if (comment) setEditText(comment.text)
     setComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, editing: true } : c
     ))
   }
 
   const cancelEditing = (commentId: number) => {
-    setEditText('')
     setComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, editing: false } : c
     ))
   }
 
-  const saveEdit = (commentId: number) => {
-    const text = editText().trim()
+  const saveEdit = (commentId: number, textareaEl: HTMLTextAreaElement) => {
+    const text = textareaEl.value.trim()
     if (!text) return
-    setEditText('')
     setComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, text, editing: false } : c
     ))
@@ -319,12 +314,14 @@ export function CommentsDemo() {
                 {comment.editing ? (
                   <div className="mt-2 space-y-2">
                     <Textarea
-                      value={editText()}
+                      value={comment.text}
                       className="text-sm min-h-[60px]"
-                      onInput={(e) => setEditText((e.target as HTMLTextAreaElement).value)}
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => saveEdit(comment.id)}>Save</Button>
+                      <Button size="sm" onClick={(e: MouseEvent) => {
+                        const ta = (e.target as HTMLElement).closest('.space-y-2')?.querySelector('textarea') as HTMLTextAreaElement | null
+                        if (ta) saveEdit(comment.id, ta)
+                      }}>Save</Button>
                       <Button variant="outline" size="sm" onClick={() => cancelEditing(comment.id)}>Cancel</Button>
                     </div>
                   </div>
