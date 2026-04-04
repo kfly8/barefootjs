@@ -96,36 +96,42 @@ export function mapArray<T>(
         ? elementsBetween(startMarker, endMarker!)
         : Array.from(container.children) as HTMLElement[]
 
-      // Check if children need key tagging (SSR elements without data-key)
+      // SSR elements without data-key need initialization.
       if (existingChildren.length > 0 && !existingChildren[0]?.hasAttribute('data-key')) {
-        for (let i = 0; i < existingChildren.length && i < items.length; i++) {
-          const child = existingChildren[i]
-          const item = items[i]
-          const key = getKey ? getKey(item, i) : String(i)
-          child.setAttribute(BF_KEY, key)
+        if (onHydrate) {
+          // Hydrate in place: tag keys, create per-item scopes, call onHydrate
+          for (let i = 0; i < existingChildren.length && i < items.length; i++) {
+            const child = existingChildren[i]
+            const item = items[i]
+            const key = getKey ? getKey(item, i) : String(i)
+            child.setAttribute(BF_KEY, key)
 
-          // Create per-item scope for existing SSR element
-          let dispose!: () => void
-          createRoot((d) => {
-            dispose = d
-            if (onHydrate) onHydrate(child, item, i)
-            return undefined
-          })
+            let dispose!: () => void
+            createRoot((d) => {
+              dispose = d
+              onHydrate(child, item, i)
+              return undefined
+            })
 
-          scopes.set(key, { element: child, dispose })
-          hydratedScopes.add(child)
+            scopes.set(key, { element: child, dispose })
+            hydratedScopes.add(child)
+          }
+
+          // If SSR had fewer items than current array, create remaining
+          for (let i = existingChildren.length; i < items.length; i++) {
+            const item = items[i]
+            const key = getKey ? getKey(item, i) : String(i)
+            const scope = createItemScope(item, i, renderItem)
+            if (!scope.element.dataset.key) scope.element.setAttribute(BF_KEY, key)
+            scopes.set(key, scope)
+            container.insertBefore(scope.element, anchor)
+          }
+          return
+        } else {
+          // No hydration callback — remove SSR placeholders and fall through
+          // to the diff path which creates fresh elements via renderItem.
+          for (const child of existingChildren) child.remove()
         }
-
-        // If SSR had fewer items than current array, create remaining
-        for (let i = existingChildren.length; i < items.length; i++) {
-          const item = items[i]
-          const key = getKey ? getKey(item, i) : String(i)
-          const scope = createItemScope(item, i, renderItem)
-          if (!scope.element.dataset.key) scope.element.setAttribute(BF_KEY, key)
-          scopes.set(key, scope)
-          container.insertBefore(scope.element, anchor)
-        }
-        return
       }
     }
 
