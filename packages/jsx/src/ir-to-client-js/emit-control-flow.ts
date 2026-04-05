@@ -262,9 +262,12 @@ function emitBranchChildComponentInits(
   components: Array<{ name: string; slotId: string | null; props: import('../types').IRProp[] }>,
 ): void {
   for (const comp of components) {
+    // Use slotId suffix match + child prefix (~) match only.
+    // Exclude non-child prefix match ([bf-s^="Name_"]) to avoid matching
+    // createComponent-rendered siblings that share the same component name.
     const selector = comp.slotId
-      ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
-      : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
+      ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"]`
+      : `[bf-s^="~${comp.name}_"]`
     const propsEntries = comp.props
       .filter(p => p.name !== 'key')
       .map(p => {
