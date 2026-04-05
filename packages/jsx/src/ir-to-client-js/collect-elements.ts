@@ -190,9 +190,9 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
         for (const child of node.children) {
           childHandlers.push(...collectEventHandlersFromIR(child))
           childEvents.push(...collectLoopChildEventsWithNesting(child))
-          childReactiveAttrs.push(...collectLoopChildReactiveAttrs(child, ctx))
-          childReactiveTexts.push(...collectLoopChildReactiveTexts(child, ctx))
-          childConditionals.push(...collectLoopChildConditionals(child, ctx))
+          childReactiveAttrs.push(...collectLoopChildReactiveAttrs(child, ctx, node.param))
+          childReactiveTexts.push(...collectLoopChildReactiveTexts(child, ctx, node.param))
+          childConditionals.push(...collectLoopChildConditionals(child, ctx, node.param))
         }
 
         if (node.childComponent) {
