@@ -173,8 +173,8 @@ describe('Client JS generation', () => {
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
 
-      // Should include index param in renderItem callback
-      expect(clientJs?.content).toContain('(item, i) => {')
+      // Should include index param in renderItem callback (with unified __existing param)
+      expect(clientJs?.content).toContain('(item, i, __existing) => {')
     })
 
     test('includes index parameter in key function when key references index', () => {

@@ -193,7 +193,7 @@ function emitCompositeBranchLoop(
   // Clear template-generated children so mapArray creates fresh elements
   // with properly initialized components via createComponent in renderItem.
   lines.push(`      if (__loop_${cv}) getLoopChildren(__loop_${cv}).forEach(__el => __el.remove())`)
-  lines.push(`      if (__loop_${cv}) mapArray(() => ${loop.array}, __loop_${cv}, ${keyFn}, (${loop.param}, ${indexParam}) => {`)
+  lines.push(`      if (__loop_${cv}) mapArray(() => ${loop.array}, __loop_${cv}, ${keyFn}, (${loop.param}, ${indexParam}, __existing) => {`)
   emitCompositeRenderItemBody(lines, '        ', ctx)
   lines.push(`      })`)
 }
@@ -467,9 +467,10 @@ function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, key
   const indexParam = elem.index || '__idx'
   const chainedExpr = buildChainedArrayExpr(elem)
 
-  lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}) =>`)
-  lines.push(`    createComponent('${name}', ${propsExpr}, ${keyExpr})`)
-  lines.push(`  )`)
+  lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}, __existing) => {`)
+  lines.push(`    if (__existing) { initChild('${name}', __existing, ${propsExpr}); return __existing }`)
+  lines.push(`    return createComponent('${name}', ${propsExpr}, ${keyExpr})`)
+  lines.push(`  })`)
 }
 
 /**
@@ -504,7 +505,7 @@ function emitHydrationTagging(
   lines.push(`    }`)
 }
 
-/** Emit mapArray for a plain element loop with hydration support. */
+/** Emit mapArray for a plain element loop with unified CSR/SSR. */
 function emitPlainElementLoopReconciliation(lines: string[], elem: LoopElement, keyFn: string): void {
   const vLoop = varSlotId(elem.slotId)
   const chainedExpr = buildChainedArrayExpr(elem)
@@ -514,22 +515,17 @@ function emitPlainElementLoopReconciliation(lines: string[], elem: LoopElement, 
   const hasReactiveEffects = elem.childReactiveAttrs.length > 0 || elem.childReactiveTexts.length > 0
 
   if (!hasReactiveEffects) {
-    // Simple case: no reactive effects, single-line renderItem
+    // Simple case: no reactive effects
     const tpl = wrap(elem.template)
-    if (elem.mapPreamble) {
-      lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}) => { ${wrap(elem.mapPreamble)}; const __tpl = document.createElement('template'); __tpl.innerHTML = \`${tpl}\`; return __tpl.content.firstElementChild.cloneNode(true) })`)
-    } else {
-      lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}) => { const __tpl = document.createElement('template'); __tpl.innerHTML = \`${tpl}\`; return __tpl.content.firstElementChild.cloneNode(true) })`)
-    }
+    const preamble = elem.mapPreamble ? `${wrap(elem.mapPreamble)}; ` : ''
+    lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}, __existing) => { ${preamble}if (__existing) return __existing; const __tpl = document.createElement('template'); __tpl.innerHTML = \`${tpl}\`; return __tpl.content.firstElementChild.cloneNode(true) })`)
   } else {
-    // Multi-line renderItem with fine-grained effects
-    lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}) => {`)
+    // Multi-line renderItem with fine-grained effects (shared for CSR and SSR)
+    lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}, __existing) => {`)
     if (elem.mapPreamble) {
       lines.push(`    ${wrap(elem.mapPreamble)}`)
     }
-    lines.push(`    const __tpl = document.createElement('template')`)
-    lines.push(`    __tpl.innerHTML = \`${wrap(elem.template)}\``)
-    lines.push(`    const __el = __tpl.content.firstElementChild.cloneNode(true)`)
+    lines.push(`    const __el = __existing ?? (() => { const __tpl = document.createElement('template'); __tpl.innerHTML = \`${wrap(elem.template)}\`; return __tpl.content.firstElementChild.cloneNode(true) })()`)
     emitLoopChildReactiveEffects(lines, '    ', '__el', elem.childReactiveAttrs, elem.childReactiveTexts, elem.childConditionals, elem.param)
     lines.push(`    return __el`)
     lines.push(`  })`)
@@ -680,24 +676,15 @@ function emitComponentAndEventSetup(
 }
 
 /**
- * Emit the renderItem function body for composite loops.
- * Creates element from template, replaces placeholders, sets up events.
- * Handles arbitrary nesting depth (depth 1, 2, ...) via recursive emission.
+ * Emit the unified renderItem function body for composite loops.
+ * Handles both CSR (create from template) and SSR (initialize existing element).
+ * Inner loops, events, and reactive effects are shared between both paths.
  */
 function emitCompositeRenderItemBody(ls: string[], indent: string, ctx: CompositeLoopContext): void {
   const param = ctx.elem.param
   const wrap = (expr: string) => wrapLoopParamAsAccessor(expr, param)
 
-  ls.push(`${indent}const __tpl = document.createElement('template')`)
-  if (ctx.elem.mapPreamble) {
-    ls.push(`${indent}${wrap(ctx.elem.mapPreamble)}`)
-  }
-  ls.push(`${indent}__tpl.innerHTML = \`${wrap(ctx.elem.template)}\``)
-  ls.push(`${indent}const __el = __tpl.content.firstElementChild.cloneNode(true)`)
-
-  // Outer-level component + event setup.
-  // Exclude components inside reactive conditionals — they are managed by insert()
-  // via bindEvents/initChild, not createComponent/replaceWith.
+  // Exclude components inside reactive conditionals — managed by insert()
   const condCompSlotIds = new Set<string>()
   for (const cond of ctx.elem.childConditionals ?? []) {
     for (const comp of [...cond.whenTrueComponents, ...cond.whenFalseComponents]) {
@@ -707,12 +694,28 @@ function emitCompositeRenderItemBody(ls: string[], indent: string, ctx: Composit
   const filteredComps = condCompSlotIds.size > 0
     ? ctx.outerComps.filter(c => !c.slotId || !condCompSlotIds.has(c.slotId))
     : ctx.outerComps
-  emitComponentAndEventSetup(ls, indent, '__el', filteredComps, ctx.outerEvents, 'csr', param)
 
-  // Inner loop levels (depth 1, 2, ...) — each level nests inside the previous
-  emitInnerLoopSetup(ls, indent, '__el', ctx.depthLevels, 'csr', param)
+  // Branch: SSR (existing element) vs CSR (create from template)
+  ls.push(`${indent}let __el`)
+  ls.push(`${indent}if (__existing) {`)
+  ls.push(`${indent}  __el = __existing`)
+  // SSR: initialize nested components via initChild
+  emitComponentAndEventSetup(ls, `${indent}  `, '__el', filteredComps, ctx.outerEvents, 'ssr', param)
+  // SSR: inner loop initialization
+  emitInnerLoopSetup(ls, `${indent}  `, '__el', ctx.depthLevels, 'ssr', param)
+  ls.push(`${indent}} else {`)
+  // CSR: create element from template, replace placeholders with createComponent
+  if (ctx.elem.mapPreamble) {
+    ls.push(`${indent}  ${wrap(ctx.elem.mapPreamble)}`)
+  }
+  ls.push(`${indent}  const __tpl = document.createElement('template')`)
+  ls.push(`${indent}  __tpl.innerHTML = \`${wrap(ctx.elem.template)}\``)
+  ls.push(`${indent}  __el = __tpl.content.firstElementChild.cloneNode(true)`)
+  emitComponentAndEventSetup(ls, `${indent}  `, '__el', filteredComps, ctx.outerEvents, 'csr', param)
+  // CSR: inner loop initialization
+  emitInnerLoopSetup(ls, `${indent}  `, '__el', ctx.depthLevels, 'csr', param)
+  ls.push(`${indent}}`)
 
-  // Fine-grained effects for reactive attrs, text, and conditionals
   const reactiveAttrs = ctx.elem.childReactiveAttrs ?? []
   const reactiveTexts = ctx.elem.childReactiveTexts ?? []
   const reactiveConditionals = ctx.elem.childConditionals ?? []
@@ -778,28 +781,6 @@ function emitInnerLoopSetup(
 }
 
 /**
- * Emit the hydration afterTag callback for composite loops.
- * Initializes components and events on SSR-rendered elements.
- */
-function emitCompositeHydrationSetup(ls: string[], ctx: CompositeLoopContext): void {
-  const param = ctx.elem.param
-  // Outer-level component + event setup on SSR elements
-  // Pass loopParam so props expressions use accessor (item() for per-item signal)
-  emitComponentAndEventSetup(ls, '        ', '__hChild', ctx.outerComps, ctx.outerEvents, 'ssr', param)
-
-  // Inner loop levels (depth 1, 2, ...) — each level nests inside the previous
-  emitInnerLoopSetup(ls, '        ', '__hChild', ctx.depthLevels, 'ssr', param)
-
-  // Fine-grained reactive effects for per-item signal updates on SSR elements
-  const reactiveAttrs = ctx.elem.childReactiveAttrs ?? []
-  const reactiveTexts = ctx.elem.childReactiveTexts ?? []
-  const reactiveConditionals = ctx.elem.childConditionals ?? []
-  if (reactiveAttrs.length > 0 || reactiveTexts.length > 0 || reactiveConditionals.length > 0) {
-    emitLoopChildReactiveEffects(ls, '        ', '__hChild', reactiveAttrs, reactiveTexts, reactiveConditionals, param)
-  }
-}
-
-/**
  * Emit reconcileElements with composite rendering for dynamic loops whose
  * native-element body contains child components.
  */
@@ -824,11 +805,8 @@ function emitCompositeElementReconciliation(
     depthLevels,
   }
 
-  lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}) => {`)
+  lines.push(`  mapArray(() => ${chainedExpr}, _${vLoop}, ${keyFn}, (${elem.param}, ${indexParam}, __existing) => {`)
   emitCompositeRenderItemBody(lines, '    ', ctx)
-  lines.push(`  }, (__hChild, ${elem.param}, ${indexParam}) => {`)
-  // onHydrate callback: initialize components and events on SSR-rendered elements
-  emitCompositeHydrationSetup(lines, ctx)
   lines.push(`  })`)
 }
 
