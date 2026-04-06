@@ -173,7 +173,9 @@ function emitCompositeBranchLoop(
     param: loop.param,
     template: loop.template,
     mapPreamble: loop.mapPreamble ?? undefined,
-    childConditionals: [],
+    childReactiveTexts: loop.childReactiveTexts ?? [],
+    childReactiveAttrs: loop.childReactiveAttrs ?? [],
+    childConditionals: loop.childConditionals ?? [],
   } as unknown as LoopElement
 
   const ctx: CompositeLoopContext = {

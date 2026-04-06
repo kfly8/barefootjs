@@ -190,7 +190,8 @@ function escapeRegExp(s: string): string {
  * Does not double-wrap: "item().text" stays "item().text"
  */
 export function wrapLoopParamAsAccessor(expr: string, paramName: string): string {
-  // Match word boundary + paramName + NOT followed by ( (to avoid double-wrapping)
-  return expr.replace(new RegExp(`\\b${escapeRegExp(paramName)}\\b(?!\\s*\\()`, 'g'), `${paramName}()`)
+  // Match word boundary + paramName + NOT followed by ( (avoid double-wrapping)
+  // or - (avoid corrupting CSS class names like "comment-item")
+  return expr.replace(new RegExp(`\\b${escapeRegExp(paramName)}\\b(?!\\s*\\()(?!-)`, 'g'), `${paramName}()`)
 }
 
