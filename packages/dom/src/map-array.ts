@@ -5,6 +5,10 @@
  * Each item is rendered in its own createRoot with a per-item signal.
  * When the array changes, same-key items UPDATE their signal instead of
  * being disposed and recreated — fine-grained effects handle DOM updates.
+ *
+ * Unified CSR/SSR: renderItem receives an optional existing element.
+ * For SSR hydration, the existing DOM element is passed so renderItem
+ * can initialize it (initChild) instead of creating a new one (createComponent).
  */
 
 import { createSignal, createEffect, createRoot } from './reactive'
@@ -51,7 +55,8 @@ function elementsBetween(start: Comment, end: Comment): HTMLElement[] {
 function createItemScope<T>(
   item: T,
   index: number,
-  renderItem: (item: () => T, index: number) => HTMLElement,
+  renderItem: (item: () => T, index: number, existing?: HTMLElement) => HTMLElement,
+  existing?: HTMLElement,
 ): ItemScope<T> {
   let element!: HTMLElement
   let dispose!: () => void
@@ -61,7 +66,7 @@ function createItemScope<T>(
     dispose = d
     const [itemAccessor, itemSetter] = createSignal(item)
     setItem = itemSetter
-    element = renderItem(itemAccessor, index)
+    element = renderItem(itemAccessor, index, existing)
     return undefined
   })
 
@@ -74,17 +79,16 @@ function createItemScope<T>(
  * @param accessor - Function returning the reactive array (signal/memo read)
  * @param container - DOM container element
  * @param getKey - Key extractor (null = use index). Receives plain item value.
- * @param renderItem - Creates an HTMLElement for a new item (runs in createRoot).
+ * @param renderItem - Creates or initializes an HTMLElement for an item (runs in createRoot).
  *                     Receives item as signal accessor: item() returns current value.
- * @param onHydrate - Optional callback for SSR hydration setup per existing child.
- *                    Receives item as signal accessor.
+ *                     When `existing` is passed, initializes the SSR-rendered element and returns it.
+ *                     When `existing` is undefined, creates a new element and returns it.
  */
 export function mapArray<T>(
   accessor: () => T[],
   container: HTMLElement | null,
   getKey: ((item: T, index: number) => string) | null,
-  renderItem: (item: () => T, index: number) => HTMLElement,
-  onHydrate?: (child: HTMLElement, item: () => T, index: number) => void,
+  renderItem: (item: () => T, index: number, existing?: HTMLElement) => HTMLElement,
 ): void {
   if (!container) return
 
@@ -107,42 +111,28 @@ export function mapArray<T>(
 
       // SSR elements without data-key need initialization.
       if (existingChildren.length > 0 && !existingChildren[0]?.hasAttribute('data-key')) {
-        if (onHydrate) {
-          // Hydrate in place: tag keys, create per-item scopes with signals
-          for (let i = 0; i < existingChildren.length && i < items.length; i++) {
-            const child = existingChildren[i]
-            const item = items[i]
-            const key = getKey ? getKey(item, i) : String(i)
-            child.setAttribute(BF_KEY, key)
+        // Hydrate in place: tag keys, create per-item scopes with renderItem(existing)
+        for (let i = 0; i < existingChildren.length && i < items.length; i++) {
+          const child = existingChildren[i]
+          const item = items[i]
+          const key = getKey ? getKey(item, i) : String(i)
+          child.setAttribute(BF_KEY, key)
 
-            let dispose!: () => void
-            let setItem!: (v: T) => void
-            createRoot((d) => {
-              dispose = d
-              const [itemAccessor, itemSetter] = createSignal(item)
-              setItem = itemSetter
-              onHydrate(child, itemAccessor, i)
-              return undefined
-            })
-
-            scopes.set(key, { element: child, dispose, setItem })
-            hydratedScopes.add(child)
-          }
-
-          // If SSR had fewer items than current array, create remaining
-          for (let i = existingChildren.length; i < items.length; i++) {
-            const item = items[i]
-            const key = getKey ? getKey(item, i) : String(i)
-            const scope = createItemScope(item, i, renderItem)
-            if (!scope.element.dataset.key) scope.element.setAttribute(BF_KEY, key)
-            scopes.set(key, scope)
-            container.insertBefore(scope.element, anchor)
-          }
-          return  // Hydration complete — effects handle future updates
-        } else {
-          // No hydration callback — remove SSR placeholders and fall through
-          for (const child of existingChildren) child.remove()
+          const scope = createItemScope(item, i, renderItem, child)
+          scopes.set(key, scope)
+          hydratedScopes.add(child)
         }
+
+        // If SSR had fewer items than current array, create remaining (CSR)
+        for (let i = existingChildren.length; i < items.length; i++) {
+          const item = items[i]
+          const key = getKey ? getKey(item, i) : String(i)
+          const scope = createItemScope(item, i, renderItem)
+          if (!scope.element.dataset.key) scope.element.setAttribute(BF_KEY, key)
+          scopes.set(key, scope)
+          container.insertBefore(scope.element, anchor)
+        }
+        return  // Hydration complete — effects handle future updates
       }
     }
 

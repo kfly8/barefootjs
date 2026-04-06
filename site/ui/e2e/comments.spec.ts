@@ -70,7 +70,7 @@ test.describe('Comments Block', () => {
     await expect(popularText).toContainText('composite loop pattern')
   })
 
-  // TODO(#730): per-item signals — pending loop-param conditional reactivity
+  // TODO(#730): per-item signals — pending deeper loop reactivity fixes
   test.skip('inline edit mode toggles and saves', async ({ page }) => {
     const section = page.locator('[bf-s^="CommentsDemo_"]:not([data-slot])').first()
     const firstComment = section.locator('.comment-item').first()
@@ -90,7 +90,7 @@ test.describe('Comments Block', () => {
     await expect(firstComment.locator('button:has-text("Edit")')).toBeVisible()
   })
 
-  // TODO(#730): per-item signals — pending loop-param conditional reactivity
+  // TODO(#730): per-item signals — pending deeper loop reactivity fixes
   test.skip('toggle reaction updates count', async ({ page }) => {
     const section = page.locator('[bf-s^="CommentsDemo_"]:not([data-slot])').first()
     const firstComment = section.locator('.comment-item').first()
@@ -122,7 +122,7 @@ test.describe('Comments Block', () => {
     await expect(replies).toHaveCount(3)
   })
 
-  // TODO(#730): per-item signals — pending loop-param conditional reactivity
+  // TODO(#730): per-item signals — pending deeper loop reactivity fixes
   test.skip('add reply via input inside nested loop', async ({ page }) => {
     const section = page.locator('[bf-s^="CommentsDemo_"]:not([data-slot])').first()
 
@@ -138,7 +138,7 @@ test.describe('Comments Block', () => {
     await expect(frankComment.locator('text=Great explanation!')).toBeVisible()
   })
 
-  // TODO(#730): per-item signals — pending loop-param conditional reactivity
+  // TODO(#730): per-item signals — pending deeper loop reactivity fixes
   test.skip('delete reply removes from nested list', async ({ page }) => {
     const section = page.locator('[bf-s^="CommentsDemo_"]:not([data-slot])').first()
 
