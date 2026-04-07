@@ -485,6 +485,21 @@ export function $t(scope: Element | null, ...ids: string[]): (Text | null)[] {
 }
 
 /**
+ * Find or create a reactive text node inside an element by its slot ID.
+ * Used by per-item loop effects where $t() scope-based lookup is not available.
+ */
+export function $tn(parent: Element, slotId: string): Text | null {
+  const marker = `bf:${slotId}`
+  const walker = document.createTreeWalker(parent, NodeFilter.SHOW_COMMENT)
+  while (walker.nextNode()) {
+    if (walker.currentNode.nodeValue === marker) {
+      return textNodeAfterComment(walker.currentNode as Comment)
+    }
+  }
+  return null
+}
+
+/**
  * Get or create the Text node immediately after a comment marker.
  */
 function textNodeAfterComment(comment: Comment): Text {
