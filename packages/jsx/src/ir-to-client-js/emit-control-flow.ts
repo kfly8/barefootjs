@@ -268,11 +268,10 @@ function emitBranchChildComponentInits(
 ): void {
   const wrap = loopParam ? (expr: string) => wrapLoopParamAsAccessor(expr, loopParam) : (expr: string) => expr
   for (const comp of components) {
-    // Use slotId suffix match + child prefix (~) match only.
-    // Exclude non-child prefix match ([bf-s^="Name_"]) to avoid matching
-    // createComponent-rendered siblings that share the same component name.
+    // Use slotId suffix match only when available to avoid matching
+    // siblings of the same component type (e.g. two Buttons with different slotIds).
     const selector = comp.slotId
-      ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"]`
+      ? `[bf-s$="_${comp.slotId}"]`
       : `[bf-s^="~${comp.name}_"]`
     const propsEntries = comp.props
       .filter(p => p.name !== 'key')
@@ -665,8 +664,11 @@ function emitEventSetup(ls: string[], indent: string, elVar: string, ev: LoopChi
 
 /** Build the component-finder CSS selector for SSR hydration initChild. */
 function buildCompSelector(comp: { slotId?: string | null; name: string }): string {
+  // When slotId is available, use suffix-only selector. It is unique within
+  // the parent scope and avoids matching siblings of the same component type
+  // (e.g. two Buttons with different slotIds).
   return comp.slotId
-    ? `[bf-s$="_${comp.slotId}"], [bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
+    ? `[bf-s$="_${comp.slotId}"]`
     : `[bf-s^="~${comp.name}_"], [bf-s^="${comp.name}_"]`
 }
 
