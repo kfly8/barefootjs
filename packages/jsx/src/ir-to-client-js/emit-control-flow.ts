@@ -507,15 +507,18 @@ function emitDynamicLoopUpdates(lines: string[], elem: LoopElement): void {
  * Shared by emitComponentLoopReconciliation and emitCompositeElementReconciliation.
  */
 function buildComponentPropsExpr(
-  comp: { props: Array<{ name: string; value: string; isEventHandler: boolean; isLiteral: boolean }>, children?: import('../types').IRNode[] }
+  comp: { props: Array<{ name: string; value: string; isEventHandler: boolean; isLiteral: boolean }>, children?: import('../types').IRNode[] },
+  loopParam?: string,
 ): string {
+  const wrap = loopParam ? (expr: string) => wrapLoopParamAsAccessor(expr, loopParam) : (expr: string) => expr
   const entries = comp.props.map((p) => {
     if (p.isEventHandler) {
-      return `${quotePropName(p.name)}: ${p.value}`
+      return `${quotePropName(p.name)}: ${wrap(p.value)}`
     } else if (p.isLiteral) {
+      // Literal string values must NOT be wrapped — they don't reference loop params
       return `get ${quotePropName(p.name)}() { return ${JSON.stringify(p.value)} }`
     } else {
-      return `get ${quotePropName(p.name)}() { return ${p.value} }`
+      return `get ${quotePropName(p.name)}() { return ${wrap(p.value)} }`
     }
   })
   if ('children' in comp && Array.isArray(comp.children) && comp.children.length > 0) {
@@ -529,7 +532,7 @@ function buildComponentPropsExpr(
 function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, keyFn: string): void {
   const { name } = elem.childComponent!
   const vLoop = varSlotId(elem.slotId)
-  const propsExpr = wrapLoopParamAsAccessor(buildComponentPropsExpr(elem.childComponent!), elem.param)
+  const propsExpr = buildComponentPropsExpr(elem.childComponent!, elem.param)
   const keyExpr = wrapLoopParamAsAccessor(elem.key || '__idx', elem.param)
   const indexParam = elem.index || '__idx'
   const chainedExpr = buildChainedArrayExpr(elem)
@@ -543,7 +546,7 @@ function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, key
     // Initialize nested child components within the SSR-rendered element
     for (const comp of nestedComps) {
       const selector = buildCompSelector(comp)
-      const nestedPropsExpr = wrapLoopParamAsAccessor(buildComponentPropsExpr(comp), elem.param)
+      const nestedPropsExpr = buildComponentPropsExpr(comp, elem.param)
       // Check if children are text-only and reference the loop param.
       // Only text-only children can safely use textContent update;
       // children containing elements/components would be destroyed.
@@ -758,7 +761,7 @@ function emitComponentAndEventSetup(
 ): void {
   const wrap = loopParam ? (expr: string) => wrapLoopParamAsAccessor(expr, loopParam) : (expr: string) => expr
   for (const comp of comps) {
-    const propsExpr = wrap(buildComponentPropsExpr(comp))
+    const propsExpr = buildComponentPropsExpr(comp, loopParam)
     if (mode === 'csr') {
       const phId = comp.slotId || comp.name
       const keyProp = comp.props.find(p => p.name === 'key')
