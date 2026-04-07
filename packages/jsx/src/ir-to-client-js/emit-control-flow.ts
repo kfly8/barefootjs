@@ -792,12 +792,7 @@ function emitInnerLoopSetup(
     const arrayExpr = wrapOuter(inner.array)
     const containerSelector = inner.containerSlotId ? `'[bf="${inner.containerSlotId}"]'` : 'null'
 
-    // Use reactive mapArray only for inner loops that:
-    // 1. Reference the outer loop param (need reactivity)
-    // 2. Have an item template (for CSR element creation)
-    // 3. Don't contain child components (components need initChild which is complex to re-run)
-    const hasComps = level.comps.length > 0
-    if (inner.refsOuterParam && inner.itemTemplate && outerLoopParam && !hasComps) {
+    if (inner.refsOuterParam && inner.itemTemplate && outerLoopParam) {
       // Reactive inner loop: use mapArray for proper add/remove/update
       // Key function receives plain item value (not accessor) per mapArray contract
       const keyFn = inner.key
@@ -816,17 +811,24 @@ function emitInnerLoopSetup(
         const wrappedKey = wrapLoopParamAsAccessor(inner.key, inner.param)
         ls.push(`${indent}  __innerEl${uid}.setAttribute('${keyAttrName(inner.depth)}', String(${wrappedKey}))`)
       }
-      // Set up events — wrap both outer and inner loop params as accessors
-      if (level.events.length > 0) {
-        // Pre-wrap event handlers with inner loop param before passing to emitEventSetup
+      // Set up components and events — wrap inner loop param as accessor
+      if (level.comps.length > 0 || level.events.length > 0) {
+        // Pre-wrap both component props and event handlers with inner loop param
+        const wrapInner = (expr: string) => wrapLoopParamAsAccessor(expr, inner.param)
+        const wrappedComps = level.comps.map(comp => ({
+          ...comp,
+          props: comp.props.map(p => p.isLiteral ? p : ({ ...p, value: wrapInner(p.value) })),
+          children: comp.children?.map(c => c.type === 'expression' && c.expr
+            ? { ...c, expr: wrapInner(c.expr) } : c),
+        }))
         const wrappedEvents = level.events.map(ev => ({
           ...ev,
-          handler: wrapLoopParamAsAccessor(ev.handler, inner.param),
+          handler: wrapInner(ev.handler),
         }))
         ls.push(`${indent}  if (!__existing) {`)
-        emitComponentAndEventSetup(ls, `${indent}    `, `__innerEl${uid}`, [], wrappedEvents, 'csr', outerLoopParam)
+        emitComponentAndEventSetup(ls, `${indent}    `, `__innerEl${uid}`, wrappedComps, wrappedEvents, 'csr', outerLoopParam)
         ls.push(`${indent}  } else {`)
-        emitComponentAndEventSetup(ls, `${indent}    `, `__innerEl${uid}`, [], wrappedEvents, 'ssr', outerLoopParam)
+        emitComponentAndEventSetup(ls, `${indent}    `, `__innerEl${uid}`, wrappedComps, wrappedEvents, 'ssr', outerLoopParam)
         ls.push(`${indent}  }`)
       }
       // Recurse for child levels
