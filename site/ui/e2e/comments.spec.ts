@@ -89,7 +89,7 @@ test.describe('Comments Block', () => {
     await expect(firstComment.locator('button:has-text("Edit")')).toBeVisible()
   })
 
-  test.skip('toggle reaction updates count', async ({ page }) => {
+  test('toggle reaction updates count', async ({ page }) => {
     const section = page.locator('[bf-s^="CommentsDemo_"]:not([data-slot])').first()
     const firstComment = section.locator('.comment-item').first()
 

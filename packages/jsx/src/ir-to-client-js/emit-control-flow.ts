@@ -617,7 +617,7 @@ function emitDynamicLoopEventDelegation(lines: string[], elem: LoopElement): voi
 interface DepthLevel {
   comps: (LoopElement['nestedComponents'] & {})[number][]
   events: LoopChildEvent[]
-  loopInfo: { array: string; param: string; key: string; depth: number; containerSlotId?: string | null } | null
+  loopInfo: { array: string; param: string; key: string; depth: number; containerSlotId?: string | null; itemTemplate?: string; refsOuterParam?: boolean; reactiveTexts?: Array<{ slotId: string; expression: string }> } | null
 }
 
 /**
@@ -791,21 +791,76 @@ function emitInnerLoopSetup(
     const uid = `${inner.depth}_${i}`
     const arrayExpr = wrapOuter(inner.array)
     const containerSelector = inner.containerSlotId ? `'[bf="${inner.containerSlotId}"]'` : 'null'
-    ls.push(`${indent}// Initialize ${inner.array} loop components and events`)
-    ls.push(`${indent}{ const __ic${uid} = ${containerSelector !== 'null' ? `${parentElVar}.querySelector(${containerSelector})` : parentElVar}`)
-    // Guard: inner loop array may be undefined when inside a conditional branch
-    ls.push(`${indent}if (__ic${uid} && ${arrayExpr}) ${arrayExpr}.forEach((${inner.param}, __innerIdx${uid}) => {`)
-    ls.push(`${indent}  const __innerEl${uid} = __ic${uid}.children[__innerIdx${uid}]`)
-    ls.push(`${indent}  if (!__innerEl${uid}) return`)
-    if (inner.key) {
-      ls.push(`${indent}  __innerEl${uid}.setAttribute('${keyAttrName(inner.depth)}', String(${inner.key}))`)
+
+    // Use reactive mapArray only for inner loops that:
+    // 1. Reference the outer loop param (need reactivity)
+    // 2. Have an item template (for CSR element creation)
+    // 3. Don't contain child components (components need initChild which is complex to re-run)
+    const hasComps = level.comps.length > 0
+    if (inner.refsOuterParam && inner.itemTemplate && outerLoopParam && !hasComps) {
+      // Reactive inner loop: use mapArray for proper add/remove/update
+      // Key function receives plain item value (not accessor) per mapArray contract
+      const keyFn = inner.key
+        ? `(${inner.param}) => String(${inner.key})`
+        : 'null'
+      // Template and key inside renderItem use accessor: wrap both outer and inner params
+      const wrapBoth = (expr: string) => wrapLoopParamAsAccessor(wrapOuter(expr), inner.param)
+      const wrappedTemplate = wrapBoth(inner.itemTemplate!)
+      ls.push(`${indent}// Reactive inner loop: ${inner.array}`)
+      ls.push(`${indent}{ const __ic${uid} = ${containerSelector !== 'null' ? `${parentElVar}.querySelector(${containerSelector})` : parentElVar}`)
+      ls.push(`${indent}if (__ic${uid}) mapArray(() => ${arrayExpr} || [], __ic${uid}, ${keyFn}, (${inner.param}, __innerIdx${uid}, __existing) => {`)
+      // SSR/CSR branch
+      ls.push(`${indent}  const __innerEl${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
+      if (inner.key) {
+        // Inside renderItem, inner.param is an accessor
+        const wrappedKey = wrapLoopParamAsAccessor(inner.key, inner.param)
+        ls.push(`${indent}  __innerEl${uid}.setAttribute('${keyAttrName(inner.depth)}', String(${wrappedKey}))`)
+      }
+      // Set up events — wrap both outer and inner loop params as accessors
+      if (level.events.length > 0) {
+        // Pre-wrap event handlers with inner loop param before passing to emitEventSetup
+        const wrappedEvents = level.events.map(ev => ({
+          ...ev,
+          handler: wrapLoopParamAsAccessor(ev.handler, inner.param),
+        }))
+        ls.push(`${indent}  if (!__existing) {`)
+        emitComponentAndEventSetup(ls, `${indent}    `, `__innerEl${uid}`, [], wrappedEvents, 'csr', outerLoopParam)
+        ls.push(`${indent}  } else {`)
+        emitComponentAndEventSetup(ls, `${indent}    `, `__innerEl${uid}`, [], wrappedEvents, 'ssr', outerLoopParam)
+        ls.push(`${indent}  }`)
+      }
+      // Recurse for child levels
+      if (childLevels.length > 0) {
+        emitInnerLoopSetup(ls, `${indent}  `, `__innerEl${uid}`, childLevels, mode, outerLoopParam)
+      }
+      // Reactive text effects for inner loop items
+      if (inner.reactiveTexts && inner.reactiveTexts.length > 0) {
+        for (const text of inner.reactiveTexts) {
+          const wrappedExpr = wrapLoopParamAsAccessor(wrapOuter(text.expression), inner.param)
+          ls.push(`${indent}  { const [__rt] = $t(__innerEl${uid}, '${text.slotId}')`)
+          ls.push(`${indent}  if (__rt) createEffect(() => { __rt.textContent = String(${wrappedExpr}) }) }`)
+        }
+      }
+      ls.push(`${indent}  return __innerEl${uid}`)
+      ls.push(`${indent}}) }`)
+    } else {
+      // Static inner loop: use forEach for initial setup only
+      ls.push(`${indent}// Initialize ${inner.array} loop components and events`)
+      ls.push(`${indent}{ const __ic${uid} = ${containerSelector !== 'null' ? `${parentElVar}.querySelector(${containerSelector})` : parentElVar}`)
+      // Guard: inner loop array may be undefined when inside a conditional branch
+      ls.push(`${indent}if (__ic${uid} && ${arrayExpr}) ${arrayExpr}.forEach((${inner.param}, __innerIdx${uid}) => {`)
+      ls.push(`${indent}  const __innerEl${uid} = __ic${uid}.children[__innerIdx${uid}]`)
+      ls.push(`${indent}  if (!__innerEl${uid}) return`)
+      if (inner.key) {
+        ls.push(`${indent}  __innerEl${uid}.setAttribute('${keyAttrName(inner.depth)}', String(${inner.key}))`)
+      }
+      emitComponentAndEventSetup(ls, `${indent}  `, `__innerEl${uid}`, level.comps, level.events, mode, outerLoopParam)
+      // Recurse for child levels (nested deeper loops)
+      if (childLevels.length > 0) {
+        emitInnerLoopSetup(ls, `${indent}  `, `__innerEl${uid}`, childLevels, mode, outerLoopParam)
+      }
+      ls.push(`${indent}}) }`)
     }
-    emitComponentAndEventSetup(ls, `${indent}  `, `__innerEl${uid}`, level.comps, level.events, mode, outerLoopParam)
-    // Recurse for child levels (nested deeper loops)
-    if (childLevels.length > 0) {
-      emitInnerLoopSetup(ls, `${indent}  `, `__innerEl${uid}`, childLevels, mode, outerLoopParam)
-    }
-    ls.push(`${indent}}) }`)
 
     i = j // skip past this level + its children
   }
