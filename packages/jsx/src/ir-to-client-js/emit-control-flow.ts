@@ -477,7 +477,15 @@ function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, key
     for (const comp of nestedComps) {
       const selector = buildCompSelector(comp)
       const nestedPropsExpr = wrapLoopParamAsAccessor(buildComponentPropsExpr(comp), elem.param)
-      lines.push(`      { const __c = __existing.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${nestedPropsExpr}) }`)
+      // Check if children reference the loop param (reactive via per-item signal)
+      const rawChildrenExpr = comp.children?.length ? irChildrenToJsExpr(comp.children) : null
+      const childrenRefsLoop = rawChildrenExpr != null && new RegExp(`\\b${elem.param}\\b`).test(rawChildrenExpr)
+      if (childrenRefsLoop) {
+        const wrappedChildren = wrapLoopParamAsAccessor(rawChildrenExpr, elem.param)
+        lines.push(`      { const __c = __existing.querySelector('${selector}'); if (__c) { initChild('${comp.name}', __c, ${nestedPropsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
+      } else {
+        lines.push(`      { const __c = __existing.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${nestedPropsExpr}) }`)
+      }
     }
     lines.push(`      return __existing`)
     lines.push(`    }`)
