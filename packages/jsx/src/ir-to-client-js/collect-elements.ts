@@ -14,7 +14,7 @@ import { expandDynamicPropValue, expandConstantForReactivity } from './prop-hand
  * Returns NestedLoopInfo for each loop node found within the tree,
  * tracking the nearest ancestor element's slotId as container.
  */
-function collectInnerLoops(nodes: IRNode[]): NestedLoopInfo[] {
+function collectInnerLoops(nodes: IRNode[], outerLoopParam?: string, ctx?: ClientJsContext): NestedLoopInfo[] {
   const result: NestedLoopInfo[] = []
   let depth = 0
   let lastSlotId: string | null = null
@@ -27,12 +27,28 @@ function collectInnerLoops(nodes: IRNode[]): NestedLoopInfo[] {
         break
       case 'loop':
         depth++
+        // Generate item template for CSR rendering in mapArray
+        const itemTemplate = n.children.map(c => irToPlaceholderTemplate(c, undefined, depth)).join('')
+        // Check if array expression references the outer loop param
+        const refsOuter = outerLoopParam
+          ? new RegExp(`\\b${outerLoopParam}\\b`).test(n.array)
+          : false
+        // Collect reactive text expressions inside inner loop items
+        const innerReactiveTexts: Array<{ slotId: string; expression: string }> = []
+        if (refsOuter && ctx) {
+          for (const child of n.children) {
+            innerReactiveTexts.push(...collectLoopChildReactiveTexts(child, ctx, n.param))
+          }
+        }
         result.push({
           depth,
           array: n.array,
           param: n.param,
           key: n.key ?? '',
           containerSlotId: lastSlotId,
+          itemTemplate,
+          refsOuterParam: refsOuter,
+          reactiveTexts: innerReactiveTexts.length > 0 ? innerReactiveTexts : undefined,
         })
         for (const child of n.children) walk(child)
         depth--
@@ -234,7 +250,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           nestedComponents: node.nestedComponents,
           isStaticArray: node.isStaticArray,
           useElementReconciliation,
-          innerLoops: useElementReconciliation ? collectInnerLoops(node.children) : undefined,
+          innerLoops: useElementReconciliation ? collectInnerLoops(node.children, node.param, ctx) : undefined,
           filterPredicate: node.filterPredicate ? {
             param: node.filterPredicate.param,
             raw: node.filterPredicate.raw,
@@ -550,7 +566,7 @@ function collectBranchLoops(node: IRNode, ctx?: ClientJsContext): ConditionalBra
           childReactiveTexts: useElementReconciliation ? childReactiveTexts : undefined,
           childReactiveAttrs: useElementReconciliation ? childReactiveAttrs : undefined,
           childConditionals: useElementReconciliation ? childConditionals : undefined,
-          innerLoops: useElementReconciliation ? collectInnerLoops(n.children) : undefined,
+          innerLoops: useElementReconciliation ? collectInnerLoops(n.children, n.param) : undefined,
           useElementReconciliation: useElementReconciliation || undefined,
         })
         // Don't recurse into the loop — nested loops are handled by the loop's own reconciliation

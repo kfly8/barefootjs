@@ -151,6 +151,12 @@ export interface NestedLoopInfo {
   param: string    // Inner loop parameter name (e.g., 'task')
   key: string      // Inner loop key expression (e.g., 'task.id')
   containerSlotId: string | null // Slot ID of the parent element containing the loop (for hydration)
+  /** HTML template for a single inner loop item (for mapArray CSR rendering) */
+  itemTemplate?: string
+  /** Whether the inner array references the outer loop param (needs reactive mapArray) */
+  refsOuterParam?: boolean
+  /** Reactive text expressions inside inner loop items (slotId → expression) */
+  reactiveTexts?: Array<{ slotId: string; expression: string }>
 }
 
 export interface LoopChildEvent {
