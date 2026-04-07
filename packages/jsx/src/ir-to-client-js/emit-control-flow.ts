@@ -6,7 +6,7 @@
 
 import type { ClientJsContext, ConditionalBranchEvent, ConditionalBranchRef, ConditionalBranchChildComponent, ConditionalBranchTextEffect, ConditionalBranchLoop, ConditionalBranchConditional, LoopChildEvent, LoopElement, NestedLoopInfo } from './types'
 import type { IRLoopChildComponent } from '../types'
-import { toDomEventName, wrapHandlerInBlock, varSlotId, buildChainedArrayExpr, quotePropName, DATA_KEY, DATA_KEY_PREFIX, DATA_BF_PH, keyAttrName, wrapLoopParamAsAccessor } from './utils'
+import { toDomEventName, wrapHandlerInBlock, varSlotId, buildChainedArrayExpr, quotePropName, DATA_KEY, DATA_KEY_PREFIX, DATA_BF_PH, keyAttrName, wrapLoopParamAsAccessor, exprReferencesIdent } from './utils'
 import { addCondAttrToTemplate, irChildrenToJsExpr } from './html-template'
 import { emitAttrUpdate } from './emit-reactive'
 
@@ -479,7 +479,7 @@ function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, key
       const nestedPropsExpr = wrapLoopParamAsAccessor(buildComponentPropsExpr(comp), elem.param)
       // Check if children reference the loop param (reactive via per-item signal)
       const rawChildrenExpr = comp.children?.length ? irChildrenToJsExpr(comp.children) : null
-      const childrenRefsLoop = rawChildrenExpr != null && new RegExp(`\\b${elem.param}\\b`).test(rawChildrenExpr)
+      const childrenRefsLoop = rawChildrenExpr != null && exprReferencesIdent(rawChildrenExpr, elem.param)
       if (childrenRefsLoop) {
         const wrappedChildren = wrapLoopParamAsAccessor(rawChildrenExpr, elem.param)
         lines.push(`      { const __c = __existing.querySelector('${selector}'); if (__c) { initChild('${comp.name}', __c, ${nestedPropsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
