@@ -7,6 +7,7 @@
 
 import { BF_SCOPE, BF_CHILD_PREFIX } from './attrs'
 import { hydratedScopes } from './hydration-state'
+import { setCurrentScope } from './context'
 import type { InitFn } from './types'
 
 /**
@@ -93,5 +94,7 @@ export function initChild(
   if (hydratedScopes.has(childScope) && childScope.getAttribute(BF_SCOPE)?.startsWith(BF_CHILD_PREFIX)) {
     return
   }
+  const prevScope = setCurrentScope(childScope)
   init(childScope, props)
+  setCurrentScope(prevScope)
 }

@@ -4,10 +4,15 @@
  * Provides createContext, useContext, and provideContext for
  * compound component patterns (DropdownMenu, Tabs, Dialog, etc.).
  *
- * Uses a global context store (Map<symbol, unknown>).
- * Since hydration is synchronous (initChild calls are sequential),
- * provideContext() before initChild() guarantees children see the correct value.
+ * Context values are stored on DOM elements (scope-based), enabling
+ * multiple providers of the same context on one page (e.g., two Select
+ * components). useContext walks DOM ancestors to find the nearest provider.
+ * Portal elements (with bf-po attribute) follow the logical owner chain.
+ *
+ * A global store is kept as fallback for non-scoped usage.
  */
+
+import { BF_PORTAL_OWNER, BF_SCOPE, BF_CHILD_PREFIX } from './attrs'
 
 export type Context<T> = {
   readonly id: symbol
@@ -18,7 +23,25 @@ export type Context<T> = {
   readonly Provider: (props: { value: T; children?: unknown }) => unknown
 }
 
+/** Global fallback store for contexts without a DOM scope. */
 const contextStore = new Map<symbol, unknown>()
+
+/** Property key for context data stored on DOM elements. */
+const CONTEXT_KEY = '__bfCtx'
+
+/** Current scope element, set by initChild during component initialization. */
+let currentScope: Element | null = null
+
+/**
+ * Set the current scope element for context operations.
+ * Called by initChild to scope provideContext/useContext to the correct element.
+ * Returns the previous scope for restoration.
+ */
+export function setCurrentScope(scope: Element | null): Element | null {
+  const prev = currentScope
+  currentScope = scope
+  return prev
+}
 
 /**
  * Create a new context with an optional default value.
@@ -40,11 +63,34 @@ export function createContext<T>(defaultValue?: T): Context<T> {
 /**
  * Read the current value of a context.
  *
- * Returns the provided value if provideContext() was called,
- * falls back to the context's default value,
- * or throws if neither exists.
+ * Walks up the DOM tree from the current scope element to find
+ * the nearest ancestor that provided this context. Falls back to
+ * the global store, then to the context's default value.
  */
 export function useContext<T>(context: Context<T>): T {
+  // Walk DOM ancestors from current scope to find nearest provider.
+  // For portal elements (bf-po attribute), follow the logical owner
+  // chain back to the original parent scope.
+  if (currentScope) {
+    let el: Element | null = currentScope
+    while (el) {
+      const ctxMap = (el as any)[CONTEXT_KEY] as Map<symbol, unknown> | undefined
+      if (ctxMap?.has(context.id)) {
+        return ctxMap.get(context.id) as T
+      }
+      // Follow portal owner chain: if this element has bf-po, jump to the owner scope
+      const portalOwnerId: string | null = el.getAttribute(BF_PORTAL_OWNER)
+      if (portalOwnerId) {
+        const ownerEl: Element | null = document.querySelector(`[${BF_SCOPE}="${BF_CHILD_PREFIX}${portalOwnerId}"], [${BF_SCOPE}="${portalOwnerId}"]`)
+        if (ownerEl && ownerEl !== el) {
+          el = ownerEl
+          continue
+        }
+      }
+      el = el.parentElement
+    }
+  }
+  // Fallback to global store
   if (contextStore.has(context.id)) {
     return contextStore.get(context.id) as T
   }
@@ -57,9 +103,34 @@ export function useContext<T>(context: Context<T>): T {
 /**
  * Provide a value for a context.
  *
- * Must be called before initChild() so child components
- * can access the value via useContext().
+ * Stores the value on the current scope DOM element so that child
+ * components can find it via useContext's DOM ancestor walk.
+ * Also sets the global store as fallback.
  */
 export function provideContext<T>(context: Context<T>, value: T): void {
+  if (currentScope) {
+    let ctxMap = (currentScope as any)[CONTEXT_KEY] as Map<symbol, unknown> | undefined
+    if (!ctxMap) {
+      ctxMap = new Map()
+      ;(currentScope as any)[CONTEXT_KEY] = ctxMap
+    }
+    ctxMap.set(context.id, value)
+
+    // Propagate context to child scope elements so portal-moved children
+    // can find it via DOM ancestor walk. At provideContext time, children
+    // are still in their original SSR positions (portals haven't moved them yet).
+    const childScopes = currentScope.querySelectorAll(`[${BF_SCOPE}]`)
+    for (const child of childScopes) {
+      let childCtxMap = (child as any)[CONTEXT_KEY] as Map<symbol, unknown> | undefined
+      if (!childCtxMap) {
+        childCtxMap = new Map()
+        ;(child as any)[CONTEXT_KEY] = childCtxMap
+      }
+      // Only set if not already provided (don't override nested providers)
+      if (!childCtxMap.has(context.id)) {
+        childCtxMap.set(context.id, value)
+      }
+    }
+  }
   contextStore.set(context.id, value)
 }
