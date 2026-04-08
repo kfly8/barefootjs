@@ -42,7 +42,7 @@ export { reconcileList, type RenderItemFn } from './list'
 export { reconcileElements, getLoopChildren } from './reconcile-elements'
 export { mapArray } from './map-array'
 
-export { createContext, useContext, provideContext, type Context } from './context'
+export { createContext, useContext, provideContext, setCurrentScope, type Context } from './context'
 
 // Template registry for client-side component creation
 export { registerTemplate, getTemplate, hasTemplate, type TemplateFn } from './template'

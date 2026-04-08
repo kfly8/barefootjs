@@ -147,6 +147,20 @@ test.describe('User Profile Block', () => {
       await expect(s.locator('.repo-empty')).toBeVisible()
     })
 
+    test('language filter select updates check indicator', async ({ page }) => {
+      const s = section(page)
+      // Open language filter and select TypeScript
+      await s.locator('.repo-language-filter').click()
+      await page.locator('[data-slot="select-item"]:has-text("TypeScript")').click()
+
+      // Reopen and verify check indicators
+      await s.locator('.repo-language-filter').click()
+      const allItem = page.locator('[data-slot="select-item"]:has-text("All Languages")')
+      const tsItem = page.locator('[data-slot="select-item"]:has-text("TypeScript")')
+      await expect(allItem).toHaveAttribute('data-state', 'unchecked')
+      await expect(tsItem).toHaveAttribute('data-state', 'checked')
+    })
+
     test('star toggle changes button text', async ({ page }) => {
       const s = section(page)
       const firstStarBtn = s.locator('.star-button').first()
