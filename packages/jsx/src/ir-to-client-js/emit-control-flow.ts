@@ -875,7 +875,6 @@ function emitInnerLoopSetup(
       const keyFn = inner.key
         ? `(${inner.param}) => String(${inner.key})`
         : 'null'
-      const wrapBoth = (expr: string) => wrapLoopParamAsAccessor(wrapOuter(expr), inner.param)
       // Template is already wrapped at generation time (irToPlaceholderTemplate with loopParams)
       const wrappedTemplate = inner.itemTemplate!
       ls.push(`${indent}// Reactive inner loop: ${inner.array}`)
