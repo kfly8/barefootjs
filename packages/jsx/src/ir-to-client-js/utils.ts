@@ -203,3 +203,15 @@ export function wrapLoopParamAsAccessor(expr: string, paramName: string): string
   return expr.replace(new RegExp(`\\b${escapeRegExp(paramName)}\\b(?!\\s*\\()(?!-)`, 'g'), `${paramName}()`)
 }
 
+/**
+ * Apply wrapLoopParamAsAccessor for multiple loop params.
+ * Used during template generation to wrap expression values at IR level,
+ * avoiding post-hoc regex replacement on full template strings.
+ */
+export function wrapExprWithLoopParams(expr: string, loopParams?: string[]): string {
+  if (!loopParams) return expr
+  let result = expr
+  for (const p of loopParams) result = wrapLoopParamAsAccessor(result, p)
+  return result
+}
+

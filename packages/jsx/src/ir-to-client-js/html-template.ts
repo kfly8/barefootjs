@@ -4,7 +4,7 @@
 
 import type { IRNode } from '../types'
 import { isBooleanAttr } from '../html-constants'
-import { toHtmlAttrName, attrValueToString, quotePropName, PROPS_PARAM, DATA_BF_PH, keyAttrName, BF_LOOP_START, BF_LOOP_END, exprReferencesIdent, wrapLoopParamAsAccessor } from './utils'
+import { toHtmlAttrName, attrValueToString, quotePropName, PROPS_PARAM, DATA_BF_PH, keyAttrName, BF_LOOP_START, BF_LOOP_END, exprReferencesIdent, wrapExprWithLoopParams } from './utils'
 
 /**
  * Protect string literals from regex-based replacements.
@@ -58,12 +58,7 @@ function templateAttrExpr(attrName: string, valExpr: string, attr: { presenceOrU
  */
 export function irToHtmlTemplate(node: IRNode, restSpreadNames?: Set<string>, loopDepth = 0, loopParams?: string[]): string {
   const recurse = (n: IRNode): string => irToHtmlTemplate(n, restSpreadNames, loopDepth, loopParams)
-  const wrapExpr = (expr: string): string => {
-    if (!loopParams) return expr
-    let result = expr
-    for (const p of loopParams) result = wrapLoopParamAsAccessor(result, p)
-    return result
-  }
+  const wrapExpr = (expr: string) => wrapExprWithLoopParams(expr, loopParams)
 
   switch (node.type) {
     case 'element': {
@@ -198,13 +193,7 @@ export function irToHtmlTemplate(node: IRNode, restSpreadNames?: Set<string>, lo
  */
 export function irToPlaceholderTemplate(node: IRNode, restSpreadNames?: Set<string>, loopDepth = 0, loopParams?: string[]): string {
   const recurse = (n: IRNode): string => irToPlaceholderTemplate(n, restSpreadNames, loopDepth, loopParams)
-  // Wrap expression with loop param accessors (only for expressions, not literal text)
-  const wrapExpr = (expr: string): string => {
-    if (!loopParams) return expr
-    let result = expr
-    for (const p of loopParams) result = wrapLoopParamAsAccessor(result, p)
-    return result
-  }
+  const wrapExpr = (expr: string) => wrapExprWithLoopParams(expr, loopParams)
 
   switch (node.type) {
     case 'element': {

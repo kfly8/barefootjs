@@ -379,8 +379,9 @@ export function collectLoopChildConditionals(
       // needsEffectWrapper only knows about signals/memos/props, not loop params.
       if (!refsLoopParam && !needsEffectWrapper(expanded, ctx)) return
       {
-        const whenTrueHtml = irToHtmlTemplate(n.whenTrue)
-        const whenFalseHtml = irToHtmlTemplate(n.whenFalse)
+        const loopParamsForCond = loopParam ? [loopParam] : undefined
+        const whenTrueHtml = irToHtmlTemplate(n.whenTrue, undefined, 0, loopParamsForCond)
+        const whenFalseHtml = irToHtmlTemplate(n.whenFalse, undefined, 0, loopParamsForCond)
         conditionals.push({
           slotId: n.slotId,
           condition: expanded,
