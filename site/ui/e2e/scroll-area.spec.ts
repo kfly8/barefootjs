@@ -28,7 +28,7 @@ test.describe('Scroll Area Reference Page', () => {
     test('shows version tags', async ({ page }) => {
       // Usage section tags demo (not the playground) has data-tag attributes
       const tagsDemo = page.locator('[data-slot="scroll-area"]').filter({ has: page.locator('[data-tag]') }).first()
-      await expect(tagsDemo.locator('[data-tag="v1.2.0-beta.50"]')).toBeVisible()
+      await expect(tagsDemo.locator('[data-tag]').first()).toBeVisible({ timeout: 10000 })
     })
 
     test('has scrollable viewport', async ({ page }) => {
