@@ -263,7 +263,7 @@ export function emitLoopUpdates(lines: string[], ctx: ClientJsContext): void {
 function emitBranchChildComponentInits(
   lines: string[],
   indent: string,
-  components: Array<{ name: string; slotId: string | null; props: import('../types').IRProp[] }>,
+  components: Array<{ name: string; slotId: string | null; props: import('../types').IRProp[]; children?: import('../types').IRNode[] }>,
   loopParam?: string,
 ): void {
   const wrap = loopParam ? (expr: string) => wrapLoopParamAsAccessor(expr, loopParam) : (expr: string) => expr
@@ -280,8 +280,16 @@ function emitBranchChildComponentInits(
         if (p.isLiteral) return `get ${quotePropName(p.name)}() { return ${JSON.stringify(p.value)} }`
         return `get ${quotePropName(p.name)}() { return ${wrap(p.value)} }`
       })
+    // Include children for CSR createComponent (SSR initChild doesn't need it — text is in HTML)
+    const childrenExpr = comp.children?.length ? irChildrenToJsExpr(comp.children) : null
+    if (childrenExpr) {
+      propsEntries.push(`get children() { return ${wrap(childrenExpr)} }`)
+    }
     const propsExpr = propsEntries.length > 0 ? `{ ${propsEntries.join(', ')} }` : '{}'
-    lines.push(`${indent}{ const __c = __branchScope.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
+    // SSR: element has bf-s attribute → initChild.
+    // CSR: element is a placeholder (data-bf-ph) → createComponent to replace it.
+    const phId = comp.slotId || comp.name
+    lines.push(`${indent}{ let __c = __branchScope.querySelector('${selector}'); if (!__c) { const __ph = __branchScope.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) { __c = createComponent('${comp.name}', ${propsExpr}); __ph.replaceWith(__c) } } if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
   }
 }
 
@@ -384,8 +392,23 @@ function emitLoopChildReactiveEffects(
     lines.push(`${indent}} }`)
   }
 
-  // Reactive text content effects
+  // Collect text slot IDs that are inside conditionals — these must be
+  // emitted inside bindEvents, not outside, because insert() branch swaps
+  // replace the DOM nodes that text effects reference.
+  const textSlotsInConditionals = new Set<string>()
+  if (conditionals) {
+    for (const cond of conditionals) {
+      for (const text of texts) {
+        if (cond.whenTrueHtml.includes(`bf:${text.slotId}`) || cond.whenFalseHtml.includes(`bf:${text.slotId}`)) {
+          textSlotsInConditionals.add(text.slotId)
+        }
+      }
+    }
+  }
+
+  // Reactive text content effects (only for slots NOT inside conditionals)
   for (const text of texts) {
+    if (textSlotsInConditionals.has(text.slotId)) continue
     const varName = `__rt_${varSlotId(text.slotId)}`
     lines.push(`${indent}{ const [${varName}] = $t(${elVar}, '${text.slotId}')`)
     lines.push(`${indent}if (${varName}) createEffect(() => { ${varName}.textContent = String(${wrap(text.expression)}) }) }`)
@@ -393,6 +416,10 @@ function emitLoopChildReactiveEffects(
 
   // Reactive conditional effects
   if (conditionals) {
+    // Text effects scoped to each branch
+    const textsForBranch = (html: string) =>
+      texts.filter(t => textSlotsInConditionals.has(t.slotId) && html.includes(`bf:${t.slotId}`))
+
     for (const cond of conditionals) {
       const whenTrueWithCond = addCondAttrToTemplate(wrap(cond.whenTrueHtml), cond.slotId)
       const whenFalseWithCond = addCondAttrToTemplate(wrap(cond.whenFalseHtml), cond.slotId)
@@ -401,12 +428,22 @@ function emitLoopChildReactiveEffects(
       lines.push(`${indent}  bindEvents: (__branchScope) => {`)
       emitBranchChildComponentInits(lines, `${indent}    `, cond.whenTrueComponents, loopParam)
       emitBranchInnerLoops(lines, `${indent}    `, '__branchScope', cond.whenTrueInnerLoops, loopParam)
+      for (const text of textsForBranch(cond.whenTrueHtml)) {
+        const varName = `__rt_${varSlotId(text.slotId)}`
+        lines.push(`${indent}    { const [${varName}] = $t(__branchScope, '${text.slotId}')`)
+        lines.push(`${indent}    if (${varName}) createEffect(() => { ${varName}.textContent = String(${wrap(text.expression)}) }) }`)
+      }
       lines.push(`${indent}  }`)
       lines.push(`${indent}}, {`)
       lines.push(`${indent}  template: () => \`${whenFalseWithCond}\`,`)
       lines.push(`${indent}  bindEvents: (__branchScope) => {`)
       emitBranchChildComponentInits(lines, `${indent}    `, cond.whenFalseComponents, loopParam)
       emitBranchInnerLoops(lines, `${indent}    `, '__branchScope', cond.whenFalseInnerLoops, loopParam)
+      for (const text of textsForBranch(cond.whenFalseHtml)) {
+        const varName = `__rt_${varSlotId(text.slotId)}`
+        lines.push(`${indent}    { const [${varName}] = $t(__branchScope, '${text.slotId}')`)
+        lines.push(`${indent}    if (${varName}) createEffect(() => { ${varName}.textContent = String(${wrap(text.expression)}) }) }`)
+      }
       lines.push(`${indent}  }`)
       lines.push(`${indent}})`)
     }
