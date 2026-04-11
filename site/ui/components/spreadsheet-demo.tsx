@@ -124,7 +124,7 @@ export function SpreadsheetDemo() {
   const selectCell = (id: string) => {
     if (editingCell() === id) return
     if (editingCell()) commitEdit()
-    setSelectedCell(id)
+    startEditing(id)
   }
 
   const startEditing = (id: string) => {
@@ -192,23 +192,14 @@ export function SpreadsheetDemo() {
       <div className="formula-bar flex items-center gap-2 px-3 py-1.5 border rounded-lg bg-muted/30 text-sm">
         <span className="cell-ref font-mono font-medium w-8">{selectedCell() || ''}</span>
         <span className="text-muted-foreground">|</span>
-        {editingCell() ? (
-          <Input
-            value={editValue()}
-            onInput={(e) => setEditValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={commitEdit}
-            className="cell-input flex-1 h-7 font-mono text-sm"
-            ref={(el) => requestAnimationFrame(() => el.focus())}
-          />
-        ) : (
-          <span
-            className="cell-formula flex-1 font-mono text-muted-foreground cursor-pointer"
-            onClick={() => { if (selectedCell()) startEditing(selectedCell()!) }}
-          >
-            {formulaDisplay()}
-          </span>
-        )}
+        <Input
+          value={editValue()}
+          onInput={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commitEdit}
+          className="cell-input flex-1 h-7 font-mono text-sm"
+          disabled={!editingCell()}
+        />
       </div>
 
       {/* Grid — nested mapArray: rows → cells */}
