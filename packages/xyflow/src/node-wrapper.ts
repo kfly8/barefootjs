@@ -41,7 +41,9 @@ export function createNodeWrapper<NodeType extends NodeBase>(
 
     // Create node element
     element = document.createElement('div')
-    element.className = 'bf-flow__node'
+    // nopan prevents D3 zoom from panning when dragging on nodes
+    // (nodrag is for child elements like inputs that shouldn't trigger drag)
+    element.className = 'bf-flow__node nopan'
     element.dataset.id = internalNode.id
     element.style.position = 'absolute'
     element.style.transformOrigin = '0 0'
