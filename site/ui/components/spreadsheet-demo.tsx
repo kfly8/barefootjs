@@ -127,6 +127,8 @@ export function SpreadsheetDemo() {
     startEditing(id)
   }
 
+  let inputRef: HTMLElement | undefined
+
   const startEditing = (id: string) => {
     for (const row of rows()) {
       const cell = row.cells.find(c => c.id === id)
@@ -134,6 +136,7 @@ export function SpreadsheetDemo() {
         setEditingCell(id)
         setSelectedCell(id)
         setEditValue(cell.formula || String(cell.value ?? ''))
+        requestAnimationFrame(() => { if (inputRef) inputRef.focus() })
         return
       }
     }
@@ -199,6 +202,7 @@ export function SpreadsheetDemo() {
           onBlur={commitEdit}
           className="cell-input flex-1 h-7 font-mono text-sm"
           disabled={!editingCell()}
+          ref={(el) => { inputRef = el }}
         />
       </div>
 
