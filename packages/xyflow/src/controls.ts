@@ -69,12 +69,12 @@ export function initControls(scope: Element, props: Record<string, unknown>): vo
   }
 
   if (showInteractive) {
-    const lockBtn = createButton(ICONS.lock, 'Toggle interactivity', () => {
+    // unlock icon = interactive (draggable), lock icon = locked (not draggable)
+    const lockBtn = createButton(ICONS.unlock, 'Toggle interactivity', () => {
       const next = !interactive()
       setInteractive(next)
 
-      // Update icon — lock = interactive, unlock = locked (no drag/connect)
-      setButtonIcon(lockBtn, next ? ICONS.lock : ICONS.unlock)
+      setButtonIcon(lockBtn, next ? ICONS.unlock : ICONS.lock)
 
       // Toggle node dragging/connecting/deleting (pan/zoom stays enabled)
       store.setNodesDraggable(next)
