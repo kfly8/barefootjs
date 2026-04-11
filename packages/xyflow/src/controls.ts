@@ -30,14 +30,23 @@ export function initControls(scope: Element, props: Record<string, unknown>): vo
 
   const [interactive, setInteractive] = createSignal(true)
 
+  // Inject hover styles once
+  if (!document.getElementById('bf-flow-controls-style')) {
+    const style = document.createElement('style')
+    style.id = 'bf-flow-controls-style'
+    style.textContent = `
+      .bf-flow__controls-button:hover { background: #f4f4f4 !important; }
+      .bf-flow__controls-button:last-child { border-bottom: none !important; }
+    `
+    document.head.appendChild(style)
+  }
+
   const container = document.createElement('div')
   container.className = 'bf-flow__controls'
   container.style.position = 'absolute'
   container.style.zIndex = '5'
   container.style.display = 'flex'
   container.style.flexDirection = 'column'
-  container.style.backgroundColor = '#fff'
-  container.style.borderRadius = '2px'
   container.style.boxShadow = '0 0 2px 1px rgba(0,0,0,0.08)'
 
   const [vertical, horizontal] = position.split('-')
@@ -61,13 +70,36 @@ export function initControls(scope: Element, props: Record<string, unknown>): vo
 
   if (showInteractive) {
     const lockBtn = createButton(ICONS.lock, 'Toggle interactivity', () => {
-      setInteractive(!interactive())
-      lockBtn.innerHTML = ''
-      const icon = document.createElement('span')
-      icon.innerHTML = interactive() ? ICONS.lock : ICONS.unlock
-      icon.querySelector('svg')!.style.width = '100%'
-      icon.querySelector('svg')!.style.height = '100%'
-      lockBtn.appendChild(icon)
+      const next = !interactive()
+      setInteractive(next)
+
+      // Update icon
+      setButtonIcon(lockBtn, next ? ICONS.lock : ICONS.unlock)
+
+      // Toggle pan/zoom on the container
+      const pz = store.panZoom()
+      if (pz) {
+        pz.update({
+          noWheelClassName: 'nowheel',
+          noPanClassName: 'nopan',
+          preventScrolling: next,
+          panOnScroll: false,
+          panOnDrag: next,
+          panOnScrollMode: 0 as any,
+          panOnScrollSpeed: 0.5,
+          userSelectionActive: false,
+          zoomOnPinch: next,
+          zoomOnScroll: next,
+          zoomOnDoubleClick: next,
+          zoomActivationKeyPressed: false,
+          lib: 'bf',
+          onTransformChange: (t: [number, number, number]) => {
+            store.setViewport({ x: t[0], y: t[1], zoom: t[2] })
+          },
+          connectionInProgress: false,
+          paneClickDistance: 0,
+        })
+      }
     })
     container.appendChild(lockBtn)
   }
@@ -80,24 +112,35 @@ function createButton(iconSvg: string, title: string, onClick: () => void): HTML
   const btn = document.createElement('button')
   btn.className = 'bf-flow__controls-button nodrag nowheel'
   btn.title = title
-  btn.style.width = '26px'
+  btn.style.display = 'flex'
+  btn.style.justifyContent = 'center'
+  btn.style.alignItems = 'center'
   btn.style.height = '26px'
+  btn.style.width = '26px'
   btn.style.padding = '4px'
   btn.style.border = 'none'
   btn.style.borderBottom = '1px solid #eee'
-  btn.style.backgroundColor = '#fff'
+  btn.style.background = '#fefefe'
   btn.style.cursor = 'pointer'
-  btn.style.display = 'flex'
-  btn.style.alignItems = 'center'
-  btn.style.justifyContent = 'center'
+  btn.style.userSelect = 'none'
+  btn.style.color = 'inherit'
 
-  const icon = document.createElement('span')
-  icon.innerHTML = iconSvg
-  icon.querySelector('svg')!.style.width = '100%'
-  icon.querySelector('svg')!.style.height = '100%'
-  icon.querySelector('svg')!.style.fill = 'currentColor'
-  btn.appendChild(icon)
-
+  setButtonIcon(btn, iconSvg)
   btn.addEventListener('click', onClick)
   return btn
+}
+
+function setButtonIcon(btn: HTMLButtonElement, iconSvg: string) {
+  btn.innerHTML = ''
+  const wrapper = document.createElement('span')
+  wrapper.style.display = 'flex'
+  wrapper.style.alignItems = 'center'
+  wrapper.style.justifyContent = 'center'
+  wrapper.innerHTML = iconSvg
+  const svg = wrapper.querySelector('svg')!
+  svg.style.width = '100%'
+  svg.style.maxWidth = '12px'
+  svg.style.maxHeight = '12px'
+  svg.style.fill = 'currentColor'
+  btn.appendChild(wrapper)
 }
