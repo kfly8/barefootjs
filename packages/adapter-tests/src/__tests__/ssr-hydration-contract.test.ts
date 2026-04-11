@@ -149,6 +149,39 @@ describe('SSR-Hydration Contract', () => {
     }
   })
 
+  describe('className preserved in marked template JSX output (#773)', () => {
+    test('static className remains className (not class) in marked template', () => {
+      const source = `
+export function Test() {
+  return <div className="container"><span className="label">Text</span></div>
+}
+`
+      const result = compileJSXSync(source, 'Test.tsx', { adapter })
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+
+      expect(template.content).toContain('className="container"')
+      expect(template.content).toContain('className="label"')
+      expect(template.content).not.toContain('class="container"')
+      expect(template.content).not.toContain('class="label"')
+    })
+
+    test('dynamic className remains className in marked template', () => {
+      const source = `
+'use client'
+import { createSignal } from '@barefootjs/dom'
+export function Test() {
+  const [active, setActive] = createSignal(false)
+  return <div className={active() ? 'on' : 'off'}>Toggle</div>
+}
+`
+      const result = compileJSXSync(source, 'Test.tsx', { adapter })
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+
+      expect(template.content).toContain('className=')
+      expect(template.content).not.toMatch(/\bclass=/)
+    })
+  })
+
   describe('key attribute: data-key in client JS ↔ .map() in source', () => {
     for (const fixture of jsxFixtures) {
       if (statelessFixtures.has(fixture.id)) continue
