@@ -4,7 +4,7 @@ import {
   onCleanup,
   untrack,
 } from '@barefootjs/client'
-import { updateNodeInternals, XYDrag } from '@xyflow/system'
+import { updateNodeInternals } from '@xyflow/system'
 import type {
   NodeBase,
   InternalNodeBase,
@@ -94,46 +94,92 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     const isDraggable = internalNode.draggable !== false
 
     if (isDraggable) {
-      const dragInstance = XYDrag({
-        getStoreItems: () => ({
-          nodes: untrack(store.nodes),
-          nodeLookup: untrack(store.nodeLookup),
-          edges: untrack(store.edges),
-          nodeExtent: store.nodeExtent,
-          snapGrid: store.snapGrid,
-          snapToGrid: store.snapToGrid,
-          nodeOrigin: store.nodeOrigin,
-          multiSelectionActive: untrack(store.multiSelectionActive),
-          domNode: untrack(store.domNode) ?? undefined,
-          transform: store.getTransform(),
-          autoPanOnNodeDrag: true,
-          nodesDraggable: true,
-          selectNodesOnDrag: true,
-          nodeDragThreshold: 0,
-          panBy: store.panByDelta,
-          unselectNodesAndEdges: store.unselectNodesAndEdges as any,
-          updateNodePositions: store.updateNodePositions as any,
-        }),
-        onDragStart: (_event, _dragItems, node) => {
-          console.log('[bf-drag] start', node?.id)
-        },
-        onDrag: (_event, _dragItems, node) => {
-          console.log('[bf-drag] move', node?.id)
-        },
-        onDragStop: (_event, _dragItems, node) => {
-          console.log('[bf-drag] stop', node?.id)
-        },
-      })
+      // Native drag implementation — D3 drag's event system doesn't
+      // integrate well with our DOM structure (XYDrag's d3Selection.call
+      // doesn't fire handlers reliably outside React's synthetic events).
+      let dragging = false
+      let startMouseX = 0
+      let startMouseY = 0
+      let startNodeX = 0
+      let startNodeY = 0
 
-      // Attach drag to this node's DOM element
-      dragInstance.update({
-        domNode: element,
-        nodeId: internalNode.id,
-        isSelectable: internalNode.selectable !== false,
-        noDragClassName: 'nodrag',
-      })
+      const onMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) return // left button only
+        e.stopPropagation() // prevent D3 zoom pan
 
-      onCleanup(() => dragInstance.destroy())
+        const [tx, ty, scale] = store.getTransform()
+        startMouseX = e.clientX
+        startMouseY = e.clientY
+
+        const lookup = untrack(store.nodeLookup)
+        const node = lookup.get(internalNode.id)
+        if (node) {
+          startNodeX = node.internals.positionAbsolute.x
+          startNodeY = node.internals.positionAbsolute.y
+        }
+
+        dragging = true
+        element.style.cursor = 'grabbing'
+
+        // Select this node
+        store.unselectNodesAndEdges()
+        store.setNodes((prev) =>
+          prev.map((n) =>
+            n.id === internalNode.id ? { ...n, selected: true } : n,
+          ),
+        )
+
+        const onMouseMove = (e: MouseEvent) => {
+          if (!dragging) return
+
+          const [, , scale] = store.getTransform()
+          const dx = (e.clientX - startMouseX) / scale
+          const dy = (e.clientY - startMouseY) / scale
+
+          const newX = startNodeX + dx
+          const newY = startNodeY + dy
+
+          // Update DOM directly for immediate visual feedback
+          element.style.transform = `translate(${newX}px, ${newY}px)`
+
+          // Update internal state
+          const lookup = untrack(store.nodeLookup)
+          const node = lookup.get(internalNode.id)
+          if (node) {
+            node.internals.positionAbsolute = { x: newX, y: newY }
+            node.internals.userNode.position = { x: newX, y: newY }
+          }
+        }
+
+        const onMouseUp = (e: MouseEvent) => {
+          dragging = false
+          element.style.cursor = 'grab'
+
+          const [, , scale] = store.getTransform()
+          const dx = (e.clientX - startMouseX) / scale
+          const dy = (e.clientY - startMouseY) / scale
+          const finalX = startNodeX + dx
+          const finalY = startNodeY + dy
+
+          // Commit final position to store (triggers edge re-render etc.)
+          store.setNodes((prev) =>
+            prev.map((n) =>
+              n.id === internalNode.id
+                ? { ...n, position: { x: finalX, y: finalY }, dragging: false }
+                : n,
+            ),
+          )
+
+          document.removeEventListener('mousemove', onMouseMove)
+          document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+      }
+
+      element.addEventListener('mousedown', onMouseDown)
+      onCleanup(() => element.removeEventListener('mousedown', onMouseDown))
     }
 
     // Reactive position update
