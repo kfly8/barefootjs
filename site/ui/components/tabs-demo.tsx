@@ -6,7 +6,7 @@
  * Used in tabs documentation page.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Tabs,
   TabsList,

@@ -5,7 +5,7 @@ Signal-based form management for [BarefootJS](https://github.com/kfly8/barefootj
 ## Install
 
 ```bash
-bun add @barefootjs/form @barefootjs/dom
+bun add @barefootjs/form @barefootjs/client
 ```
 
 You also need a Standard Schema–compatible validation library (e.g. [Zod](https://zod.dev/), [Valibot](https://valibot.dev/), [ArkType](https://arktype.io/)):

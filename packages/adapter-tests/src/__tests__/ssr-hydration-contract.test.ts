@@ -168,7 +168,7 @@ export function Test() {
     test('dynamic className remains className in marked template', () => {
       const source = `
 'use client'
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client-runtime'
 export function Test() {
   const [active, setActive] = createSignal(false)
   return <div className={active() ? 'on' : 'off'}>Toggle</div>

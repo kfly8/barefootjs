@@ -7,7 +7,7 @@
  * Used to verify consistent behavior across different backends.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 
 interface CounterProps {
   initial?: number

@@ -6,7 +6,7 @@
  * Shows Counter JSX source and compiled output for different backends.
  */
 
-import { createSignal, onMount } from '@barefootjs/dom'
+import { createSignal, onMount } from '@barefootjs/client'
 import { COUNTER_SOURCE, HONO_OUTPUT, ECHO_OUTPUT } from './code-examples'
 
 export function CodeDemo() {

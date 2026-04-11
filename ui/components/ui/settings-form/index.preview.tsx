@@ -1,6 +1,6 @@
 "use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { SettingsForm } from '../settings-form'
 import { Switch } from '../switch'
 import { Input } from '../input'

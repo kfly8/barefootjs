@@ -4,8 +4,8 @@
 
 import type { ComponentIR, IRNode } from '../types'
 
-// All exports from @barefootjs/dom that may be used in generated code
-export const DOM_IMPORT_CANDIDATES = [
+// All exports from @barefootjs/client-runtime that may be used in generated code
+export const RUNTIME_IMPORT_CANDIDATES = [
   'createSignal', 'createMemo', 'createEffect', 'onCleanup', 'onMount',
   'hydrate', 'insert', 'reconcileElements', 'getLoopChildren', 'mapArray', 'createDisposableEffect',
   'createComponent', 'renderChild', 'registerComponent', 'registerTemplate', 'initChild', 'updateClientMarker',
@@ -15,15 +15,20 @@ export const DOM_IMPORT_CANDIDATES = [
   'qsa', '__slot',
 ] as const
 
+/** @deprecated Use RUNTIME_IMPORT_CANDIDATES */
+export const DOM_IMPORT_CANDIDATES = RUNTIME_IMPORT_CANDIDATES
+
+export const RUNTIME_MODULE = '@barefootjs/client-runtime'
+
 export const IMPORT_PLACEHOLDER = '/* __BAREFOOTJS_DOM_IMPORTS__ */'
 export const MODULE_CONSTANTS_PLACEHOLDER = '/* __MODULE_LEVEL_CONSTANTS__ */'
 
 /**
- * Detect which @barefootjs/dom functions are actually used in the generated code
+ * Detect which @barefootjs/client-runtime functions are actually used in the generated code
  */
 export function detectUsedImports(code: string): Set<string> {
   const used = new Set<string>()
-  for (const name of DOM_IMPORT_CANDIDATES) {
+  for (const name of RUNTIME_IMPORT_CANDIDATES) {
     // Match function calls: name(
     if (new RegExp(`\\b${name}\\s*\\(`).test(code)) {
       used.add(name)
@@ -45,12 +50,13 @@ export function detectUsedImports(code: string): Set<string> {
 }
 
 /**
- * Collect user-defined imports from @barefootjs/dom (preserve PR #248 behavior)
+ * Collect user-defined imports from @barefootjs/client or @barefootjs/client-runtime
  */
 export function collectUserDomImports(ir: ComponentIR): string[] {
+  const runtimeSources = new Set([RUNTIME_MODULE, '@barefootjs/client', '@barefootjs/dom'])
   const userImports: string[] = []
   for (const imp of ir.metadata.imports) {
-    if (imp.source === '@barefootjs/dom' && !imp.isTypeOnly) {
+    if (runtimeSources.has(imp.source) && !imp.isTypeOnly) {
       for (const spec of imp.specifiers) {
         if (!spec.isDefault && !spec.isNamespace) {
           userImports.push(spec.alias ? `${spec.name} as ${spec.alias}` : spec.name)
@@ -71,7 +77,7 @@ export function collectExternalImports(ir: ComponentIR, generatedCode: string, l
   const importLines: string[] = []
   for (const imp of ir.metadata.imports) {
     if (imp.isTypeOnly) continue
-    if (imp.source === '@barefootjs/dom') continue
+    if (imp.source === '@barefootjs/dom' || imp.source === '@barefootjs/client' || imp.source === RUNTIME_MODULE) continue
     // Skip local path-alias imports (resolved at build time, not in browser)
     if (localImportPrefixes?.some(prefix => imp.source.startsWith(prefix))) continue
 

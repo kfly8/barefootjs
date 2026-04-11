@@ -59,7 +59,7 @@ export class TestAdapter extends BaseAdapter {
     const lines: string[] = []
 
     for (const imp of ir.metadata.imports) {
-      if (imp.source === '@barefootjs/dom') continue
+      if (imp.source === '@barefootjs/dom' || imp.source === '@barefootjs/client' || imp.source === '@barefootjs/client-runtime') continue
       if (imp.specifiers.length === 0) {
         if (!imp.isTypeOnly) {
           lines.push(`import '${imp.source}'`)

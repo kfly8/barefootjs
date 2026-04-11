@@ -9,7 +9,7 @@
  * and loop-in-loop with events (replies inside comments inside posts).
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Avatar, AvatarFallback } from '@ui/components/ui/avatar'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'

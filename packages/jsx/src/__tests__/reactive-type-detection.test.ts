@@ -355,7 +355,7 @@ describe('IR reactivity detection', () => {
   test('signal getter in JSX expression is marked reactive', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function Counter() {
         const [count, setCount] = createSignal(0)
@@ -375,7 +375,7 @@ describe('IR reactivity detection', () => {
   test('memo in JSX expression is marked reactive', () => {
     const source = `
       'use client'
-      import { createSignal, createMemo } from '@barefootjs/dom'
+      import { createSignal, createMemo } from '@barefootjs/client-runtime'
 
       export function Counter() {
         const [count, setCount] = createSignal(0)
@@ -414,7 +414,7 @@ describe('IR reactivity detection', () => {
   test('ternary with signal condition is marked reactive', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function Toggle() {
         const [on, setOn] = createSignal(false)
@@ -433,7 +433,7 @@ describe('IR reactivity detection', () => {
   test('props reference in JSX is marked reactive', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function Display(props: { label: string }) {
         const [count, setCount] = createSignal(0)
@@ -453,7 +453,7 @@ describe('IR reactivity detection', () => {
   test('tainted constant — const derived from signal is reactive', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function Counter() {
         const [count, setCount] = createSignal(0)

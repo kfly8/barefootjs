@@ -6,7 +6,7 @@
  * Allows tweaking maxLength and disabled props with live preview.
  */
 
-import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { hlPlain, hlTag, hlAttr } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

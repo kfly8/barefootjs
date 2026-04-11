@@ -6,7 +6,7 @@
  * Used in textarea documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Textarea } from '@ui/components/ui/textarea'
 
 /**

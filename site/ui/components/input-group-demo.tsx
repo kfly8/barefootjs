@@ -6,7 +6,7 @@
  * Shows realistic scenarios with addons, prefixes, and suffixes.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   InputGroup,
   InputGroupAddon,

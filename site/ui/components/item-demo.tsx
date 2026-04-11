@@ -6,7 +6,7 @@
  * Shows realistic list layouts with composable sub-components.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Item, ItemGroup, ItemSeparator, ItemContent, ItemTitle, ItemDescription, ItemMedia, ItemActions } from '@ui/components/ui/item'
 import { Button } from '@ui/components/ui/button'
 import { Badge } from '@ui/components/ui/badge'

@@ -7,7 +7,7 @@
   },
   "peerDependencies": {
     "@barefootjs/jsx": "workspace:*",
-    "@barefootjs/dom": "workspace:*"
+    "@barefootjs/client-runtime": "workspace:*"
   },
   "devDependencies": {
     "@barefootjs/test": "workspace:*"

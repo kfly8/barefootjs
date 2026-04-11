@@ -6,7 +6,7 @@
  * Each demo shows a realistic usage scenario.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Button } from '@ui/components/ui/button'
 import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from '@ui/components/ui/button-group'
 

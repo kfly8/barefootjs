@@ -9,7 +9,7 @@
  * sorted view), and event handlers at every nesting level.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Avatar, AvatarFallback } from '@ui/components/ui/avatar'
 import { Button } from '@ui/components/ui/button'
 import { Input } from '@ui/components/ui/input'

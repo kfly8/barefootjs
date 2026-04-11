@@ -6,7 +6,7 @@
  * Allows tweaking the default selected tab with live preview.
  */
 
-import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { highlightJsxTree, plainJsxTree, type JsxTreeNode, type HighlightProp } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

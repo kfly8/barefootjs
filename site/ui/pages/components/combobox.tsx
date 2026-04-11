@@ -32,7 +32,7 @@ const tocItems: TocItem[] = [
 
 const usageCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent,
   ComboboxInput, ComboboxEmpty, ComboboxItem,
@@ -61,7 +61,7 @@ function ComboboxDemo() {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent,
   ComboboxInput, ComboboxEmpty, ComboboxItem,
@@ -95,7 +95,7 @@ function ComboboxBasicDemo() {
 
 const formCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent,
   ComboboxInput, ComboboxEmpty, ComboboxItem,
@@ -139,7 +139,7 @@ function ComboboxFormDemo() {
 
 const groupedCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent,
   ComboboxInput, ComboboxEmpty, ComboboxItem,

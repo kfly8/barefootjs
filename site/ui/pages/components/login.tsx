@@ -23,7 +23,7 @@ const tocItems: TocItem[] = [
 
 const basicCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Field, FieldLabel, FieldContent, FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -98,7 +98,7 @@ function LoginBasic() {
 
 const socialCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Field, FieldLabel, FieldContent, FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'

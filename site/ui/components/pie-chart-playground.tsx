@@ -6,7 +6,7 @@
  * Allows tweaking innerRadius, outerRadius, and paddingAngle.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import {
   hlPlain, hlTag, hlAttr, hlStr,

@@ -6,7 +6,7 @@
  * Used in alert-dialog documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   AlertDialog,
   AlertDialogTrigger,

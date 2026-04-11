@@ -1,4 +1,4 @@
-import { createSignal, createEffect, provideContext, useContext } from '@barefootjs/dom'
+import { createSignal, createEffect, provideContext, useContext } from '@barefootjs/client-runtime'
 import type { AreaRegistration } from './types'
 import { AreaChartContext, ChartConfigContext } from './context'
 import { createPointScale, createLinearScale } from './utils/scales'

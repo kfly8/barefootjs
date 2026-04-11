@@ -52,7 +52,7 @@ const UI_COMPONENTS_DIR = resolve(ROOT_DIR, '../../ui/components')
 const SHARED_COMPONENTS_DIR = resolve(ROOT_DIR, '../shared/components')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
-const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
+const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/client-runtime')
 
 // Check if a file is a test or preview (should be excluded from build)
 function isTestOrPreview(filename: string): boolean {
@@ -89,12 +89,12 @@ const componentFiles = [...uiComponentFiles, ...docsComponentFiles, ...sharedCom
 await rm(DIST_DIR, { recursive: true, force: true })
 await mkdir(DIST_COMPONENTS_DIR, { recursive: true })
 
-// Build and copy barefoot.js from @barefootjs/dom
+// Build and copy barefoot.js from @barefootjs/client-runtime
 const barefootFileName = 'barefoot.js'
 const domDistFile = resolve(DOM_PKG_DIR, 'dist/index.js')
 
 if (!await Bun.file(domDistFile).exists()) {
-  console.log('Building @barefootjs/dom...')
+  console.log('Building @barefootjs/client-runtime...')
   const proc = Bun.spawn(['bun', 'run', 'build'], { cwd: DOM_PKG_DIR })
   await proc.exited
 }
@@ -107,7 +107,7 @@ await Bun.write(
 console.log(`Generated: dist/components/${barefootFileName}`)
 
 // Build and copy barefoot-form.js from @barefootjs/form
-// External @barefootjs/dom so it resolves via import map
+// External @barefootjs/client-runtime so it resolves via import map
 const FORM_PKG_DIR = resolve(ROOT_DIR, '../../packages/form')
 const formEntryFile = resolve(FORM_PKG_DIR, 'src/index.ts')
 
@@ -115,7 +115,7 @@ console.log('Building @barefootjs/form for site...')
 const formBuildResult = await Bun.build({
   entrypoints: [formEntryFile],
   format: 'esm',
-  external: ['@barefootjs/dom'],
+  external: ['@barefootjs/client-runtime'],
 })
 
 if (formBuildResult.outputs.length > 0) {
@@ -127,7 +127,7 @@ if (formBuildResult.outputs.length > 0) {
 }
 
 // Build and copy barefoot-chart.js from @barefootjs/chart
-// External @barefootjs/dom so it resolves via import map
+// External @barefootjs/client-runtime so it resolves via import map
 const CHART_PKG_DIR = resolve(ROOT_DIR, '../../packages/chart')
 const chartEntryFile = resolve(CHART_PKG_DIR, 'src/index.ts')
 
@@ -135,7 +135,7 @@ console.log('Building @barefootjs/chart for site...')
 const chartBuildResult = await Bun.build({
   entrypoints: [chartEntryFile],
   format: 'esm',
-  external: ['@barefootjs/dom'],
+  external: ['@barefootjs/client-runtime'],
 })
 
 if (chartBuildResult.outputs.length > 0) {

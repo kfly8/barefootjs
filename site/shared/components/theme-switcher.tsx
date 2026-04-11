@@ -8,7 +8,7 @@
  * Inline SVG icons — no external icon dependency.
  */
 
-import { createSignal, createEffect, createMemo } from '@barefootjs/dom'
+import { createSignal, createEffect, createMemo } from '@barefootjs/client'
 
 export type Theme = 'light' | 'dark'
 

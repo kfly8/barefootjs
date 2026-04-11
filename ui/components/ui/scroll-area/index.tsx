@@ -1,7 +1,7 @@
 "use client"
 
 import type { HTMLBaseAttributes } from '@barefootjs/jsx'
-import { createSignal, onCleanup } from '@barefootjs/dom'
+import { createSignal, onCleanup } from '@barefootjs/client'
 
 /**
  * ScrollArea Component

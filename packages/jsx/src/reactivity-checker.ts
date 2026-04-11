@@ -2,7 +2,7 @@
  * Type-based reactivity detection using TypeScript TypeChecker.
  *
  * Detects reactive expressions by checking for the Reactive<T> brand type
- * from @barefootjs/dom. Any expression involving a value typed as Reactive<T>
+ * from @barefootjs/client. Any expression involving a value typed as Reactive<T>
  * is recognized as reactive.
  */
 

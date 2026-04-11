@@ -1,16 +1,5 @@
-export {
-  BF_SCOPE,
-  BF_SLOT,
-  BF_PROPS,
-  BF_COND,
-  BF_PORTAL_OWNER,
-  BF_PORTAL_ID,
-  BF_PORTAL_PLACEHOLDER,
-  BF_ITEM,
-  BF_CHILD_PREFIX,
-  BF_SCOPE_COMMENT_PREFIX,
-} from './attrs'
-
+// Re-export all @barefootjs/client APIs so compiler-generated code
+// can use a single import source.
 export {
   createSignal,
   createEffect,
@@ -25,8 +14,31 @@ export {
   type Memo,
   type CleanupFn,
   type EffectFn,
-} from './reactive'
+  splitProps,
+  __slot,
+  type SlotMarker,
+  forwardProps,
+  unwrap,
+} from '@barefootjs/client'
 
+// Attribute constants
+export {
+  BF_SCOPE,
+  BF_SLOT,
+  BF_PROPS,
+  BF_COND,
+  BF_PORTAL_OWNER,
+  BF_PORTAL_ID,
+  BF_PORTAL_PLACEHOLDER,
+  BF_ITEM,
+  BF_CHILD_PREFIX,
+  BF_SCOPE_COMMENT_PREFIX,
+} from './attrs'
+
+// Context API
+export { createContext, useContext, provideContext, setCurrentScope, type Context } from './context'
+
+// Portal system
 export {
   createPortal,
   isSSRPortal,
@@ -38,36 +50,26 @@ export {
   type PortalChildren,
 } from './portal'
 
+// List reconciliation
 export { reconcileList, type RenderItemFn } from './list'
 export { reconcileElements, getLoopChildren } from './reconcile-elements'
 export { mapArray } from './map-array'
 
-export { createContext, useContext, provideContext, setCurrentScope, type Context } from './context'
-
-// Template registry for client-side component creation
+// Template registry
 export { registerTemplate, getTemplate, hasTemplate, type TemplateFn } from './template'
 
-// Component creation for dynamic rendering
-export { createComponent, renderChild, getPropsUpdateFn, getComponentProps } from './component'
+// Component creation
+export { createComponent, renderChild, getPropsUpdateFn, getComponentProps, parseHTML } from './component'
 
-// Props utilities
-export { splitProps } from './split-props'
-
-// Slot marker for JSX props containing components
-export { __slot, type SlotMarker } from './slot'
-
-// Spread props helpers (internal, for compiler-generated code)
-export { forwardProps } from './forward-props'
+// Spread props helpers
 export { applyRestAttrs } from './apply-rest-attrs'
 export { spreadAttrs } from './spread-attrs'
 
-// Runtime helpers (internal, for compiler-generated code)
+// Runtime helpers
 export { findScope, find, $, $c, $t, qsa } from './query'
-export { parseHTML } from './component'
 export { hydrate } from './hydrate'
 export { registerComponent, getComponentInit, initChild } from './registry'
 export { insert, type BranchConfig } from './insert'
-export { unwrap } from './unwrap'
 export { updateClientMarker } from './client-marker'
 
 // Hydration state

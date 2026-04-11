@@ -27,7 +27,7 @@ A client component uses reactive primitives and ships JavaScript to the browser.
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter({ initial = 0 }) {
   const [count, setCount] = createSignal(initial)
@@ -85,7 +85,7 @@ A client component compiles into a marked template and a client init function. H
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Toggle() {
   const [on, setOn] = createSignal(false)
@@ -124,7 +124,7 @@ export function Toggle() {
 **Client JS:**
 
 ```js
-import { createSignal, createEffect, $, hydrate } from '@barefootjs/dom'
+import { createSignal, createEffect, $, hydrate } from '@barefootjs/client'
 
 export function initToggle(__scope, props = {}) {
   const [on, setOn] = createSignal(false)
@@ -187,7 +187,7 @@ Client components use `ref` callbacks for imperative DOM access. The callback re
 
 ```tsx
 "use client"
-import { createEffect } from '@barefootjs/dom'
+import { createEffect } from '@barefootjs/client'
 
 export function AutoFocus() {
   const handleMount = (el: HTMLInputElement) => {

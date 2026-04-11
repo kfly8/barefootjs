@@ -6,7 +6,7 @@
  */
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
 import { insert } from '../src/insert'
-import { createSignal, createEffect } from '../src/reactive'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { $ as query } from '../src/query'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 

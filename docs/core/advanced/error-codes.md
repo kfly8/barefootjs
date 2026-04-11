@@ -14,7 +14,7 @@ error[BF001]: 'use client' directive required for components with createSignal
 
   --> src/components/Counter.tsx:3:1
    |
- 3 | import { createSignal } from '@barefootjs/dom'
+ 3 | import { createSignal } from '@barefootjs/client'
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: Add 'use client' at the top of the file
@@ -30,7 +30,7 @@ error[BF001]: 'use client' directive required for components with createSignal
 
 ```tsx
 // ❌ BF001
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 export function Counter() {
   const [count, setCount] = createSignal(0)
   return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
@@ -42,7 +42,7 @@ export function Counter() {
 ```tsx
 // ✅ Fixed
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 export function Counter() { ... }
 ```
 
@@ -52,7 +52,7 @@ export function Counter() { ... }
 
 ```tsx
 // ❌ BF002
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 "use client"
 ```
 

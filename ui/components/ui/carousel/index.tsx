@@ -22,7 +22,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect, onCleanup } from '@barefootjs/client-runtime'
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 import { ChevronLeftIcon, ChevronRightIcon } from '../icon'

@@ -8,7 +8,7 @@
  * conditional rendering (playing vs paused), loop + conditional coexistence.
  */
 
-import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'
 import { Slider } from '@ui/components/ui/slider'

@@ -6,7 +6,7 @@
  * Animation is managed internally by Toast via createEffect.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   ToastProvider,
   Toast,

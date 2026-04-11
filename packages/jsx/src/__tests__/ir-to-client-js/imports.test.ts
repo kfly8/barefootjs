@@ -77,8 +77,8 @@ describe('collectExternalImports', () => {
     expect(result).toEqual(["import { z } from 'zod'"])
   })
 
-  test('skips @barefootjs/dom imports', () => {
-    const ir = makeIR([makeImport('@barefootjs/dom', ['createSignal'])])
+  test('skips @barefootjs/client-runtime imports', () => {
+    const ir = makeIR([makeImport('@barefootjs/client-runtime', ['createSignal'])])
     const code = 'createSignal(0)'
     const result = collectExternalImports(ir, code)
     expect(result).toEqual([])
@@ -201,8 +201,8 @@ describe('collectExternalImports', () => {
     expect(result).toEqual(["import '@barefootjs/chart'"])
   })
 
-  test('skips @barefootjs/dom side-effect imports', () => {
-    const ir = makeIR([{ source: '@barefootjs/dom', specifiers: [], isTypeOnly: false, loc: dummyLoc }])
+  test('skips @barefootjs/client-runtime side-effect imports', () => {
+    const ir = makeIR([{ source: '@barefootjs/client-runtime', specifiers: [], isTypeOnly: false, loc: dummyLoc }])
     const code = ''
     const result = collectExternalImports(ir, code)
     expect(result).toEqual([])

@@ -8,7 +8,7 @@ description: Runs a callback once when the component initializes, without tracki
 Runs once when the component initializes. Signal accesses inside are **not** tracked.
 
 ```tsx
-import { onMount } from '@barefootjs/dom'
+import { onMount } from '@barefootjs/client'
 
 onMount(fn: () => void): void
 ```

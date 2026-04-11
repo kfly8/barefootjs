@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
 import { insert } from '../src/insert'
-import { createSignal } from '../src/reactive'
+import { createSignal } from '@barefootjs/client'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
 beforeAll(() => {

@@ -134,7 +134,7 @@
       "calendar"
     ],
     "external": [
-      "@barefootjs/dom"
+      "@barefootjs/client-runtime"
     ]
   },
   "related": [],

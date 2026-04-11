@@ -15,7 +15,7 @@
  * - 5-way conditional in loop (activity type badges)
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@ui/components/ui/card'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'

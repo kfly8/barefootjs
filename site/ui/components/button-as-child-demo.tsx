@@ -7,7 +7,7 @@
  * reactive attribute updates (aria-expanded) and event handlers.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Button } from '@ui/components/ui/button'
 
 /**

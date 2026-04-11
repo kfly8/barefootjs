@@ -12,7 +12,7 @@
  * - Fuzzy search filtering
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { SearchIcon } from '@ui/components/ui/icon'
 import { Kbd } from '@ui/components/ui/kbd'
 

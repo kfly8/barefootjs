@@ -7,7 +7,7 @@
  * since Typography components are stateless (no "use client").
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { highlightJsx, plainJsx, type HighlightProp } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
@@ -24,7 +24,7 @@ const defaultTexts: Record<TypographyElement, string> = {
   P: 'The king, seeing how the people of his kingdom were suffering, decided to repeal the joke tax.',
   Blockquote: '"After all," he said, "everyone enjoys a good joke."',
   List: 'List item text',
-  InlineCode: '@barefootjs/dom',
+  InlineCode: '@barefootjs/client-runtime',
   Lead: 'A modal dialog that interrupts the user with important content and expects a response.',
   Large: 'Are you absolutely sure?',
   Small: 'Email address',

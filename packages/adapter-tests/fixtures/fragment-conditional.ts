@@ -9,7 +9,7 @@ export const fixture = createFixture({
   description: 'Conditional with fragment branches (multiple sibling elements)',
   source: `
 'use client'
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client-runtime'
 export function FragmentConditional() {
   const [editing, setEditing] = createSignal(false)
   return (

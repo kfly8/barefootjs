@@ -10,7 +10,7 @@
  * are not preserved during compilation.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   ContextMenu,
   ContextMenuTrigger,

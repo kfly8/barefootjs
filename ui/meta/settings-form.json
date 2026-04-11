@@ -42,7 +42,7 @@
       "label"
     ],
     "external": [
-      "@barefootjs/dom"
+      "@barefootjs/client-runtime"
     ]
   },
   "related": [],

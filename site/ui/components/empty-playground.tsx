@@ -6,7 +6,7 @@
  * Allows tweaking EmptyMedia variant prop with live preview.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { highlightJsxTree, plainJsxTree, type JsxTreeNode, type HighlightProp } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

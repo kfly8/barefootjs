@@ -9,7 +9,7 @@
  * (not DOM manipulation) because Select requires hydration for interactivity.
  */
 
-import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { hlPlain, hlTag, hlAttr, hlStr, escapeHtml } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

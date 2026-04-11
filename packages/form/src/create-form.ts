@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { createSignal, createMemo, untrack } from "@barefootjs/dom";
-import type { Signal, Memo } from "@barefootjs/dom";
+import { createSignal, createMemo, untrack } from "@barefootjs/client";
+import type { Signal, Memo } from "@barefootjs/client";
 import { validateSchema, validateField } from "./validate";
 import type {
   CreateFormOptions,

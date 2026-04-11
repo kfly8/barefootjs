@@ -142,10 +142,10 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
   await mkdir(componentsOutDir, { recursive: true })
 
   // 1. Build and copy barefoot.js runtime
-  const domPkgDir = resolve(config.projectDir, 'node_modules/@barefootjs/dom')
+  const domPkgDir = resolve(config.projectDir, 'node_modules/@barefootjs/client-runtime')
   // Try workspace path first (monorepo), then node_modules
   const domDistCandidates = [
-    resolve(config.projectDir, '../../packages/dom/dist/index.js'),
+    resolve(config.projectDir, '../../packages/client-runtime/dist/index.js'),
     resolve(domPkgDir, 'dist/index.js'),
   ]
   let domDistFile: string | null = null
@@ -166,7 +166,7 @@ export async function build(config: BuildConfig): Promise<BuildResult> {
     )
     console.log('Generated: components/barefoot.js')
   } else {
-    console.warn('Warning: @barefootjs/dom dist not found. Skipping barefoot.js copy.')
+    console.warn('Warning: @barefootjs/client-runtime dist not found. Skipping barefoot.js copy.')
   }
 
   // 2. Adapter (already instantiated in config)

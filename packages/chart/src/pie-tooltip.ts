@@ -1,4 +1,4 @@
-import { useContext, createEffect, onCleanup } from '@barefootjs/dom'
+import { useContext, createEffect, onCleanup } from '@barefootjs/client-runtime'
 import { PieChartContext } from './context'
 import { escapeHtml } from './utils/escape-html'
 

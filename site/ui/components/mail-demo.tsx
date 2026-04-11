@@ -7,7 +7,7 @@
  * AlertDialog/portal from loop context, filter+map chains, derived memos.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Card,
   CardHeader,

@@ -6,7 +6,7 @@
  * Used in accordion documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Accordion,
   AccordionItem,

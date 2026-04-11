@@ -95,7 +95,7 @@ function BasicMenubar() {
 
 const applicationCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Menubar,
   MenubarMenu,

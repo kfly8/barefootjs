@@ -6,7 +6,7 @@
  * Demonstrates async state management with loading, success, and error states.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@ui/components/ui/input'
 import { Button } from '@ui/components/ui/button'
 import {

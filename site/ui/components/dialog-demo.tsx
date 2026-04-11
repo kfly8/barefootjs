@@ -6,7 +6,7 @@
  * Used in dialog documentation page.
  */
 
-import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createEffect, onCleanup } from '@barefootjs/client'
 import {
   Dialog,
   DialogTrigger,

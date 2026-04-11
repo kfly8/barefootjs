@@ -46,7 +46,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Drawer,
   DrawerTrigger,
@@ -95,7 +95,7 @@ function BasicDrawer() {
 
 const directionCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Drawer,
   DrawerTrigger,
@@ -136,7 +136,7 @@ function DrawerDirections() {
 
 const formCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Drawer,
   DrawerTrigger,

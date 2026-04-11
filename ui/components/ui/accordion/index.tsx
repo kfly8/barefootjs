@@ -23,7 +23,7 @@
  */
 
 import type { ButtonHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
-import { createContext, useContext, createEffect } from '@barefootjs/dom'
+import { createContext, useContext, createEffect } from '@barefootjs/client-runtime'
 import type { Child } from '../../../types'
 import { ChevronDownIcon } from '../icon'
 

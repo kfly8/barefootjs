@@ -1,6 +1,6 @@
 "use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { ChevronLeftIcon, ChevronRightIcon } from '../icon'
 
 /**

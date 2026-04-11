@@ -10,7 +10,7 @@
  * created from loop templates. See html-template.ts for details.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Button } from '@ui/components/ui/button'
 
 type EmailField = {

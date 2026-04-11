@@ -11,7 +11,7 @@
  * - Null branch rendering (SVG checkmark appears/disappears)
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Form() {
   const [accepted, setAccepted] = createSignal(false)

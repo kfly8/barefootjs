@@ -106,9 +106,9 @@ export class HonoAdapter implements TemplateAdapter {
     // Add bfComment/bfText for hydration markers
     lines.push("import { bfComment, bfText, bfTextEnd } from '@barefootjs/hono/utils'")
 
-    // Re-export original imports (excluding @barefootjs/dom)
+    // Re-export original imports (excluding @barefootjs/client-runtime)
     for (const imp of ir.metadata.imports) {
-      if (imp.source === '@barefootjs/dom') continue
+      if (imp.source === '@barefootjs/client-runtime') continue
       if (imp.specifiers.length === 0) {
         if (!imp.isTypeOnly) {
           lines.push(`import '${imp.source}'`)

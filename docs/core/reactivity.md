@@ -7,10 +7,10 @@ description: Fine-grained reactive primitives inspired by SolidJS, including sig
 
 BarefootJS uses fine-grained reactivity inspired by SolidJS. For a conceptual overview, see [Core Concepts](./core-concepts.md#signal-based-reactivity).
 
-All reactive primitives are imported from `@barefootjs/dom`:
+All reactive primitives are imported from `@barefootjs/client-runtime`:
 
 ```tsx
-import { createSignal, createEffect, createMemo, onMount, onCleanup, untrack } from '@barefootjs/dom'
+import { createSignal, createEffect, createMemo, onMount, onCleanup, untrack } from '@barefootjs/client'
 ```
 
 ## API Reference

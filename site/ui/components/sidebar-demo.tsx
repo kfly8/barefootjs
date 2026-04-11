@@ -5,7 +5,7 @@
  * Interactive demos for Sidebar component documentation.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Sidebar,
   SidebarContent,

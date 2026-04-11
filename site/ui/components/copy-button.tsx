@@ -6,7 +6,7 @@
  * Uses createSignal for reactive state management.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { CheckIcon, CopyIcon } from '@ui/components/ui/icon'
 
 export interface CopyButtonProps {

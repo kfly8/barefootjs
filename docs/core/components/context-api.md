@@ -8,7 +8,7 @@ description: Share state with deeply nested children without prop drilling using
 Context lets a parent component share state with deeply nested children without passing props through every level. It is the foundation of compound component patterns like Dialog, Accordion, and Tabs.
 
 ```tsx
-import { createContext, useContext } from '@barefootjs/dom'
+import { createContext, useContext } from '@barefootjs/client'
 ```
 
 
@@ -63,7 +63,7 @@ const value = useContext(MyContext)
 
 ```tsx
 "use client"
-import { createContext, useContext } from '@barefootjs/dom'
+import { createContext, useContext } from '@barefootjs/client'
 
 // 1. Create the context
 const ThemeContext = createContext<'light' | 'dark'>('light')
@@ -104,7 +104,7 @@ Context is most commonly used for compound components — a group of related com
 
 ```tsx
 "use client"
-import { createSignal, createContext, useContext, createEffect } from '@barefootjs/dom'
+import { createSignal, createContext, useContext, createEffect } from '@barefootjs/client'
 
 // Context type
 interface AccordionContextValue {

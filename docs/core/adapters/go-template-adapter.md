@@ -86,7 +86,7 @@ func NewGreetingProps(input GreetingInput) GreetingProps {
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter({ initial = 0 }: { initial?: number }) {
   const [count, setCount] = createSignal(initial)

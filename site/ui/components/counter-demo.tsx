@@ -6,7 +6,7 @@
  * Used in counter documentation page.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Counter } from '@ui/components/ui/counter'
 
 /**

@@ -6,7 +6,7 @@
   "private": true,
   "main": "./src/index.ts",
   "dependencies": {
-    "@barefootjs/dom": "workspace:*",
+    "@barefootjs/client-runtime": "workspace:*",
     "@barefootjs/jsx": "workspace:*",
     "@barefootjs/preview": "workspace:*"
   }

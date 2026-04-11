@@ -8,7 +8,7 @@ description: Creates a reactive getter/setter pair for managing state.
 Creates a reactive value. Returns a getter/setter pair.
 
 ```tsx
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 const [getter, setter] = createSignal<T>(initialValue: T)
 ```
@@ -93,7 +93,7 @@ In BarefootJS components, signal getters in JSX expressions create fine-grained 
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter() {
   const [count, setCount] = createSignal(0)

@@ -66,7 +66,7 @@ describe('GoTemplateAdapter - Adapter Specific', () => {
       const adapter = new GoTemplateAdapter()
       const ir = compileToIR(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function Example(props: { label?: string }) {
   const [label, setLabel] = createSignal(props.label ?? 'Default')
@@ -89,7 +89,7 @@ export function Example(props: { label?: string }) {
       const adapter = new GoTemplateAdapter()
       const ir = compileToIR(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function Counter(props: { initial?: number }) {
   const [count, setCount] = createSignal(props.initial ?? 0)
@@ -129,7 +129,7 @@ export function Button(props: { label: string }) {
       // The compiler creates IRComponent nodes for any PascalCase JSX element.
       const ir = compileToIR(`
 "use client"
-import { createSignal, createMemo } from "@barefootjs/dom"
+import { createSignal, createMemo } from "@barefootjs/client-runtime"
 
 export default function ReactiveProps() {
   const [count, setCount] = createSignal(0)
@@ -168,7 +168,7 @@ export default function ReactiveProps() {
       // Portal is referenced as a child component (not defined in file).
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function DialogDemo() {
   const [open, setOpen] = createSignal(false)
@@ -188,7 +188,7 @@ export function DialogDemo() {
     test('renders Portal with dynamic attribute in children', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function DialogDemo() {
   const [open, setOpen] = createSignal(false)
@@ -209,7 +209,7 @@ export function DialogDemo() {
     test('Portal without children renders empty portal add', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function DialogDemo() {
   const [open, setOpen] = createSignal(false)
@@ -227,7 +227,7 @@ export function DialogDemo() {
       // DialogTrigger is referenced but not defined — compiler creates IRComponent.
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function DialogDemo() {
   const [open, setOpen] = createSignal(false)
@@ -247,7 +247,7 @@ export function DialogDemo() {
     test('renders loop with simple block body filter', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 type Todo = { text: string; done: boolean }
 
@@ -270,7 +270,7 @@ export function TodoList() {
     test('renders loop with variable declaration and simple if', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 type Todo = { text: string; done: boolean }
 
@@ -299,7 +299,7 @@ export function TodoList() {
     test('renders loop with TodoApp filter pattern', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 type Todo = { text: string; done: boolean }
 
@@ -333,7 +333,7 @@ export function TodoApp() {
     test('simple every(t => t.done) uses bf_every', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 type Todo = { text: string; done: boolean }
 
@@ -350,7 +350,7 @@ export function TodoStatus() {
     test('renders find() with equality + comparison mixed predicate', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 type Item = { price: number; category: string }
 
@@ -369,7 +369,7 @@ export function ItemFinder() {
     test('renders find() in condition', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 type Item = { name: string; done: boolean }
 
@@ -387,7 +387,7 @@ export function ItemChecker() {
     test('component root in client component outputs bfScopeComment', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function Wrapper() {
   const [active, setActive] = createSignal(false)
@@ -403,7 +403,7 @@ export function Wrapper() {
       // Element roots use bf-s attribute directly, not scope comments
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function Counter() {
   const [count, setCount] = createSignal(0)
@@ -417,7 +417,7 @@ export function Counter() {
     test('if-statement root with component branches outputs bfScopeComment', () => {
       const result = compileAndGenerate(`
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 
 export function ConditionalComponent(props: { variant: string }) {
   const [active, setActive] = createSignal(false)

@@ -8,7 +8,7 @@ description: Registers a cleanup function that runs when the owning effect re-ru
 Registers a cleanup function in the current reactive context. Called when the owning effect re-runs or the component is destroyed.
 
 ```tsx
-import { onCleanup } from '@barefootjs/dom'
+import { onCleanup } from '@barefootjs/client'
 
 onCleanup(fn: () => void): void
 ```

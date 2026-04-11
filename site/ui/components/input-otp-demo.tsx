@@ -6,7 +6,7 @@
  * Based on shadcn/ui patterns for practical use cases.
  */
 
-import { createSignal, createMemo, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo, onCleanup } from '@barefootjs/client'
 import {
   InputOTP,
   InputOTPGroup,

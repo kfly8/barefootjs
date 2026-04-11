@@ -113,7 +113,7 @@ function PaginationBasic() {
 
 const dynamicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Pagination,
   PaginationContent,

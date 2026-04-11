@@ -14,7 +14,7 @@
  * - Signal-driven class on multiple elements
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@ui/components/ui/card'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'

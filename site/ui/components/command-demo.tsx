@@ -6,7 +6,7 @@
  * Interactive demos for Command component documentation.
  */
 
-import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createEffect, onCleanup } from '@barefootjs/client'
 import { Button } from '@ui/components/ui/button'
 import {
   Command,

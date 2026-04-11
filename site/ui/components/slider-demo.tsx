@@ -6,7 +6,7 @@
  * Based on shadcn/ui patterns for practical use cases.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Slider } from '@ui/components/ui/slider'
 
 /**

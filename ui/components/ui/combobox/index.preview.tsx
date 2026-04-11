@@ -1,6 +1,6 @@
 "use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Combobox,
   ComboboxTrigger,

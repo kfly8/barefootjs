@@ -635,10 +635,48 @@ function collectOnMount(node: ts.CallExpression, ctx: AnalyzerContext): void {
 // Import Collection
 // =============================================================================
 
+// Symbols exported from @barefootjs/client (reactive primitives, no DOM types)
+const CLIENT_EXPORTS = new Set([
+  'createSignal', 'createEffect', 'createDisposableEffect', 'createMemo',
+  'createRoot', 'onCleanup', 'onMount', 'untrack', 'splitProps',
+  'forwardProps', 'unwrap', '__slot',
+])
+
 function collectImport(node: ts.ImportDeclaration, ctx: AnalyzerContext): void {
   const source = (node.moduleSpecifier as ts.StringLiteral).text
   const specifiers: ImportSpecifier[] = []
   const isTypeOnly = !!node.importClause?.isTypeOnly
+  const loc = getSourceLocation(node, ctx.sourceFile, ctx.filePath)
+
+  // Diagnostic: @barefootjs/dom is deprecated
+  if (source === '@barefootjs/dom' && !isTypeOnly) {
+    ctx.errors.push(createError(ErrorCodes.DEPRECATED_DOM_IMPORT, loc, {
+      severity: 'warning',
+      suggestion: {
+        message: "Use '@barefootjs/client' for reactive primitives (createSignal, createEffect, etc.) and '@barefootjs/client-runtime' for DOM APIs (createContext, createPortal, etc.).",
+      },
+    }))
+  }
+
+  // Diagnostic: wrong package for specific imports
+  if (source === '@barefootjs/client' && !isTypeOnly && node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)) {
+    const wrongImports: string[] = []
+    for (const element of node.importClause.namedBindings.elements) {
+      const name = element.propertyName?.text ?? element.name.text
+      if (!element.isTypeOnly && !CLIENT_EXPORTS.has(name)) {
+        wrongImports.push(name)
+      }
+    }
+    if (wrongImports.length > 0) {
+      ctx.errors.push(createError(ErrorCodes.WRONG_PACKAGE_IMPORT, loc, {
+        severity: 'error',
+        message: `'${wrongImports.join("', '")}' is not exported from '@barefootjs/client'.`,
+        suggestion: {
+          message: `Import from '@barefootjs/client-runtime' instead: import { ${wrongImports.join(', ')} } from '@barefootjs/client-runtime'`,
+        },
+      }))
+    }
+  }
 
   if (node.importClause) {
     // Default import
@@ -679,7 +717,7 @@ function collectImport(node: ts.ImportDeclaration, ctx: AnalyzerContext): void {
     source,
     specifiers,
     isTypeOnly,
-    loc: getSourceLocation(node, ctx.sourceFile, ctx.filePath),
+    loc,
   })
 }
 

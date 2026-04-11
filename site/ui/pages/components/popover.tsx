@@ -38,7 +38,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Popover,
   PopoverTrigger,
@@ -69,7 +69,7 @@ function BasicPopover() {
 
 const formCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Popover,
   PopoverTrigger,

@@ -8,7 +8,7 @@
  * derived select-all state from filtered+paginated subset, bulk operations.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@ui/components/ui/table'

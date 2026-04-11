@@ -122,7 +122,7 @@ export function PieChartDonutDemo() {
 
 const interactiveCode = `"use client"
 
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 import type { ChartConfig } from "@barefootjs/chart"
 
 const chartConfig: ChartConfig = {

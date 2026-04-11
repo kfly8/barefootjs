@@ -3,10 +3,10 @@
 /**
  * Portal Demo Components
  *
- * Demonstrates the createPortal utility from @barefootjs/dom.
+ * Demonstrates the createPortal utility from @barefootjs/client-runtime.
  */
 
-import { createSignal, createPortal } from '@barefootjs/dom'
+import { createSignal, createPortal } from '@barefootjs/client-runtime'
 
 /**
  * Basic portal demo - shows content rendering at document.body

@@ -10,7 +10,7 @@
  * - DateRangePicker: Range selection, stays open until range is complete
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import type { HTMLBaseAttributes } from '@barefootjs/jsx'
 import { CalendarIcon } from '../icon'
 import { Button } from '../button'

@@ -32,7 +32,7 @@ const tocItems: TocItem[] = [
 
 const usageCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Tabs,
   TabsList,
@@ -76,7 +76,7 @@ function TabsDemo() {
 
 const basicCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Tabs,
   TabsList,
@@ -120,7 +120,7 @@ function TabsBasic() {
 
 const multipleTabsCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Tabs,
   TabsList,

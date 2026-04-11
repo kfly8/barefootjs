@@ -50,7 +50,7 @@ function SpinnerSizes() {
 
 const buttonLoadingCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 

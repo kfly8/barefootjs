@@ -31,7 +31,7 @@ const tocItems: TocItem[] = [
 
 const usageCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -72,7 +72,7 @@ function ContextMenuDemo() {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -117,7 +117,7 @@ function BasicContextMenu() {
 
 const checkboxCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   ContextMenu,
   ContextMenuTrigger,

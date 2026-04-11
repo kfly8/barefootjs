@@ -6,7 +6,7 @@
  * Demonstrates Signal ↔ input value synchronization.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@ui/components/ui/input'
 
 /**
