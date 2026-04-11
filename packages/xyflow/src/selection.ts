@@ -29,6 +29,7 @@ export function setupKeyboardHandlers<
     }
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (!untrack(store.nodesDraggable)) return // locked
       const selectedNodes = untrack(store.nodes).filter((n) => n.selected)
       const selectedEdges = untrack(store.edges).filter((e) => e.selected)
 

@@ -73,33 +73,11 @@ export function initControls(scope: Element, props: Record<string, unknown>): vo
       const next = !interactive()
       setInteractive(next)
 
-      // Update icon
+      // Update icon — lock = interactive, unlock = locked (no drag/connect)
       setButtonIcon(lockBtn, next ? ICONS.lock : ICONS.unlock)
 
-      // Toggle pan/zoom on the container
-      const pz = store.panZoom()
-      if (pz) {
-        pz.update({
-          noWheelClassName: 'nowheel',
-          noPanClassName: 'nopan',
-          preventScrolling: next,
-          panOnScroll: false,
-          panOnDrag: next,
-          panOnScrollMode: 0 as any,
-          panOnScrollSpeed: 0.5,
-          userSelectionActive: false,
-          zoomOnPinch: next,
-          zoomOnScroll: next,
-          zoomOnDoubleClick: next,
-          zoomActivationKeyPressed: false,
-          lib: 'bf',
-          onTransformChange: (t: [number, number, number]) => {
-            store.setViewport({ x: t[0], y: t[1], zoom: t[2] })
-          },
-          connectionInProgress: false,
-          paneClickDistance: 0,
-        })
-      }
+      // Toggle node dragging/connecting/deleting (pan/zoom stays enabled)
+      store.setNodesDraggable(next)
     })
     container.appendChild(lockBtn)
   }

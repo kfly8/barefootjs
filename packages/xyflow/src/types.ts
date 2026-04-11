@@ -117,6 +117,10 @@ export type FlowStore<
   // Selection state
   multiSelectionActive: Signal<boolean>[0]
 
+  // Interactivity — when false, nodes cannot be dragged/connected/deleted
+  nodesDraggable: Signal<boolean>[0]
+  setNodesDraggable: Signal<boolean>[1]
+
   // Actions
   fitView: (options?: FitViewOptions) => void
   updateNodePositions: (
