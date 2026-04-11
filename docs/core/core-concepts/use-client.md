@@ -9,7 +9,7 @@ Components that use reactive primitives (`createSignal`, `createEffect`, etc.) m
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter() {
   const [count, setCount] = createSignal(0)
@@ -30,7 +30,7 @@ error[BF001]: 'use client' directive required for components with createSignal
 
   --> src/components/Counter.tsx:3:1
    |
- 3 | import { createSignal } from '@barefootjs/dom'
+ 3 | import { createSignal } from '@barefootjs/client'
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: Add "use client" at the top of the file
@@ -57,7 +57,7 @@ export function UserList() {
 // counter.tsx — "use client"
 // This code ships to the browser. No secrets here.
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter() {
   const [count, setCount] = createSignal(0)

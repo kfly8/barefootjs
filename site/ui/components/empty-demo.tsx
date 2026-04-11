@@ -6,7 +6,7 @@
  * empty state with icon, title, description, and action button.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@ui/components/ui/empty'
 import { Button } from '@ui/components/ui/button'
 

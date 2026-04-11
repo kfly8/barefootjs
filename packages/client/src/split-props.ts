@@ -6,7 +6,7 @@
  *
  * @example
  * ```tsx
- * import { splitProps } from '@barefootjs/dom'
+ * import { splitProps } from '@barefootjs/client'
  *
  * function Checkbox(props: CheckboxProps) {
  *   const [local, rest] = splitProps(props, ['checked', 'onCheckedChange'])

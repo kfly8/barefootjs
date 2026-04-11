@@ -6,7 +6,7 @@
  * Used in sheet documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Sheet,
   SheetTrigger,

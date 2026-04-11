@@ -95,7 +95,7 @@ function generateComponentCode(
   if (needsClient) {
     lines.push(`"use client"`)
     lines.push(``)
-    lines.push(`import { createSignal } from '@barefootjs/dom'`)
+    lines.push(`import { createSignal } from '@barefootjs/client-runtime'`)
   }
 
   lines.push(`import type { Child } from '../../../types'`)

@@ -7,7 +7,7 @@
  * then returns to "any backend" and stops.
  */
 
-import { createSignal, onMount, onCleanup } from '@barefootjs/dom'
+import { createSignal, onMount, onCleanup } from '@barefootjs/client'
 
 const sequence = [
   { name: 'any backend', logo: null },

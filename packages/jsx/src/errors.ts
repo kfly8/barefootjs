@@ -41,6 +41,10 @@ export const ErrorCodes = {
   INVALID_COMPONENT_NAME: 'BF042',
   PROPS_DESTRUCTURING: 'BF043',
   SIGNAL_GETTER_NOT_CALLED: 'BF044',
+
+  // Import errors (BF050-BF059)
+  DEPRECATED_DOM_IMPORT: 'BF050',
+  WRONG_PACKAGE_IMPORT: 'BF051',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
@@ -81,6 +85,11 @@ const errorMessages: Record<ErrorCode, string> = {
     'Props destructuring in function parameters breaks reactivity. Use props object directly.',
   [ErrorCodes.SIGNAL_GETTER_NOT_CALLED]:
     'Signal/memo getter passed without calling it. Use getter() to read the value.',
+
+  [ErrorCodes.DEPRECATED_DOM_IMPORT]:
+    "'@barefootjs/dom' has been split into '@barefootjs/client' and '@barefootjs/client-runtime'.",
+  [ErrorCodes.WRONG_PACKAGE_IMPORT]:
+    'Import from wrong package.',
 }
 
 // =============================================================================

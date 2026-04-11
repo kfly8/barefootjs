@@ -9,7 +9,7 @@
  * Ref: #517
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { Badge } from '@/components/ui/badge'
 
 const tagOptions = [

@@ -8,7 +8,7 @@
  * module-level constants in nested loops.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'
 import { Input } from '@ui/components/ui/input'

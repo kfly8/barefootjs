@@ -37,7 +37,7 @@ const tocItems: TocItem[] = [
 
 const usageCode = `"use client"
 
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 import {
   InputOTP,
   InputOTPGroup,
@@ -118,7 +118,7 @@ export function InputOTPPatternDemo() {
 
 const formCode = `"use client"
 
-import { createSignal, createMemo, onCleanup } from "@barefootjs/dom"
+import { createSignal, createMemo, onCleanup } from "@barefootjs/client-runtime"
 import {
   InputOTP,
   InputOTPGroup,

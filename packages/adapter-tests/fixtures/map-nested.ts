@@ -9,7 +9,7 @@ export const fixture = createFixture({
   description: 'Nested loop with inner param expressions',
   source: `
 'use client'
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client-runtime'
 type Group = { id: string; items: { id: number; name: string }[] }
 export function MapNested() {
   const [groups, setGroups] = createSignal<Group[]>([])

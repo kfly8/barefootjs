@@ -42,7 +42,7 @@
     "directory": "packages/jsx"
   },
   "peerDependencies": {
-    "@barefootjs/dom": "workspace:*"
+    "@barefootjs/client-runtime": "workspace:*"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",

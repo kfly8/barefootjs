@@ -39,7 +39,7 @@ import {
   createSignal,
   createEffect,
   onCleanup,
-} from '@barefootjs/dom'
+} from '@barefootjs/client'
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 import { PanelLeftIcon } from '../icon'

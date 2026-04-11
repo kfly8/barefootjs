@@ -7,7 +7,7 @@
  * reactive attribute updates and event handlers.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
 
 /**

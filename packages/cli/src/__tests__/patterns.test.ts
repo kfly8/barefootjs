@@ -64,7 +64,7 @@ describe('RELATIVE_IMPORT_RE', () => {
 
   describe('does not match non-relative imports', () => {
     test('package import', () => {
-      const m = matchAll(`import { createSignal } from '@barefootjs/dom'`)
+      const m = matchAll(`import { createSignal } from '@barefootjs/client-runtime'`)
       expect(m).toHaveLength(0)
     })
 
@@ -77,7 +77,7 @@ describe('RELATIVE_IMPORT_RE', () => {
   describe('multiline content', () => {
     test('matches multiple relative imports in multiline content', () => {
       const input = [
-        `import { createSignal } from '@barefootjs/dom'`,
+        `import { createSignal } from '@barefootjs/client-runtime'`,
         `import { foo } from './foo'`,
         `import Bar from './bar'`,
         `import './side-effect'`,

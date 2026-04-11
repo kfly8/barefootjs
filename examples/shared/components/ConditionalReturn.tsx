@@ -8,7 +8,7 @@
  * Both branches have reactive state to verify client-side hydration.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 interface ConditionalReturnProps {
   variant?: string

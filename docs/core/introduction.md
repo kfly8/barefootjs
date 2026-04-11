@@ -13,7 +13,7 @@ Write familiar JSX with fine-grained reactivity — the compiler splits it into 
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter({ initial = 0 }) {
   const [count, setCount] = createSignal(initial)
@@ -61,7 +61,7 @@ export function Counter(props) {
 **Client script** — Wires up only the interactive parts:
 
 ```js
-import { createSignal, createEffect, find, hydrate } from '@barefootjs/dom'
+import { createSignal, createEffect, find, hydrate } from '@barefootjs/client'
 
 export function initCounter(__scope, props = {}) {
   const [count, setCount] = createSignal(props.initial ?? 0)

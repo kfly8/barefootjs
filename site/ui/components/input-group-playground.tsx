@@ -6,7 +6,7 @@
  * Allows tweaking addon alignment and content with live preview.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { highlightJsxTree, plainJsx, type HighlightProp, type JsxTreeNode } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

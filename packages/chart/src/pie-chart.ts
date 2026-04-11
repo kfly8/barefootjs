@@ -1,4 +1,4 @@
-import { createSignal, provideContext, useContext } from '@barefootjs/dom'
+import { createSignal, provideContext, useContext } from '@barefootjs/client-runtime'
 import type { PieRegistration } from './types'
 import { PieChartContext, ChartConfigContext } from './context'
 

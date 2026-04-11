@@ -63,7 +63,7 @@ export function WithProps() {
 - IR tests go in `ui/components/ui/__tests__/<name>.test.ts`.
 - Stateful components (using signals) must have `"use client"` as the first line.
 - Stateful components must use `props.xxx` (not destructuring) to maintain reactivity.
-- Use `createSignal`, `createMemo`, `createEffect` from `@barefootjs/dom` (SolidJS-style, not React hooks).
+- Use `createSignal`, `createMemo`, `createEffect` from `@barefootjs/client` (SolidJS-style, not React hooks).
 - Use `for` attribute on `<Label>` (not `htmlFor`).
 - Event handlers have typed `e.target` — write `onInput={e => setValue(e.target.value)}` directly. Do not cast with `as HTMLInputElement`.
 - Use `className` in JSX (not `class`). `class` is a JS reserved keyword.

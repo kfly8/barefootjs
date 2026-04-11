@@ -6,7 +6,7 @@
  * Demonstrates reactive state with signals.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function CounterDemo() {
   const [count, setCount] = createSignal(0)

@@ -6,7 +6,7 @@
  * Used in button documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Button } from '@ui/components/ui/button'
 
 /**

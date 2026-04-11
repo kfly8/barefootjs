@@ -36,7 +36,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   HoverCard,
   HoverCardTrigger,

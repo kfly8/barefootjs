@@ -6,7 +6,7 @@
  * Uses JSX component API with @barefootjs/chart.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import type { ChartConfig } from '@barefootjs/chart'
 import {
   ChartContainer,

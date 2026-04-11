@@ -6,7 +6,7 @@
  * Allows tweaking placeholder and filter behavior with live preview.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { hlPlain, hlTag, hlAttr, hlStr } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

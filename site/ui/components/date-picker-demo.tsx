@@ -7,7 +7,7 @@
  * Used in date-picker documentation page.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { DatePicker, DateRangePicker, type DateRange } from '@ui/components/ui/date-picker'
 
 /**

@@ -44,7 +44,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Sheet,
   SheetTrigger,
@@ -88,7 +88,7 @@ function BasicSheet() {
 
 const sideCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Sheet,
   SheetTrigger,
@@ -130,7 +130,7 @@ function SheetSides() {
 
 const formCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Sheet,
   SheetTrigger,

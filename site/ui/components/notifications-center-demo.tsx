@@ -14,7 +14,7 @@
  * - Component loop with Card: per-item signal updates (toggleRead)
  */
 
-import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'
 import {

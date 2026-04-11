@@ -6,7 +6,7 @@
  * Allows tweaking stroke width, curve type, dot visibility, and grid.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import {
   highlightJsxTree, plainJsxTree,

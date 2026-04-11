@@ -6,7 +6,7 @@
  * Demonstrates error state management and multi-field validation.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@ui/components/ui/input'
 import { Button } from '@ui/components/ui/button'
 

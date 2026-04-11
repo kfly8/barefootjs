@@ -1,7 +1,7 @@
 // Auto-generated preview. Customize by editing this file.
 "use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../hover-card'
 
 export function Default() {

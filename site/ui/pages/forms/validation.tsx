@@ -28,7 +28,7 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const requiredFieldCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const requiredFieldCode = `import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@/components/ui/input'
 
 const [name, setName] = createSignal('')
@@ -46,7 +46,7 @@ const error = createMemo(() => {
 />
 <p className="text-red-400">{error()}</p>`
 
-const emailValidationCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const emailValidationCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const [email, setEmail] = createSignal('')
 const [touched, setTouched] = createSignal(false)
@@ -67,7 +67,7 @@ const isValid = createMemo(() => touched() && error() === '')
 <p className="text-red-400">{error()}</p>
 {isValid() ? <span className="text-green-400">Valid</span> : null}`
 
-const passwordConfirmCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const passwordConfirmCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const [password, setPassword] = createSignal('')
 const [confirmPassword, setConfirmPassword] = createSignal('')
@@ -93,7 +93,7 @@ const isValid = createMemo(() =>
   passwordError() === '' && confirmError() === ''
 )`
 
-const multiFieldFormCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const multiFieldFormCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 // Field values
 const [name, setName] = createSignal('')

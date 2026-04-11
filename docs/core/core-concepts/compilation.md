@@ -29,7 +29,7 @@ Given this source:
 
 ```tsx
 "use client"
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter({ initial = 0 }) {
   const [count, setCount] = createSignal(initial)
@@ -76,7 +76,7 @@ export function Counter(props) {
 Phase 2b produces client JS:
 
 ```js
-import { createSignal, createEffect, find, hydrate } from '@barefootjs/dom'
+import { createSignal, createEffect, find, hydrate } from '@barefootjs/client'
 
 export function initCounter(__scope, props = {}) {
   const [count, setCount] = createSignal(props.initial ?? 0)

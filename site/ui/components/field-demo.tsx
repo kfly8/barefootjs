@@ -6,7 +6,7 @@
  * Shows form field patterns with label, description, and error.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldSet, FieldLegend, FieldGroup } from '@ui/components/ui/field'
 import { Input } from '@ui/components/ui/input'
 import { Checkbox } from '@ui/components/ui/checkbox'

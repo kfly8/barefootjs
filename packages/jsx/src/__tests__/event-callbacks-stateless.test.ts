@@ -106,7 +106,7 @@ describe('event callbacks on stateless components', () => {
 
   test('components with reactive primitives still require "use client"', () => {
     const source = `
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function Counter() {
         const [count, setCount] = createSignal(0)
@@ -154,7 +154,7 @@ describe('event callbacks on stateless components', () => {
 
   test('HonoAdapter throws for signals without "use client"', () => {
     const source = `
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function Counter() {
         const [count, setCount] = createSignal(0)

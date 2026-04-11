@@ -22,7 +22,7 @@ const tocItems: TocItem[] = [
 
 const previewCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DataTableColumnHeader, DataTablePagination } from '@/components/ui/data-table'
 

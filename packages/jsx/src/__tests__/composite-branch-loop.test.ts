@@ -15,7 +15,7 @@ describe('composite loops inside conditional branches (#724)', () => {
   test('loop with child component inside ternary generates composite reconciliation', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function CartDemo() {
         const [items, setItems] = createSignal([
@@ -65,7 +65,7 @@ describe('composite loops inside conditional branches (#724)', () => {
   test('simple loop inside ternary (no components) uses basic reconciliation', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function SimpleList() {
         const [items, setItems] = createSignal(['a', 'b', 'c'])
@@ -101,7 +101,7 @@ describe('composite loops inside conditional branches (#724)', () => {
   test('simple loop with onClick inside conditional generates event delegation (#766)', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       interface Item { id: string; name: string }
 
@@ -150,7 +150,7 @@ describe('composite loops inside conditional branches (#724)', () => {
   test('SSR hydration: composite branch loop initializes child components via initChild', () => {
     const source = `
       'use client'
-      import { createSignal } from '@barefootjs/dom'
+      import { createSignal } from '@barefootjs/client-runtime'
 
       export function TodoList() {
         const [todos, setTodos] = createSignal([

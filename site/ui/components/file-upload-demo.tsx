@@ -14,7 +14,7 @@
  * - Toast for completion notification
  */
 
-import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/client'
 import { Card, CardContent } from '@ui/components/ui/card'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'

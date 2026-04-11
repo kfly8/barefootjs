@@ -107,7 +107,7 @@
   "dependencies": {
     "internal": [],
     "external": [
-      "@barefootjs/dom"
+      "@barefootjs/client-runtime"
     ]
   },
   "related": [

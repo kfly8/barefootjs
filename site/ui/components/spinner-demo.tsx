@@ -8,7 +8,7 @@
  * - SpinnerButtonDemo: Button with loading state
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Spinner } from '@ui/components/ui/spinner'
 import { Button } from '@ui/components/ui/button'
 

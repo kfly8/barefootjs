@@ -6,7 +6,7 @@
  * Context-based compound components must be rendered as client components.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { RadioGroup, RadioGroupItem } from '@ui/components/ui/radio-group'
 
 export function RadioGroupUsageDemo() {

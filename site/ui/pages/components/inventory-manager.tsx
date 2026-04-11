@@ -22,7 +22,7 @@ const tocItems: TocItem[] = [
 
 const previewCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'

@@ -6,7 +6,7 @@
  * Based on shadcn/ui patterns for practical use cases.
  */
 
-import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/client'
 import { Progress } from '@ui/components/ui/progress'
 
 /**

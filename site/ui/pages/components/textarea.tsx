@@ -58,7 +58,7 @@ function TextareaDisabled() {
 
 const bindingCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Textarea } from '@/components/ui/textarea'
 
 function TextareaBinding() {

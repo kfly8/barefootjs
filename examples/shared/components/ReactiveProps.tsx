@@ -9,7 +9,7 @@
  * 3. Callback props from child to parent
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 
 // Child component that receives reactive props
 // Uses SolidJS-style props (props.xxx) to maintain reactivity

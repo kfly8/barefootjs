@@ -5,7 +5,7 @@ export const fixture = createFixture({
   description: 'Chained filter and sort before map',
   source: `
 'use client'
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client-runtime'
 type Product = { name: string; price: number; active: boolean }
 export function FilterSortChain() {
   const [products, setProducts] = createSignal<Product[]>([])

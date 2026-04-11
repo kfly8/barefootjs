@@ -13,7 +13,7 @@
  * - Nested immutable updates for cell values
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Button } from '@ui/components/ui/button'
 import { Input } from '@ui/components/ui/input'
 import { Badge } from '@ui/components/ui/badge'

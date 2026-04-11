@@ -20,7 +20,7 @@
  */
 
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
-import { createContext, useContext, createSignal, createEffect } from '@barefootjs/dom'
+import { createContext, useContext, createSignal, createEffect } from '@barefootjs/client-runtime'
 import type { Child } from '../../../types'
 
 // Context for Collapsible → children state sharing

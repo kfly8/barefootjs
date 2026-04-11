@@ -10,7 +10,7 @@
  * serialized props and client JS complexity.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 
 interface PackageManagerTabsProps {

@@ -7,7 +7,7 @@
  * Adapted from ui site's mobile-menu.tsx with core documentation navigation.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 
 const summaryClass = 'flex w-full items-center justify-between py-2.5 px-4 text-base font-medium text-foreground hover:bg-accent/50 rounded-md transition-colors cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden'
 const menuLinkClass = 'block py-2.5 px-4 text-base rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 no-underline'

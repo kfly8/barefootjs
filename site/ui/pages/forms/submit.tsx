@@ -26,7 +26,7 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const basicSubmitCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const basicSubmitCode = `import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Toast, ToastProvider, ToastTitle, ToastDescription } from '@/components/ui/toast'
@@ -69,7 +69,7 @@ const handleSubmit = async () => {
   </Toast>
 </ToastProvider>`
 
-const errorHandlingCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const errorHandlingCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const [loading, setLoading] = createSignal(false)
 const [errorMsg, setErrorMsg] = createSignal('')
@@ -101,7 +101,7 @@ const handleRetry = () => {
   <ToastAction onClick={handleRetry}>Retry</ToastAction>
 </Toast>`
 
-const serverValidationCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const serverValidationCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const [email, setEmail] = createSignal('')
 const [serverError, setServerError] = createSignal('')

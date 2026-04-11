@@ -1,4 +1,4 @@
-import { useContext, createEffect, onCleanup } from '@barefootjs/dom'
+import { useContext, createEffect, onCleanup } from '@barefootjs/client-runtime'
 import { RadialChartContext } from './context'
 import { arc as d3Arc } from 'd3-shape'
 import { scaleLinear } from 'd3-scale'

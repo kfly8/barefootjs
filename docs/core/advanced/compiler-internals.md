@@ -62,7 +62,7 @@ The analyzer (`analyzer.ts`) performs a **single-pass** AST walk using TypeScrip
 | Effects | effect body | `createEffect(() => { ... })` |
 | onMounts | callback body | `onMount(() => { ... })` |
 | Props | parameter style, type info, defaults | `(props: ButtonProps)` or `({ label }: Props)` |
-| Imports | source, specifiers | `import { createSignal } from '@barefootjs/dom'` |
+| Imports | source, specifiers | `import { createSignal } from '@barefootjs/client'` |
 | Constants | name, value, dependencies | `const baseClass = 'btn'` |
 | Functions | name, body, parameters | `function handleClick() { ... }` |
 | Types | interfaces, type aliases | `interface ButtonProps { ... }` |
@@ -213,7 +213,7 @@ createEffect(() => {
 The generated `init` function follows this structure:
 
 ```javascript
-import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/dom'
+import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/client'
 
 export function initCounter(__scope, props = {}) {
   if (!__scope) return
@@ -283,10 +283,10 @@ hydrate('Counter', { init: initCounter })
 
 ### 5. Import Detection
 
-The generator scans the output code and includes only the `@barefootjs/dom` imports actually used:
+The generator scans the output code and includes only the `@barefootjs/client-runtime` imports actually used:
 
 ```javascript
-import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/dom'
+import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/client'
 ```
 
 ### 6. Template Registration

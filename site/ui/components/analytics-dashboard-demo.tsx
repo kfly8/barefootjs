@@ -15,7 +15,7 @@
  * - Multiple signal reads in single expression
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import type { ChartConfig } from '@barefootjs/chart'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@ui/components/ui/card'
 import { Badge } from '@ui/components/ui/badge'

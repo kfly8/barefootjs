@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import { createContext, useContext, provideContext } from '../src/context'
-import { createSignal, createEffect } from '../src/reactive'
+import { createSignal, createEffect } from '@barefootjs/client'
 
 describe('createContext', () => {
   test('creates context with unique id', () => {

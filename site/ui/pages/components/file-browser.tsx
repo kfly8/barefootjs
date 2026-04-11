@@ -20,7 +20,7 @@ const tocItems: TocItem[] = [
 
 const previewCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Checkbox } from '@/components/ui/checkbox'
 
 type TreeNode = FileItem | FolderItem

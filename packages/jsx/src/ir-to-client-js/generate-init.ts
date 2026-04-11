@@ -302,7 +302,7 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   }
 
   const sortedImports = [...usedImports].sort()
-  const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/dom'`
+  const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/client-runtime'`
 
   // Collect external (non-DOM) imports used in the generated code
   const externalImportLines = collectExternalImports(_ir, generatedCode, localImportPrefixes)

@@ -8,7 +8,7 @@ description: Render elements outside their parent DOM hierarchy for overlays, mo
 A portal renders an element outside its parent DOM hierarchy. This is useful for overlays, modals, and tooltips that need to escape `overflow: hidden`, `z-index` stacking contexts, or other CSS containment.
 
 ```tsx
-import { createPortal } from '@barefootjs/dom'
+import { createPortal } from '@barefootjs/client'
 ```
 
 
@@ -50,7 +50,7 @@ Portals are typically created inside a `ref` callback. The element is moved to `
 
 ```tsx
 "use client"
-import { createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/dom'
+import { createSignal, createEffect, createPortal, isSSRPortal } from '@barefootjs/client'
 
 export function Tooltip(props: { text: string; children?: Child }) {
   const [visible, setVisible] = createSignal(false)
@@ -89,7 +89,7 @@ export function Tooltip(props: { text: string; children?: Child }) {
 When a portal is server-rendered, it is already in the correct position in the DOM. `isSSRPortal` checks whether an element was already portaled during SSR to prevent double-portaling:
 
 ```tsx
-import { isSSRPortal } from '@barefootjs/dom'
+import { isSSRPortal } from '@barefootjs/client'
 
 const handleMount = (el: HTMLElement) => {
   // Skip if already portaled during SSR
@@ -102,7 +102,7 @@ const handleMount = (el: HTMLElement) => {
 SSR portals are marked with `bf-pi` attributes. After hydration, call `cleanupPortalPlaceholder` to remove the SSR placeholder:
 
 ```tsx
-import { cleanupPortalPlaceholder } from '@barefootjs/dom'
+import { cleanupPortalPlaceholder } from '@barefootjs/client'
 
 cleanupPortalPlaceholder(portalId)
 ```
@@ -130,7 +130,7 @@ A common use of portals is moving dialog overlays and content to `document.body`
 
 ```tsx
 "use client"
-import { createPortal, isSSRPortal, useContext, createEffect } from '@barefootjs/dom'
+import { createPortal, isSSRPortal, useContext, createEffect } from '@barefootjs/client'
 
 function DialogOverlay() {
   const handleMount = (el: HTMLElement) => {
@@ -167,7 +167,7 @@ The overlay is rendered inside the `<Dialog>` component tree (so it can access `
 Use `portal.unmount()` to remove a portaled element. Combine with `onCleanup` to clean up when a component is destroyed:
 
 ```tsx
-import { createPortal, onCleanup } from '@barefootjs/dom'
+import { createPortal, onCleanup } from '@barefootjs/client'
 
 const handleMount = (el: HTMLElement) => {
   const portal = createPortal(el, document.body)

@@ -1,6 +1,6 @@
 import { describe, test, expect, mock } from "bun:test";
 import { z } from "zod";
-import { createEffect } from "@barefootjs/dom";
+import { createEffect } from "@barefootjs/client";
 import { createForm } from "../src/create-form";
 
 const schema = z.object({

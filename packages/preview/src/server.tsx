@@ -39,10 +39,10 @@ function WithPredictableIds({ children }: { children: any }) {
   return <>{children}</>
 }
 
-// Import map for resolving @barefootjs/dom in client JS
+// Import map for resolving @barefootjs/client-runtime in client JS
 const importMapScript = JSON.stringify({
   imports: {
-    '@barefootjs/dom': '/static/barefoot.js',
+    '@barefootjs/client-runtime': '/static/barefoot.js',
   },
 })
 

@@ -7,7 +7,7 @@
  * Follows TodoMVC HTML structure and styling conventions
  */
 
-import { createSignal, onMount } from '@barefootjs/dom'
+import { createSignal, onMount } from '@barefootjs/client'
 import TodoItem from './TodoItem'
 
 type Todo = {

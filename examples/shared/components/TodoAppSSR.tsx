@@ -7,7 +7,7 @@
  * Used to verify higher-order function handling.
  */
 
-import { createSignal, onMount } from '@barefootjs/dom'
+import { createSignal, onMount } from '@barefootjs/client'
 import TodoItem from './TodoItem'
 
 type Todo = {

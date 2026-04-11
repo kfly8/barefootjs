@@ -7,7 +7,7 @@
  * reactive .filter().map() chain, multiple sibling Card components.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import {
   Card,
   CardHeader,

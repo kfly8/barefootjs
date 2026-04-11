@@ -6,7 +6,7 @@
  * Used in hover-card documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   HoverCard,
   HoverCardTrigger,

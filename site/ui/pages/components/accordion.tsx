@@ -40,7 +40,7 @@ const usageCode = `import {
 
 const singleCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Accordion,
   AccordionItem,
@@ -77,7 +77,7 @@ function AccordionSingle() {
 
 const multipleCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Accordion,
   AccordionItem,
@@ -117,7 +117,7 @@ function AccordionMultiple() {
 
 const asChildCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Accordion,
   AccordionItem,

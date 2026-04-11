@@ -44,7 +44,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Dialog,
   DialogTrigger,
@@ -109,7 +109,7 @@ function CreateTaskDialog() {
 
 const deleteCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Dialog,
   DialogTrigger,
@@ -176,7 +176,7 @@ function DeleteConfirmDialog() {
 
 const longContentCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Dialog,
   DialogTrigger,

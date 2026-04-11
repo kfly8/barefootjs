@@ -8,7 +8,7 @@
 
 'use client'
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 
 export interface TocItem {
   id: string

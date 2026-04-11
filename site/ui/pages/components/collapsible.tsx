@@ -39,7 +39,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -53,7 +53,7 @@ function CollapsibleBasic() {
     <Collapsible defaultOpen class="space-y-2">
       <div className="flex items-center justify-between space-x-4">
         <h4 className="text-sm font-semibold">
-          @barefootjs/dom has 3 repositories
+          @barefootjs/client-runtime has 3 repositories
         </h4>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="w-9 p-0">
@@ -63,7 +63,7 @@ function CollapsibleBasic() {
         </CollapsibleTrigger>
       </div>
       <div className="rounded-md border px-4 py-2 font-mono text-sm">
-        @barefootjs/dom
+        @barefootjs/client-runtime
       </div>
       <CollapsibleContent class="space-y-2">
         <div className="rounded-md border px-4 py-2 font-mono text-sm">
@@ -79,7 +79,7 @@ function CollapsibleBasic() {
 
 const controlledCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Collapsible,
   CollapsibleTrigger,

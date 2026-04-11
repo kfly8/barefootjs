@@ -19,7 +19,7 @@ const tocItems: TocItem[] = [
 
 const previewCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@/components/ui/input'
 
 const COLS = ['A', 'B', 'C']

@@ -1,7 +1,7 @@
 // Auto-generated preview. Customize by editing this file.
 "use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from '../select'
 
 export function Default() {

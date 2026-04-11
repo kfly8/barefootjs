@@ -174,7 +174,7 @@ function generateTemplateOnlyMount(ir: ComponentIR, ctx: ClientJsContext): strin
   const generatedCode = lines.join('\n')
   const usedImports = detectUsedImports(generatedCode)
   const sortedImports = [...usedImports].sort()
-  const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/dom'`
+  const importLine = `import { ${sortedImports.join(', ')} } from '@barefootjs/client-runtime'`
 
   return generatedCode.replace(IMPORT_PLACEHOLDER, importLine)
 }

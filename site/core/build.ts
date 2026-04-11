@@ -33,7 +33,7 @@ const CONTENT_DIR = resolve(ROOT_DIR, '../../docs/core')
 const DIST_DIR = resolve(ROOT_DIR, 'dist')
 const DIST_COMPONENTS_DIR = resolve(DIST_DIR, 'components')
 const DIST_STATIC_DIR = resolve(DIST_DIR, 'static')
-const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/dom')
+const DOM_PKG_DIR = resolve(ROOT_DIR, '../../packages/client-runtime')
 const SHARED_DIR = resolve(ROOT_DIR, '../shared')
 const COMPONENTS_DIR = resolve(ROOT_DIR, 'components')
 const LANDING_COMPONENTS_DIR = resolve(ROOT_DIR, 'landing/components')
@@ -56,7 +56,7 @@ const barefootFileName = 'barefoot.js'
 const domDistFile = resolve(DOM_PKG_DIR, 'dist/index.js')
 
 if (!await Bun.file(domDistFile).exists()) {
-  console.log('Building @barefootjs/dom...')
+  console.log('Building @barefootjs/client-runtime...')
   const proc = Bun.spawn(['bun', 'run', 'build'], { cwd: DOM_PKG_DIR })
   await proc.exited
 }

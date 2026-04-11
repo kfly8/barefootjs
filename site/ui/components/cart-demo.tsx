@@ -9,7 +9,7 @@
  * updates (remove item → reconciliation).
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'
 import { Separator } from '@ui/components/ui/separator'

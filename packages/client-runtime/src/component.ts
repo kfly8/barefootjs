@@ -8,7 +8,7 @@
 import { getTemplate } from './template'
 import { getComponentInit } from './registry'
 import { hydratedScopes } from './hydration-state'
-import { untrack } from './reactive'
+import { untrack } from '@barefootjs/client'
 import { BF_SCOPE, BF_KEY } from './attrs'
 import type { ComponentDef } from './types'
 

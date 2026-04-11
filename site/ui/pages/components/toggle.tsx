@@ -73,7 +73,7 @@ export function ToggleOutlineDemo() {
 
 const toolbarCode = `"use client"
 
-import { createSignal, createMemo } from "@barefootjs/dom"
+import { createSignal, createMemo } from "@barefootjs/client-runtime"
 import { Toggle } from "@/components/ui/toggle"
 
 const formatOptions = [

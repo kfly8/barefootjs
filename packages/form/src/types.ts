@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { Reactive, Memo } from "@barefootjs/dom";
+import type { Reactive, Memo } from "@barefootjs/client";
 
 // --- Validation timing ---
 

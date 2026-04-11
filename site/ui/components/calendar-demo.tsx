@@ -6,7 +6,7 @@
  * Shows practical date selection patterns.
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Calendar } from '@ui/components/ui/calendar'
 
 /**

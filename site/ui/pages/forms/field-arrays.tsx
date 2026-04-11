@@ -26,7 +26,7 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const basicFieldArrayCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const basicFieldArrayCode = `import { createSignal, createMemo } from '@barefootjs/client'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -73,7 +73,7 @@ const handleChange = (id: number, value: string) => {
 ))}
 <Button onClick={handleAdd}>+ Add Email</Button>`
 
-const duplicateValidationCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const duplicateValidationCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const isDuplicate = (id: number, value: string): boolean => {
   if (value.trim() === '') return false
@@ -98,7 +98,7 @@ const duplicateCount = createMemo(() => {
   <p className="text-amber-400">{duplicateCount()} duplicate(s) detected</p>
 )}`
 
-const minMaxFieldsCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const minMaxFieldsCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const MIN_FIELDS = 1
 const MAX_FIELDS = 5

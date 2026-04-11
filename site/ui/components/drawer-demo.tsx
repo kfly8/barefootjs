@@ -6,7 +6,7 @@
  * Used in drawer documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Drawer,
   DrawerTrigger,

@@ -53,7 +53,7 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
   // 1. Copy barefoot.js runtime
   const domDistFile = resolve(DOM_PKG_DIR, 'dist/index.js')
   if (!await Bun.file(domDistFile).exists()) {
-    console.log('Building @barefootjs/dom...')
+    console.log('Building @barefootjs/client-runtime...')
     const proc = Bun.spawn(['bun', 'run', 'build'], { cwd: DOM_PKG_DIR })
     await proc.exited
   }

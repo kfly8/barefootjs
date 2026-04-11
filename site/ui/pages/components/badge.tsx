@@ -56,7 +56,7 @@ const outlineCode = `<Badge variant="outline">Outline</Badge>`
 
 const asChildCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Badge } from '@/components/ui/badge'
 
 function BadgeAsChild() {

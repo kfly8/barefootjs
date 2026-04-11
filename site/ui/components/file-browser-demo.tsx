@@ -8,7 +8,7 @@
  * dynamic list updates (create/delete), derived state (selected count, total size).
  */
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'
 import { Checkbox } from '@ui/components/ui/checkbox'

@@ -9,7 +9,7 @@
  * and uses createEffect to update placeholder/disabled via DOM manipulation.
  */
 
-import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { hlPlain, hlTag, hlAttr, hlStr, escapeHtml } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'

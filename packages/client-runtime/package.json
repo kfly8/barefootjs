@@ -1,7 +1,7 @@
 {
-  "name": "@barefootjs/dom",
+  "name": "@barefootjs/client-runtime",
   "version": "0.0.1",
-  "description": "Minimal reactive DOM primitives for BarefootJS",
+  "description": "DOM runtime for BarefootJS compiler-generated code",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,9 +23,8 @@
     "clean": "rm -rf dist"
   },
   "keywords": [
-    "reactive",
-    "signals",
     "dom",
+    "runtime",
     "barefoot"
   ],
   "author": "",
@@ -33,7 +32,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/kfly8/barefootjs",
-    "directory": "packages/dom"
+    "directory": "packages/client-runtime"
+  },
+  "peerDependencies": {
+    "@barefootjs/client": ">=0.0.1"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.11",

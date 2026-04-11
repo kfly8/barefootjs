@@ -8,7 +8,7 @@ description: Runs a function and re-runs it whenever its tracked signal dependen
 Runs a function immediately and re-runs it whenever any signal read inside it changes.
 
 ```tsx
-import { createEffect } from '@barefootjs/dom'
+import { createEffect } from '@barefootjs/client'
 
 createEffect(fn: () => void | (() => void)): void
 ```

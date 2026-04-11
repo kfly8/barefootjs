@@ -144,7 +144,7 @@ function SidebarBasic() {
 
 const collapsibleCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   Sidebar, SidebarContent, SidebarGroup,
   SidebarGroupContent, SidebarGroupLabel, SidebarHeader,

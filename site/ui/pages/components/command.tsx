@@ -86,7 +86,7 @@ function CommandMenu() {
 
 const dialogCode = `"use client"
 
-import { createSignal, createEffect, onCleanup } from '@barefootjs/dom'
+import { createSignal, createEffect, onCleanup } from '@barefootjs/client'
 import {
   CommandDialog,
   CommandInput,

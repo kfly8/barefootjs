@@ -43,7 +43,7 @@ describe('Adapter output', () => {
     test('compiles component with props', () => {
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         interface CounterProps {
           initial?: number
@@ -96,7 +96,7 @@ describe('Adapter output', () => {
     test('reactive ternary preserves string quotes (TestAdapter)', () => {
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function SubmitButton() {
           const [isSubmitting, setIsSubmitting] = createSignal(false)
@@ -134,7 +134,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function SubmitButton() {
           const [isSubmitting, setIsSubmitting] = createSignal(false)
@@ -157,7 +157,7 @@ describe('Adapter output', () => {
     test('export const is preserved at module level', () => {
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export const REGEXP_ONLY_DIGITS = '^\\\\d+$'
 
@@ -185,7 +185,7 @@ describe('Adapter output', () => {
     test('non-exported const stays inside function body', () => {
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         const INTERNAL_VALUE = 'secret'
 
@@ -212,7 +212,7 @@ describe('Adapter output', () => {
     test('exported non-component function at module level', () => {
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function helperFn(x: number) { return x * 2 }
 
@@ -240,7 +240,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export const PATTERN = /^[0-9]+$/
 
@@ -268,7 +268,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function Calendar(props) {
           const [mode, setMode] = createSignal(props.mode ?? 'single')
@@ -289,7 +289,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function MyComponent(props) {
           const normalize = (val) => val == null ? '' : String(val)
@@ -312,7 +312,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export const formatDate = (d) => d.toISOString().split('T')[0]
 
@@ -336,7 +336,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function Counter() {
           const [count, setCount] = createSignal(0)
@@ -355,7 +355,7 @@ describe('Adapter output', () => {
     test('signal setter accepts arguments in generated SSR template (TestAdapter)', () => {
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function Counter() {
           const [count, setCount] = createSignal(0)
@@ -373,7 +373,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         function formatNum(n: number): string { return n.toFixed(2) }
 
@@ -393,7 +393,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function helperFn(x: number, label: string) { return label + x }
 
@@ -413,7 +413,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         interface CounterProps { initial?: number }
 
@@ -434,7 +434,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function Counter() {
           const [count, setCount] = createSignal(0)
@@ -454,7 +454,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function MembersPanel() {
           const [members, setMembers] = createSignal<string[]>([])
@@ -489,7 +489,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function Display() {
           const [val, setVal] = createSignal(0)
@@ -516,7 +516,7 @@ describe('Adapter output', () => {
       const honoAdapter = new HonoAdapter()
       const source = `
         'use client'
-        import { createSignal } from '@barefootjs/dom'
+        import { createSignal } from '@barefootjs/client-runtime'
 
         export function Counter() {
           const [count, setCount] = createSignal(0)

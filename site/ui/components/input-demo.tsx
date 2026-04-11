@@ -6,7 +6,7 @@
  * Used in input documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { Input } from '@ui/components/ui/input'
 
 /**

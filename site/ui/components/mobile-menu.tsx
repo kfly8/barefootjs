@@ -6,7 +6,7 @@
  * Bottom sheet menu for mobile devices with drag-to-resize functionality.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { XIcon, ChevronRightIcon } from '@ui/components/ui/icon'
 import { categoryOrder, categoryLabels, getComponentsByCategory, blockEntries } from './shared/component-registry'
 

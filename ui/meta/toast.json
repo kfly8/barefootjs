@@ -164,7 +164,7 @@
       "icon"
     ],
     "external": [
-      "@barefootjs/dom"
+      "@barefootjs/client-runtime"
     ]
   },
   "related": [

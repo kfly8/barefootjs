@@ -6,7 +6,7 @@
  * Used in native-select documentation page.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { NativeSelect, NativeSelectOption } from '@ui/components/ui/native-select'
 
 /**

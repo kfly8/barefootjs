@@ -8,7 +8,7 @@ description: Executes a function without tracking signal dependencies in the cur
 Executes a function without tracking signal dependencies. Signal reads inside the function do not register the current effect as a subscriber.
 
 ```tsx
-import { untrack } from '@barefootjs/dom'
+import { untrack } from '@barefootjs/client'
 
 untrack<T>(fn: () => T): T
 ```

@@ -39,7 +39,7 @@ const tocItems: TocItem[] = [
 
 const usageCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { DatePicker } from '@/components/ui/date-picker'
 
 function DatePickerDemo() {
@@ -62,7 +62,7 @@ function DatePickerDemo() {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { DatePicker } from '@/components/ui/date-picker'
 
 function DatePickerDemo() {
@@ -85,7 +85,7 @@ function DatePickerDemo() {
 
 const formCode = `"use client"
 
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 import { DatePicker } from '@/components/ui/date-picker'
 
 function DatePickerForm() {
@@ -135,7 +135,7 @@ function DatePickerForm() {
 
 const rangeCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { DateRangePicker, type DateRange } from '@/components/ui/date-picker'
 
 function DateRangeDemo() {
@@ -152,7 +152,7 @@ function DateRangeDemo() {
 
 const presetsCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { DatePicker } from '@/components/ui/date-picker'
 
 function DatePickerWithPresets() {

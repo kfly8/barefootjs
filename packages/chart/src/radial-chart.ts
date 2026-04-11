@@ -1,4 +1,4 @@
-import { createSignal, provideContext, useContext } from '@barefootjs/dom'
+import { createSignal, provideContext, useContext } from '@barefootjs/client-runtime'
 import type { RadialBarRegistration } from './types'
 import { RadialChartContext, ChartConfigContext } from './context'
 

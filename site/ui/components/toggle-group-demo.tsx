@@ -6,7 +6,7 @@
  * Each demo shows a visual preview that responds to selection changes.
  */
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import { ToggleGroup, ToggleGroupItem } from '@ui/components/ui/toggle-group'
 
 /**

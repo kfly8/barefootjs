@@ -32,17 +32,17 @@ const templatesDir = resolve(outputDir, 'templates')
 const clientDir = resolve(outputDir, 'client')
 
 // DOM package path
-const domPkgDir = resolve(projectRoot, '../../packages/dom')
+const domPkgDir = resolve(projectRoot, '../../packages/client-runtime')
 const domDistFile = resolve(domPkgDir, 'dist/index.js')
 
 // Create output directories
 mkdirSync(templatesDir, { recursive: true })
 mkdirSync(clientDir, { recursive: true })
 
-// Build and copy barefoot.js from @barefootjs/dom
-console.log('Preparing @barefootjs/dom runtime...')
+// Build and copy barefoot.js from @barefootjs/client-runtime
+console.log('Preparing @barefootjs/client-runtime runtime...')
 if (!existsSync(domDistFile)) {
-  console.log('  Building @barefootjs/dom...')
+  console.log('  Building @barefootjs/client-runtime...')
   spawnSync('bun', ['run', 'build'], { cwd: domPkgDir, stdio: 'inherit' })
 }
 const barefootDest = resolve(clientDir, 'barefoot.js')
@@ -252,9 +252,9 @@ for (const componentPath of components) {
 
       let clientJs = generateClientJs(ir, allComponentNames)
       if (clientJs) {
-        // Replace @barefootjs/dom import with relative path to barefoot.js
+        // Replace @barefootjs/client-runtime import with relative path to barefoot.js
         clientJs = clientJs.replace(
-          /from ['"]@barefootjs\/dom['"]/g,
+          /from ['"]@barefootjs\/client-runtime['"]/g,
           "from './barefoot.js'"
         )
 

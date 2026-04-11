@@ -85,7 +85,7 @@ import { analyzeComponent, jsxToIR } from '../index'
 
 test('detects signal usage in JSX expression', () => {
   const source = `"use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 function Counter() {
   const [count, setCount] = createSignal(0)
   return <span>{count()}</span>
@@ -97,7 +97,7 @@ function Counter() {
 
 test('emits BF043 for props destructuring in stateful component', () => {
   const source = `"use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 function Comp({ value }: Props) {
   const [x] = createSignal(value)
   return <span>{x()}</span>
@@ -267,7 +267,7 @@ export const fixture = createFixture({
   description: 'Description of what this fixture tests',
   source: `
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 function MyComponent() {
   const [value, setValue] = createSignal(0)
   return <div>{value()}</div>
@@ -341,7 +341,7 @@ export const fixture = createFixture({
   description: 'Dynamic boolean attributes use DOM properties, not setAttribute',
   source: `
 "use client"
-import { createSignal } from "@barefootjs/dom"
+import { createSignal } from "@barefootjs/client-runtime"
 function Demo() {
   const [disabled, setDisabled] = createSignal(false)
   return <button disabled={disabled()}>Click</button>
@@ -360,7 +360,7 @@ function Demo() {
 
 ### Purpose
 
-Test the client-side runtime: signal creation, effect tracking, DOM operations, hydration, context API. These test the `@barefootjs/dom` package in isolation.
+Test the client-side runtime: signal creation, effect tracking, DOM operations, hydration, context API. These test the `@barefootjs/client-runtime` package in isolation.
 
 ### What to test here
 

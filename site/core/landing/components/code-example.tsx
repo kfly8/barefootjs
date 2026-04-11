@@ -9,7 +9,7 @@ import { CounterDemo } from '@/components/demo/counter-demo'
 
 const counterCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 
 export function Counter() {
   const [count, setCount] = createSignal(0)

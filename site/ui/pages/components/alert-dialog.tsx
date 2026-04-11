@@ -44,7 +44,7 @@ const usageCode = `import {
 
 const basicCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -89,7 +89,7 @@ function BasicAlertDialog() {
 
 const destructiveCode = `"use client"
 
-import { createSignal } from '@barefootjs/dom'
+import { createSignal } from '@barefootjs/client'
 import {
   AlertDialog,
   AlertDialogTrigger,

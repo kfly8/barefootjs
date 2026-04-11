@@ -8,7 +8,7 @@
  * createMemo chains (unread count, filtered contacts), rapid list growth.
  */
 
-import { createSignal, createMemo, createEffect } from '@barefootjs/dom'
+import { createSignal, createMemo, createEffect } from '@barefootjs/client'
 import { Avatar, AvatarFallback } from '@ui/components/ui/avatar'
 import { Badge } from '@ui/components/ui/badge'
 import { Button } from '@ui/components/ui/button'

@@ -6,7 +6,7 @@
  * Allows tweaking open state and disabled props with live preview.
  */
 
-import { createSignal, createEffect } from '@barefootjs/dom'
+import { createSignal, createEffect } from '@barefootjs/client'
 import { CopyButton } from './copy-button'
 import { highlightJsxTree, plainJsxTree, type HighlightProp, type JsxTreeNode } from './shared/playground-highlight'
 import { PlaygroundLayout, PlaygroundControl } from './shared/PlaygroundLayout'
@@ -51,7 +51,7 @@ function CollapsiblePlayground(_props: {}) {
           <Collapsible open={open()} onOpenChange={setOpen} disabled={disabled()} className="space-y-2">
             <div className="flex items-center justify-between space-x-4">
               <h4 className="text-sm font-semibold">
-                @barefootjs/dom has 3 repositories
+                @barefootjs/client-runtime has 3 repositories
               </h4>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-9 p-0">
@@ -61,7 +61,7 @@ function CollapsiblePlayground(_props: {}) {
               </CollapsibleTrigger>
             </div>
             <div className="rounded-md border px-4 py-2 font-mono text-sm shadow-xs">
-              @barefootjs/dom
+              @barefootjs/client-runtime
             </div>
             <CollapsibleContent className="space-y-2">
               <div className="rounded-md border px-4 py-2 font-mono text-sm shadow-xs">

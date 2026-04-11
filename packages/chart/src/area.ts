@@ -1,4 +1,4 @@
-import { useContext, createEffect, onCleanup } from '@barefootjs/dom'
+import { useContext, createEffect, onCleanup } from '@barefootjs/client-runtime'
 import { area as d3Area, curveLinear } from 'd3-shape'
 import { AreaChartContext } from './context'
 

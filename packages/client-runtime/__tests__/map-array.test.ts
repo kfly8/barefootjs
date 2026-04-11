@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, beforeEach } from 'bun:test'
-import { createSignal, createEffect, createRoot } from '../src/reactive'
+import { createSignal, createEffect, createRoot } from '@barefootjs/client'
 import { mapArray } from '../src/map-array'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 

@@ -1,7 +1,7 @@
 "use client"
 
 import type { HTMLBaseAttributes } from '@barefootjs/jsx'
-import { createSignal, createMemo } from '@barefootjs/dom'
+import { createSignal, createMemo } from '@barefootjs/client'
 
 /**
  * Progress Component

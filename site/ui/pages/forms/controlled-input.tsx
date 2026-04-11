@@ -28,7 +28,7 @@ const tocItems: TocItem[] = [
 ]
 
 // Code examples
-const basicCode = `import { createSignal } from '@barefootjs/dom'
+const basicCode = `import { createSignal } from '@barefootjs/client'
 import { Input } from '@/components/ui/input'
 
 const [text, setText] = createSignal('')
@@ -40,7 +40,7 @@ const [text, setText] = createSignal('')
 />
 <p>Current value: {text()}</p>`
 
-const characterCountCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const characterCountCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const [text, setText] = createSignal('')
 const charCount = createMemo(() => text().length)
@@ -53,7 +53,7 @@ const remaining = createMemo(() => 100 - text().length)
 <p>Characters: {charCount()}</p>
 <p>{remaining()} remaining</p>`
 
-const livePreviewCode = `import { createSignal, createMemo } from '@barefootjs/dom'
+const livePreviewCode = `import { createSignal, createMemo } from '@barefootjs/client'
 
 const [text, setText] = createSignal('')
 const uppercase = createMemo(() => text().toUpperCase())
@@ -69,7 +69,7 @@ const wordCount = createMemo(() => {
 <p>Uppercase: {uppercase()}</p>
 <p>Word count: {wordCount()}</p>`
 
-const multiInputCode = `import { createSignal } from '@barefootjs/dom'
+const multiInputCode = `import { createSignal } from '@barefootjs/client'
 
 const [text, setText] = createSignal('')
 

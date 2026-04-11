@@ -301,7 +301,7 @@ error[BF001]: 'use client' directive required for components with createSignal
 
   --> src/components/Counter.tsx:3:1
    |
- 3 | import { createSignal } from '@barefootjs/dom'
+ 3 | import { createSignal } from '@barefootjs/client'
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: Add 'use client' at the top of the file
