@@ -122,7 +122,7 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
   // Configure pan/zoom behavior
   panZoomInstance.update({
     noWheelClassName: 'nowheel',
-    noPanClassName: 'nodrag',
+    noPanClassName: 'nopan',
     preventScrolling: true,
     panOnScroll: false,
     panOnDrag: true,
