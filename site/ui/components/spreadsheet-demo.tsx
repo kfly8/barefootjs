@@ -63,29 +63,32 @@ function initialRows(): Row[] {
 }
 
 function evaluateFormulas(rows: Row[]): Record<string, CellValue> {
-  const byId: Record<string, Cell> = {}
-  for (const row of rows) for (const c of row.cells) byId[c.id] = c
-
+  // Build result map — all lookups read from result (already-computed values),
+  // so formulas that reference other formula cells get the computed value.
   const result: Record<string, CellValue> = {}
+  const lookup = (id: string): CellValue => result[id] ?? ''
+
   for (const row of rows) {
     for (const c of row.cells) {
       if (!c.formula) { result[c.id] = c.value; continue }
       const expr = c.formula.slice(1)
+      // =X1*Y1
+      const mulMatch = expr.match(/^([A-D])(\d+)\*([A-D])(\d+)$/)
+      if (mulMatch) {
+        const a = lookup(cellId(mulMatch[1], parseInt(mulMatch[2], 10)))
+        const b = lookup(cellId(mulMatch[3], parseInt(mulMatch[4], 10)))
+        result[c.id] = typeof a === 'number' && typeof b === 'number' ? Math.round(a * b * 100) / 100 : 0
+        continue
+      }
+      // =SUM(X1:X3)
       const sumMatch = expr.match(/^SUM\(([A-D])(\d+):([A-D])(\d+)\)$/)
       if (sumMatch) {
         let sum = 0
         for (let r = parseInt(sumMatch[2], 10); r <= parseInt(sumMatch[4], 10); r++) {
-          const v = byId[cellId(sumMatch[1], r)]?.value
+          const v = lookup(cellId(sumMatch[1], r))
           if (typeof v === 'number') sum += v
         }
         result[c.id] = Math.round(sum * 100) / 100
-        continue
-      }
-      const mulMatch = expr.match(/^([A-D])(\d+)\*([A-D])(\d+)$/)
-      if (mulMatch) {
-        const a = byId[cellId(mulMatch[1], parseInt(mulMatch[2], 10))]?.value
-        const b = byId[cellId(mulMatch[3], parseInt(mulMatch[4], 10))]?.value
-        result[c.id] = typeof a === 'number' && typeof b === 'number' ? Math.round(a * b * 100) / 100 : 0
         continue
       }
       result[c.id] = c.formula

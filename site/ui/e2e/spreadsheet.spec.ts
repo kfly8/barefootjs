@@ -112,6 +112,20 @@ test.describe('Spreadsheet Block', () => {
       const d2 = s.locator('.spreadsheet-row').nth(1).locator('.spreadsheet-cell').nth(3)
       await expect(d2.locator('.cell-value')).toContainText('599.8')
     })
+
+    test('SUM updates when dependent cells change', async ({ page }) => {
+      const s = section(page)
+      // Edit B2 (price) from 29.99 to 100
+      await s.locator('.spreadsheet-row').nth(1).locator('.spreadsheet-cell').nth(1).click()
+      await s.locator('.cell-input').fill('100')
+      await s.locator('.cell-input').press('Enter')
+      // D2 = B2 * C2 = 100 * 10 = 1000
+      const d2 = s.locator('.spreadsheet-row').nth(1).locator('.spreadsheet-cell').nth(3)
+      await expect(d2.locator('.cell-value')).toContainText('1,000')
+      // D5 = SUM(D2:D4) should update
+      const d5 = s.locator('.spreadsheet-row').nth(4).locator('.spreadsheet-cell').nth(3)
+      await expect(d5.locator('.cell-value')).toContainText('1,449')
+    })
   })
 
   test.describe('Clear Cell', () => {
