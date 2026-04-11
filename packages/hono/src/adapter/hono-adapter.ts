@@ -277,8 +277,14 @@ export class HonoAdapter implements TemplateAdapter {
       jsxBody = `<>{bfComment(\`scope:${scopeExpr}${propsExpr}\`)}${jsxBody}</>`
     }
 
+    // For if-statement roots, render branches early so they're included in reference analysis
+    const ifCode = isIfStatement
+      ? this.renderIfStatement(ir.root as IRIfStatement, { isRootOfClientComponent: true })
+      : ''
+
     // Generate signal initializers with unused-aware prefixing (needs jsxBody for reference analysis)
-    const signalInits = this.generateSignalInitializers(ir, jsxBody)
+    const fullBodyText = jsxBody + '\n' + ifCode
+    const signalInits = this.generateSignalInitializers(ir, fullBodyText)
 
     // Determine which hydration params are actually used in the generated body
     // Include scopeId line content for accurate reference checking
@@ -286,7 +292,7 @@ export class HonoAdapter implements TemplateAdapter {
       ? `__instanceId`
       : `__bfScope || __instanceId`
     const bodyRefText = [
-      jsxBody,
+      fullBodyText,
       signalInits,
       scopeIdLine,
       // Props serialization references __bfParentProps
@@ -366,7 +372,6 @@ export class HonoAdapter implements TemplateAdapter {
 
     // Handle if-statement roots (early return pattern)
     if (isIfStatement) {
-      const ifCode = this.renderIfStatement(ir.root as IRIfStatement, { isRootOfClientComponent: true })
       lines.push(ifCode)
       lines.push(`}`)
       return lines.join('\n')
