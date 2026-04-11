@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@barefootjs/xyflow E2E Tests</title>
+  <script type="importmap">
+    { "imports": { "@barefootjs/dom": "/barefoot-dom.js", "@barefootjs/xyflow": "/barefoot-xyflow.js" } }
+  </script>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    .test-container { width: 800px; height: 400px; border: 1px solid #ccc; margin: 16px; }
+    h2 { margin: 16px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<h2>Basic Flow</h2>
+<div id="basic" class="test-container"></div>
+
+<h2>Flow with Plugins</h2>
+<div id="plugins" class="test-container"></div>
+
+<h2>Stress Test (20 nodes)</h2>
+<div id="stress" class="test-container" style="height:500px"></div>
+
+<script type="module">
+import { createRoot } from '@barefootjs/dom'
+import { initFlow, initBackground, initControls } from '@barefootjs/xyflow'
+
+// Basic Flow
+createRoot(() => {
+  initFlow(document.getElementById('basic'), {
+    nodes: [
+      { id: '1', position: { x: 0, y: 0 }, data: { label: 'Start' } },
+      { id: '2', position: { x: 200, y: 80 }, data: { label: 'Process A' } },
+      { id: '3', position: { x: 200, y: 200 }, data: { label: 'Process B' } },
+      { id: '4', position: { x: 400, y: 130 }, data: { label: 'End' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2' },
+      { id: 'e1-3', source: '1', target: '3' },
+      { id: 'e2-4', source: '2', target: '4' },
+    ],
+  })
+})
+
+// Flow with plugins
+createRoot(() => {
+  const el = document.getElementById('plugins')
+  initFlow(el, {
+    nodes: [
+      { id: 'a', position: { x: 50, y: 50 }, data: { label: 'Input' } },
+      { id: 'b', position: { x: 250, y: 50 }, data: { label: 'Transform' } },
+      { id: 'c', position: { x: 250, y: 200 }, data: { label: 'Validate' } },
+      { id: 'd', position: { x: 450, y: 120 }, data: { label: 'Output' } },
+    ],
+    edges: [
+      { id: 'ab', source: 'a', target: 'b' },
+      { id: 'ac', source: 'a', target: 'c' },
+      { id: 'bd', source: 'b', target: 'd' },
+      { id: 'cd', source: 'c', target: 'd' },
+    ],
+  })
+  initBackground(el, { variant: 'dots', gap: 20, color: '#e0e0e0' })
+  initControls(el, { position: 'bottom-left' })
+})
+
+// Stress test
+createRoot(() => {
+  const el = document.getElementById('stress')
+  const nodes = []
+  const edges = []
+  const cols = 5, rows = 4
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const id = `n${r}-${c}`
+      nodes.push({ id, position: { x: c * 180, y: r * 100 }, data: { label: `Node ${r * cols + c + 1}` } })
+      if (c < cols - 1) edges.push({ id: `e${id}-h`, source: id, target: `n${r}-${c + 1}` })
+      if (r < rows - 1) edges.push({ id: `e${id}-v`, source: id, target: `n${r + 1}-${c}` })
+    }
+  }
+
+  initFlow(el, { nodes, edges, fitView: true })
+  initBackground(el, { variant: 'lines', gap: 30, color: '#f0f0f0' })
+  initControls(el, { position: 'top-right' })
+})
+</script>
+</body>
+</html>
