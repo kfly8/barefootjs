@@ -253,25 +253,39 @@ test.describe('Pan & Zoom', () => {
     expect(t.scale).toBeGreaterThanOrEqual(0.49) // small float tolerance
   })
 
-  // Pan via mouse drag is not working in headless mode.
-  // D3 zoom's pan handler requires investigation — tracked as a
-  // known issue for follow-up. Zoom (via scroll wheel) works correctly.
-  test.fixme('panning moves the viewport via drag', async ({ page }) => {
-    const container = page.locator('#plugins')
+  test('D3 zoom is attached to container', async ({ page }) => {
+    const hasZoom = await page.evaluate(() => {
+      const container = document.getElementById('basic')!
+      return (container as any).__zoom !== undefined
+    })
+    expect(hasZoom).toBe(true)
+  })
+
+  test('panning via mouse drag changes viewport style', async ({ page }) => {
+    const container = page.locator('#basic')
     const viewport = container.locator('.bf-flow__viewport')
-    const before = await getTransform(viewport)
 
     const box = await container.boundingBox()
     if (!box) throw new Error('Container not visible')
 
-    await page.mouse.move(box.x + 5, box.y + 5)
-    await page.mouse.down()
-    await page.mouse.move(box.x + 125, box.y + 85, { steps: 20 })
-    await page.mouse.up()
-    await page.waitForTimeout(300)
+    const styleBefore = await viewport.evaluate((el: HTMLElement) => el.style.transform)
 
-    const after = await getTransform(viewport)
-    expect(after.translateX).not.toBe(before.translateX)
+    // Drag on empty area — bottom-right corner is far from all nodes
+    const startX = box.x + box.width - 20
+    const startY = box.y + box.height - 20
+    await page.mouse.move(startX, startY)
+    await page.mouse.down()
+    await page.mouse.move(startX - 120, startY - 80, { steps: 15 })
+    await page.mouse.up()
+    await page.waitForTimeout(500)
+
+    const styleAfter = await viewport.evaluate((el: HTMLElement) => el.style.transform)
+
+    // If pan doesn't work, this is a known issue with XYPanZoom + D3
+    // integration. The zoom (wheel) path works because D3 uses a different
+    // event handler for wheel vs pointer/drag events.
+    // Pan should have changed the viewport transform
+    expect(styleAfter).not.toBe(styleBefore)
   })
 
   test('panning preserves zoom level', async ({ page }) => {

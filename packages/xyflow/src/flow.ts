@@ -48,9 +48,6 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
   // --- Build DOM structure ---
   el.style.position = 'relative'
   el.style.overflow = 'hidden'
-  // Ensure the container has dimensions
-  if (!el.style.width) el.style.width = '100%'
-  if (!el.style.height) el.style.height = '100%'
 
   // Viewport wrapper — transformed by pan/zoom
   const viewportEl = document.createElement('div')
