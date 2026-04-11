@@ -108,6 +108,7 @@ export function createNodeWrapper<NodeType extends NodeBase>(
 
       const onMouseDown = (e: MouseEvent) => {
         if (e.button !== 0) return // left button only
+        if (!untrack(store.nodesDraggable)) return // interactivity locked
         e.stopPropagation() // prevent D3 zoom pan
 
         startMouseX = e.clientX

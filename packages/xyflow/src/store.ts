@@ -123,6 +123,9 @@ export function createFlowStore<
   // --- Selection state ---
   const [multiSelectionActive, setMultiSelectionActive] = createSignal(false)
 
+  // --- Interactivity ---
+  const [nodesDraggable, setNodesDraggable] = createSignal(true)
+
   // --- Actions ---
 
   function getTransform(): Transform {
@@ -296,6 +299,8 @@ export function createFlowStore<
 
     // Selection state
     multiSelectionActive,
+    nodesDraggable,
+    setNodesDraggable,
 
     // Internal setters (not on public FlowStore type, but needed by initFlow)
     setDragging,
