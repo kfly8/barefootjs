@@ -114,6 +114,13 @@ export function SpreadsheetDemo() {
     return Object.values(c).reduce((sum: number, v) => sum + (typeof v === 'number' ? v : 0), 0)
   })
 
+  // Formula bar display value — memo avoids ternary which compiler turns into
+  // a conditional node (insert() skips re-render when truthy→truthy).
+  const formulaDisplay = createMemo(() => {
+    const id = selectedCell()
+    return id ? formatValue(computed()[id] ?? '') : ''
+  })
+
   const selectCell = (id: string) => {
     if (editingCell() === id) return
     if (editingCell()) commitEdit()
@@ -199,7 +206,7 @@ export function SpreadsheetDemo() {
             className="cell-formula flex-1 font-mono text-muted-foreground cursor-pointer"
             onClick={() => { if (selectedCell()) startEditing(selectedCell()!) }}
           >
-            {selectedCell() ? formatValue(computed()[selectedCell()!] ?? '') : ''}
+            {formulaDisplay()}
           </span>
         )}
       </div>
