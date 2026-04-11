@@ -45,6 +45,7 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     element.dataset.id = internalNode.id
     element.style.position = 'absolute'
     element.style.transformOrigin = '0 0'
+    element.style.pointerEvents = 'all'
 
     // Render content (custom type or default)
     renderNodeContent(element, internalNode, store)

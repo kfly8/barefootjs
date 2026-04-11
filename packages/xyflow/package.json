@@ -19,7 +19,8 @@
     "build": "bun run build:js && bun run build:types",
     "build:js": "bun build ./src/index.ts --outdir ./dist --format esm --external '@barefootjs/dom'",
     "build:types": "tsc --emitDeclarationOnly --outDir ./dist",
-    "test": "bun test",
+    "test": "bun test src/",
+    "test:e2e": "bunx playwright test",
     "clean": "rm -rf dist"
   },
   "keywords": [
