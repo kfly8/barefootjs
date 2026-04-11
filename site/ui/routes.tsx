@@ -80,6 +80,7 @@ import { CheckoutRefPage } from './pages/components/checkout'
 import { CommentsRefPage } from './pages/components/comments'
 import { NotificationsCenterRefPage } from './pages/components/notifications-center'
 import { InventoryManagerRefPage } from './pages/components/inventory-manager'
+import { SpreadsheetRefPage } from './pages/components/spreadsheet'
 import { HoverCardRefPage } from './pages/components/hover-card'
 import { MenubarRefPage } from './pages/components/menubar'
 import { NavigationMenuRefPage } from './pages/components/navigation-menu'
@@ -546,6 +547,11 @@ export function createApp() {
   // Inventory Manager block page
   app.get('/components/inventory-manager', (c) => {
     return c.render(<InventoryManagerRefPage />)
+  })
+
+  // Spreadsheet block page
+  app.get('/components/spreadsheet', (c) => {
+    return c.render(<SpreadsheetRefPage />)
   })
 
   // Bar Chart reference page
