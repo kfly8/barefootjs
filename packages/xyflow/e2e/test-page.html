@@ -34,12 +34,23 @@
 import { createRoot } from '@barefootjs/client'
 import { initFlow, initBackground, initControls } from '@barefootjs/xyflow'
 
-// Debug: log mousedown event.view on any node click
+// Debug: trace mousedown → D3 drag flow
 document.addEventListener('mousedown', (e) => {
-  if (e.target.closest && e.target.closest('.bf-flow__node')) {
-    console.log('[debug] mousedown on node, event.view:', e.view === window ? 'window' : e.view)
+  const node = e.target.closest && e.target.closest('.bf-flow__node')
+  if (node) {
+    console.log('[debug] mousedown on node:', node.dataset.id,
+      'event.view:', e.view === window ? 'window' : e.view,
+      'button:', e.button,
+      'target:', e.target.tagName + '.' + e.target.className)
+    // Check D3 drag state
+    const d3on = node.__on
+    console.log('[debug] D3 __on:', d3on?.map(l => l.type + '.' + l.name))
   }
 }, true)
+// Also catch errors globally
+window.addEventListener('error', (e) => {
+  console.error('[debug] Uncaught error:', e.message, e.filename, e.lineno)
+})
 
 // Basic Flow
 createRoot(() => {

@@ -114,6 +114,15 @@ export function createNodeWrapper<NodeType extends NodeBase>(
           unselectNodesAndEdges: store.unselectNodesAndEdges as any,
           updateNodePositions: store.updateNodePositions as any,
         }),
+        onDragStart: (_event, _dragItems, node) => {
+          console.log('[bf-drag] start', node?.id)
+        },
+        onDrag: (_event, _dragItems, node) => {
+          console.log('[bf-drag] move', node?.id)
+        },
+        onDragStop: (_event, _dragItems, node) => {
+          console.log('[bf-drag] stop', node?.id)
+        },
       })
 
       // Attach drag to this node's DOM element
@@ -213,7 +222,7 @@ function renderNodeContent<NodeType extends NodeBase>(
   el.textContent = String(label)
 
   // Add default handles (source=bottom, target=top) to match React Flow
-  const handleSize = 8
+  const handleSize = 6
   const createDefaultHandle = (type: 'source' | 'target') => {
     const h = document.createElement('div')
     h.className = `bf-flow__handle bf-flow__handle--${type}`
