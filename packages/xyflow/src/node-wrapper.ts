@@ -49,11 +49,12 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     element.style.transformOrigin = '0 0'
     element.style.pointerEvents = 'all'
 
-    // Toggle nopan class based on interactivity:
+    // Toggle nopan class based on interactivity and draggability:
     // - nopan ON: D3 zoom won't pan when dragging on this node (node drag works)
-    // - nopan OFF (locked): D3 zoom pans even when dragging on nodes
+    // - nopan OFF: D3 zoom pans (locked state, or non-draggable node)
+    const isDraggable = internalNode.draggable !== false
     createEffect(() => {
-      if (store.nodesDraggable()) {
+      if (isDraggable && store.nodesDraggable()) {
         element.classList.add('nopan')
       } else {
         element.classList.remove('nopan')
@@ -106,9 +107,7 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     // --- Click-to-select ---
     setupNodeSelection(element, internalNode.id, store)
 
-    // --- XYDrag integration ---
-    const isDraggable = internalNode.draggable !== false
-
+    // --- Node drag ---
     if (isDraggable) {
       // Native drag implementation — D3 drag's event system doesn't
       // integrate well with our DOM structure (XYDrag's d3Selection.call
