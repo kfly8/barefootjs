@@ -150,14 +150,7 @@ export function emitDeclaration(
     case 'function': {
       const fn = decl.info
       const paramStr = fn.params.map((p) => p.name).join(', ')
-      let body = fn.body
-      // Strip raw JSX from function body to prevent syntax errors in client JS (#786).
-      // JSX-returning functions that can be inlined are handled earlier (isJsxFunction).
-      // Functions that reach here with containsJsx have multiple returns or complex patterns.
-      if (fn.containsJsx && !fn.isJsxFunction) {
-        body = sanitizeJsxInBody(body)
-      }
-      lines.push(`  const ${fn.name} = (${paramStr}) => ${body}`)
+      lines.push(`  const ${fn.name} = (${paramStr}) => ${fn.body}`)
       break
     }
   }
@@ -365,23 +358,3 @@ export function emitStaticArrayChildInits(lines: string[], ctx: ClientJsContext)
   }
 }
 
-/**
- * Strip raw JSX from a function body to prevent syntax errors in client JS (#786).
- * Replaces JSX elements with empty strings so the function remains syntactically valid.
- *
- * This is a best-effort transform for functions that contain JSX but cannot be
- * inlined (multiple returns, complex patterns). The compiler emits BF045 warning
- * alongside this transform.
- */
-function sanitizeJsxInBody(body: string): string {
-  // Replace JSX self-closing tags: <Tag ... /> → ''
-  let result = body.replace(/<[A-Za-z][A-Za-z0-9.]*(?:\s[^>]*)?\s*\/>/g, "''")
-  // Replace JSX element pairs: <tag ...>...</tag> → ''
-  // Uses non-greedy match for simple cases; deeply nested JSX may need multiple passes
-  for (let i = 0; i < 3; i++) {
-    const prev = result
-    result = result.replace(/<([A-Za-z][A-Za-z0-9.]*)(?:\s[^>]*)?>[\s\S]*?<\/\1>/g, "''")
-    if (result === prev) break
-  }
-  return result
-}

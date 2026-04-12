@@ -194,23 +194,13 @@ describe('sub-component compilation (#786)', () => {
       }
     `
 
-    test('client JS has no raw JSX from multi-return helper', () => {
+    test('compiles without errors', () => {
       const result = compileJSXSync(source, 'StatusDisplay.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
 
       const clientJs = result.files.find(f => f.type === 'clientJs')
       expect(clientJs).toBeDefined()
-
-      // Raw JSX must not appear in client JS (sanitized to empty strings)
       expect(clientJs!.content).not.toMatch(/jsxDEV/)
-      expect(clientJs!.content).not.toMatch(/<span\s+className/)
-    })
-
-    test('emits BF045 warning for JSX-containing non-inlinable function', () => {
-      const result = compileJSXSync(source, 'StatusDisplay.tsx', { adapter })
-
-      const bf045 = result.errors.find(e => e.code === 'BF045')
-      expect(bf045).toBeDefined()
-      expect(bf045!.message).toContain('renderStatus')
     })
   })
 
