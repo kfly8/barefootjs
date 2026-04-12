@@ -257,6 +257,10 @@ export function createFlowStore<
     const w = untrack(width)
     const h = untrack(height)
 
+    console.log('[bf-fitView]', { w, h, nodeCount: lookup.size,
+      measured: [...lookup.values()].map(n => ({ id: n.id, mw: n.measured.width, mh: n.measured.height }))
+    })
+
     fitViewport(
       {
         nodes: lookup,

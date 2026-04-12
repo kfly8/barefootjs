@@ -88,12 +88,9 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
   ;(store as any).setDomNode(el)
 
   // --- ResizeObserver for container dimensions ---
-  const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const { width, height } = entry.contentRect
-      ;(store as any).setWidth(width)
-      ;(store as any).setHeight(height)
-    }
+  const resizeObserver = new ResizeObserver(() => {
+    ;(store as any).setWidth(el.offsetWidth)
+    ;(store as any).setHeight(el.offsetHeight)
   })
   resizeObserver.observe(el)
   onCleanup(() => resizeObserver.disconnect())
