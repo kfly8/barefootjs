@@ -534,4 +534,126 @@ describe('Adapter output', () => {
       expect(template.content).toContain('__bfParentProps: _bfParentProps')
     })
   })
+
+  describe('unused imports and type inference (#782)', () => {
+    test('static component omits bfComment/bfText/bfTextEnd imports', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        export function Logo() {
+          return <div class="logo">BarefootJS</div>
+        }
+      `
+      const result = compileJSXSync(source, 'Logo.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+      expect(template.content).not.toContain("from '@barefootjs/hono/utils'")
+    })
+
+    test('interactive component only imports used hono utilities', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return <button onClick={() => setCount(n => n + 1)}>Count: {count()}</button>
+        }
+      `
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+      // Should have bfComment (for hydration markers) but only the ones actually used
+      const importLine = template.content.split('\n').find(l => l.includes("from '@barefootjs/hono/utils'"))
+      if (importLine) {
+        // Each imported name should actually appear in the component body
+        const importedNames = importLine.match(/\b(bfComment|bfText|bfTextEnd)\b/g) ?? []
+        const componentBody = template.content.slice(template.content.indexOf('export function'))
+        for (const name of importedNames) {
+          expect(componentBody).toContain(name)
+        }
+      }
+    })
+
+    test('@barefootjs/client-runtime imports are skipped in SSR output', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+        }
+      `
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+      expect(template.content).not.toContain("from '@barefootjs/client-runtime'")
+      expect(template.content).not.toContain("from '@barefootjs/dom'")
+      expect(template.content).not.toContain("from '@barefootjs/client'")
+    })
+
+    test('signal with generic type parameter emits type assertion in SSR getter', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        export function TodoList() {
+          const [items, setItems] = createSignal<string[]>([])
+          return <span>{items().length}</span>
+        }
+      `
+      const result = compileJSXSync(source, 'TodoList.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+      // Should emit typed assertion: [] as string[] instead of bare []
+      expect(template.content).toMatch(/items\s*=\s*\(\)\s*=>\s*\[\]\s+as\s+string\[\]/)
+    })
+
+    test('signal with inline type annotation preserves it without duplication', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        export function Panel() {
+          const [ids, setIds] = createSignal([] as string[])
+          return <span>{ids().length}</span>
+        }
+      `
+      const result = compileJSXSync(source, 'Panel.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+      // Should preserve the inline annotation, not add a duplicate
+      expect(template.content).toContain('[] as string[]')
+      // Should NOT have double assertion: [] as string[] as string[]
+      expect(template.content).not.toContain('as string[] as string[]')
+    })
+
+    test('signal with primitive type does not emit redundant assertion', () => {
+      const honoAdapter = new HonoAdapter()
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        export function Counter() {
+          const [count, setCount] = createSignal(0)
+          return <button onClick={() => setCount(n => n + 1)}>{count()}</button>
+        }
+      `
+      const result = compileJSXSync(source, 'Counter.tsx', { adapter: honoAdapter })
+      expect(result.errors).toHaveLength(0)
+
+      const template = result.files.find(f => f.type === 'markedTemplate')!
+      // Primitive initial value should NOT have redundant `as number`
+      expect(template.content).not.toMatch(/\b0\s+as\s+number\b/)
+    })
+  })
 })

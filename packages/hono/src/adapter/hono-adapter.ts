@@ -474,8 +474,8 @@ export class HonoAdapter implements TemplateAdapter {
       // parameter (e.g. createSignal<string[]>([])), add a type assertion to prevent TS
       // from inferring never[] / {} / null etc.
       const needsTypeAssertion = !signal.typedInitialValue
-        && signal.type.raw !== 'unknown'
-        && signal.type.raw !== signal.initialValue
+        && signal.type.kind !== 'unknown'
+        && signal.type.kind !== 'primitive'
       if (needsTypeAssertion) {
         lines.push(`  const ${signal.getter} = () => ${initialValue} as ${signal.type.raw}`)
       } else {
