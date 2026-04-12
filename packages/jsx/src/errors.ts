@@ -46,7 +46,6 @@ export const ErrorCodes = {
   JSX_IN_LOCAL_FUNCTION: 'BF045',
 
   // Import errors (BF050-BF059)
-  DEPRECATED_DOM_IMPORT: 'BF050',
   WRONG_PACKAGE_IMPORT: 'BF051',
 } as const
 
@@ -91,8 +90,6 @@ const errorMessages: Record<ErrorCode, string> = {
   [ErrorCodes.JSX_IN_LOCAL_FUNCTION]:
     'Local function returns JSX but cannot be inlined. Extract it as a top-level PascalCase component or use a single return statement.',
 
-  [ErrorCodes.DEPRECATED_DOM_IMPORT]:
-    "'@barefootjs/dom' has been split into '@barefootjs/client' and '@barefootjs/client-runtime'.",
   [ErrorCodes.WRONG_PACKAGE_IMPORT]:
     'Import from wrong package.',
 }

@@ -34,6 +34,7 @@ function makeIR(imports: ImportInfo[], componentNames: string[] = []): Component
       effects: [],
       onMounts: [],
       imports,
+      templateImports: imports.filter(imp => !['@barefootjs/client-runtime', '@barefootjs/client'].includes(imp.source)),
       localFunctions: [],
       localConstants: [],
     },
