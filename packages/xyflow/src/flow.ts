@@ -237,7 +237,8 @@ function injectDefaultStyles() {
     .bf-flow__handle--source:hover { bottom: -5px; }
     .bf-flow__edge { fill: none; stroke: #b1b1b7; stroke-width: 1; pointer-events: none; }
     .bf-flow__edge--selected { stroke: #555; stroke-width: 2; }
-    .bf-flow__edge--animated { stroke-dasharray: 5; }
+    .bf-flow__edge--animated { stroke-dasharray: 5; animation: bf-dashdraw 0.5s linear infinite; }
+    @keyframes bf-dashdraw { from { stroke-dashoffset: 10; } }
     .bf-flow__controls-button:hover { background: #f4f4f4 !important; }
     .bf-flow__controls-button:last-child { border-bottom: none !important; }
   `
