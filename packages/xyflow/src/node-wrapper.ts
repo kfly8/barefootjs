@@ -49,6 +49,17 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     element.style.transformOrigin = '0 0'
     element.style.pointerEvents = 'all'
 
+    // Toggle nopan class based on interactivity:
+    // - nopan ON: D3 zoom won't pan when dragging on this node (node drag works)
+    // - nopan OFF (locked): D3 zoom pans even when dragging on nodes
+    createEffect(() => {
+      if (store.nodesDraggable()) {
+        element.classList.add('nopan')
+      } else {
+        element.classList.remove('nopan')
+      }
+    })
+
     // Render content (custom type or default)
     renderNodeContent(element, internalNode, store)
 
@@ -109,8 +120,8 @@ export function createNodeWrapper<NodeType extends NodeBase>(
       const onMouseDown = (e: MouseEvent) => {
         if (e.button !== 0) return // left button only
         const draggable = untrack(store.nodesDraggable)
-        if (!draggable) return // interactivity locked
-        e.stopPropagation() // prevent D3 zoom pan
+        if (!draggable) return // locked — let event bubble to D3 zoom for pan
+        e.stopPropagation() // prevent D3 zoom pan (only when dragging nodes)
 
         startMouseX = e.clientX
         startMouseY = e.clientY
