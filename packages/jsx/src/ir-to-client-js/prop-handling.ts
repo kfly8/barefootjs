@@ -54,6 +54,18 @@ export function valueReferencesReactiveData(
     }
   }
 
+  // Fallback: extract prop names from props.xxx pattern when propsParams is incomplete
+  // (e.g., inherited props from extended interfaces not resolved by extractPropsFromType)
+  if (ctx.propsObjectName && usedProps.length === 0) {
+    const propsAccess = new RegExp(`\\b${ctx.propsObjectName}\\.(\\w+)`, 'g')
+    let match: RegExpExecArray | null
+    while ((match = propsAccess.exec(value)) !== null) {
+      if (match[1] !== 'children') {
+        usedProps.push(match[1])
+      }
+    }
+  }
+
   for (const signal of ctx.signals) {
     if (new RegExp(`\\b${signal.getter}\\s*\\(`).test(value)) {
       usesSignals = true

@@ -35,6 +35,7 @@
 
 import {
   createSignal,
+  createMemo,
   createEffect,
   onCleanup,
 } from '@barefootjs/client'
@@ -166,11 +167,11 @@ interface SidebarProps extends HTMLBaseAttributes {
 }
 
 function Sidebar(props: SidebarProps) {
-  const side = props.side ?? 'left'
-  const variant = props.variant ?? 'sidebar'
-  const collapsible = props.collapsible ?? 'offcanvas'
+  const side = createMemo(() => props.side ?? 'left')
+  const variant = createMemo(() => props.variant ?? 'sidebar')
+  const collapsible = createMemo(() => props.collapsible ?? 'offcanvas')
 
-  if (collapsible === 'none') {
+  if (collapsible() === 'none') {
     return (
       <div
         data-slot="sidebar"
@@ -190,44 +191,52 @@ function Sidebar(props: SidebarProps) {
     createEffect(() => {
       const s = ctx.state()
       el.dataset.state = s
-      el.dataset.collapsible = s === 'collapsed' ? collapsible : ''
+      el.dataset.collapsible = s === 'collapsed' ? collapsible() : ''
       el.style.display = ctx.isMobile() ? 'none' : ''
     })
   }
 
   // Gap width classes
-  const gapFloatingOrInset = variant === 'floating' || variant === 'inset'
-  const gapClasses = `relative w-[var(--sidebar-width)] bg-transparent transition-[width] duration-200 ease-linear group-data-[collapsible=offcanvas]:w-0 ${side === 'right' ? 'rotate-180' : ''} ${gapFloatingOrInset ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem)]' : 'group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]'}`
+  const gapClasses = createMemo(() => {
+    const gapFloatingOrInset = variant() === 'floating' || variant() === 'inset'
+    return `relative w-[var(--sidebar-width)] bg-transparent transition-[width] duration-200 ease-linear group-data-[collapsible=offcanvas]:w-0 ${side() === 'right' ? 'rotate-180' : ''} ${gapFloatingOrInset ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem)]' : 'group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]'}`
+  })
 
   // Container classes
-  const containerBase = `absolute inset-y-0 z-10 hidden h-full w-[var(--sidebar-width)] transition-[left,right,width] duration-200 ease-linear md:flex`
-  const containerSide = side === 'left'
-    ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
-    : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]'
-  const containerVariant = gapFloatingOrInset
-    ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]'
-    : `group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] ${side === 'left' ? 'border-r' : 'border-l'}`
+  const containerClasses = createMemo(() => {
+    const gapFloatingOrInset = variant() === 'floating' || variant() === 'inset'
+    const base = `absolute inset-y-0 z-10 hidden h-full w-[var(--sidebar-width)] transition-[left,right,width] duration-200 ease-linear md:flex`
+    const sideClass = side() === 'left'
+      ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
+      : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]'
+    const variantClass = gapFloatingOrInset
+      ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]'
+      : `group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] ${side() === 'left' ? 'border-r' : 'border-l'}`
+    return `${base} ${sideClass} ${variantClass}`
+  })
 
   // Inner classes
-  const innerClasses = `bg-background flex size-full flex-col ${variant === 'floating' ? 'rounded-lg shadow-sm ring-1 ring-border' : ''}`
+  const innerClasses = createMemo(() =>
+    `bg-background flex size-full flex-col ${variant() === 'floating' ? 'rounded-lg shadow-sm ring-1 ring-border' : ''}`
+  )
 
   return (
     <div
       className="group peer text-foreground hidden md:block"
       data-state="expanded"
       data-collapsible=""
-      data-variant={variant}
-      data-side={side}
+      data-variant={variant()}
+      data-side={side()}
       data-slot="sidebar"
       ref={handleDesktopMount}
     >
-      <div data-slot="sidebar-gap" className={gapClasses} />
+      <div data-slot="sidebar-gap" className={gapClasses()} />
       <div
         data-slot="sidebar-container"
-        data-side={side}
-        className={`${containerBase} ${containerSide} ${containerVariant} ${props.className ?? ''}`}
+        data-side={side()}
+        className={`${containerClasses()} ${props.className ?? ''}`}
       >
-        <div data-sidebar="sidebar" data-slot="sidebar-inner" className={innerClasses}>
+        <div data-sidebar="sidebar" data-slot="sidebar-inner" className={innerClasses()}>
           {props.children}
         </div>
       </div>
@@ -526,14 +535,16 @@ interface SidebarMenuButtonProps extends ButtonHTMLAttributes {
 }
 
 function SidebarMenuButton(props: SidebarMenuButtonProps) {
-  const variant = props.variant ?? 'default'
-  const size = props.size ?? 'default'
-  const isActive = props.isActive ?? false
+  const variant = createMemo(() => props.variant ?? 'default')
+  const size = createMemo(() => props.size ?? 'default')
+  const isActive = createMemo(() => props.isActive ?? false)
 
-  const classes = `${menuButtonBaseClasses} ${menuButtonVariantClasses[variant]} ${menuButtonSizeClasses[size]} ${props.className ?? ''}`
+  const classes = createMemo(() =>
+    `${menuButtonBaseClasses} ${menuButtonVariantClasses[variant()]} ${menuButtonSizeClasses[size()]} ${props.className ?? ''}`
+  )
 
   const handleMount = (el: HTMLElement) => {
-    if (isActive) {
+    if (isActive()) {
       el.dataset.active = 'true'
     }
   }
@@ -541,10 +552,10 @@ function SidebarMenuButton(props: SidebarMenuButtonProps) {
   return (
     <button
       data-slot="sidebar-menu-button"
-      data-size={size}
-      data-active={isActive || undefined}
+      data-size={size()}
+      data-active={isActive() || undefined}
       type="button"
-      className={classes}
+      className={classes()}
       ref={handleMount}
     >
       {props.children}

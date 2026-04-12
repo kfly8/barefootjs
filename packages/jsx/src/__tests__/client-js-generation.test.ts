@@ -2332,4 +2332,46 @@ describe('Client JS generation', () => {
       expect(content).toMatch(/initChild\('Alert'/)
     })
   })
+
+  describe('reactive props.xxx detection (#789)', () => {
+    test('generates createEffect for props.xxx with inherited type props', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        interface BaseProps {
+          disabled?: boolean
+          className?: string
+        }
+        interface MyButtonProps extends BaseProps {
+          label: string
+        }
+
+        export function MyButton(props: MyButtonProps) {
+          const [count, setCount] = createSignal(0)
+          return <button disabled={props.disabled ?? false} className={props.className ?? ''}>{count()}</button>
+        }
+      `
+      const result = compileJSXSync(source, 'MyButton.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+      const clientJs = result.files.find(f => f.type === 'clientJs')
+      expect(clientJs).toBeDefined()
+      // props.disabled and props.className should trigger createEffect wrapping
+      expect(clientJs!.content).toContain('createEffect')
+    })
+
+    test('does not wrap props.children in createEffect', () => {
+      const source = `
+        'use client'
+        import { createSignal } from '@barefootjs/client-runtime'
+
+        export function Wrapper(props: { children?: any }) {
+          const [count, setCount] = createSignal(0)
+          return <div>{count()}</div>
+        }
+      `
+      const result = compileJSXSync(source, 'Wrapper.tsx', { adapter })
+      expect(result.errors).toHaveLength(0)
+    })
+  })
 })

@@ -22,7 +22,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, onCleanup } from '@barefootjs/client-runtime'
+import { createContext, useContext, createSignal, createMemo, createEffect, onCleanup } from '@barefootjs/client-runtime'
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 import { ChevronLeftIcon, ChevronRightIcon } from '../icon'
@@ -76,7 +76,7 @@ interface CarouselProps extends HTMLBaseAttributes {
 }
 
 function Carousel(props: CarouselProps) {
-  const orientation = props.orientation ?? 'horizontal'
+  const orientation = createMemo(() => props.orientation ?? 'horizontal')
   const [canScrollPrev, setCanScrollPrev] = createSignal(false)
   const [canScrollNext, setCanScrollNext] = createSignal(false)
   let emblaApi: EmblaCarouselType | undefined
@@ -86,7 +86,7 @@ function Carousel(props: CarouselProps) {
 
   const handleMount = (el: HTMLElement) => {
     el.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (orientation === 'horizontal') {
+      if (orientation() === 'horizontal') {
         if (e.key === 'ArrowLeft') { e.preventDefault(); scrollPrev() }
         else if (e.key === 'ArrowRight') { e.preventDefault(); scrollNext() }
       } else {
@@ -98,7 +98,7 @@ function Carousel(props: CarouselProps) {
 
   return (
     <CarouselContext.Provider value={{
-      orientation,
+      orientation: orientation(),
       scrollPrev,
       scrollNext,
       canScrollPrev,
@@ -114,7 +114,7 @@ function Carousel(props: CarouselProps) {
         className={`${carouselClasses} ${props.className ?? ''}`}
         tabindex={0}
         ref={handleMount}
-        data-orientation={orientation}
+        data-orientation={orientation()}
         data-opts={props.opts ? JSON.stringify(props.opts) : undefined}
       >
         {props.children}
@@ -131,7 +131,7 @@ interface CarouselContentProps extends HTMLBaseAttributes {
 }
 
 function CarouselContent(props: CarouselContentProps) {
-  const orientation = props.orientation ?? 'horizontal'
+  const orientation = createMemo(() => props.orientation ?? 'horizontal')
 
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(CarouselContext)
@@ -171,13 +171,13 @@ function CarouselContent(props: CarouselContentProps) {
     })
   }
 
-  const directionClasses = orientation === 'vertical' ? 'flex-col -mt-4' : 'flex -ml-4'
+  const directionClasses = createMemo(() => orientation() === 'vertical' ? 'flex-col -mt-4' : 'flex -ml-4')
 
   return (
     <div data-slot="carousel-viewport" className="overflow-hidden">
       <div
         data-slot="carousel-content"
-        className={`${directionClasses} ${props.className ?? ''}`}
+        className={`${directionClasses()} ${props.className ?? ''}`}
         ref={handleMount}
       >
         {props.children}
@@ -194,14 +194,14 @@ interface CarouselItemProps extends HTMLBaseAttributes {
 }
 
 function CarouselItem(props: CarouselItemProps) {
-  const paddingClass = (props.orientation ?? 'horizontal') === 'vertical' ? 'pt-4' : 'pl-4'
+  const paddingClass = createMemo(() => (props.orientation ?? 'horizontal') === 'vertical' ? 'pt-4' : 'pl-4')
 
   return (
     <div
       data-slot="carousel-item"
       role="group"
       aria-roledescription="slide"
-      className={`${carouselItemClasses} ${paddingClass} ${props.className ?? ''}`}
+      className={`${carouselItemClasses} ${paddingClass()} ${props.className ?? ''}`}
     >
       {props.children}
     </div>
@@ -219,8 +219,8 @@ const prevHorizontalClasses = '-left-12 top-1/2 -translate-y-1/2'
 const prevVerticalClasses = '-top-12 left-1/2 -translate-x-1/2 rotate-90'
 
 function CarouselPrevious(props: CarouselPreviousProps) {
-  const orientation = props.orientation ?? 'horizontal'
-  const positionClasses = orientation === 'vertical' ? prevVerticalClasses : prevHorizontalClasses
+  const orientation = createMemo(() => props.orientation ?? 'horizontal')
+  const positionClasses = createMemo(() => orientation() === 'vertical' ? prevVerticalClasses : prevHorizontalClasses)
 
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(CarouselContext)
@@ -240,7 +240,7 @@ function CarouselPrevious(props: CarouselPreviousProps) {
     <button
       data-slot="carousel-previous"
       type="button"
-      className={`${carouselButtonBaseClasses} ${positionClasses} ${props.className ?? ''}`}
+      className={`${carouselButtonBaseClasses} ${positionClasses()} ${props.className ?? ''}`}
       disabled
       aria-label="Previous slide"
       ref={handleMount}
@@ -262,8 +262,8 @@ const nextHorizontalClasses = '-right-12 top-1/2 -translate-y-1/2'
 const nextVerticalClasses = '-bottom-12 left-1/2 -translate-x-1/2 rotate-90'
 
 function CarouselNext(props: CarouselNextProps) {
-  const orientation = props.orientation ?? 'horizontal'
-  const positionClasses = orientation === 'vertical' ? nextVerticalClasses : nextHorizontalClasses
+  const orientation = createMemo(() => props.orientation ?? 'horizontal')
+  const positionClasses = createMemo(() => orientation() === 'vertical' ? nextVerticalClasses : nextHorizontalClasses)
 
   const handleMount = (el: HTMLElement) => {
     const ctx = useContext(CarouselContext)
@@ -283,7 +283,7 @@ function CarouselNext(props: CarouselNextProps) {
     <button
       data-slot="carousel-next"
       type="button"
-      className={`${carouselButtonBaseClasses} ${positionClasses} ${props.className ?? ''}`}
+      className={`${carouselButtonBaseClasses} ${positionClasses()} ${props.className ?? ''}`}
       disabled
       aria-label="Next slide"
       ref={handleMount}

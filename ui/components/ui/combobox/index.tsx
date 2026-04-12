@@ -38,7 +38,7 @@
  * ```
  */
 
-import { createContext, useContext, createSignal, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/client-runtime'
+import { createContext, useContext, createSignal, createMemo, createEffect, createPortal, isSSRPortal, findSiblingSlot } from '@barefootjs/client-runtime'
 import type { HTMLBaseAttributes, ButtonHTMLAttributes } from '@barefootjs/jsx'
 import type { Child } from '../../../types'
 import { CheckIcon, ChevronDownIcon, SearchIcon } from '../icon'
@@ -166,12 +166,12 @@ function Combobox(props: ComboboxProps) {
   const [search, setSearch] = createSignal('')
   // Internal state for uncontrolled mode (when value prop is not provided)
   const [internalValue, setInternalValue] = createSignal(props.value ?? '')
-  const isControlled = props.value !== undefined
+  const isControlled = createMemo(() => props.value !== undefined)
 
-  const filterFn = props.filter ?? ((value: string, search: string) => {
+  const filterFn = createMemo(() => props.filter ?? ((value: string, search: string) => {
     if (!search) return true
     return value.toLowerCase().includes(search.toLowerCase())
-  })
+  }))
 
   return (
     <ComboboxContext.Provider value={{
@@ -181,14 +181,14 @@ function Combobox(props: ComboboxProps) {
         // Clear search when closing
         if (!v) setSearch('')
       },
-      value: () => isControlled ? (props.value ?? '') : internalValue(),
+      value: () => isControlled() ? (props.value ?? '') : internalValue(),
       onValueChange: (v: string) => {
-        if (!isControlled) setInternalValue(v)
+        if (!isControlled()) setInternalValue(v)
         if (props.onValueChange) props.onValueChange(v)
       },
       search,
       onSearchChange: setSearch,
-      filter: filterFn,
+      filter: filterFn(),
     }}>
       <div data-slot="combobox" id={props.id} className={`relative inline-block ${props.className ?? ''}`}>
         {props.children}
@@ -568,8 +568,8 @@ function ComboboxItem(props: ComboboxItemProps) {
     })
   }
 
-  const isDisabled = props.disabled ?? false
-  const stateClasses = isDisabled ? itemDisabledClasses : itemDefaultClasses
+  const isDisabled = createMemo(() => props.disabled ?? false)
+  const stateClasses = createMemo(() => isDisabled() ? itemDisabledClasses : itemDefaultClasses)
 
   return (
     <div
@@ -580,9 +580,9 @@ function ComboboxItem(props: ComboboxItemProps) {
       role="option"
       id={props.id}
       aria-selected="false"
-      aria-disabled={isDisabled || undefined}
+      aria-disabled={isDisabled() || undefined}
       tabindex={-1}
-      className={`${itemBaseClasses} ${stateClasses} ${props.className ?? ''}`}
+      className={`${itemBaseClasses} ${stateClasses()} ${props.className ?? ''}`}
       ref={handleMount}
     >
       <span data-slot="combobox-item-indicator" className={indicatorClasses} style="display:none">

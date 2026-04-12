@@ -51,22 +51,22 @@ interface ProgressProps extends HTMLBaseAttributes {
  * Progress component for displaying task completion.
  */
 function Progress(props: ProgressProps) {
-  const max = props.max ?? 100
+  const max = createMemo(() => props.max ?? 100)
 
   // Track the value reactively
   const [currentValue, setCurrentValue] = createSignal(props.value ?? 0)
 
   // Compute percentage clamped to [0, 100]
   const percentage = createMemo(() => {
-    if (max <= 0) return 0
-    return Math.max(0, Math.min(100, (currentValue() / max) * 100))
+    if (max() <= 0) return 0
+    return Math.max(0, Math.min(100, (currentValue() / max()) * 100))
   })
 
   // Compute data-state: "complete" when value >= max, otherwise "loading"
-  const dataState = createMemo(() => currentValue() >= max ? 'complete' : 'loading')
+  const dataState = createMemo(() => currentValue() >= max() ? 'complete' : 'loading')
 
-  const rootClasses = `${rootBaseClasses} ${props.className ?? ''}`
-  const indicatorClasses = `${indicatorBaseClasses} ${props.indicatorClassName ?? ''}`
+  const rootClasses = createMemo(() => `${rootBaseClasses} ${props.className ?? ''}`)
+  const indicatorClasses = createMemo(() => `${indicatorBaseClasses} ${props.indicatorClassName ?? ''}`)
 
   return (
     <div
@@ -75,14 +75,14 @@ function Progress(props: ProgressProps) {
       role="progressbar"
       aria-valuenow={currentValue()}
       aria-valuemin={0}
-      aria-valuemax={max}
+      aria-valuemax={max()}
       data-state={dataState()}
-      className={rootClasses}
+      className={rootClasses()}
     >
       <div
         data-slot="progress-indicator"
         data-state={dataState()}
-        className={indicatorClasses}
+        className={indicatorClasses()}
         style={`transform: translateX(-${100 - percentage()}%)`}
       />
     </div>
