@@ -228,15 +228,11 @@ export function createNodeWrapper<NodeType extends NodeBase>(
       element.style.transform = `translate(${pos.x}px, ${pos.y}px)`
       element.style.zIndex = String(current.internals.z ?? 0)
 
-      // Selection styling — box-shadow when selected (matches React Flow)
+      // Selection styling — toggle CSS class (styled via injected stylesheet)
       if (current.selected) {
         element.classList.add('bf-flow__node--selected')
-        element.style.outline = '1px solid #1a192b'
-        element.style.outlineOffset = '-1px'
       } else {
         element.classList.remove('bf-flow__node--selected')
-        element.style.outline = ''
-        element.style.outlineOffset = ''
       }
     })
 
@@ -290,40 +286,18 @@ function renderNodeContent<NodeType extends NodeBase>(
     return
   }
 
-  // Default rendering — match React Flow's default node style
+  // Default rendering — styled via injected CSS (.bf-flow__node class)
   el.style.width = '150px'
-  el.style.padding = '10px'
-  el.style.border = '1px solid #1a192b'
-  el.style.borderRadius = '5px'
-  el.style.backgroundColor = '#fff'
-  el.style.fontSize = '12px'
-  el.style.color = '#222'
-  el.style.textAlign = 'center'
-  el.style.cursor = 'grab'
-  el.style.userSelect = 'none'
-  el.style.boxSizing = 'border-box'
 
   const data = node.internals.userNode.data as Record<string, unknown>
   const label = data?.label ?? node.id
   el.textContent = String(label)
 
-  // Add default handles (source=bottom, target=top) to match React Flow
-  const handleSize = 6
+  // Add default handles (source=bottom, target=top)
+  // Styled via injected CSS (.bf-flow__handle class)
   const createDefaultHandle = (type: 'source' | 'target') => {
     const h = document.createElement('div')
     h.className = `bf-flow__handle bf-flow__handle--${type}`
-    h.style.position = 'absolute'
-    h.style.width = `${handleSize}px`
-    h.style.height = `${handleSize}px`
-    h.style.borderRadius = '50%'
-    h.style.backgroundColor = '#1a192b'
-    h.style.left = '50%'
-    h.style.transform = 'translateX(-50%)'
-    if (type === 'target') {
-      h.style.top = `-${handleSize / 2}px`
-    } else {
-      h.style.bottom = `-${handleSize / 2}px`
-    }
     el.appendChild(h)
   }
   createDefaultHandle('target')

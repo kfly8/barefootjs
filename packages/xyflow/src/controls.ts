@@ -30,17 +30,7 @@ export function initControls(scope: Element, props: Record<string, unknown>): vo
 
   const [interactive, setInteractive] = createSignal(true)
 
-  // Inject hover styles once
-  if (!document.getElementById('bf-flow-controls-style')) {
-    const style = document.createElement('style')
-    style.id = 'bf-flow-controls-style'
-    style.textContent = `
-      .bf-flow__controls-button:hover { background: #f4f4f4 !important; }
-      .bf-flow__controls-button:last-child { border-bottom: none !important; }
-    `
-    document.head.appendChild(style)
-  }
-
+  // Styles are injected by initFlow's injectDefaultStyles()
   const container = document.createElement('div')
   container.className = 'bf-flow__controls'
   container.style.position = 'absolute'
