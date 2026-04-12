@@ -17,14 +17,12 @@ import { expandDynamicPropValue, expandConstantForReactivity } from './prop-hand
 function collectInnerLoops(nodes: IRNode[], outerLoopParam?: string, ctx?: ClientJsContext): NestedLoopInfo[] {
   const result: NestedLoopInfo[] = []
   let depth = 0
-  let lastSlotId: string | null = null
   let insideCond = false
 
-  function walk(n: IRNode): void {
+  function walk(n: IRNode, parentSlotId: string | null): void {
     switch (n.type) {
       case 'element':
-        if (n.slotId) lastSlotId = n.slotId
-        for (const child of n.children) walk(child)
+        for (const child of n.children) walk(child, n.slotId ?? parentSlotId)
         break
       case 'loop':
         depth++
@@ -48,32 +46,32 @@ function collectInnerLoops(nodes: IRNode[], outerLoopParam?: string, ctx?: Clien
           array: n.array,
           param: n.param,
           key: n.key ?? '',
-          containerSlotId: lastSlotId,
+          containerSlotId: parentSlotId,
           itemTemplate,
           refsOuterParam: refsOuter,
           reactiveTexts: innerReactiveTexts.length > 0 ? innerReactiveTexts : undefined,
           insideConditional: insideCond || undefined,
         })
-        for (const child of n.children) walk(child)
+        for (const child of n.children) walk(child, parentSlotId)
         depth--
         break
       case 'fragment':
       case 'component':
       case 'provider':
-        for (const child of n.children) walk(child)
+        for (const child of n.children) walk(child, parentSlotId)
         break
       case 'conditional': {
         const prev = insideCond
         insideCond = true
-        walk(n.whenTrue)
-        walk(n.whenFalse)
+        walk(n.whenTrue, parentSlotId)
+        walk(n.whenFalse, parentSlotId)
         insideCond = prev
         break
       }
     }
   }
 
-  nodes.forEach(walk)
+  nodes.forEach(n => walk(n, null))
   return result
 }
 
@@ -231,7 +229,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
         // Use element reconciliation when the loop body has nested components,
         // or when inner loops need their own mapArray for events/reactive text.
         const hasNestedComps = (node.nestedComponents?.length ?? 0) > 0
-        const innerLoops = !node.childComponent && !node.isStaticArray
+        const innerLoops = !node.childComponent
           ? collectInnerLoops(node.children, node.param, ctx)
           : undefined
         const hasInnerLoops = (innerLoops?.length ?? 0) > 0
@@ -266,7 +264,7 @@ export function collectElements(node: IRNode, ctx: ClientJsContext, insideCondit
           nestedComponents: node.nestedComponents,
           isStaticArray: node.isStaticArray,
           useElementReconciliation,
-          innerLoops: useElementReconciliation ? innerLoops : undefined,
+          innerLoops: (useElementReconciliation || node.isStaticArray) ? innerLoops : undefined,
           filterPredicate: node.filterPredicate ? {
             param: node.filterPredicate.param,
             raw: node.filterPredicate.raw,
