@@ -229,7 +229,21 @@ function compileMultipleComponentsSync(
     return { files, errors }
   }
 
-  // Use imports from first component (they should be similar)
+  // Merge imports from all components, deduplicating by line
+  const seenImportLines = new Set<string>()
+  const uniqueImports: string[] = []
+  for (const output of allOutputs) {
+    if (output.imports) {
+      for (const line of output.imports.split('\n')) {
+        if (line.trim() && !seenImportLines.has(line)) {
+          seenImportLines.add(line)
+          uniqueImports.push(line)
+        }
+      }
+    }
+  }
+  const mergedImports = uniqueImports.join('\n')
+
   // Combine unique type definitions
   const seenTypes = new Set<string>()
   const uniqueTypes: string[] = []
@@ -256,7 +270,7 @@ function compileMultipleComponentsSync(
 
   // Combine all components
   const combinedTemplate = [
-    allOutputs[0].imports,
+    mergedImports,
     uniqueTypes.join('\n\n'),
     uniqueModuleExports.length > 0 ? uniqueModuleExports.join('\n') : '',
     ...allOutputs.map(o => o.component),
