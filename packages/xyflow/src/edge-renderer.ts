@@ -33,8 +33,9 @@ export function createEdgeRenderer<
   edgeGroup.setAttribute('class', 'bf-flow__edge-group')
   svgContainer.appendChild(edgeGroup)
 
-  // Track edge path elements by edge id
+  // Track edge path elements and hit areas by edge id
   const edgeElements = new Map<string, SVGPathElement>()
+  const hitElements = new Map<string, SVGPathElement>()
 
   createEffect(() => {
     const edges = store.edges()
@@ -92,6 +93,27 @@ export function createEdgeRenderer<
       // Create or update path element
       let pathEl = edgeElements.get(edge.id)
       if (!pathEl) {
+        // Invisible hit area for click selection (wider than visible path)
+        const hitPath = document.createElementNS(SVG_NS, 'path')
+        hitPath.setAttribute('fill', 'none')
+        hitPath.setAttribute('stroke', 'transparent')
+        hitPath.setAttribute('stroke-width', '20')
+        hitPath.style.cursor = 'pointer'
+        hitPath.style.pointerEvents = 'stroke'
+        hitPath.addEventListener('mousedown', (e) => {
+          e.stopPropagation()
+          const edgeId = edge.id
+          store.unselectNodesAndEdges()
+          store.setEdges((prev) =>
+            prev.map((ed) =>
+              ed.id === edgeId ? { ...ed, selected: true } : ed,
+            ),
+          )
+        })
+        edgeGroup.appendChild(hitPath)
+        hitElements.set(edge.id, hitPath)
+
+        // Visible path
         pathEl = document.createElementNS(SVG_NS, 'path')
         pathEl.setAttribute('class', 'bf-flow__edge')
         pathEl.dataset.id = edge.id
@@ -103,6 +125,10 @@ export function createEdgeRenderer<
       }
 
       pathEl.setAttribute('d', path)
+
+      // Update hit area path
+      const hitEl = hitElements.get(edge.id)
+      if (hitEl) hitEl.setAttribute('d', path)
 
       // Update selection styling
       if (edge.selected) {
@@ -123,10 +149,9 @@ export function createEdgeRenderer<
     // Remove edges that no longer exist
     for (const removedId of existingIds) {
       const el = edgeElements.get(removedId)
-      if (el) {
-        el.remove()
-        edgeElements.delete(removedId)
-      }
+      if (el) { el.remove(); edgeElements.delete(removedId) }
+      const hit = hitElements.get(removedId)
+      if (hit) { hit.remove(); hitElements.delete(removedId) }
     }
   })
 
