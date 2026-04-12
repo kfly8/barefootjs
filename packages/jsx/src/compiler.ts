@@ -33,8 +33,8 @@ export interface CompileOptionsWithAdapter extends CompileOptions {
  */
 const CLIENT_PACKAGE_SOURCES = new Set([
   '@barefootjs/client-runtime',
-  '@barefootjs/dom',
   '@barefootjs/client',
+  '@barefootjs/dom', // deprecated (split into client + client-runtime), kept for backward compat
 ])
 
 function filterTemplateImports(imports: ImportInfo[]): ImportInfo[] {
