@@ -77,8 +77,11 @@ export function setupNodeSelection<NodeType extends NodeBase>(
   nodeId: string,
   store: FlowStore<NodeType>,
 ): void {
-  nodeElement.addEventListener('click', (event) => {
-    event.stopPropagation()
+  // Use mousedown instead of click — D3 zoom's mousedown handler on the
+  // container calls stopImmediatePropagation, which prevents the native
+  // click event from reaching the node element.
+  nodeElement.addEventListener('mousedown', (event) => {
+    if (event.button !== 0) return
 
     const multiSelect = untrack(store.multiSelectionActive) || event.shiftKey
 
