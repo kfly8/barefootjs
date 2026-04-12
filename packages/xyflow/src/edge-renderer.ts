@@ -117,10 +117,6 @@ export function createEdgeRenderer<
         pathEl = document.createElementNS(SVG_NS, 'path')
         pathEl.setAttribute('class', 'bf-flow__edge')
         pathEl.dataset.id = edge.id
-        pathEl.setAttribute('fill', 'none')
-        pathEl.setAttribute('stroke', '#b1b1b7')
-        pathEl.setAttribute('stroke-width', '1')
-        pathEl.style.pointerEvents = 'none'
         edgeGroup.appendChild(pathEl)
         edgeElements.set(edge.id, pathEl)
       }
@@ -131,18 +127,15 @@ export function createEdgeRenderer<
       const hitEl = hitElements.get(edge.id)
       if (hitEl) hitEl.setAttribute('d', path)
 
-      // Update selection styling
+      // Update selection styling via CSS class
       if (edge.selected) {
-        pathEl.setAttribute('stroke', '#555')
-        pathEl.setAttribute('stroke-width', '2')
+        pathEl.classList.add('bf-flow__edge--selected')
       } else {
-        pathEl.setAttribute('stroke', '#b1b1b7')
-        pathEl.setAttribute('stroke-width', '1')
+        pathEl.classList.remove('bf-flow__edge--selected')
       }
 
-      // Animated edges
+      // Animated edges via CSS class
       if (edge.animated) {
-        pathEl.setAttribute('stroke-dasharray', '5')
         pathEl.classList.add('bf-flow__edge--animated')
       }
     }
