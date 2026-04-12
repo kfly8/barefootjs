@@ -70,9 +70,11 @@ export class HonoAdapter implements TemplateAdapter {
     this.componentName = ir.metadata.componentName
     this.isClientComponent = ir.metadata.isClientComponent
 
-    const imports = this.generateImports(ir)
+    // Generate component body FIRST so we can scan it for used imports
     const component = this.generateComponent(ir)
     const types = this.generateTypes(ir, component)
+    const componentCode = [types, component].filter(Boolean).join('\n')
+    const imports = this.generateImports(ir, componentCode)
 
     const defaultExport = ir.metadata.hasDefaultExport
       ? `\nexport default ${this.componentName}`
@@ -100,15 +102,29 @@ export class HonoAdapter implements TemplateAdapter {
   // Imports Generation
   // ===========================================================================
 
-  private generateImports(ir: ComponentIR): string {
+  private generateImports(ir: ComponentIR, componentCode: string): string {
     const lines: string[] = []
 
-    // Add bfComment/bfText for hydration markers
-    lines.push("import { bfComment, bfText, bfTextEnd } from '@barefootjs/hono/utils'")
+    // Only import bfComment/bfText/bfTextEnd utilities that are actually used
+    const utilImports: string[] = []
+    for (const util of ['bfComment', 'bfText', 'bfTextEnd']) {
+      if (new RegExp(`\\b${util}\\b`).test(componentCode)) {
+        utilImports.push(util)
+      }
+    }
+    if (utilImports.length > 0) {
+      lines.push(`import { ${utilImports.join(', ')} } from '@barefootjs/hono/utils'`)
+    }
 
-    // Re-export original imports (excluding @barefootjs/client-runtime)
+    // Re-export original imports, skipping all barefootjs client-side modules
+    // (their exports are replaced by SSR no-ops in generateSignalInitializers)
+    const ssrSkippedSources = new Set([
+      '@barefootjs/client-runtime',
+      '@barefootjs/dom',
+      '@barefootjs/client',
+    ])
     for (const imp of ir.metadata.imports) {
-      if (imp.source === '@barefootjs/client-runtime') continue
+      if (ssrSkippedSources.has(imp.source)) continue
       if (imp.specifiers.length === 0) {
         if (!imp.isTypeOnly) {
           lines.push(`import '${imp.source}'`)
@@ -454,7 +470,17 @@ export class HonoAdapter implements TemplateAdapter {
       // Use typed version when available to preserve type annotations in .tsx output
       const rawInitialValue = signal.typedInitialValue ?? signal.initialValue
       const initialValue = rawInitialValue.trim().startsWith('{') ? `(${rawInitialValue})` : rawInitialValue
-      lines.push(`  const ${signal.getter} = () => ${initialValue}`)
+      // When typedInitialValue is absent but signal.type has a meaningful type from a generic
+      // parameter (e.g. createSignal<string[]>([])), add a type assertion to prevent TS
+      // from inferring never[] / {} / null etc.
+      const needsTypeAssertion = !signal.typedInitialValue
+        && signal.type.raw !== 'unknown'
+        && signal.type.raw !== signal.initialValue
+      if (needsTypeAssertion) {
+        lines.push(`  const ${signal.getter} = () => ${initialValue} as ${signal.type.raw}`)
+      } else {
+        lines.push(`  const ${signal.getter} = () => ${initialValue}`)
+      }
       // Create a no-op setter for SSR — omit entirely if not referenced anywhere
       const setterUsed = new RegExp(`\\b${signal.setter}\\b`).test(setterRefText)
       if (setterUsed) {
