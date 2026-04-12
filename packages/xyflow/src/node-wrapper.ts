@@ -305,6 +305,8 @@ function renderNodeContent<NodeType extends NodeBase>(
   const createDefaultHandle = (type: 'source' | 'target') => {
     const h = document.createElement('div')
     h.className = `bf-flow__handle bf-flow__handle--${type}`
+    h.dataset.handleType = type
+    h.dataset.nodeId = node.id
     el.appendChild(h)
   }
   createDefaultHandle('target')

@@ -6,6 +6,7 @@ export { createNodeWrapper, createNodeRenderer } from './node-wrapper'
 export { createEdgeRenderer } from './edge-renderer'
 export { createHandle, initHandle } from './handle'
 export type { HandleType, HandleProps } from './handle'
+export { setupConnectionHandler } from './connection'
 export { useFlow, useViewport, useNodes, useEdges, useNodesInitialized } from './hooks'
 export { setupKeyboardHandlers, setupNodeSelection, setupEdgeSelection } from './selection'
 
