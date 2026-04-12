@@ -45,6 +45,9 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
   // Provide store via context for child components
   provideContext(FlowContext, store as FlowStore)
 
+  // --- Inject default styles once ---
+  injectDefaultStyles()
+
   // --- Build DOM structure ---
   el.style.position = 'relative'
   el.style.overflow = 'hidden'
@@ -185,4 +188,49 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
       tryFitView()
     })
   }
+}
+
+/**
+ * Inject default CSS styles for xyflow components.
+ * Uses CSS classes so users can override with their own styles.
+ * Called once per page (idempotent via ID check).
+ */
+function injectDefaultStyles() {
+  if (document.getElementById('bf-flow-styles')) return
+
+  const style = document.createElement('style')
+  style.id = 'bf-flow-styles'
+  style.textContent = `
+    .bf-flow__node {
+      padding: 10px;
+      border: 1px solid #1a192b;
+      border-radius: 5px;
+      background-color: #fff;
+      font-size: 12px;
+      color: #222;
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    .bf-flow__node--selected {
+      box-shadow: 0 0 0 0.5px #1a192b;
+    }
+    .bf-flow__handle {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #1a192b;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .bf-flow__handle--target { top: -3px; }
+    .bf-flow__handle--source { bottom: -3px; }
+    .bf-flow__edge { fill: none; stroke: #b1b1b7; stroke-width: 1; }
+    .bf-flow__edge--animated { stroke-dasharray: 5; }
+    .bf-flow__controls-button:hover { background: #f4f4f4 !important; }
+    .bf-flow__controls-button:last-child { border-bottom: none !important; }
+  `
+  document.head.appendChild(style)
 }
