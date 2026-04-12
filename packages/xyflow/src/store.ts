@@ -266,7 +266,7 @@ export function createFlowStore<
         minZoom,
         maxZoom,
       },
-      fitViewOptions
+      { padding: 0.1, ...fitViewOptions }
     )
   }
 
