@@ -67,33 +67,34 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     nodesContainer.appendChild(element)
 
     // ResizeObserver for dimension measurement
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        if (width === 0 && height === 0) continue
+    const resizeObserver = new ResizeObserver(() => {
+      // Use offsetWidth/offsetHeight (border-box) instead of contentRect
+      // (content-box) for correct bounds calculation in fitViewport
+      const width = element.offsetWidth
+      const height = element.offsetHeight
+      if (width === 0 && height === 0) return
 
-        internalNode.measured.width = width
-        internalNode.measured.height = height
+      internalNode.measured.width = width
+      internalNode.measured.height = height
 
-        const updates = new Map<string, InternalNodeUpdate>()
-        updates.set(internalNode.id, {
-          id: internalNode.id,
-          nodeElement: element as HTMLDivElement,
-          force: false,
-        })
+      const updates = new Map<string, InternalNodeUpdate>()
+      updates.set(internalNode.id, {
+        id: internalNode.id,
+        nodeElement: element as HTMLDivElement,
+        force: false,
+      })
 
-        const lookup = store.nodeLookup()
-        const parentLookup = store.parentLookup()
+      const lookup = store.nodeLookup()
+      const parentLookup = store.parentLookup()
 
-        updateNodeInternals(
-          updates,
-          lookup,
-          parentLookup,
-          store.domNode(),
-          store.nodeOrigin,
-          store.nodeExtent,
-        )
-      }
+      updateNodeInternals(
+        updates,
+        lookup,
+        parentLookup,
+        store.domNode(),
+        store.nodeOrigin,
+        store.nodeExtent,
+      )
     })
     resizeObserver.observe(element)
     onCleanup(() => resizeObserver.disconnect())
