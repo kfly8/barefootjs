@@ -24,7 +24,7 @@ import type { ComponentDef } from './types'
  * @param props - Props to pass to the component
  *
  * @example
- * import { render } from '@barefootjs/dom'
+ * import { render } from '@barefootjs/client-runtime'
  * import { Counter } from './Counter'
  *
  * render(document.getElementById('app')!, Counter, { initialCount: 0 })

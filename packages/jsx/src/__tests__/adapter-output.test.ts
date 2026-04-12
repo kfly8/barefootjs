@@ -593,7 +593,6 @@ describe('Adapter output', () => {
 
       const template = result.files.find(f => f.type === 'markedTemplate')!
       expect(template.content).not.toContain("from '@barefootjs/client-runtime'")
-      expect(template.content).not.toContain("from '@barefootjs/dom'")
       expect(template.content).not.toContain("from '@barefootjs/client'")
     })
 

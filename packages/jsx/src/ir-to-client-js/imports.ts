@@ -53,7 +53,7 @@ export function detectUsedImports(code: string): Set<string> {
  * Collect user-defined imports from @barefootjs/client or @barefootjs/client-runtime
  */
 export function collectUserDomImports(ir: ComponentIR): string[] {
-  const runtimeSources = new Set([RUNTIME_MODULE, '@barefootjs/client', '@barefootjs/dom'])
+  const runtimeSources = new Set([RUNTIME_MODULE, '@barefootjs/client'])
   const userImports: string[] = []
   for (const imp of ir.metadata.imports) {
     if (runtimeSources.has(imp.source) && !imp.isTypeOnly) {
@@ -77,7 +77,7 @@ export function collectExternalImports(ir: ComponentIR, generatedCode: string, l
   const importLines: string[] = []
   for (const imp of ir.metadata.imports) {
     if (imp.isTypeOnly) continue
-    if (imp.source === '@barefootjs/dom' || imp.source === '@barefootjs/client' || imp.source === RUNTIME_MODULE) continue
+    if (imp.source === '@barefootjs/client' || imp.source === RUNTIME_MODULE) continue
     // Skip local path-alias imports (resolved at build time, not in browser)
     if (localImportPrefixes?.some(prefix => imp.source.startsWith(prefix))) continue
 

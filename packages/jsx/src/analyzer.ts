@@ -666,16 +666,6 @@ function collectImport(node: ts.ImportDeclaration, ctx: AnalyzerContext): void {
   const isTypeOnly = !!node.importClause?.isTypeOnly
   const loc = getSourceLocation(node, ctx.sourceFile, ctx.filePath)
 
-  // Diagnostic: @barefootjs/dom is deprecated
-  if (source === '@barefootjs/dom' && !isTypeOnly) {
-    ctx.errors.push(createError(ErrorCodes.DEPRECATED_DOM_IMPORT, loc, {
-      severity: 'warning',
-      suggestion: {
-        message: "Use '@barefootjs/client' for reactive primitives (createSignal, createEffect, etc.) and '@barefootjs/client-runtime' for DOM APIs (createContext, createPortal, etc.).",
-      },
-    }))
-  }
-
   // Diagnostic: wrong package for specific imports
   if (source === '@barefootjs/client' && !isTypeOnly && node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)) {
     const wrongImports: string[] = []

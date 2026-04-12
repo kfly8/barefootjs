@@ -77,7 +77,7 @@ describe('event callbacks on stateless components', () => {
         effects: ctx.effects,
         onMounts: ctx.onMounts,
         imports: ctx.imports,
-        templateImports: ctx.imports.filter((imp: any) => !['@barefootjs/client-runtime', '@barefootjs/dom', '@barefootjs/client'].includes(imp.source)),
+        templateImports: ctx.imports.filter((imp: any) => !['@barefootjs/client-runtime', '@barefootjs/client'].includes(imp.source)),
         localFunctions: ctx.localFunctions,
         localConstants: ctx.localConstants,
       },
