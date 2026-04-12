@@ -16,6 +16,7 @@ import { FlowContext } from './context'
 import { createNodeRenderer } from './node-wrapper'
 import { createEdgeRenderer } from './edge-renderer'
 import { setupKeyboardHandlers } from './selection'
+import { setupConnectionHandler } from './connection'
 import type { FlowProps, FlowStore } from './types'
 
 /**
@@ -161,6 +162,9 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
   // --- Reactive edge rendering (delegated to edge-renderer.ts) ---
   createEdgeRenderer(store as FlowStore, edgesSvg)
 
+  // --- Handle-to-handle edge creation ---
+  setupConnectionHandler(el, edgesSvg, store as FlowStore)
+
   // --- Keyboard handlers (delete, escape, shift for multi-select) ---
   setupKeyboardHandlers(store as FlowStore, el)
 
@@ -227,9 +231,14 @@ function injectDefaultStyles() {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      cursor: crosshair;
+      pointer-events: all;
     }
+    .bf-flow__handle:hover { width: 10px; height: 10px; transform: translateX(-50%); }
     .bf-flow__handle--target { top: -3px; }
+    .bf-flow__handle--target:hover { top: -5px; }
     .bf-flow__handle--source { bottom: -3px; }
+    .bf-flow__handle--source:hover { bottom: -5px; }
     .bf-flow__edge { fill: none; stroke: #b1b1b7; stroke-width: 1; pointer-events: none; }
     .bf-flow__edge--selected { stroke: #555; stroke-width: 2; }
     .bf-flow__edge--animated { stroke-dasharray: 5; }

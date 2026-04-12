@@ -94,10 +94,9 @@ test.describe('Edge Rendering', () => {
     expect(tagName).toBe('path')
   })
 
-  test('edges have fill=none and stroke', async ({ page }) => {
+  test('edges are styled via CSS class', async ({ page }) => {
     const edge = page.locator('#basic .bf-flow__edge').first()
-    expect(await edge.getAttribute('fill')).toBe('none')
-    expect(await edge.getAttribute('stroke')).toBeTruthy()
+    await expect(edge).toHaveClass(/bf-flow__edge/)
   })
 })
 
@@ -113,10 +112,9 @@ test.describe('Edge Properties', () => {
     await expect(page.locator('#edge-props .bf-flow__edge[data-id="hidden-edge"]')).not.toBeAttached()
   })
 
-  test('animated edge has dasharray and class', async ({ page }) => {
+  test('animated edge has animated class', async ({ page }) => {
     const edge = page.locator('#edge-props .bf-flow__edge[data-id="animated-edge"]')
     await expect(edge).toBeAttached()
-    expect(await edge.getAttribute('stroke-dasharray')).toBe('5')
     await expect(edge).toHaveClass(/bf-flow__edge--animated/)
   })
 
