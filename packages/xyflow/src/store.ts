@@ -88,6 +88,19 @@ export function createFlowStore<
     const lookup = nodeLookup()
     const parents = parentLookup()
 
+    // Preserve measured dimensions from existing internal nodes.
+    // adoptUserNodes reads userNode.measured but setNodes callers
+    // may not include it. Inject from existing lookup before rebuild.
+    for (const userNode of currentNodes) {
+      const existing = lookup.get(userNode.id)
+      if (existing?.measured.width && !userNode.measured?.width) {
+        (userNode as any).measured = {
+          width: existing.measured.width,
+          height: existing.measured.height,
+        }
+      }
+    }
+
     const result = adoptUserNodes(currentNodes, lookup, parents, {
       nodeOrigin,
       nodeExtent,
