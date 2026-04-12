@@ -19,14 +19,17 @@ import { IMPORT_PLACEHOLDER, detectUsedImports } from './imports'
 export function generateClientJs(ir: ComponentIR, siblingComponents?: string[], localImportPrefixes?: string[]): string {
   const ctx = createContext(ir)
   collectElements(ir.root, ctx)
-  ir.errors.push(...ctx.warnings)
 
   if (!needsClientJs(ctx)) {
     // Stateless components still need template registration so renderChild() can find them (#435)
+    ir.errors.push(...ctx.warnings)
     return generateTemplateOnlyMount(ir, ctx)
   }
 
-  return generateInitFunction(ir, ctx, siblingComponents, localImportPrefixes)
+  const result = generateInitFunction(ir, ctx, siblingComponents, localImportPrefixes)
+  // Push warnings after generateInitFunction, which may add BF045 warnings (#786)
+  ir.errors.push(...ctx.warnings)
+  return result
 }
 
 /**

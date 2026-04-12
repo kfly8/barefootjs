@@ -3,6 +3,7 @@
  */
 
 import type { ComponentIR, ConstantInfo, FunctionInfo, IRNode } from '../types'
+import { createWarning, ErrorCodes } from '../errors'
 import type { ClientJsContext, ConditionalBranchConditional, ConditionalBranchLoop } from './types'
 import { varSlotId, bodyReferencesComponentScope, PROPS_PARAM } from './utils'
 import { collectUsedIdentifiers, collectUsedFunctions, collectIdentifiersFromIRTree } from './identifiers'
@@ -188,6 +189,12 @@ export function generateInitFunction(_ir: ComponentIR, ctx: ClientJsContext, sib
   for (const fn of ctx.localFunctions) {
     if (fn.isJsxFunction) continue  // Inlined at call sites (#569)
     if (!usedIdentifiers.has(fn.name)) continue
+    // Warn about local functions with JSX that can't be inlined (#786)
+    if (fn.containsJsx && !fn.isJsxFunction) {
+      ctx.warnings.push(createWarning(ErrorCodes.JSX_IN_LOCAL_FUNCTION, fn.loc, {
+        message: `Function '${fn.name}' returns JSX but has multiple return statements and cannot be inlined. Extract it as a top-level PascalCase component or use a single return statement.`,
+      }))
+    }
     if (fn.isModule && !bodyReferencesComponentScope(fn.body, componentScopeNames)) {
       moduleLevelFunctions.push(fn)
       continue
