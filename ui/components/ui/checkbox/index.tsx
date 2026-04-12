@@ -109,7 +109,9 @@ function Checkbox(props: CheckboxProps) {
   const isChecked = createMemo(() => isControlled() ? controlledChecked() : internalChecked())
 
   // Classes - state styling handled by data-state attribute selectors
-  const classes = `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${props.className ?? ''} grid place-content-center`
+  const classes = createMemo(() =>
+    `${baseClasses} ${focusClasses} ${errorClasses} ${stateClasses} ${props.className ?? ''} grid place-content-center`
+  )
 
   // Click handler — only updates signals; the compiler's reactivity handles
   // data-state, aria-checked, and conditional SVG via insert().
@@ -134,7 +136,7 @@ function Checkbox(props: CheckboxProps) {
       aria-checked={isChecked()}
       aria-invalid={props.error || undefined}
       disabled={props.disabled ?? false}
-      className={classes}
+      className={classes()}
       onClick={handleClick}
     >
       {isChecked() && (

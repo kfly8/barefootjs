@@ -31,6 +31,7 @@
  */
 
 import type { AnchorHTMLAttributes, HTMLBaseAttributes } from '@barefootjs/jsx'
+import { createMemo } from '@barefootjs/client'
 import type { Child } from '../../../types'
 import { ChevronLeftIcon, ChevronRightIcon, EllipsisIcon } from '../icon'
 
@@ -96,14 +97,14 @@ interface PaginationLinkProps extends AnchorHTMLAttributes {
 }
 
 function PaginationLink(props: PaginationLinkProps) {
-  const size = props.size ?? 'icon'
+  const size = createMemo(() => props.size ?? 'icon')
   return (
     <a
       aria-current={props.isActive ? 'page' : undefined}
       data-slot="pagination-link"
       data-active={props.isActive}
       id={props.id}
-      className={`${buttonBaseClasses} ${props.isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size]} ${props.className ?? ''}`}
+      className={`${buttonBaseClasses} ${props.isActive ? variantClasses.outline : variantClasses.ghost} ${sizeClasses[size()]} ${props.className ?? ''}`}
       href={props.href}
       onClick={props.onClick}
     >

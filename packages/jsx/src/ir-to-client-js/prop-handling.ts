@@ -54,6 +54,20 @@ export function valueReferencesReactiveData(
     }
   }
 
+  // Also extract prop names from props.xxx pattern directly.
+  // propsParams may be incomplete when extractPropsFromType couldn't resolve inherited
+  // props (e.g., CheckboxProps extends ButtonHTMLAttributes → 'disabled' not extracted).
+  // Always run this to catch props missed by the propsParams loop above.
+  if (ctx.propsObjectName) {
+    const propsAccess = new RegExp(`\\b${ctx.propsObjectName}\\.(\\w+)`, 'g')
+    let match: RegExpExecArray | null
+    while ((match = propsAccess.exec(value)) !== null) {
+      if (match[1] !== 'children' && !usedProps.includes(match[1])) {
+        usedProps.push(match[1])
+      }
+    }
+  }
+
   for (const signal of ctx.signals) {
     if (new RegExp(`\\b${signal.getter}\\s*\\(`).test(value)) {
       usesSignals = true

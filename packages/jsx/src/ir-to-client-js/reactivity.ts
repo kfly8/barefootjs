@@ -51,6 +51,14 @@ export function needsEffectWrapper(expr: string, ctx: ClientJsContext): boolean 
     }
   }
 
+  // Fallback: detect props.xxx pattern directly when propsObjectName is known.
+  // Catches cases where extractPropsFromType couldn't resolve inherited props
+  // (e.g., CheckboxProps extends ButtonHTMLAttributes → 'disabled' not in propsParams).
+  if (ctx.propsObjectName) {
+    const propsAccess = new RegExp(`\\b${ctx.propsObjectName}\\.(?!children\\b)\\w+`)
+    if (propsAccess.test(expr)) return true
+  }
+
   return false
 }
 

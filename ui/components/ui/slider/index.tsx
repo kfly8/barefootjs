@@ -83,12 +83,12 @@ interface SliderProps extends HTMLBaseAttributes {
  * Supports both controlled and uncontrolled modes.
  */
 function Slider(props: SliderProps) {
-  const min = props.min ?? 0
-  const max = props.max ?? 100
-  const step = props.step ?? 1
+  const min = createMemo(() => props.min ?? 0)
+  const max = createMemo(() => props.max ?? 100)
+  const step = createMemo(() => props.step ?? 1)
 
   // Internal state for uncontrolled mode
-  const [internalValue, setInternalValue] = createSignal(props.defaultValue ?? min)
+  const [internalValue, setInternalValue] = createSignal(props.defaultValue ?? min())
 
   // Controlled state - synced from parent via DOM attribute
   // When parent passes value={signal()}, the compiler generates a sync effect
@@ -103,29 +103,29 @@ function Slider(props: SliderProps) {
 
   // Compute percentage for positioning
   const percentage = createMemo(() => {
-    if (max <= min) return 0
-    return Math.max(0, Math.min(100, ((currentValue() - min) / (max - min)) * 100))
+    if (max() <= min()) return 0
+    return Math.max(0, Math.min(100, ((currentValue() - min()) / (max() - min())) * 100))
   })
 
   // Snap a raw value to the nearest step
   const snapToStep = (rawValue: number): number => {
-    const stepped = Math.round((rawValue - min) / step) * step + min
+    const stepped = Math.round((rawValue - min()) / step()) * step() + min()
     // Round to avoid floating point issues
-    const decimals = (step.toString().split('.')[1] || '').length
+    const decimals = (step().toString().split('.')[1] || '').length
     const rounded = parseFloat(stepped.toFixed(decimals))
-    return Math.max(min, Math.min(max, rounded))
+    return Math.max(min(), Math.min(max(), rounded))
   }
 
   // Calculate value from pointer position relative to track
   const getValueFromPointer = (clientX: number, trackRect: DOMRect): number => {
     const pct = (clientX - trackRect.left) / trackRect.width
-    const rawValue = min + pct * (max - min)
+    const rawValue = min() + pct * (max() - min())
     return snapToStep(rawValue)
   }
 
   // Update DOM elements to reflect current value
   const updateSliderUI = (root: HTMLElement, value: number) => {
-    const pct = ((value - min) / (max - min)) * 100
+    const pct = ((value - min()) / (max() - min())) * 100
     const thumb = root.querySelector('[data-slot="slider-thumb"]') as HTMLElement
     const range = root.querySelector('[data-slot="slider-range"]') as HTMLElement
 
@@ -199,17 +199,17 @@ function Slider(props: SliderProps) {
     switch (e.key) {
       case 'ArrowRight':
       case 'ArrowUp':
-        newValue = snapToStep(current + step)
+        newValue = snapToStep(current + step())
         break
       case 'ArrowLeft':
       case 'ArrowDown':
-        newValue = snapToStep(current - step)
+        newValue = snapToStep(current - step())
         break
       case 'Home':
-        newValue = min
+        newValue = min()
         break
       case 'End':
-        newValue = max
+        newValue = max()
         break
       default:
         return
@@ -243,8 +243,8 @@ function Slider(props: SliderProps) {
       <span
         data-slot="slider-thumb"
         role="slider"
-        aria-valuemin={min}
-        aria-valuemax={max}
+        aria-valuemin={min()}
+        aria-valuemax={max()}
         aria-valuenow={currentValue()}
         tabindex={props.disabled ? -1 : 0}
         className={thumbClasses}
