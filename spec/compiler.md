@@ -232,10 +232,41 @@ The Intermediate Representation (IR) is a pure JSON tree structure. Full type de
 - `IRElement` - HTML/SVG elements with attrs, events, children
 - `IRText` - Static text content
 - `IRExpression` - Dynamic expressions (reactive or static)
-- `IRConditional` - Ternary/logical conditionals
+- `IRConditional` - Ternary/logical conditionals (`cond ? a : b`, `cond && a`)
+- `IRIfStatement` - Component-level conditional returns (`if (cond) return <A/>; return <B/>`)
 - `IRLoop` - Array mapping (.map()), with optional `filterPredicate` and `sortComparator`
 - `IRComponent` - Child component references
 - `IRSlot` - Slot placeholders
+
+### IRIfStatement
+
+Represents component-level `if`/`else` returns (early returns). Unlike `IRConditional` (inline ternary/logical), `IRIfStatement` is produced when the component function has multiple return statements guarded by `if` blocks.
+
+```typescript
+interface IRIfStatement {
+  type: 'if-statement'
+  condition: string           // JS condition expression
+  consequent: IRNode          // JSX for the then branch
+  alternate: IRNode | null    // Else branch (another IRIfStatement for else-if, or IRNode)
+}
+```
+
+SSR renders only the matching branch. Client JS handles all branches and switches at runtime. This means the SSR HTML contains markers from only one branch, while client JS references markers from all branches.
+
+### IRLoop.filterPredicate
+
+When `.filter().map()` chains are detected, the compiler extracts the filter into `IRLoop.filterPredicate`:
+
+```typescript
+interface FilterPredicate {
+  param: string              // Filter callback parameter (e.g., 't')
+  predicate?: ParsedExpr     // Simple expression body
+  blockBody?: ParsedStatement[] // Complex block body with if/return
+  raw: string                // Original JS source
+}
+```
+
+Adapters should render the filter as a conditional wrapper inside the loop (e.g., `if (condition) { children }`), not by pre-filtering the array. The filter param may differ from the loop param (e.g., filter uses `t`, loop uses `todo`) — adapters must map between them.
 
 ### Metadata
 
@@ -297,6 +328,66 @@ The **hydration contract** between template and client JS is maintained through 
 
 - **HonoAdapter** (`@barefootjs/hono`) - Generates hono/jsx compatible TSX
 - **GoTemplateAdapter** (`@barefootjs/go-template`) - Generates Go html/template files
+- **MojoAdapter** (`@barefootjs/mojolicious`) - Generates Mojolicious EP template files (.html.ep)
+
+### Implementing a New Adapter
+
+When implementing a new adapter, handle these concerns in addition to the basic `TemplateAdapter` interface:
+
+#### Child Component Rendering
+
+Child components produce `IRComponent` nodes. The adapter emits a call to the runtime's child-render mechanism (e.g., `render_child('name', prop => val)`). Key rules:
+
+- **Skip `onXxx` callback props** — Event handler props (names matching `/^on[A-Z]/`) are client-only and should be omitted from SSR output.
+- **Pass `_bf_slot` for static children** — Non-loop children have unique `slotId`s. Pass this to the child renderer so it can set the correct scope ID (`{parentScope}_{slotId}`). Loop children use `{ChildName}_{random}` pattern instead.
+- **`scriptBaseName` for in-file children** — Non-default-export components in the same file should register the default export's `.client.js` file, not their own.
+
+#### `bf-p` Props Serialization
+
+Components with client-side interactivity need initial props serialized in `bf-p` attribute for hydration. The JSON must contain data the client JS needs to initialize signals (e.g., `initialTodos`, `variant`).
+
+**Encoding caution:** For non-JS backends, ensure the JSON is a character string (not byte string) when embedded in templates. In Perl, use `to_json` (character string) instead of `encode_json` (byte string) to prevent double UTF-8 encoding.
+
+#### IRIfStatement (Conditional Returns)
+
+When `ir.root.type === 'if-statement'`, the adapter must render the if/else branches. The root node is not a standard element — it requires special handling before `renderNode()`.
+
+#### Filter Predicate in Loops
+
+When `IRLoop.filterPredicate` is present, wrap loop children in a conditional:
+
+```
+for each item in array:
+  if (filterCondition(item)):
+    render children
+```
+
+For complex block body filters (with `if/return` statements), collect all return paths and combine with OR logic. See `GoTemplateAdapter.renderBlockBodyCondition()` as reference.
+
+The filter predicate uses a `ParsedExpr` AST (not raw string). Adapters must implement recursive `ParsedExpr` → target language conversion for:
+
+| ParsedExpr kind | Purpose |
+|---|---|
+| `identifier` | Variables, filter params |
+| `literal` | String, number, boolean values |
+| `member` | Property access (`t.done`) |
+| `call` | Signal getter calls (`filter()`) |
+| `binary` | Comparisons (`===`, `>`) — handle string vs numeric comparison |
+| `unary` | Negation (`!`) — mind operator precedence in target language |
+| `logical` | `&&`, `\|\|` |
+| `higher-order` | `filter()`, `every()`, `some()` on arrays |
+
+#### Standalone Higher-Order Expressions
+
+Expressions like `todos().filter(t => !t.done).length` appear as `IRExpression` nodes (not inside loops). Use `parseExpression()` from `@barefootjs/jsx` to get the `ParsedExpr` AST, detect `higher-order` kind, and convert to the target language's equivalent (e.g., Perl `grep`, Go `bf_filter` helper).
+
+#### Character Encoding
+
+For non-JS backends, ensure proper UTF-8 handling:
+
+- Template output should be character strings, with encoding handled by the framework's output layer
+- JSON embedded in HTML attributes (`bf-p`) must not be double-encoded
+- Add `<meta charset="UTF-8">` to HTML layouts
 
 ---
 
