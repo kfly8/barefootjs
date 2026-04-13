@@ -249,12 +249,15 @@ Verify that each adapter (Hono, GoTemplate) produces correct HTML from the same 
 packages/adapter-tests/fixtures/
   Priority 1 (Core reactivity):   counter, signal-with-fallback, memo, effect, ...
   Priority 2 (Props):             props-static, props-reactive, nested-elements
-  Priority 3 (Conditionals):      ternary, logical-and, conditional-class
+  Priority 3 (Conditionals):      ternary, logical-and, conditional-class, if-statement
   Priority 4 (Loops):             map-basic, map-with-index, filter-simple, sort-simple
   Priority 5 (Elements):          void-elements, dynamic-attributes, style-attribute
   Priority 6 (Advanced):          fragment, client-only, event-handlers
   Priority 7 (Multi-file):        child-component, multiple-instances
+  Priority 8 (CSR conformance):   boolean-dynamic-attr, child-component-init, reactive-prop-binding
 ```
+
+**Note on `if-statement`:** SSR renders only one branch, but client JS references markers from all branches. The SSR-Hydration contract test skips this fixture for the JS→HTML direction marker check.
 
 ### Adding a fixture
 
@@ -427,6 +430,36 @@ test.describe('Checkbox', () => {
 })
 ```
 
+### Shared E2E test suites for examples
+
+Example apps (`examples/echo/`, `examples/hono/`, `examples/mojolicious/`) share E2E test suites from `examples/shared/e2e/`. Each shared test function is parameterized with a `baseUrl` and optional path:
+
+```typescript
+// examples/shared/e2e/toggle.spec.ts (shared suite)
+export function toggleTests(baseUrl: string) {
+  test.describe('Toggle Component', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto(`${baseUrl}/toggle`)
+    })
+    // ... tests ...
+  })
+}
+
+// examples/mojolicious/e2e/toggle.spec.ts (example wrapper)
+import { toggleTests } from '../../shared/e2e/toggle.spec'
+toggleTests('http://localhost:3004')
+```
+
+Available shared suites: `counterTests`, `toggleTests`, `formTests`, `conditionalReturnTests`, `reactivePropsTests`, `todoAppTests`, `portalTests`.
+
+`todoAppTests` accepts an optional second parameter for the path (default `/todos`), enabling reuse for SSR variants:
+
+```typescript
+todoAppTests('http://localhost:3004', '/todos-ssr')
+```
+
+Each example's `playwright.config.ts` configures the webServer command, port, and single-worker mode for CI (to avoid shared state conflicts with `/api/todos`).
+
 ---
 
 ## Decision Guide: Where to Write a Test
@@ -437,6 +470,7 @@ test.describe('Checkbox', () => {
 | New compiler transformation rule | Compiler Unit | `packages/jsx/src/__tests__/my-rule.test.ts` |
 | New compiler error code | Compiler Unit | Add to existing or new error-specific test file |
 | New adapter or adapter bug fix | Adapter Conformance | Add/fix fixture in `packages/adapter-tests/fixtures/` |
+| New example app E2E | E2E (shared suite) | Wrapper in `examples/*/e2e/` calling shared test function |
 | New runtime primitive | Runtime Unit | `packages/dom/__tests__/my-primitive.test.ts` |
 | Click/keyboard behavior | E2E | `site/ui/e2e/my-component.spec.ts` |
 | Hydration bug (user reports) | Fix in compiler, verify with E2E | Root cause in `packages/jsx/`, E2E confirms fix |
