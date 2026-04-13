@@ -7,7 +7,6 @@ import {
   getSmoothStepPath,
   getStraightPath,
   getEdgePosition,
-  getEdgeToolbarTransform,
   ConnectionMode,
   Position,
 } from '@xyflow/system'
@@ -302,9 +301,6 @@ export function createEdgeLabelRenderer<
 
   // Track label elements by edge id
   const labelElements = new Map<string, HTMLDivElement>()
-  // Track toolbar element (only one at a time — for the selected edge)
-  let toolbarEl: HTMLDivElement | null = null
-  let toolbarEdgeId: string | null = null
 
   createEffect(() => {
     const edges = store.edges()
@@ -317,22 +313,12 @@ export function createEdgeLabelRenderer<
       | undefined
 
     const existingIds = new Set(labelElements.keys())
-    let selectedEdgeId: string | null = null
-    let selectedLabelX = 0
-    let selectedLabelY = 0
 
     for (const edge of edges) {
       if (edge.hidden) continue
 
       const pos = labelPositions?.get(edge.id)
       if (!pos) continue
-
-      // Track selected edge for toolbar
-      if (edge.selected) {
-        selectedEdgeId = edge.id
-        selectedLabelX = pos.x
-        selectedLabelY = pos.y
-      }
 
       // Only render label if the edge has one
       const labelText = (edge as any).label
@@ -377,55 +363,11 @@ export function createEdgeLabelRenderer<
       if (el) { el.remove(); labelElements.delete(removedId) }
     }
 
-    // Edge toolbar — show on selected edge, hide otherwise
-    if (selectedEdgeId) {
-      if (!toolbarEl) {
-        toolbarEl = document.createElement('div')
-        toolbarEl.className = 'bf-flow__edge-toolbar'
-        toolbarEl.style.pointerEvents = 'all'
-        labelContainer.appendChild(toolbarEl)
-      }
-
-      // Render delete button
-      if (toolbarEdgeId !== selectedEdgeId) {
-        toolbarEl.innerHTML = ''
-        const deleteBtn = document.createElement('button')
-        deleteBtn.className = 'bf-flow__edge-toolbar-button'
-        deleteBtn.title = 'Delete edge'
-        deleteBtn.textContent = '\u00d7' // multiplication sign
-        const edgeId = selectedEdgeId
-        deleteBtn.addEventListener('mousedown', (e) => {
-          e.stopPropagation()
-          store.setEdges((prev) => prev.filter((ed) => ed.id !== edgeId))
-        })
-        toolbarEl.appendChild(deleteBtn)
-        toolbarEdgeId = selectedEdgeId
-      }
-
-      // Position toolbar below the edge midpoint
-      const zoom = store.viewport().zoom
-      const toolbarTransform = getEdgeToolbarTransform(
-        selectedLabelX,
-        selectedLabelY,
-        zoom,
-        'center',
-        'top',
-      )
-      toolbarEl.style.transform = toolbarTransform
-      toolbarEl.style.display = ''
-    } else {
-      // Hide toolbar when no edge is selected
-      if (toolbarEl) {
-        toolbarEl.style.display = 'none'
-        toolbarEdgeId = null
-      }
-    }
   })
 
   onCleanup(() => {
     labelContainer.remove()
     labelElements.clear()
-    if (toolbarEl) { toolbarEl.remove(); toolbarEl = null }
   })
 }
 
