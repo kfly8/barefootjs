@@ -317,8 +317,8 @@ export interface IRTemplateLiteral {
 }
 
 export type IRTemplatePart =
-  | { type: 'string'; value: string }
-  | { type: 'ternary'; condition: string; whenTrue: string; whenFalse: string }
+  | { type: 'string'; value: string; templateValue?: string }
+  | { type: 'ternary'; condition: string; templateCondition?: string; whenTrue: string; whenFalse: string }
 
 /**
  * Attribute metadata shared across all attribute-like interfaces.

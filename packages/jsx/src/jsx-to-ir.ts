@@ -1821,11 +1821,15 @@ function parseTemplateLiteral(
         parts.push(ternary)
       } else {
         // Fallback: keep as string expression
-        parts.push({ type: 'string', value: `\${${ctx.getJS(span.expression)}}` })
+        const val = ctx.getJS(span.expression)
+        const tVal = rewriteBarePropRefs(val, span.expression, ctx)
+        parts.push({ type: 'string', value: `\${${val}}`, templateValue: tVal ? `\${${tVal}}` : undefined })
       }
     } else {
       // Non-ternary expression: keep as ${expr}
-      parts.push({ type: 'string', value: `\${${ctx.getJS(span.expression)}}` })
+      const val = ctx.getJS(span.expression)
+      const tVal = rewriteBarePropRefs(val, span.expression, ctx)
+      parts.push({ type: 'string', value: `\${${val}}`, templateValue: tVal ? `\${${tVal}}` : undefined })
     }
 
     // Add the literal part after this span (text after ${} until next ${} or end)
@@ -1850,9 +1854,11 @@ function parseTernary(
 
   // Only parse if both branches are string literals
   if (whenTrueValue !== null && whenFalseValue !== null) {
+    const condition = ctx.getJS(expr.condition)
     return {
       type: 'ternary',
-      condition: ctx.getJS(expr.condition),
+      condition,
+      templateCondition: rewriteBarePropRefs(condition, expr.condition, ctx),
       whenTrue: whenTrueValue,
       whenFalse: whenFalseValue,
     }
