@@ -187,12 +187,11 @@ function getSelectedNodesBBox<NodeType extends NodeBase>(
     maxY = Math.max(maxY, sy + sh)
   }
 
-  const pad = 4
   return {
-    x: minX - pad,
-    y: minY - pad,
-    width: maxX - minX + pad * 2,
-    height: maxY - minY + pad * 2,
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
   }
 }
 
