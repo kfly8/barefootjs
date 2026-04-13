@@ -305,6 +305,7 @@ __DATA__
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title><%= $title %></title>
     <link rel="stylesheet" href="/styles/components.css">
     <link rel="stylesheet" href="/styles/todo-app.css">
