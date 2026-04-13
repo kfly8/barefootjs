@@ -45,14 +45,16 @@ export class MojoAdapter extends BaseAdapter {
     }
   }
 
-  generate(ir: ComponentIR, _options?: AdapterGenerateOptions): AdapterOutput {
+  generate(ir: ComponentIR, options?: AdapterGenerateOptions): AdapterOutput {
     this.componentName = ir.metadata.componentName
     this.errors = []
 
     const templateBody = this.renderNode(ir.root)
 
     // Generate script registration
-    const scriptReg = this.generateScriptRegistrations(ir)
+    const scriptReg = options?.skipScriptRegistration
+      ? ''
+      : this.generateScriptRegistrations(ir, options?.scriptBaseName)
 
     const template = `${scriptReg}${templateBody}\n`
 
@@ -71,11 +73,11 @@ export class MojoAdapter extends BaseAdapter {
   // Script Registration
   // ===========================================================================
 
-  private generateScriptRegistrations(ir: ComponentIR): string {
+  private generateScriptRegistrations(ir: ComponentIR, scriptBaseName?: string): string {
     const hasInteractivity = this.hasClientInteractivity(ir)
     if (!hasInteractivity) return ''
 
-    const name = ir.metadata.componentName
+    const name = scriptBaseName ?? ir.metadata.componentName
     const runtimePath = this.options.barefootJsPath
     const clientJsPath = `${this.options.clientJsBasePath}${name}.client.js`
 
@@ -266,13 +268,16 @@ export class MojoAdapter extends BaseAdapter {
   // ===========================================================================
 
   renderComponent(comp: IRComponent): string {
-    const propParts = comp.props.map(p => {
+    const propParts: string[] = []
+    for (const p of comp.props) {
+      // Skip callback props (onXxx) — event handlers are client-only for SSR
+      if (p.name.match(/^on[A-Z]/) && p.dynamic) continue
       if (p.dynamic) {
-        return `${p.name} => ${this.convertExpressionToPerl(typeof p.value === 'string' ? p.value : '')}`
+        propParts.push(`${p.name} => ${this.convertExpressionToPerl(typeof p.value === 'string' ? p.value : '')}`)
+      } else {
+        propParts.push(`${p.name} => '${p.value}'`)
       }
-      // Static props: quote the value
-      return `${p.name} => '${p.value}'`
-    })
+    }
     const propsStr = propParts.length > 0 ? ', ' + propParts.join(', ') : ''
     return `<%== bf->render_child('${this.toTemplateName(comp.name)}'${propsStr}) %>`
   }
