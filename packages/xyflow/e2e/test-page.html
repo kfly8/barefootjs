@@ -30,19 +30,30 @@
 <h2>Stress Test (20 nodes)</h2>
 <div id="stress" class="test-container" style="height:500px"></div>
 
+<h2>Edge Labels</h2>
+<div id="edge-labels" class="test-container"></div>
+
 <h2>Selection Rectangle (Shift+drag)</h2>
 <div id="selection-rect" class="test-container"></div>
 
 <h2>Selection on Drag (drag without Shift)</h2>
 <div id="selection-on-drag" class="test-container"></div>
 
-
 <h2>Heavy Stress Test (100 nodes)</h2>
 <div id="heavy-stress" class="test-container" style="height:600px"></div>
 
+<h2>MiniMap Interactive</h2>
+<div id="minimap-test" class="test-container"></div>
+
+<h2>Connection Validation</h2>
+<div id="validation" class="test-container"></div>
+
+<h2>Edge Reconnection</h2>
+<div id="reconnect" class="test-container"></div>
+
 <script type="module">
 import { createRoot } from '@barefootjs/client'
-import { initFlow, initBackground, initControls } from '@barefootjs/xyflow'
+import { initFlow, initBackground, initControls, initMiniMap } from '@barefootjs/xyflow'
 
 // Debug: trace mousedown → D3 drag flow
 document.addEventListener('mousedown', (e) => {
@@ -111,6 +122,22 @@ createRoot(() => {
     edges: [
       { id: 'e-drag', source: 'drag1', target: 'drag2' },
       { id: 'e-fixed', source: 'drag1', target: 'fixed' },
+    ],
+  })
+})
+
+// Edge labels test — labels on edges, toolbar on selection
+createRoot(() => {
+  initFlow(document.getElementById('edge-labels'), {
+    nodes: [
+      { id: 'el1', position: { x: 50, y: 50 }, data: { label: 'Source' } },
+      { id: 'el2', position: { x: 300, y: 50 }, data: { label: 'Target A' } },
+      { id: 'el3', position: { x: 300, y: 200 }, data: { label: 'Target B' } },
+    ],
+    edges: [
+      { id: 'el-ab', source: 'el1', target: 'el2', label: 'connection 1' },
+      { id: 'el-ac', source: 'el1', target: 'el3', label: 'connection 2' },
+      { id: 'el-bc', source: 'el2', target: 'el3' },
     ],
   })
 })
@@ -202,6 +229,61 @@ createRoot(() => {
 
   initFlow(el, { nodes, edges, fitView: true })
   initControls(el, { position: 'top-right' })
+})
+
+// MiniMap interactive test
+createRoot(() => {
+  const el = document.getElementById('minimap-test')
+  initFlow(el, {
+    nodes: [
+      { id: 'm1', position: { x: 0, y: 0 }, data: { label: 'Alpha' } },
+      { id: 'm2', position: { x: 250, y: 0 }, data: { label: 'Beta' } },
+      { id: 'm3', position: { x: 125, y: 150 }, data: { label: 'Gamma' } },
+      { id: 'm4', position: { x: 500, y: 100 }, data: { label: 'Delta' } },
+    ],
+    edges: [
+      { id: 'em1-2', source: 'm1', target: 'm2' },
+      { id: 'em1-3', source: 'm1', target: 'm3' },
+      { id: 'em2-4', source: 'm2', target: 'm4' },
+      { id: 'em3-4', source: 'm3', target: 'm4' },
+    ],
+  })
+  initMiniMap(el, { pannable: true, zoomable: true })
+})
+
+// Edge Reconnection — edges can be reconnected by dragging endpoints
+createRoot(() => {
+  const reconnectEl = document.getElementById('reconnect')
+  window.__reconnectLog = []
+  initFlow(reconnectEl, {
+    nodes: [
+      { id: 'r-a', position: { x: 50, y: 100 }, data: { label: 'Node A' } },
+      { id: 'r-b', position: { x: 300, y: 50 }, data: { label: 'Node B' } },
+      { id: 'r-c', position: { x: 300, y: 200 }, data: { label: 'Node C' } },
+    ],
+    edges: [
+      { id: 'r-ab', source: 'r-a', target: 'r-b' },
+    ],
+    edgesReconnectable: true,
+    onReconnect: (oldEdge, newConnection) => {
+      window.__reconnectLog.push({ oldEdge, newConnection })
+    },
+  })
+})
+
+// Connection Validation — only allow connections to "v-allowed"
+createRoot(() => {
+  initFlow(document.getElementById('validation'), {
+    nodes: [
+      { id: 'v-source', position: { x: 50, y: 100 }, data: { label: 'Source' } },
+      { id: 'v-allowed', position: { x: 300, y: 50 }, data: { label: 'Allowed Target' } },
+      { id: 'v-blocked', position: { x: 300, y: 200 }, data: { label: 'Blocked Target' } },
+    ],
+    edges: [],
+    isValidConnection: (connection) => {
+      return connection.target === 'v-allowed'
+    },
+  })
 })
 </script>
 </body>

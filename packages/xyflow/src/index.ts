@@ -3,10 +3,10 @@ export { initFlow } from './flow'
 export { createFlowStore } from './store'
 export { FlowContext } from './context'
 export { createNodeWrapper, createNodeRenderer } from './node-wrapper'
-export { createEdgeRenderer } from './edge-renderer'
+export { createEdgeRenderer, createEdgeLabelRenderer } from './edge-renderer'
 export { createHandle, initHandle } from './handle'
 export type { HandleType, HandleProps } from './handle'
-export { attachConnectionHandler } from './connection'
+export { attachConnectionHandler, attachReconnectionHandler } from './connection'
 export { useFlow, useViewport, useNodes, useEdges, useNodesInitialized } from './hooks'
 export { setupKeyboardHandlers, setupNodeSelection, setupSelectionRectangle } from './selection'
 export type { SelectionRectOptions } from './selection'
@@ -48,6 +48,8 @@ export type {
   ConnectionMode,
   NodeComponentProps,
   SelectionMode,
+  OnReconnect,
+  Connection,
 } from './types'
 
 // Compat layer (React Flow API shims for desk migration)
@@ -63,6 +65,7 @@ export {
   getIncomers,
   getNodesBounds,
   getNodesInside,
+  getEdgeToolbarTransform,
   Position,
   ConnectionMode as ConnectionModeEnum,
   MarkerType,
