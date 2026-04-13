@@ -4,9 +4,9 @@
  * Compiles JSX components to .html.ep template files + client JS.
  */
 
-import { compileJSXSync } from '@barefootjs/jsx'
+import { compileJSXSync, combineParentChildClientJs } from '@barefootjs/jsx'
 import { MojoAdapter } from '@barefootjs/mojolicious'
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
@@ -32,8 +32,12 @@ copyFileSync(domDistFile, resolve(clientDir, 'barefoot.js'))
 console.log('  Copied: barefoot.js\n')
 
 // Components to compile
+// TODO: Add child-component examples (Toggle, TodoApp, Portal) once
+// bf->render_child is integrated with Mojolicious's include system
 const components = [
   '../shared/components/Counter.tsx',
+  '../shared/components/Form.tsx',
+  '../shared/components/ConditionalReturn.tsx',
 ]
 
 const adapter = new MojoAdapter({
@@ -49,7 +53,12 @@ for (const componentPath of components) {
 
   const result = compileJSXSync(source, fullPath, { adapter })
 
+  const warnings = result.errors.filter(e => e.severity === 'warning')
   const errors = result.errors.filter(e => e.severity === 'error')
+
+  if (warnings.length > 0) {
+    for (const w of warnings) console.warn(`  ⚠ ${w.message}`)
+  }
   if (errors.length > 0) {
     console.error(`Errors compiling ${componentPath}:`)
     for (const e of errors) console.error(`  ${e.message}`)
@@ -78,6 +87,19 @@ for (const componentPath of components) {
   }
 
   console.log(`✓ ${componentPath}`)
+}
+
+// Combine parent-child client JS into single files
+const clientFiles = readdirSync(clientDir).filter(f => f.endsWith('.client.js'))
+const files = new Map<string, string>()
+for (const file of clientFiles) {
+  const name = file.replace('.client.js', '')
+  files.set(name, readFileSync(resolve(clientDir, file), 'utf-8'))
+}
+const combined = combineParentChildClientJs(files)
+for (const [name, content] of combined) {
+  writeFileSync(resolve(clientDir, `${name}.client.js`), content)
+  console.log(`Combined: client/${name}.client.js`)
 }
 
 console.log('\nDone!')
