@@ -63,8 +63,8 @@ export function initMiniMap(scope: Element, props: Record<string, unknown>): voi
   const position = (props.position as string) ?? 'bottom-right'
   const mapWidth = (props.width as number) ?? 200
   const mapHeight = (props.height as number) ?? 150
-  const nodeColor = (props.nodeColor as string) ?? '#e2e2e2'
-  const maskColor = (props.maskColor as string) ?? 'rgba(200, 200, 200, 0.6)'
+  const nodeColor = (props.nodeColor as string) ?? '#e2e8f0'
+  const maskColor = (props.maskColor as string) ?? 'rgba(240, 240, 240, 0.6)'
   const maskStrokeColor = (props.maskStrokeColor as string) ?? 'none'
   const maskStrokeWidth = (props.maskStrokeWidth as number) ?? 0
   const pannable = (props.pannable as boolean) ?? true
@@ -201,12 +201,25 @@ export function initMiniMap(scope: Element, props: Record<string, unknown>): voi
     // Track position changes from drag
     store.positionEpoch()
 
-    const bounds = getNodeBoundingRect(nodeLookup)
-    if (!bounds) return
+    const nodeBounds = getNodeBoundingRect(nodeLookup)
+    if (!nodeBounds) return
 
-    // Compute viewBox following React Flow's approach
-    const scaledWidth = bounds.width / mapWidth
-    const scaledHeight = bounds.height / mapHeight
+    // Compute the visible viewport rect in flow coordinates
+    const vpX = -vp.x / vp.zoom
+    const vpY = -vp.y / vp.zoom
+    const vpW = flowW / vp.zoom
+    const vpH = flowH / vp.zoom
+
+    // Union of node bounds and viewport — keeps minimap stable when dragging
+    const unionX = Math.min(nodeBounds.x, vpX)
+    const unionY = Math.min(nodeBounds.y, vpY)
+    const unionR = Math.max(nodeBounds.x + nodeBounds.width, vpX + vpW)
+    const unionB = Math.max(nodeBounds.y + nodeBounds.height, vpY + vpH)
+    const unionW = unionR - unionX
+    const unionH = unionB - unionY
+
+    const scaledWidth = unionW / mapWidth
+    const scaledHeight = unionH / mapHeight
     const viewScale = Math.max(scaledWidth, scaledHeight)
     currentViewScale = viewScale
 
@@ -214,8 +227,8 @@ export function initMiniMap(scope: Element, props: Record<string, unknown>): voi
     const viewHeight = viewScale * mapHeight
     const offset = offsetScale * viewScale
 
-    const vbX = bounds.x - (viewWidth - bounds.width) / 2 - offset
-    const vbY = bounds.y - (viewHeight - bounds.height) / 2 - offset
+    const vbX = unionX - (viewWidth - unionW) / 2 - offset
+    const vbY = unionY - (viewHeight - unionH) / 2 - offset
     const vbW = viewWidth + offset * 2
     const vbH = viewHeight + offset * 2
 
@@ -238,15 +251,10 @@ export function initMiniMap(scope: Element, props: Record<string, unknown>): voi
           ? (nodeColor as (n: any) => string)(node)
           : nodeColor
       rect.setAttribute('fill', color)
-      rect.setAttribute('rx', '2')
+      rect.setAttribute('rx', '5')
+      rect.setAttribute('ry', '5')
       nodesGroup.appendChild(rect)
     }
-
-    // Compute viewport bounding box in flow coordinates
-    const vpX = -vp.x / vp.zoom
-    const vpY = -vp.y / vp.zoom
-    const vpW = flowW / vp.zoom
-    const vpH = flowH / vp.zoom
 
     // Build mask path: outer rect with inner viewport cutout (evenodd)
     const outerX = vbX - offset
