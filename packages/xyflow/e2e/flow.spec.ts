@@ -886,3 +886,152 @@ test.describe('Heavy Stress Test (100 nodes)', () => {
     expect(someVisible).toBeGreaterThan(50)
   })
 })
+
+// ============================================================
+// Edge Reconnection
+// ============================================================
+test.describe('Edge Reconnection', () => {
+  test.beforeEach(async ({ page }) => {
+    // Scroll the reconnect container into view since the page is long
+    await page.evaluate(() => {
+      const el = document.getElementById('reconnect')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#reconnect .bf-flow__node[data-id="r-a"]')
+    await page.waitForSelector('#reconnect .bf-flow__node[data-id="r-b"]')
+    await page.waitForSelector('#reconnect .bf-flow__node[data-id="r-c"]')
+  })
+
+  test('reconnect endpoint handles are visible on reconnectable edges', async ({ page }) => {
+    // Reconnection handles (SVG circles) should exist for the edge
+    const handles = await page.locator('#reconnect .bf-flow__edge-reconnect').count()
+    // 1 edge with 2 endpoints (source + target)
+    expect(handles).toBe(2)
+  })
+
+  test('reconnecting edge to a different node updates the edge', async ({ page }) => {
+    // Edge r-ab connects r-a → r-b. Drag the target endpoint to r-c.
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('reconnect')!
+
+      // Find the target reconnect handle (the one at the target end of r-ab)
+      const tgtHandle = container.querySelector('.bf-flow__edge-reconnect--target') as SVGCircleElement
+      if (!tgtHandle) return { error: 'No target reconnect handle found' }
+
+      // Get the target handle position in page coordinates
+      const svg = container.querySelector('.bf-flow__edges') as SVGSVGElement
+      const viewport = container.querySelector('.bf-flow__viewport') as HTMLElement
+      const ctm = svg.getScreenCTM()
+      if (!ctm) return { error: 'No CTM' }
+
+      const cx = parseFloat(tgtHandle.getAttribute('cx') || '0')
+      const cy = parseFloat(tgtHandle.getAttribute('cy') || '0')
+
+      // Transform SVG coords to screen coords
+      const pt = svg.createSVGPoint()
+      pt.x = cx
+      pt.y = cy
+      const screenPt = pt.matrixTransform(ctm)
+
+      // Find the target handle (r-c's target handle at the top)
+      const rCHandleTarget = container.querySelector('[data-id="r-c"] .bf-flow__handle--target') as HTMLElement
+      if (!rCHandleTarget) return { error: 'No r-c target handle' }
+      const targetRect = rCHandleTarget.getBoundingClientRect()
+      const targetX = targetRect.left + targetRect.width / 2
+      const targetY = targetRect.top + targetRect.height / 2
+
+      // Dispatch drag from reconnect handle to r-c's handle
+      tgtHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: screenPt.x, clientY: screenPt.y, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: targetX, clientY: targetY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: targetX, clientY: targetY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 200))
+
+      // Check onReconnect was called
+      const log = (window as any).__reconnectLog || []
+      return {
+        reconnectCalled: log.length > 0,
+        oldEdgeId: log[0]?.oldEdge?.id,
+        newTarget: log[0]?.newConnection?.target,
+        edgeCount: container.querySelectorAll('.bf-flow__edge').length,
+      }
+    })
+
+    expect(result.reconnectCalled).toBe(true)
+    expect(result.oldEdgeId).toBe('r-ab')
+    expect(result.newTarget).toBe('r-c')
+    // Edge count should still be 1 (reconnected, not added)
+    expect(result.edgeCount).toBe(1)
+  })
+
+  test('dropping on empty space reverts the edge', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('reconnect')!
+
+      const edgeBefore = container.querySelector('.bf-flow__edge[data-id="r-ab"]')
+      const pathBefore = edgeBefore?.getAttribute('d')
+
+      // Find the target reconnect handle
+      const tgtHandle = container.querySelector('.bf-flow__edge-reconnect--target') as SVGCircleElement
+      if (!tgtHandle) return { error: 'No target reconnect handle' }
+
+      const svg = container.querySelector('.bf-flow__edges') as SVGSVGElement
+      const ctm = svg.getScreenCTM()
+      if (!ctm) return { error: 'No CTM' }
+
+      const cx = parseFloat(tgtHandle.getAttribute('cx') || '0')
+      const cy = parseFloat(tgtHandle.getAttribute('cy') || '0')
+      const pt = svg.createSVGPoint()
+      pt.x = cx
+      pt.y = cy
+      const screenPt = pt.matrixTransform(ctm)
+
+      // Drag to empty space (far away from any node)
+      const containerRect = container.getBoundingClientRect()
+      const emptyX = containerRect.left + containerRect.width - 10
+      const emptyY = containerRect.top + containerRect.height - 10
+
+      tgtHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: screenPt.x, clientY: screenPt.y, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: emptyX, clientY: emptyY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: emptyX, clientY: emptyY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 200))
+
+      // Edge should still exist with the same path (reverted)
+      const edgeAfter = container.querySelector('.bf-flow__edge[data-id="r-ab"]')
+      const pathAfter = edgeAfter?.getAttribute('d')
+
+      return {
+        edgeExists: !!edgeAfter,
+        edgeCount: container.querySelectorAll('.bf-flow__edge').length,
+        pathPreserved: pathBefore === pathAfter,
+      }
+    })
+
+    expect(result.edgeExists).toBe(true)
+    expect(result.edgeCount).toBe(1)
+    expect(result.pathPreserved).toBe(true)
+  })
+})
