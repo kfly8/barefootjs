@@ -823,7 +823,8 @@ function generateCsrTemplateWithOpts(node: IRNode, opts: TemplateOptions): strin
       const indexParam = node.index ? `, ${node.index}` : ''
       let mapExpr: string
       if (node.mapPreamble) {
-        mapExpr = `\${${transformExpr(node.array, node.templateArray)}.map((${node.param}${indexParam}) => { ${node.mapPreamble} return \`${childTemplate}\` }).join('')}`
+        const preamble = node.templateMapPreamble ?? node.mapPreamble
+        mapExpr = `\${${transformExpr(node.array, node.templateArray)}.map((${node.param}${indexParam}) => { ${preamble} return \`${childTemplate}\` }).join('')}`
       } else {
         mapExpr = `\${${transformExpr(node.array, node.templateArray)}.map((${node.param}${indexParam}) => \`${childTemplate}\`).join('')}`
       }

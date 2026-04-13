@@ -239,6 +239,8 @@ export interface IRLoop {
    * stores "const label = item.name.toUpperCase();" as mapPreamble.
    */
   mapPreamble?: string
+  /** Pre-transformed mapPreamble with destructured prop refs rewritten to _p.xxx. */
+  templateMapPreamble?: string
 
   /** Type annotation for loop param (e.g., 'Desk'), preserved for .tsx output */
   paramType?: string

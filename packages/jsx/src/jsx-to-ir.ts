@@ -1246,6 +1246,7 @@ function transformMapCall(
   let sortComparator: SortComparatorResult | undefined
   let chainOrder: 'filter-sort' | 'sort-filter' | undefined
   let mapPreamble: string | undefined
+  let templateMapPreamble: string | undefined
   let typedMapPreamble: string | undefined
 
   // Helper to set both array and templateArray
@@ -1442,18 +1443,26 @@ function transformMapCall(
           }
         }
         const preambleStmts: string[] = []
+        const templatePreambleStmts: string[] = []
         const typedPreambleStmts: string[] = []
         let hasTypeDiff = false
+        let hasTemplateDiff = false
         for (const stmt of body.statements) {
           if (stmt === returnStmt) break
           const js = ctx.getJS(stmt)
+          const tjs = ctx.getTemplateJS(stmt)
           const ts = stmt.getText(ctx.sourceFile)
           preambleStmts.push(js.endsWith(';') ? js : js + ';')
+          templatePreambleStmts.push(tjs.endsWith(';') ? tjs : tjs + ';')
           typedPreambleStmts.push(ts.endsWith(';') ? ts : ts + ';')
           if (js !== ts) hasTypeDiff = true
+          if (js !== tjs) hasTemplateDiff = true
         }
         if (preambleStmts.length > 0) {
           mapPreamble = preambleStmts.join(' ')
+          if (hasTemplateDiff) {
+            templateMapPreamble = templatePreambleStmts.join(' ')
+          }
           if (hasTypeDiff) {
             typedMapPreamble = typedPreambleStmts.join(' ')
           }
@@ -1540,6 +1549,7 @@ function transformMapCall(
     chainOrder,
     clientOnly: isClientOnly || undefined,
     mapPreamble,
+    templateMapPreamble,
     paramType,
     indexType,
     typedMapPreamble,
