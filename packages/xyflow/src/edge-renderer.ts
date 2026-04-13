@@ -18,6 +18,7 @@ import type {
 } from '@xyflow/system'
 import type { FlowStore } from './types'
 import { SVG_NS } from './constants'
+import { attachReconnectionHandler } from './connection'
 
 /**
  * Reactively renders all edges as SVG paths.
@@ -35,9 +36,11 @@ export function createEdgeRenderer<
   edgeGroup.setAttribute('class', 'bf-flow__edge-group')
   svgContainer.appendChild(edgeGroup)
 
-  // Track edge path elements and hit areas by edge id
+  // Track edge path elements, hit areas, and reconnection handles by edge id
   const edgeElements = new Map<string, SVGPathElement>()
   const hitElements = new Map<string, SVGPathElement>()
+  const reconnectSourceHandles = new Map<string, SVGCircleElement>()
+  const reconnectTargetHandles = new Map<string, SVGCircleElement>()
 
   // Expose label positions so the edge label renderer can read them
   const labelPositions = new Map<string, { x: number; y: number }>()
@@ -106,6 +109,7 @@ export function createEdgeRenderer<
         hitPath.setAttribute('fill', 'none')
         hitPath.setAttribute('stroke', 'transparent')
         hitPath.setAttribute('stroke-width', '20')
+        hitPath.dataset.hitId = edge.id
         hitPath.style.cursor = 'pointer'
         hitPath.style.pointerEvents = 'stroke'
         hitPath.addEventListener('mousedown', (e) => {
@@ -140,6 +144,47 @@ export function createEdgeRenderer<
 
       pathEl.classList.toggle('bf-flow__edge--selected', !!edge.selected)
       pathEl.classList.toggle('bf-flow__edge--animated', !!edge.animated)
+
+      // Edge reconnection handles
+      const isReconnectable = store.edgesReconnectable && (edge as any).reconnectable !== false
+      if (isReconnectable) {
+        // Source reconnection handle
+        let srcHandle = reconnectSourceHandles.get(edge.id)
+        if (!srcHandle) {
+          srcHandle = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
+          srcHandle.setAttribute('class', 'bf-flow__edge-reconnect bf-flow__edge-reconnect--source')
+          srcHandle.setAttribute('r', '5')
+          srcHandle.style.cursor = 'crosshair'
+          srcHandle.style.pointerEvents = 'all'
+          edgeGroup.appendChild(srcHandle)
+          reconnectSourceHandles.set(edge.id, srcHandle)
+          // Attach reconnection handler
+          const container = store.domNode()
+          if (container) {
+            attachReconnectionHandler(srcHandle, edge, 'source', container, svgContainer, store)
+          }
+        }
+        srcHandle.setAttribute('cx', String(edgePos.sourceX))
+        srcHandle.setAttribute('cy', String(edgePos.sourceY))
+
+        // Target reconnection handle
+        let tgtHandle = reconnectTargetHandles.get(edge.id)
+        if (!tgtHandle) {
+          tgtHandle = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
+          tgtHandle.setAttribute('class', 'bf-flow__edge-reconnect bf-flow__edge-reconnect--target')
+          tgtHandle.setAttribute('r', '5')
+          tgtHandle.style.cursor = 'crosshair'
+          tgtHandle.style.pointerEvents = 'all'
+          edgeGroup.appendChild(tgtHandle)
+          reconnectTargetHandles.set(edge.id, tgtHandle)
+          const container = store.domNode()
+          if (container) {
+            attachReconnectionHandler(tgtHandle, edge, 'target', container, svgContainer, store)
+          }
+        }
+        tgtHandle.setAttribute('cx', String(edgePos.targetX))
+        tgtHandle.setAttribute('cy', String(edgePos.targetY))
+      }
     }
 
     // Remove edges that no longer exist
@@ -149,6 +194,10 @@ export function createEdgeRenderer<
       const hit = hitElements.get(removedId)
       if (hit) { hit.remove(); hitElements.delete(removedId) }
       labelPositions.delete(removedId)
+      const srcH = reconnectSourceHandles.get(removedId)
+      if (srcH) { srcH.remove(); reconnectSourceHandles.delete(removedId) }
+      const tgtH = reconnectTargetHandles.get(removedId)
+      if (tgtH) { tgtH.remove(); reconnectTargetHandles.delete(removedId) }
     }
   })
 
@@ -157,6 +206,8 @@ export function createEdgeRenderer<
     edgeElements.clear()
     hitElements.clear()
     labelPositions.clear()
+    reconnectSourceHandles.clear()
+    reconnectTargetHandles.clear()
   })
 }
 
