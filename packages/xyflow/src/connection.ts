@@ -68,12 +68,13 @@ export function attachConnectionHandler<
     const sourceX = (handleRect.left + handleRect.width / 2 - containerRect0.left - vp0.x) / scale0
     const sourceY = (handleRect.top + handleRect.height / 2 - containerRect0.top - vp0.y) / scale0
 
-    // Create temporary connection line
+    // Create temporary connection line — above nodes during drag
     const connectionLine = document.createElementNS(SVG_NS, 'path')
     connectionLine.setAttribute('fill', 'none')
     connectionLine.setAttribute('stroke', '#b1b1b7')
     connectionLine.setAttribute('stroke-width', '1')
     edgesSvg.appendChild(connectionLine)
+    edgesSvg.style.zIndex = '10'
 
     // Track the currently hovered handle for validation feedback
     let lastHoveredHandle: HTMLElement | null = null
@@ -114,8 +115,12 @@ export function attachConnectionHandler<
         hoveredHandle.dataset.nodeId &&
         hoveredHandle.dataset.nodeId !== nodeId
       ) {
+        // Check handle type compatibility: source→target or target→source
+        const hoveredHandleType = hoveredHandle.classList.contains('bf-flow__handle--target') ? 'target' : 'source'
+        const isCompatibleType = handleType !== hoveredHandleType
+
         const conn = buildConnection(nodeId, hoveredHandle.dataset.nodeId, handleType)
-        const isValid = checkConnectionValidity(store, conn)
+        const isValid = isCompatibleType && checkConnectionValidity(store, conn)
 
         hoveredHandle.classList.remove('invalid')
         if (!isValid) hoveredHandle.classList.add('invalid')
@@ -144,10 +149,12 @@ export function attachConnectionHandler<
         targetHandle.dataset.nodeId !== nodeId
       ) {
         const targetNodeId = targetHandle.dataset.nodeId
+        const targetHandleType = targetHandle.classList.contains('bf-flow__handle--target') ? 'target' : 'source'
+        const isCompatibleType = handleType !== targetHandleType
         const conn = buildConnection(nodeId, targetNodeId, handleType)
 
-        // Validate before creating edge
-        const isValid = checkConnectionValidity(store, conn)
+        // Validate: handle type must be compatible + custom validation
+        const isValid = isCompatibleType && checkConnectionValidity(store, conn)
 
         if (isValid) {
           const edgeId = `e-${conn.source}-${conn.target}-${Date.now()}`
@@ -161,8 +168,9 @@ export function attachConnectionHandler<
         }
       }
 
-      // Remove connection line
+      // Remove connection line, restore edge z-index
       connectionLine.remove()
+      edgesSvg.style.zIndex = ''
     }
 
     document.addEventListener('mousemove', onMouseMove)
