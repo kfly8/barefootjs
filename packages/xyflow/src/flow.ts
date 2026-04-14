@@ -5,11 +5,8 @@ import {
   provideContext,
   untrack,
 } from '@barefootjs/client-runtime'
-import { XYPanZoom, PanOnScrollMode } from '@xyflow/system'
-import type {
-  Viewport,
-  Transform,
-} from '@xyflow/system'
+import { XYPanZoom } from '@xyflow/system'
+import type { Viewport } from '@xyflow/system'
 
 import { createFlowStore } from './store'
 import { FlowContext } from './context'
@@ -42,9 +39,35 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
     nodeTypes: flowProps.nodeTypes,
     edgeTypes: flowProps.edgeTypes,
     onConnect: flowProps.onConnect,
+    onConnectStart: flowProps.onConnectStart,
+    onConnectEnd: flowProps.onConnectEnd,
     isValidConnection: flowProps.isValidConnection,
     edgesReconnectable: flowProps.edgesReconnectable,
     onReconnect: flowProps.onReconnect,
+    // Lifecycle callbacks
+    onInit: flowProps.onInit,
+    onNodeDragStart: flowProps.onNodeDragStart,
+    onNodeDragStop: flowProps.onNodeDragStop,
+    onMoveEnd: flowProps.onMoveEnd,
+    onPaneClick: flowProps.onPaneClick,
+    onPaneMouseMove: flowProps.onPaneMouseMove,
+    onNodesDelete: flowProps.onNodesDelete,
+    onEdgesDelete: flowProps.onEdgesDelete,
+    // Interactivity config
+    panOnDrag: flowProps.panOnDrag,
+    panOnScroll: flowProps.panOnScroll,
+    zoomOnScroll: flowProps.zoomOnScroll,
+    zoomOnDoubleClick: flowProps.zoomOnDoubleClick,
+    zoomActivationKeyCode: flowProps.zoomActivationKeyCode,
+    nodesDraggable: flowProps.nodesDraggable,
+    nodesConnectable: flowProps.nodesConnectable,
+    elementsSelectable: flowProps.elementsSelectable,
+    deleteKeyCode: flowProps.deleteKeyCode,
+    selectionKeyCode: flowProps.selectionKeyCode,
+    connectionLineStyle: flowProps.connectionLineStyle,
+    defaultEdgeOptions: flowProps.defaultEdgeOptions,
+    elevateNodesOnSelect: flowProps.elevateNodesOnSelect,
+    reconnectRadius: flowProps.reconnectRadius,
   })
 
   provideContext(FlowContext, store)
@@ -112,33 +135,27 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
       store.setViewport(vp)
     },
     onPanZoomStart: undefined,
-    onPanZoomEnd: undefined,
+    onPanZoomEnd: (_event: MouseEvent | TouchEvent | null, vp: Viewport) => {
+      if (store.onMoveEnd) {
+        store.onMoveEnd(_event, vp)
+      }
+    },
   })
 
   store.setPanZoom(panZoomInstance)
 
-  panZoomInstance.update({
-    noWheelClassName: 'nowheel',
-    noPanClassName: 'nopan',
-    preventScrolling: true,
-    panOnScroll: false,
-    panOnDrag: true,
-    panOnScrollMode: PanOnScrollMode.Free,
-    panOnScrollSpeed: 0.5,
-    userSelectionActive: false,
-    zoomOnPinch: true,
-    zoomOnScroll: true,
-    zoomOnDoubleClick: true,
-    zoomActivationKeyPressed: false,
-    lib: 'bf',
-    onTransformChange: (transform: Transform) => {
-      store.setViewport({ x: transform[0], y: transform[1], zoom: transform[2] })
-    },
-    connectionInProgress: false,
-    paneClickDistance: 0,
-  })
+  // Initial pan/zoom config from store
+  store.updatePanZoomConfig()
 
   onCleanup(() => panZoomInstance.destroy())
+
+  // Re-apply pan/zoom config when reactive settings change
+  createEffect(() => {
+    store.panOnDrag()
+    store.panOnScroll()
+    store.zoomOnScroll()
+    store.updatePanZoomConfig()
+  })
 
   createEffect(() => {
     const vp = store.viewport()
@@ -154,11 +171,29 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
     selectionMode: flowProps.selectionMode,
   })
 
+  // Pane click: deselect all + call onPaneClick callback
   el.addEventListener('click', (event) => {
     if (event.target === el || event.target === viewportEl) {
       store.unselectNodesAndEdges()
+      if (store.onPaneClick) {
+        store.onPaneClick(event)
+      }
     }
   })
+
+  // Pane mouse move callback
+  if (flowProps.onPaneMouseMove) {
+    el.addEventListener('mousemove', (event) => {
+      if (event.target === el || event.target === viewportEl) {
+        store.onPaneMouseMove?.(event)
+      }
+    })
+  }
+
+  // Call onInit callback after setup
+  if (store.onInit) {
+    store.onInit(store)
+  }
 
   if (flowProps.fitView) {
     onMount(() => {

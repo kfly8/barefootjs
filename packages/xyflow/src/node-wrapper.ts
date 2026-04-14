@@ -161,6 +161,14 @@ export function createNodeWrapper<NodeType extends NodeBase>(
           ),
         )
 
+        // Fire onNodeDragStart callback
+        if (store.onNodeDragStart) {
+          const draggedNode = untrack(store.nodes).find((n) => n.id === internalNode.id)
+          if (draggedNode) {
+            store.onNodeDragStart(e, draggedNode, untrack(store.nodes))
+          }
+        }
+
         // Auto-pan state: pan viewport when dragging near container edges
         let autoPanId = 0
         let lastMouseX = 0
@@ -286,6 +294,14 @@ export function createNodeWrapper<NodeType extends NodeBase>(
                 : n,
             ),
           )
+
+          // Fire onNodeDragStop callback
+          if (store.onNodeDragStop) {
+            const draggedNode = untrack(store.nodes).find((n) => n.id === internalNode.id)
+            if (draggedNode) {
+              store.onNodeDragStop(e, draggedNode, untrack(store.nodes))
+            }
+          }
 
           document.removeEventListener('mousemove', onMouseMove)
           document.removeEventListener('mouseup', onMouseUp)
