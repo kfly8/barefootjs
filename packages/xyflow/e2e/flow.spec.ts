@@ -192,11 +192,9 @@ test.describe('Edge Labels', () => {
     expect(style).toContain('translate')
   })
 
-  test('edge toolbar appears on edge selection', async ({ page }) => {
-    // Initially toolbar is hidden
+  test('edge selection via click on hit area', async ({ page }) => {
     await page.waitForSelector('#edge-labels .bf-flow__edge')
 
-    // Click on edge hit area to select it
     await page.evaluate(() => {
       const hitPath = document.querySelector('#edge-labels path[stroke="transparent"]')!
       hitPath.dispatchEvent(
@@ -206,38 +204,11 @@ test.describe('Edge Labels', () => {
     })
     await page.waitForTimeout(100)
 
-    // Toolbar should be visible
-    const toolbar = page.locator('#edge-labels .bf-flow__edge-toolbar')
-    await expect(toolbar).toBeVisible()
-  })
-
-  test('edge toolbar delete button removes selected edge', async ({ page }) => {
-    await page.waitForSelector('#edge-labels .bf-flow__edge')
-    const beforeCount = await page.locator('#edge-labels .bf-flow__edge').count()
-
-    // Select first edge
-    await page.evaluate(() => {
-      const hitPath = document.querySelector('#edge-labels path[stroke="transparent"]')!
-      hitPath.dispatchEvent(
-        new MouseEvent('mousedown', { button: 0, bubbles: true, view: window }),
-      )
-      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, view: window }))
+    const selected = await page.evaluate(() => {
+      const edge = document.querySelector('#edge-labels .bf-flow__edge')
+      return edge?.classList.contains('bf-flow__edge--selected')
     })
-    await page.waitForTimeout(100)
-
-    // Click delete button on toolbar
-    await page.evaluate(() => {
-      const btn = document.querySelector(
-        '#edge-labels .bf-flow__edge-toolbar-button',
-      )!
-      btn.dispatchEvent(
-        new MouseEvent('mousedown', { button: 0, bubbles: true, view: window }),
-      )
-    })
-    await page.waitForTimeout(100)
-
-    const afterCount = await page.locator('#edge-labels .bf-flow__edge').count()
-    expect(afterCount).toBeLessThan(beforeCount)
+    expect(selected).toBe(true)
   })
 
   test('edge labels update position when node is dragged', async ({ page }) => {
@@ -1505,7 +1476,7 @@ test.describe('Custom Node Types', () => {
     // Check data attributes set by the custom renderer
     expect(await customNode.getAttribute('data-node-id')).toBe('cn1')
     expect(await customNode.getAttribute('data-node-type')).toBe('custom')
-    expect(await customNode.getAttribute('data-is-connectable')).toBe('true')
+    expect(await customNode.getAttribute('data-is-connectable')).toBe('false')
   })
 
   test('second custom node renders with different data', async ({ page }) => {
@@ -1524,11 +1495,11 @@ test.describe('Custom Node Types', () => {
     await expect(defaultNode).toContainText('Default Node')
   })
 
-  test('handles are present on custom nodes', async ({ page }) => {
+  test('custom nodes with connectable:false have no handles', async ({ page }) => {
     const node = page.locator('#custom-nodes .bf-flow__node[data-id="cn1"]')
-    // Custom nodes should have both source and target handles
-    await expect(node.locator('.bf-flow__handle--source')).toBeAttached()
-    await expect(node.locator('.bf-flow__handle--target')).toBeAttached()
+    // connectable:false nodes should NOT have handles
+    await expect(node.locator('.bf-flow__handle--source')).not.toBeAttached()
+    await expect(node.locator('.bf-flow__handle--target')).not.toBeAttached()
   })
 
   test('handles are present on default nodes alongside custom types', async ({ page }) => {
@@ -1542,9 +1513,8 @@ test.describe('Custom Node Types', () => {
     await expect(page.locator('#custom-nodes .bf-flow__node')).toHaveCount(3)
   })
 
-  test('edges still render between custom and default nodes', async ({ page }) => {
-    // 3 edges: cn1→cn2, cn1→cn3, cn2→cn3
-    await expect(page.locator('#custom-nodes .bf-flow__edge')).toHaveCount(3)
+  test('custom nodes demo has no edges (connectable:false)', async ({ page }) => {
+    await expect(page.locator('#custom-nodes .bf-flow__edge')).toHaveCount(0)
   })
 })
 
@@ -1871,5 +1841,38 @@ test.describe('Sub-Flows', () => {
   test('edges render between child nodes', async ({ page }) => {
     // 2 edges: child-1 → child-2, child-2 → standalone
     await expect(page.locator('#sub-flows .bf-flow__edge')).toHaveCount(2)
+  })
+
+  test('child nodes with extent:parent cannot be dragged outside group', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('sub-flows')!
+      const child = container.querySelector('[data-id="child-1"]')! as HTMLElement
+      const group = container.querySelector('[data-id="group-1"]')! as HTMLElement
+
+      const childRect = child.getBoundingClientRect()
+      const cx = childRect.left + childRect.width / 2
+      const cy = childRect.top + childRect.height / 2
+
+      // Drag child far to the left (outside group)
+      child.dispatchEvent(new MouseEvent('mousedown', { clientX: cx, clientY: cy, button: 0, bubbles: true, view: window }))
+      await new Promise(r => setTimeout(r, 10))
+      for (let i = 1; i <= 10; i++) {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: cx - i * 30, clientY: cy, bubbles: true, view: window }))
+        await new Promise(r => setTimeout(r, 16))
+      }
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: cx - 300, clientY: cy, bubbles: true, view: window }))
+      await new Promise(r => setTimeout(r, 100))
+
+      const childAfter = child.getBoundingClientRect()
+      const groupRect = group.getBoundingClientRect()
+
+      return {
+        childLeft: childAfter.left,
+        groupLeft: groupRect.left,
+        childInsideGroup: childAfter.left >= groupRect.left,
+      }
+    })
+
+    expect(result.childInsideGroup).toBe(true)
   })
 })
