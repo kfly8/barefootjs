@@ -538,20 +538,17 @@ export function PivotTableDemo() {
               >
                 <td className="p-2 border-r" style={`padding-left: ${12 + item.depth * 16}px`}>
                   <div className="flex items-center gap-1">
-                    {item.isGroup ? (
-                      <button
-                        className="pivot-expand-btn text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => toggleExpand(item.id)}
-                        aria-label={isGroupExpanded(item.id) ? 'Collapse' : 'Expand'}
-                        aria-expanded={isGroupExpanded(item.id)}
-                      >
-                        {isGroupExpanded(item.id)
-                          ? <ChevronDownIcon className="w-3.5 h-3.5" />
-                          : <ChevronRightIcon className="w-3.5 h-3.5" />}
-                      </button>
-                    ) : (
-                      <span className="w-3.5 h-3.5 inline-block" />
-                    )}
+                    <button
+                      className={`pivot-expand-btn text-muted-foreground hover:text-foreground transition-colors${item.isGroup ? '' : ' invisible pointer-events-none'}`}
+                      onClick={() => toggleExpand(item.id)}
+                      aria-label={isGroupExpanded(item.id) ? 'Collapse' : 'Expand'}
+                      aria-expanded={isGroupExpanded(item.id)}
+                      tabindex={item.isGroup ? 0 : -1}
+                    >
+                      {isGroupExpanded(item.id)
+                        ? <ChevronDownIcon className="w-3.5 h-3.5" />
+                        : <ChevronRightIcon className="w-3.5 h-3.5" />}
+                    </button>
                     <span className={item.isGroup ? 'font-medium' : 'text-muted-foreground'}>
                       {item.label}
                     </span>
