@@ -240,6 +240,14 @@ export function createEdgeRenderer<
           srcHandle.style.pointerEvents = 'all'
           reconnectGroup.appendChild(srcHandle)
           reconnectSourceHandles.set(edge.id, srcHandle)
+          // Darken edge on reconnect handle hover
+          const srcEdgeId = edge.id
+          srcHandle.addEventListener('mouseenter', () => {
+            edgeElements.get(srcEdgeId)?.classList.add('bf-flow__edge--reconnect-hover')
+          })
+          srcHandle.addEventListener('mouseleave', () => {
+            edgeElements.get(srcEdgeId)?.classList.remove('bf-flow__edge--reconnect-hover')
+          })
           // Attach reconnection handler
           const container = store.domNode()
           if (container) {
@@ -260,6 +268,13 @@ export function createEdgeRenderer<
           tgtHandle.style.pointerEvents = 'all'
           reconnectGroup.appendChild(tgtHandle)
           reconnectTargetHandles.set(edge.id, tgtHandle)
+          const tgtEdgeId = edge.id
+          tgtHandle.addEventListener('mouseenter', () => {
+            edgeElements.get(tgtEdgeId)?.classList.add('bf-flow__edge--reconnect-hover')
+          })
+          tgtHandle.addEventListener('mouseleave', () => {
+            edgeElements.get(tgtEdgeId)?.classList.remove('bf-flow__edge--reconnect-hover')
+          })
           const container = store.domNode()
           if (container) {
             attachReconnectionHandler(tgtHandle, edge, 'target', container, svgContainer, store)
