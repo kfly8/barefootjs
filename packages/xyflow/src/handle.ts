@@ -28,8 +28,11 @@ export function createHandle(
   const position = props.position ?? Position.Top
 
   const el = document.createElement('div')
-  el.className = `bf-flow__handle bf-flow__handle--${handleType}`
+  // Include bare 'source'/'target' class — @xyflow/system's getHandleBounds
+  // queries by `.source` / `.target` to compute handle positions for edges.
+  el.className = `bf-flow__handle bf-flow__handle--${handleType} ${handleType}`
   el.dataset.handleType = handleType
+  el.dataset.handlepos = position  // data-handlepos (lowercase) for @xyflow/system
   el.dataset.handlePosition = position
   el.dataset.nodeId = props.nodeId
   if (props.id) {
