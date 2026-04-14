@@ -260,7 +260,7 @@ export function attachReconnectionHandler<
     connectionLine.setAttribute('fill', 'none')
     connectionLine.setAttribute('stroke', '#b1b1b7')
     connectionLine.setAttribute('stroke-width', '1')
-    connectionLine.setAttribute('stroke-dasharray', '5')
+    connectionLine.setAttribute('pointer-events', 'none')
     edgesSvg.appendChild(connectionLine)
 
     let lastHoveredHandle: HTMLElement | null = null
@@ -302,11 +302,12 @@ export function attachReconnectionHandler<
         hoveredHandle.dataset.nodeId &&
         hoveredHandle.dataset.nodeId !== anchorNodeId
       ) {
-        // Build connection: anchor is the fixed end, hovered node is the new end
+        // Build connection based on the hovered handle's type
         const hoveredNodeId = hoveredHandle.dataset.nodeId
-        const conn: Connection = endpointType === 'source'
-          ? { source: hoveredNodeId, target: anchorNodeId, sourceHandle: null, targetHandle: null }
-          : { source: anchorNodeId, target: hoveredNodeId, sourceHandle: null, targetHandle: null }
+        const hoveredHandleType = hoveredHandle.classList.contains('bf-flow__handle--target') ? 'target' : 'source'
+        const conn: Connection = hoveredHandleType === 'target'
+          ? { source: anchorNodeId, target: hoveredNodeId, sourceHandle: null, targetHandle: null }
+          : { source: hoveredNodeId, target: anchorNodeId, sourceHandle: null, targetHandle: null }
 
         const isValid = checkConnectionValidity(store, conn)
         hoveredHandle.classList.remove('invalid')
@@ -339,9 +340,11 @@ export function attachReconnectionHandler<
         droppedHandle.dataset.nodeId !== anchorNodeId
       ) {
         const droppedNodeId = droppedHandle.dataset.nodeId
-        const newConnection: Connection = endpointType === 'source'
-          ? { source: droppedNodeId, target: anchorNodeId, sourceHandle: null, targetHandle: null }
-          : { source: anchorNodeId, target: droppedNodeId, sourceHandle: null, targetHandle: null }
+        // Determine connection direction from the dropped handle's type
+        const droppedHandleType = droppedHandle.classList.contains('bf-flow__handle--target') ? 'target' : 'source'
+        const newConnection: Connection = droppedHandleType === 'target'
+          ? { source: anchorNodeId, target: droppedNodeId, sourceHandle: null, targetHandle: null }
+          : { source: droppedNodeId, target: anchorNodeId, sourceHandle: null, targetHandle: null }
 
         const isValid = checkConnectionValidity(store, newConnection)
 
