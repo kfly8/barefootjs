@@ -227,5 +227,10 @@ describe('nested loops/conditionals inside mapArray (#830, #839)', () => {
 
     // Handler must use the loop param accessor pattern: row().id (not row.id)
     expect(content).toContain('toggle(row().id)')
+
+    // Must use qsa() (not scope-aware $()) for element lookup inside loop items,
+    // because loop item elements lack bf-s and $() would fail to match
+    expect(bindEventsMatch![1]).toContain('qsa(__branchScope')
+    expect(bindEventsMatch![1]).not.toContain('$(__branchScope')
   })
 })

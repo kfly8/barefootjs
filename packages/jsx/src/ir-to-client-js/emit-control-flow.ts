@@ -398,7 +398,10 @@ function emitLoopCondBranchEventBindings(
   }
   for (const [slotId, slotEvents] of eventsBySlot) {
     const v = varSlotId(slotId)
-    lines.push(`${indent}{ const [_${v}] = $(__branchScope, '${slotId}')`)
+    // Use qsa() instead of $() because __branchScope is a loop item element
+    // (without bf-s attr), and $() uses scope-aware search that would fail
+    // to find descendants when the nearest bf-s is the component root.
+    lines.push(`${indent}{ const _${v} = qsa(__branchScope, '[bf="${slotId}"]')`)
     for (const ev of slotEvents) {
       const handler = wrapHandlerInBlock(wrap(ev.handler))
       lines.push(`${indent}  if (_${v}) _${v}.addEventListener('${toDomEventName(ev.eventName)}', ${handler}) }`)
