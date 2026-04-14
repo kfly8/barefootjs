@@ -35,6 +35,25 @@ export function createEdgeRenderer<
   edgeGroup.setAttribute('class', 'bf-flow__edge-group')
   svgContainer.appendChild(edgeGroup)
 
+  // Overlay SVG for reconnection handles — above nodes layer.
+  // The main edges SVG is behind nodes; this overlay lets reconnect
+  // handles receive mouse events on top of node elements.
+  const viewportEl = svgContainer.parentElement!
+  const reconnectOverlay = document.createElementNS(SVG_NS, 'svg')
+  reconnectOverlay.setAttribute('class', 'bf-flow__reconnect-overlay')
+  reconnectOverlay.style.position = 'absolute'
+  reconnectOverlay.style.top = '0'
+  reconnectOverlay.style.left = '0'
+  reconnectOverlay.style.width = '100%'
+  reconnectOverlay.style.height = '100%'
+  reconnectOverlay.style.overflow = 'visible'
+  reconnectOverlay.style.pointerEvents = 'none'
+  reconnectOverlay.style.zIndex = '5'
+  viewportEl.appendChild(reconnectOverlay)
+
+  const reconnectGroup = document.createElementNS(SVG_NS, 'g')
+  reconnectOverlay.appendChild(reconnectGroup)
+
   // Track edge path elements, hit areas, custom groups, and reconnection handles by edge id
   const edgeElements = new Map<string, SVGPathElement>()
   const hitElements = new Map<string, SVGPathElement>()
@@ -53,6 +72,10 @@ export function createEdgeRenderer<
     store.positionEpoch()
     store.nodes()
     const nodeLookup = store.nodeLookup()
+
+    // Sync reconnect overlay transform with viewport
+    const vp = store.viewport()
+    reconnectGroup.setAttribute('transform', `translate(${vp.x}, ${vp.y}) scale(${vp.zoom})`)
     const existingIds = new Set(edgeElements.keys())
 
     for (const edge of edges) {
@@ -213,9 +236,9 @@ export function createEdgeRenderer<
         if (!srcHandle) {
           srcHandle = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
           srcHandle.setAttribute('class', 'bf-flow__edge-reconnect bf-flow__edge-reconnect--source')
-          srcHandle.setAttribute('r', '20')
+          srcHandle.setAttribute('r', '10')
           srcHandle.style.pointerEvents = 'all'
-          edgeGroup.appendChild(srcHandle)
+          reconnectGroup.appendChild(srcHandle)
           reconnectSourceHandles.set(edge.id, srcHandle)
           // Attach reconnection handler
           const container = store.domNode()
@@ -231,9 +254,9 @@ export function createEdgeRenderer<
         if (!tgtHandle) {
           tgtHandle = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
           tgtHandle.setAttribute('class', 'bf-flow__edge-reconnect bf-flow__edge-reconnect--target')
-          tgtHandle.setAttribute('r', '20')
+          tgtHandle.setAttribute('r', '10')
           tgtHandle.style.pointerEvents = 'all'
-          edgeGroup.appendChild(tgtHandle)
+          reconnectGroup.appendChild(tgtHandle)
           reconnectTargetHandles.set(edge.id, tgtHandle)
           const container = store.domNode()
           if (container) {
@@ -263,6 +286,7 @@ export function createEdgeRenderer<
 
   onCleanup(() => {
     edgeGroup.remove()
+    reconnectOverlay.remove()
     edgeElements.clear()
     hitElements.clear()
     customEdgeGroups.clear()
