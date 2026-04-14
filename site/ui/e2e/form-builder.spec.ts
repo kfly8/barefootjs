@@ -324,5 +324,16 @@ test.describe('Form Builder Block', () => {
       const newChild = groupField.locator('.child-field').last()
       await expect(newChild).not.toContainText('undefined')
     })
+
+    test('editing child label updates group preview label', async ({ page }) => {
+      const s = section(page)
+      const groupField = s.locator('.field-editor').nth(3)
+      const firstChild = groupField.locator('.child-field').first()
+      // Edit the child label from 'Street' to 'Updated Street'
+      await firstChild.locator('.child-label-input').fill('Updated Street')
+      // Preview group should show the updated label
+      const groupPreview = s.locator('.preview-field-group').first()
+      await expect(groupPreview.locator('.child-preview').first()).toContainText('Updated Street')
+    })
   })
 })

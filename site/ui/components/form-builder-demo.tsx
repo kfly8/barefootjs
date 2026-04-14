@@ -455,10 +455,10 @@ export function FormBuilderDemo() {
                         <div key={child.id} className="child-preview">
                           {child.type === 'text' ? (
                             <div className="space-y-1">
-                              <Label className="text-xs">
+                              <label className="text-xs font-medium leading-none">
                                 {child.label}
                                 {child.required ? <span className="text-destructive ml-1">*</span> : null}
-                              </Label>
+                              </label>
                               <Input placeholder={child.label} className="preview-child-input" />
                             </div>
                           ) : null}
@@ -470,7 +470,7 @@ export function FormBuilderDemo() {
                           ) : null}
                           {child.type === 'select' ? (
                             <div className="space-y-1">
-                              <Label className="text-xs">{child.label}</Label>
+                              <label className="text-xs font-medium leading-none">{child.label}</label>
                               <select className="preview-child-select w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm appearance-none cursor-pointer">
                                 <option value="">Select…</option>
                                 {child.options.split(',').map(opt => (
