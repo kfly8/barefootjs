@@ -20,6 +20,7 @@ import type {
   IsValidConnection,
   NodeDragItem,
   ConnectionMode,
+  Connection,
 } from '@xyflow/system'
 import type { Signal, Memo } from '@barefootjs/client'
 import type { ComponentDef } from '@barefootjs/client-runtime'
@@ -47,7 +48,16 @@ export type {
   IsValidConnection,
   NodeDragItem,
   ConnectionMode,
+  Connection,
 }
+
+/**
+ * Callback fired when an edge is reconnected to a new handle.
+ */
+export type OnReconnect<EdgeType extends EdgeBase = EdgeBase> = (
+  oldEdge: EdgeType,
+  newConnection: Connection,
+) => void
 
 /**
  * Options for creating a flow store.
@@ -70,7 +80,11 @@ export type FlowStoreOptions<
 
   // Custom component types
   nodeTypes?: Record<string, ComponentDef | ((props: NodeComponentProps<NodeType>) => void)>
-  edgeTypes?: Record<string, ComponentDef>
+  edgeTypes?: Record<string, ComponentDef | ((props: EdgeComponentProps<EdgeType>) => void)>
+
+  // Edge reconnection
+  edgesReconnectable?: boolean
+  onReconnect?: OnReconnect<EdgeType>
 
   // Callbacks
   onConnect?: OnConnect
@@ -154,7 +168,11 @@ export type FlowStore<
 
   // Custom component types
   nodeTypes?: Record<string, ComponentDef | ((props: NodeComponentProps<NodeType>) => void)>
-  edgeTypes?: Record<string, ComponentDef>
+  edgeTypes?: Record<string, ComponentDef | ((props: EdgeComponentProps<EdgeType>) => void)>
+
+  // Edge reconnection
+  edgesReconnectable: boolean
+  onReconnect?: OnReconnect<EdgeType>
 
   // Callbacks
   onConnect?: OnConnect
@@ -194,6 +212,34 @@ export type NodeComponentProps<NodeType extends NodeBase = NodeBase> = {
 }
 
 /**
+ * Props passed to custom edge components.
+ */
+export type EdgeComponentProps<EdgeType extends EdgeBase = EdgeBase> = {
+  id: string
+  source: string
+  target: string
+  sourceX: number
+  sourceY: number
+  targetX: number
+  targetY: number
+  sourcePosition: string
+  targetPosition: string
+  data: EdgeType['data']
+  selected: boolean
+  animated: boolean
+  label?: string
+  /** SVG group element to render custom edge content into */
+  svgGroup: SVGGElement
+}
+
+/**
+ * Selection mode for rectangle selection.
+ * - 'partial': selects nodes that partially overlap the rectangle (default)
+ * - 'full': only selects nodes fully contained in the rectangle
+ */
+export type SelectionMode = 'partial' | 'full'
+
+/**
  * Props for the Flow init function.
  */
 export type FlowProps<
@@ -201,4 +247,8 @@ export type FlowProps<
   EdgeType extends EdgeBase = EdgeBase,
 > = FlowStoreOptions<NodeType, EdgeType> & {
   class?: string
+  /** When true, dragging on empty pane starts selection without Shift key */
+  selectionOnDrag?: boolean
+  /** Selection mode: 'partial' (default) or 'full' */
+  selectionMode?: SelectionMode
 }

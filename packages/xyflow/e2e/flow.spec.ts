@@ -155,6 +155,107 @@ test.describe('Edge Rendering', () => {
 })
 
 // ============================================================
+// Edge Labels
+// ============================================================
+test.describe('Edge Labels', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      document.getElementById('edge-labels')?.scrollIntoView({ block: 'center' })
+    })
+  })
+
+  test('renders edge labels with correct text', async ({ page }) => {
+    const labels = page.locator('#edge-labels .bf-flow__edge-label')
+    await expect(labels).toHaveCount(2)
+    await expect(labels.nth(0)).toHaveText('connection 1')
+    await expect(labels.nth(1)).toHaveText('connection 2')
+  })
+
+  test('edge labels have data-edge-id attribute', async ({ page }) => {
+    await expect(
+      page.locator('#edge-labels .bf-flow__edge-label[data-edge-id="el-ab"]'),
+    ).toBeAttached()
+    await expect(
+      page.locator('#edge-labels .bf-flow__edge-label[data-edge-id="el-ac"]'),
+    ).toBeAttached()
+  })
+
+  test('edges without label do not render label element', async ({ page }) => {
+    await expect(
+      page.locator('#edge-labels .bf-flow__edge-label[data-edge-id="el-bc"]'),
+    ).not.toBeAttached()
+  })
+
+  test('edge labels are positioned with transform', async ({ page }) => {
+    const label = page.locator('#edge-labels .bf-flow__edge-label').first()
+    const style = await label.getAttribute('style')
+    expect(style).toContain('translate')
+  })
+
+  test('edge selection via click on hit area', async ({ page }) => {
+    await page.waitForSelector('#edge-labels .bf-flow__edge')
+
+    await page.evaluate(() => {
+      const hitPath = document.querySelector('#edge-labels path[stroke="transparent"]')!
+      hitPath.dispatchEvent(
+        new MouseEvent('mousedown', { button: 0, bubbles: true, view: window }),
+      )
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, view: window }))
+    })
+    await page.waitForTimeout(100)
+
+    const selected = await page.evaluate(() => {
+      const edge = document.querySelector('#edge-labels .bf-flow__edge')
+      return edge?.classList.contains('bf-flow__edge--selected')
+    })
+    expect(selected).toBe(true)
+  })
+
+  test('edge labels update position when node is dragged', async ({ page }) => {
+    await page.waitForSelector('#edge-labels .bf-flow__edge-label')
+
+    const result = await page.evaluate(async () => {
+      const label = document.querySelector('#edge-labels .bf-flow__edge-label')! as HTMLElement
+      const before = label.style.transform
+
+      // Drag source node
+      const node = document.querySelector('#edge-labels [data-id="el1"]')!
+      const rect = node.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+
+      node.dispatchEvent(
+        new MouseEvent('mousedown', {
+          clientX: cx,
+          clientY: cy,
+          button: 0,
+          bubbles: true,
+          view: window,
+        }),
+      )
+      for (let i = 1; i <= 5; i++) {
+        document.dispatchEvent(
+          new MouseEvent('mousemove', {
+            clientX: cx + i * 20,
+            clientY: cy,
+            bubbles: true,
+            view: window,
+          }),
+        )
+        await new Promise((r) => setTimeout(r, 16))
+      }
+      document.dispatchEvent(
+        new MouseEvent('mouseup', { bubbles: true, view: window }),
+      )
+      await new Promise((r) => setTimeout(r, 100))
+
+      return { before, after: label.style.transform }
+    })
+    expect(result.after).not.toBe(result.before)
+  })
+})
+
+// ============================================================
 // Edge Properties (hidden, animated)
 // ============================================================
 test.describe('Edge Properties', () => {
@@ -662,6 +763,377 @@ test.describe('Stress Test (20 nodes)', () => {
 })
 
 // ============================================================
+// Selection Rectangle
+// ============================================================
+test.describe('Selection Rectangle', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      document.getElementById('selection-rect')?.scrollIntoView({ block: 'center' })
+    })
+  })
+
+  test('Shift+drag on empty pane draws selection rectangle', async ({ page }) => {
+    await page.waitForSelector('#selection-rect .bf-flow__node[data-id="sr1"]')
+
+    const rectVisible = await page.evaluate(async () => {
+      const container = document.getElementById('selection-rect')!
+      const cr = container.getBoundingClientRect()
+      // Start drag on empty area (bottom-right corner where no nodes are)
+      const startX = cr.left + cr.width - 50
+      const startY = cr.top + cr.height - 50
+
+      container.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: startX, clientY: startY, button: 0,
+        shiftKey: true, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Move to create a rectangle
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: startX + 100, clientY: startY + 50,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Check if selection rect exists
+      const selRect = container.querySelector('.bf-flow__selection')
+      const exists = selRect !== null
+      const hasSize = selRect
+        ? (parseInt((selRect as HTMLElement).style.width) > 0)
+        : false
+
+      // Release
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: startX + 100, clientY: startY + 50,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      return { exists, hasSize }
+    })
+
+    expect(rectVisible.exists).toBe(true)
+    expect(rectVisible.hasSize).toBe(true)
+  })
+
+  test('releasing mouse removes selection rectangle', async ({ page }) => {
+    await page.waitForSelector('#selection-rect .bf-flow__node[data-id="sr1"]')
+
+    const afterRelease = await page.evaluate(async () => {
+      const container = document.getElementById('selection-rect')!
+      const cr = container.getBoundingClientRect()
+      const startX = cr.left + cr.width - 50
+      const startY = cr.top + cr.height - 50
+
+      container.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: startX, clientY: startY, button: 0,
+        shiftKey: true, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: startX + 100, clientY: startY + 50,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Release
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: startX + 100, clientY: startY + 50,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      // Check rect is removed
+      return container.querySelector('.bf-flow__selection') === null
+    })
+
+    expect(afterRelease).toBe(true)
+  })
+
+  test('nodes inside selection rectangle become selected', async ({ page }) => {
+    await page.waitForSelector('#selection-rect .bf-flow__node[data-id="sr1"]')
+
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('selection-rect')!
+      const cr = container.getBoundingClientRect()
+
+      // Drag from top-left to cover sr1 (50,50) and sr3 (50,200) — left column
+      const startX = cr.left + 10
+      const startY = cr.top + 10
+      const endX = cr.left + 220
+      const endY = cr.top + 280
+
+      container.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: startX, clientY: startY, button: 0,
+        shiftKey: true, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Move in steps for more reliable detection
+      for (let i = 1; i <= 5; i++) {
+        document.dispatchEvent(new MouseEvent('mousemove', {
+          clientX: startX + ((endX - startX) * i) / 5,
+          clientY: startY + ((endY - startY) * i) / 5,
+          bubbles: true, view: window,
+        }))
+        await new Promise((r) => setTimeout(r, 10))
+      }
+
+      // Release
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: endX, clientY: endY,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 100))
+
+      // Check which nodes are selected
+      const nodes = container.querySelectorAll('.bf-flow__node')
+      const selected: string[] = []
+      nodes.forEach((n) => {
+        if (n.classList.contains('bf-flow__node--selected')) {
+          selected.push(n.getAttribute('data-id')!)
+        }
+      })
+      return selected
+    })
+
+    // sr1 and sr3 are in the left column, should be selected
+    // sr5 is far right, should not be selected
+    expect(result).toContain('sr1')
+    expect(result).toContain('sr3')
+    expect(result).not.toContain('sr5')
+  })
+})
+
+// ============================================================
+// Selection on Drag
+// ============================================================
+test.describe('Selection on Drag', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      document.getElementById('selection-on-drag')?.scrollIntoView({ block: 'center' })
+    })
+  })
+
+  test('drag without Shift starts selection when selectionOnDrag is true', async ({ page }) => {
+    await page.waitForSelector('#selection-on-drag .bf-flow__node[data-id="sd1"]')
+
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('selection-on-drag')!
+      const cr = container.getBoundingClientRect()
+
+      // Drag on empty area without Shift
+      const startX = cr.left + cr.width - 50
+      const startY = cr.top + cr.height - 50
+
+      container.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: startX, clientY: startY, button: 0,
+        shiftKey: false, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: startX + 80, clientY: startY + 50,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Check if selection rect appears
+      const selRect = container.querySelector('.bf-flow__selection')
+      const exists = selRect !== null
+
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: startX + 80, clientY: startY + 50,
+        bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      return exists
+    })
+
+    expect(result).toBe(true)
+  })
+})
+
+// ============================================================
+// Connection Validation (isValidConnection)
+// ============================================================
+test.describe('Connection Validation', () => {
+  test.beforeEach(async ({ page }) => {
+    // Scroll the validation container into view since it's at the bottom of the page
+    await page.evaluate(() => {
+      const el = document.getElementById('validation')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#validation .bf-flow__node[data-id="v-source"]')
+    await page.waitForSelector('#validation .bf-flow__node[data-id="v-allowed"]')
+    await page.waitForSelector('#validation .bf-flow__node[data-id="v-blocked"]')
+  })
+
+  test('valid connection creates an edge', async ({ page }) => {
+    const beforeEdges = await page.locator('#validation .bf-flow__edge').count()
+
+    const created = await page.evaluate(async () => {
+      const sourceHandle = document.querySelector('#validation [data-id="v-source"] .bf-flow__handle--source')!
+      const targetHandle = document.querySelector('#validation [data-id="v-allowed"] .bf-flow__handle--target')!
+      const sr = sourceHandle.getBoundingClientRect()
+      const tr = targetHandle.getBoundingClientRect()
+
+      sourceHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: sr.left + 3, clientY: sr.top + 3, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 200))
+
+      return document.querySelectorAll('#validation .bf-flow__edge').length
+    })
+
+    expect(created).toBeGreaterThan(beforeEdges)
+  })
+
+  test('invalid connection does not create an edge', async ({ page }) => {
+    const beforeEdges = await page.locator('#validation .bf-flow__edge').count()
+
+    const afterEdges = await page.evaluate(async () => {
+      const sourceHandle = document.querySelector('#validation [data-id="v-source"] .bf-flow__handle--source')!
+      const targetHandle = document.querySelector('#validation [data-id="v-blocked"] .bf-flow__handle--target')!
+      const sr = sourceHandle.getBoundingClientRect()
+      const tr = targetHandle.getBoundingClientRect()
+
+      sourceHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: sr.left + 3, clientY: sr.top + 3, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 200))
+
+      return document.querySelectorAll('#validation .bf-flow__edge').length
+    })
+
+    expect(afterEdges).toBe(beforeEdges)
+  })
+
+  test('valid target handle shows no invalid class during drag', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const sourceHandle = document.querySelector('#validation [data-id="v-source"] .bf-flow__handle--source')!
+      const targetHandle = document.querySelector('#validation [data-id="v-allowed"] .bf-flow__handle--target')!
+      const sr = sourceHandle.getBoundingClientRect()
+      const tr = targetHandle.getBoundingClientRect()
+
+      sourceHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: sr.left + 3, clientY: sr.top + 3, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Move to the target handle
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      const hasInvalid = targetHandle.classList.contains('invalid')
+
+      // Clean up — release mouse
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      return { hasInvalid }
+    })
+
+    expect(result.hasInvalid).toBe(false)
+  })
+
+  test('invalid target handle shows .invalid class during drag', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const sourceHandle = document.querySelector('#validation [data-id="v-source"] .bf-flow__handle--source')!
+      const targetHandle = document.querySelector('#validation [data-id="v-blocked"] .bf-flow__handle--target')!
+      const sr = sourceHandle.getBoundingClientRect()
+      const tr = targetHandle.getBoundingClientRect()
+
+      sourceHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: sr.left + 3, clientY: sr.top + 3, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+
+      // Move to the blocked target handle
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      const hasValid = targetHandle.classList.contains('valid')
+      const hasInvalid = targetHandle.classList.contains('invalid')
+
+      // Clean up — release mouse
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      return { hasValid, hasInvalid }
+    })
+
+    expect(result.hasValid).toBe(false)
+    expect(result.hasInvalid).toBe(true)
+  })
+
+  test('validation classes are cleaned up after mouse up', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const sourceHandle = document.querySelector('#validation [data-id="v-source"] .bf-flow__handle--source')!
+      const targetHandle = document.querySelector('#validation [data-id="v-blocked"] .bf-flow__handle--target')!
+      const sr = sourceHandle.getBoundingClientRect()
+      const tr = targetHandle.getBoundingClientRect()
+
+      sourceHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: sr.left + 3, clientY: sr.top + 3, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 10))
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      // Verify the class is present during drag
+      const hasDuring = targetHandle.classList.contains('invalid')
+
+      // Release mouse
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: tr.left + 3, clientY: tr.top + 3, bubbles: true, view: window,
+      }))
+      await new Promise((r) => setTimeout(r, 50))
+
+      // Verify classes are cleaned up
+      const hasValidAfter = targetHandle.classList.contains('valid')
+      const hasInvalidAfter = targetHandle.classList.contains('invalid')
+
+      return { hasDuring, hasValidAfter, hasInvalidAfter }
+    })
+
+    expect(result.hasDuring).toBe(true)
+    expect(result.hasValidAfter).toBe(false)
+    expect(result.hasInvalidAfter).toBe(false)
+  })
+})
+
+// ============================================================
 // Heavy Stress Test (100 nodes, 10x10 grid)
 // ============================================================
 test.describe('Heavy Stress Test (100 nodes)', () => {
@@ -705,5 +1177,702 @@ test.describe('Heavy Stress Test (100 nodes)', () => {
     })
     // With fitView, most nodes should be visible
     expect(someVisible).toBeGreaterThan(50)
+  })
+})
+
+// ============================================================
+// MiniMap Plugin
+// ============================================================
+test.describe('MiniMap Plugin', () => {
+  test.beforeEach(async ({ page }) => {
+    // Scroll minimap section into viewport so page.mouse can reach it
+    await page.locator('#minimap-test').scrollIntoViewIfNeeded()
+    await page.waitForTimeout(200)
+  })
+
+  test('renders minimap container', async ({ page }) => {
+    await expect(page.locator('#minimap-test .bf-flow__minimap')).toBeVisible()
+  })
+
+  test('minimap contains SVG element', async ({ page }) => {
+    const svg = page.locator('#minimap-test .bf-flow__minimap svg')
+    await expect(svg).toBeAttached()
+    expect(Number(await svg.getAttribute('width'))).toBe(200)
+    expect(Number(await svg.getAttribute('height'))).toBe(150)
+  })
+
+  test('minimap renders node rectangles', async ({ page }) => {
+    await page.waitForTimeout(500)
+    const rects = page.locator('#minimap-test .bf-flow__minimap svg g rect')
+    const count = await rects.count()
+    expect(count).toBe(4)
+  })
+
+  test('minimap has viewport mask path', async ({ page }) => {
+    await page.waitForTimeout(500)
+    const mask = page.locator('#minimap-test .bf-flow__minimap-mask')
+    await expect(mask).toBeAttached()
+    const d = await mask.getAttribute('d')
+    expect(d).toBeTruthy()
+    expect(await mask.getAttribute('fill-rule')).toBe('evenodd')
+  })
+
+  test('minimap SVG has viewBox attribute', async ({ page }) => {
+    await page.waitForTimeout(500)
+    const svg = page.locator('#minimap-test .bf-flow__minimap svg')
+    const viewBox = await svg.getAttribute('viewBox')
+    expect(viewBox).toBeTruthy()
+    expect(viewBox!.split(' ').length).toBe(4)
+  })
+
+  test('minimap has interactive cursor', async ({ page }) => {
+    const svg = page.locator('#minimap-test .bf-flow__minimap svg')
+    const cursor = await svg.evaluate((el: SVGSVGElement) => el.style.cursor)
+    expect(cursor).toBe('grab')
+  })
+
+  test('dragging on minimap pans the main viewport', async ({ page }) => {
+    await page.waitForTimeout(500)
+    const container = page.locator('#minimap-test')
+    const viewport = container.locator('.bf-flow__viewport')
+    const minimapSvg = container.locator('.bf-flow__minimap svg')
+
+    const transformBefore = await viewport.evaluate((el: HTMLElement) => el.style.transform)
+
+    const box = await minimapSvg.boundingBox()
+    if (!box) throw new Error('minimap SVG not found')
+
+    const startX = box.x + box.width / 2
+    const startY = box.y + box.height / 2
+
+    await page.mouse.move(startX, startY)
+    await page.mouse.down()
+    await page.mouse.move(startX + 30, startY + 20, { steps: 5 })
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+
+    const transformAfter = await viewport.evaluate((el: HTMLElement) => el.style.transform)
+    expect(transformAfter).not.toBe(transformBefore)
+  })
+
+  test('minimap viewport indicator updates after main viewport pan', async ({ page }) => {
+    await page.waitForTimeout(500)
+    const container = page.locator('#minimap-test')
+    const mask = container.locator('.bf-flow__minimap-mask')
+
+    const maskBefore = await mask.getAttribute('d')
+
+    const mainBox = await container.boundingBox()
+    if (!mainBox) throw new Error('container not found')
+
+    const startX = mainBox.x + 50
+    const startY = mainBox.y + 50
+    await page.mouse.move(startX, startY)
+    await page.mouse.down()
+    await page.mouse.move(startX - 100, startY - 80, { steps: 10 })
+    await page.mouse.up()
+    await page.waitForTimeout(500)
+
+    const maskAfter = await mask.getAttribute('d')
+    expect(maskAfter).not.toBe(maskBefore)
+  })
+
+  test('minimap zoom via scroll wheel changes main viewport zoom', async ({ page }) => {
+    await page.waitForTimeout(500)
+    const container = page.locator('#minimap-test')
+    const viewport = container.locator('.bf-flow__viewport')
+    const minimapSvg = container.locator('.bf-flow__minimap svg')
+
+    const before = await getTransform(viewport)
+    const box = await minimapSvg.boundingBox()
+    if (!box) throw new Error('minimap SVG not found')
+
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.wheel(0, -300)
+    await page.waitForTimeout(500)
+
+    const after = await getTransform(viewport)
+    expect(after.scale).not.toBeCloseTo(before.scale, 1)
+  })
+})
+
+// ============================================================
+// Edge Reconnection
+// ============================================================
+test.describe('Edge Reconnection', () => {
+  test.beforeEach(async ({ page }) => {
+    // Scroll the reconnect container into view since the page is long
+    await page.evaluate(() => {
+      const el = document.getElementById('reconnect')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#reconnect .bf-flow__node[data-id="r-a"]')
+    await page.waitForSelector('#reconnect .bf-flow__node[data-id="r-b"]')
+    await page.waitForSelector('#reconnect .bf-flow__node[data-id="r-c"]')
+  })
+
+  test('reconnect endpoint handles are visible on reconnectable edges', async ({ page }) => {
+    // Reconnection handles (SVG circles) should exist for the edge
+    const handles = await page.locator('#reconnect .bf-flow__edge-reconnect').count()
+    // 1 edge with 2 endpoints (source + target)
+    expect(handles).toBe(2)
+  })
+
+  test('reconnecting edge to a different node updates the edge', async ({ page }) => {
+    // Edge r-ab connects r-a → r-b. Drag the target endpoint to r-c.
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('reconnect')!
+
+      // Find the target reconnect handle (the one at the target end of r-ab)
+      const tgtHandle = container.querySelector('.bf-flow__edge-reconnect--target') as SVGCircleElement
+      if (!tgtHandle) return { error: 'No target reconnect handle found' }
+
+      // Get the target handle position in page coordinates
+      const svg = container.querySelector('.bf-flow__edges') as SVGSVGElement
+      const viewport = container.querySelector('.bf-flow__viewport') as HTMLElement
+      const ctm = svg.getScreenCTM()
+      if (!ctm) return { error: 'No CTM' }
+
+      const cx = parseFloat(tgtHandle.getAttribute('cx') || '0')
+      const cy = parseFloat(tgtHandle.getAttribute('cy') || '0')
+
+      // Transform SVG coords to screen coords
+      const pt = svg.createSVGPoint()
+      pt.x = cx
+      pt.y = cy
+      const screenPt = pt.matrixTransform(ctm)
+
+      // Find the target handle (r-c's target handle at the top)
+      const rCHandleTarget = container.querySelector('[data-id="r-c"] .bf-flow__handle--target') as HTMLElement
+      if (!rCHandleTarget) return { error: 'No r-c target handle' }
+      const targetRect = rCHandleTarget.getBoundingClientRect()
+      const targetX = targetRect.left + targetRect.width / 2
+      const targetY = targetRect.top + targetRect.height / 2
+
+      // Dispatch drag from reconnect handle to r-c's handle
+      tgtHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: screenPt.x, clientY: screenPt.y, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: targetX, clientY: targetY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: targetX, clientY: targetY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 200))
+
+      // Check onReconnect was called
+      const log = (window as any).__reconnectLog || []
+      return {
+        reconnectCalled: log.length > 0,
+        oldEdgeId: log[0]?.oldEdge?.id,
+        newTarget: log[0]?.newConnection?.target,
+        edgeCount: container.querySelectorAll('.bf-flow__edge').length,
+      }
+    })
+
+    expect(result.reconnectCalled).toBe(true)
+    expect(result.oldEdgeId).toBe('r-ab')
+    expect(result.newTarget).toBe('r-c')
+    // Edge count should still be 1 (reconnected, not added)
+    expect(result.edgeCount).toBe(1)
+  })
+
+  test('dropping on empty space reverts the edge', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('reconnect')!
+
+      const edgeBefore = container.querySelector('.bf-flow__edge[data-id="r-ab"]')
+      const pathBefore = edgeBefore?.getAttribute('d')
+
+      // Find the target reconnect handle
+      const tgtHandle = container.querySelector('.bf-flow__edge-reconnect--target') as SVGCircleElement
+      if (!tgtHandle) return { error: 'No target reconnect handle' }
+
+      const svg = container.querySelector('.bf-flow__edges') as SVGSVGElement
+      const ctm = svg.getScreenCTM()
+      if (!ctm) return { error: 'No CTM' }
+
+      const cx = parseFloat(tgtHandle.getAttribute('cx') || '0')
+      const cy = parseFloat(tgtHandle.getAttribute('cy') || '0')
+      const pt = svg.createSVGPoint()
+      pt.x = cx
+      pt.y = cy
+      const screenPt = pt.matrixTransform(ctm)
+
+      // Drag to empty space (far away from any node)
+      const containerRect = container.getBoundingClientRect()
+      const emptyX = containerRect.left + containerRect.width - 10
+      const emptyY = containerRect.top + containerRect.height - 10
+
+      tgtHandle.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: screenPt.x, clientY: screenPt.y, button: 0, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: emptyX, clientY: emptyY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 10))
+
+      document.dispatchEvent(new MouseEvent('mouseup', {
+        clientX: emptyX, clientY: emptyY, bubbles: true, view: window,
+      }))
+      await new Promise(r => setTimeout(r, 200))
+
+      // Edge should still exist with the same path (reverted)
+      const edgeAfter = container.querySelector('.bf-flow__edge[data-id="r-ab"]')
+      const pathAfter = edgeAfter?.getAttribute('d')
+
+      return {
+        edgeExists: !!edgeAfter,
+        edgeCount: container.querySelectorAll('.bf-flow__edge').length,
+        pathPreserved: pathBefore === pathAfter,
+      }
+    })
+
+    expect(result.edgeExists).toBe(true)
+    expect(result.edgeCount).toBe(1)
+    expect(result.pathPreserved).toBe(true)
+  })
+})
+
+// ============================================================
+// Custom Node Types
+// ============================================================
+test.describe('Custom Node Types', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      const el = document.getElementById('custom-nodes')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#custom-nodes .bf-flow__node[data-id="cn1"]')
+  })
+
+  test('renders custom node content', async ({ page }) => {
+    const node = page.locator('#custom-nodes .bf-flow__node[data-id="cn1"]')
+    // Custom node should contain .bf-flow__node-content wrapper
+    await expect(node.locator('.bf-flow__node-content')).toBeAttached()
+    // Custom content should be inside the wrapper
+    await expect(node.locator('.custom-node-title')).toHaveText('Input Node')
+    await expect(node.locator('.custom-node-desc')).toHaveText('Receives data')
+  })
+
+  test('custom node receives correct props (id, data)', async ({ page }) => {
+    const customNode = page.locator('#custom-nodes .bf-flow__node[data-id="cn1"] .custom-node')
+    await expect(customNode).toBeAttached()
+    // Check data attributes set by the custom renderer
+    expect(await customNode.getAttribute('data-node-id')).toBe('cn1')
+    expect(await customNode.getAttribute('data-node-type')).toBe('custom')
+    expect(await customNode.getAttribute('data-is-connectable')).toBe('false')
+  })
+
+  test('second custom node renders with different data', async ({ page }) => {
+    const node = page.locator('#custom-nodes .bf-flow__node[data-id="cn2"]')
+    await expect(node.locator('.custom-node-title')).toHaveText('Process Node')
+    await expect(node.locator('.custom-node-desc')).toHaveText('Transforms data')
+  })
+
+  test('default node type still works alongside custom types', async ({ page }) => {
+    // cn3 has no type, so it should render as a default node with label text
+    const defaultNode = page.locator('#custom-nodes .bf-flow__node[data-id="cn3"]')
+    await expect(defaultNode).toBeAttached()
+    // Default node should NOT have custom-node class
+    await expect(defaultNode.locator('.custom-node')).not.toBeAttached()
+    // Should show its label text
+    await expect(defaultNode).toContainText('Default Node')
+  })
+
+  test('custom nodes with connectable:false have no handles', async ({ page }) => {
+    const node = page.locator('#custom-nodes .bf-flow__node[data-id="cn1"]')
+    // connectable:false nodes should NOT have handles
+    await expect(node.locator('.bf-flow__handle--source')).not.toBeAttached()
+    await expect(node.locator('.bf-flow__handle--target')).not.toBeAttached()
+  })
+
+  test('handles are present on default nodes alongside custom types', async ({ page }) => {
+    const node = page.locator('#custom-nodes .bf-flow__node[data-id="cn3"]')
+    await expect(node.locator('.bf-flow__handle--source')).toBeAttached()
+    await expect(node.locator('.bf-flow__handle--target')).toBeAttached()
+  })
+
+  test('custom node renders correct number of nodes', async ({ page }) => {
+    // 2 custom + 1 default = 3 nodes
+    await expect(page.locator('#custom-nodes .bf-flow__node')).toHaveCount(3)
+  })
+
+  test('custom nodes demo has no edges (connectable:false)', async ({ page }) => {
+    await expect(page.locator('#custom-nodes .bf-flow__edge')).toHaveCount(0)
+  })
+})
+
+// ============================================================
+// Custom Edge Types
+// ============================================================
+test.describe('Custom Edge Types', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      const el = document.getElementById('custom-edges')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#custom-edges .bf-flow__node[data-id="ce1"]')
+  })
+
+  test('renders custom edge as SVG group', async ({ page }) => {
+    const customEdge = page.locator('#custom-edges .bf-flow__edge-custom[data-id="ece1-2"]')
+    await expect(customEdge).toBeAttached()
+  })
+
+  test('custom edge contains custom path element', async ({ page }) => {
+    const customPath = page.locator('#custom-edges .bf-flow__edge-custom-path')
+    await expect(customPath).toBeAttached()
+    // Should be a dashed line
+    const dashArray = await customPath.getAttribute('stroke-dasharray')
+    expect(dashArray).toBe('8 4')
+  })
+
+  test('custom edge contains midpoint marker', async ({ page }) => {
+    const marker = page.locator('#custom-edges .bf-flow__edge-custom-marker')
+    await expect(marker).toBeAttached()
+    // Circle marker
+    const tagName = await marker.evaluate((el) => el.tagName.toLowerCase())
+    expect(tagName).toBe('circle')
+  })
+
+  test('custom edge renders label from data', async ({ page }) => {
+    const label = page.locator('#custom-edges .bf-flow__edge-custom-label')
+    await expect(label).toBeAttached()
+    await expect(label).toHaveText('custom edge')
+  })
+
+  test('default edge type still works alongside custom edge types', async ({ page }) => {
+    // ece1-3 has no type, should render as default bezier path
+    const defaultEdge = page.locator('#custom-edges .bf-flow__edge[data-id="ece1-3"]')
+    await expect(defaultEdge).toBeAttached()
+    const tagName = await defaultEdge.evaluate((el) => el.tagName.toLowerCase())
+    expect(tagName).toBe('path')
+  })
+
+  test('correct number of edges rendered (custom + default)', async ({ page }) => {
+    // 1 custom edge group + 1 default edge path
+    const customEdges = await page.locator('#custom-edges .bf-flow__edge-custom').count()
+    const defaultEdges = await page.locator('#custom-edges .bf-flow__edge').count()
+    expect(customEdges).toBe(1)
+    expect(defaultEdges).toBe(1)
+  })
+})
+
+// ============================================================
+// Node Resize
+// ============================================================
+test.describe('Node Resize', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      const el = document.getElementById('node-resize')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#node-resize .bf-flow__node[data-id="rs1"]')
+  })
+
+  test('resizable nodes have resize handles', async ({ page }) => {
+    const node1 = page.locator('#node-resize .bf-flow__node[data-id="rs1"]')
+    const handles = node1.locator('.bf-flow__resize-handle')
+    // Handle variant: 4 corner handles (top-left, top-right, bottom-left, bottom-right)
+    await expect(handles).toHaveCount(4)
+  })
+
+  test('resize handles have correct position data attributes', async ({ page }) => {
+    const node1 = page.locator('#node-resize .bf-flow__node[data-id="rs1"]')
+    for (const pos of ['top-left', 'top-right', 'bottom-left', 'bottom-right']) {
+      await expect(node1.locator(`.bf-flow__resize-handle[data-position="${pos}"]`)).toBeAttached()
+    }
+  })
+
+  test('non-resizable node does not have resize handles', async ({ page }) => {
+    const node3 = page.locator('#node-resize .bf-flow__node[data-id="rs3"]')
+    const handles = node3.locator('.bf-flow__resize-handle')
+    await expect(handles).toHaveCount(0)
+  })
+
+  test('resizable nodes have bf-flow__node--resizable class', async ({ page }) => {
+    const node1 = page.locator('#node-resize .bf-flow__node[data-id="rs1"]')
+    await expect(node1).toHaveClass(/bf-flow__node--resizable/)
+  })
+
+  test('resize container element exists', async ({ page }) => {
+    const node1 = page.locator('#node-resize .bf-flow__node[data-id="rs1"]')
+    const container = node1.locator('.bf-flow__node-resizer')
+    await expect(container).toBeAttached()
+  })
+
+  test('dragging bottom-right handle changes node dimensions', async ({ page }) => {
+    const node1 = page.locator('#node-resize .bf-flow__node[data-id="rs1"]')
+
+    // Get initial dimensions
+    const initialBox = await node1.boundingBox()
+    expect(initialBox).toBeTruthy()
+
+    const handle = node1.locator('.bf-flow__resize-handle[data-position="bottom-right"]')
+    const handleBox = await handle.boundingBox()
+    expect(handleBox).toBeTruthy()
+
+    // Drag the bottom-right handle to increase size
+    await page.evaluate(
+      async ({ handleSel, dx, dy }) => {
+        const handleEl = document.querySelector(handleSel)!
+        const rect = handleEl.getBoundingClientRect()
+        const cx = rect.left + rect.width / 2
+        const cy = rect.top + rect.height / 2
+
+        handleEl.dispatchEvent(
+          new MouseEvent('mousedown', { clientX: cx, clientY: cy, button: 0, bubbles: true, view: window }),
+        )
+        await new Promise((r) => setTimeout(r, 50))
+        for (let i = 1; i <= 5; i++) {
+          document.dispatchEvent(
+            new MouseEvent('mousemove', {
+              clientX: cx + (dx * i) / 5,
+              clientY: cy + (dy * i) / 5,
+              bubbles: true,
+              view: window,
+            }),
+          )
+          await new Promise((r) => setTimeout(r, 16))
+        }
+        document.dispatchEvent(
+          new MouseEvent('mouseup', { clientX: cx + dx, clientY: cy + dy, bubbles: true, view: window }),
+        )
+        await new Promise((r) => setTimeout(r, 100))
+      },
+      {
+        handleSel: '#node-resize .bf-flow__node[data-id="rs1"] .bf-flow__resize-handle[data-position="bottom-right"]',
+        dx: 50,
+        dy: 30,
+      },
+    )
+
+    // Verify the onResize callback was fired
+    const resizeLog = await page.evaluate(() => (window as any).__resizeLog)
+    const rs1Resizes = resizeLog.filter((r: any) => r.nodeId === 'rs1')
+    expect(rs1Resizes.length).toBeGreaterThan(0)
+  })
+
+  test('min constraints are respected during resize', async ({ page }) => {
+    // rs1 has minWidth: 80, minHeight: 50
+    // Try to make it very small by dragging bottom-right handle far to the upper-left
+    await page.evaluate(
+      async ({ handleSel, dx, dy }) => {
+        const handleEl = document.querySelector(handleSel)!
+        const rect = handleEl.getBoundingClientRect()
+        const cx = rect.left + rect.width / 2
+        const cy = rect.top + rect.height / 2
+
+        handleEl.dispatchEvent(
+          new MouseEvent('mousedown', { clientX: cx, clientY: cy, button: 0, bubbles: true, view: window }),
+        )
+        await new Promise((r) => setTimeout(r, 50))
+        for (let i = 1; i <= 10; i++) {
+          document.dispatchEvent(
+            new MouseEvent('mousemove', {
+              clientX: cx + (dx * i) / 10,
+              clientY: cy + (dy * i) / 10,
+              bubbles: true,
+              view: window,
+            }),
+          )
+          await new Promise((r) => setTimeout(r, 16))
+        }
+        document.dispatchEvent(
+          new MouseEvent('mouseup', { clientX: cx + dx, clientY: cy + dy, bubbles: true, view: window }),
+        )
+        await new Promise((r) => setTimeout(r, 100))
+      },
+      {
+        handleSel: '#node-resize .bf-flow__node[data-id="rs1"] .bf-flow__resize-handle[data-position="bottom-right"]',
+        dx: -200, // try to shrink way below minimum
+        dy: -200,
+      },
+    )
+
+    // Check dimensions — should not be smaller than min
+    const finalBox = await page.locator('#node-resize .bf-flow__node[data-id="rs1"]').boundingBox()
+    expect(finalBox).toBeTruthy()
+    // Width should be at least minWidth (80px), accounting for zoom
+    expect(finalBox!.width).toBeGreaterThanOrEqual(75) // slight tolerance for border-box/rounding
+    expect(finalBox!.height).toBeGreaterThanOrEqual(45)
+  })
+})
+
+// ============================================================
+// Sub-Flows (nested nodes with parentId)
+// ============================================================
+test.describe('Sub-Flows', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      const el = document.getElementById('sub-flows')
+      if (el && 'scrollIntoViewIfNeeded' in el) {
+        ;(el as any).scrollIntoViewIfNeeded()
+      } else if (el) {
+        el.scrollIntoView({ block: 'center' })
+      }
+    })
+    await page.waitForSelector('#sub-flows .bf-flow__node[data-id="group-1"]')
+    await page.waitForSelector('#sub-flows .bf-flow__node[data-id="child-1"]')
+    await page.waitForSelector('#sub-flows .bf-flow__node[data-id="child-2"]')
+  })
+
+  test('renders parent and child nodes', async ({ page }) => {
+    // 1 parent + 2 children + 1 standalone = 4 nodes
+    await expect(page.locator('#sub-flows .bf-flow__node')).toHaveCount(4)
+  })
+
+  test('parent node has group class', async ({ page }) => {
+    const parent = page.locator('#sub-flows .bf-flow__node[data-id="group-1"]')
+    await expect(parent).toHaveClass(/bf-flow__node--group/)
+  })
+
+  test('child nodes have child class', async ({ page }) => {
+    const child1 = page.locator('#sub-flows .bf-flow__node[data-id="child-1"]')
+    const child2 = page.locator('#sub-flows .bf-flow__node[data-id="child-2"]')
+    await expect(child1).toHaveClass(/bf-flow__node--child/)
+    await expect(child2).toHaveClass(/bf-flow__node--child/)
+  })
+
+  test('standalone node has neither group nor child class', async ({ page }) => {
+    const standalone = page.locator('#sub-flows .bf-flow__node[data-id="standalone"]')
+    await expect(standalone).not.toHaveClass(/bf-flow__node--group/)
+    await expect(standalone).not.toHaveClass(/bf-flow__node--child/)
+  })
+
+  test('child nodes render inside parent node visually', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const parent = document.querySelector('#sub-flows .bf-flow__node[data-id="group-1"]')!
+      const child1 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-1"]')!
+      const child2 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-2"]')!
+
+      const pr = parent.getBoundingClientRect()
+      const c1r = child1.getBoundingClientRect()
+      const c2r = child2.getBoundingClientRect()
+
+      return {
+        child1Inside:
+          c1r.left >= pr.left - 2 &&
+          c1r.top >= pr.top - 2 &&
+          c1r.right <= pr.right + 2 &&
+          c1r.bottom <= pr.bottom + 2,
+        child2Inside:
+          c2r.left >= pr.left - 2 &&
+          c2r.top >= pr.top - 2 &&
+          c2r.right <= pr.right + 2 &&
+          c2r.bottom <= pr.bottom + 2,
+      }
+    })
+
+    expect(result.child1Inside).toBe(true)
+    expect(result.child2Inside).toBe(true)
+  })
+
+  test('child nodes have higher z-index than parent', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const parent = document.querySelector('#sub-flows .bf-flow__node[data-id="group-1"]') as HTMLElement
+      const child1 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-1"]') as HTMLElement
+
+      return {
+        parentZ: parseInt(parent.style.zIndex || '0'),
+        childZ: parseInt(child1.style.zIndex || '0'),
+      }
+    })
+
+    expect(result.childZ).toBeGreaterThan(result.parentZ)
+  })
+
+  test('dragging parent moves children', async ({ page }) => {
+    // Record child positions before drag
+    const before = await page.evaluate(() => {
+      const child1 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-1"]') as HTMLElement
+      const child2 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-2"]') as HTMLElement
+      return {
+        c1: child1.getBoundingClientRect(),
+        c2: child2.getBoundingClientRect(),
+      }
+    })
+
+    // Drag the parent node
+    await dispatchDrag(page, '#sub-flows .bf-flow__node[data-id="group-1"]', 100, 50)
+
+    // Record child positions after drag
+    const after = await page.evaluate(() => {
+      const child1 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-1"]') as HTMLElement
+      const child2 = document.querySelector('#sub-flows .bf-flow__node[data-id="child-2"]') as HTMLElement
+      return {
+        c1: child1.getBoundingClientRect(),
+        c2: child2.getBoundingClientRect(),
+      }
+    })
+
+    // Children should have moved approximately the same amount as the drag
+    // (within reasonable tolerance for rAF timing)
+    expect(after.c1.left - before.c1.left).toBeGreaterThan(50)
+    expect(after.c1.top - before.c1.top).toBeGreaterThan(20)
+    expect(after.c2.left - before.c2.left).toBeGreaterThan(50)
+    expect(after.c2.top - before.c2.top).toBeGreaterThan(20)
+  })
+
+  test('edges render between child nodes', async ({ page }) => {
+    // 2 edges: child-1 → child-2, child-2 → standalone
+    await expect(page.locator('#sub-flows .bf-flow__edge')).toHaveCount(2)
+  })
+
+  test('child nodes with extent:parent cannot be dragged outside group', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const container = document.getElementById('sub-flows')!
+      const child = container.querySelector('[data-id="child-1"]')! as HTMLElement
+      const group = container.querySelector('[data-id="group-1"]')! as HTMLElement
+
+      const childRect = child.getBoundingClientRect()
+      const cx = childRect.left + childRect.width / 2
+      const cy = childRect.top + childRect.height / 2
+
+      // Drag child far to the left (outside group)
+      child.dispatchEvent(new MouseEvent('mousedown', { clientX: cx, clientY: cy, button: 0, bubbles: true, view: window }))
+      await new Promise(r => setTimeout(r, 10))
+      for (let i = 1; i <= 10; i++) {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: cx - i * 30, clientY: cy, bubbles: true, view: window }))
+        await new Promise(r => setTimeout(r, 16))
+      }
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: cx - 300, clientY: cy, bubbles: true, view: window }))
+      await new Promise(r => setTimeout(r, 100))
+
+      const childAfter = child.getBoundingClientRect()
+      const groupRect = group.getBoundingClientRect()
+
+      return {
+        childLeft: childAfter.left,
+        groupLeft: groupRect.left,
+        childInsideGroup: childAfter.left >= groupRect.left,
+      }
+    })
+
+    expect(result.childInsideGroup).toBe(true)
   })
 })

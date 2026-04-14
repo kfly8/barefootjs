@@ -15,8 +15,9 @@ import type {
   EdgeBase,
   EdgePosition,
 } from '@xyflow/system'
-import type { FlowStore } from './types'
+import type { FlowStore, EdgeComponentProps } from './types'
 import { SVG_NS } from './constants'
+import { attachReconnectionHandler } from './connection'
 
 /**
  * Reactively renders all edges as SVG paths.
@@ -34,9 +35,35 @@ export function createEdgeRenderer<
   edgeGroup.setAttribute('class', 'bf-flow__edge-group')
   svgContainer.appendChild(edgeGroup)
 
-  // Track edge path elements and hit areas by edge id
+  // Overlay SVG for reconnection handles — above nodes layer.
+  // The main edges SVG is behind nodes; this overlay lets reconnect
+  // handles receive mouse events on top of node elements.
+  const viewportEl = svgContainer.parentElement!
+  const reconnectOverlay = document.createElementNS(SVG_NS, 'svg')
+  reconnectOverlay.setAttribute('class', 'bf-flow__reconnect-overlay')
+  reconnectOverlay.style.position = 'absolute'
+  reconnectOverlay.style.top = '0'
+  reconnectOverlay.style.left = '0'
+  reconnectOverlay.style.width = '100%'
+  reconnectOverlay.style.height = '100%'
+  reconnectOverlay.style.overflow = 'visible'
+  reconnectOverlay.style.pointerEvents = 'none'
+  reconnectOverlay.style.zIndex = '5'
+  viewportEl.appendChild(reconnectOverlay)
+
+  const reconnectGroup = document.createElementNS(SVG_NS, 'g')
+  reconnectOverlay.appendChild(reconnectGroup)
+
+  // Track edge path elements, hit areas, custom groups, and reconnection handles by edge id
   const edgeElements = new Map<string, SVGPathElement>()
   const hitElements = new Map<string, SVGPathElement>()
+  const customEdgeGroups = new Map<string, SVGGElement>()
+  const reconnectSourceHandles = new Map<string, SVGCircleElement>()
+  const reconnectTargetHandles = new Map<string, SVGCircleElement>()
+
+  // Expose label positions so the edge label renderer can read them
+  const labelPositions = new Map<string, { x: number; y: number }>()
+  ;(store as any)._edgeLabelPositions = labelPositions
 
   createEffect(() => {
     const edges = store.edges()
@@ -45,6 +72,10 @@ export function createEdgeRenderer<
     store.positionEpoch()
     store.nodes()
     const nodeLookup = store.nodeLookup()
+
+    // Sync reconnect overlay transform with viewport
+    const vp = store.viewport()
+    reconnectGroup.setAttribute('transform', `translate(${vp.x}, ${vp.y}) scale(${vp.zoom})`)
     const existingIds = new Set(edgeElements.keys())
 
     for (const edge of edges) {
@@ -86,10 +117,73 @@ export function createEdgeRenderer<
         }
       }
 
+      // Check for custom edge type
+      const edgeType = edge.type
+      const customEdgeType = edgeType && store.edgeTypes?.[edgeType]
+
+      if (customEdgeType && typeof customEdgeType === 'function') {
+        // Custom edge rendering via plain function
+        const midX = (edgePos.sourceX + edgePos.targetX) / 2
+        const midY = (edgePos.sourceY + edgePos.targetY) / 2
+        labelPositions.set(edge.id, { x: midX, y: midY })
+
+        let group = customEdgeGroups.get(edge.id)
+        if (!group) {
+          group = document.createElementNS(SVG_NS, 'g')
+          group.setAttribute('class', 'bf-flow__edge-custom')
+          group.dataset.id = edge.id
+          group.style.cursor = 'pointer'
+          group.style.pointerEvents = 'all'
+          group.addEventListener('mousedown', (e) => {
+            e.stopPropagation()
+            const container = store.domNode()
+            if (container) container.focus()
+            const edgeId = edge.id
+            store.unselectNodesAndEdges()
+            store.setEdges((prev) =>
+              prev.map((ed) =>
+                ed.id === edgeId ? { ...ed, selected: true } : ed,
+              ),
+            )
+          })
+          edgeGroup.appendChild(group)
+          customEdgeGroups.set(edge.id, group)
+
+          // Also track in edgeElements for cleanup
+          edgeElements.set(edge.id, group as unknown as SVGPathElement)
+        }
+
+        // Clear and re-render custom content
+        group.innerHTML = ''
+
+        const edgeProps: EdgeComponentProps = {
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          sourceX: edgePos.sourceX,
+          sourceY: edgePos.sourceY,
+          targetX: edgePos.targetX,
+          targetY: edgePos.targetY,
+          sourcePosition: edgePos.sourcePosition,
+          targetPosition: edgePos.targetPosition,
+          data: (edge as any).data,
+          selected: !!edge.selected,
+          animated: !!edge.animated,
+          label: (edge as any).label,
+          svgGroup: group,
+        }
+
+        customEdgeType(edgeProps)
+        continue
+      }
+
       const pathData = getEdgePath(edge, edgePos)
       if (!pathData) continue
 
-      const [path] = pathData
+      const [path, labelX, labelY] = pathData
+
+      // Store label position for the edge label renderer
+      labelPositions.set(edge.id, { x: labelX, y: labelY })
 
       let pathEl = edgeElements.get(edge.id)
       if (!pathEl) {
@@ -98,6 +192,7 @@ export function createEdgeRenderer<
         hitPath.setAttribute('fill', 'none')
         hitPath.setAttribute('stroke', 'transparent')
         hitPath.setAttribute('stroke-width', '20')
+        hitPath.dataset.hitId = edge.id
         hitPath.style.cursor = 'pointer'
         hitPath.style.pointerEvents = 'stroke'
         hitPath.addEventListener('mousedown', (e) => {
@@ -132,6 +227,64 @@ export function createEdgeRenderer<
 
       pathEl.classList.toggle('bf-flow__edge--selected', !!edge.selected)
       pathEl.classList.toggle('bf-flow__edge--animated', !!edge.animated)
+
+      // Edge reconnection handles
+      const isReconnectable = store.edgesReconnectable && (edge as any).reconnectable !== false
+      if (isReconnectable) {
+        // Source reconnection handle
+        let srcHandle = reconnectSourceHandles.get(edge.id)
+        if (!srcHandle) {
+          srcHandle = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
+          srcHandle.setAttribute('class', 'bf-flow__edge-reconnect bf-flow__edge-reconnect--source')
+          srcHandle.setAttribute('r', '10')
+          srcHandle.style.pointerEvents = 'all'
+          reconnectGroup.appendChild(srcHandle)
+          reconnectSourceHandles.set(edge.id, srcHandle)
+          // Darken edge on reconnect handle hover
+          const srcEdgeId = edge.id
+          srcHandle.addEventListener('mouseenter', () => {
+            edgeElements.get(srcEdgeId)?.classList.add('bf-flow__edge--reconnect-hover')
+          })
+          srcHandle.addEventListener('mouseleave', () => {
+            edgeElements.get(srcEdgeId)?.classList.remove('bf-flow__edge--reconnect-hover')
+          })
+          // Attach reconnection handler
+          const container = store.domNode()
+          if (container) {
+            attachReconnectionHandler(srcHandle, edge, 'source', container, svgContainer, store)
+          }
+        }
+        // Shift outward from node by radius (matching React Flow's shiftX/shiftY)
+        const srcR = 10
+        srcHandle.setAttribute('cx', String(edgePos.sourceX))
+        srcHandle.setAttribute('cy', String(edgePos.sourceY + srcR))
+
+        // Target reconnection handle
+        let tgtHandle = reconnectTargetHandles.get(edge.id)
+        if (!tgtHandle) {
+          tgtHandle = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
+          tgtHandle.setAttribute('class', 'bf-flow__edge-reconnect bf-flow__edge-reconnect--target')
+          tgtHandle.setAttribute('r', '10')
+          tgtHandle.style.pointerEvents = 'all'
+          reconnectGroup.appendChild(tgtHandle)
+          reconnectTargetHandles.set(edge.id, tgtHandle)
+          const tgtEdgeId = edge.id
+          tgtHandle.addEventListener('mouseenter', () => {
+            edgeElements.get(tgtEdgeId)?.classList.add('bf-flow__edge--reconnect-hover')
+          })
+          tgtHandle.addEventListener('mouseleave', () => {
+            edgeElements.get(tgtEdgeId)?.classList.remove('bf-flow__edge--reconnect-hover')
+          })
+          const container = store.domNode()
+          if (container) {
+            attachReconnectionHandler(tgtHandle, edge, 'target', container, svgContainer, store)
+          }
+        }
+        // Shift outward from node by radius (matching React Flow's shiftX/shiftY)
+        const tgtR = 10
+        tgtHandle.setAttribute('cx', String(edgePos.targetX))
+        tgtHandle.setAttribute('cy', String(edgePos.targetY - tgtR))
+      }
     }
 
     // Remove edges that no longer exist
@@ -140,13 +293,122 @@ export function createEdgeRenderer<
       if (el) { el.remove(); edgeElements.delete(removedId) }
       const hit = hitElements.get(removedId)
       if (hit) { hit.remove(); hitElements.delete(removedId) }
+      const customGroup = customEdgeGroups.get(removedId)
+      if (customGroup) { customGroup.remove(); customEdgeGroups.delete(removedId) }
+      labelPositions.delete(removedId)
+      const srcH = reconnectSourceHandles.get(removedId)
+      if (srcH) { srcH.remove(); reconnectSourceHandles.delete(removedId) }
+      const tgtH = reconnectTargetHandles.get(removedId)
+      if (tgtH) { tgtH.remove(); reconnectTargetHandles.delete(removedId) }
     }
   })
 
   onCleanup(() => {
     edgeGroup.remove()
+    reconnectOverlay.remove()
     edgeElements.clear()
     hitElements.clear()
+    customEdgeGroups.clear()
+    labelPositions.clear()
+    reconnectSourceHandles.clear()
+    reconnectTargetHandles.clear()
+  })
+}
+
+/**
+ * Reactively renders edge labels and edge toolbar as HTML elements
+ * in a layer above the SVG edges.
+ *
+ * Edge labels are positioned at the midpoint of each edge using CSS transforms.
+ * When an edge is selected, a toolbar with a delete button appears near the midpoint.
+ */
+export function createEdgeLabelRenderer<
+  NodeType extends NodeBase = NodeBase,
+  EdgeType extends EdgeBase = EdgeBase,
+>(
+  store: FlowStore<NodeType, EdgeType>,
+  viewportEl: HTMLElement,
+): void {
+  // Container for edge labels — positioned absolutely inside the viewport
+  const labelContainer = document.createElement('div')
+  labelContainer.className = 'bf-flow__edge-labels'
+  labelContainer.style.position = 'absolute'
+  labelContainer.style.top = '0'
+  labelContainer.style.left = '0'
+  labelContainer.style.width = '0'
+  labelContainer.style.height = '0'
+  labelContainer.style.pointerEvents = 'none'
+  viewportEl.appendChild(labelContainer)
+
+  // Track label elements by edge id
+  const labelElements = new Map<string, HTMLDivElement>()
+
+  createEffect(() => {
+    const edges = store.edges()
+    store.positionEpoch()
+    store.nodes()
+    store.nodeLookup()
+
+    const labelPositions = (store as any)._edgeLabelPositions as
+      | Map<string, { x: number; y: number }>
+      | undefined
+
+    const existingIds = new Set(labelElements.keys())
+
+    for (const edge of edges) {
+      if (edge.hidden) continue
+
+      const pos = labelPositions?.get(edge.id)
+      if (!pos) continue
+
+      // Only render label if the edge has one
+      const labelText = (edge as any).label
+      if (!labelText) {
+        // No label — remove if previously existed
+        const existing = labelElements.get(edge.id)
+        if (existing) {
+          existing.remove()
+          labelElements.delete(edge.id)
+        }
+        existingIds.delete(edge.id)
+        continue
+      }
+
+      existingIds.delete(edge.id)
+
+      let labelEl = labelElements.get(edge.id)
+      if (!labelEl) {
+        labelEl = document.createElement('div')
+        labelEl.className = 'bf-flow__edge-label'
+        labelEl.dataset.edgeId = edge.id
+        labelEl.style.pointerEvents = 'all'
+        labelContainer.appendChild(labelEl)
+        labelElements.set(edge.id, labelEl)
+      }
+
+      // Update content
+      if (labelEl.textContent !== String(labelText)) {
+        labelEl.textContent = String(labelText)
+      }
+
+      // Position at edge midpoint using transform
+      labelEl.style.transform =
+        `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px)`
+
+      labelEl.classList.toggle('bf-flow__edge-label--selected', !!edge.selected)
+    }
+
+    // Remove labels for edges that no longer exist
+    for (const removedId of existingIds) {
+      const el = labelElements.get(removedId)
+      if (el) { el.remove(); labelElements.delete(removedId) }
+    }
+
+  })
+
+  onCleanup(() => {
+    labelContainer.remove()
+    labelElements.clear()
   })
 }
 

@@ -14,8 +14,8 @@ import type {
 import { createFlowStore } from './store'
 import { FlowContext } from './context'
 import { createNodeRenderer } from './node-wrapper'
-import { createEdgeRenderer } from './edge-renderer'
-import { setupKeyboardHandlers } from './selection'
+import { createEdgeRenderer, createEdgeLabelRenderer } from './edge-renderer'
+import { setupKeyboardHandlers, setupSelectionRectangle } from './selection'
 import { INFINITE_EXTENT, SVG_NS } from './constants'
 import type { FlowProps } from './types'
 
@@ -39,7 +39,12 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
     nodeExtent: flowProps.nodeExtent,
     snapToGrid: flowProps.snapToGrid,
     snapGrid: flowProps.snapGrid,
+    nodeTypes: flowProps.nodeTypes,
+    edgeTypes: flowProps.edgeTypes,
     onConnect: flowProps.onConnect,
+    isValidConnection: flowProps.isValidConnection,
+    edgesReconnectable: flowProps.edgesReconnectable,
+    onReconnect: flowProps.onReconnect,
   })
 
   provideContext(FlowContext, store)
@@ -142,7 +147,12 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
 
   createNodeRenderer(store, nodesEl)
   createEdgeRenderer(store, edgesSvg)
+  createEdgeLabelRenderer(store, viewportEl)
   setupKeyboardHandlers(store, el)
+  setupSelectionRectangle(store, el, {
+    selectionOnDrag: flowProps.selectionOnDrag,
+    selectionMode: flowProps.selectionMode,
+  })
 
   el.addEventListener('click', (event) => {
     if (event.target === el || event.target === viewportEl) {
@@ -194,6 +204,15 @@ function injectDefaultStyles() {
       user-select: none;
       box-sizing: border-box;
     }
+    .bf-flow__node--custom {
+      border: none;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+    }
+    .bf-flow__node--custom.bf-flow__node--selected {
+      box-shadow: none;
+    }
     .bf-flow__node--selected {
       box-shadow: 0 0 0 0.5px #1a192b;
     }
@@ -213,12 +232,144 @@ function injectDefaultStyles() {
     .bf-flow__handle--target:hover { top: -5px; }
     .bf-flow__handle--source { bottom: -3px; }
     .bf-flow__handle--source:hover { bottom: -5px; }
+    .bf-flow__handle.valid { background-color: #22c55e; border-color: #16a34a; width: 10px; height: 10px; }
+    .bf-flow__handle.invalid { background-color: #ef4444; border-color: #dc2626; width: 10px; height: 10px; }
     .bf-flow__edge { fill: none; stroke: #b1b1b7; stroke-width: 1; pointer-events: none; }
     .bf-flow__edge--selected { stroke: #555; stroke-width: 2; }
     .bf-flow__edge--animated { stroke-dasharray: 5; animation: bf-dashdraw 0.5s linear infinite; }
     @keyframes bf-dashdraw { from { stroke-dashoffset: 10; } }
+    .bf-flow__edge-reconnect { fill: transparent; stroke: transparent; cursor: move; pointer-events: all; }
+    path.bf-flow__edge.bf-flow__edge--reconnect-hover { stroke: #222; }
     .bf-flow__controls-button:hover { background: #f4f4f4 !important; }
     .bf-flow__controls-button:last-child { border-bottom: none !important; }
+    .bf-flow__edge-label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #fff;
+      padding: 2px 4px;
+      font-size: 11px;
+      color: #222;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .bf-flow__edge-toolbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      gap: 4px;
+      z-index: 10;
+    }
+    .bf-flow__edge-toolbar-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid #e2e2e2;
+      background: #fff;
+      color: #666;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+    .bf-flow__edge-toolbar-button:hover {
+      background: #fee;
+      color: #c00;
+      border-color: #c00;
+    }
+    .bf-flow__selection {
+      background: rgba(0, 89, 220, 0.08);
+      border: 1px dashed rgba(0, 89, 220, 0.5);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    .bf-flow__node-resizer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .bf-flow__resize-handle {
+      position: absolute;
+      pointer-events: all;
+      z-index: 10;
+    }
+    .bf-flow__resize-handle--corner {
+      width: 8px;
+      height: 8px;
+      background: var(--bf-resize-color, #4a90d9);
+      border: none;
+      border-radius: 0;
+    }
+    .bf-flow__resize-handle--top-left {
+      top: -4px;
+      left: -4px;
+      cursor: nwse-resize;
+    }
+    .bf-flow__resize-handle--top-right {
+      top: -4px;
+      right: -4px;
+      cursor: nesw-resize;
+    }
+    .bf-flow__resize-handle--bottom-left {
+      bottom: -4px;
+      left: -4px;
+      cursor: nesw-resize;
+    }
+    .bf-flow__resize-handle--bottom-right {
+      bottom: -4px;
+      right: -4px;
+      cursor: nwse-resize;
+    }
+    .bf-flow__resize-handle--line {
+      background: transparent;
+    }
+    .bf-flow__resize-handle--line.bf-flow__resize-handle--top {
+      top: -2px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      cursor: ns-resize;
+    }
+    .bf-flow__resize-handle--line.bf-flow__resize-handle--bottom {
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      cursor: ns-resize;
+    }
+    .bf-flow__resize-handle--line.bf-flow__resize-handle--left {
+      left: -2px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      cursor: ew-resize;
+    }
+    .bf-flow__resize-handle--line.bf-flow__resize-handle--right {
+      right: -2px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      cursor: ew-resize;
+    }
+    .bf-flow__resize-handle--line:hover {
+      background: rgba(26, 25, 43, 0.1);
+    }
+    .bf-flow__resize-handle--corner:hover {
+      background: var(--bf-resize-color, #3a7bd5);
+    }
+    .bf-flow__node--group {
+      background-color: rgba(240, 240, 240, 0.7);
+      border: 1px dashed #999;
+      border-radius: 8px;
+      padding: 40px 10px 10px 10px;
+    }
+    .bf-flow__node--child {
+      /* Child nodes render above parents via z-index from @xyflow/system */
+    }
   `
   document.head.appendChild(style)
 }

@@ -4,7 +4,7 @@ import {
   onCleanup,
   untrack,
 } from '@barefootjs/client'
-import { updateNodeInternals } from '@xyflow/system'
+import { updateNodeInternals, updateAbsolutePositions, calcAutoPan, clampPositionToParent } from '@xyflow/system'
 import type {
   NodeBase,
   InternalNodeBase,
@@ -49,6 +49,17 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     element.style.position = 'absolute'
     element.style.transformOrigin = '0 0'
     element.style.pointerEvents = 'all'
+
+    // Sub-flow classes: parent (group) nodes and child nodes
+    const userNode = internalNode.internals.userNode
+    const isParentNode = store.parentLookup().has(internalNode.id)
+    const isChildNode = !!userNode.parentId
+    if (isParentNode) {
+      element.classList.add('bf-flow__node--group')
+    }
+    if (isChildNode) {
+      element.classList.add('bf-flow__node--child')
+    }
 
     // Toggle nopan class based on interactivity and draggability:
     // - nopan ON: D3 zoom won't pan when dragging on this node (node drag works)
@@ -109,11 +120,13 @@ export function createNodeWrapper<NodeType extends NodeBase>(
       // integrate well with our DOM structure (XYDrag's d3Selection.call
       // doesn't fire handlers reliably outside React's synthetic events).
       let dragging = false
-      let startMouseX = 0
-      let startMouseY = 0
       let startNodeX = 0
       let startNodeY = 0
       let rafId = 0
+      let currentAbsX = 0
+      let currentAbsY = 0
+      let prevMouseX = 0
+      let prevMouseY = 0
 
       const onMouseDown = (e: MouseEvent) => {
         if (e.button !== 0) return // left button only
@@ -121,14 +134,16 @@ export function createNodeWrapper<NodeType extends NodeBase>(
         if (!draggable) return // locked — let event bubble to D3 zoom for pan
         e.stopPropagation() // prevent D3 zoom pan (only when dragging nodes)
 
-        startMouseX = e.clientX
-        startMouseY = e.clientY
+        prevMouseX = e.clientX
+        prevMouseY = e.clientY
 
         const lookup = untrack(store.nodeLookup)
         const node = lookup.get(internalNode.id)
         if (node) {
           startNodeX = node.internals.positionAbsolute.x
           startNodeY = node.internals.positionAbsolute.y
+          currentAbsX = startNodeX
+          currentAbsY = startNodeY
         }
 
         dragging = true
@@ -146,30 +161,62 @@ export function createNodeWrapper<NodeType extends NodeBase>(
           ),
         )
 
-        const onMouseMove = (e: MouseEvent) => {
-          if (!dragging) return
+        // Auto-pan state: pan viewport when dragging near container edges
+        let autoPanId = 0
+        let lastMouseX = 0
+        let lastMouseY = 0
 
-          const [, , scale] = store.getTransform()
-          const dx = (e.clientX - startMouseX) / scale
-          const dy = (e.clientY - startMouseY) / scale
-
-          const newX = startNodeX + dx
-          const newY = startNodeY + dy
-
-          // Update DOM directly for immediate visual feedback
-          element.style.transform = `translate(${newX}px, ${newY}px)`
-
-          // Mutate internal state in-place (no array copy)
+        function updateNodePosition(newX: number, newY: number) {
           const lookup = untrack(store.nodeLookup)
           const node = lookup.get(internalNode.id)
-          if (node) {
-            node.internals.positionAbsolute = { x: newX, y: newY }
-            node.internals.userNode.position = { x: newX, y: newY }
+          if (!node) return
+
+          let absX = newX
+          let absY = newY
+
+          // Clamp child nodes within parent bounds when extent: 'parent'
+          const userNode = node.internals.userNode
+          if (userNode.parentId && userNode.extent === 'parent') {
+            const parentNode = lookup.get(userNode.parentId)
+            if (parentNode) {
+              const clamped = clampPositionToParent(
+                { x: absX, y: absY },
+                { width: node.measured.width ?? 150, height: node.measured.height ?? 40 },
+                parentNode,
+              )
+              absX = clamped.x
+              absY = clamped.y
+            }
           }
 
-          // Notify edge renderer and other position subscribers via
-          // lightweight epoch bump (rAF-throttled). This avoids the
-          // full adoptUserNodes pipeline that setNodes would trigger.
+          element.style.transform = `translate(${absX}px, ${absY}px)`
+          node.internals.positionAbsolute = { x: absX, y: absY }
+          currentAbsX = absX
+          currentAbsY = absY
+
+          // Update relative position for child nodes
+          if (userNode.parentId) {
+            const parentNode = lookup.get(userNode.parentId)
+            if (parentNode) {
+              userNode.position = {
+                x: absX - parentNode.internals.positionAbsolute.x,
+                y: absY - parentNode.internals.positionAbsolute.y,
+              }
+            } else {
+              userNode.position = { x: absX, y: absY }
+            }
+          } else {
+            userNode.position = { x: absX, y: absY }
+          }
+
+          const parents = untrack(store.parentLookup)
+          if (parents.has(internalNode.id)) {
+            updateAbsolutePositions(lookup, parents, {
+              nodeOrigin: store.nodeOrigin,
+              nodeExtent: store.nodeExtent,
+            })
+          }
+
           if (!rafId) {
             rafId = requestAnimationFrame(() => {
               rafId = 0
@@ -178,23 +225,64 @@ export function createNodeWrapper<NodeType extends NodeBase>(
           }
         }
 
+        function autoPanTick() {
+          if (!dragging) return
+          const container = untrack(store.domNode)
+          if (!container) return
+
+          const containerBounds = container.getBoundingClientRect()
+          const mousePos = { x: lastMouseX - containerBounds.left, y: lastMouseY - containerBounds.top }
+          const [xMovement, yMovement] = calcAutoPan(mousePos, containerBounds)
+
+          if (xMovement !== 0 || yMovement !== 0) {
+            const [, , scale] = store.getTransform()
+
+            store.panByDelta({ x: xMovement, y: yMovement })
+
+            // Move node by the auto-pan delta (in flow space)
+            updateNodePosition(currentAbsX - xMovement / scale, currentAbsY - yMovement / scale)
+          }
+
+          autoPanId = requestAnimationFrame(autoPanTick)
+        }
+
+        const onMouseMove = (e: MouseEvent) => {
+          if (!dragging) return
+
+          lastMouseX = e.clientX
+          lastMouseY = e.clientY
+
+          // Incremental delta from previous mouse position
+          const [, , scale] = store.getTransform()
+          const dx = (e.clientX - prevMouseX) / scale
+          const dy = (e.clientY - prevMouseY) / scale
+          prevMouseX = e.clientX
+          prevMouseY = e.clientY
+
+          updateNodePosition(currentAbsX + dx, currentAbsY + dy)
+
+          // Start auto-pan loop if not already running
+          if (!autoPanId) {
+            autoPanId = requestAnimationFrame(autoPanTick)
+          }
+        }
+
         const onMouseUp = (e: MouseEvent) => {
           dragging = false
           element.style.cursor = 'grab'
           if (rafId) { cancelAnimationFrame(rafId); rafId = 0 }
+          if (autoPanId) { cancelAnimationFrame(autoPanId); autoPanId = 0 }
 
-          const [, , scale] = store.getTransform()
-          const dx = (e.clientX - startMouseX) / scale
-          const dy = (e.clientY - startMouseY) / scale
-          const finalX = startNodeX + dx
-          const finalY = startNodeY + dy
+          // Commit final position: use the clamped position from the last
+          // updateNodePosition call (stored in internals.userNode.position).
+          const lookup = untrack(store.nodeLookup)
+          const finalNode = lookup.get(internalNode.id)
+          const committedPos = finalNode?.internals.userNode.position ?? { x: currentAbsX, y: currentAbsY }
 
-          // Commit final position to the nodes array so that
-          // adoptUserNodes picks it up correctly.
           store.setNodes((prev) =>
             prev.map((n) =>
               n.id === internalNode.id
-                ? { ...n, position: { x: finalX, y: finalY }, dragging: false, measured: { width: mw, height: mh } }
+                ? { ...n, position: committedPos, dragging: false, measured: { width: mw, height: mh } }
                 : n,
             ),
           )
@@ -228,6 +316,11 @@ export function createNodeWrapper<NodeType extends NodeBase>(
 
       // Selection styling — toggle CSS class (styled via injected stylesheet)
       element.classList.toggle('bf-flow__node--selected', !!current.selected)
+
+      // Sub-flow classes — update dynamically as parentLookup may change
+      const parents = store.parentLookup()
+      element.classList.toggle('bf-flow__node--group', parents.has(internalNode.id))
+      element.classList.toggle('bf-flow__node--child', !!current.internals.userNode.parentId)
     })
 
     onCleanup(() => {
@@ -236,6 +329,30 @@ export function createNodeWrapper<NodeType extends NodeBase>(
   })
 
   return { element, dispose: disposeRoot }
+}
+
+/**
+ * Create a default handle element and attach connection handler.
+ */
+function createDefaultHandle<NodeType extends NodeBase>(
+  parentEl: HTMLElement,
+  nodeId: string,
+  type: 'source' | 'target',
+  store: FlowStore<NodeType>,
+): HTMLElement {
+  const h = document.createElement('div')
+  h.className = `bf-flow__handle bf-flow__handle--${type}`
+  h.dataset.handleType = type
+  h.dataset.nodeId = nodeId
+  parentEl.appendChild(h)
+
+  // Attach connection drag handler
+  const container = store.domNode()
+  const edgesSvg = container?.querySelector('.bf-flow__edges') as SVGSVGElement | null
+  if (container && edgesSvg) {
+    attachConnectionHandler(h, nodeId, type, container, edgesSvg, store)
+  }
+  return h
 }
 
 /**
@@ -250,6 +367,9 @@ function renderNodeContent<NodeType extends NodeBase>(
   const customType = nodeType && store.nodeTypes?.[nodeType]
 
   if (customType) {
+    // Reset default node styling for custom types
+    el.classList.add('bf-flow__node--custom')
+
     // Build node component props
     const nodeProps: NodeComponentProps<NodeType> = {
       id: node.id,
@@ -264,15 +384,29 @@ function renderNodeContent<NodeType extends NodeBase>(
       isConnectable: node.connectable !== false,
     }
 
+    const isConnectable = node.connectable !== false
+
+    // Add target handle before custom content (only if connectable)
+    if (isConnectable) {
+      createDefaultHandle(el, node.id, 'target', store)
+    }
+
+    // Render custom content
+    const contentEl = document.createElement('div')
+    contentEl.className = 'bf-flow__node-content'
+    el.appendChild(contentEl)
+
     if (typeof customType === 'function') {
-      // Plain init function
-      customType(nodeProps)
+      // Plain init function — receives container element and props
+      customType.call(contentEl, nodeProps)
     } else {
       // ComponentDef — render via CSR
-      const contentEl = document.createElement('div')
-      contentEl.className = 'bf-flow__node-content'
-      el.appendChild(contentEl)
       render(contentEl, customType as ComponentDef, nodeProps as unknown as Record<string, unknown>)
+    }
+
+    // Add source handle after custom content (only if connectable)
+    if (isConnectable) {
+      createDefaultHandle(el, node.id, 'source', store)
     }
 
     el.style.cursor = 'grab'
@@ -281,7 +415,18 @@ function renderNodeContent<NodeType extends NodeBase>(
   }
 
   // Default rendering — styled via injected CSS (.bf-flow__node class)
-  el.style.width = '150px'
+  // Group (parent) nodes get larger default size to contain children.
+  // Use width/height from the node definition if provided, otherwise defaults.
+  const parentLookup = store.parentLookup()
+  const isGroup = parentLookup.has(node.id)
+  const userNode = node.internals.userNode
+  if (isGroup) {
+    el.style.width = userNode.width ? `${userNode.width}px` : '300px'
+    el.style.height = userNode.height ? `${userNode.height}px` : '200px'
+  } else {
+    el.style.width = userNode.width ? `${userNode.width}px` : '150px'
+    if (userNode.height) el.style.height = `${userNode.height}px`
+  }
 
   const data = node.internals.userNode.data as Record<string, unknown>
   const label = data?.label ?? node.id
@@ -289,22 +434,8 @@ function renderNodeContent<NodeType extends NodeBase>(
 
   // Add default handles (source=bottom, target=top)
   // Styled via injected CSS (.bf-flow__handle class)
-  const createDefaultHandle = (type: 'source' | 'target') => {
-    const h = document.createElement('div')
-    h.className = `bf-flow__handle bf-flow__handle--${type}`
-    h.dataset.handleType = type
-    h.dataset.nodeId = node.id
-    el.appendChild(h)
-
-    // Attach connection drag handler
-    const container = store.domNode()
-    const edgesSvg = container?.querySelector('.bf-flow__edges') as SVGSVGElement | null
-    if (container && edgesSvg) {
-      attachConnectionHandler(h, node.id, type, container, edgesSvg, store)
-    }
-  }
-  createDefaultHandle('target')
-  createDefaultHandle('source')
+  createDefaultHandle(el, node.id, 'target', store)
+  createDefaultHandle(el, node.id, 'source', store)
 }
 
 /**
