@@ -210,6 +210,9 @@ function injectDefaultStyles() {
       padding: 0;
       border-radius: 0;
     }
+    .bf-flow__node--custom.bf-flow__node--selected {
+      box-shadow: none;
+    }
     .bf-flow__node--selected {
       box-shadow: 0 0 0 0.5px #1a192b;
     }
