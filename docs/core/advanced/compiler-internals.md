@@ -5,8 +5,6 @@ description: How the BarefootJS compiler transforms JSX into marked templates an
 
 # Compiler Internals
 
-This page explains how the BarefootJS compiler transforms JSX source into marked templates and client JavaScript. Understanding these internals is useful for debugging compilation issues, writing custom adapters, or contributing to the compiler.
-
 ## Pipeline Overview
 
 ```
@@ -45,15 +43,15 @@ compileJSX(entryPath: string, readFile: ReadFileFn, options: CompileOptions): Pr
 compileJSXSync(source: string, filePath: string, options: CompileOptions): CompileResult
 ```
 
-Both support multi-component files — the compiler detects all exported components and compiles each independently, then merges the output.
+Both support multi-component files.
 
 ---
 
 ## Phase 1: Analysis
 
-The analyzer (`analyzer.ts`) performs a **single-pass** AST walk using TypeScript's compiler API. It collects everything the later phases need:
+The analyzer (`analyzer.ts`) performs a **single-pass** AST walk using TypeScript's compiler API.
 
-### What the Analyzer Extracts
+### Extracted Data
 
 | Category | Data | Example |
 |----------|------|---------|
@@ -71,15 +69,13 @@ The analyzer (`analyzer.ts`) performs a **single-pass** AST walk using TypeScrip
 
 ### `"use client"` Validation
 
-The analyzer checks for the `"use client"` directive at the top of the file. If the file contains reactive APIs (`createSignal`, `createEffect`, event handlers) but lacks the directive, it emits **BF001**:
+Files with reactive APIs but no `"use client"` emit **BF001**:
 
 ```
 error[BF001]: 'use client' directive required for components with createSignal
 ```
 
 ### Props Destructuring Detection
-
-When props are destructured in the function parameter, the analyzer emits **BF043** (warning):
 
 ```tsx
 // ⚠️ BF043: Destructuring captures values once — may lose reactivity
@@ -89,36 +85,32 @@ function Child({ count }: Props) { ... }
 function Child(props: Props) { ... }
 ```
 
-The warning can be suppressed with `// @bf-ignore props-destructuring`.
+Suppress with `// @bf-ignore props-destructuring`.
 
 ---
 
 ## Phase 2: JSX → IR
 
-The `jsxToIR` function (`jsx-to-ir.ts`) transforms the analyzed JSX AST into the IR node tree.
+`jsxToIR` (`jsx-to-ir.ts`) transforms the analyzed JSX AST into the IR node tree.
 
 ### Reactivity Detection
 
-The core decision at this phase is: **is this expression reactive?**
-
-The compiler uses a two-tier detection strategy:
+Two-tier strategy to determine if an expression is reactive:
 
 1. **TypeChecker path** — Walks the AST and checks each node's type for the `Reactive<T>` brand via `checker.getTypeAtLocation()`. This detects all reactive getters: signals, memos, and library-provided reactive accessors (e.g., `FieldReturn.error`, `FormReturn.isSubmitting`).
 
 2. **Regex fallback** — Pattern-matches known signal/memo names and props references. Used when the TypeChecker cannot resolve imported types.
 
-An expression is reactive if it matches any of:
+Reactive if any match:
 - A `Reactive<T>`-branded type (via TypeChecker)
 - A signal getter: `count()` — regex pattern `\bcount\s*\(`
 - A memo: `doubled()` — same pattern
 - A props reference: `props.value` — per-prop name matching (excludes `children`)
 - A local constant derived from any of the above (taint analysis)
 
-Reactive expressions get a `slotId` assigned, which becomes a `bf` hydration marker in the output.
-
 ### Slot ID Assignment
 
-Elements receive a `slotId` (making them findable during hydration) when they have:
+Elements receive a `slotId` when they have:
 
 1. Event handlers (`onClick`, `onInput`, etc.)
 2. Dynamic children (reactive expressions, loops, conditionals)
@@ -128,7 +120,7 @@ Elements receive a `slotId` (making them findable during hydration) when they ha
 
 ### Filter/Sort Chain Parsing
 
-The compiler parses `.filter()` and `.sort()` chains before `.map()` for template-level evaluation:
+`.filter()` and `.sort()` chains before `.map()` are parsed for template-level evaluation:
 
 ```tsx
 {todos().filter(t => !t.done).sort((a, b) => a.date - b.date).map(t => (
@@ -136,19 +128,17 @@ The compiler parses `.filter()` and `.sort()` chains before `.map()` for templat
 ))}
 ```
 
-Simple patterns (e.g., `t => !t.done`, `(a, b) => a.price - b.price`) can be compiled for template-level evaluation. Complex patterns trigger **BF021** with a suggestion to use `/* @client */`. See [Error Codes Reference](./error-codes.md#bf021--unsupported-jsx-pattern) for details.
+Simple patterns compile for template-level evaluation. Complex patterns trigger **BF021**. See [Error Codes](./error-codes.md#bf021--unsupported-jsx-pattern).
 
 ### Auto Scope Wrapping
 
-If a component's IR root is a Provider (Context.Provider) with no wrapper element, the compiler wraps it in `<div style="display:contents">` to provide a DOM anchor for scope identification during hydration. The scope element is passed directly as the first argument to the init function.
+If the IR root is a Provider with no wrapper element, the compiler wraps it in `<div style="display:contents">` for scope identification during hydration.
 
 ---
 
 ## Phase 3a: Template Generation (Adapter)
 
-Adapters implement the `TemplateAdapter` interface to convert IR nodes into backend-specific templates. See [Adapter Architecture](../adapters/adapter-architecture.md) for the full interface.
-
-Each adapter handles:
+See [Adapter Architecture](../adapters/adapter-architecture.md). Each adapter handles:
 - `renderElement()` — HTML elements with hydration markers
 - `renderExpression()` — Dynamic values in the target template language
 - `renderConditional()` — Template-level conditionals
@@ -159,11 +149,7 @@ Each adapter handles:
 
 ## Phase 3b: Client JS Generation
 
-The `ir-to-client-js` module generates minimal JavaScript for hydration. It operates in several sub-phases:
-
 ### 1. Element Collection
-
-Walk the IR tree and categorize elements:
 
 | Category | Description | Example |
 |----------|-------------|---------|
@@ -177,8 +163,6 @@ Walk the IR tree and categorize elements:
 
 ### 2. Dependency Resolution
 
-Constants and functions are sorted by dependency:
-
 ```typescript
 // "Early" constants — no reactive deps, emitted first
 const baseClass = 'btn'
@@ -190,7 +174,7 @@ const displayValue = `Count: ${count()}`
 
 ### 3. Controlled Signal Detection
 
-The compiler detects when a signal name matches a prop name:
+When a signal name matches a prop name:
 
 ```tsx
 function Switch(props: Props) {
@@ -199,78 +183,71 @@ function Switch(props: Props) {
 }
 ```
 
-This generates a sync effect immediately after the signal creation:
+A sync effect is generated:
 
 ```javascript
 createEffect(() => {
-  const __val = props.checked
+  const __val = _p.checked
   if (__val !== undefined) setChecked(__val)
 })
 ```
 
 ### 4. Code Generation Order
 
-The generated `init` function follows this structure:
-
 ```javascript
-import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/client'
+import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/client-runtime'
 
-export function initCounter(__scope, props = {}) {
+export function initCounter(__scope, _p = {}) {
   if (!__scope) return
 
-  // 1. Props extraction (with defaults)
-  const label = props.label ?? 'Click'
-
-  // 2. Early constants (no reactive deps)
+  // 1. Early constants (no reactive deps)
   const baseClass = 'counter'
 
-  // 3. Local functions / handlers (before signals so signal initializers
-  //    can reference them, e.g., createSignal(toArray(props.x)))
+  // 2. Local functions / handlers (before signals so signal initializers
+  //    can reference them, e.g., createSignal(toArray(_p.x)))
   const handleClick = () => { setCount(n => n + 1) }
 
-  // 4. Signals, memos, controlled signal sync, and late constants
-  const [count, setCount] = createSignal(props.initial ?? 0)
+  // 3. Signals, memos, controlled signal sync, and late constants
+  const [count, setCount] = createSignal(_p.initial ?? 0)
   createEffect(() => {                          // controlled signal sync
-    const __val = props.initial
+    const __val = _p.initial
     if (__val !== undefined) setCount(__val)
   })
   const doubled = createMemo(() => count() * 2)
-  const displayValue = `Count: ${count()}`      // late constant (reactive deps)
 
-  // 5. Element references (always destructured, always returns array)
-  //    $()  — regular elements:  find(scope, '[bf="id"]')
+  // 4. Element references (always destructured, always returns array)
+  //    $()  — regular elements:  querySelector('[bf="id"]') within scope
   //    $t() — text nodes:        find comment marker <!--bf:id-->
-  //    $c() — child components:  find(scope, '[bf-s$="_id"]')
   const [_s3] = $(__scope, 's3')
   const [_s0, _s2] = $t(__scope, 's0', 's2')
 
-  // 6. Dynamic text updates
+  // 5. Dynamic text updates
   createEffect(() => {
     const __val = count()
-    if (_s0) _s0.nodeValue = String(__val)
+    if (_s0 && !__val?.__isSlot) _s0.nodeValue = String(__val ?? '')
   })
 
-  // 7. Reactive attribute updates
+  // 6. Reactive attribute updates
   createEffect(() => {
     if (_s3) { _s3.disabled = !!(count() > 10) }
   })
 
-  // 8. Conditional updates
-  // insert(_s4, () => isOpen() ? panelHtml : null)
+  // 7. Conditional updates (insert with comment markers)
+  // insert(__scope, 's4', () => isOpen(), trueBranch, falseBranch)
 
-  // 9. Loop updates
-  // reconcileElements(_s5, items(), getKey, renderItem)
+  // 8. Loop updates (mapArray with reconciliation)
+  // mapArray(() => items(), _s5, null, (item, idx, existing) => { ... })
 
-  // 10. Event handlers
-  if (_s3) _s3.onclick = handleClick
+  // 9. Event handlers
+  if (_s3) _s3.addEventListener('click', handleClick)
 
-  // 11. Reactive prop bindings / child component props
-  // 12. Ref callbacks
-  // 13. User-defined effects and onMounts
+  // 10. Reactive prop bindings / child component props
+  // 11. Ref callbacks
+  // 12. User-defined effects and onMounts
   createEffect(() => { console.log('Count changed:', count()) })
   onMount(() => { console.log('Mounted') })
 
-  // 14. Provider setup and child component initialization
+  // 13. Provider setup and child component initialization
 }
 
 // Registration: hydrate() registers the component and initializes all
@@ -278,56 +255,56 @@ export function initCounter(__scope, props = {}) {
 // 1. Static template (no signal deps) → always included
 // 2. CSR fallback template → only when used as a child component
 // Top-level-only components with signals skip template to save bytes.
-hydrate('Counter', { init: initCounter })
+hydrate('Counter', {
+  init: initCounter,
+  template: (_p) => `<div><p bf="s1">Count: <!--bf:s0-->${(0)}<!--/--></p>...</div>`
+})
 ```
 
 ### 5. Import Detection
 
-The generator scans the output code and includes only the `@barefootjs/client-runtime` imports actually used:
+Only used imports are included:
 
 ```javascript
-import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/client'
+import { $, $t, createEffect, createMemo, createSignal, hydrate, onMount } from '@barefootjs/client-runtime'
 ```
 
 ### 6. Template Registration
 
-The compiler decides whether to include a `template` function in the `hydrate()` call based on two factors:
-
-**Static template** — When `canGenerateStaticTemplate()` returns true (no signal-dependent expressions), a lightweight template is always included:
+**Static template** — No signal-dependent expressions:
 
 ```javascript
 hydrate('Button', {
   init: initButton,
-  template: (props) => `<button class="${props.className ?? ''}" bf="s0">${props.children}</button>`
+  template: (_p) => `<button ${(_p.className ?? '') != null ? 'class="' + (_p.className ?? '') + '"' : ''} bf="s0">${_p.children}</button>`
 })
 ```
 
-**CSR fallback template** — When a component has signals (can't generate a static template) but is used as a child by another component in the same file, a CSR fallback template is generated. This template replaces signal calls with initial values so `createComponent()` can render the component in loops and conditionals:
+**CSR fallback template** — Component has signals but is used as a child in the same file:
 
 ```javascript
 // StatusBadge is used by Dashboard in the same file → gets CSR fallback
 hydrate('StatusBadge', {
   init: initStatusBadge,
-  template: (props) => `<span bf="s0">${props.active ? 'on' : 'off'}</span>`
+  template: (_p) => `<span bf="s0">${_p.active ? 'on' : 'off'}</span>`
 })
 
 // Dashboard is top-level only → no template (saves bytes)
 hydrate('Dashboard', { init: initDashboard })
 ```
 
-**No template** — Top-level-only components with signals skip template generation entirely. They are hydrated from server-rendered HTML and never need to be created dynamically by `createComponent()`.
+**No template** — Top-level-only components with signals. Hydrated from server HTML only.
 
 ---
 
 ## Multi-Component Files
 
-When a file exports multiple components, the compiler uses a **two-pass** approach:
+Two-pass approach for multi-component files:
 
-1. **Pass 1** — Detects all exports via `listExportedComponents()`, then runs analysis and JSX → IR for each component
-2. **Between passes** — Scans all IRs with `collectComponentNamesFromIR()` to build a `usedAsChild` set (components referenced by other components in the same file)
-3. **Pass 2** — Runs adapter generation and client JS generation for each component, passing `usedAsChild` so that only child components get CSR fallback templates
-4. Merges templates — deduplicates shared imports and type definitions
-5. Merges client JS — combines imports by source module
+1. **Pass 1** — Detect exports, analyze, and generate IR for each
+2. **Between passes** — Build `usedAsChild` set via `collectComponentNamesFromIR()`
+3. **Pass 2** — Generate templates and client JS; only child components get CSR fallback templates
+4. Merge templates (deduplicate imports/types) and client JS (combine imports)
 
 ```tsx
 // Both compiled from the same file

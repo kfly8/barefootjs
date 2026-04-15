@@ -5,12 +5,12 @@ description: Learn how to write server and client components in BarefootJS using
 
 # Component Authoring
 
-A BarefootJS component is a function that returns JSX. Components come in two kinds: **server components** and **client components**.
+Components are functions that return JSX, in two kinds: **server components** and **client components**.
 
 
 ## Server Components
 
-A server component renders HTML on the server. It has no client-side JavaScript.
+Server components render HTML on the server with no client-side JavaScript.
 
 ```tsx
 export function Greeting({ name }: { name: string }) {
@@ -18,46 +18,40 @@ export function Greeting({ name }: { name: string }) {
 }
 ```
 
-Server components can access databases, read files, use secrets — anything that should stay on the server. They produce a template that is rendered once per request.
+Server components can access databases, read files, and use secrets. They produce a template rendered once per request.
 
 
 ## Client Components
 
-A client component uses reactive primitives and ships JavaScript to the browser. It requires the `"use client"` directive at the top of the file:
+Client components use reactive primitives and ship JavaScript to the browser. They require the `"use client"` directive:
 
 ```tsx
 "use client"
 import { createSignal } from '@barefootjs/client'
 
-export function Counter({ initial = 0 }) {
-  const [count, setCount] = createSignal(initial)
+export function Counter() {
+  const [count, setCount] = createSignal(0)
 
   return (
-    <div>
-      <p>{count()}</p>
-      <button onClick={() => setCount(n => n + 1)}>+1</button>
-    </div>
+    <button onClick={() => setCount(n => n + 1)}>
+      Count: {count()}
+    </button>
   )
 }
 ```
 
-The compiler produces two outputs from this source:
-
-1. **Marked Template** — Server-rendered HTML with `bf-*` attributes
-2. **Client JS** — A minimal script that creates signals, binds effects, and attaches event handlers
-
-See [Core Concepts — Two-Phase Compilation](../core-concepts.md#two-phase-compilation) for details.
+The compiler produces a **marked template** (server HTML with `bf-*` attributes) and **client JS** (signals, effects, event handlers). See [Two-Phase Compilation](../core-concepts/compilation.md) for details.
 
 ### When `"use client"` Is Required
 
-Add `"use client"` when a component uses any of these:
+Add `"use client"` when a component uses:
 
 - `createSignal`, `createEffect`, `createMemo`
 - `onMount`, `onCleanup`, `untrack`
 - `createContext`, `useContext`
 - Event handlers (`onClick`, `onChange`, etc.)
 
-Without the directive, the compiler emits an error:
+Without the directive:
 
 ```
 error[BF001]: 'use client' directive required for components with createSignal
@@ -66,7 +60,7 @@ error[BF001]: 'use client' directive required for components with createSignal
 
 ## Component Naming
 
-Component names must start with an uppercase letter. This is how the compiler distinguishes components from HTML elements:
+Component names must start with an uppercase letter:
 
 ```tsx
 // ✅ Component
@@ -79,8 +73,6 @@ function todoItem() { ... }
 
 ## Compilation Output
 
-A client component compiles into a marked template and a client init function. Here is a minimal example to illustrate the full pipeline:
-
 **Source:**
 
 ```tsx
@@ -91,22 +83,26 @@ export function Toggle() {
   const [on, setOn] = createSignal(false)
 
   return (
-    <button onClick={() => setOn(v => !v)}>
+    <button onClick={() => setOn(prev => !prev)}>
       {on() ? 'ON' : 'OFF'}
     </button>
   )
 }
 ```
 
-**Marked template (Hono):**
+**Marked template:**
 
 <!-- tabs:adapter -->
 <!-- tab:Hono -->
 ```tsx
-export function Toggle() {
+export function Toggle({ __instanceId, ... }) {
+  const __scopeId = __instanceId || `Toggle_${...}`
+  const on = () => false
+
   return (
-    <button bf-s="Toggle" bf="slot_0">
-      OFF
+    <button bf-s={__scopeId} bf="s1">
+      {on() ? <>{bfComment("cond-start:s0")}{'ON'}{bfComment("cond-end:s0")}</>
+            : <>{bfComment("cond-start:s0")}{'OFF'}{bfComment("cond-end:s0")}</>}
     </button>
   )
 }
@@ -114,8 +110,9 @@ export function Toggle() {
 <!-- tab:Go Template -->
 ```go-template
 {{define "Toggle"}}
-<button bf-s="{{.ScopeID}}" bf="slot_0">
-  OFF
+<button bf-s="{{bfScopeAttr .}}" bf="s1">
+  {{if .On}}{{bfComment "cond-start:s0"}}{{"ON"}}{{bfComment "cond-end:s0"}}
+  {{else}}{{bfComment "cond-start:s0"}}{{"OFF"}}{{bfComment "cond-end:s0"}}{{end}}
 </button>
 {{end}}
 ```
@@ -124,29 +121,33 @@ export function Toggle() {
 **Client JS:**
 
 ```js
-import { createSignal, createEffect, $, hydrate } from '@barefootjs/client'
+import { $, createSignal, hydrate, insert } from '@barefootjs/client-runtime'
 
-export function initToggle(__scope, props = {}) {
+export function initToggle(__scope, _p = {}) {
+  if (!__scope) return
+
   const [on, setOn] = createSignal(false)
 
-  const _s0 = $(__scope, 's0')
+  const [_s1, _s0] = $(__scope, 's1', 's0')
 
-  createEffect(() => {
-    if (_s0) _s0.textContent = on() ? 'ON' : 'OFF'
+  insert(__scope, 's0', () => on(), {
+    template: () => `<!--bf-cond-start:s0-->ON<!--bf-cond-end:s0-->`,
+    bindEvents: (__branchScope) => {}
+  }, {
+    template: () => `<!--bf-cond-start:s0-->OFF<!--bf-cond-end:s0-->`,
+    bindEvents: (__branchScope) => {}
   })
 
-  if (_s0) _s0.onclick = () => setOn(v => !v)
+  if (_s1) _s1.addEventListener('click', () => { setOn(prev => !prev) })
 }
 
-hydrate('Toggle', { init: initToggle })
+hydrate('Toggle', { init: initToggle, template: ... })
 ```
 
-The server renders static HTML. The browser runs the init function to make it interactive. Only the specific text node bound to `on()` updates when the signal changes.
+Only the conditional branch bound to `on()` updates when the signal changes. The `insert()` function handles DOM swapping using comment markers as boundaries.
 
 
 ## Composition Rules
-
-Server and client components follow a one-way composition rule:
 
 | From | To | Allowed |
 |------|----|---------|
@@ -155,7 +156,7 @@ Server and client components follow a one-way composition rule:
 | Client component | Client component | ✅ |
 | Client component | Server component | ❌ |
 
-A client component cannot import a server component because server-only code does not exist in the browser. The compiler emits error `BF003` if this is attempted.
+Server-only code does not exist in the browser. The compiler emits `BF003` if a client component imports a server component.
 
 ```tsx
 // Page.tsx — server component
@@ -178,12 +179,9 @@ import { Counter } from './Counter'    // ✅ Client → Client
 import { UserList } from './UserList'  // ❌ BF003: Client → Server
 ```
 
-Think of `"use client"` as a one-way gate: once you cross into client territory, everything below must also be a client component.
-
-
 ## Ref Callbacks
 
-Client components use `ref` callbacks for imperative DOM access. The callback receives the DOM element after it is mounted:
+`ref` callbacks provide imperative DOM access. The callback receives the element after mount:
 
 ```tsx
 "use client"
@@ -198,7 +196,7 @@ export function AutoFocus() {
 }
 ```
 
-Ref callbacks are the primary mechanism for attaching side effects to specific elements. They are often combined with `createEffect` for reactive DOM updates:
+Combine with `createEffect` for reactive DOM updates:
 
 ```tsx
 const handleMount = (el: HTMLElement) => {

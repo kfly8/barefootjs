@@ -5,7 +5,7 @@ description: Generate Hono JSX templates from the compiler's IR for Hono-based s
 
 # Hono Adapter
 
-The Hono adapter generates Hono JSX (`.hono.tsx`) files from the compiler's IR. It is designed for Hono-based servers and any JSX-compatible TypeScript backend.
+Generates Hono JSX (`.hono.tsx`) files from the compiler's IR. Works with Hono and any JSX-compatible TypeScript backend.
 
 ```
 npm install @barefootjs/hono
@@ -47,29 +47,34 @@ const adapter = new HonoAdapter({
 
 ### Server Component
 
-A server-only component (no `"use client"`) produces a plain Hono JSX function:
+Without `"use client"`, the template is generated with props access and hydration markers (for potential parent hydration), but no client JS:
 
 **Source:**
 
 ```tsx
-export function Greeting({ name }: { name: string }) {
-  return <h1>Hello, {name}</h1>
+export function Greeting(props: { name: string }) {
+  return <h1>Hello, {props.name}!</h1>
 }
 ```
 
 **Output (.hono.tsx):**
 
 ```tsx
-export function Greeting({ name }: { name: string }) {
-  return <h1>Hello, {name}</h1>
+import { bfText, bfTextEnd } from '@barefootjs/hono/utils'
+
+export function Greeting(__allProps: { name: string } & { __instanceId?: string; ... }) {
+  const { __instanceId, ..., ...props } = __allProps
+  const __scopeId = __instanceId || `Greeting_${...}`
+
+  return (
+    <h1 bf-s={...} bf="s1">
+      Hello, {bfText("s0")}{props.name}{bfTextEnd()}!
+    </h1>
+  )
 }
 ```
 
-No hydration markers, no client JS.
-
 ### Client Component
-
-A client component produces a Hono JSX function with hydration markers and props serialization:
 
 **Source:**
 
@@ -77,12 +82,12 @@ A client component produces a Hono JSX function with hydration markers and props
 "use client"
 import { createSignal } from '@barefootjs/client'
 
-export function Counter({ initial = 0 }: { initial?: number }) {
-  const [count, setCount] = createSignal(initial)
+export function Counter(props: { initial?: number }) {
+  const [count, setCount] = createSignal(props.initial ?? 0)
 
   return (
     <div>
-      <p>{count()}</p>
+      <span>Count: {count()}</span>
       <button onClick={() => setCount(n => n + 1)}>+1</button>
     </div>
   )
@@ -92,34 +97,33 @@ export function Counter({ initial = 0 }: { initial?: number }) {
 **Output (.hono.tsx):**
 
 ```tsx
-export function Counter({ initial = 0, __instanceId, __bfScope }: CounterPropsWithHydration) {
+import { bfText, bfTextEnd } from '@barefootjs/hono/utils'
+
+export function Counter(__allProps: { initial?: number } & { __instanceId?: string; ... }) {
+  const { __instanceId, ..., ...props } = __allProps
   const __scopeId = __instanceId || `Counter_${Math.random().toString(36).slice(2, 8)}`
-  const count = () => initial ?? 0
-  const setCount = () => {}
+  const count = () => props.initial ?? 0    // signal → server-side stub
 
   return (
-    <div bf-s={__scopeId} {...(__bfPropsJson ? { "bf-p": __bfPropsJson } : {})}>
-      <p bf="slot_0">{count()}</p>
-      <button bf="slot_1">+1</button>
+    <div bf-s={...} {...(... ? { "bf-p": __bfPropsJson } : {})}>
+      <span bf="s1">Count: {bfText("s0")}{count()}{bfTextEnd()}</span>
+      <button onClick={() => {}} bf="s2">+1</button>
     </div>
   )
 }
 ```
 
-Key aspects of the output:
-
-- **`bf-s`** on the root element identifies the component boundary
-- **`bf="slot_N"`** marks elements that the client JS will target
-- **Signal stubs** (`count = () => initial ?? 0`) allow the template to render the initial value server-side
-- **`bf-p`** attribute serializes props as JSON for client-side hydration
-- **Event handlers are removed** — they exist only in the client JS
+- `bf-s` — component scope boundary (unique per instance)
+- `bf="sN"` — client JS targets (elements, text nodes)
+- `bfText("s0")` / `bfTextEnd()` — text node markers (rendered as `<!--bf:s0-->...<!--/-->`)
+- Signal stubs (`count = () => props.initial ?? 0`) — render initial values server-side
+- `bf-p` — serialized props JSON for client hydration
+- Event handlers are replaced with no-ops (client JS handles the real ones)
 
 
 ## Script Collection
 
-Script collection is handled as a build-time post-processing step. After compiling with HonoAdapter, the build script injects `useRequestContext()` calls into the generated marked templates to register client scripts during SSR.
-
-At the end of the page, the `BfScripts` component renders the collected `<script>` tags:
+A build-time post-processing step injects `useRequestContext()` calls into generated templates. `BfScripts` renders the collected `<script>` tags:
 
 ```tsx
 import { BfScripts } from '@barefootjs/hono'
@@ -136,12 +140,12 @@ export function Layout({ children }) {
 }
 ```
 
-This ensures each component's client JS is loaded exactly once, even if the component appears multiple times on the page. See `site/ui/build.ts` for the `addScriptCollection()` implementation pattern.
+Each component's client JS loads once regardless of instance count. See `site/ui/build.ts` for the `addScriptCollection()` pattern.
 
 
 ## Hydration Props
 
-The adapter extends every client component's props with hydration-related fields:
+Every client component's props are extended with hydration fields:
 
 | Prop | Purpose |
 |------|---------|
@@ -150,42 +154,46 @@ The adapter extends every client component's props with hydration-related fields
 | `__bfChild` | Marks this component as a child instance (adds `~` prefix to `bf-s` value) |
 | `data-key` | Stable key for list-rendered instances |
 
-These props are used internally by the hydration system and do not need to be passed manually when using components.
+These are used internally — no manual passing needed.
 
 
 ## Conditional Rendering
 
-Ternary expressions in JSX compile to conditional output with hydration markers:
+Ternaries with element branches use `bf-c` markers. Text-only ternaries use comment markers:
 
-**Source:**
-
-```tsx
-{isActive() ? <span>Active</span> : <span>Inactive</span>}
-```
-
-**Output:**
+**Element branches:**
 
 ```tsx
-{isActive() ? <span bf-c="slot_2">Active</span> : <span bf-c="slot_2">Inactive</span>}
+{loggedIn() ? <span>Welcome back!</span> : <span>Please log in</span>}
 ```
 
-The client JS uses the `bf-c` marker to swap DOM nodes when the condition changes.
+```tsx
+{loggedIn() ? <span bf-c="s0">Welcome back!</span> : <span bf-c="s0">Please log in</span>}
+```
 
+**Text-only branches:**
+
+```tsx
+{on() ? 'ON' : 'OFF'}
+```
+
+```tsx
+{on() ? <>{bfComment("cond-start:s0")}{'ON'}{bfComment("cond-end:s0")}</>
+      : <>{bfComment("cond-start:s0")}{'OFF'}{bfComment("cond-end:s0")}</>}
+```
 
 ## Loop Rendering
 
-Array `.map()` calls compile to JSX map expressions:
-
 **Source:**
 
 ```tsx
-{items().map(item => <li>{item.name}</li>)}
+{items().map(item => <li>{item}</li>)}
 ```
 
 **Output:**
 
 ```tsx
-{items().map(item => <li>{item.name}</li>)}
+{bfComment('loop')}{items().map((item) => <li>{bfText("s0")}{item}{bfTextEnd()}</li>)}{bfComment('/loop')}
 ```
 
-For loops with child components, the adapter generates unique instance IDs per iteration using the loop index or a `key` prop.
+Loop markers (`<!--bf-loop-->...<!--bf-/loop-->`) are used for reconciliation. For child components in loops, the adapter generates unique instance IDs per iteration using the loop index or `key`.

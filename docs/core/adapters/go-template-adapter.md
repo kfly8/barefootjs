@@ -5,7 +5,7 @@ description: Generate Go html/template files and type definitions from the compi
 
 # Go Template Adapter
 
-The Go Template adapter generates Go `html/template` files (`.tmpl`) and Go type definitions (`_types.go`) from the compiler's IR. It is designed for Go backends using the standard `html/template` package.
+Generates Go `html/template` files (`.tmpl`) and type definitions (`_types.go`) from the compiler's IR.
 
 ```
 npm install @barefootjs/go-template
@@ -47,8 +47,8 @@ const adapter = new GoTemplateAdapter({
 **Source:**
 
 ```tsx
-export function Greeting({ name }: { name: string }) {
-  return <h1>Hello, {name}</h1>
+export function Greeting(props: { name: string }) {
+  return <p>Hello, {props.name}!</p>
 }
 ```
 
@@ -56,29 +56,15 @@ export function Greeting({ name }: { name: string }) {
 
 ```go-template
 {{define "Greeting"}}
-<h1>Hello, {{.Name}}</h1>
+<p bf-s="{{bfScopeAttr .}}" {{bfPropsAttr .}} bf="s1">
+  Hello, {{bfTextStart "s0"}}{{.Name}}{{bfTextEnd}}!
+</p>
 {{end}}
 ```
 
-**Output (_types.go):**
-
-```go
-package components
-
-type GreetingInput struct {
-    Name string `json:"name"`
-}
-
-type GreetingProps struct {
-    Name string `json:"name"`
-}
-
-func NewGreetingProps(input GreetingInput) GreetingProps {
-    return GreetingProps{
-        Name: input.Name,
-    }
-}
-```
+- `bfScopeAttr` — generates the `bf-s` scope ID
+- `bfPropsAttr` — serializes props for client hydration
+- `bfTextStart` / `bfTextEnd` — text node markers (rendered as `<!--bf:s0-->...<!--/-->`)
 
 ### Client Component
 
@@ -88,12 +74,12 @@ func NewGreetingProps(input GreetingInput) GreetingProps {
 "use client"
 import { createSignal } from '@barefootjs/client'
 
-export function Counter({ initial = 0 }: { initial?: number }) {
-  const [count, setCount] = createSignal(initial)
+export function Counter(props: { initial?: number }) {
+  const [count, setCount] = createSignal(props.initial ?? 0)
 
   return (
     <div>
-      <p>{count()}</p>
+      <span>Count: {count()}</span>
       <button onClick={() => setCount(n => n + 1)}>+1</button>
     </div>
   )
@@ -104,18 +90,16 @@ export function Counter({ initial = 0 }: { initial?: number }) {
 
 ```go-template
 {{define "Counter"}}
-{{template "bf_register_script" "Counter"}}
+{{if .Scripts}}{{.Scripts.Register "/static/client/barefoot.js"}}{{.Scripts.Register "/static/client/Counter.client.js"}}{{end}}
 <div bf-s="{{bfScopeAttr .}}" {{bfPropsAttr .}}>
-  <p bf="slot_0">{{.Initial}}</p>
-  <button bf="slot_1">+1</button>
+  <span bf="s1">Count: {{bfTextStart "s0"}}{{.Count}}{{bfTextEnd}}</span>
+  <button bf="s2">+1</button>
 </div>
 {{end}}
 ```
 
 
 ## Expression Translation
-
-The adapter translates JavaScript expressions into Go template syntax. This is the most complex part of the adapter, as the two languages have fundamentally different expression models.
 
 ### Property Access
 
@@ -157,30 +141,28 @@ Field names are automatically capitalized to follow Go conventions.
 
 ## Array Methods
 
-The adapter translates JavaScript array methods into Go template functions and blocks.
-
 ### `.map()`
 
 ```tsx
-{items.map(item => <li>{item.name}</li>)}
+{items().map(item => <li>{item}</li>)}
 ```
 
 ```go-template
-{{range .Items}}
-<li>{{.Name}}</li>
+{{range $_, $item := .Items}}
+<li>{{bfTextStart "s0"}}{{.Item}}{{bfTextEnd}}</li>
 {{end}}
 ```
 
 ### `.filter().map()`
 
 ```tsx
-{items.filter(t => t.completed).map(t => <li>{t.name}</li>)}
+{items().filter(item => item.active).map(item => <li>{item.name}</li>)}
 ```
 
 ```go-template
-{{range bf_filter .Items "Completed" true}}
-<li>{{.Name}}</li>
-{{end}}
+{{range $_, $item := .Items}}{{if .Active}}
+<li>{{bfTextStart "s0"}}{{.Item.Name}}{{bfTextEnd}}</li>
+{{end}}{{end}}
 ```
 
 For complex filter predicates, the adapter generates template block functions.
@@ -193,7 +175,7 @@ For complex filter predicates, the adapter generates template block functions.
 
 ```go-template
 {{range bf_sort .Items "Priority" "asc"}}
-<li>{{.Name}}</li>
+<li>{{bfTextStart "s0"}}{{.Name}}{{bfTextEnd}}</li>
 {{end}}
 ```
 
@@ -210,11 +192,11 @@ For complex filter predicates, the adapter generates template block functions.
 
 ## Type Generation
 
-The Go adapter generates type-safe Go code alongside the template. For each component, it produces:
+For each component, the adapter generates:
 
-1. **Input struct** — The external API (what the caller passes)
-2. **Props struct** — The internal representation (includes hydration fields)
-3. **Constructor function** — `New{Component}Props()` with default values
+1. **Input struct** — external API
+2. **Props struct** — internal representation (includes hydration fields)
+3. **Constructor** — `New{Component}Props()` with defaults
 
 ### Type Mapping
 
@@ -229,8 +211,6 @@ The Go adapter generates type-safe Go code alongside the template. For each comp
 
 ### Nested Components
 
-When a component renders child components, the adapter generates Props structs for the children and includes them as fields in the parent's Props struct:
-
 ```tsx
 export function TodoList({ items }: { items: TodoItem[] }) {
   return (
@@ -241,40 +221,39 @@ export function TodoList({ items }: { items: TodoItem[] }) {
 }
 ```
 
-The generated Go types include a `TodoItems` field of type `[]TodoItemProps`, pre-populated by the constructor function.
-
-
 ## Conditional Rendering
 
-Ternary expressions translate to `{{if}}...{{else}}...{{end}}` blocks:
+Ternaries become `{{if}}...{{else}}...{{end}}`:
 
 **Source:**
 
 ```tsx
-{isActive ? <span>Active</span> : <span>Inactive</span>}
+{loggedIn() ? <span>Welcome back!</span> : <span>Please log in</span>}
 ```
 
 **Output:**
 
 ```go-template
-{{if .IsActive}}<span>Active</span>{{else}}<span>Inactive</span>{{end}}
+{{if .LoggedIn}}<span bf-c="s0">Welcome back!</span>{{else}}<span bf-c="s0">Please log in</span>{{end}}
 ```
+
+Element branches use `bf-c` for conditional markers. Text-only ternaries use `bfComment` markers instead.
 
 
 ## Script Registration
 
-The adapter uses a `ScriptCollector` pattern. Each client component registers its script with:
+Client components register their scripts via the `.Scripts` interface:
 
 ```go-template
-{{template "bf_register_script" "Counter"}}
+{{if .Scripts}}{{.Scripts.Register "/static/client/barefoot.js"}}{{.Scripts.Register "/static/client/Counter.client.js"}}{{end}}
 ```
 
-The Go server's `ScriptCollector` tracks which scripts are needed and renders the appropriate `<script>` tags at the end of the page. Each component's script is included at most once.
+The `ScriptCollector` tracks needed scripts and renders `<script>` tags at page end. Each script loads at most once.
 
 
 ## Go Helper Functions
 
-The adapter assumes these helper functions are available in the Go template `FuncMap`:
+These helper functions must be in the Go template `FuncMap`:
 
 | Function | Purpose |
 |----------|---------|
@@ -287,4 +266,4 @@ The adapter assumes these helper functions are available in the Go template `Fun
 | `bf_json` | JSON-encode a value for props serialization |
 | `bf_concat` | String concatenation |
 
-These are provided by the BarefootJS Go runtime package.
+Provided by the BarefootJS Go runtime package.

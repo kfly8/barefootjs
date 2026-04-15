@@ -15,14 +15,13 @@ Write familiar JSX with fine-grained reactivity — the compiler splits it into 
 "use client"
 import { createSignal } from '@barefootjs/client'
 
-export function Counter({ initial = 0 }) {
-  const [count, setCount] = createSignal(initial)
+export function Counter() {
+  const [count, setCount] = createSignal(0)
 
   return (
-    <div>
-      <p>{count()}</p>
-      <button onClick={() => setCount(n => n + 1)}>+1</button>
-    </div>
+    <button onClick={() => setCount(n => n + 1)}>
+      Count: {count()}
+    </button>
   )
 }
 ```
@@ -34,12 +33,14 @@ This single file compiles into two outputs:
 **Marked template** — Renders static HTML with hydration markers:
 
 ```tsx
-export function Counter(props) {
+export function Counter({ __instanceId, ... }) {
+  const __scopeId = __instanceId || `Counter_${Math.random().toString(36).slice(2, 8)}`
+  const count = () => 0
+
   return (
-    <div bf-s="Counter">
-      <p bf="slot_0">{props.initial ?? 0}</p>
-      <button bf="slot_1">+1</button>
-    </div>
+    <button bf-s={__scopeId} bf="s1">
+      Count: {bfText("s0")}{count()}{bfTextEnd()}
+    </button>
   )
 }
 ```
@@ -49,10 +50,9 @@ export function Counter(props) {
 
 ```go-template
 {{define "Counter"}}
-<div bf-s="{{.ScopeID}}">
-  <p bf="slot_0">{{.Initial}}</p>
-  <button bf="slot_1">+1</button>
-</div>
+<button bf-s="{{bfScopeAttr .}}" bf="s1">
+  Count: {{bfTextStart "s0"}}{{.Count}}{{bfTextEnd}}
+</button>
 {{end}}
 ```
 
@@ -61,65 +61,49 @@ export function Counter(props) {
 **Client script** — Wires up only the interactive parts:
 
 ```js
-import { createSignal, createEffect, find, hydrate } from '@barefootjs/client'
+import { $, $t, createEffect, createSignal, hydrate } from '@barefootjs/client-runtime'
 
-export function initCounter(__scope, props = {}) {
-  const [count, setCount] = createSignal(props.initial ?? 0)
+export function initCounter(__scope, _p = {}) {
+  if (!__scope) return
 
-  const _slot_0 = find(__scope, '[bf="slot_0"]')
-  const _slot_1 = find(__scope, '[bf="slot_1"]')
+  const [count, setCount] = createSignal(0)
+
+  const [_s1] = $(__scope, 's1')       // find element with bf="s1"
+  const [_s0] = $t(__scope, 's0')      // find text node at <!--bf:s0-->
 
   createEffect(() => {
-    if (_slot_0) _slot_0.textContent = String(count())
+    const __val = count()
+    if (_s0) _s0.nodeValue = String(__val ?? '')
   })
 
-  if (_slot_1) _slot_1.onclick = () => setCount(n => n + 1)
+  if (_s1) _s1.addEventListener('click', () => { setCount(n => n + 1) })
 }
 
-hydrate('Counter', { init: initCounter })
+hydrate('Counter', {
+  init: initCounter,
+  template: (_p) => `<button bf="s1"> Count: <!--bf:s0-->${(0)}<!--/--></button>`
+})
 ```
 
 No framework runtime. No virtual DOM. Just the minimum JavaScript needed for interactivity.
 
 
-## Why BarefootJS?
+## Design Principles
 
-### The Problem
-
-Modern frontend frameworks ship large JavaScript runtimes to the browser, even when most of the page is static content. Server-side rendering helps with initial load, but hydration still requires downloading and executing the full framework.
-
-If your backend is Go, Python, or Perl, the gap is wider: you either maintain separate template and JavaScript codebases, or adopt a JavaScript-only stack.
-
-### The BarefootJS Approach
-
-BarefootJS compiles JSX into **native templates for your backend** and **minimal client JS** — bridging server rendering and client interactivity without a runtime.
-
-- **Backend agnostic** — The same JSX source produces templates for any backend (Go, TypeScript, etc.)
-- **Fine-grained reactivity** — Signals track dependencies at the expression level, updating only the affected DOM nodes
-- **Minimal client JS** — Each component ships only the JavaScript it needs, not a framework runtime
-- **Full type safety** — TypeScript types flow through the entire compilation pipeline
-
-
-## Design Philosophy
-
-**1. Compile, don't ship a runtime.**
+**Compile, don't ship a runtime.**
 The compiler does the heavy lifting at build time. The browser receives only the JavaScript it needs — no framework, no virtual DOM diffing.
 
-**2. Backend agnostic.**
+**Backend agnostic.**
 The same JSX source produces templates for Hono, Go `html/template`, and any future adapter. Your component library works across stacks.
 
-**3. Fine-grained reactivity.**
+**Fine-grained reactivity.**
 Inspired by SolidJS, signals track dependencies at the expression level. When state changes, only the affected DOM nodes update — not the entire component tree.
 
-**4. Progressive enhancement.**
-Server-rendered HTML works without JavaScript. Client scripts enhance the page with interactivity. If JavaScript fails to load, users still see content.
+**Progressive enhancement.**
+Server-rendered HTML works without JavaScript. Client scripts add interactivity. If JavaScript fails to load, users still see content.
 
-**5. Familiar syntax, no lock-in.**
-JSX is the authoring format, but the output is standard HTML and vanilla JavaScript. There is no proprietary template language to learn and no framework to migrate away from.
+**Full type safety.**
+TypeScript types flow through the entire compilation pipeline.
 
-
-## Who is it for?
-
-- **Full-stack TypeScript developers** who want reactive UI without shipping a framework runtime to the browser
-- **Backend teams** (Go, Python, etc.) who need interactive components without adopting a JavaScript-only stack
-- **Performance-focused teams** who need minimal client JS with fine-grained DOM updates
+**No lock-in.**
+JSX is the authoring format, but the output is standard HTML and vanilla JavaScript. No proprietary template language. No framework to migrate away from.

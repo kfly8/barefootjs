@@ -5,7 +5,7 @@ description: Marker-driven hydration that makes server-rendered HTML interactive
 
 # Hydration Model
 
-Hydration is the process of making server-rendered HTML interactive. BarefootJS uses a **marker-driven** approach.
+BarefootJS uses **marker-driven** hydration to make server-rendered HTML interactive.
 
 ## Hydration Markers
 
@@ -36,13 +36,13 @@ Server HTML (static)
     ↓
 Client JS loads
     ↓
-hydrate('Counter', { init: initCounter })
+hydrate('Counter', { init: initCounter, template: ... })
     ↓
-Find uninitialized <div bf-s="Counter_a1b2">
+Find uninitialized <... bf-s="Counter_a1b2">
     ↓
 Read props from bf-p attribute
     ↓
-Run init(): createSignal, createEffect, attach event handlers
+Run init(): createSignal, createEffect, addEventListener
     ↓
 Track scope as initialized (internal hydratedScopes Set)
     ↓
@@ -51,15 +51,15 @@ Page is interactive
 
 ## Scoped Queries
 
-Each component only hydrates its own elements. The runtime's `find()` function searches within a scope boundary, excluding nested component scopes. This prevents components from interfering with each other.
+`$()` and `$t()` search within a scope boundary, excluding nested component scopes.
 
 ```html
 <div bf-s="TodoApp_x1">        <!-- TodoApp scope -->
-  <h1 bf="slot_0">Todo</h1>        <!-- belongs to TodoApp -->
+  <h1 bf="s0">Todo</h1>            <!-- belongs to TodoApp -->
   <div bf-s="~TodoItem_y1">     <!-- TodoItem scope (~ = child, excluded from TodoApp queries) -->
-    <span bf="slot_0">Buy milk</span>
+    <span bf="s0">Buy milk</span>
   </div>
 </div>
 ```
 
-When TodoApp's init calls `find(scope, '[bf="slot_0"]')`, it finds the `<h1>`, not the `<span>` inside TodoItem.
+When TodoApp's init calls `$(__scope, 's0')`, it finds the `<h1>`, not the `<span>` inside TodoItem. The `~` prefix on `bf-s` marks a child component scope, which is excluded from parent queries.

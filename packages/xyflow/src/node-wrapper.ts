@@ -76,9 +76,25 @@ export function createNodeWrapper<NodeType extends NodeBase>(
     renderNodeContent(element, internalNode, store)
     nodesContainer.appendChild(element)
 
-    // Set initial dimensions synchronously (ResizeObserver is async)
+    // Set initial dimensions and handle bounds synchronously
     internalNode.measured.width = element.offsetWidth
     internalNode.measured.height = element.offsetHeight
+
+    // Compute handle bounds immediately so edges resolve handles correctly
+    const initUpdates = new Map<string, InternalNodeUpdate>()
+    initUpdates.set(internalNode.id, {
+      id: internalNode.id,
+      nodeElement: element as HTMLDivElement,
+      force: true,
+    })
+    updateNodeInternals(
+      initUpdates,
+      store.nodeLookup(),
+      store.parentLookup(),
+      store.domNode(),
+      store.nodeOrigin,
+      store.nodeExtent,
+    )
 
     // ResizeObserver for subsequent dimension changes
     const resizeObserver = new ResizeObserver(() => {
