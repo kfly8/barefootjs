@@ -206,6 +206,15 @@ export function initFlow(scope: Element, props: Record<string, unknown>): void {
   el.addEventListener('click', (event) => {
     if (event.target === el || event.target === viewportEl) {
       store.unselectNodesAndEdges()
+      if (store.onPaneClick) {
+        store.onPaneClick(event as MouseEvent)
+      }
+    }
+  })
+
+  el.addEventListener('mousemove', (event) => {
+    if (store.onPaneMouseMove) {
+      store.onPaneMouseMove(event as MouseEvent)
     }
   })
 
