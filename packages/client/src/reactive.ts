@@ -37,6 +37,9 @@ let Owner: EffectContext | null = null
 let Listener: EffectContext | null = null
 const MAX_EFFECT_RUNS = 100
 
+let BatchDepth = 0
+const PendingEffects = new Set<EffectContext>()
+
 /**
  * Create a reactive value
  *
@@ -72,9 +75,15 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 
     value = newValue
 
-    const effectsToRun = [...subscribers]
-    for (const effect of effectsToRun) {
-      runEffect(effect)
+    if (BatchDepth > 0) {
+      for (const effect of subscribers) {
+        PendingEffects.add(effect)
+      }
+    } else {
+      const effectsToRun = [...subscribers]
+      for (const effect of effectsToRun) {
+        runEffect(effect)
+      }
     }
   }
 
@@ -292,6 +301,50 @@ export function untrack<T>(fn: () => T): T {
     return fn()
   } finally {
     Listener = prevListener
+  }
+}
+
+/**
+ * Batch multiple signal updates and propagate once
+ *
+ * Collects all signal writes inside `fn`, then flushes
+ * dependent effects after `fn` returns. Duplicate effects
+ * are deduplicated, so a deep memo chain only propagates once
+ * regardless of how many times the source signal was written.
+ *
+ * Batches can be nested — effects flush when the outermost batch ends.
+ *
+ * @param fn - Function containing signal writes to batch
+ * @returns The return value of fn
+ *
+ * @example
+ * const [a, setA] = createSignal(0)
+ * const [b, setB] = createSignal(0)
+ * batch(() => {
+ *   setA(1)  // queued
+ *   setB(2)  // queued
+ * })
+ * // effects run once here, not twice
+ */
+export function batch<T>(fn: () => T): T {
+  BatchDepth++
+  try {
+    return fn()
+  } finally {
+    BatchDepth--
+    if (BatchDepth === 0) {
+      flushEffects()
+    }
+  }
+}
+
+function flushEffects(): void {
+  while (PendingEffects.size > 0) {
+    const effects = [...PendingEffects]
+    PendingEffects.clear()
+    for (const effect of effects) {
+      runEffect(effect)
+    }
   }
 }
 

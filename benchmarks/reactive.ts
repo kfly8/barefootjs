@@ -9,6 +9,7 @@ import {
   createEffect,
   createMemo,
   createRoot,
+  batch,
 } from '../packages/client/src/index.ts'
 
 // ---------------------------------------------------------------------------
@@ -128,6 +129,30 @@ console.log('\n=== Reactive Primitives Benchmark ===\n')
       }
     }, 20)
     report(`Deep chain (${DEPTH} memos) × ${UPDATES} updates`, ms, UPDATES)
+  })
+}
+
+// 6b. Deep chain with batch: same as above but wrapped in batch()
+{
+  const DEPTH = 100
+  createRoot(() => {
+    const [get, set] = createSignal(0)
+    let current: () => number = get
+    for (let i = 0; i < DEPTH; i++) {
+      const prev = current
+      current = createMemo(() => prev() + 1)
+    }
+    const last = current
+    createEffect(() => { last() })
+    const UPDATES = 1000
+    const ms = measure(`deep chain batched (${DEPTH})`, () => {
+      batch(() => {
+        for (let i = 0; i < UPDATES; i++) {
+          set(i)
+        }
+      })
+    }, 20)
+    report(`Deep chain batched (${DEPTH} memos) × ${UPDATES}`, ms, UPDATES)
   })
 }
 

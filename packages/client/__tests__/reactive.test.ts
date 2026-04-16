@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { createSignal, createMemo, createEffect, onCleanup, onMount } from '../src/reactive'
+import { createSignal, createMemo, createEffect, onCleanup, onMount, batch } from '../src/reactive'
 
 describe('createSignal', () => {
   test('returns initial value', () => {
@@ -494,5 +494,178 @@ describe('onMount', () => {
     expect(events).toEqual(['mount'])
     // onCleanup is registered for when the effect is cleaned up
     // In a real component lifecycle, this would be called on unmount
+  })
+})
+
+describe('batch', () => {
+  test('coalesces multiple signal updates into one effect run', () => {
+    let effectCount = 0
+    const [a, setA] = createSignal(0)
+    const [b, setB] = createSignal(0)
+
+    createEffect(() => {
+      a()
+      b()
+      effectCount++
+    })
+
+    expect(effectCount).toBe(1) // initial run
+
+    batch(() => {
+      setA(1)
+      setB(2)
+    })
+
+    expect(effectCount).toBe(2) // runs once after batch, not twice
+    expect(a()).toBe(1)
+    expect(b()).toBe(2)
+  })
+
+  test('returns the value from fn', () => {
+    const result = batch(() => 42)
+    expect(result).toBe(42)
+  })
+
+  test('nested batch flushes only when outermost ends', () => {
+    let effectCount = 0
+    const [a, setA] = createSignal(0)
+    const [b, setB] = createSignal(0)
+
+    createEffect(() => {
+      a()
+      b()
+      effectCount++
+    })
+
+    expect(effectCount).toBe(1)
+
+    batch(() => {
+      setA(1)
+      batch(() => {
+        setB(2)
+      })
+      // inner batch ended but outer is still active — no flush yet
+      expect(effectCount).toBe(1)
+    })
+
+    expect(effectCount).toBe(2)
+  })
+
+  test('deep memo chain propagates correctly after batch', () => {
+    const [source, setSource] = createSignal(0)
+    const m1 = createMemo(() => source() + 1)
+    const m2 = createMemo(() => m1() + 1)
+    const m3 = createMemo(() => m2() + 1)
+
+    const results: number[] = []
+    createEffect(() => {
+      results.push(m3())
+    })
+
+    expect(results).toEqual([3]) // 0+1+1+1
+
+    batch(() => {
+      setSource(10)
+      setSource(20)
+      setSource(30)
+    })
+
+    // Only the final value propagates through the chain
+    expect(results).toEqual([3, 33]) // 30+1+1+1
+    expect(m3()).toBe(33)
+  })
+
+  test('values are updated immediately inside batch', () => {
+    const [count, setCount] = createSignal(0)
+
+    batch(() => {
+      setCount(5)
+      expect(count()).toBe(5) // value is available immediately
+      setCount(n => n + 1)
+      expect(count()).toBe(6)
+    })
+  })
+
+  test('effects do not run during batch', () => {
+    const results: number[] = []
+    const [count, setCount] = createSignal(0)
+
+    createEffect(() => {
+      results.push(count())
+    })
+
+    expect(results).toEqual([0])
+
+    batch(() => {
+      setCount(1)
+      setCount(2)
+      setCount(3)
+      // No effect runs yet
+      expect(results).toEqual([0])
+    })
+
+    // Effect runs once with the final value
+    expect(results).toEqual([0, 3])
+  })
+
+  test('batch with no changes does not trigger effects', () => {
+    let effectCount = 0
+    const [count, setCount] = createSignal(0)
+
+    createEffect(() => {
+      count()
+      effectCount++
+    })
+
+    expect(effectCount).toBe(1)
+
+    batch(() => {
+      // no signal writes
+    })
+
+    expect(effectCount).toBe(1)
+  })
+
+  test('batch with same-value writes does not trigger effects', () => {
+    let effectCount = 0
+    const [count, setCount] = createSignal(5)
+
+    createEffect(() => {
+      count()
+      effectCount++
+    })
+
+    expect(effectCount).toBe(1)
+
+    batch(() => {
+      setCount(5) // same value — Object.is skips
+    })
+
+    expect(effectCount).toBe(1)
+  })
+
+  test('multiple signals with shared effect run effect once', () => {
+    let effectCount = 0
+    const [a, setA] = createSignal(1)
+    const [b, setB] = createSignal(2)
+    const [c, setC] = createSignal(3)
+
+    createEffect(() => {
+      a() + b() + c()
+      effectCount++
+    })
+
+    expect(effectCount).toBe(1)
+
+    batch(() => {
+      setA(10)
+      setB(20)
+      setC(30)
+    })
+
+    expect(effectCount).toBe(2)
+    expect(a()).toBe(10)
+    expect(b()).toBe(20)
+    expect(c()).toBe(30)
   })
 })
