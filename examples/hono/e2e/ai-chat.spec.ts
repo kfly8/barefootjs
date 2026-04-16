@@ -1,51 +1,56 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('AI Chat (Streaming SSR)', () => {
+test.describe('AI Chat (SSE Streaming)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/ai-chat')
   })
 
-  test('shows skeleton then streams chat history', async ({ page }) => {
-    // Either skeleton is visible initially or chat has already resolved
-    const skeleton = page.locator('.chat-skeleton')
-    const chatMessages = page.locator('.chat-messages')
-
-    await expect(skeleton.or(chatMessages)).toBeVisible({ timeout: 5000 })
-
-    // After streaming resolves, chat messages should be visible
-    await expect(chatMessages).toBeVisible({ timeout: 5000 })
-    await expect(skeleton).toBeHidden()
+  test('shows chat input on load', async ({ page }) => {
+    await expect(page.locator('.chat-input')).toBeVisible()
+    await expect(page.locator('.chat-send')).toBeVisible()
   })
 
-  test('displays all mock chat messages after streaming', async ({ page }) => {
-    await expect(page.locator('.chat-messages')).toBeVisible({ timeout: 5000 })
+  test('user message appears after sending', async ({ page }) => {
+    await page.fill('.chat-input', 'こんにちは')
+    await page.click('.chat-send')
 
-    // Should have both user and assistant messages
-    const userMessages = page.locator('.chat-user')
-    const assistantMessages = page.locator('.chat-assistant')
-
-    await expect(userMessages.first()).toBeVisible()
-    await expect(assistantMessages.first()).toBeVisible()
-
-    // Check specific content
-    await expect(page.locator('text=BarefootJSとは何ですか')).toBeVisible()
+    await expect(page.locator('.chat-user')).toBeVisible()
+    await expect(page.locator('.chat-user .chat-bubble p')).toHaveText('こんにちは')
+    await expect(page.locator('.chat-input')).toHaveValue('')
   })
 
-  test('streams suggested questions', async ({ page }) => {
-    // Suggestions may load before or after chat history
-    await expect(page.locator('.chat-suggestions')).toBeVisible({ timeout: 5000 })
+  test('AI response streams in after sending a message', async ({ page }) => {
+    await page.fill('.chat-input', 'テスト')
+    await page.click('.chat-send')
 
-    const chips = page.locator('.suggestion-chip')
-    await expect(chips).toHaveCount(3)
+    // Streaming response appears (cursor visible during streaming)
+    await expect(page.locator('.chat-assistant')).toBeVisible({ timeout: 3000 })
+
+    // Streaming completes and final message is present
+    await expect(page.locator('.chat-assistant .chat-bubble p')).not.toBeEmpty({ timeout: 10000 })
+    await expect(page.locator('.streaming-cursor')).toBeHidden({ timeout: 10000 })
   })
 
-  test('counter is interactive after streaming completes', async ({ page }) => {
-    // Wait for streaming to complete
-    await expect(page.locator('.chat-messages')).toBeVisible({ timeout: 5000 })
+  test('can send message with Enter key', async ({ page }) => {
+    await page.fill('.chat-input', 'Enterキーテスト')
+    await page.press('.chat-input', 'Enter')
 
-    // Counter should be hydrated and functional
-    await expect(page.locator('.counter-value')).toHaveText('0')
-    await page.click('button:has-text("+1")')
-    await expect(page.locator('.counter-value')).toHaveText('1')
+    await expect(page.locator('.chat-user')).toBeVisible()
+    await expect(page.locator('.chat-user .chat-bubble p')).toHaveText('Enterキーテスト')
+  })
+
+  test('can send multiple messages sequentially', async ({ page }) => {
+    await page.fill('.chat-input', '1つ目')
+    await page.click('.chat-send')
+    await expect(page.locator('.chat-user').first()).toBeVisible()
+
+    // Wait for first AI response to complete
+    await expect(page.locator('.streaming-cursor')).toBeHidden({ timeout: 10000 })
+
+    await page.fill('.chat-input', '2つ目')
+    await page.click('.chat-send')
+
+    await expect(page.locator('.chat-user')).toHaveCount(2, { timeout: 3000 })
+    await expect(page.locator('.chat-assistant')).toHaveCount(2, { timeout: 10000 })
   })
 })

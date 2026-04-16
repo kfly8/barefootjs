@@ -9,7 +9,7 @@
 }
 
 /* Messages */
-.chat-messages { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.chat-messages { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; min-height: 200px; max-height: 400px; overflow-y: auto; }
 .chat-msg { display: flex; }
 .chat-user { justify-content: flex-end; }
 .chat-assistant { justify-content: flex-start; }
@@ -37,6 +37,9 @@
   transition: background 0.15s;
 }
 .suggestion-chip:hover { background: #f0f0f0; }
+
+/* Streaming message (separate container for SSR/CSR ordering) */
+.chat-streaming { padding: 0 1rem 0.75rem; }
 
 /* Input area */
 .chat-input-area {
@@ -86,4 +89,16 @@
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* Streaming cursor */
+.streaming-cursor {
+  display: inline-block;
+  color: currentColor;
+  animation: cursor-blink 0.7s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }

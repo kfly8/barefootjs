@@ -14,9 +14,9 @@ import TodoApp from '@/components/TodoApp'
 import TodoAppSSR from '@/components/TodoAppSSR'
 import ReactiveProps, { PropsReactivityComparison } from '@/components/ReactiveProps'
 import Form from '@/components/Form'
-import { AIChatPage } from './components/AIChatPage'
 import PortalExample from '@/components/PortalExample'
 import ConditionalReturn from '@/components/ConditionalReturn'
+import { AIChatPage } from './components/AIChatPage'
 
 const app = new Hono()
 
@@ -53,7 +53,7 @@ app.get('/', (c) => {
           <li><a href="/toggle">Toggle</a></li>
           <li><a href="/todos">Todo (@client)</a></li>
           <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
-          <li><a href="/ai-chat">AI Chat (Streaming SSR)</a></li>
+          <li><a href="/ai-chat">AI Chat (SSE Streaming)</a></li>
         </ul>
       </nav>
     </div>
@@ -169,9 +169,44 @@ app.get('/conditional-return-link', (c) => {
   )
 })
 
-// AI Chat with Streaming SSR (BfAsync + BarefootJS)
+// AI Chat with SSE streaming
 app.get('/ai-chat', (c) => {
   return c.render(<AIChatPage />)
+})
+
+// SSE endpoint: streams a fake AI response token by token
+const FAKE_RESPONSES = [
+  'それは面白い質問ですね！BarefootJSはJSXをサーバーサイドテンプレートにコンパイルするフレームワークです。シグナルベースのリアクティビティで効率的なDOM更新が可能です。',
+  'なるほど！ストリーミングSSRでは、サーバーがまずスケルトンUIを送信し、データが準備できたらテンプレートチャンクをストリーミングします。クライアントがコンテンツを差し替えます。',
+  'いい質問です！BarefootJSはHonoやGoのEchoなどのアダプタをサポートしています。どのHTTPサーバーでも使えます。',
+  'ご質問ありがとうございます。コンポーネントを作るには、useClientディレクティブを追加してcreateSignalでリアクティブな状態を管理します。',
+  'おっしゃる通りです！シグナルのゲッターは必ず関数として呼び出してください。count変数ではなくcount()関数として使ってください。',
+]
+
+app.get('/api/ai-chat', () => {
+  const text = FAKE_RESPONSES[Math.floor(Math.random() * FAKE_RESPONSES.length)]
+  const chars = [...text] // Unicode-safe split
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const enc = new TextEncoder()
+      for (const ch of chars) {
+        controller.enqueue(enc.encode(`data: ${JSON.stringify(ch)}\n\n`))
+        await new Promise(r => setTimeout(r, 30))
+      }
+      controller.enqueue(enc.encode('data: [DONE]\n\n'))
+      controller.close()
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
+  })
 })
 
 // REST API
