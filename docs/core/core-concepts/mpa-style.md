@@ -11,51 +11,11 @@ You have a server-rendered app that works. You need interactive UI — a search 
 - **SPA framework (React, Vue, Svelte)** — Powerful, but requires rewriting pages, adopting a client-side router, and setting up SSR hydration.
 - **Islands (Astro, Fresh)** — Better, but still tied to a specific meta-framework and runtime.
 
-BarefootJS is a different approach: **add interactive components to existing pages without changing your architecture.** Your routing, data fetching, and templates stay as they are. Only the components that need interactivity ship JavaScript.
+BarefootJS is a different approach: **add interactive components to existing pages without changing your architecture.** Routing, data fetching, and templates stay as they are. Only the components that need interactivity ship JavaScript.
 
-## Server-First by Default
+## Server-First, Client Where Marked
 
-Every component is a **server component** unless explicitly marked otherwise. Server components render to HTML on the server and send zero JavaScript to the browser:
-
-```tsx
-// Header.tsx — server component (no directive)
-export function Header({ title }) {
-  return <h1>{title}</h1>
-}
-```
-
-This produces static HTML. No client JS, no hydration markers, no runtime overhead.
-
-## JavaScript Only Where Marked
-
-Client-side interactivity is opt-in. Add `"use client"` only to the components that need signals, effects, or event handlers:
-
-```tsx
-"use client"
-import { createSignal } from '@barefootjs/client'
-
-export function SearchBox() {
-  const [query, setQuery] = createSignal('')
-  return (
-    <input
-      type="text"
-      value={query()}
-      onInput={(e) => setQuery(e.target.value)}
-    />
-  )
-}
-```
-
-A page with 20 components and only one `"use client"` component ships JavaScript for that one component. The other 19 are pure HTML.
-
-## Progressive Enhancement
-
-BarefootJS fits naturally into existing server-rendered applications:
-
-1. **Pages are normal routes** — Your server handles routing. Each page is a standard HTTP response.
-2. **HTML renders before JS loads** — Server-rendered content is visible immediately. Hydration adds interactivity after the page is already usable.
-3. **No full-page reloads for interactivity** — Client components hydrate in place. The rest of the page remains static HTML.
-4. **Graceful degradation** — Server-rendered content works even if JavaScript fails to load.
+Every component is a **server component** by default — rendered to HTML, zero JavaScript. Add `"use client"` only to the components that need interactivity:
 
 ```tsx
 // ProductPage.tsx — server component
@@ -75,14 +35,4 @@ export function ProductPage({ product }) {
 }
 ```
 
-The product name, description, and image are server-rendered with no JS cost. Only `ReviewStars` and `AddToCart` ship client JavaScript.
-
-## No Build-Time Framework Lock-in
-
-Unlike SPA frameworks that require a specific router, state management solution, and build pipeline, BarefootJS works with whatever server stack you already have:
-
-- **Routing**: Your server's routing (Hono, Go `net/http`, etc.)
-- **Data fetching**: Your server's data layer (SQL, ORM, API calls)
-- **Templating**: The compiler generates templates that plug into your existing template engine
-
-You add BarefootJS components to pages — you don't rewrite pages around BarefootJS.
+The product name, description, and image are server-rendered with no JS cost. Only `ReviewStars` and `AddToCart` ship client JavaScript. HTML is visible before JS loads, and content works even if JavaScript fails.

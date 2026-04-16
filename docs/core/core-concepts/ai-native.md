@@ -11,11 +11,7 @@ BarefootJS makes component tests as fast as unit tests. **The compiler produces 
 
 This same structured output makes BarefootJS uniquely suited for AI-assisted development. AI agents can discover components via CLI, generate code, and verify it with fast tests — all without browser automation or screenshot diffing.
 
-## Testable Without a Browser
-
-The compiler produces a structured **Intermediate Representation** (IR) — a JSON tree that describes a component's structure, reactive bindings, event handlers, and accessibility attributes. This IR can be inspected and tested directly, without rendering to a DOM or launching a browser.
-
-### `renderToTest()`
+## `renderToTest()`
 
 `renderToTest()` compiles a JSX component and returns its IR for assertions:
 
@@ -31,47 +27,16 @@ test('Counter has a button with click handler', () => {
 })
 ```
 
-Tests run in milliseconds — no browser, no DOM, no waiting. This makes component development fast and CI-friendly.
-
-### What the IR Captures
-
-The IR contains everything needed to verify a component's behavior:
-
-- **Structure** — Element tree, attributes, text content
-- **Reactivity** — Signals, effects, memos, and their dependencies
-- **Events** — Handler bindings and target elements
-- **Accessibility** — ARIA attributes, roles, keyboard interactions
-- **Styles** — Class bindings, conditional classes
-
-See [IR Schema Reference](../advanced/ir-schema.md) for the full node type specification.
+The IR captures structure, reactivity, events, accessibility, and styles — everything needed to verify behavior without rendering. See [IR Schema Reference](../advanced/ir-schema.md) for details.
 
 ## CLI for Component Discovery
 
-The `barefoot` CLI provides structured access to component APIs and documentation:
+The `barefoot` CLI gives both humans and AI agents structured access to component APIs:
 
 ```bash
-# Search for components by name, category, or tags
-barefoot search dialog
-
-# Get full component reference: props, examples, accessibility
-barefoot ui accordion
-
-# Look up core framework docs
-barefoot core signals
+barefoot search dialog       # Find components by name/category/tags
+barefoot ui accordion        # Full reference: props, examples, a11y
+barefoot core signals        # Core framework docs
 ```
 
-AI agents use these commands to discover available components, understand their APIs, and generate correct usage without reading source files.
-
-## AI-Assisted Workflow
-
-The combination of testable IR and CLI discovery enables a complete AI-assisted development loop:
-
-```
-1. barefoot search → Find the right component
-2. barefoot ui <name> → Learn its API
-3. Write JSX using the component
-4. renderToTest() → Verify structure and behavior
-5. Iterate until tests pass
-```
-
-Each step produces structured, parseable output. No screenshots, no browser automation, no flaky visual assertions.
+Each command produces structured, parseable output. No screenshots, no browser automation, no flaky visual assertions.
