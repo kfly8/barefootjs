@@ -2229,10 +2229,10 @@ export class GoTemplateAdapter extends BaseAdapter {
         filterCond = 'true'
       }
 
-      return `{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}`
+      return `{{bfComment "loop"}}{{range $${index}, $${param} := ${goArray}}}{{if ${filterCond}}}${children}{{end}}{{end}}{{bfComment "/loop"}}`
     }
 
-    return `{{range $${index}, $${param} := ${goArray}}}${children}{{end}}`
+    return `{{bfComment "loop"}}{{range $${index}, $${param} := ${goArray}}}${children}{{end}}{{bfComment "/loop"}}`
   }
 
   /**
