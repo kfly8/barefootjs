@@ -442,12 +442,16 @@ function collectBranchInnerLoops(
 ): LoopChildConditional['whenTrueInnerLoops'] {
   const { irToPlaceholderTemplate } = require('./html-template')
   const loops: import('./types').NestedLoopInfo[] = []
-  let lastSlotId: string | null = null
 
-  function walk(n: IRNode): void {
+  // Pass the current container's slotId down through the tree.
+  // A loop uses parentContainerSlotId as its container.
+  // When entering a component, its slotId becomes the container for its children,
+  // but NOT for its siblings — this prevents a sibling component's slotId from
+  // being used as the loop container.
+  function walk(n: IRNode, parentContainerSlotId: string | null = null): void {
     if (n.type === 'element') {
-      if (n.slotId) lastSlotId = n.slotId
-      for (const child of n.children) walk(child)
+      const mySlotId = n.slotId ?? parentContainerSlotId
+      for (const child of n.children) walk(child, mySlotId)
     } else if (n.type === 'loop') {
       const loopParamsForTemplate = outerLoopParam ? [outerLoopParam, n.param] : undefined
       const itemTemplate = n.children.map((c: IRNode) => irToPlaceholderTemplate(c, undefined, 1, loopParamsForTemplate)).join('')
@@ -496,7 +500,7 @@ function collectBranchInnerLoops(
         array: n.array,
         param: n.param,
         key: n.key ?? '',
-        containerSlotId: lastSlotId,
+        containerSlotId: parentContainerSlotId,
         itemTemplate,
         refsOuterParam: refsOuter,
         reactiveTexts: reactiveTexts.length > 0 ? reactiveTexts : undefined,
@@ -505,14 +509,14 @@ function collectBranchInnerLoops(
         childConditionals: childConditionals.length > 0 ? childConditionals : undefined,
       })
     } else if (n.type === 'fragment' || n.type === 'component' || n.type === 'provider') {
-      // For component nodes (e.g., SelectContent), track their slotId so inner loops
+      // For component nodes (e.g., SelectContent), pass slotId to children so inner loops
       // use the component element as their container rather than the branch scope.
-      if (n.type === 'component' && n.slotId) lastSlotId = n.slotId
-      for (const child of n.children) walk(child)
+      const mySlotId = (n.type === 'component' && n.slotId) ? n.slotId : parentContainerSlotId
+      for (const child of n.children) walk(child, mySlotId)
     }
   }
 
-  walk(node)
+  walk(node, null)
   return loops.length > 0 ? loops : undefined
 }
 
