@@ -12,6 +12,7 @@ import type {
   IRConditional,
   IRLoop,
   IRComponent,
+  IRAsync,
 } from '../types'
 
 export interface TemplateSections {
@@ -52,6 +53,7 @@ export interface TemplateAdapter {
   renderConditional(cond: IRConditional): string
   renderLoop(loop: IRLoop): string
   renderComponent(comp: IRComponent): string
+  renderAsync(node: IRAsync): string
 
   // Hydration markers
   renderScopeMarker(instanceIdExpr: string): string
@@ -80,5 +82,10 @@ export abstract class BaseAdapter implements TemplateAdapter {
 
   renderChildren(children: IRNode[]): string {
     return children.map((child) => this.renderNode(child)).join('')
+  }
+
+  /** Default: render fallback + children inline (no streaming). Override for streaming support. */
+  renderAsync(node: IRAsync): string {
+    return this.renderNode(node.fallback) + this.renderChildren(node.children)
   }
 }
