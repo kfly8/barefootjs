@@ -1,10 +1,10 @@
 ---
 name: barefootjs
-description: Build UI components using the barefoot CLI for component discovery, scaffolding, and testing.
+description: "Build, inspect, and debug UI components using the barefoot CLI. Use when: creating/editing/reviewing components, investigating signal dependencies, debugging reactive updates, scaffolding new components, or looking up component APIs."
 ---
 # Component Development Skill
 
-Build UI components using the `barefoot` CLI for component discovery, scaffolding, and testing.
+Build UI components using the `barefoot` CLI for component discovery, scaffolding, testing, and signal inspection.
 
 ## Workflow
 
@@ -18,6 +18,39 @@ Build UI components using the `barefoot` CLI for component discovery, scaffoldin
 8. `bun test <path>` — Final verification
 9. Create previews and run `bun run barefoot preview <name>` — Visual preview in browser
 10. Ask the user to check `http://localhost:3003` in the browser for visual/interaction verification
+
+## Signal Inspection & Debugging
+
+Use these commands to understand and debug a component's reactive structure **without running any code**. All analysis is static (from IR).
+
+### `bun run barefoot inspect <component>`
+
+Show the signal dependency graph for a component. Use this **before modifying** a stateful component to understand its reactive structure: which signals exist, what memos depend on them, and which DOM nodes are bound.
+
+- Add `--json` for machine-readable output.
+- Example: `bun run barefoot inspect combobox`
+
+### `bun run barefoot why-update <component> <signal|memo>`
+
+Reverse-lookup: trace the full propagation path from a signal/memo to every DOM binding it affects. Use this to answer "why does this DOM node update?" or to verify that a signal change reaches the expected targets.
+
+- If the signal name is wrong, the CLI lists available signals/memos.
+- Add `--json` for machine-readable output.
+- Example: `bun run barefoot why-update combobox open`
+
+### `bun run barefoot test --debug <component>`
+
+Show a signal initialization trace: every signal, its initial value, and its effect bindings. Useful for verifying that signals are wired correctly in a newly written or modified component.
+
+- Add `--json` for machine-readable output.
+- Example: `bun run barefoot test --debug select`
+
+### When to use inspection
+
+- **Before editing a stateful component** — run `inspect` to map the reactive graph.
+- **Unexpected re-renders or missing updates** — run `why-update` to trace propagation.
+- **After implementing a new component** — run `test --debug` to verify signal wiring.
+- **Reviewing a PR** — run `inspect --json` to diff the dependency graph before/after.
 
 ## Previews
 
