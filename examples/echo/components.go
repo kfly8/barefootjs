@@ -17,18 +17,6 @@ func randomID(n int) string {
 	return string(b)
 }
 
-// =============================================================================
-// Manual Types (application-specific, not generated from components)
-// =============================================================================
-
-// Todo represents a single todo item.
-type Todo struct {
-	ID      int    `json:"id"`
-	Text    string `json:"text"`
-	Done    bool   `json:"done"`
-	Editing bool   `json:"editing"`
-}
-
 // PortalExampleInput is the user-facing input type.
 type PortalExampleInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
@@ -54,6 +42,14 @@ func NewPortalExampleProps(in PortalExampleInput) PortalExampleProps {
 		ScopeID: scopeID,
 		Open: false,
 	}
+}
+
+// Todo represents a todo.
+type Todo struct {
+	ID int `json:"id"`
+	Text string `json:"text"`
+	Done bool `json:"done"`
+	Editing bool `json:"editing"`
 }
 
 // TodoItemInput is the user-facing input type.
@@ -96,6 +92,9 @@ func NewTodoItemProps(in TodoItemInput) TodoItemProps {
 	}
 }
 
+// Filter is a string type.
+type Filter = string
+
 // TodoAppInput is the user-facing input type.
 type TodoAppInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
@@ -111,7 +110,7 @@ type TodoAppProps struct {
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
-	Filter string `json:"filter"`
+	Filter Filter `json:"filter"`
 	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
 	DoneCount    int              `json:"doneCount"` // Pre-computed done count
 }
@@ -128,7 +127,7 @@ func NewTodoAppProps(in TodoAppInput) TodoAppProps {
 		InitialTodos: in.InitialTodos,
 		Todos: in.InitialTodos,
 		NewText: "",
-		Filter: "all",
+		Filter: nil,
 	}
 }
 
@@ -164,6 +163,13 @@ func NewCounterProps(in CounterInput) CounterProps {
 	}
 }
 
+// Message represents a message.
+type Message struct {
+	ID int `json:"id"`
+	Role interface{} `json:"role"`
+	Content string `json:"content"`
+}
+
 // AIChatInteractiveInput is the user-facing input type.
 type AIChatInteractiveInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
@@ -175,7 +181,7 @@ type AIChatInteractiveProps struct {
 	BfIsRoot bool `json:"-"`
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	Messages []interface{} `json:"messages"`
+	Messages []Message `json:"messages"`
 	Input string `json:"input"`
 	StreamingText string `json:"streamingText"`
 	IsStreaming bool `json:"isStreaming"`
@@ -195,6 +201,19 @@ func NewAIChatInteractiveProps(in AIChatInteractiveInput) AIChatInteractiveProps
 		StreamingText: "",
 		IsStreaming: false,
 	}
+}
+
+// ChildProps represents a childprops.
+type ChildProps struct {
+	Value int `json:"value"`
+	Label string `json:"label"`
+	OnIncrement interface{} `json:"onIncrement"`
+}
+
+// PropsStyleChildProps represents a propsstylechildprops.
+type PropsStyleChildProps struct {
+	Value int `json:"value"`
+	Label string `json:"label"`
 }
 
 // ReactiveChildInput is the user-facing input type.
@@ -229,6 +248,9 @@ func NewReactiveChildProps(in ReactiveChildInput) ReactiveChildProps {
 		Label: in.Label,
 		OnIncrement: in.OnIncrement,
 	}
+}
+
+ `json:"onIncrement"`
 }
 
 // ReactivePropsInput is the user-facing input type.
@@ -272,6 +294,9 @@ func NewReactivePropsProps(in ReactivePropsInput) ReactivePropsProps {
 	}
 }
 
+ `json:"onIncrement"`
+}
+
 // PropsStyleChildInput is the user-facing input type.
 type PropsStyleChildInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
@@ -279,15 +304,7 @@ type PropsStyleChildInput struct {
 	Label string
 }
 
-// PropsStyleChildProps is the props type for the PropsStyleChild component.
-type PropsStyleChildProps struct {
-	ScopeID string `json:"scopeID"`
-	BfIsRoot bool `json:"-"`
-	BfIsChild bool `json:"-"`
-	Scripts *bf.ScriptCollector `json:"-"`
-	Value int `json:"value"`
-	Label string `json:"label"`
-	DisplayValue interface{} `json:"displayValue"`
+ `json:"displayValue"`
 }
 
 // NewPropsStyleChildProps creates PropsStyleChildProps from PropsStyleChildInput.
@@ -305,11 +322,14 @@ func NewPropsStyleChildProps(in PropsStyleChildInput) PropsStyleChildProps {
 	}
 }
 
+ `json:"onIncrement"`
+}
+
 // DestructuredStyleChildInput is the user-facing input type.
 type DestructuredStyleChildInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
-	Value int
-	Label string
+	Value interface{}
+	Label interface{}
 }
 
 // DestructuredStyleChildProps is the props type for the DestructuredStyleChild component.
@@ -318,8 +338,8 @@ type DestructuredStyleChildProps struct {
 	BfIsRoot bool `json:"-"`
 	BfIsChild bool `json:"-"`
 	Scripts *bf.ScriptCollector `json:"-"`
-	Value int `json:"value"`
-	Label string `json:"label"`
+	Value interface{} `json:"value"`
+	Label interface{} `json:"label"`
 	DisplayValue interface{} `json:"displayValue"`
 }
 
@@ -336,6 +356,9 @@ func NewDestructuredStyleChildProps(in DestructuredStyleChildInput) Destructured
 		Label: in.Label,
 		DisplayValue: in.Value * 10,
 	}
+}
+
+ `json:"onIncrement"`
 }
 
 // PropsReactivityComparisonInput is the user-facing input type.
@@ -422,7 +445,7 @@ type TodoAppSSRProps struct {
 	InitialTodos []Todo `json:"initialTodos"`
 	Todos []Todo `json:"todos"`
 	NewText string `json:"newText"`
-	Filter string `json:"filter"`
+	Filter Filter `json:"filter"`
 	TodoItems    []TodoItemProps  `json:"-"`         // For Go template (not in JSON)
 	DoneCount    int              `json:"doneCount"` // Pre-computed done count
 }
@@ -439,8 +462,13 @@ func NewTodoAppSSRProps(in TodoAppSSRInput) TodoAppSSRProps {
 		InitialTodos: in.InitialTodos,
 		Todos: in.InitialTodos,
 		NewText: "",
-		Filter: "all",
+		Filter: nil,
 	}
+}
+
+// ToggleProps represents a toggleprops.
+type ToggleProps struct {
+	ToggleItems []interface{} `json:"toggleItems"`
 }
 
 // ToggleItemInput is the user-facing input type.
@@ -480,15 +508,6 @@ func NewToggleItemProps(in ToggleItemInput) ToggleItemProps {
 type ToggleInput struct {
 	ScopeID string // Optional: if empty, random ID is generated
 	ToggleItems []ToggleItemInput
-}
-
-// ToggleProps is the props type for the Toggle component.
-type ToggleProps struct {
-	ScopeID string `json:"scopeID"`
-	BfIsRoot bool `json:"-"`
-	BfIsChild bool `json:"-"`
-	Scripts *bf.ScriptCollector `json:"-"`
-	ToggleItems []ToggleItemProps `json:"toggleItems"`
 }
 
 // NewToggleProps creates ToggleProps from ToggleInput.

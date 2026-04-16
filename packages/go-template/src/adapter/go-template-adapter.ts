@@ -59,6 +59,8 @@ export class GoTemplateAdapter extends BaseAdapter {
   private loopParamStack: string[] = []
   private errors: CompilerError[] = []
   private propsObjectName: string | null = null
+  /** Local type names resolved from typeDefinitions (populated during generateTypes) */
+  private localTypeNames: Set<string> = new Set()
 
   constructor(options: GoTemplateAdapterOptions = {}) {
     super()
@@ -248,6 +250,24 @@ export class GoTemplateAdapter extends BaseAdapter {
 
     const componentName = ir.metadata.componentName
 
+    // Build set of locally-defined type names so typeInfoToGo can resolve them
+    this.localTypeNames = new Set<string>()
+    for (const td of ir.metadata.typeDefinitions) {
+      // Skip the Props type itself (it's the component's own props, not a reusable type)
+      if (td.name === 'Props' || td.name === `${componentName}Props`) continue
+      this.localTypeNames.add(td.name)
+    }
+
+    // Generate Go structs for local type definitions (e.g., Todo, Filter → string alias)
+    for (const td of ir.metadata.typeDefinitions) {
+      if (td.name === 'Props' || td.name === `${componentName}Props`) continue
+      const goStruct = this.typeDefinitionToGo(td)
+      if (goStruct) {
+        lines.push(goStruct)
+        lines.push('')
+      }
+    }
+
     // Find nested components (loops with childComponent)
     const nestedComponents = this.findNestedComponents(ir.root)
 
@@ -264,6 +284,64 @@ export class GoTemplateAdapter extends BaseAdapter {
     this.generateNewPropsFunction(lines, ir, componentName, nestedComponents)
 
     return lines.join('\n')
+  }
+
+  /**
+   * Convert a TypeScript type definition to a Go type.
+   * Handles object types → Go structs, and union string literals → string alias.
+   */
+  private typeDefinitionToGo(td: { kind: string; name: string; definition: string }): string | null {
+    const def = td.definition
+
+    // String literal union: type Filter = 'all' | 'active' | 'completed'
+    if (def.match(/^type \w+ = ('[^']*'(\s*\|\s*'[^']*')*)/)) {
+      // Map to Go string (union of string literals → just string in Go)
+      return `// ${td.name} is a string type.\ntype ${td.name} = string`
+    }
+
+    // Object/interface type: type Todo = { id: number; text: string; ... }
+    const bodyMatch = def.match(/(?:type \w+ = |interface \w+ )\{([\s\S]*)\}/)
+    if (!bodyMatch) return null
+
+    const body = bodyMatch[1]
+    const goFields: string[] = []
+
+    // Parse each field: "fieldName: type" or "fieldName?: type"
+    // Handle both semicolon-separated and newline-separated
+    const fieldEntries = body.split(/[;\n]/).map(s => s.trim()).filter(Boolean)
+    for (const entry of fieldEntries) {
+      const fieldMatch = entry.match(/^(\w+)\??\s*:\s*(.+)$/)
+      if (!fieldMatch) continue
+      const [, fieldName, tsType] = fieldMatch
+      const goFieldName = this.capitalizeFieldName(fieldName)
+      const goType = this.tsTypeStringToGo(tsType.trim())
+      const jsonTag = this.toJsonTag(fieldName)
+      goFields.push(`\t${goFieldName} ${goType} \`json:"${jsonTag}"\``)
+    }
+
+    if (goFields.length === 0) return null
+
+    return `// ${td.name} represents a ${td.name.toLowerCase()}.\ntype ${td.name} struct {\n${goFields.join('\n')}\n}`
+  }
+
+  /**
+   * Convert a raw TypeScript type string to a Go type string.
+   * Handles primitives (number, string, boolean) and basic arrays.
+   */
+  private tsTypeStringToGo(tsType: string): string {
+    const t = tsType.trim()
+    if (t === 'number') return 'int'
+    if (t === 'string') return 'string'
+    if (t === 'boolean' || t === 'bool') return 'bool'
+    if (t.endsWith('[]')) {
+      const elem = t.slice(0, -2)
+      return `[]${this.tsTypeStringToGo(elem)}`
+    }
+    const arrayMatch = t.match(/^Array<(.+)>$/)
+    if (arrayMatch) return `[]${this.tsTypeStringToGo(arrayMatch[1])}`
+    // Check if it's a known local type
+    if (this.localTypeNames.has(t)) return t
+    return 'interface{}'
   }
 
   /**
@@ -717,6 +795,12 @@ export class GoTemplateAdapter extends BaseAdapter {
         return '[]interface{}'
       case 'object':
         return 'map[string]interface{}'
+      case 'interface':
+        // Check if raw type name matches a locally-defined type
+        if (typeInfo.raw && this.localTypeNames.has(typeInfo.raw)) {
+          return typeInfo.raw
+        }
+        return 'interface{}'
       case 'unknown':
         // Try to infer type from default value
         if (defaultValue !== undefined) {
@@ -961,8 +1045,19 @@ export class GoTemplateAdapter extends BaseAdapter {
     return null
   }
 
+  /** Go common initialisms that should be fully uppercased (https://go.dev/wiki/CodeReviewComments#initialisms) */
+  private static GO_INITIALISMS = new Set([
+    'id', 'url', 'http', 'https', 'api', 'json', 'xml', 'html', 'css', 'sql',
+    'ip', 'tcp', 'udp', 'dns', 'ssh', 'tls', 'ssl', 'uri', 'uid', 'uuid',
+    'ascii', 'utf8', 'eof', 'grpc', 'rpc', 'cpu', 'gpu', 'ram', 'os',
+  ])
+
   private capitalizeFieldName(name: string): string {
     if (!name) return name
+    // Check if the entire name is a Go initialism (e.g., 'id' → 'ID')
+    if (GoTemplateAdapter.GO_INITIALISMS.has(name.toLowerCase())) {
+      return name.toUpperCase()
+    }
     return name.charAt(0).toUpperCase() + name.slice(1)
   }
 

@@ -71,8 +71,8 @@ export function stripGoPackageHeader(types: string): string {
 export function deduplicateGoTypes(combined: string): string {
   const seenDefinitions = new Set<string>()
 
-  // Deduplicate type definitions
-  const typeRegex = /\/\/ \w+ is .*\ntype (\w+) struct\s*\{[^}]*\}/g
+  // Deduplicate type definitions (handles both "is" and "represents" comment styles)
+  const typeRegex = /\/\/ \w+ (?:is|represents) .*\ntype (\w+) (?:struct\s*\{[^}]*\}|= \w+)/g
   let result = combined.replace(typeRegex, (match, typeName) => {
     if (seenDefinitions.has(`type:${typeName}`)) return ''
     seenDefinitions.add(`type:${typeName}`)
