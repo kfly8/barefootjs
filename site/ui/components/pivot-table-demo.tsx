@@ -14,6 +14,7 @@
 
 import { createSignal, createMemo } from '@barefootjs/client'
 import { Badge } from '@ui/components/ui/badge'
+import { Button } from '@ui/components/ui/button'
 import {
   Select,
   SelectTrigger,
@@ -352,8 +353,16 @@ export function PivotTableDemo() {
   const groupCount = createMemo(() => visibleRows().length)
 
   // Helper memos for field labels (avoids IIFE in JSX which breaks CSR codegen)
+  // insert() only re-renders branch templates on condition changes, not on signal
+  // changes within a branch — so reactive expressions that stay in the same branch
+  // must be extracted into memos to get proper reactive text updates.
   const columnLabel = createMemo(() => ALL_FIELDS.find(x => x.id === columnField())?.label ?? '')
   const valueLabel = createMemo(() => ALL_FIELDS.find(x => x.id === valueField())?.label ?? '')
+  const rowFieldsHeader = createMemo(() =>
+    rowFields().length > 0
+      ? rowFields().map((f: DimensionId) => ALL_FIELDS.find(x => x.id === f)?.label ?? '').join(' / ')
+      : 'Groups'
+  )
 
   // Helper functions for row rendering (defined at component level to avoid
   // local variable scoping issues inside .map() callbacks — the compiler
@@ -431,13 +440,9 @@ export function PivotTableDemo() {
                 >
                   <GripVerticalIcon className="w-3 h-3 opacity-60" />
                   {f.label}
-                  <button
-                    className="field-remove-btn ml-0.5 opacity-60 hover:opacity-100"
-                    onClick={() => removeField(fid)}
-                    aria-label={`Remove ${f.label}`}
-                  >
+                  <Button variant="ghost" size="icon-sm" className="field-remove-btn ml-0.5 opacity-60 hover:opacity-100" onClick={() => removeField(fid)} aria-label={`Remove ${f.label}`}>
                     <XIcon className="w-3 h-3" />
-                  </button>
+                  </Button>
                 </div>
               )
             })}
@@ -460,13 +465,9 @@ export function PivotTableDemo() {
               >
                 <GripVerticalIcon className="w-3 h-3 opacity-60" />
                 {columnLabel()}
-                <button
-                  className="field-remove-btn ml-0.5 opacity-60 hover:opacity-100"
-                  onClick={() => removeField(columnField() as FieldId)}
-                  aria-label={`Remove ${columnLabel()}`}
-                >
+                <Button variant="ghost" size="icon-sm" className="field-remove-btn ml-0.5 opacity-60 hover:opacity-100" onClick={() => removeField(columnField() as FieldId)} aria-label={`Remove ${columnLabel()}`}>
                   <XIcon className="w-3 h-3" />
-                </button>
+                </Button>
               </div>
             ) : null}
           </div>
@@ -518,9 +519,7 @@ export function PivotTableDemo() {
           <thead>
             <tr className="bg-muted/50">
               <th className="text-left p-2 pl-3 font-medium border-r min-w-[180px]">
-                {rowFields().length > 0
-                  ? rowFields().map((f: DimensionId) => ALL_FIELDS.find(x => x.id === f)?.label).join(' / ')
-                  : 'Groups'}
+                {rowFieldsHeader()}
               </th>
               {columnValues().map((cv: string) => (
                 <th key={cv} className="pivot-header p-2 text-right font-medium border-r min-w-[90px]">

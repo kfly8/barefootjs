@@ -446,12 +446,16 @@ function collectBranchInnerLoops(
 ): LoopChildConditional['whenTrueInnerLoops'] {
   const { irToPlaceholderTemplate } = require('./html-template')
   const loops: import('./types').NestedLoopInfo[] = []
-  let lastSlotId: string | null = null
 
-  function walk(n: IRNode): void {
+  // Pass the current container's slotId down through the tree.
+  // A loop uses parentContainerSlotId as its container.
+  // When entering a component, its slotId becomes the container for its children,
+  // but NOT for its siblings — this prevents a sibling component's slotId from
+  // being used as the loop container.
+  function walk(n: IRNode, parentContainerSlotId: string | null = null): void {
     if (n.type === 'element') {
-      if (n.slotId) lastSlotId = n.slotId
-      for (const child of n.children) walk(child)
+      const mySlotId = n.slotId ?? parentContainerSlotId
+      for (const child of n.children) walk(child, mySlotId)
     } else if (n.type === 'loop') {
       const loopParamsForTemplate = outerLoopParam ? [outerLoopParam, n.param] : undefined
       const itemTemplate = n.children.map((c: IRNode) => irToPlaceholderTemplate(c, undefined, 1, loopParamsForTemplate)).join('')
@@ -466,7 +470,7 @@ function collectBranchInnerLoops(
       }
       // Collect child components and events inside inner loop items
       // Walk loop body children (not the loop node itself, which traverseForComponents skips)
-      const rawComps: Array<{ name: string; slotId: string | null; props: import('../types').IRProp[] }> = []
+      const rawComps: Array<{ name: string; slotId: string | null; props: import('../types').IRProp[]; children: import('../types').IRNode[] }> = []
       for (const child of n.children) {
         rawComps.push(...collectConditionalBranchChildComponents(child))
       }
@@ -480,7 +484,7 @@ function collectBranchInnerLoops(
           isLiteral: p.isLiteral ?? false,
           isEventHandler: p.name.startsWith('on') && p.name.length > 2 && p.name[2] === p.name[2].toUpperCase(),
         })),
-        children: [] as import('../types').IRNode[],
+        children: c.children,
         loopDepth: 1,
       }))
       const childEvents: import('./types').LoopChildEvent[] = []
@@ -500,7 +504,7 @@ function collectBranchInnerLoops(
         array: n.array,
         param: n.param,
         key: n.key ?? '',
-        containerSlotId: lastSlotId,
+        containerSlotId: parentContainerSlotId,
         itemTemplate,
         refsOuterParam: refsOuter,
         reactiveTexts: reactiveTexts.length > 0 ? reactiveTexts : undefined,
@@ -509,11 +513,14 @@ function collectBranchInnerLoops(
         childConditionals: childConditionals.length > 0 ? childConditionals : undefined,
       })
     } else if (n.type === 'fragment' || n.type === 'component' || n.type === 'provider') {
-      for (const child of n.children) walk(child)
+      // For component nodes (e.g., SelectContent), pass slotId to children so inner loops
+      // use the component element as their container rather than the branch scope.
+      const mySlotId = (n.type === 'component' && n.slotId) ? n.slotId : parentContainerSlotId
+      for (const child of n.children) walk(child, mySlotId)
     }
   }
 
-  walk(node)
+  walk(node, null)
   return loops.length > 0 ? loops : undefined
 }
 

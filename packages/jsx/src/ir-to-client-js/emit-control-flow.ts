@@ -291,7 +291,7 @@ function emitBranchChildComponentInits(
     // SSR: element has bf-s attribute → initChild.
     // CSR: element is a placeholder (data-bf-ph) → createComponent to replace it.
     const phId = comp.slotId || comp.name
-    lines.push(`${indent}{ let __c = __branchScope.querySelector('${selector}'); if (!__c) { const __ph = __branchScope.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) { __c = createComponent('${comp.name}', ${propsExpr}); __ph.replaceWith(__c) } } if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
+    lines.push(`${indent}{ let __c = qsa(__branchScope, '${selector}'); if (!__c) { const __ph = __branchScope.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) { __c = createComponent('${comp.name}', ${propsExpr}); __ph.replaceWith(__c) } } if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
   }
 }
 
@@ -324,20 +324,35 @@ function emitBranchInnerLoops(
     const wrapBoth = (expr: string) => wrapLoopParamAsAccessor(wrapOuter(expr), inner.param)
     // Template is already wrapped at generation time (irToPlaceholderTemplate with loopParams)
     const wrappedTemplate = inner.itemTemplate
-    const containerSelector = inner.containerSlotId ? `'[bf="${inner.containerSlotId}"]'` : 'null'
+    // Find the container for the inner loop. Try bf= attribute (plain elements) first,
+    // then bf-s$ suffix match (component scope elements like SelectContent).
+    const csl = inner.containerSlotId
+    const containerExpr = csl
+      ? `(${scopeVar}.querySelector('[bf="${csl}"]') ?? ${scopeVar}.querySelector('[bf-s$="_${csl}"]') ?? ${scopeVar})`
+      : scopeVar
 
-    lines.push(`${indent}{ const __bic${uid} = ${containerSelector !== 'null' ? `${scopeVar}.querySelector(${containerSelector})` : scopeVar}`)
+    lines.push(`${indent}{ const __bic${uid} = ${containerExpr}`)
     lines.push(`${indent}if (__bic${uid}) mapArray(() => ${arrayExpr} || [], __bic${uid}, ${keyFn}, (${inner.param}, __bidx${uid}, __existing) => {`)
-    lines.push(`${indent}  const __bel${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
+    lines.push(`${indent}  let __bel${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
     if (inner.key) {
       const wrappedKey = wrapLoopParamAsAccessor(inner.key, inner.param)
       lines.push(`${indent}  __bel${uid}.setAttribute('${keyAttrName(1)}', String(${wrappedKey}))`)
     }
     // Components and events inside inner loop items
     const wrapInner = (expr: string) => wrapLoopParamAsAccessor(expr, inner.param)
+    // Recursively wrap IR nodes for inner loop param accessor conversion
+    const wrapIRNodeBranch = (node: any): any => {
+      if (node.type === 'component') {
+        return { ...node, props: node.props.map((p: any) => p.isLiteral ? p : ({ ...p, value: wrapInner(p.value) })), children: node.children?.map(wrapIRNodeBranch) }
+      }
+      if (node.type === 'expression' && node.expr) return { ...node, expr: wrapInner(node.expr) }
+      if (node.children) return { ...node, children: node.children.map(wrapIRNodeBranch) }
+      return node
+    }
     const comps = (inner.childComponents ?? []).map(comp => ({
       ...comp,
       props: comp.props.map(p => p.isLiteral ? p : ({ ...p, value: wrapInner(p.value) })),
+      children: comp.children?.map(wrapIRNodeBranch),
     }))
     const events = (inner.childEvents ?? []).map(ev => ({
       ...ev,
@@ -677,7 +692,9 @@ function buildComponentPropsExpr(
   })
   if ('children' in comp && Array.isArray(comp.children) && comp.children.length > 0) {
     const childrenExpr = irChildrenToJsExpr(comp.children)
-    entries.push(`get children() { return ${wrap(childrenExpr)} }`)
+    if (childrenExpr && childrenExpr !== "''") {
+      entries.push(`get children() { return ${wrap(childrenExpr)} }`)
+    }
   }
   return entries.length > 0 ? `{ ${entries.join(', ')} }` : '{}'
 }
@@ -712,9 +729,9 @@ function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, key
       const childrenRefsLoop = rawChildrenExpr != null && exprReferencesIdent(rawChildrenExpr, elem.param)
       if (childrenRefsLoop) {
         const wrappedChildren = wrapLoopParamAsAccessor(rawChildrenExpr, elem.param)
-        lines.push(`      { const __c = __existing.querySelector('${selector}'); if (__c) { initChild('${comp.name}', __c, ${nestedPropsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
+        lines.push(`      { const __c = qsa(__existing, '${selector}'); if (__c) { initChild('${comp.name}', __c, ${nestedPropsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
       } else {
-        lines.push(`      { const __c = __existing.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${nestedPropsExpr}) }`)
+        lines.push(`      { const __c = qsa(__existing, '${selector}'); if (__c) initChild('${comp.name}', __c, ${nestedPropsExpr}) }`)
       }
     }
     // Emit reactive effects for conditionals/texts inside component children
@@ -734,9 +751,9 @@ function emitComponentLoopReconciliation(lines: string[], elem: LoopElement, key
       const childrenRefsLoop = rawChildrenExpr != null && exprReferencesIdent(rawChildrenExpr, elem.param)
       if (childrenRefsLoop) {
         const wrappedChildren = wrapLoopParamAsAccessor(rawChildrenExpr, elem.param)
-        lines.push(`    { const __c = __csrEl.querySelector('${selector}'); if (__c) { initChild('${comp.name}', __c, ${nestedPropsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
+        lines.push(`    { const __c = qsa(__csrEl, '${selector}'); if (__c) { initChild('${comp.name}', __c, ${nestedPropsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
       } else {
-        lines.push(`    { const __c = __csrEl.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${nestedPropsExpr}) }`)
+        lines.push(`    { const __c = qsa(__csrEl, '${selector}'); if (__c) initChild('${comp.name}', __c, ${nestedPropsExpr}) }`)
       }
     }
     if (elem.childConditionals && elem.childConditionals.length > 0) {
@@ -1018,17 +1035,21 @@ function emitComponentAndEventSetup(
       const keyArg = keyProp ? `, ${wrap(keyProp.value)}` : ''
       if (childrenRefsLoop) {
         const wrappedChildren = wrap(rawChildrenExpr!)
-        ls.push(`${indent}{ const __ph = ${elVar}.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) { const __comp = createComponent('${comp.name}', ${propsExpr}${keyArg}); __ph.replaceWith(__comp); createEffect(() => { const __v = ${wrappedChildren}; __comp.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
+        // Use qsa so the placeholder element is found even when it IS elVar itself
+        // (e.g., loop body = bare component: <div data-bf-ph="sN"> is both the item and the placeholder).
+        // When __ph === elVar, the element is detached so replaceWith is a no-op; reassign instead.
+        ls.push(`${indent}{ const __ph = qsa(${elVar}, '[${DATA_BF_PH}="${phId}"]'); if (__ph) { const __comp = createComponent('${comp.name}', ${propsExpr}${keyArg}); if (__ph === ${elVar}) ${elVar} = __comp; else __ph.replaceWith(__comp); createEffect(() => { const __v = ${wrappedChildren}; __comp.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
       } else {
-        ls.push(`${indent}{ const __ph = ${elVar}.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) __ph.replaceWith(createComponent('${comp.name}', ${propsExpr}${keyArg})) }`)
+        // Same qsa + reassignment fix for the non-children-reactive case.
+        ls.push(`${indent}{ const __ph = qsa(${elVar}, '[${DATA_BF_PH}="${phId}"]'); if (__ph) { const __comp = createComponent('${comp.name}', ${propsExpr}${keyArg}); if (__ph === ${elVar}) ${elVar} = __comp; else __ph.replaceWith(__comp) } }`)
       }
     } else {
       const selector = buildCompSelector(comp)
       if (childrenRefsLoop) {
         const wrappedChildren = wrap(rawChildrenExpr!)
-        ls.push(`${indent}{ const __c = ${elVar}.querySelector('${selector}'); if (__c) { initChild('${comp.name}', __c, ${propsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
+        ls.push(`${indent}{ const __c = qsa(${elVar}, '${selector}'); if (__c) { initChild('${comp.name}', __c, ${propsExpr}); createEffect(() => { const __v = ${wrappedChildren}; __c.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
       } else {
-        ls.push(`${indent}{ const __c = ${elVar}.querySelector('${selector}'); if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
+        ls.push(`${indent}{ const __c = qsa(${elVar}, '${selector}'); if (__c) initChild('${comp.name}', __c, ${propsExpr}) }`)
       }
     }
   }
@@ -1057,6 +1078,13 @@ function emitCompositeRenderItemBody(ls: string[], indent: string, ctx: Composit
     ? ctx.outerComps.filter(c => !c.slotId || !condCompSlotIds.has(c.slotId))
     : ctx.outerComps
 
+  // Hoist mapPreamble before the SSR/CSR split so variables it declares
+  // (e.g. `const f = arr.find(...)`) are accessible in both branches and in
+  // any reactive attribute getters emitted after the if/else block.
+  if (ctx.elem.mapPreamble) {
+    ls.push(`${indent}${wrap(ctx.elem.mapPreamble)}`)
+  }
+
   // Branch: SSR (existing element) vs CSR (create from template)
   ls.push(`${indent}let __el`)
   ls.push(`${indent}if (__existing) {`)
@@ -1067,9 +1095,6 @@ function emitCompositeRenderItemBody(ls: string[], indent: string, ctx: Composit
   emitInnerLoopSetup(ls, `${indent}  `, '__el', ctx.depthLevels, 'ssr', param)
   ls.push(`${indent}} else {`)
   // CSR: create element from template, replace placeholders with createComponent
-  if (ctx.elem.mapPreamble) {
-    ls.push(`${indent}  ${wrap(ctx.elem.mapPreamble)}`)
-  }
   ls.push(`${indent}  const __tpl = document.createElement('template')`)
   // Template is already wrapped at generation time (irToPlaceholderTemplate with loopParams)
   ls.push(`${indent}  __tpl.innerHTML = \`${ctx.elem.template}\``)
@@ -1139,7 +1164,7 @@ function emitInnerLoopSetup(
       ls.push(`${indent}{ const __ic${uid} = ${containerSelector !== 'null' ? `qsa(${parentElVar}, ${containerSelector})` : parentElVar}`)
       ls.push(`${indent}if (__ic${uid}) mapArray(() => ${arrayExpr} || [], __ic${uid}, ${keyFn}, (${inner.param}, __innerIdx${uid}, __existing) => {`)
       // SSR/CSR branch
-      ls.push(`${indent}  const __innerEl${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
+      ls.push(`${indent}  let __innerEl${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
       if (inner.key) {
         // Inside renderItem, inner.param is an accessor
         const wrappedKey = wrapLoopParamAsAccessor(inner.key, inner.param)
@@ -1147,14 +1172,36 @@ function emitInnerLoopSetup(
       }
       // Set up components and events — wrap inner loop param as accessor
       if (level.comps.length > 0 || level.events.length > 0) {
-        // Pre-wrap both component props and event handlers with inner loop param
+        // Pre-wrap both component props and event handlers with inner loop param.
+        // Children IR nodes must be wrapped recursively so nested component props
+        // (e.g., SelectItem value inside SelectContent inside Select) also get
+        // the inner loop param converted to signal accessor form.
         const wrapInner = (expr: string) => wrapLoopParamAsAccessor(expr, inner.param)
-        const wrappedComps = level.comps.map(comp => ({
-          ...comp,
-          props: comp.props.map(p => p.isLiteral ? p : ({ ...p, value: wrapInner(p.value) })),
-          children: comp.children?.map(c => c.type === 'expression' && c.expr
-            ? { ...c, expr: wrapInner(c.expr) } : c),
-        }))
+        const wrapIRNode = (node: any): any => {
+          if (node.type === 'component') {
+            return {
+              ...node,
+              props: node.props.map((p: any) => p.isLiteral ? p : ({ ...p, value: wrapInner(p.value) })),
+              children: node.children?.map(wrapIRNode),
+            }
+          }
+          if (node.type === 'expression' && node.expr) {
+            return { ...node, expr: wrapInner(node.expr) }
+          }
+          if (node.children) {
+            return { ...node, children: node.children.map(wrapIRNode) }
+          }
+          return node
+        }
+        const wrappedComps = level.comps.map(comp => {
+          const wrapped = {
+            ...comp,
+            props: comp.props.map(p => p.isLiteral ? p : ({ ...p, value: wrapInner(p.value) })),
+            children: comp.children?.map(wrapIRNode),
+          }
+          if (comp.name === 'Select') console.error('[DEBUG-WRAP] before:', comp.children?.length, 'after:', wrapped.children?.length)
+          return wrapped
+        })
         const wrappedEvents = level.events.map(ev => ({
           ...ev,
           handler: wrapInner(ev.handler),
