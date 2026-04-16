@@ -7,6 +7,7 @@ export {
   onCleanup,
   onMount,
   untrack,
+  batch,
   type Reactive,
   type Signal,
   type Memo,
