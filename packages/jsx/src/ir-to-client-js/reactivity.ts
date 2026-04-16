@@ -505,6 +505,9 @@ function collectBranchInnerLoops(
         childConditionals: childConditionals.length > 0 ? childConditionals : undefined,
       })
     } else if (n.type === 'fragment' || n.type === 'component' || n.type === 'provider') {
+      // For component nodes (e.g., SelectContent), track their slotId so inner loops
+      // use the component element as their container rather than the branch scope.
+      if (n.type === 'component' && n.slotId) lastSlotId = n.slotId
       for (const child of n.children) walk(child)
     }
   }

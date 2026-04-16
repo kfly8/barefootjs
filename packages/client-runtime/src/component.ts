@@ -144,20 +144,7 @@ export function createComponent(
   if (childrenIsGetter) {
     const children = untrack(() => childrenDescriptor!.get!())
     if (children != null) {
-      if (hasDomElements(children)) {
-        // DOM elements from createComponent calls
-        insertDomChildren(element, children)
-      } else if (Array.isArray(children)) {
-        // Non-DOM array: join and insert as HTML
-        const joined = (children as unknown[]).flat()
-          .map(c => c == null ? '' : String(c)).join('')
-        if (joined.length > 0) element.appendChild(parseHTML(joined))
-      } else if (typeof children === 'string' && children.length > 0) {
-        // HTML string or literal text: parse and insert
-        element.appendChild(parseHTML(children.trim()))
-      } else if (typeof children === 'number') {
-        element.appendChild(document.createTextNode(String(children)))
-      }
+      insertGetterChildren(element, children)
     }
   }
 
@@ -368,6 +355,33 @@ function insertDomChildren(element: HTMLElement, children: unknown): void {
       insertDomChildren(element, child)
     }
   } else if (typeof children === 'string' || typeof children === 'number') {
+    element.appendChild(document.createTextNode(String(children)))
+  }
+}
+
+/**
+ * Insert getter children into an element.
+ * Unlike insertDomChildren, strings are parsed as HTML (not text nodes) because
+ * getter children may return HTML strings from compiler-generated template literals
+ * (e.g. `<span class="...">Required</span>`).
+ * Arrays may contain a mix of DOM elements and HTML strings.
+ */
+function insertGetterChildren(element: HTMLElement, children: unknown): void {
+  if (children instanceof HTMLElement) {
+    element.appendChild(children)
+  } else if (Array.isArray(children)) {
+    for (const child of (children as unknown[]).flat()) {
+      if (child instanceof HTMLElement) {
+        element.appendChild(child)
+      } else if (typeof child === 'string' && child.length > 0) {
+        element.appendChild(parseHTML(child.trim()))
+      } else if (typeof child === 'number') {
+        element.appendChild(document.createTextNode(String(child)))
+      }
+    }
+  } else if (typeof children === 'string' && (children as string).length > 0) {
+    element.appendChild(parseHTML((children as string).trim()))
+  } else if (typeof children === 'number') {
     element.appendChild(document.createTextNode(String(children)))
   }
 }

@@ -83,10 +83,17 @@ function collectInnerLoops(nodes: IRNode[], outerLoopParam?: string, ctx?: Clien
         break
       }
       case 'fragment':
-      case 'component':
       case 'provider':
         for (const child of n.children) walk(child, parentSlotId)
         break
+      case 'component': {
+        // Use the component's own slotId as the container for inner loops,
+        // so loops inside child components (e.g., SelectContent) use that
+        // component's element as the mapArray container instead of __branchScope.
+        const mySlotId = n.slotId ?? parentSlotId
+        for (const child of n.children) walk(child, mySlotId)
+        break
+      }
       case 'conditional': {
         const prev = insideCond
         insideCond = true

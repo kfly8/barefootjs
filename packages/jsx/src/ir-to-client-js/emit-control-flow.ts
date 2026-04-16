@@ -333,7 +333,7 @@ function emitBranchInnerLoops(
 
     lines.push(`${indent}{ const __bic${uid} = ${containerExpr}`)
     lines.push(`${indent}if (__bic${uid}) mapArray(() => ${arrayExpr} || [], __bic${uid}, ${keyFn}, (${inner.param}, __bidx${uid}, __existing) => {`)
-    lines.push(`${indent}  const __bel${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
+    lines.push(`${indent}  let __bel${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
     if (inner.key) {
       const wrappedKey = wrapLoopParamAsAccessor(inner.key, inner.param)
       lines.push(`${indent}  __bel${uid}.setAttribute('${keyAttrName(1)}', String(${wrappedKey}))`)
@@ -1035,9 +1035,13 @@ function emitComponentAndEventSetup(
       const keyArg = keyProp ? `, ${wrap(keyProp.value)}` : ''
       if (childrenRefsLoop) {
         const wrappedChildren = wrap(rawChildrenExpr!)
-        ls.push(`${indent}{ const __ph = ${elVar}.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) { const __comp = createComponent('${comp.name}', ${propsExpr}${keyArg}); __ph.replaceWith(__comp); createEffect(() => { const __v = ${wrappedChildren}; __comp.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
+        // Use qsa so the placeholder element is found even when it IS elVar itself
+        // (e.g., loop body = bare component: <div data-bf-ph="sN"> is both the item and the placeholder).
+        // When __ph === elVar, the element is detached so replaceWith is a no-op; reassign instead.
+        ls.push(`${indent}{ const __ph = qsa(${elVar}, '[${DATA_BF_PH}="${phId}"]'); if (__ph) { const __comp = createComponent('${comp.name}', ${propsExpr}${keyArg}); if (__ph === ${elVar}) ${elVar} = __comp; else __ph.replaceWith(__comp); createEffect(() => { const __v = ${wrappedChildren}; __comp.textContent = Array.isArray(__v) ? __v.join('') : String(__v ?? '') }) } }`)
       } else {
-        ls.push(`${indent}{ const __ph = ${elVar}.querySelector('[${DATA_BF_PH}="${phId}"]'); if (__ph) __ph.replaceWith(createComponent('${comp.name}', ${propsExpr}${keyArg})) }`)
+        // Same qsa + reassignment fix for the non-children-reactive case.
+        ls.push(`${indent}{ const __ph = qsa(${elVar}, '[${DATA_BF_PH}="${phId}"]'); if (__ph) { const __comp = createComponent('${comp.name}', ${propsExpr}${keyArg}); if (__ph === ${elVar}) ${elVar} = __comp; else __ph.replaceWith(__comp) } }`)
       }
     } else {
       const selector = buildCompSelector(comp)
@@ -1160,7 +1164,7 @@ function emitInnerLoopSetup(
       ls.push(`${indent}{ const __ic${uid} = ${containerSelector !== 'null' ? `qsa(${parentElVar}, ${containerSelector})` : parentElVar}`)
       ls.push(`${indent}if (__ic${uid}) mapArray(() => ${arrayExpr} || [], __ic${uid}, ${keyFn}, (${inner.param}, __innerIdx${uid}, __existing) => {`)
       // SSR/CSR branch
-      ls.push(`${indent}  const __innerEl${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
+      ls.push(`${indent}  let __innerEl${uid} = __existing ?? (() => { const __t = document.createElement('template'); __t.innerHTML = \`${wrappedTemplate}\`; return __t.content.firstElementChild.cloneNode(true) })()`)
       if (inner.key) {
         // Inside renderItem, inner.param is an accessor
         const wrappedKey = wrapLoopParamAsAccessor(inner.key, inner.param)
