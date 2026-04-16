@@ -5,20 +5,12 @@ description: How adapters let the same JSX run on any server — Hono, Go, and b
 
 # Backend Freedom
 
-Most UI component libraries assume Node.js on the server. If your backend is Go, Python, or Ruby, you're either maintaining a separate Node.js service for rendering or hand-writing UI without a component system.
+The compiler generates native server templates from JSX — no Node.js runtime required.
 
-BarefootJS removes this constraint. **Write components once in JSX. The compiler generates native templates for your backend** — no Node.js runtime needed at serving time.
-
-## One Source, Any Backend
-
-The compiler transforms JSX into a backend-agnostic **Intermediate Representation** (IR). An **adapter** converts the IR into the template format your server needs:
+Most UI component libraries assume Node.js. If your backend is Go or another language, you either run a separate Node.js service for rendering or hand-write UI without a component system. BarefootJS compiles JSX into a backend-agnostic IR, then an adapter converts it to your server's template format:
 
 ```
-JSX Source
-    ↓
-  Compiler → IR (backend-agnostic)
-    ↓
-  Adapter → Template for your backend
+JSX → IR (backend-agnostic) → Adapter → Template
 ```
 
 | Adapter | Output | Backend |
@@ -26,4 +18,4 @@ JSX Source
 | `HonoAdapter` | `.hono.tsx` | Hono / JSX-based servers |
 | `GoTemplateAdapter` | `.tmpl` + `_types.go` | Go `html/template` |
 
-The same component works unchanged across all supported backends. The IR contract is stable, so you can also [write adapters for any backend](../adapters/custom-adapter.md).
+The IR contract is stable. You can [write adapters for any backend](../adapters/custom-adapter.md).

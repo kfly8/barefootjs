@@ -1,45 +1,35 @@
 ---
 title: Fine-grained Reactivity
-description: Signal-based reactivity with signals, effects, and memos — no virtual DOM needed
+description: Signal-based reactivity — no virtual DOM, updates at the DOM node level
 ---
 
 # Fine-grained Reactivity
 
-In React, changing a single piece of state re-renders the component and its entire subtree. The virtual DOM then diffs the old and new trees to find what actually changed. This works, but it's overhead on every update — even when only one text node needs to change.
+The compiler wires each signal to its DOM target at build time. When state changes, only that DOM node updates — no virtual DOM, no component re-render.
 
-BarefootJS takes a different approach. **The compiler statically analyzes which DOM nodes depend on which signals, and wires them together at build time.** When a signal changes, only the exact DOM nodes that use it update. No diffing, no component re-render, no virtual DOM.
+Inspired by [SolidJS](https://www.solidjs.com/). The key difference from React: **components run once**, not on every state change.
 
-This is inspired by [SolidJS](https://www.solidjs.com/). If you're coming from React or Vue, the key difference is: **components run once, not on every state change.**
-
-## Signals and Effects
-
-A **signal** holds a reactive value. An **effect** runs whenever its dependencies change. A **memo** is a cached derived value. No dependency arrays needed — the system tracks reads automatically.
+## Signals, Effects, Memos
 
 ```tsx
-const [count, setCount] = createSignal(0)   // signal
-const doubled = createMemo(() => count() * 2) // memo (cached)
+const [count, setCount] = createSignal(0)     // reactive value
+const doubled = createMemo(() => count() * 2)  // cached derived value
 
 createEffect(() => {
-  console.log('Count is:', count())          // effect (re-runs on change)
+  console.log('Count is:', count())            // re-runs when count changes
 })
 
-setCount(1)  // triggers the effect, updates doubled
+setCount(1)  // triggers the effect, recomputes doubled
 ```
 
-The getter is a **function call** — `count()`, not `count`. This is how the reactivity system tracks which signals each effect depends on.
+The getter is a function call — `count()`, not `count`. The runtime tracks which signals each effect reads. No dependency arrays.
 
-## Update Flow
+## How Updates Reach the DOM
 
-**Virtual DOM (React):**
 ```
-setState(1) → re-run component → diff virtual trees → patch DOM
-```
-
-**Signals (BarefootJS):**
-```
-setCount(1) → signal notifies subscribers → effect updates DOM node directly
+setCount(1) → signal notifies subscribers → effect updates the DOM node
 ```
 
-No tree walk. The signal knows exactly which DOM node to update because the compiler wired them together at build time.
+The compiler determined at build time which DOM node depends on `count`. No tree diffing occurs at runtime.
 
-For the full API reference, see [Reactivity](../reactivity.md).
+For the full API, see [Reactivity](../reactivity.md).
