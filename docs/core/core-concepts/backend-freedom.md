@@ -25,6 +25,6 @@ JSX → IR (backend-agnostic) → Adapter → Template
 | Language | Adapter |
 |----------|---------|
 | Rust | (TBD) |
-| Python | FastAPIAdapter |
+| Python | Jinja2Adapter |
 
 The IR contract is stable. You can [write a custom adapter](../adapters/custom-adapter.md) for any backend.
