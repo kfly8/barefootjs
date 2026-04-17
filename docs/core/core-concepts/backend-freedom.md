@@ -26,5 +26,6 @@ JSX → IR (backend-agnostic) → Adapter → Template
 |----------|---------|
 | Rust | (TBD) |
 | Python | Jinja2Adapter |
+| Ruby | ERBAdapter |
 
 The IR contract is stable. You can [write a custom adapter](../adapters/custom-adapter.md) for any backend.
