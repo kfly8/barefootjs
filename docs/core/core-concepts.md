@@ -21,7 +21,7 @@ The compiler analyzes which DOM nodes depend on which signals and generates code
 
 ## AI-native Development
 
-Component tests run in milliseconds against the compiler's IR — no browser needed. The `barefoot` CLI provides structured component discovery for humans and AI agents.
+`renderToTest()` verifies component structure, signals, and accessibility against the compiler's IR in milliseconds. E2E tests are still needed for real interactions, but structural issues are caught fast. The `barefoot` CLI provides discovery, scaffolding, and debugging for humans and AI agents.
 
 ## How It Works
 

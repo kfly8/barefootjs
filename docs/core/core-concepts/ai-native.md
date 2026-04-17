@@ -5,7 +5,7 @@ description: Millisecond component tests via IR, CLI-driven component discovery
 
 # AI-native Development
 
-Component tests run in milliseconds — no browser, no JSDOM. The compiler outputs a structured IR (JSON) capturing structure, signals, events, and accessibility. Test it directly:
+`renderToTest()` verifies component structure, signals, events, and accessibility against the compiler's IR — in milliseconds, without a browser. Real interactions and visual behavior still need E2E tests, but structural issues are caught before you get there:
 
 ```tsx
 import { renderToTest } from '@barefootjs/test-utils'
