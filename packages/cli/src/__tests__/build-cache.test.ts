@@ -106,6 +106,29 @@ describe('loadCache / saveCache', () => {
     }
   })
 
+  // Regression: adapter-generated types (e.g. Go structs) must persist in the
+  // cache so a partial rebuild does not drop types emitted by cache-hit entries
+  // into the postBuild hook. Previously only newly compiled entries contributed
+  // types, so editing one .tsx truncated the generated types file.
+  test('types and typesKey round-trip through disk', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'bf-cache-types-'))
+    try {
+      const cache = emptyCache('gh')
+      cache.entries['/abs/Counter.tsx'] = {
+        ...makeEntry('h', {}),
+        typesKey: 'Counter',
+        types: 'type CounterProps struct { Initial int }',
+      }
+      await saveCache(dir, cache)
+      const loaded = await loadCache(dir)
+      const entry = loaded!.entries['/abs/Counter.tsx']
+      expect(entry.typesKey).toBe('Counter')
+      expect(entry.types).toBe('type CounterProps struct { Initial int }')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   test('returns null when cache file is absent', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'bf-cache-'))
     try {

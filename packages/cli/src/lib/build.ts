@@ -327,6 +327,9 @@ export async function build(
       if (cached.manifestKey && cached.manifestEntry) {
         manifest[cached.manifestKey] = cached.manifestEntry
       }
+      if (cached.typesKey && cached.types) {
+        collectedTypes.set(cached.typesKey, cached.types)
+      }
       cachedCount++
       continue
     }
@@ -349,6 +352,9 @@ export async function build(
         nextEntries[entryPath] = cached
         if (cached.manifestKey && cached.manifestEntry) {
           manifest[cached.manifestKey] = cached.manifestEntry
+        }
+        if (cached.typesKey && cached.types) {
+          collectedTypes.set(cached.typesKey, cached.types)
         }
       }
       continue
@@ -373,6 +379,8 @@ export async function build(
       outputs: result.outputs,
       manifestKey: result.manifestKey,
       manifestEntry: result.manifestEntry,
+      typesKey: result.typesKey,
+      types: result.types,
     }
   }
 

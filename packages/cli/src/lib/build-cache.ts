@@ -4,7 +4,7 @@
 import { resolve } from 'node:path'
 import { fileExists, hashString, readText, writeText } from './runtime'
 
-export const CACHE_VERSION = 1
+export const CACHE_VERSION = 2
 export const CACHE_FILENAME = '.buildcache.json'
 
 export interface CacheEntry {
@@ -18,6 +18,11 @@ export interface CacheEntry {
   manifestKey: string | null
   /** Stored manifest row, so cache-hit entries can restore it without recompiling */
   manifestEntry?: { markedTemplate: string; clientJs?: string }
+  /** Key used to register this entry's types with the postBuild hook */
+  typesKey?: string
+  /** Adapter-generated types (e.g. Go structs). Restored on cache hit so the
+   *  postBuild hook sees types from every component, not just freshly compiled ones. */
+  types?: string
 }
 
 export interface BuildCache {
