@@ -722,6 +722,25 @@ async function compileEntry(args: CompileEntryArgs): Promise<CompileEntryOutcome
   }
 }
 
+// ── Dev sentinel ─────────────────────────────────────────────────────────
+
+export const DEV_SENTINEL_SUBDIR = '.dev'
+export const DEV_SENTINEL_FILENAME = 'build-id'
+
+/**
+ * Dev-only sentinel for signalling browsers to reload after a watch rebuild.
+ * Written at `<outDir>/.dev/build-id` only when the build both succeeded and
+ * actually changed output on disk — so a touch-save that produces no diff
+ * does not trigger a reload.
+ */
+async function writeBuildId(outDir: string, result: BuildResult): Promise<void> {
+  if (result.errorCount > 0 || !result.changed) return
+  const devDir = resolve(outDir, DEV_SENTINEL_SUBDIR)
+  await mkdir(devDir, { recursive: true })
+  const path = resolve(devDir, DEV_SENTINEL_FILENAME)
+  await writeIfChanged(path, String(Date.now()))
+}
+
 // ── Watch mode ───────────────────────────────────────────────────────────
 
 export interface WatchOptions {
@@ -749,6 +768,7 @@ export async function watch(
   console.log(
     `Initial build: ${initial.compiledCount} compiled, ${initial.cachedCount} cached, ${initial.errorCount} errors`,
   )
+  await writeBuildId(config.outDir, initial)
   console.log('Watching for changes...')
 
   // Watch component source dirs recursively; watch project dir non-recursively
@@ -776,6 +796,7 @@ export async function watch(
     console.log(
       `Rebuild: ${result.compiledCount} compiled, ${result.cachedCount} cached, ${result.errorCount} errors (${ms}ms)`,
     )
+    await writeBuildId(config.outDir, result)
   }
 
   const isRelevant = (root: string, filename: string | null): boolean => {
