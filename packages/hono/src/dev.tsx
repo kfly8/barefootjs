@@ -44,6 +44,9 @@ export interface BfDevReloadProps {
   endpoint?: string
 }
 
+// Sentinel path contract with `@barefootjs/cli`. These values must match
+// `DEV_SENTINEL_SUBDIR` / `DEV_SENTINEL_FILENAME` in `packages/cli/src/lib/build.ts`
+// — duplicated intentionally to avoid a runtime dep on the CLI.
 const DEV_SUBDIR = '.dev'
 const BUILD_ID_FILE = 'build-id'
 const SCROLL_STORAGE_KEY = '__bf_devreload_scroll'
