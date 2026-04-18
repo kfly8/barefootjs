@@ -125,6 +125,30 @@ export { Static }
   })
 })
 
+describe('<Async> streaming boundary', () => {
+  test('exposes resolved children as a fragment', () => {
+    const source = `
+function ProductPage() {
+  return (
+    <div>
+      <Async fallback={<p>Loading...</p>}>
+        <span>Resolved</span>
+      </Async>
+    </div>
+  )
+}
+
+export { ProductPage }
+`
+    const result = renderToTest(source, 'product-page.tsx')
+    const span = result.find({ tag: 'span' })
+    expect(span).not.toBeNull()
+    expect(span!.text).toBeNull()
+    const textChild = span!.children.find(c => c.type === 'text')
+    expect(textChild?.text).toBe('Resolved')
+  })
+})
+
 describe('Error detection', () => {
   test('missing "use client" reports BF001', () => {
     const source = `
