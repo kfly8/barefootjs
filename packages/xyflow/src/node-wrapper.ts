@@ -393,12 +393,19 @@ function renderNodeContent<NodeType extends NodeBase>(
     // Reset default node styling for custom types
     el.classList.add('bf-flow__node--custom')
 
-    // Build node component props
+    // Build node component props. `selected` is exposed as a reactive getter
+    // — resolving it inside createEffect lets the custom component track
+    // selection changes after mount. Reading node.selected once at mount
+    // time gave components a stale snapshot and forced them to observe
+    // the bf-flow__node--selected class on their own.
     const nodeProps: NodeComponentProps<NodeType> = {
       id: node.id,
       data: node.internals.userNode.data,
       type: nodeType,
-      selected: node.selected ?? false,
+      selected: () => {
+        const current = store.nodes().find((n) => n.id === node.id)
+        return current?.selected ?? false
+      },
       dragging: node.dragging ?? false,
       positionAbsoluteX: node.internals.positionAbsolute.x,
       positionAbsoluteY: node.internals.positionAbsolute.y,
