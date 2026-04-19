@@ -20,8 +20,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "perl app.pl daemon -l 'http://*:3004'",
-    url: 'http://localhost:3004',
+    command: "BASE_PATH=/examples/mojolicious perl app.pl daemon -l 'http://*:3004'",
+    url: 'http://localhost:3004/examples/mojolicious/',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },

@@ -6,4 +6,4 @@
 
 import { portalTests } from '../../shared/e2e/portal.spec'
 
-portalTests('http://localhost:3004')
+portalTests('http://localhost:3004/examples/mojolicious')

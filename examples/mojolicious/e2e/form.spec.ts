@@ -6,4 +6,4 @@
 
 import { formTests } from '../../shared/e2e/form.spec'
 
-formTests('http://localhost:3004')
+formTests('http://localhost:3004/examples/mojolicious')

@@ -6,4 +6,4 @@
 
 import { reactivePropsTests } from '../../shared/e2e/reactive-props.spec'
 
-reactivePropsTests('http://localhost:3004')
+reactivePropsTests('http://localhost:3004/examples/mojolicious')

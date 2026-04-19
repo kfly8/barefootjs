@@ -12,6 +12,9 @@ dist
 examples/*/public
 examples/*/.wrangler
 
+# Mojolicious example: staged BarefootJS Perl plugin copy
+examples/mojolicious/lib
+
 # code coverage
 coverage
 *.lcov
