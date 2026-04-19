@@ -1,0 +1,187 @@
+/**
+ * Shared layout + header styles for all BarefootJS examples.
+ *
+ * Consumes CSS variables declared in tokens.css. Pairs with the header HTML
+ * that each adapter renders directly in its layout (see renderer.tsx /
+ * main.go / app.pl) and with scripts/theme-toggle.js for dark/light.
+ */
+
+/* ── Base ───────────────────────────────────────────────── */
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding-top: var(--header-height);
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Center the main content in non-todo layouts. The todo demos manage their
+ * own full-width layout via .todoapp, so skip the centering there.
+ */
+body:not(:has(.todoapp)) > :not(.bf-header):not(script) {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+body:not(:has(.todoapp)) > h1:first-of-type {
+  margin-top: 2rem;
+}
+
+a {
+  color: var(--foreground);
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.bf-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: var(--header-height);
+  background: color-mix(in oklch, var(--background) 95%, transparent);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+}
+
+.bf-header-inner {
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .bf-header-inner {
+    padding: 0 var(--space-6);
+  }
+}
+
+.bf-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .bf-header-left {
+    gap: var(--space-6);
+  }
+}
+
+.bf-header-logo {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: var(--tracking-tight);
+  transition: opacity var(--duration-fast);
+}
+
+.bf-header-logo:hover {
+  opacity: 0.85;
+}
+
+.bf-header-sep {
+  display: none;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+@media (min-width: 640px) {
+  .bf-header-sep {
+    display: block;
+  }
+}
+
+.bf-header-nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+@media (min-width: 640px) {
+  .bf-header-nav {
+    display: flex;
+  }
+}
+
+.bf-header-link {
+  position: relative;
+  padding: 6px var(--space-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: color var(--duration-fast), background-color var(--duration-fast);
+}
+
+.bf-header-link:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+.bf-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (min-width: 640px) {
+  .bf-header-right {
+    gap: var(--space-4);
+  }
+}
+
+.bf-header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--duration-fast);
+}
+
+.bf-header-icon-btn:hover {
+  background: var(--accent);
+}
+
+.bf-header-icon-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Theme toggle: show moon in light mode, sun in dark mode */
+.bf-theme-sun { display: none; }
+.bf-theme-moon { display: block; }
+html.dark .bf-theme-sun { display: block; }
+html.dark .bf-theme-moon { display: none; }
