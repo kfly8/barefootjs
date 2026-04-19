@@ -1,10 +1,13 @@
 import { createConfig } from '@barefootjs/mojolicious/build'
 
+const basePath = process.env.BASE_PATH ?? '/examples/mojolicious'
+const clientBase = `${basePath}/client/`
+
 export default createConfig({
   components: ['../shared/components'],
   outDir: 'dist',
   adapterOptions: {
-    clientJsBasePath: '/client/',
-    barefootJsPath: '/client/barefoot.js',
+    clientJsBasePath: clientBase,
+    barefootJsPath: `${clientBase}barefoot.js`,
   },
 })

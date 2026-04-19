@@ -6,4 +6,4 @@
 
 import { todoAppTests } from '../../shared/e2e/todo-app.spec'
 
-todoAppTests('http://localhost:3004')
+todoAppTests('http://localhost:3004/examples/mojolicious')

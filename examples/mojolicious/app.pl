@@ -1,6 +1,9 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite -signatures;
-use lib '../../packages/mojolicious/lib';
+# `lib` is populated by scripts/copy-plugin.pl at build time (used in the
+# container); `../../packages/mojolicious/lib` is the workspace source (used
+# in local dev). Both are listed so either location resolves.
+use lib 'lib', '../../packages/mojolicious/lib';
 use Mojo::JSON qw(true false encode_json);
 
 # Load BarefootJS plugin
@@ -10,10 +13,14 @@ plugin 'BarefootJS';
 # is emitted in the layout below via `bf_dev_snippet`.
 plugin 'BarefootJS::DevReload';
 
-# Serve static files (client JS, barefoot.js)
-app->static->paths->[0] = app->home->child('dist');
+# URL prefix the app is mounted under. Defaults to /examples/mojolicious so
+# the app is deploy-ready for barefootjs.dev/examples/mojolicious.
+my $BASE_PATH = $ENV{BASE_PATH} // '/examples/mojolicious';
+app->defaults(base_path => $BASE_PATH);
 
-# Serve shared styles
+# Static file roots: dist/ for generated client JS and templates; ../shared
+# for design-system stylesheets shared across all example backends.
+app->static->paths->[0] = app->home->child('dist');
 push @{app->static->paths}, app->home->child('../shared');
 
 # Template directory
@@ -108,11 +115,24 @@ helper render_component => sub ($c, $component, %opts) {
 };
 
 # ---------------------------------------------------------------------------
-# Routes
+# Routes (grouped under $BASE_PATH)
 # ---------------------------------------------------------------------------
 
-get '/' => sub ($c) {
-    $c->render(inline => <<~'HTML');
+my $r = app->routes->under($BASE_PATH);
+
+# Proxy static asset URLs that include the base-path prefix into the standard
+# static paths. Mojolicious's built-in static serving does not support URL
+# prefixes natively, so we forward /$BASE_PATH/client/* and
+# /$BASE_PATH/styles/* to reply->static.
+$r->get('/client/*asset' => sub ($c) {
+    $c->reply->static('client/' . ($c->stash('asset') // '')) or $c->reply->not_found;
+});
+$r->get('/styles/*asset' => sub ($c) {
+    $c->reply->static('styles/' . ($c->stash('asset') // '')) or $c->reply->not_found;
+});
+
+$r->get('/' => sub ($c) {
+    $c->render(inline => <<~HTML);
     <!DOCTYPE html>
     <html>
     <head>
@@ -127,18 +147,18 @@ get '/' => sub ($c) {
         <h1>BarefootJS + Mojolicious Example</h1>
         <p>This example demonstrates server-side rendering with Mojolicious and BarefootJS.</p>
         <ul>
-            <li><a href="/counter">Counter</a></li>
-            <li><a href="/toggle">Toggle</a></li>
-            <li><a href="/todos">Todo (@client)</a></li>
-            <li><a href="/todos-ssr">Todo (no @client markers)</a></li>
-            <li><a href="/ai-chat">AI Chat (SSE Streaming)</a></li>
+            <li><a href="$BASE_PATH/counter">Counter</a></li>
+            <li><a href="$BASE_PATH/toggle">Toggle</a></li>
+            <li><a href="$BASE_PATH/todos">Todo (\@client)</a></li>
+            <li><a href="$BASE_PATH/todos-ssr">Todo (no \@client markers)</a></li>
+            <li><a href="$BASE_PATH/ai-chat">AI Chat (SSE Streaming)</a></li>
         </ul>
     </body>
     </html>
     HTML
-};
+});
 
-get '/counter' => sub ($c) {
+$r->get('/counter' => sub ($c) {
     $c->render_component('Counter',
         props => { initial => 0 },
         stash => {
@@ -148,9 +168,9 @@ get '/counter' => sub ($c) {
         },
         heading => 'Counter Component',
     );
-};
+});
 
-get '/toggle' => sub ($c) {
+$r->get('/toggle' => sub ($c) {
     my $items = [
         { label => 'Setting 1', defaultOn => \1 },
         { label => 'Setting 2', defaultOn => \0 },
@@ -168,42 +188,42 @@ get '/toggle' => sub ($c) {
         stash => { toggleItems => $items },
         heading => 'Toggle Component',
     );
-};
+});
 
-get '/form' => sub ($c) {
+$r->get('/form' => sub ($c) {
     $c->render_component('Form',
         props   => {},
         stash   => { accepted => 0 },
         heading => 'Form Example',
     );
-};
+});
 
-get '/reactive-props' => sub ($c) {
+$r->get('/reactive-props' => sub ($c) {
     $c->render_component('ReactiveProps',
         children => { reactive_child => 'ReactiveChild' },
         props    => {},
         stash    => { count => 0, doubled => 0 },
         heading  => 'Reactive Props Test',
     );
-};
+});
 
-get '/conditional-return' => sub ($c) {
+$r->get('/conditional-return' => sub ($c) {
     $c->render_component('ConditionalReturn',
         props => { variant => '' },
         stash => { variant => '', count => 0 },
         heading => 'Conditional Return Example',
     );
-};
+});
 
-get '/conditional-return-link' => sub ($c) {
+$r->get('/conditional-return-link' => sub ($c) {
     $c->render_component('ConditionalReturn',
         props => { variant => 'link' },
         stash => { variant => 'link', count => 0 },
         heading => 'Conditional Return Example (Link)',
     );
-};
+});
 
-get '/todos' => sub ($c) {
+$r->get('/todos' => sub ($c) {
     my @current_todos = map { {%$_} } @todos;  # shallow copy
     my $done_count = scalar grep { $_->{done} } @current_todos;
 
@@ -217,9 +237,9 @@ get '/todos' => sub ($c) {
             doneCount => $done_count,
         },
     );
-};
+});
 
-get '/todos-ssr' => sub ($c) {
+$r->get('/todos-ssr' => sub ($c) {
     my @current_todos = map { {%$_} } @todos;
     my $done_count = scalar grep { $_->{done} } @current_todos;
 
@@ -233,9 +253,9 @@ get '/todos-ssr' => sub ($c) {
             doneCount => $done_count,
         },
     );
-};
+});
 
-get '/props-reactivity' => sub ($c) {
+$r->get('/props-reactivity' => sub ($c) {
     $c->render_component('PropsReactivityComparison',
         children => {
             props_style_child        => 'PropsStyleChild',
@@ -255,15 +275,15 @@ get '/props-reactivity' => sub ($c) {
         stash   => { count => 1 },
         heading => 'Props Reactivity Comparison',
     );
-};
+});
 
-get '/portal' => sub ($c) {
+$r->get('/portal' => sub ($c) {
     $c->render_component('PortalExample',
         props   => {},
         stash   => { open => 0 },
         heading => 'Portal Example',
     );
-};
+});
 
 # ---------------------------------------------------------------------------
 # AI Chat — SSE Streaming Example
@@ -277,7 +297,7 @@ my @ai_responses = (
     "[Dummy response] Out-of-Order Streaming SSR and interactive SSE streaming are two different features of BarefootJS.",
 );
 
-get '/ai-chat' => sub ($c) {
+$r->get('/ai-chat' => sub ($c) {
     $c->render_component('AIChatInteractive',
         title   => 'AI Chat — SSE Streaming (Mojolicious)',
         heading => 'AI Chat — SSE Streaming',
@@ -286,12 +306,12 @@ get '/ai-chat' => sub ($c) {
             input         => '',
             streamingText => '',
             isStreaming   => 0,
-            extra_css     => '<link rel="stylesheet" href="/styles/ai-chat.css">',
+            extra_css     => qq{<link rel="stylesheet" href="$BASE_PATH/styles/ai-chat.css">},
         },
     );
-};
+});
 
-get '/api/ai-chat' => sub ($c) {
+$r->get('/api/ai-chat' => sub ($c) {
     my $text = $ai_responses[int(rand(scalar @ai_responses))];
     my @chars = split //, $text;
 
@@ -312,17 +332,17 @@ get '/api/ai-chat' => sub ($c) {
             $c->write("data: [DONE]\n\n" => sub { $c->finish });
         }
     });
-};
+});
 
 # ---------------------------------------------------------------------------
 # Todo API
 # ---------------------------------------------------------------------------
 
-get '/api/todos' => sub ($c) {
+$r->get('/api/todos' => sub ($c) {
     $c->render(json => \@todos);
-};
+});
 
-post '/api/todos' => sub ($c) {
+$r->post('/api/todos' => sub ($c) {
     my $input = $c->req->json;
     my $todo = {
         id      => $next_id++,
@@ -332,9 +352,9 @@ post '/api/todos' => sub ($c) {
     };
     push @todos, $todo;
     $c->render(json => $todo, status => 201);
-};
+});
 
-put '/api/todos/:id' => sub ($c) {
+$r->put('/api/todos/:id' => sub ($c) {
     my $id = $c->param('id');
     my $input = $c->req->json;
     for my $todo (@todos) {
@@ -345,31 +365,32 @@ put '/api/todos/:id' => sub ($c) {
         }
     }
     $c->render(json => { error => 'not found' }, status => 404);
-};
+});
 
-del '/api/todos/:id' => sub ($c) {
+$r->delete('/api/todos/:id' => sub ($c) {
     my $id = $c->param('id');
     @todos = grep { $_->{id} != $id } @todos;
     $c->rendered(204);
-};
+});
 
-post '/api/todos/reset' => sub ($c) {
+$r->post('/api/todos/reset' => sub ($c) {
     reset_todos();
     $c->rendered(200);
-};
+});
 
 app->start;
 
 __DATA__
 
 @@ layouts/default.html.ep
+% my $bp = stash('base_path') // '';
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title><%= $title %></title>
-    <link rel="stylesheet" href="/styles/components.css">
-    <link rel="stylesheet" href="/styles/todo-app.css">
+    <link rel="stylesheet" href="<%= $bp %>/styles/components.css">
+    <link rel="stylesheet" href="<%= $bp %>/styles/todo-app.css">
     % my $extra_css = stash('extra_css') // '';
     % if ($extra_css) {
     <%== $extra_css %>
@@ -385,7 +406,7 @@ __DATA__
     <h1><%= $heading %></h1>
     % }
     <div id="app"><%= content %></div>
-    <p><a href="/">← Back</a></p>
+    <p><a href="<%= $bp %>/">← Back</a></p>
     <%== bf->scripts %>
     <%== bf_dev_snippet %>
 </body>
