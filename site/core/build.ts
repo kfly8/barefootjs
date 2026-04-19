@@ -412,12 +412,16 @@ const HONO_JSX_SHIM = `declare module 'hono/jsx' {
 }
 `
 const HONO_JSX_RUNTIME_SHIM = `declare module 'hono/jsx/jsx-runtime' {
-  export const jsx: any
-  export const jsxs: any
-  export const Fragment: any
-  export const jsxAttr: any
-  export const jsxEscape: any
-  export const jsxTemplate: any
+  type Props = Record<string, unknown>
+  export function jsx(tag: string | Function, props: Props, key?: string): unknown
+  export const jsxs: typeof jsx
+  export function Fragment(props: { children?: unknown }): unknown
+  export function jsxAttr(name: string, value: unknown): string
+  export function jsxEscape(value: unknown): string
+  export function jsxTemplate(
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ): unknown
 }
 `
 
