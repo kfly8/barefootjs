@@ -3,16 +3,11 @@
  *
  * Consumes CSS variables declared in tokens.css. Pairs with the header HTML
  * that each adapter renders directly in its layout (see renderer.tsx /
- * main.go / app.pl) and with scripts/theme-toggle.js for dark/light.
+ * main.go / app.pl). The examples are pinned to dark mode via
+ * <html class="dark">, so only the `.dark` overrides in tokens.css apply.
  */
 
-/* ── Base ───────────────────────────────────────────────── */
-
 html {
-  color-scheme: light;
-}
-
-html.dark {
   color-scheme: dark;
 }
 
@@ -67,24 +62,12 @@ a {
   padding: 0 var(--space-4);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 @media (min-width: 640px) {
   .bf-header-inner {
     padding: 0 var(--space-6);
-  }
-}
-
-.bf-header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-@media (min-width: 640px) {
-  .bf-header-left {
     gap: var(--space-6);
   }
 }
@@ -103,32 +86,12 @@ a {
 }
 
 .bf-header-sep {
-  display: none;
   width: 1px;
   height: 20px;
   background: var(--border);
 }
 
-@media (min-width: 640px) {
-  .bf-header-sep {
-    display: block;
-  }
-}
-
-.bf-header-nav {
-  display: none;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-@media (min-width: 640px) {
-  .bf-header-nav {
-    display: flex;
-  }
-}
-
 .bf-header-link {
-  position: relative;
   padding: 6px var(--space-3);
   font-size: 0.875rem;
   font-weight: 500;
@@ -142,46 +105,3 @@ a {
   color: var(--foreground);
   background: color-mix(in oklch, var(--accent) 50%, transparent);
 }
-
-.bf-header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-@media (min-width: 640px) {
-  .bf-header-right {
-    gap: var(--space-4);
-  }
-}
-
-.bf-header-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-md);
-  color: var(--foreground);
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color var(--duration-fast);
-}
-
-.bf-header-icon-btn:hover {
-  background: var(--accent);
-}
-
-.bf-header-icon-btn:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* Theme toggle: show moon in light mode, sun in dark mode */
-.bf-theme-sun { display: none; }
-.bf-theme-moon { display: block; }
-html.dark .bf-theme-sun { display: block; }
-html.dark .bf-theme-moon { display: none; }

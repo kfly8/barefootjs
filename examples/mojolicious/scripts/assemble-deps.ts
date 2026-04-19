@@ -1,11 +1,10 @@
 /**
- * Post-build step that stages Perl sources and shared assets under the
+ * Post-build step that stages Perl sources and shared styles under the
  * mojolicious example directory so the same layout works in local dev and
  * inside the container image.
  *
- *   ./lib           ← packages/mojolicious/lib (BarefootJS Mojo plugin)
- *   ./dist/styles   ← examples/shared/styles   (design-system stylesheets)
- *   ./dist/scripts  ← examples/shared/scripts  (theme toggle etc.)
+ *   ./lib          ← packages/mojolicious/lib (BarefootJS Mojo plugin)
+ *   ./dist/styles  ← examples/shared/styles  (design-system stylesheets)
  */
 
 import { cp, mkdir, rm } from 'node:fs/promises'
@@ -24,4 +23,3 @@ async function mirror(src: string, dest: string) {
 
 await mirror(join(ROOT, '../../packages/mojolicious/lib'), join(ROOT, 'lib'))
 await mirror(join(ROOT, '../shared/styles'), join(ROOT, 'dist/styles'))
-await mirror(join(ROOT, '../shared/scripts'), join(ROOT, 'dist/scripts'))

@@ -4,7 +4,6 @@
  * Mirrors the URL layout expected by the Worker:
  *   /examples/hono/static/components/*  ← dist/components/*.{js,map}
  *   /examples/hono/shared/styles/*      ← ../shared/styles/*
- *   /examples/hono/shared/scripts/*     ← ../shared/scripts/*
  */
 
 import { readdir, mkdir, copyFile, rm } from 'node:fs/promises'
@@ -38,11 +37,6 @@ await copyDir(
 await copyDir(
   join(ROOT, '../shared/styles'),
   `${BASE}/shared/styles`,
-)
-
-await copyDir(
-  join(ROOT, '../shared/scripts'),
-  `${BASE}/shared/scripts`,
 )
 
 console.log(`Assembled ./public${BASE}/`)
