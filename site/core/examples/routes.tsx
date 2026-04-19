@@ -43,30 +43,20 @@ const ADAPTERS: Adapter[] = [
 
 function ExamplesIndex() {
   return (
-    <section className="mx-auto max-w-4xl px-6 py-16">
-      <header className="mb-10">
-        <h1 className="text-3xl font-semibold mb-2">Examples</h1>
-        <p className="text-muted-foreground">
-          The same shared components running on three backends. Click through
-          to try them out.
-        </p>
-      </header>
+    <section className="mx-auto max-w-3xl px-6 py-16">
+      <h1 className="text-3xl font-semibold mb-2">Examples</h1>
+      <p className="text-muted-foreground mb-8">
+        The same shared components running on three backends.
+      </p>
 
-      <ul className="grid gap-4 list-none p-0 md:grid-cols-2">
+      <ul className="list-none p-0 m-0">
         {ADAPTERS.map((a) => (
-          <li className="m-0">
-            <a
-              href={`/examples/${a.slug}`}
-              className="block rounded-lg border border-border p-5 hover:border-foreground/40 transition-colors no-underline"
-            >
-              <div className="flex items-baseline justify-between mb-2">
-                <h2 className="text-xl font-semibold m-0">{a.name}</h2>
-                <code className="text-xs text-muted-foreground bg-muted rounded px-2 py-0.5">
-                  {a.runtime}
-                </code>
-              </div>
-              <p className="text-sm text-muted-foreground m-0">{a.description}</p>
+          <li className="py-3 border-b border-border last:border-b-0">
+            <a href={`/examples/${a.slug}`} className="font-semibold mr-2">
+              {a.name}
             </a>
+            <span className="text-sm text-muted-foreground">{a.runtime}</span>
+            <p className="text-sm text-muted-foreground m-0 mt-1">{a.description}</p>
           </li>
         ))}
       </ul>
