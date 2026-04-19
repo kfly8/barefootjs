@@ -7,13 +7,15 @@
 
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { BfScripts } from '../../packages/hono/src/scripts'
-import { BfDevReload } from '../../packages/hono/src/dev'
+import { BfDevReload } from '../../packages/hono/src/dev-reload'
+
+const BASE_PATH = process.env.BASE_PATH ?? '/examples/hono'
 
 // Import map for resolving @barefootjs/client in client JS
 const importMapScript = JSON.stringify({
   imports: {
-    '@barefootjs/client': '/static/components/barefoot.js',
-    '@barefootjs/client/runtime': '/static/components/barefoot.js',
+    '@barefootjs/client': `${BASE_PATH}/static/components/barefoot.js`,
+    '@barefootjs/client/runtime': `${BASE_PATH}/static/components/barefoot.js`,
   },
 })
 
@@ -26,9 +28,9 @@ export const renderer = jsxRenderer(
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <title>BarefootJS + Hono/JSX</title>
           <script type="importmap" dangerouslySetInnerHTML={{ __html: importMapScript }} />
-          <link rel="stylesheet" href="/shared/styles/components.css" />
-          <link rel="stylesheet" href="/shared/styles/todo-app.css" />
-          <link rel="stylesheet" href="/shared/styles/ai-chat.css" />
+          <link rel="stylesheet" href={`${BASE_PATH}/shared/styles/components.css`} />
+          <link rel="stylesheet" href={`${BASE_PATH}/shared/styles/todo-app.css`} />
+          <link rel="stylesheet" href={`${BASE_PATH}/shared/styles/ai-chat.css`} />
           <style>{`
             body:not(:has(.todoapp)) {
               font-family: system-ui, sans-serif;
@@ -52,7 +54,7 @@ export const renderer = jsxRenderer(
         <body>
           {children}
           <BfScripts />
-          <BfDevReload />
+          <BfDevReload endpoint={`${BASE_PATH}/_bf/reload`} />
         </body>
       </html>
     )
