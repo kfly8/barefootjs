@@ -380,6 +380,18 @@ for (const output of playgroundPage.outputs) {
 }
 console.log('Generated: dist/playground/page.js (+ static copy)')
 
+// ── 9c. Write _headers for Cloudflare Workers static assets ──────
+// The playground iframe runs as `sandbox="allow-scripts"` (no
+// allow-same-origin), so its origin is opaque ("null"). When it imports
+// /static/components/barefoot.js the request is cross-origin and module
+// loading needs CORS. `Access-Control-Allow-Origin: *` makes the runtime
+// loadable without giving the iframe access to this site's origin.
+const headersContent = `/static/components/*
+  Access-Control-Allow-Origin: *
+`
+await Bun.write(resolve(DIST_DIR, '_headers'), headersContent)
+console.log('Generated: dist/_headers')
+
 // ── 10. Generate llms.txt ──────────────────────────────────────
 const coreDocs = scanCoreDocs(CONTENT_DIR)
 const coreLlmsTxt = generateCoreLlmsTxt(coreDocs, 'https://barefootjs.dev/docs')

@@ -14,6 +14,14 @@ const { pages, content } = await loadContentFromDisk(CONTENT_DIR)
 
 const server = new Hono()
 
+// Mirror the production _headers rule: the playground iframe is
+// sandbox="allow-scripts" (opaque origin), so it needs CORS to import the
+// runtime cross-origin.
+server.use('/static/components/*', async (c, next) => {
+  await next()
+  c.header('Access-Control-Allow-Origin', '*')
+})
+
 // Serve compiled static files (CSS, components, icons, logos, snippets)
 server.use('/static/*', serveStatic({
   root: './dist',
