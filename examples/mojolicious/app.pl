@@ -146,6 +146,7 @@ $r->get('/' => sub ($c) {
         </style>
     </head>
     <body>
+        <p><a href="/examples">← All adapters</a></p>
         <h1>BarefootJS + Mojolicious Example</h1>
         <p>This example demonstrates server-side rendering with Mojolicious and BarefootJS.</p>
         <ul>

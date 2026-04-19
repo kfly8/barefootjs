@@ -48,6 +48,7 @@ let nextId = 4
 app.get('/', (c) => {
   return c.render(
     <div>
+      <p><a href="/examples">← All adapters</a></p>
       <h1>BarefootJS + Hono/JSX Examples</h1>
       <nav>
         <ul>
