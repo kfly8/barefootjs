@@ -380,6 +380,30 @@ for (const output of playgroundPage.outputs) {
 }
 console.log('Generated: dist/playground/page.js (+ static copy)')
 
+// Type bundle for Monaco — gives the editor real autocomplete + accurate
+// error reporting against @barefootjs/hono/jsx (used as the JSX source) and
+// @barefootjs/client (signals API).
+const PKG_DIR = resolve(ROOT_DIR, '../../packages')
+const typeBundle: Record<string, string> = {
+  'file:///node_modules/@barefootjs/hono/jsx/jsx-runtime/index.d.ts':
+    await Bun.file(resolve(PKG_DIR, 'hono/src/jsx/jsx-runtime/index.d.ts')).text(),
+  'file:///node_modules/@barefootjs/jsx/jsx-runtime/index.d.ts':
+    await Bun.file(resolve(PKG_DIR, 'jsx/src/jsx-runtime/index.d.ts')).text(),
+  'file:///node_modules/@barefootjs/jsx/html-types.d.ts':
+    await Bun.file(resolve(PKG_DIR, 'jsx/src/html-types.ts')).text(),
+  'file:///node_modules/@barefootjs/client/index.d.ts':
+    await Bun.file(resolve(PKG_DIR, 'client/dist/index.d.ts')).text(),
+}
+await Bun.write(
+  resolve(PLAYGROUND_DIST_DIR, 'types-bundle.json'),
+  JSON.stringify(typeBundle),
+)
+await Bun.write(
+  resolve(PLAYGROUND_STATIC_DIR, 'types-bundle.json'),
+  Bun.file(resolve(PLAYGROUND_DIST_DIR, 'types-bundle.json')),
+)
+console.log('Generated: dist/playground/types-bundle.json (+ static copy)')
+
 // ── 9c. Write _headers for Cloudflare Workers static assets ──────
 // The playground iframe runs as `sandbox="allow-scripts"` (no
 // allow-same-origin), so its origin is opaque ("null"). When it imports
